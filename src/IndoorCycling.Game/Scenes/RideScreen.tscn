@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://bqhmueagpbut7"]
+
+[ext_resource type="Script" uid="uid://d4cnou722ywht" path="res://Scripts/GameBootstrap.cs" id="1_r0ppa"]
+[ext_resource type="Script" uid="uid://s631ubcfq4do" path="res://Scripts/RideSessionNode.cs" id="2_uf0cn"]
+[ext_resource type="Script" uid="uid://rlqehj5yx77y" path="res://Scripts/HudController.cs" id="3_qpsp1"]
+
+[node name="Control" type="Control" unique_id=141499871]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="GameBootstrap" type="Node" parent="." unique_id=437395488]
+script = ExtResource("1_r0ppa")
+
+[node name="RideSessionNode" type="Node" parent="." unique_id=1280285128]
+script = ExtResource("2_uf0cn")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=918052689]
+
+[node name="HudController" type="Control" parent="CanvasLayer" unique_id=96029640]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("3_qpsp1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/HudController" unique_id=1552515694]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PowerLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=668261802]
+layout_mode = 2
+text = "0 W"
+
+[node name="CadenceLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1435129084]
+layout_mode = 2
+text = "0 rpm"
+
+[node name="SpeedLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1107721793]
+layout_mode = 2
+text = "0.0 km/h"
+
+[node name="GradientLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=2036337385]
+layout_mode = 2
+text = "0.0 %"
+
+[node name="DistanceLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=2081383482]
+layout_mode = 2
+text = "0.00 km"
