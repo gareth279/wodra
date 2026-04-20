@@ -10,11 +10,13 @@ config_version=5
 
 [application]
 
+config/name="IndoorCycling.Game"
+run/main_scene="uid://bqhmueagpbut7"
 config/features=PackedStringArray("4.6", "C#")
 
 [dotnet]
 
-project/assembly_name="UnnamedProject"
+project/assembly_name="IndoorCycling.Game"
 
 [physics]
 

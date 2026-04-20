@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWinRT>true</UseWinRT>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
+    <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />
+  </ItemGroup>
+</Project>

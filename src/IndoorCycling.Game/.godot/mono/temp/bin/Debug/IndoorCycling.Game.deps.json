@@ -8,8 +8,8 @@
     ".NETCoreApp,Version=v8.0": {
       "IndoorCycling.Game/1.0.0": {
         "dependencies": {
-          "GodotSharp": "4.6.0",
-          "GodotSharpEditor": "4.6.0",
+          "GodotSharp": "4.6.2",
+          "GodotSharpEditor": "4.6.2",
           "IndoorCycling.Core": "1.0.0",
           "IndoorCycling.Trainer": "1.0.0"
         },
@@ -17,22 +17,22 @@
           "IndoorCycling.Game.dll": {}
         }
       },
-      "GodotSharp/4.6.0": {
+      "GodotSharp/4.6.2": {
         "runtime": {
           "lib/net8.0/GodotSharp.dll": {
-            "assemblyVersion": "4.6.0.0",
-            "fileVersion": "4.6.0.0"
+            "assemblyVersion": "4.6.2.0",
+            "fileVersion": "4.6.2.0"
           }
         }
       },
-      "GodotSharpEditor/4.6.0": {
+      "GodotSharpEditor/4.6.2": {
         "dependencies": {
-          "GodotSharp": "4.6.0"
+          "GodotSharp": "4.6.2"
         },
         "runtime": {
           "lib/net8.0/GodotSharpEditor.dll": {
-            "assemblyVersion": "4.6.0.0",
-            "fileVersion": "4.6.0.0"
+            "assemblyVersion": "4.6.2.0",
+            "fileVersion": "4.6.2.0"
           }
         }
       },
@@ -63,19 +63,19 @@
       "serviceable": false,
       "sha512": ""
     },
-    "GodotSharp/4.6.0": {
+    "GodotSharp/4.6.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-k4VnWoOPueAkTtFoUzhDnP5e4Qs3Gho0ls/0VyHD81F90HeVBvT0YlsGtS5fvkrmxl731d96bKRWNL4+Rd977g==",
-      "path": "godotsharp/4.6.0",
-      "hashPath": "godotsharp.4.6.0.nupkg.sha512"
+      "sha512": "sha512-yWYaxRtawrYOQ6TZqKovkw6IN3jNWLTjfrL+pvoGdprvGT7LOYdBCwy0OU7rSfzTn48Rr4IuyuZoSuC0Cp2JeA==",
+      "path": "godotsharp/4.6.2",
+      "hashPath": "godotsharp.4.6.2.nupkg.sha512"
     },
-    "GodotSharpEditor/4.6.0": {
+    "GodotSharpEditor/4.6.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-jpUfzyAJnG65kWsctfdXKTTPDGzv1eHVlGw/E5Fh5Axw8rGeklQJi0isAX1tBxPjcq/AuELYltpfOdUGc9f0kg==",
-      "path": "godotsharpeditor/4.6.0",
-      "hashPath": "godotsharpeditor.4.6.0.nupkg.sha512"
+      "sha512": "sha512-WbxolK7BIzSl7d8jhTQQSwZ7JEf+6RHeaZWa6aw7f/qXsN/hXzFSgQvpKxGrLo0icQlowjvF0NomnYO5owMG7w==",
+      "path": "godotsharpeditor/4.6.2",
+      "hashPath": "godotsharpeditor.4.6.2.nupkg.sha512"
     },
     "IndoorCycling.Core/1.0.0": {
       "type": "project",

@@ -3,21 +3,16 @@ using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
 
-namespace IndoorCycling.Game.Scripts;
+//namespace IndoorCycling.Game.Scripts;
 
 public partial class RideSessionNode : Node
 {
-	[Export] public NodePath? HudControllerPath { get; set; }
-
 	private HudController? _hudController;
 	private RideState _rideState = RideState.Initial;
 
 	public override async void _Ready()
 	{
-		if (HudControllerPath is not null)
-		{
-			_hudController = GetNodeOrNull<HudController>(HudControllerPath);
-		}
+		_hudController = GetNodeOrNull<HudController>("../CanvasLayer/HudController");
 
 		await GameBootstrap.TrainerClient.ConnectAsync();
 
@@ -58,12 +53,6 @@ public partial class RideSessionNode : Node
 
 	private static double GetGradientForCurrentDistance(double distanceMeters)
 	{
-		// crude test route:
-		// 0-500m flat
-		// 500-1500m 3%
-		// 1500-2500m 6%
-		// 2500-3500m -2%
-		// then repeat
 		var d = distanceMeters % 3500.0;
 
 		if (d < 500) return 0;

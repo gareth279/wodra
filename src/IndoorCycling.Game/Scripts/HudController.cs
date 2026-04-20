@@ -1,16 +1,10 @@
 using Godot;
 using IndoorCycling.Core.Models;
 
-namespace IndoorCycling.Game.Scripts;
+//namespace IndoorCycling.Game.Scripts;
 
 public partial class HudController : Control
 {
-	[Export] public NodePath? PowerLabelPath { get; set; }
-	[Export] public NodePath? CadenceLabelPath { get; set; }
-	[Export] public NodePath? SpeedLabelPath { get; set; }
-	[Export] public NodePath? GradientLabelPath { get; set; }
-	[Export] public NodePath? DistanceLabelPath { get; set; }
-
 	private Label? _powerLabel;
 	private Label? _cadenceLabel;
 	private Label? _speedLabel;
@@ -19,11 +13,11 @@ public partial class HudController : Control
 
 	public override void _Ready()
 	{
-		_powerLabel = GetNodeOrNull<Label>(PowerLabelPath);
-		_cadenceLabel = GetNodeOrNull<Label>(CadenceLabelPath);
-		_speedLabel = GetNodeOrNull<Label>(SpeedLabelPath);
-		_gradientLabel = GetNodeOrNull<Label>(GradientLabelPath);
-		_distanceLabel = GetNodeOrNull<Label>(DistanceLabelPath);
+		_powerLabel = GetNodeOrNull<Label>("VBoxContainer/PowerLabel");
+		_cadenceLabel = GetNodeOrNull<Label>("VBoxContainer/CadenceLabel");
+		_speedLabel = GetNodeOrNull<Label>("VBoxContainer/SpeedLabel");
+		_gradientLabel = GetNodeOrNull<Label>("VBoxContainer/GradientLabel");
+		_distanceLabel = GetNodeOrNull<Label>("VBoxContainer/DistanceLabel");
 	}
 
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry telemetry)

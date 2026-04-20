@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IndoorCycling.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+13384186ecd5edc9b1bc9c3cc1ddb904c049a97a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b5efd2cb6e3ff0bdec41c69868cef0cc42d6fcf9")]
 [assembly: System.Reflection.AssemblyProductAttribute("IndoorCycling.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IndoorCycling.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

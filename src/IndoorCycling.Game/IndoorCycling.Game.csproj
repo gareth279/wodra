@@ -1,12 +1,14 @@
-<Project Sdk="Godot.NET.Sdk/4.6.0">
+<Project Sdk="Godot.NET.Sdk/4.6.2">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <Nullable>enable</Nullable>
+    <AssemblyName>IndoorCycling.Game</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\IndoorCycling.Trainer.Windows\IndoorCycling.Trainer.Windows.csproj" />
+</ItemGroup>
 </Project>
