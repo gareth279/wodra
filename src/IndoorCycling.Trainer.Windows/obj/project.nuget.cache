@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Tav4rRPskS4=",
+  "dgSpecHash": "rNLaqBc+rOs=",
   "success": true,
-  "projectFilePath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
+  "projectFilePath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.26\\microsoft.netcore.app.ref.8.0.26.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.26\\microsoft.windowsdesktop.app.ref.8.0.26.nupkg.sha512",

@@ -23,6 +23,10 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public bool IsConnected => _device is not null;
 
+    private GattCharacteristic? _ftmsIndoorBikeDataCharacteristic;   // 2AD2 notify
+    private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
+    private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
+
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         // For now, this just means:
@@ -197,11 +201,214 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
         Console.WriteLine($"Connected to device: {device.Name}");
 
+        await ResolveFtmsCharacteristicsAsync(cancellationToken);
+
         // Later:
         // - enumerate GATT services
         // - find FTMS service
         // - subscribe to indoor bike data / trainer data
-        await DumpServicesAsync(cancellationToken);
+        //await DumpServicesAsync(cancellationToken);
+    }
+
+
+    public async Task ResolveFtmsCharacteristicsAsync(CancellationToken cancellationToken = default)
+    {
+        if (_device is null)
+        {
+            Console.WriteLine("No BLE device connected.");
+            return;
+        }
+
+        var ftmsUuid = Guid.Parse("00001826-0000-1000-8000-00805f9b34fb");
+        var indoorBikeDataUuid = Guid.Parse("00002ad2-0000-1000-8000-00805f9b34fb");
+        var fitnessMachineStatusUuid = Guid.Parse("00002ada-0000-1000-8000-00805f9b34fb");
+        var fitnessMachineControlPointUuid = Guid.Parse("00002ad9-0000-1000-8000-00805f9b34fb");
+
+        var servicesResult = await _device.GetGattServicesForUuidAsync(ftmsUuid, BluetoothCacheMode.Cached);
+
+        if (servicesResult.Status != GattCommunicationStatus.Success || servicesResult.Services.Count == 0)
+        {
+            Console.WriteLine($"Could not access FTMS service: {servicesResult.Status}");
+            return;
+        }
+
+        var ftmsService = servicesResult.Services[0];
+        Console.WriteLine("FTMS service found.");
+
+        var charsResult = await ftmsService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
+
+        if (charsResult.Status != GattCommunicationStatus.Success)
+        {
+            Console.WriteLine($"Could not access FTMS characteristics: {charsResult.Status}");
+            return;
+        }
+
+        _ftmsIndoorBikeDataCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == indoorBikeDataUuid);
+        _ftmsFitnessMachineStatusCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineStatusUuid);
+        _ftmsControlPointCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineControlPointUuid);
+
+        Console.WriteLine($"Indoor Bike Data char found: {_ftmsIndoorBikeDataCharacteristic is not null}");
+        Console.WriteLine($"Fitness Machine Status char found: {_ftmsFitnessMachineStatusCharacteristic is not null}");
+        Console.WriteLine($"Control Point char found: {_ftmsControlPointCharacteristic is not null}");
+    }
+
+    public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
+    {
+        if (_ftmsIndoorBikeDataCharacteristic is null)
+        {
+            Console.WriteLine("FTMS Indoor Bike Data characteristic is not resolved.");
+            return;
+        }
+
+        _ftmsIndoorBikeDataCharacteristic.ValueChanged -= OnFtmsIndoorBikeDataChanged;
+        _ftmsIndoorBikeDataCharacteristic.ValueChanged += OnFtmsIndoorBikeDataChanged;
+
+        var status = await _ftmsIndoorBikeDataCharacteristic
+            .WriteClientCharacteristicConfigurationDescriptorAsync(
+                GattClientCharacteristicConfigurationDescriptorValue.Notify);
+
+        Console.WriteLine($"Subscribe FTMS telemetry result: {status}");
+    }
+
+    public async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
+    {
+        if (_ftmsControlPointCharacteristic is null)
+        {
+            Console.WriteLine("FTMS Control Point characteristic is not resolved.");
+            return;
+        }
+
+        _ftmsControlPointCharacteristic.ValueChanged -= OnFtmsControlPointChanged;
+        _ftmsControlPointCharacteristic.ValueChanged += OnFtmsControlPointChanged;
+
+        var status = await _ftmsControlPointCharacteristic
+            .WriteClientCharacteristicConfigurationDescriptorAsync(
+                GattClientCharacteristicConfigurationDescriptorValue.Indicate);
+
+        Console.WriteLine($"Subscribe FTMS control point result: {status}");
+    }
+
+    public async Task RequestControlAsync(CancellationToken cancellationToken = default)
+    {
+        await WriteControlPointAsync(new byte[] { 0x00 }, cancellationToken);
+    }
+
+    public async Task SetTargetPowerAsync(short watts, CancellationToken cancellationToken = default)
+    {
+        var payload = new byte[]
+        {
+            0x05,
+            (byte)(watts & 0xFF),
+            (byte)((watts >> 8) & 0xFF)
+        };
+
+        await WriteControlPointAsync(payload, cancellationToken);
+    }
+
+    public async Task RampTargetPowerAsync(
+        short startWatts,
+        short endWatts,
+        short stepWatts,
+        TimeSpan delay,
+        CancellationToken cancellationToken = default)
+    {
+        if (stepWatts <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stepWatts), "stepWatts must be > 0");
+        }
+
+        if (startWatts <= endWatts)
+        {
+            for (short w = startWatts; w <= endWatts; w += stepWatts)
+            {
+                Console.WriteLine($"Setting target power to {w} W");
+                await SetTargetPowerAsync(w, cancellationToken);
+                await Task.Delay(delay, cancellationToken);
+            }
+        }
+        else
+        {
+            for (short w = startWatts; w >= endWatts; w -= stepWatts)
+            {
+                Console.WriteLine($"Setting target power to {w} W");
+                await SetTargetPowerAsync(w, cancellationToken);
+                await Task.Delay(delay, cancellationToken);
+            }
+        }
+    }
+
+    private async Task WriteControlPointAsync(byte[] payload, CancellationToken cancellationToken = default)
+    {
+        if (_ftmsControlPointCharacteristic is null)
+        {
+            Console.WriteLine("FTMS Control Point characteristic is not resolved.");
+            return;
+        }
+
+        var writer = new Windows.Storage.Streams.DataWriter();
+        writer.WriteBytes(payload);
+
+        var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
+            writer.DetachBuffer(),
+            GattWriteOption.WriteWithResponse);
+
+        Console.WriteLine($"Control point write [{BitConverter.ToString(payload)}] => {status}");
+    }
+
+    private void OnFtmsControlPointChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
+    {
+        try
+        {
+            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var data = new byte[reader.UnconsumedBufferLength];
+            reader.ReadBytes(data);
+
+            Console.WriteLine($"FTMS Control Point response: {BitConverter.ToString(data)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading control point indication: {ex.Message}");
+        }
+    }
+
+    private void OnFtmsIndoorBikeDataChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
+    {
+        try
+        {
+            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var data = new byte[reader.UnconsumedBufferLength];
+            reader.ReadBytes(data);
+
+            if (data.Length < 8)
+            {
+                Console.WriteLine($"FTMS packet too short: {BitConverter.ToString(data)}");
+                return;
+            }
+
+            var flags = BitConverter.ToUInt16(data, 0);
+            var speedRaw = BitConverter.ToUInt16(data, 2);
+            var cadenceRaw = BitConverter.ToUInt16(data, 4);
+            var powerRaw = BitConverter.ToInt16(data, 6);
+
+            var speedKph = speedRaw / 100.0;
+            var cadenceRpm = (int)Math.Round(cadenceRaw / 2.0);
+            var powerWatts = (int)powerRaw;
+
+            _latestTelemetry = new TrainerTelemetry(
+                Timestamp: DateTimeOffset.UtcNow,
+                PowerWatts: powerWatts,
+                CadenceRpm: cadenceRpm,
+                SpeedKph: speedKph,
+                HeartRateBpm: null
+            );
+
+            Console.WriteLine(
+                $"FTMS flags=0x{flags:X4} speed={speedKph:0.0} kph cadence={cadenceRpm} rpm power={powerWatts} W");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing FTMS notification: {ex.Message}");
+        }
     }
 
     public async Task DumpServicesAsync(CancellationToken cancellationToken = default)
@@ -212,7 +419,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             return;
         }
 
-        var servicesResult = await _device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+        //var servicesResult = await _device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+        var servicesResult = await _device.GetGattServicesAsync(BluetoothCacheMode.Cached);
 
         if (servicesResult.Status != GattCommunicationStatus.Success)
         {
@@ -226,7 +434,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         {
             Console.WriteLine($"  Service: {service.Uuid}");
 
-            var charsResult = await service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
+            //var charsResult = await service.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
+            var charsResult = await service.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
 
             if (charsResult.Status != GattCommunicationStatus.Success)
             {

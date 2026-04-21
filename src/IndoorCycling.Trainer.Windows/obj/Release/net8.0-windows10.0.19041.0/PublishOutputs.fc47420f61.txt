@@ -1,0 +1,9 @@
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Trainer.Windows.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Trainer.Windows.deps.json
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Trainer.Windows.pdb
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\Microsoft.Windows.SDK.NET.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\WinRT.Runtime.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Core.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Trainer.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Core.pdb
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Trainer.Windows\bin\Release\net8.0-windows10.0.19041.0\publish\IndoorCycling.Trainer.pdb
