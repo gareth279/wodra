@@ -123,7 +123,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
+    "C:\\Users\\garet\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -131,11 +131,11 @@
       "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
       "projectName": "IndoorCycling.Game",
       "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
-      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
       "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\.godot\\mono\\temp\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"

@@ -66,7 +66,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
+    "C:\\Users\\garet\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -74,11 +74,11 @@
       "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
       "projectName": "IndoorCycling.BleTestHarness",
       "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
-      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
       "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows10.0.19041.0"
