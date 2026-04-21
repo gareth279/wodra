@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "dgSpecHash": "9cwJjNV3yow=",
-  "success": false,
+  "dgSpecHash": "e278XG5r7PU=",
+  "success": true,
   "projectFilePath": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\wooga72p\\.nuget\\packages\\godot.sourcegenerators\\4.6.2\\godot.sourcegenerators.4.6.2.nupkg.sha512",
@@ -11,17 +11,5 @@
     "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.26\\microsoft.windowsdesktop.app.ref.8.0.26.nupkg.sha512",
     "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.26\\microsoft.aspnetcore.app.ref.8.0.26.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1201",
-      "level": "Error",
-      "message": "Project IndoorCycling.Trainer.Windows is not compatible with net8.0 (.NETCoreApp,Version=v8.0). Project IndoorCycling.Trainer.Windows supports: net8.0-windows10.0.19041 (.NETCoreApp,Version=v8.0)",
-      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
-      "filePath": "C:\\Otago\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
-      "libraryId": "IndoorCycling.Trainer.Windows",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  "logs": []
 }

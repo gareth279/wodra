@@ -1,0 +1,165 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0-windows10.0.19041": {
+      "IndoorCycling.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/IndoorCycling.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/IndoorCycling.Core.dll": {}
+        }
+      },
+      "IndoorCycling.Trainer/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "IndoorCycling.Core": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/IndoorCycling.Trainer.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/IndoorCycling.Trainer.dll": {}
+        }
+      },
+      "IndoorCycling.Trainer.Windows/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "IndoorCycling.Core": "1.0.0",
+          "IndoorCycling.Trainer": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "IndoorCycling.Core/1.0.0": {
+      "type": "project",
+      "path": "../IndoorCycling.Core/IndoorCycling.Core.csproj",
+      "msbuildProject": "../IndoorCycling.Core/IndoorCycling.Core.csproj"
+    },
+    "IndoorCycling.Trainer/1.0.0": {
+      "type": "project",
+      "path": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj",
+      "msbuildProject": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj"
+    },
+    "IndoorCycling.Trainer.Windows/1.0.0": {
+      "type": "project",
+      "path": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj",
+      "msbuildProject": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0-windows10.0.19041": [
+      "IndoorCycling.Core >= 1.0.0",
+      "IndoorCycling.Trainer >= 1.0.0",
+      "IndoorCycling.Trainer.Windows >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
+      "projectName": "IndoorCycling.BleTestHarness",
+      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
+      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
+      "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0-windows10.0.19041.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0-windows10.0.19041": {
+          "targetAlias": "net8.0-windows10.0.19041.0",
+          "projectReferences": {
+            "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            },
+            "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
+              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
+            },
+            "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
+              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.200"
+    },
+    "frameworks": {
+      "net8.0-windows10.0.19041": {
+        "targetAlias": "net8.0-windows10.0.19041.0",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          },
+          {
+            "name": "Microsoft.Windows.SDK.NET.Ref",
+            "version": "[10.0.19041.57, 10.0.19041.57]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.26, 8.0.26]"
+          }
+        ],
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.Windows.SDK.NET.Ref.Windows": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

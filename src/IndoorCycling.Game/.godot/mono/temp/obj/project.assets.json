@@ -59,16 +59,6 @@
         "runtime": {
           "bin/placeholder/IndoorCycling.Trainer.dll": {}
         }
-      },
-      "IndoorCycling.Trainer.Windows/1.0.0": {
-        "type": "project",
-        "framework": "Unsupported,Version=v0.0",
-        "compile": {
-          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
-        }
       }
     }
   },
@@ -121,11 +111,6 @@
       "type": "project",
       "path": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj",
       "msbuildProject": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj"
-    },
-    "IndoorCycling.Trainer.Windows/1.0.0": {
-      "type": "project",
-      "path": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj",
-      "msbuildProject": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -134,8 +119,7 @@
       "GodotSharp >= 4.6.2",
       "GodotSharpEditor >= 4.6.2",
       "IndoorCycling.Core >= 1.0.0",
-      "IndoorCycling.Trainer >= 1.0.0",
-      "IndoorCycling.Trainer.Windows >= 1.0.0"
+      "IndoorCycling.Trainer >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -165,9 +149,6 @@
           "projectReferences": {
             "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
               "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
-            },
-            "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
-              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
             },
             "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
               "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
@@ -240,16 +221,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1201",
-      "level": "Error",
-      "message": "Project IndoorCycling.Trainer.Windows is not compatible with net8.0 (.NETCoreApp,Version=v8.0). Project IndoorCycling.Trainer.Windows supports: net8.0-windows10.0.19041 (.NETCoreApp,Version=v8.0)",
-      "libraryId": "IndoorCycling.Trainer.Windows",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  }
 }

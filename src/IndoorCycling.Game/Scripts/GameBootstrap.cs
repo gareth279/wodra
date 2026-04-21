@@ -13,21 +13,12 @@ public partial class GameBootstrap : Node
 
     public override void _Ready()
     {
-        const bool useFakeTrainer = true;
-
-        TrainerClient = useFakeTrainer
-            ? new FakeTrainerClient()
-            : CreateRealTrainerClient();
+        TrainerClient = new FakeTrainerClient();
 
         SimulationEngine = new SimulationEngine();
         RiderProfile = new RiderProfile("Gareth", 88.0);
         BikeProfile = new BikeProfile("Indoor Bike", 9.0);
 
         GD.Print($"GameBootstrap initialised. Trainer type: {TrainerClient.GetType().Name}");
-    }
-
-    private static ITrainerClient CreateRealTrainerClient()
-    {
-        return new WindowsBleTrainerClient();
     }
 }
