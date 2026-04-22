@@ -22,3 +22,4 @@ C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Debug\net8.0\IndoorCycl
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Debug\net8.0\refint\IndoorCycling.Core.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Debug\net8.0\IndoorCycling.Core.pdb
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Debug\net8.0\ref\IndoorCycling.Core.dll
+C:\Otago\gwift\src\IndoorCycling.Core\obj\Debug\net8.0\IndoorCycling.Core.csproj.AssemblyReference.cache

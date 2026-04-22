@@ -17,6 +17,14 @@
           "IndoorCycling.Game.dll": {}
         }
       },
+      "Garmin.FIT.Sdk/21.201.0": {
+        "runtime": {
+          "lib/netcoreapp2.0/FitSDK.dll": {
+            "assemblyVersion": "21.201.0.0",
+            "fileVersion": "21.201.0.0"
+          }
+        }
+      },
       "GodotSharp/4.6.2": {
         "runtime": {
           "lib/net8.0/GodotSharp.dll": {
@@ -37,6 +45,9 @@
         }
       },
       "IndoorCycling.Core/1.0.0": {
+        "dependencies": {
+          "Garmin.FIT.Sdk": "21.201.0"
+        },
         "runtime": {
           "IndoorCycling.Core.dll": {
             "assemblyVersion": "1.0.0.0",
@@ -62,6 +73,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "Garmin.FIT.Sdk/21.201.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-bCEt48r/STml9eGimMmaso4XjLVk7lzNpf/y2mzyM9ZLn5AxcG7l1Ki4X1TGtP1y7cEUm0GQI+/GvZdW97E0Kw==",
+      "path": "garmin.fit.sdk/21.201.0",
+      "hashPath": "garmin.fit.sdk.21.201.0.nupkg.sha512"
     },
     "GodotSharp/4.6.2": {
       "type": "package",

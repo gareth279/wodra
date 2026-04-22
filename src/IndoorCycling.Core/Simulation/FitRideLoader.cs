@@ -17,21 +17,22 @@ public sealed class FitRideLoader
 
         using var fitStream = File.OpenRead(path);
 
-        if (!Decode.IsFIT(fitStream))
+        var decode = new Decode();
+
+        if (!decode.IsFIT(fitStream))
         {
             throw new InvalidOperationException("File is not a valid FIT file.");
         }
 
         fitStream.Position = 0;
 
-        if (!Decode.CheckIntegrity(fitStream))
+        if (!decode.CheckIntegrity(fitStream))
         {
             throw new InvalidOperationException("FIT file failed integrity check.");
         }
 
         fitStream.Position = 0;
 
-        var decode = new Decode();
         var broadcaster = new MesgBroadcaster();
 
         var frames = new List<ReplayFrame>();

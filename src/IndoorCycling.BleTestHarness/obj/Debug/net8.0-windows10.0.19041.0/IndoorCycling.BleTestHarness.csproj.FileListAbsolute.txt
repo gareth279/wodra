@@ -48,3 +48,4 @@ C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.pdb
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.genruntimeconfig.cache
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\ref\IndoorCycling.BleTestHarness.dll
+C:\Otago\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\FitSDK.dll
