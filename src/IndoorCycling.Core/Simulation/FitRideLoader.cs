@@ -1,5 +1,6 @@
 using Dynastream.Fit;
 using IndoorCycling.Core.Models;
+using File = System.IO.File;
 
 namespace IndoorCycling.Core.Simulation;
 
@@ -31,13 +32,21 @@ public sealed class FitRideLoader
         fitStream.Position = 0;
 
         var decode = new Decode();
-        var broadcaster = new MesgBroadcaster(decode);
+        var broadcaster = new MesgBroadcaster();
 
         var frames = new List<ReplayFrame>();
         DateTimeOffset? firstTimestamp = null;
 
-        broadcaster.RecordMesgEvent += (_, _, mesg) =>
+        decode.MesgEvent += broadcaster.OnMesg;
+        decode.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+
+        broadcaster.RecordMesgEvent += (sender, e) =>
         {
+            if (e?.mesg is not RecordMesg mesg)
+            {
+                return;
+            }
+
             var timestamp = ToDateTimeOffset(mesg.GetTimestamp());
             if (timestamp is null)
             {
@@ -63,7 +72,7 @@ public sealed class FitRideLoader
             });
         };
 
-        decode.Read(fitStream, broadcaster, broadcaster);
+        decode.Read(fitStream);
 
         return frames;
     }
@@ -97,8 +106,11 @@ public sealed class FitRideLoader
 
     private static double? ToDegreesNullable(int? semicircles)
     {
-        return semicircles.HasValue
-            ? Conversions.SemicirclesToDegrees(semicircles.Value)
-            : null;
+        if (!semicircles.HasValue)
+        {
+            return null;
+        }
+
+        return semicircles.Value * (180.0 / 2147483648.0);
     }
 }
