@@ -1,0 +1,167 @@
+GWift BLE Test Harness
+----------------------
+Commands:
+  scan                 - scan for BLE devices for 10 seconds
+  connect         - connect to the last likely trainer seen
+  dump        - dump GATT services on the connected device
+  subs       - subscribe to FTMS indoor bike data notifications
+  tele            - print current cached telemetry
+  quit                 - exit
+
+> scan
+Scanning for BLE devices for 10 seconds...
+Found 1 BLE device(s).
+- EF:63:1A:CF:4E:06 |  | RSSI -57 | Services: 00001826-0000-1000-8000-00805f9b34fb, 00001818-0000-1000-8000-00805f9b34fb, 669aa605-0c08-969e-e211-86ad5062675f
+> connect
+Connecting to EF:63:1A:CF:4E:06 ...
+Connected to device: Tacx Flux-2 04206
+FTMS service found.
+Indoor Bike Data char found: True
+Fitness Machine Status char found: True
+Control Point char found: True
+> subs
+Subscribe FTMS telemetry result: Success
+> FTMS Indoor Bike Data raw: 44-00-9C-04-40-00-38-00
+FTMS Indoor Bike Data raw: 44-00-46-05-4A-00-62-00
+FTMS Indoor Bike Data raw: 44-00-46-05-4A-00-62-00
+FTMS Indoor Bike Data raw: 44-00-6E-05-4C-00-38-00
+FTMS Indoor Bike Data raw: 44-00-96-05-4E-00-36-00
+FTMS Indoor Bike Data raw: 44-00-96-05-4E-00-36-00
+FTMS Indoor Bike Data raw: 44-00-04-06-54-00-55-00
+FTMS Indoor Bike Data raw: 44-00-C8-05-50-00-36-00
+FTMS Indoor Bike Data raw: 44-00-C8-05-50-00-36-00
+FTMS Indoor Bike Data raw: 44-00-64-05-4C-00-36-00
+FTMS Indoor Bike Data raw: 44-00-1E-05-48-00-3C-00
+FTMS Indoor Bike Data raw: 44-00-0A-05-46-00-3C-00
+FTMS Indoor Bike Data raw: 44-00-0A-05-46-00-3C-00
+FTMS Indoor Bike Data raw: 44-00-64-05-4C-00-45-00
+FTMS Indoor Bike Data raw: 44-00-5A-05-4A-00-3C-00
+FTMS Indoor Bike Data raw: 44-00-5A-05-4A-00-3C-00
+FTMS Indoor Bike Data raw: 44-00-46-05-4A-00-37-00
+FTMS Indoor Bike Data raw: 44-00-46-05-4A-00-37-00
+FTMS Indoor Bike Data raw: 44-00-32-05-48-00-37-00
+FTMS Indoor Bike Data raw: 44-00-14-05-46-00-37-00
+FTMS Indoor Bike Data raw: 44-00-14-05-46-00-34-00
+FTMS Indoor Bike Data raw: 44-00-14-05-46-00-34-00
+FTMS Indoor Bike Data raw: 44-00-F6-04-46-00-36-00
+FTMS Indoor Bike Data raw: 44-00-0A-05-46-00-36-00
+FTMS Indoor Bike Data raw: 44-00-0A-05-46-00-36-00
+FTMS Indoor Bike Data raw: 44-00-EC-04-44-00-36-00
+FTMS Indoor Bike Data raw: 44-00-F6-04-46-00-34-00
+FTMS Indoor Bike Data raw: 44-00-92-04-00-00-00-00
+FTMS Indoor Bike Data raw: 44-00-92-04-00-00-00-00
+FTMS Indoor Bike Data raw: 44-00-42-04-3C-00-34-00
+FTMS Indoor Bike Data raw: 44-00-42-04-3C-00-34-00
+FTMS Indoor Bike Data raw: 44-00-A2-03-32-00-27-00
+FTMS Indoor Bike Data raw: 44-00-C0-03-34-00-27-00
+FTMS Indoor Bike Data raw: 44-00-C0-03-34-00-27-00
+FTMS Indoor Bike Data raw: 44-00-B6-03-34-00-27-00
+FTMS Indoor Bike Data raw: 44-00-AC-03-32-00-27-00
+FTMS Indoor Bike Data raw: 44-00-C0-03-34-00-21-00
+FTMS Indoor Bike Data raw: 44-00-C0-03-34-00-21-00
+FTMS Indoor Bike Data raw: 44-00-B6-03-34-00-21-00
+FTMS Indoor Bike Data raw: 44-00-D4-03-36-00-21-00
+FTMS Indoor Bike Data raw: 44-00-D4-03-36-00-21-00
+FTMS Indoor Bike Data raw: 44-00-B6-03-34-00-21-00
+FTMS Indoor Bike Data raw: 44-00-CA-03-34-00-22-00
+FTMS Indoor Bike Data raw: 44-00-8E-03-32-00-22-00
+FTMS Indoor Bike Data raw: 44-00-8E-03-32-00-22-00
+FTMS Indoor Bike Data raw: 44-00-48-03-2E-00-22-00
+FTMS Indoor Bike Data raw: 44-00-EE-02-28-00-22-00
+FTMS Indoor Bike Data raw: 44-00-EE-02-28-00-22-00
+FTMS Indoor Bike Data raw: 44-00-B2-02-26-00-19-00
+FTMS Indoor Bike Data raw: 44-00-94-02-24-00-19-00
+FTMS Indoor Bike Data raw: 44-00-94-02-24-00-19-00
+FTMS Indoor Bike Data raw: 44-00-2A-03-2C-00-1D-00
+FTMS Indoor Bike Data raw: 44-00-2A-03-2C-00-1D-00
+FTMS Indoor Bike Data raw: 44-00-EE-02-28-00-16-00
+FTMS Indoor Bike Data raw: 44-00-B2-02-26-00-16-00
+FTMS Indoor Bike Data raw: 44-00-B2-02-26-00-13-00
+FTMS Indoor Bike Data raw: 44-00-B2-02-26-00-13-00
+FTMS Indoor Bike Data raw: 44-00-80-02-22-00-16-00
+FTMS Indoor Bike Data raw: 44-00-08-02-1C-00-10-00
+FTMS Indoor Bike Data raw: 44-00-08-02-1C-00-10-00
+FTMS Indoor Bike Data raw: 44-00-12-02-1C-00-10-00
+FTMS Indoor Bike Data raw: 44-00-12-02-1C-00-10-00
+FTMS Indoor Bike Data raw: 44-00-30-02-1E-00-0B-00
+
+
+GWift BLE Test Harness
+----------------------
+Commands:
+  scan                 - scan for BLE devices for 10 seconds
+  connect         - connect to the last likely trainer seen
+  dump        - dump GATT services on the connected device
+  subs       - subscribe to FTMS indoor bike data notifications
+  tele            - print current cached telemetry
+  quit                 - exit
+
+> scan
+Scanning for BLE devices for 10 seconds...
+Found 0 BLE device(s).
+> scan
+Scanning for BLE devices for 10 seconds...
+Found 1 BLE device(s).
+- EF:63:1A:CF:4E:06 |  | RSSI -49 | Services: 00001826-0000-1000-8000-00805f9b34fb, 00001818-0000-1000-8000-00805f9b34fb, 669aa605-0c08-969e-e211-86ad5062675f
+> connect
+Connecting to EF:63:1A:CF:4E:06 ...
+Connected to device: Tacx Flux-2 04206
+FTMS service found.
+Indoor Bike Data char found: True
+Fitness Machine Status char found: True
+Control Point char found: True
+> dump
+Services for Tacx Flux-2 04206:
+  Service: 00001800-0000-1000-8000-00805f9b34fb
+    Characteristic: 00002a00-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a01-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a04-0000-1000-8000-00805f9b34fb | Properties: Read
+  Service: 00001801-0000-1000-8000-00805f9b34fb
+    Characteristic: 00002a05-0000-1000-8000-00805f9b34fb | Properties: Indicate
+  Service: 0000180a-0000-1000-8000-00805f9b34fb
+    Characteristic: 00002a26-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a29-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a24-0000-1000-8000-00805f9b34fb | Properties: Read
+  Service: 669aa605-0c08-969e-e211-86ad5062675f
+    Characteristic: 669aab01-0c08-969e-e211-86ad5062675f | Properties: Write
+    Characteristic: 669aab02-0c08-969e-e211-86ad5062675f | Properties: Notify
+    Characteristic: 669aab21-0c08-969e-e211-86ad5062675f | Properties: WriteWithoutResponse, Write
+    Characteristic: 669aab22-0c08-969e-e211-86ad5062675f | Properties: Notify
+  Service: 669aa501-0c08-969e-e211-86ad5062675f
+    Characteristic: 669aac01-0c08-969e-e211-86ad5062675f | Properties: Read, Write
+  Service: 00001818-0000-1000-8000-00805f9b34fb
+    Characteristic: 00002a63-0000-1000-8000-00805f9b34fb | Properties: Notify
+    Characteristic: 00002a65-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a5d-0000-1000-8000-00805f9b34fb | Properties: Read
+    Characteristic: 00002a66-0000-1000-8000-00805f9b34fb | Properties: Write, Indicate
+  Service: 00001826-0000-1000-8000-00805f9b34fb
+    Could not read characteristics: AccessDenied
+  Service: 6e40fec1-b5a3-f393-e0a9-e50e24dcca9e
+    Characteristic: 6e40fec2-b5a3-f393-e0a9-e50e24dcca9e | Properties: Notify
+    Characteristic: 6e40fec3-b5a3-f393-e0a9-e50e24dcca9e | Properties: WriteWithoutResponse, Write
+> subs
+Subscribe FTMS telemetry result: Success
+> FTMS Indoor Bike Data raw: 44-00-52-03-2E-00-2D-00
+FTMS Indoor Bike Data raw: 44-00-16-03-2A-00-1E-00
+FTMS Indoor Bike Data raw: 44-00-16-03-2A-00-1E-00
+FTMS Indoor Bike Data raw: 44-00-74-04-3E-00-31-00
+FTMS Indoor Bike Data raw: 44-00-7E-04-3E-00-1E-00
+FTMS Indoor Bike Data raw: 44-00-7E-04-3E-00-1E-00
+FTMS Indoor Bike Data raw: 44-00-56-04-3C-00-2A-00
+FTMS Indoor Bike Data raw: 44-00-2E-04-3A-00-2A-00
+FTMS Indoor Bike Data raw: 44-00-2E-04-3A-00-2A-00
+FTMS Indoor Bike Data raw: 44-00-D4-03-36-00-2A-00
+FTMS Indoor Bike Data raw: 44-00-E8-03-36-00-2A-00
+FTMS Indoor Bike Data raw: 44-00-68-06-5A-00-6A-01
+FTMS Indoor Bike Data raw: 44-00-68-06-5A-00-6A-01
+FTMS Indoor Bike Data raw: 44-00-34-08-72-00-D4-01
+FTMS Indoor Bike Data raw: 44-00-5A-0A-92-00-53-02
+FTMS Indoor Bike Data raw: 44-00-5A-0A-92-00-53-02
+FTMS Indoor Bike Data raw: 44-00-62-0C-AE-00-CA-02
+FTMS Indoor Bike Data raw: 44-00-CA-0D-C2-00-A6-02
+FTMS Indoor Bike Data raw: 44-00-A2-0D-C0-00-87-00
+FTMS Indoor Bike Data raw: 44-00-A2-0D-C0-00-87-00
+FTMS Indoor Bike Data raw: 44-00-34-0D-BA-00-87-00
+FTMS Indoor Bike Data raw: 44-00-B2-0C-B2-00-87-00
+FTMS Indoor Bike Data raw: 44-00-B2-0C-B2-00-87-00
+FTMS Indoor Bike Data raw: 44-00-3A-0C-00-00-00-00

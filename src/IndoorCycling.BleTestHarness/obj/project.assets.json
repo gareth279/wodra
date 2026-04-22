@@ -66,19 +66,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
+    "C:\\Users\\garet\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
+      "projectUniqueName": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
       "projectName": "IndoorCycling.BleTestHarness",
-      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
-      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
-      "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.BleTestHarness\\obj\\",
+      "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.BleTestHarness\\IndoorCycling.BleTestHarness.csproj",
+      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.BleTestHarness\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows10.0.19041.0"
@@ -90,14 +90,14 @@
         "net8.0-windows10.0.19041": {
           "targetAlias": "net8.0-windows10.0.19041.0",
           "projectReferences": {
-            "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
-              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
             },
-            "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
-              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
+            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
+              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
             },
-            "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
-              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
+            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
+              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
             }
           }
         }

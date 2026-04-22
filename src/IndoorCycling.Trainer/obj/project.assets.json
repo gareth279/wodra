@@ -27,19 +27,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
+    "C:\\Users\\garet\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj",
+      "projectUniqueName": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj",
       "projectName": "IndoorCycling.Trainer",
-      "projectPath": "c:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj",
-      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
-      "outputPath": "c:\\Otago\\gwift\\src\\IndoorCycling.Trainer\\obj\\",
+      "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj",
+      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
+      "outputPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -51,8 +51,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
-              "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
             }
           }
         }
