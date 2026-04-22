@@ -43,3 +43,4 @@ C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\IndoorCycling.Game.genruntimeconfig.cache
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\ref\IndoorCycling.Game.dll
 C:\Otago\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\FitSDK.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\FitSDK.dll
