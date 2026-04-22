@@ -1,26 +1,55 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {}
+    "net8.0": {
+      "Garmin.FIT.Sdk/21.201.0": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp2.0/FitSDK.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.0/FitSDK.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Garmin.FIT.Sdk/21.201.0": {
+      "sha512": "bCEt48r/STml9eGimMmaso4XjLVk7lzNpf/y2mzyM9ZLn5AxcG7l1Ki4X1TGtP1y7cEUm0GQI+/GvZdW97E0Kw==",
+      "type": "package",
+      "path": "garmin.fit.sdk/21.201.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "README.md",
+        "garmin.fit.sdk.21.201.0.nupkg.sha512",
+        "garmin.fit.sdk.nuspec",
+        "lib/net46/FitSDK.dll",
+        "lib/netcoreapp2.0/FitSDK.dll",
+        "lib/netstandard2.0/FitSDK.dll"
+      ]
+    }
+  },
   "projectFileDependencyGroups": {
-    "net8.0": []
+    "net8.0": [
+      "Garmin.FIT.Sdk >= 21.201.0"
+    ]
   },
   "packageFolders": {
-    "C:\\Users\\garet\\.nuget\\packages\\": {}
+    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+      "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
       "projectName": "IndoorCycling.Core",
-      "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
-      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\obj\\",
+      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
+      "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -49,6 +78,12 @@
     "frameworks": {
       "net8.0": {
         "targetAlias": "net8.0",
+        "dependencies": {
+          "Garmin.FIT.Sdk": {
+            "target": "Package",
+            "version": "[21.201.0, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

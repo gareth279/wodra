@@ -1,6 +1,18 @@
 using System.Globalization;
+using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 
 var trainer = new WindowsBleTrainerClient();
+
+var fitLoader = new FitRideLoader();
+var rideReplayer = new RideReplayer();
+ReplayFrame? latestReplayFrame = null;
+string? loadedFitPath = null;
+
+rideReplayer.FrameApplied += frame =>
+{
+    latestReplayFrame = frame;
+};
 
 Console.WriteLine("GWift BLE Test Harness");
 Console.WriteLine("----------------------");
@@ -12,6 +24,14 @@ Console.WriteLine("  subs                 - subscribe to FTMS indoor bike data n
 Console.WriteLine("  cp                   - subscribe to FTMS control point indications");
 Console.WriteLine("  req                  - request FTMS control");
 Console.WriteLine("  tele                 - print current cached telemetry");
+Console.WriteLine("  load-fit <path>      - load a FIT file for replay");
+Console.WriteLine("  fit-info             - show loaded FIT replay info");
+Console.WriteLine("  fit-play             - start FIT replay");
+Console.WriteLine("  fit-pause            - pause FIT replay");
+Console.WriteLine("  fit-stop             - stop FIT replay and rewind");
+Console.WriteLine("  fit-rate <value>     - set FIT replay rate (e.g. 1, 2, 4)");
+Console.WriteLine("  fit-seek <hh:mm:ss>  - seek FIT replay to elapsed time");
+Console.WriteLine("  fit-tele             - print current FIT replay telemetry");
 Console.WriteLine("  pow <watts>          - set target power");
 Console.WriteLine("  ramp                 - ramp target power 150 -> 250 W");
 Console.WriteLine("  quit                 - exit");
@@ -25,6 +45,7 @@ while (true)
     if (string.Equals(input, "quit", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
     {
+        rideReplayer.Pause();
         break;
     }
 
@@ -65,6 +86,87 @@ while (true)
                     $"Timestamp={t.Timestamp:u}, Power={t.PowerWatts}W, Cadence={t.CadenceRpm}rpm, Speed={t.SpeedKph.ToString("0.0", CultureInfo.InvariantCulture)}kph");
                 break;
 
+            case "load-fit":
+                if (parts.Length < 2)
+                {
+                    Console.WriteLine("Usage: load-fit <path>");
+                    break;
+                }
+
+                var fitPath = input["load-fit".Length..].Trim().Trim('"');
+                TryLoadFit(fitPath);
+                break;
+
+            case "fit-info":
+                if (!rideReplayer.IsLoaded)
+                {
+                    Console.WriteLine("No FIT ride loaded.");
+                    break;
+                }
+
+                Console.WriteLine($"File: {loadedFitPath}");
+                Console.WriteLine($"Frames: {rideReplayer.FrameCount}");
+                Console.WriteLine($"Duration: {rideReplayer.Duration}");
+                Console.WriteLine($"Playback rate: {rideReplayer.PlaybackRate:0.##}x");
+                Console.WriteLine($"Playing: {rideReplayer.IsPlaying}");
+                break;
+
+            case "fit-play":
+                if (!rideReplayer.IsLoaded)
+                {
+                    Console.WriteLine("Load a FIT file first.");
+                    break;
+                }
+
+                rideReplayer.Play();
+                Console.WriteLine("FIT replay started.");
+                break;
+
+            case "fit-pause":
+                rideReplayer.Pause();
+                Console.WriteLine("FIT replay paused.");
+                break;
+
+            case "fit-stop":
+                rideReplayer.Stop();
+                Console.WriteLine("FIT replay stopped and rewound.");
+                break;
+
+            case "fit-rate":
+                if (parts.Length < 2 ||
+                    !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var replayRate) ||
+                    replayRate <= 0)
+                {
+                    Console.WriteLine("Usage: fit-rate <value>");
+                    break;
+                }
+
+                rideReplayer.SetPlaybackRate(replayRate);
+                Console.WriteLine($"FIT replay rate set to {rideReplayer.PlaybackRate:0.##}x");
+                break;
+
+            case "fit-seek":
+                if (parts.Length < 2)
+                {
+                    Console.WriteLine("Usage: fit-seek <hh:mm:ss>");
+                    break;
+                }
+
+                var seekText = input["fit-seek".Length..].Trim();
+                if (!TimeSpan.TryParse(seekText, CultureInfo.InvariantCulture, out var seekElapsed))
+                {
+                    Console.WriteLine("Usage: fit-seek <hh:mm:ss>");
+                    break;
+                }
+
+                rideReplayer.Seek(seekElapsed);
+                Console.WriteLine($"FIT replay seeked to {seekElapsed}");
+                break;
+
+            case "fit-tele":
+                PrintReplayTelemetry(latestReplayFrame, rideReplayer);
+                break;
+
             case "pow":
                 if (parts.Length < 2 || !short.TryParse(parts[1], out var watts))
                 {
@@ -97,3 +199,66 @@ while (true)
 
 await trainer.DisconnectAsync();
 Console.WriteLine("Done.");
+
+void TryLoadFit(string path)
+{
+    try
+    {
+        var frames = fitLoader.Load(path);
+        rideReplayer.Load(frames);
+        loadedFitPath = path;
+
+        Console.WriteLine($"Loaded FIT: {path}");
+        Console.WriteLine($"Frames: {rideReplayer.FrameCount}");
+        Console.WriteLine($"Duration: {rideReplayer.Duration}");
+
+        PrintReplayTelemetry(latestReplayFrame, rideReplayer);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to load FIT: {ex.Message}");
+    }
+}
+
+static void PrintReplayTelemetry(ReplayFrame? frame, RideReplayer rideReplayer)
+{
+    if (frame is null)
+    {
+        Console.WriteLine("No FIT replay telemetry available.");
+        return;
+    }
+
+    Console.WriteLine($"Elapsed:       {frame.Elapsed}");
+    Console.WriteLine($"Timestamp:     {frame.Timestamp:u}");
+    Console.WriteLine($"Power:         {FormatInt(frame.PowerWatts, "W")}");
+    Console.WriteLine($"Cadence:       {FormatInt(frame.CadenceRpm, "rpm")}");
+    Console.WriteLine($"Heart rate:    {FormatInt(frame.HeartRateBpm, "bpm")}");
+    Console.WriteLine($"Speed:         {FormatSpeed(frame.SpeedMps)}");
+    Console.WriteLine($"Distance:      {FormatDouble(frame.DistanceMeters, "m")}");
+    Console.WriteLine($"Elevation:     {FormatDouble(frame.ElevationMeters, "m")}");
+    Console.WriteLine($"Latitude:      {FormatDouble(frame.Latitude, "")}");
+    Console.WriteLine($"Longitude:     {FormatDouble(frame.Longitude, "")}");
+    Console.WriteLine($"Playing:       {rideReplayer.IsPlaying}");
+    Console.WriteLine($"Playback rate: {rideReplayer.PlaybackRate:0.##}x");
+}
+
+static string FormatInt(int? value, string unit)
+{
+    return value.HasValue ? $"{value.Value} {unit}".Trim() : "-";
+}
+
+static string FormatDouble(double? value, string unit)
+{
+    return value.HasValue ? $"{value.Value:0.##} {unit}".Trim() : "-";
+}
+
+static string FormatSpeed(double? speedMps)
+{
+    if (!speedMps.HasValue)
+    {
+        return "-";
+    }
+
+    var kph = speedMps.Value * 3.6;
+    return $"{kph:0.##} kph";
+}

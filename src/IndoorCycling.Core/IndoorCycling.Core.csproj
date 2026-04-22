@@ -4,4 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Garmin.FIT.Sdk" Version="21.201.0" />
+  </ItemGroup>
 </Project>
