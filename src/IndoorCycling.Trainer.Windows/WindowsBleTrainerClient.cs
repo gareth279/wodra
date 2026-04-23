@@ -23,6 +23,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public bool IsConnected => _device is not null;
 
+    public event Action<object>? DebugEvent;
+
     private GattCharacteristic? _ftmsIndoorBikeDataCharacteristic;   // 2AD2 notify
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
