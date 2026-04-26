@@ -23,11 +23,13 @@ C:\Otago\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.190
 C:\Otago\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.pdb
 C:\Otago\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.genruntimeconfig.cache
 C:\Otago\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\ref\IndoorCycling.BleTestHarness.dll
+C:\Otago\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\FitSDK.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.exe
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.deps.json
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.runtimeconfig.json
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.pdb
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\FitSDK.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\Microsoft.Windows.SDK.NET.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\WinRT.Runtime.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\IndoorCycling.Core.dll
@@ -48,5 +50,3 @@ C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.pdb
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\IndoorCycling.BleTestHarness.genruntimeconfig.cache
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\obj\Debug\net8.0-windows10.0.19041.0\ref\IndoorCycling.BleTestHarness.dll
-C:\Otago\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\FitSDK.dll
-C:\Users\garet\OneDrive\gwift\src\IndoorCycling.BleTestHarness\bin\Debug\net8.0-windows10.0.19041.0\FitSDK.dll

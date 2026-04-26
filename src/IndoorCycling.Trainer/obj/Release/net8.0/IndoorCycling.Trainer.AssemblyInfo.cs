@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IndoorCycling.Trainer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b663936b3c1b1c2cd02853bb734dffcdf2ce4cb7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+73223b48b8dd409861e1af469121a7b241e7bce1")]
 [assembly: System.Reflection.AssemblyProductAttribute("IndoorCycling.Trainer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IndoorCycling.Trainer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

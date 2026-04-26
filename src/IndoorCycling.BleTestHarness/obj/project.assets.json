@@ -118,8 +118,8 @@
         "net8.0-windows10.0.19041": {
           "targetAlias": "net8.0-windows10.0.19041.0",
           "projectReferences": {
-            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
-              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+              "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
             },
             "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
               "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
@@ -186,7 +186,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

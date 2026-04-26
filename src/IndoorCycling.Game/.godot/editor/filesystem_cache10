@@ -1,8 +1,9 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1776735359
-::res://Scenes/::1776713064
-RideScreen.tscn::PackedScene::3524657356357454382::1776713064::0::1::::<><><>0<>0<><>::uid://d4cnou722ywht::::res://Scripts/GameBootstrap.cs<>uid://s631ubcfq4do::::res://Scripts/RideSessionNode.cs<>uid://rlqehj5yx77y::::res://Scripts/HudController.cs
-::res://Scripts/::1776735068
-GameBootstrap.cs::CSharpScript::9199682695275545129::1776735068::0::1::::<>Node<><>0<>0<><>::
-HudController.cs::CSharpScript::1216897495163858704::1776735068::0::1::::<>Control<><>0<>0<><>::
-RideSessionNode.cs::CSharpScript::1329142454409446584::1776735068::0::1::::<>Node<><>0<>0<><>::
+::res://::1777171368
+::res://Scenes/::1776921952
+RideScreen.tscn::PackedScene::3524657356357454382::1776921952::0::1::::<><><>0<>0<><>::uid://d4cnou722ywht::::res://Scripts/GameBootstrap.cs<>uid://s631ubcfq4do::::res://Scripts/RideSessionNode.cs<>uid://rlqehj5yx77y::::res://Scripts/HudController.cs<>uid://crqtd3rlp1gr1::::res://Scripts/StartPanelController.cs
+::res://Scripts/::1776920895
+GameBootstrap.cs::CSharpScript::9199682695275545129::1776920895::0::1::::<>Node<><>0<>0<><>::
+HudController.cs::CSharpScript::1216897495163858704::1776920895::0::1::::<>Control<><>0<>0<><>::
+RideSessionNode.cs::CSharpScript::1329142454409446584::1776920895::0::1::::<>Node<><>0<>0<><>::
+StartPanelController.cs::CSharpScript::6000242230978329812::1776920895::0::1::::<>Control<><>0<>0<><>::

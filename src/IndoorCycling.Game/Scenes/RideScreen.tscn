@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://d4cnou722ywht" path="res://Scripts/GameBootstrap.cs" id="1_r0ppa"]
 [ext_resource type="Script" uid="uid://s631ubcfq4do" path="res://Scripts/RideSessionNode.cs" id="2_uf0cn"]
 [ext_resource type="Script" uid="uid://rlqehj5yx77y" path="res://Scripts/HudController.cs" id="3_qpsp1"]
+[ext_resource type="Script" uid="uid://crqtd3rlp1gr1" path="res://Scripts/StartPanelController.cs" id="3_uf0cn"]
+[ext_resource type="Script" uid="uid://cftbuqonfro7b" path="res://Scripts/DeviceConnectionPanelController.cs" id="4_qpsp1"]
 
 [node name="Control" type="Control" unique_id=141499871]
 layout_mode = 3
@@ -18,6 +20,258 @@ script = ExtResource("2_uf0cn")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=918052689]
 
+[node name="StartPanel" type="Control" parent="CanvasLayer" unique_id=1154518562]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_uf0cn")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/StartPanel" unique_id=1086381158]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/StartPanel" unique_id=252191979]
+custom_minimum_size = Vector2(480, 260)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -110.0
+offset_right = 210.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/StartPanel/PanelContainer" unique_id=1875418180]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer" unique_id=700183179]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1236452577]
+layout_mode = 2
+text = "Gwift"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=342786995]
+layout_mode = 2
+text = "Choose how you want to start"
+
+[node name="ConnectTrainerButton" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1036208023]
+layout_mode = 2
+text = "Connect Trainer"
+
+[node name="LoadFitButton" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=449877992]
+layout_mode = 2
+text = "Load Fit File"
+
+[node name="QuitButton" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=847293783]
+layout_mode = 2
+text = "Quit"
+
+[node name="FileDialog" type="FileDialog" parent="CanvasLayer/StartPanel" unique_id=1362504790]
+title = "Open a File"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.fit ; FIT Files")
+
+[node name="DeviceConnectionPanel" type="Control" parent="CanvasLayer" unique_id=1028200806]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("4_qpsp1")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/DeviceConnectionPanel" unique_id=1468668877]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel" unique_id=1955237708]
+custom_minimum_size = Vector2(900, 520)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer" unique_id=1832862266]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer" unique_id=800476260]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995051879]
+layout_mode = 2
+text = "Device Connections"
+
+[node name="SubtitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1042406415]
+layout_mode = 2
+text = "Connect your devices"
+
+[node name="OverallStatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995716997]
+layout_mode = 2
+text = "Waiting"
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=2028954431]
+layout_mode = 2
+columns = 3
+
+[node name="PowerCard" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=1246684935]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard" unique_id=1265730009]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer" unique_id=1824782213]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer" unique_id=1476532806]
+layout_mode = 2
+text = "Power Source"
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer" unique_id=1760583453]
+layout_mode = 2
+text = "Not paired"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer" unique_id=1136032693]
+layout_mode = 2
+text = "Waiting"
+
+[node name="ActionButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer" unique_id=908975159]
+layout_mode = 2
+text = "Pair"
+
+[node name="CadenceCard" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=1016264371]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard" unique_id=1817271103]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer" unique_id=685023363]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer" unique_id=268289566]
+layout_mode = 2
+text = "Cadence"
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer" unique_id=2036454758]
+layout_mode = 2
+text = "Not paired"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer" unique_id=1391217875]
+layout_mode = 2
+text = "Waiting"
+
+[node name="ActionButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer" unique_id=603212428]
+layout_mode = 2
+text = "Pair"
+
+[node name="ControlCard" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=2137334314]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard" unique_id=990793041]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer" unique_id=1228877468]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer" unique_id=456593424]
+layout_mode = 2
+text = "Smart Control"
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer" unique_id=837952132]
+layout_mode = 2
+text = "Not paired"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer" unique_id=259852932]
+layout_mode = 2
+text = "Waiting"
+
+[node name="ActionButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer" unique_id=761874926]
+layout_mode = 2
+text = "Pair"
+
+[node name="SteeringCard" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=1267692554]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard" unique_id=1873479933]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer" unique_id=878607017]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer" unique_id=1603669399]
+layout_mode = 2
+text = "Steering"
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer" unique_id=1807762728]
+layout_mode = 2
+text = "Not paired"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer" unique_id=426495797]
+layout_mode = 2
+text = "Waiting"
+
+[node name="ActionButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer" unique_id=397834583]
+layout_mode = 2
+text = "Coming Soon"
+
+[node name="HeartRateCard" type="PanelContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=1608626483]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard" unique_id=608361499]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer" unique_id=522070491]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer" unique_id=1735382237]
+layout_mode = 2
+text = "Heart Rate"
+
+[node name="DeviceLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer" unique_id=170210096]
+layout_mode = 2
+text = "Not paired"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer" unique_id=816460083]
+layout_mode = 2
+text = "Waiting"
+
+[node name="ActionButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer" unique_id=2048299490]
+layout_mode = 2
+text = "Coming Soon"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=2064893719]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=119656213]
+layout_mode = 2
+text = "Back"
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=255480153]
+layout_mode = 2
+text = "Continue"
+
 [node name="HudController" type="Control" parent="CanvasLayer" unique_id=96029640]
 layout_mode = 3
 anchors_preset = 0
@@ -29,6 +283,12 @@ script = ExtResource("3_qpsp1")
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
+
+[node name="ModeLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=641568863]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1115674977]
+layout_mode = 2
 
 [node name="PowerLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=668261802]
 layout_mode = 2
@@ -49,3 +309,15 @@ text = "0.0 %"
 [node name="DistanceLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=2081383482]
 layout_mode = 2
 text = "0.00 km"
+
+[node name="ElapsedLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=25549261]
+layout_mode = 2
+
+[connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton" to="CanvasLayer/StartPanel" method="OnConnectTrainerPressed"]
+[connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/LoadFitButton" to="CanvasLayer/StartPanel" method="OnLoadFitPressed"]
+[connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/QuitButton" to="CanvasLayer/StartPanel" method="OnQuitPressed"]
+[connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton" to="CanvasLayer/DeviceConnectionPanel" method="OnPairTrainerPressed"]
+[connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer/ActionButton" to="CanvasLayer/DeviceConnectionPanel" method="OnPairTrainerPressed"]
+[connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer/ActionButton" to="CanvasLayer/DeviceConnectionPanel" method="OnPairTrainerPressed"]
+[connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/BackButton" to="CanvasLayer/DeviceConnectionPanel" method="OnBackPressed"]
+[connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ContinueButton" to="CanvasLayer/DeviceConnectionPanel" method="OnContinuePressed"]
