@@ -6,6 +6,9 @@ using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
+namespace IndoorCycling.Trainer.Windows
+{
+
 public sealed class WindowsBleTrainerClient : ITrainerClient
 {
     private BluetoothLEAdvertisementWatcher? _watcher;
@@ -378,7 +381,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             return;
         }
 
-        var writer = new Windows.Storage.Streams.DataWriter();
+        var writer = new global::Windows.Storage.Streams.DataWriter();
         writer.WriteBytes(payload);
 
         var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
@@ -397,7 +400,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     {
         try
         {
-            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
             var data = new byte[reader.UnconsumedBufferLength];
             reader.ReadBytes(data);
 
@@ -421,7 +424,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     {
         try
         {
-            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
             var data = new byte[reader.UnconsumedBufferLength];
             reader.ReadBytes(data);
 
@@ -580,9 +583,11 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     }
 }
 
+
 public sealed record BleDiscoveredDevice(
     ulong BluetoothAddress,
     string Name,
     IReadOnlyList<string> ServiceUuids,
     short Rssi
 );
+}

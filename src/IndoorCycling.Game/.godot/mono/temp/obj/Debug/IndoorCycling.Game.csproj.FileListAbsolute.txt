@@ -28,10 +28,14 @@ C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\FitSDK.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\GodotSharp.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\GodotSharpEditor.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\Microsoft.Windows.SDK.NET.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\WinRT.Runtime.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Core.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Trainer.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Trainer.Windows.dll
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Core.pdb
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Trainer.pdb
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\IndoorCycling.Trainer.Windows.pdb
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\IndoorCycling.Game.csproj.AssemblyReference.cache
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\IndoorCycling.Game.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\obj\Debug\IndoorCycling.Game.AssemblyInfoInputs.cache

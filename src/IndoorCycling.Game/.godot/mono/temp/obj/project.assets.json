@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {
+    "net8.0-windows10.0.19041": {
       "Garmin.FIT.Sdk/21.201.0": {
         "type": "package",
         "compile": {
@@ -71,6 +71,20 @@
         "runtime": {
           "bin/placeholder/IndoorCycling.Trainer.dll": {}
         }
+      },
+      "IndoorCycling.Trainer.Windows/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "IndoorCycling.Core": "1.0.0",
+          "IndoorCycling.Trainer": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
+        }
       }
     }
   },
@@ -139,15 +153,21 @@
       "type": "project",
       "path": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj",
       "msbuildProject": "../IndoorCycling.Trainer/IndoorCycling.Trainer.csproj"
+    },
+    "IndoorCycling.Trainer.Windows/1.0.0": {
+      "type": "project",
+      "path": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj",
+      "msbuildProject": "../IndoorCycling.Trainer.Windows/IndoorCycling.Trainer.Windows.csproj"
     }
   },
   "projectFileDependencyGroups": {
-    "net8.0": [
+    "net8.0-windows10.0.19041": [
       "Godot.SourceGenerators >= 4.6.2",
       "GodotSharp >= 4.6.2",
       "GodotSharpEditor >= 4.6.2",
       "IndoorCycling.Core >= 1.0.0",
-      "IndoorCycling.Trainer >= 1.0.0"
+      "IndoorCycling.Trainer >= 1.0.0",
+      "IndoorCycling.Trainer.Windows >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -166,17 +186,20 @@
         "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
-        "net8.0"
+        "net8.0-windows10.0.19041.0"
       ],
       "sources": {
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net8.0-windows10.0.19041": {
+          "targetAlias": "net8.0-windows10.0.19041.0",
           "projectReferences": {
             "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
               "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            },
+            "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
+              "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
             },
             "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
               "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
@@ -197,8 +220,8 @@
       "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
-      "net8.0": {
-        "targetAlias": "net8.0",
+      "net8.0-windows10.0.19041": {
+        "targetAlias": "net8.0-windows10.0.19041.0",
         "dependencies": {
           "Godot.SourceGenerators": {
             "target": "Package",
@@ -237,12 +260,19 @@
             "version": "[8.0.26, 8.0.26]"
           },
           {
+            "name": "Microsoft.Windows.SDK.NET.Ref",
+            "version": "[10.0.19041.57, 10.0.19041.57]"
+          },
+          {
             "name": "Microsoft.WindowsDesktop.App.Ref",
             "version": "[8.0.26, 8.0.26]"
           }
         ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.Windows.SDK.NET.Ref.Windows": {
             "privateAssets": "all"
           }
         },

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Trainer.Windows;
 
 var trainer = new WindowsBleTrainerClient();
 

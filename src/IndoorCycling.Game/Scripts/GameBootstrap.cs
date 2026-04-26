@@ -30,24 +30,28 @@ public partial class GameBootstrap : Node
 		GD.Print("GameBootstrap initialised.");
 	}
 
-	public static void ConfigureTrainerMode()
+	public static void ConfigureFakeTrainerMode()
 	{
 		Mode = SessionMode.Trainer;
 		FitReplayPath = null;
-
-		// Swap this if needed later, but this is what you want on the cycling PC.
-		//TrainerClient = new WindowsBleTrainerClient();
 		TrainerClient = new FakeTrainerClient();
 
-		GD.Print($"Configured trainer mode. Trainer type: {TrainerClient.GetType().Name}");
+		GD.Print("Configured fake trainer mode.");
+	}
+
+	public static void ConfigureRealTrainerMode(ITrainerClient trainerClient)
+	{
+		Mode = SessionMode.Trainer;
+		FitReplayPath = null;
+		TrainerClient = trainerClient;
+
+		GD.Print($"Configured real trainer mode: {trainerClient.GetType().Name}");
 	}
 
 	public static void ConfigureFitReplayMode(string fitPath)
 	{
 		Mode = SessionMode.FitReplay;
 		FitReplayPath = fitPath;
-
-		// Keep this null for now unless/until you wire replay into a trainer-like source.
 		TrainerClient = null;
 
 		GD.Print($"Configured FIT replay mode. File: {fitPath}");

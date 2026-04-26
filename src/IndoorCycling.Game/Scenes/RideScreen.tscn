@@ -81,6 +81,10 @@ text = "Choose how you want to start"
 layout_mode = 2
 text = "Connect Trainer"
 
+[node name="Test with Fake Trainer" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1278357050]
+layout_mode = 2
+text = "Connect Trainer"
+
 [node name="LoadFitButton" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=449877992]
 layout_mode = 2
 text = "Load Fit File"
@@ -314,6 +318,7 @@ text = "0.00 km"
 layout_mode = 2
 
 [connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton" to="CanvasLayer/StartPanel" method="OnConnectTrainerPressed"]
+[connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer" to="CanvasLayer/StartPanel" method="OnQuickFakeTrainerPressed"]
 [connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/LoadFitButton" to="CanvasLayer/StartPanel" method="OnLoadFitPressed"]
 [connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/QuitButton" to="CanvasLayer/StartPanel" method="OnQuitPressed"]
 [connection signal="pressed" from="CanvasLayer/DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton" to="CanvasLayer/DeviceConnectionPanel" method="OnPairTrainerPressed"]

@@ -40,6 +40,22 @@ public partial class StartPanelController : Control
 		_deviceConnectionPanel.ShowTrainerConnectionScreen();
 	}
 
+	private async void OnQuickFakeTrainerPressed()
+	{
+		if (_rideSessionNode is null)
+		{
+			SetStatus("RideSessionNode not found.");
+			return;
+		}
+
+		GameBootstrap.ConfigureFakeTrainerMode();
+
+		_hudController?.Show();
+		Hide();
+
+		await _rideSessionNode.StartTrainerSessionAsync();
+	}
+
 	private void OnLoadFitPressed()
 	{
 		if (_fileDialog is null)

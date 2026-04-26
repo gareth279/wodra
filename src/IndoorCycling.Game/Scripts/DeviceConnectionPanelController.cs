@@ -1,8 +1,15 @@
+using System;
+using IndoorCycling.Trainer.Abstractions;
+using IndoorCycling.Trainer.Implementations;
+//using IndoorCycling.Core.Models;
+//using IndoorCycling.Core.Simulation;
 using System.Threading.Tasks;
+using IndoorCycling.Trainer.Windows;
 using Godot;
 
 public partial class DeviceConnectionPanelController : Control
 {
+	private WindowsBleTrainerClient? _realTrainerClient;
 	private RideSessionNode? _rideSessionNode;
 	private Control? _hudController;
 	private Control? _startPanel;
@@ -97,20 +104,25 @@ public partial class DeviceConnectionPanelController : Control
 	{
 		try
 		{
+			SetOverallStatus("Scanning for trainer...");
+
+			_realTrainerClient = new WindowsBleTrainerClient();
+
+			await _realTrainerClient.ScanForDevicesAsync(TimeSpan.FromSeconds(6));
+
 			SetOverallStatus("Connecting to trainer...");
+			await _realTrainerClient.ConnectToLastSeenDeviceAsync();
 
-			GameBootstrap.ConfigureTrainerMode();
+			SetOverallStatus("Subscribing control point...");
+			await _realTrainerClient.SubscribeControlPointAsync();
 
-			if (GameBootstrap.TrainerClient is null)
-			{
-				SetOverallStatus("Trainer client not configured.");
-				return;
-			}
+			SetOverallStatus("Requesting trainer control...");
+			await _realTrainerClient.RequestControlAsync();
 
-			if (!GameBootstrap.TrainerClient.IsConnected)
-			{
-				await GameBootstrap.TrainerClient.ConnectAsync();
-			}
+			SetOverallStatus("Subscribing telemetry...");
+			await _realTrainerClient.SubscribeFtmsTelemetryAsync();
+
+			GameBootstrap.ConfigureRealTrainerMode(_realTrainerClient);
 
 			SetCard(_powerDeviceLabel, _powerStatusLabel, "Smart Trainer", "Connected");
 			SetCard(_cadenceDeviceLabel, _cadenceStatusLabel, "Smart Trainer", "Connected");
