@@ -14,6 +14,12 @@ config/name="IndoorCycling.Game"
 run/main_scene="uid://bqhmueagpbut7"
 config/features=PackedStringArray("4.6", "C#")
 
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+
 [dotnet]
 
 project/assembly_name="IndoorCycling.Game"
