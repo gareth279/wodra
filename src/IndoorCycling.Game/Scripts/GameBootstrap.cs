@@ -30,6 +30,13 @@ public partial class GameBootstrap : Node
 		GD.Print("GameBootstrap initialised.");
 	}
 
+	public static void ResetSession()
+	{
+		Mode = SessionMode.None;
+		FitReplayPath = null;
+		TrainerClient = null;
+	}
+
 	public static void ConfigureFakeTrainerMode()
 	{
 		Mode = SessionMode.Trainer;

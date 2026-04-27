@@ -3,9 +3,9 @@ Label
 VBoxContainer
 MarginContainer
 PanelContainer
-HBoxContainer
-GridContainer
 ColorRect
 Control
+HBoxContainer
+GridContainer
 Panel
 FileDialog

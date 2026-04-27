@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IndoorCycling.BleTestHarness")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+efe2a5007adb99ef9743ec753cfb2bca3b307526")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a32890b9e813fc68af2d1bd2426c2c36b1ecfe75")]
 [assembly: System.Reflection.AssemblyProductAttribute("IndoorCycling.BleTestHarness")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IndoorCycling.BleTestHarness")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

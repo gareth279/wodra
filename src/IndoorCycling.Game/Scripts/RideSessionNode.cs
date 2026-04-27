@@ -67,6 +67,27 @@ public partial class RideSessionNode : Node
 		GD.Print($"FIT replay session selected: {fitPath}");
 	}
 
+	public async Task ExitToMainMenuAsync()
+	{
+		_sessionStarted = false;
+		_trainerSessionActive = false;
+		_fitReplaySessionActive = false;
+		_rideState = RideState.Initial;
+		_elapsedSeconds = 0;
+
+		if (GameBootstrap.TrainerClient is not null && GameBootstrap.TrainerClient.IsConnected)
+		{
+			await GameBootstrap.TrainerClient.DisconnectAsync();
+		}
+
+		GameBootstrap.ResetSession();
+
+		_hudController?.ResetHud();
+		_hudController?.SetStatus("Choose a mode to begin.");
+
+		GD.Print("Returned to main menu.");
+	}
+
 	public override async void _Process(double delta)
 	{
 		if (!_sessionStarted)

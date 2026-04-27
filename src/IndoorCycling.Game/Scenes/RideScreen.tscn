@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://rlqehj5yx77y" path="res://Scripts/HudController.cs" id="3_qpsp1"]
 [ext_resource type="Script" uid="uid://crqtd3rlp1gr1" path="res://Scripts/StartPanelController.cs" id="3_uf0cn"]
 [ext_resource type="Script" uid="uid://cftbuqonfro7b" path="res://Scripts/DeviceConnectionPanelController.cs" id="4_qpsp1"]
+[ext_resource type="Script" uid="uid://nmh53lmgi1yi" path="res://Scripts/RideMenuPanelController.cs" id="6_e67xs"]
 
 [node name="Control" type="Control" unique_id=141499871]
 layout_mode = 3
@@ -22,9 +23,10 @@ script = ExtResource("2_uf0cn")
 
 [node name="StartPanel" type="Control" parent="CanvasLayer" unique_id=1154518562]
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_right = 1.9160001
+anchor_bottom = 1.6
+offset_right = -0.23217773
+offset_bottom = 0.19995117
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_uf0cn")
@@ -288,34 +290,120 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="ModeLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=641568863]
+[node name="TopHudPanel" type="PanelContainer" parent="CanvasLayer/HudController" unique_id=809396590]
+custom_minimum_size = Vector2(260, 260)
+layout_mode = 1
+offset_right = 68.0
+offset_bottom = 212.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/HudController/TopHudPanel" unique_id=395579594]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1115674977]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer" unique_id=485584424]
 layout_mode = 2
 
-[node name="PowerLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=668261802]
+[node name="ModeLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=641568863]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1115674977]
+layout_mode = 2
+
+[node name="PowerLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=668261802]
 layout_mode = 2
 text = "0 W"
 
-[node name="CadenceLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1435129084]
+[node name="CadenceLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1435129084]
 layout_mode = 2
 text = "0 rpm"
 
-[node name="SpeedLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=1107721793]
+[node name="SpeedLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1107721793]
 layout_mode = 2
 text = "0.0 km/h"
 
-[node name="GradientLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=2036337385]
+[node name="GradientLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=2036337385]
 layout_mode = 2
 text = "0.0 %"
 
-[node name="DistanceLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=2081383482]
+[node name="DistanceLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=2081383482]
 layout_mode = 2
 text = "0.00 km"
 
-[node name="ElapsedLabel" type="Label" parent="CanvasLayer/HudController/VBoxContainer" unique_id=25549261]
+[node name="ElapsedLabel" type="Label" parent="CanvasLayer/HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=25549261]
 layout_mode = 2
+
+[node name="BottomBar" type="PanelContainer" parent="CanvasLayer/HudController" unique_id=236134331]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1088.0
+offset_top = 800.0
+offset_right = 1104.0
+offset_bottom = 860.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/HudController/BottomBar" unique_id=662509860]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/HudController/BottomBar/MarginContainer" unique_id=1547907366]
+layout_mode = 2
+
+[node name="MenuButton" type="Button" parent="CanvasLayer/HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1255797073]
+layout_mode = 2
+text = "Menu"
+
+[node name="RideMenuPanel" type="Control" parent="CanvasLayer" unique_id=512087807]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("6_e67xs")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/RideMenuPanel" unique_id=1769909631]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0, 0, 0, 0)
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/RideMenuPanel" unique_id=1049868500]
+custom_minimum_size = Vector2(360, 220)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -179.0
+offset_top = -111.0
+offset_right = 181.0
+offset_bottom = 109.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/RideMenuPanel/PanelContainer" unique_id=228671966]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/RideMenuPanel/PanelContainer" unique_id=1004658819]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/RideMenuPanel/PanelContainer/VBoxContainer" unique_id=1736102257]
+layout_mode = 2
+text = "Title"
+
+[node name="ResumeButton" type="Button" parent="CanvasLayer/RideMenuPanel/PanelContainer/VBoxContainer" unique_id=1390345354]
+layout_mode = 2
+text = "Resume"
+
+[node name="BackToMenuButton" type="Button" parent="CanvasLayer/RideMenuPanel/PanelContainer/VBoxContainer" unique_id=2062167002]
+layout_mode = 2
+text = "Back To Menu"
+
+[node name="QuitButton" type="Button" parent="CanvasLayer/RideMenuPanel/PanelContainer/VBoxContainer" unique_id=18915124]
+layout_mode = 2
+text = "Quit"
 
 [connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton" to="CanvasLayer/StartPanel" method="OnConnectTrainerPressed"]
 [connection signal="pressed" from="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer" to="CanvasLayer/StartPanel" method="OnQuickFakeTrainerPressed"]
