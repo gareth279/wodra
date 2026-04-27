@@ -37,19 +37,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\garet\\.nuget\\packages\\": {}
+    "C:\\Users\\wooga72p\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+      "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
       "projectName": "IndoorCycling.Core",
-      "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
-      "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\obj\\",
+      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+      "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
+      "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -117,5 +117,13 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "Undefined",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Problem reading the cache file C:\\Otago\\gwift\\src\\IndoorCycling.Core\\obj\\project.nuget.cache : '<' is an invalid start of a property name. Expected a '\"'. Path: $ | LineNumber: 2 | BytePositionInLine: 0."
+    }
+  ]
 }
