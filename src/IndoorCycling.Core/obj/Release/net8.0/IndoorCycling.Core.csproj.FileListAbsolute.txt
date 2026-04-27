@@ -22,3 +22,4 @@ c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Release\net8.0\IndoorCy
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Release\net8.0\refint\IndoorCycling.Core.dll
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Release\net8.0\IndoorCycling.Core.pdb
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Release\net8.0\ref\IndoorCycling.Core.dll
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Core\obj\Release\net8.0\IndoorCycling.Core.csproj.AssemblyReference.cache

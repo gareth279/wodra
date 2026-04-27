@@ -1,10 +1,13 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Abstractions;
 using IndoorCycling.Trainer.Models;
-using System.Text;
+//using System.Text;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+
+namespace IndoorCycling.Trainer.Windows
+{
 
 public sealed class WindowsBleTrainerClient : ITrainerClient
 {
@@ -23,6 +26,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public bool IsConnected => _device is not null;
 
+    public event Action<object>? DebugEvent;
+
     private GattCharacteristic? _ftmsIndoorBikeDataCharacteristic;   // 2AD2 notify
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
@@ -39,10 +44,25 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     {
         await StopScanAsync();
 
+        if (_ftmsIndoorBikeDataCharacteristic is not null)
+        {
+            _ftmsIndoorBikeDataCharacteristic.ValueChanged -= OnFtmsIndoorBikeDataChanged;
+        }
+
+        if (_ftmsControlPointCharacteristic is not null)
+        {
+            _ftmsControlPointCharacteristic.ValueChanged -= OnFtmsControlPointChanged;
+        }
+
+        _ftmsIndoorBikeDataCharacteristic = null;
+        _ftmsFitnessMachineStatusCharacteristic = null;
+        _ftmsControlPointCharacteristic = null;
+
         _device?.Dispose();
         _device = null;
 
         Console.WriteLine("BLE trainer disconnected.");
+        EmitDebug("disconnect", new { });
     }
 
     public Task SetSimulationAsync(
@@ -201,6 +221,12 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
         Console.WriteLine($"Connected to device: {device.Name}");
 
+        EmitDebug("connect", new
+        {
+            address = FormatAddress(bluetoothAddress),
+            name = device.Name
+        });
+
         await ResolveFtmsCharacteristicsAsync(cancellationToken);
 
         // Later:
@@ -234,6 +260,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
         var ftmsService = servicesResult.Services[0];
         Console.WriteLine("FTMS service found.");
+        EmitDebug("ftms_service_found", new { serviceUuid = ftmsUuid });
 
         var charsResult = await ftmsService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
 
@@ -250,6 +277,13 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         Console.WriteLine($"Indoor Bike Data char found: {_ftmsIndoorBikeDataCharacteristic is not null}");
         Console.WriteLine($"Fitness Machine Status char found: {_ftmsFitnessMachineStatusCharacteristic is not null}");
         Console.WriteLine($"Control Point char found: {_ftmsControlPointCharacteristic is not null}");
+
+        EmitDebug("ftms_characteristics_resolved", new
+        {
+            indoorBikeData = _ftmsIndoorBikeDataCharacteristic is not null,
+            fitnessMachineStatus = _ftmsFitnessMachineStatusCharacteristic is not null,
+            controlPoint = _ftmsControlPointCharacteristic is not null
+        });
     }
 
     public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
@@ -268,6 +302,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 GattClientCharacteristicConfigurationDescriptorValue.Notify);
 
         Console.WriteLine($"Subscribe FTMS telemetry result: {status}");
+        EmitDebug("subscribe_ftms_telemetry", new { status = status.ToString() });
     }
 
     public async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
@@ -286,6 +321,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 GattClientCharacteristicConfigurationDescriptorValue.Indicate);
 
         Console.WriteLine($"Subscribe FTMS control point result: {status}");
+        EmitDebug("subscribe_control_point", new { status = status.ToString() });
     }
 
     public async Task RequestControlAsync(CancellationToken cancellationToken = default)
@@ -345,7 +381,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             return;
         }
 
-        var writer = new Windows.Storage.Streams.DataWriter();
+        var writer = new global::Windows.Storage.Streams.DataWriter();
         writer.WriteBytes(payload);
 
         var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
@@ -353,21 +389,34 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             GattWriteOption.WriteWithResponse);
 
         Console.WriteLine($"Control point write [{BitConverter.ToString(payload)}] => {status}");
+        EmitDebug("control_point_write", new
+        {
+            payload = BitConverter.ToString(payload),
+            status = status.ToString()
+        });
     }
 
     private void OnFtmsControlPointChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
     {
         try
         {
-            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
             var data = new byte[reader.UnconsumedBufferLength];
             reader.ReadBytes(data);
 
             Console.WriteLine($"FTMS Control Point response: {BitConverter.ToString(data)}");
+            EmitDebug("control_point_response", new
+            {
+                data = BitConverter.ToString(data)
+            });
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error reading control point indication: {ex.Message}");
+            EmitDebug("control_point_error", new
+            {
+                message = ex.Message
+            });
         }
     }
 
@@ -375,13 +424,17 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     {
         try
         {
-            var reader = Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
+            var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
             var data = new byte[reader.UnconsumedBufferLength];
             reader.ReadBytes(data);
 
             if (data.Length < 8)
             {
                 Console.WriteLine($"FTMS packet too short: {BitConverter.ToString(data)}");
+                EmitDebug("ftms_packet_too_short", new
+                {
+                    data = BitConverter.ToString(data)
+                });
                 return;
             }
 
@@ -394,8 +447,10 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             var cadenceRpm = (int)Math.Round(cadenceRaw / 2.0);
             var powerWatts = (int)powerRaw;
 
+            var timestamp = DateTimeOffset.UtcNow;
+
             _latestTelemetry = new TrainerTelemetry(
-                Timestamp: DateTimeOffset.UtcNow,
+                Timestamp: timestamp,
                 PowerWatts: powerWatts,
                 CadenceRpm: cadenceRpm,
                 SpeedKph: speedKph,
@@ -404,10 +459,23 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
             Console.WriteLine(
                 $"FTMS flags=0x{flags:X4} speed={speedKph:0.0} kph cadence={cadenceRpm} rpm power={powerWatts} W");
+
+            EmitDebug("ftms_telemetry", new
+            {
+                timestamp,
+                flags = $"0x{flags:X4}",
+                speedKph,
+                cadenceRpm,
+                powerWatts
+            });
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error parsing FTMS notification: {ex.Message}");
+            EmitDebug("ftms_parse_error", new
+            {
+                message = ex.Message
+            });
         }
     }
 
@@ -461,12 +529,33 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             _lastSeenName = string.IsNullOrWhiteSpace(name) ? "(unnamed device)" : name;
 
             Console.WriteLine($"Trainer candidate seen: {FormatAddress(args.BluetoothAddress)} | {_lastSeenName} | RSSI {args.RawSignalStrengthInDBm}");
+            EmitDebug("trainer_candidate_seen", new
+            {
+                address = FormatAddress(args.BluetoothAddress),
+                name = _lastSeenName,
+                rssi = args.RawSignalStrengthInDBm
+            });
         }
     }
 
     private void OnWatcherStopped(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementWatcherStoppedEventArgs args)
     {
         Console.WriteLine($"BLE watcher stopped. Error={args.Error}");
+        EmitDebug("watcher_stopped", new
+        {
+            error = args.Error.ToString()
+        });
+    }
+
+
+    private void EmitDebug(string type, object payload)
+    {
+        DebugEvent?.Invoke(new
+        {
+            type,
+            ts = DateTimeOffset.UtcNow,
+            payload
+        });
     }
 
     private static bool LooksLikeTrainer(string? name, IReadOnlyList<string> serviceUuids)
@@ -494,9 +583,11 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     }
 }
 
+
 public sealed record BleDiscoveredDevice(
     ulong BluetoothAddress,
     string Name,
     IReadOnlyList<string> ServiceUuids,
     short Rssi
 );
+}

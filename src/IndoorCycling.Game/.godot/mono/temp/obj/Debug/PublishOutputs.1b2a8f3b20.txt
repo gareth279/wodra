@@ -1,0 +1,11 @@
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.deps.json
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.runtimeconfig.json
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.pdb
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\FitSDK.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\GodotSharp.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\GodotSharpEditor.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Core.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Trainer.dll
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Core.pdb
+C:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Trainer.pdb

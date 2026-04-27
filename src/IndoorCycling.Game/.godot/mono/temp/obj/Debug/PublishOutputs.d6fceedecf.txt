@@ -2,6 +2,7 @@ c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.deps.json
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.runtimeconfig.json
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Game.pdb
+c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\FitSDK.dll
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\GodotSharp.dll
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\GodotSharpEditor.dll
 c:\Users\garet\OneDrive\gwift\src\IndoorCycling.Game\.godot\mono\temp\bin\Debug\publish\IndoorCycling.Core.dll

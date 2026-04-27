@@ -11,10 +11,24 @@
           "GodotSharp": "4.6.2",
           "GodotSharpEditor": "4.6.2",
           "IndoorCycling.Core": "1.0.0",
-          "IndoorCycling.Trainer": "1.0.0"
+          "IndoorCycling.Trainer": "1.0.0",
+          "IndoorCycling.Trainer.Windows": "1.0.0",
+          "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.19041.57"
         },
         "runtime": {
           "IndoorCycling.Game.dll": {}
+        }
+      },
+      "runtimepack.Microsoft.Windows.SDK.NET.Ref/10.0.19041.57": {
+        "runtime": {
+          "Microsoft.Windows.SDK.NET.dll": {
+            "assemblyVersion": "10.0.19041.38",
+            "fileVersion": "10.0.19041.55"
+          },
+          "WinRT.Runtime.dll": {
+            "assemblyVersion": "2.2.0.0",
+            "fileVersion": "2.2.0.48161"
+          }
         }
       },
       "Garmin.FIT.Sdk/21.201.0": {
@@ -65,12 +79,29 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "IndoorCycling.Trainer.Windows/1.0.0": {
+        "dependencies": {
+          "IndoorCycling.Core": "1.0.0",
+          "IndoorCycling.Trainer": "1.0.0"
+        },
+        "runtime": {
+          "IndoorCycling.Trainer.Windows.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
   "libraries": {
     "IndoorCycling.Game/1.0.0": {
       "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "runtimepack.Microsoft.Windows.SDK.NET.Ref/10.0.19041.57": {
+      "type": "runtimepack",
       "serviceable": false,
       "sha512": ""
     },
@@ -101,6 +132,11 @@
       "sha512": ""
     },
     "IndoorCycling.Trainer/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IndoorCycling.Trainer.Windows/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
