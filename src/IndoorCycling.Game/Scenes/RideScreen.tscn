@@ -83,7 +83,7 @@ text = "Connect Trainer"
 
 [node name="Test with Fake Trainer" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1278357050]
 layout_mode = 2
-text = "Connect Trainer"
+text = "Test with Dummy Trainer"
 
 [node name="LoadFitButton" type="Button" parent="CanvasLayer/StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=449877992]
 layout_mode = 2
