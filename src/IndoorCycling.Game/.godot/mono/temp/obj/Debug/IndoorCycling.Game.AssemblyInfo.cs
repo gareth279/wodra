@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IndoorCycling.Game")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c15f8fbbbe8f93f22e645c1e6882f1da91ffcf7b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dd901f3f01cb971659385e28165b596481bb4f4a")]
 [assembly: System.Reflection.AssemblyProductAttribute("IndoorCycling.Game")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IndoorCycling.Game")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

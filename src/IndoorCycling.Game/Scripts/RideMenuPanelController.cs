@@ -9,7 +9,7 @@ public partial class RideMenuPanelController : Control
 
 	public override void _Ready()
 	{
-		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../../RideSessionNode");
+		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 

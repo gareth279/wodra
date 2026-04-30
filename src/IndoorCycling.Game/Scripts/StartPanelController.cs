@@ -15,7 +15,7 @@ public partial class StartPanelController : Control
 
 	public override void _Ready()
 	{
-		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../../RideSessionNode");
+		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_fileDialog = GetNodeOrNull<FileDialog>("FileDialog");
 		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/StatusLabel");
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");

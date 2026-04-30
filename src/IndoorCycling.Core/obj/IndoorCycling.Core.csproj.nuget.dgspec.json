@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {}
+    "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {}
   },
   "projects": {
-    "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+    "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+        "projectUniqueName": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
         "projectName": "IndoorCycling.Core",
-        "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
-        "packagesPath": "C:\\Users\\wooga72p\\.nuget\\packages\\",
-        "outputPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Core\\obj\\",
+        "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj",
+        "packagesPath": "C:\\Users\\garet\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\wooga72p\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\garet\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -66,11 +66,23 @@
               "version": "[8.0.26, 8.0.26]"
             },
             {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
               "name": "Microsoft.NETCore.App.Ref",
               "version": "[8.0.26, 8.0.26]"
             },
             {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
               "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.26, 8.0.26]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
               "version": "[8.0.26, 8.0.26]"
             }
           ],
@@ -80,6 +92,11 @@
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

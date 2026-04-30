@@ -17,7 +17,7 @@ public partial class RideSessionNode : Node
 
 	public override void _Ready()
 	{
-		_hudController = GetNodeOrNull<HudController>("../CanvasLayer/HudController");
+		_hudController = GetNodeOrNull<HudController>("../HudController");
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 

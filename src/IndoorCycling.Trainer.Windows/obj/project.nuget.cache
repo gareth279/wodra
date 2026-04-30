@@ -1,24 +1,17 @@
 {
   "version": 2,
-  "dgSpecHash": "zSkJeLuy0zU=",
+  "dgSpecHash": "pEmaZV6rSdc=",
   "success": true,
-  "projectFilePath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
+  "projectFilePath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\wooga72p\\.nuget\\packages\\garmin.fit.sdk\\21.201.0\\garmin.fit.sdk.21.201.0.nupkg.sha512",
-    "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.26\\microsoft.netcore.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.26\\microsoft.windowsdesktop.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.26\\microsoft.aspnetcore.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\wooga72p\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
+    "C:\\Users\\garet\\.nuget\\packages\\garmin.fit.sdk\\21.201.0\\garmin.fit.sdk.21.201.0.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.26\\microsoft.netcore.app.ref.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.26\\microsoft.netcore.app.runtime.win-x64.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.26\\microsoft.windowsdesktop.app.ref.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.26\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.26\\microsoft.aspnetcore.app.ref.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.26\\microsoft.aspnetcore.app.runtime.win-x64.8.0.26.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "message": "Problem reading the cache file C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\obj\\project.nuget.cache : '<' is an invalid start of a property name. Expected a '\"'. Path: $ | LineNumber: 2 | BytePositionInLine: 0.",
-      "projectPath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Otago\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj",
-      "targetGraphs": []
-    }
-  ]
+  "logs": []
 }
