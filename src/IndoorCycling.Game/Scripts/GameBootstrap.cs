@@ -23,9 +23,19 @@ public partial class GameBootstrap : Node
 
 	public override void _Ready()
 	{
+		GameLogger.Init();
+
 		SimulationEngine = new SimulationEngine();
 		RiderProfile = new RiderProfile("Gareth", 88.0);
 		BikeProfile = new BikeProfile("Indoor Bike", 9.0);
+
+		GameLogger.Log("game_bootstrap_initialised", new
+		{
+			rider = RiderProfile.Name,
+			riderWeightKg = RiderProfile.WeightKg,
+			bike = BikeProfile.Name,
+			bikeWeightKg = BikeProfile.WeightKg
+		});
 
 		GD.Print("GameBootstrap initialised.");
 	}

@@ -14,7 +14,10 @@ public partial class HudController : Control
 	private Label? _elapsedLabel;
 
 	private Button? _menuButton;
+	private Button? _gradientUpButton;
+	private Button? _gradientDownButton;
 	private RideMenuPanelController? _rideMenuPanel;
+	private RideSessionNode? _rideSessionNode;
 
 	public override void _Ready()
 	{
@@ -28,12 +31,36 @@ public partial class HudController : Control
 		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ElapsedLabel");
 
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
+		_gradientDownButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientDownButton");
+		_gradientUpButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientUpButton");
+
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
+		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 
 		if (_menuButton is not null)
 		{
 			_menuButton.Pressed += OnMenuPressed;
 		}
+
+		if (_gradientDownButton is not null)
+		{
+			_gradientDownButton.Pressed += OnGradientDownPressed;
+		}
+
+		if (_gradientUpButton is not null)
+		{
+			_gradientUpButton.Pressed += OnGradientUpPressed;
+		}
+	}
+
+	private void OnGradientDownPressed()
+	{
+		_rideSessionNode?.DecreaseManualGradient();
+	}
+
+	private void OnGradientUpPressed()
+	{
+		_rideSessionNode?.IncreaseManualGradient();
 	}
 
 	private void OnMenuPressed()

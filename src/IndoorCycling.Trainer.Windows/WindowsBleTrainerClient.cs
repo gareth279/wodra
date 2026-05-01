@@ -65,13 +65,69 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         EmitDebug("disconnect", new { });
     }
 
-    public Task SetSimulationAsync(
-        SimulationCommand command,
-        CancellationToken cancellationToken = default)
+    public async Task SetSimulationAsync(
+    SimulationCommand command,
+    CancellationToken cancellationToken = default)
     {
-        // Stub for later FTMS write
-        Console.WriteLine($"[SIM] Grade={command.GradePercent:0.0}% Rider={command.RiderWeightKg}kg Bike={command.BikeWeightKg}kg");
-        return Task.CompletedTask;
+        if (_ftmsControlPointCharacteristic is null)
+        {
+            Console.WriteLine("FTMS Control Point characteristic is not resolved. Cannot set simulation.");
+            EmitDebug("set_simulation_skipped", new
+            {
+                reason = "control_point_not_resolved",
+                gradePercent = command.GradePercent,
+                riderWeightKg = command.RiderWeightKg,
+                bikeWeightKg = command.BikeWeightKg
+            });
+            return;
+        }
+
+        // FTMS Set Indoor Bike Simulation Parameters
+        // Opcode 0x11
+        // Wind speed: sint16, little-endian
+        // Grade: sint16, usually grade percent * 100
+        // Crr: uint8
+        // Wind resistance coefficient: uint8
+        short windSpeedRaw = 0;
+        short gradeRaw = (short)Math.Clamp(
+            Math.Round(command.GradePercent * 100.0),
+            short.MinValue,
+            short.MaxValue
+        );
+
+        // Reasonable default road-ish values.
+        // These may need tuning by trainer model.
+        byte rollingResistanceRaw = 40;
+        byte windResistanceRaw = 51;
+
+        var payload = new byte[]
+        {
+            0x11,
+
+            (byte)(windSpeedRaw & 0xFF),
+            (byte)((windSpeedRaw >> 8) & 0xFF),
+
+            (byte)(gradeRaw & 0xFF),
+            (byte)((gradeRaw >> 8) & 0xFF),
+
+            rollingResistanceRaw,
+            windResistanceRaw
+        };
+
+        Console.WriteLine(
+            $"[SIM WRITE] Grade={command.GradePercent:0.0}% RawGrade={gradeRaw} Payload={BitConverter.ToString(payload)}");
+
+        EmitDebug("set_simulation", new
+        {
+            gradePercent = command.GradePercent,
+            gradeRaw,
+            windSpeedRaw,
+            rollingResistanceRaw,
+            windResistanceRaw,
+            payload = BitConverter.ToString(payload)
+        });
+
+        await WriteControlPointAsync(payload, cancellationToken);
     }
 
     public Task SetResistanceAsync(

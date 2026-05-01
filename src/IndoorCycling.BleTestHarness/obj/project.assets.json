@@ -118,14 +118,14 @@
         "net8.0-windows10.0.19041": {
           "targetAlias": "net8.0-windows10.0.19041.0",
           "projectReferences": {
-            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
-              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
+            "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj": {
+              "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Core\\IndoorCycling.Core.csproj"
             },
-            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
-              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
+            "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj": {
+              "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer.Windows\\IndoorCycling.Trainer.Windows.csproj"
             },
-            "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
-              "projectPath": "c:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
+            "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj": {
+              "projectPath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Trainer\\IndoorCycling.Trainer.csproj"
             }
           }
         }

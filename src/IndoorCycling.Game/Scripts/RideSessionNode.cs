@@ -2,6 +2,7 @@ using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
+using IndoorCycling.Trainer.Implementations;
 using System;
 using System.Threading.Tasks;
 
@@ -12,8 +13,22 @@ public partial class RideSessionNode : Node
 	private bool _trainerSessionActive;
 	private bool _fitReplaySessionActive;
 
+	private FakeTrainerClient? _fitReplayClient;
+
 	private RideState _rideState = RideState.Initial;
 	private double _elapsedSeconds;
+
+	private double _trainerCommandElapsedSeconds;
+	private double? _lastSentTrainerGradientPercent;
+	private bool _trainerCommandDirty = true;
+
+	private const double TrainerCommandMinIntervalSeconds = 1.0;
+	private const double TrainerGradientChangeThresholdPercent = 0.1;
+
+	private double _manualGradientOffsetPercent;
+	private const double GradientStepPercent = 0.5;
+	private const double MinManualGradientOffsetPercent = -10.0;
+	private const double MaxManualGradientOffsetPercent = 10.0;
 
 	public override void _Ready()
 	{
@@ -44,6 +59,11 @@ public partial class RideSessionNode : Node
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
 		_elapsedSeconds = 0;
+		_manualGradientOffsetPercent = 0;
+
+		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
+		_lastSentTrainerGradientPercent = null;
+		_trainerCommandDirty = true;
 
 		_hudController?.SetModeText("Trainer");
 		_hudController?.SetStatus("Trainer session started.");
@@ -51,15 +71,17 @@ public partial class RideSessionNode : Node
 		GD.Print("Trainer ride session started.");
 	}
 
-	public void StartFitReplaySession(string fitPath)
+	public async Task StartFitReplaySessionAsync(string fitPath)
 	{
-		// Deliberately stubbed for the next step.
-		// For now this gets the screen flow right without overbuilding replay internals here.
+		_fitReplayClient = new FakeTrainerClient();
+		await _fitReplayClient.ConnectAsync();
+
 		_sessionStarted = true;
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
 		_rideState = RideState.Initial;
 		_elapsedSeconds = 0;
+		_manualGradientOffsetPercent = 0;
 
 		_hudController?.SetModeText("FIT Replay");
 		_hudController?.SetStatus($"FIT loaded: {fitPath}");
@@ -74,11 +96,19 @@ public partial class RideSessionNode : Node
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
 		_elapsedSeconds = 0;
+		_manualGradientOffsetPercent = 0;
 
 		if (GameBootstrap.TrainerClient is not null && GameBootstrap.TrainerClient.IsConnected)
 		{
 			await GameBootstrap.TrainerClient.DisconnectAsync();
 		}
+
+		if (_fitReplayClient is not null && _fitReplayClient.IsConnected)
+		{
+			await _fitReplayClient.DisconnectAsync();
+		}
+
+		_fitReplayClient = null;
 
 		GameBootstrap.ResetSession();
 
@@ -86,6 +116,58 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus("Choose a mode to begin.");
 
 		GD.Print("Returned to main menu.");
+	}
+
+	public void IncreaseManualGradient()
+	{
+		_manualGradientOffsetPercent = Math.Min(
+			MaxManualGradientOffsetPercent,
+			_manualGradientOffsetPercent + GradientStepPercent
+		);
+
+		_trainerCommandDirty = true;
+
+		_hudController?.SetStatus($"Manual gradient offset: {_manualGradientOffsetPercent:+0.0;-0.0;0.0}%");
+	}
+
+	public void DecreaseManualGradient()
+	{
+		_manualGradientOffsetPercent = Math.Max(
+			MinManualGradientOffsetPercent,
+			_manualGradientOffsetPercent - GradientStepPercent
+		);
+
+		_trainerCommandDirty = true;
+
+		_hudController?.SetStatus($"Manual gradient offset: {_manualGradientOffsetPercent:+0.0;-0.0;0.0}%");
+	}
+
+	private double GetCurrentGradient()
+	{
+		var routeGradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
+		return routeGradient + _manualGradientOffsetPercent;
+	}
+
+	private bool ShouldSendTrainerSimulationCommand(double gradientPercent)
+	{
+		if (_trainerCommandElapsedSeconds < TrainerCommandMinIntervalSeconds)
+		{
+			return false;
+		}
+
+		if (_trainerCommandDirty)
+		{
+			return true;
+		}
+
+		if (_lastSentTrainerGradientPercent is null)
+		{
+			return true;
+		}
+
+		var gradientChange = Math.Abs(gradientPercent - _lastSentTrainerGradientPercent.Value);
+
+		return gradientChange >= TrainerGradientChangeThresholdPercent;
 	}
 
 	public override async void _Process(double delta)
@@ -105,7 +187,7 @@ public partial class RideSessionNode : Node
 
 		if (_fitReplaySessionActive)
 		{
-			ProcessFitReplayMode(delta);
+			await ProcessFitReplayMode(delta);
 		}
 	}
 
@@ -118,7 +200,8 @@ public partial class RideSessionNode : Node
 		}
 
 		var telemetry = GameBootstrap.TrainerClient.GetLatestTelemetry();
-		var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
+		//var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
+		var gradient = GetCurrentGradient();
 
 		var input = new SimulationTickInput(
 			Telemetry: telemetry,
@@ -131,41 +214,63 @@ public partial class RideSessionNode : Node
 		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
 		_rideState = result.NewState;
 
-		await GameBootstrap.TrainerClient.SetSimulationAsync(
+		_trainerCommandElapsedSeconds += delta;
+
+		if (ShouldSendTrainerSimulationCommand(gradient))
+		{
+			GameLogger.Log("trainer_simulation_command_send", new
+			{
+				gradientPercent = gradient,
+				manualGradientOffsetPercent = _manualGradientOffsetPercent,
+				elapsedSeconds = _elapsedSeconds
+			});
+
+			await GameBootstrap.TrainerClient.SetSimulationAsync(
+				new SimulationCommand(
+					GradePercent: gradient,
+					RiderWeightKg: GameBootstrap.RiderProfile.WeightKg,
+					BikeWeightKg: GameBootstrap.BikeProfile.WeightKg
+				)
+			);
+
+			_lastSentTrainerGradientPercent = gradient;
+			_trainerCommandElapsedSeconds = 0;
+			_trainerCommandDirty = false;
+		}
+		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
+	}
+
+	private async Task ProcessFitReplayMode(double delta)
+	{
+		if (_fitReplayClient is null || !_fitReplayClient.IsConnected)
+		{
+			_hudController?.SetStatus("FIT replay client not connected.");
+			return;
+		}
+
+		//var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
+		var gradient = GetCurrentGradient();
+
+		var telemetry = _fitReplayClient.GetLatestTelemetry();
+
+		var input = new SimulationTickInput(
+			Telemetry: telemetry,
+			GradientPercent: gradient,
+			DeltaSeconds: delta,
+			RiderProfile: GameBootstrap.RiderProfile,
+			BikeProfile: GameBootstrap.BikeProfile
+		);
+
+		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
+		_rideState = result.NewState;
+
+		await _fitReplayClient.SetSimulationAsync(
 			new SimulationCommand(
 				GradePercent: gradient,
 				RiderWeightKg: GameBootstrap.RiderProfile.WeightKg,
 				BikeWeightKg: GameBootstrap.BikeProfile.WeightKg
 			)
 		);
-
-		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
-	}
-
-	private void ProcessFitReplayMode(double delta)
-	{
-		// Temporary fake telemetry so the HUD/session shell works now.
-		// Replace this with real FitRideLoader/RideReplayer wiring next.
-		var telemetry = new TrainerTelemetry(
-			Timestamp: DateTimeOffset.UtcNow,
-			PowerWatts: 120,
-			CadenceRpm: 82,
-			SpeedKph: 28.0,
-			HeartRateBpm: null
-		);
-
-		var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
-
-		var input = new SimulationTickInput(
-			Telemetry: telemetry,
-			GradientPercent: gradient,
-			DeltaSeconds: delta,
-			RiderProfile: GameBootstrap.RiderProfile,
-			BikeProfile: GameBootstrap.BikeProfile
-		);
-
-		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
-		_rideState = result.NewState;
 
 		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 	}

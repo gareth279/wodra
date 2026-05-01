@@ -35,7 +35,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	public override void _Ready()
 	{
-		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../../RideSessionNode");
+		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 
@@ -107,6 +107,9 @@ public partial class DeviceConnectionPanelController : Control
 			SetOverallStatus("Scanning for trainer...");
 
 			_realTrainerClient = new WindowsBleTrainerClient();
+			_realTrainerClient.DebugEvent += evt => GameLogger.Log("trainer_event", evt);
+
+			GameLogger.Log("trainer_client_created", new { });
 
 			await _realTrainerClient.ScanForDevicesAsync(TimeSpan.FromSeconds(6));
 

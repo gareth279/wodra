@@ -67,7 +67,7 @@ public partial class StartPanelController : Control
 		_fileDialog.PopupCenteredRatio(0.7f);
 	}
 
-	private void OnFitFileSelected(string path)
+	private async void OnFitFileSelected(string path)
 	{
 		if (_rideSessionNode is null)
 		{
@@ -77,9 +77,9 @@ public partial class StartPanelController : Control
 
 		GameBootstrap.ConfigureFitReplayMode(path);
 		_hudController?.Show();
-		Hide();		
+		Hide();
 
-		_rideSessionNode.StartFitReplaySession(path);
+		await _rideSessionNode.StartFitReplaySessionAsync(path);
 	}
 
 	private void OnQuitPressed()
