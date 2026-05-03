@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://crqtd3rlp1gr1" path="res://Scripts/StartPanelController.cs" id="3_uf0cn"]
 [ext_resource type="Script" uid="uid://cftbuqonfro7b" path="res://Scripts/DeviceConnectionPanelController.cs" id="4_qpsp1"]
 [ext_resource type="Script" uid="uid://nmh53lmgi1yi" path="res://Scripts/RideMenuPanelController.cs" id="6_e67xs"]
+[ext_resource type="Script" uid="uid://bvhod3tfngrgo" path="res://Scripts/RouteSelectionPanelController.cs" id="7_05hhs"]
 
 [node name="Control" type="Control" unique_id=141499871]
 custom_minimum_size = Vector2(1024, 768)
@@ -27,6 +28,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 13.0
+offset_bottom = 13.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_uf0cn")
@@ -100,10 +103,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 11.0
-offset_top = 7.0
-offset_right = 11.0
-offset_bottom = 7.0
+offset_left = -2.0
+offset_top = 10.0
+offset_right = -2.0
+offset_bottom = 10.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("4_qpsp1")
@@ -348,10 +351,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 11.0
-offset_top = -109.0
-offset_right = -960.0
-offset_bottom = -49.0
+offset_left = -2.0
+offset_top = -96.0
+offset_right = -553.0
+offset_bottom = -36.0
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -368,6 +371,22 @@ text = "- Grade"
 [node name="GradientUpButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1466323880]
 layout_mode = 2
 text = "+ Grade"
+
+[node name="RecordStartButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=782817168]
+layout_mode = 2
+text = "Start"
+
+[node name="RecordPauseButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=165903913]
+layout_mode = 2
+text = "Pause"
+
+[node name="RecordStopButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=945416178]
+layout_mode = 2
+text = "Stop"
+
+[node name="SaveToStravaButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=265709212]
+layout_mode = 2
+text = "Save to Strava"
 
 [node name="MenuButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1255797073]
 layout_mode = 2
@@ -425,6 +444,39 @@ text = "Back To Menu"
 layout_mode = 2
 text = "Quit"
 
+[node name="RouteSelectionPanel" type="Control" parent="." unique_id=261971885]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 16.0
+offset_right = 3.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_05hhs")
+
+[node name="PanelContainer" type="PanelContainer" parent="RouteSelectionPanel" unique_id=619640184]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer" unique_id=1636506050]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=1609611295]
+layout_mode = 2
+text = "Route Selection"
+
+[node name="TestRouteButton" type="Button" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=2019816014]
+layout_mode = 2
+text = "Test Route"
+
+[node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=1373868971]
+layout_mode = 2
+text = "Back"
+
 [connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton" to="StartPanel" method="OnConnectTrainerPressed"]
 [connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer" to="StartPanel" method="OnQuickFakeTrainerPressed"]
 [connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/LoadFitButton" to="StartPanel" method="OnLoadFitPressed"]
@@ -434,7 +486,13 @@ text = "Quit"
 [connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer/ActionButton" to="DeviceConnectionPanel" method="OnPairTrainerPressed"]
 [connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/BackButton" to="DeviceConnectionPanel" method="OnBackPressed"]
 [connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ContinueButton" to="DeviceConnectionPanel" method="OnContinuePressed"]
+[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordStartButton" to="HudController" method="OnRecordStartPressed"]
+[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordPauseButton" to="HudController" method="OnRecordPausePressed"]
+[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordStopButton" to="HudController" method="OnRecordStopPressed"]
+[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton" to="HudController" method="OnSaveToStravaPressed"]
 [connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/MenuButton" to="HudController" method="OnMenuPressed"]
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/ResumeButton" to="RideMenuPanel" method="OnResumeButtonPressed"]
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/BackToMenuButton" to="RideMenuPanel" method="OnBackToMenuButtonPressed"]
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/QuitButton" to="RideMenuPanel" method="OnQuitButtonPressed"]
+[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/VBoxContainer/TestRouteButton" to="RouteSelectionPanel" method="OnTestRoutePressed"]
+[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/VBoxContainer/BackButton" to="RouteSelectionPanel" method="OnBackPressed"]

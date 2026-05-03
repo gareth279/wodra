@@ -16,6 +16,12 @@ public partial class HudController : Control
 	private Button? _menuButton;
 	private Button? _gradientUpButton;
 	private Button? _gradientDownButton;
+
+	private Button? _recordStartButton;
+	private Button? _recordPauseButton;
+	private Button? _recordStopButton;
+	
+	private Button? _saveToStravaButton;
 	private RideMenuPanelController? _rideMenuPanel;
 	private RideSessionNode? _rideSessionNode;
 
@@ -33,7 +39,10 @@ public partial class HudController : Control
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
 		_gradientDownButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientDownButton");
 		_gradientUpButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientUpButton");
-
+		_recordStartButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordStartButton");
+		_recordPauseButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordPauseButton");
+		_recordStopButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordStopButton");
+		_saveToStravaButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 
@@ -51,6 +60,25 @@ public partial class HudController : Control
 		{
 			_gradientUpButton.Pressed += OnGradientUpPressed;
 		}
+
+		if (_recordStartButton is not null)
+		{
+			_recordStartButton.Pressed += OnRecordStartPressed;
+		}
+
+		if (_recordPauseButton is not null)
+		{
+			_recordPauseButton.Pressed += OnRecordPausePressed;
+		}
+
+		if (_recordStopButton is not null)
+		{
+			_recordStopButton.Pressed += OnRecordStopPressed;
+		}
+		if (_saveToStravaButton is not null)
+		{
+			_saveToStravaButton.Pressed += OnSaveToStravaPressed;
+		}
 	}
 
 	private void OnGradientDownPressed()
@@ -63,9 +91,40 @@ public partial class HudController : Control
 		_rideSessionNode?.IncreaseManualGradient();
 	}
 
+	private void OnRecordStartPressed()
+	{
+		_rideSessionNode?.StartRideRecording();
+	}
+
+	private void OnRecordPausePressed()
+	{
+		_rideSessionNode?.PauseRideRecording();
+	}
+
+	private void OnRecordStopPressed()
+	{
+		_rideSessionNode?.StopRideRecording();
+	}
+
+	private void OnSaveToStravaPressed()
+	{
+		_rideSessionNode?.SaveLastRecordingToStrava();
+	}
+
 	private void OnMenuPressed()
 	{
-		_rideMenuPanel?.ShowMenu();
+		GameLogger.Log("hud_menu_pressed", new
+		{
+			rideMenuPanelFound = _rideMenuPanel is not null
+		});
+
+		if (_rideMenuPanel is null)
+		{
+			SetStatus("Ride menu panel not found.");
+			return;
+		}
+
+		_rideMenuPanel.ShowMenu();
 	}
 
 	public void SetModeText(string mode)

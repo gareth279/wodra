@@ -18,6 +18,8 @@ public partial class GameBootstrap : Node
 	public static RiderProfile RiderProfile { get; private set; } = default!;
 	public static BikeProfile BikeProfile { get; private set; } = default!;
 
+	public static AppSettings Settings { get; private set; } = default!;
+
 	public static SessionMode Mode { get; private set; } = SessionMode.None;
 	public static string? FitReplayPath { get; private set; }
 
@@ -25,16 +27,27 @@ public partial class GameBootstrap : Node
 	{
 		GameLogger.Init();
 
+		Settings = AppSettings.LoadOrCreate();
+
 		SimulationEngine = new SimulationEngine();
-		RiderProfile = new RiderProfile("Gareth", 88.0);
-		BikeProfile = new BikeProfile("Indoor Bike", 9.0);
+
+		RiderProfile = new RiderProfile(
+			Settings.Rider.Name,
+			Settings.Rider.WeightKg
+		);
+
+		BikeProfile = new BikeProfile(
+			Settings.Rider.BikeName,
+			Settings.Rider.BikeWeightKg
+		);
 
 		GameLogger.Log("game_bootstrap_initialised", new
 		{
 			rider = RiderProfile.Name,
 			riderWeightKg = RiderProfile.WeightKg,
 			bike = BikeProfile.Name,
-			bikeWeightKg = BikeProfile.WeightKg
+			bikeWeightKg = BikeProfile.WeightKg,
+			settingsPath = AppSettings.SettingsPath
 		});
 
 		GD.Print("GameBootstrap initialised.");

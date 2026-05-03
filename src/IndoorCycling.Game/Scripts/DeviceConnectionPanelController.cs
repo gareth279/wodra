@@ -14,6 +14,8 @@ public partial class DeviceConnectionPanelController : Control
 	private Control? _hudController;
 	private Control? _startPanel;
 
+	private RouteSelectionPanelController? _routeSelectionPanel;
+
 	private Label? _overallStatusLabel;
 
 	private Label? _powerDeviceLabel;
@@ -38,6 +40,7 @@ public partial class DeviceConnectionPanelController : Control
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
+		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 
 		_overallStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/OverallStatusLabel");
 
@@ -140,22 +143,27 @@ public partial class DeviceConnectionPanelController : Control
 		}
 		catch (System.Exception ex)
 		{
+			GameLogger.Log("trainer_connection_failed", new
+			{
+				message = ex.Message,
+				exceptionType = ex.GetType().FullName,
+				stackTrace = ex.StackTrace
+			});
+
 			SetOverallStatus($"Trainer connection failed: {ex.Message}");
 		}
 	}
 
-	private async void OnContinuePressed()
+	private void OnContinuePressed()
 	{
-		if (_rideSessionNode is null)
+		if (_routeSelectionPanel is null)
 		{
-			SetOverallStatus("RideSessionNode not found.");
+			SetOverallStatus("Route selection panel not found.");
 			return;
 		}
 
 		Hide();
-		_hudController?.Show();
-
-		await _rideSessionNode.StartTrainerSessionAsync();
+		_routeSelectionPanel.ShowRouteSelection();
 	}
 
 	private void OnBackPressed()

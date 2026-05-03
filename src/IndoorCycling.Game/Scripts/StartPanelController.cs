@@ -13,12 +13,15 @@ public partial class StartPanelController : Control
 
 	private DeviceConnectionPanelController? _deviceConnectionPanel;
 
+	private RouteSelectionPanelController? _routeSelectionPanel;
+
 	public override void _Ready()
 	{
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_fileDialog = GetNodeOrNull<FileDialog>("FileDialog");
 		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/StatusLabel");
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
+		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_hudController?.Hide();
 
@@ -40,20 +43,19 @@ public partial class StartPanelController : Control
 		_deviceConnectionPanel.ShowTrainerConnectionScreen();
 	}
 
-	private async void OnQuickFakeTrainerPressed()
+	private void OnQuickFakeTrainerPressed()
 	{
-		if (_rideSessionNode is null)
+		if (_routeSelectionPanel is null)
 		{
-			SetStatus("RideSessionNode not found.");
+			SetStatus("Route selection panel not found.");
 			return;
 		}
 
 		GameBootstrap.ConfigureFakeTrainerMode();
 
-		_hudController?.Show();
 		Hide();
-
-		await _rideSessionNode.StartTrainerSessionAsync();
+		_hudController?.Hide();
+		_routeSelectionPanel.ShowRouteSelection();
 	}
 
 	private void OnLoadFitPressed()

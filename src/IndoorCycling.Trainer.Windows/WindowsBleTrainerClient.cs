@@ -31,6 +31,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     private GattCharacteristic? _ftmsIndoorBikeDataCharacteristic;   // 2AD2 notify
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
+    private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
@@ -434,22 +435,48 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         if (_ftmsControlPointCharacteristic is null)
         {
             Console.WriteLine("FTMS Control Point characteristic is not resolved.");
+            EmitDebug("control_point_write_skipped", new
+            {
+                reason = "control_point_not_resolved",
+                payload = BitConverter.ToString(payload)
+            });
             return;
         }
 
-        var writer = new global::Windows.Storage.Streams.DataWriter();
-        writer.WriteBytes(payload);
+        await _controlPointWriteLock.WaitAsync(cancellationToken);
 
-        var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
-            writer.DetachBuffer(),
-            GattWriteOption.WriteWithResponse);
-
-        Console.WriteLine($"Control point write [{BitConverter.ToString(payload)}] => {status}");
-        EmitDebug("control_point_write", new
+        try
         {
-            payload = BitConverter.ToString(payload),
-            status = status.ToString()
-        });
+            var writer = new global::Windows.Storage.Streams.DataWriter();
+            writer.WriteBytes(payload);
+
+            var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
+                writer.DetachBuffer(),
+                GattWriteOption.WriteWithResponse);
+
+            Console.WriteLine($"Control point write [{BitConverter.ToString(payload)}] => {status}");
+
+            EmitDebug("control_point_write", new
+            {
+                payload = BitConverter.ToString(payload),
+                status = status.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Control point write failed [{BitConverter.ToString(payload)}]: {ex.Message}");
+
+            EmitDebug("control_point_write_failed", new
+            {
+                payload = BitConverter.ToString(payload),
+                message = ex.Message,
+                exceptionType = ex.GetType().FullName
+            });
+        }
+        finally
+        {
+            _controlPointWriteLock.Release();
+        }
     }
 
     private void OnFtmsControlPointChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
