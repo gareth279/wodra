@@ -1,18 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "LCE0AZT+LC8=",
+  "dgSpecHash": "S3u+HFYFjro=",
   "success": true,
   "projectFilePath": "C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.Game\\IndoorCycling.Game.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\garet\\.nuget\\packages\\garmin.fit.sdk\\21.201.0\\garmin.fit.sdk.21.201.0.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\godot.sourcegenerators\\4.6.2\\godot.sourcegenerators.4.6.2.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\godotsharp\\4.6.2\\godotsharp.4.6.2.nupkg.sha512",
+    "C:\\Users\\garet\\.nuget\\packages\\godotsharpeditor\\4.6.2\\godotsharpeditor.4.6.2.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.26\\microsoft.netcore.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\garet\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.26\\microsoft.netcore.app.runtime.win-x64.8.0.26.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.26\\microsoft.windowsdesktop.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\garet\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.26\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.26.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.26\\microsoft.aspnetcore.app.ref.8.0.26.nupkg.sha512",
-    "C:\\Users\\garet\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.26\\microsoft.aspnetcore.app.runtime.win-x64.8.0.26.nupkg.sha512",
     "C:\\Users\\garet\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
   ],
   "logs": []

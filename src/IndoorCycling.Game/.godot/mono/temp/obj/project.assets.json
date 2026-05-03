@@ -30,72 +30,18 @@
           }
         }
       },
-      "IndoorCycling.Core/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "dependencies": {
-          "Garmin.FIT.Sdk": "21.201.0"
-        },
-        "compile": {
-          "bin/placeholder/IndoorCycling.Core.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/IndoorCycling.Core.dll": {}
-        }
-      },
-      "IndoorCycling.Trainer/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "dependencies": {
-          "IndoorCycling.Core": "1.0.0"
-        },
-        "compile": {
-          "bin/placeholder/IndoorCycling.Trainer.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/IndoorCycling.Trainer.dll": {}
-        }
-      },
-      "IndoorCycling.Trainer.Windows/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "dependencies": {
-          "IndoorCycling.Core": "1.0.0",
-          "IndoorCycling.Trainer": "1.0.0"
-        },
-        "compile": {
-          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/IndoorCycling.Trainer.Windows.dll": {}
-        }
-      }
-    },
-    "net8.0-windows10.0.19041/win-x64": {
-      "Garmin.FIT.Sdk/21.201.0": {
+      "GodotSharpEditor/4.6.2": {
         "type": "package",
-        "compile": {
-          "lib/netcoreapp2.0/FitSDK.dll": {}
+        "dependencies": {
+          "GodotSharp": "4.6.2"
         },
-        "runtime": {
-          "lib/netcoreapp2.0/FitSDK.dll": {}
-        }
-      },
-      "Godot.SourceGenerators/4.6.2": {
-        "type": "package",
-        "build": {
-          "build/Godot.SourceGenerators.props": {}
-        }
-      },
-      "GodotSharp/4.6.2": {
-        "type": "package",
         "compile": {
-          "lib/net8.0/GodotSharp.dll": {
+          "lib/net8.0/GodotSharpEditor.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net8.0/GodotSharp.dll": {
+          "lib/net8.0/GodotSharpEditor.dll": {
             "related": ".xml"
           }
         }
@@ -185,6 +131,19 @@
         "lib/net8.0/GodotSharp.xml"
       ]
     },
+    "GodotSharpEditor/4.6.2": {
+      "sha512": "WbxolK7BIzSl7d8jhTQQSwZ7JEf+6RHeaZWa6aw7f/qXsN/hXzFSgQvpKxGrLo0icQlowjvF0NomnYO5owMG7w==",
+      "type": "package",
+      "path": "godotsharpeditor/4.6.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "godotsharpeditor.4.6.2.nupkg.sha512",
+        "godotsharpeditor.nuspec",
+        "lib/net8.0/GodotSharpEditor.dll",
+        "lib/net8.0/GodotSharpEditor.xml"
+      ]
+    },
     "IndoorCycling.Core/1.0.0": {
       "type": "project",
       "path": "../IndoorCycling.Core/IndoorCycling.Core.csproj",
@@ -205,6 +164,7 @@
     "net8.0-windows10.0.19041": [
       "Godot.SourceGenerators >= 4.6.2",
       "GodotSharp >= 4.6.2",
+      "GodotSharpEditor >= 4.6.2",
       "IndoorCycling.Core >= 1.0.0",
       "IndoorCycling.Trainer >= 1.0.0",
       "IndoorCycling.Trainer.Windows >= 1.0.0"
@@ -272,6 +232,11 @@
             "target": "Package",
             "version": "[4.6.2, )",
             "autoReferenced": true
+          },
+          "GodotSharpEditor": {
+            "target": "Package",
+            "version": "[4.6.2, )",
+            "autoReferenced": true
           }
         },
         "imports": [
@@ -291,15 +256,7 @@
             "version": "[8.0.26, 8.0.26]"
           },
           {
-            "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-            "version": "[8.0.26, 8.0.26]"
-          },
-          {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.26, 8.0.26]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Runtime.win-x64",
             "version": "[8.0.26, 8.0.26]"
           },
           {
@@ -308,10 +265,6 @@
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.26, 8.0.26]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
             "version": "[8.0.26, 8.0.26]"
           }
         ],
@@ -324,11 +277,6 @@
           }
         },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
-      }
-    },
-    "runtimes": {
-      "win-x64": {
-        "#import": []
       }
     }
   }
