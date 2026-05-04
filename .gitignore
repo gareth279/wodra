@@ -1,0 +1,75 @@
+# Build outputs
+bin/
+obj/
+[Bb]uild/
+[Bb]uilds/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+arm64/
+publish/
+out/
+artifacts/
+
+# Godot generated files
+.godot/
+.import/
+.mono/
+
+# Godot export outputs
+*.pck
+*.exe
+*.dll
+*.so
+*.dylib
+*.apk
+*.aab
+*.ipa
+*.app
+*.zip
+
+# IDE/editor
+.vscode/
+.vs/
+.idea/
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Logs and generated ride data
+logs/
+*.log
+*.jsonl
+*.fit
+*.tcx
+*.gpx
+
+# Local settings / secrets
+settings.json
+appsettings.local.json
+appsettings.Development.json
+*.secrets.json
+.env
+.env.*
+secrets/
+user_settings/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test and coverage
+TestResults/
+coverage/
+coverage.xml
+*.trx
+*.coverage
+*.coveragexml
+
+# Local NuGet fallback packages
+packages/
