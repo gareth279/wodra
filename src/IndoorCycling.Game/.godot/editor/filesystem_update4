@@ -1,8 +1,0 @@
-res://Scenes/RideScreen.tscn
-res://Scripts/RideMenuPanelController.cs
-res://Scripts/DeviceConnectionPanelController.cs
-res://Scripts/StartPanelController.cs
-res://Scripts/HudController.cs
-res://Scripts/RideSessionNode.cs
-res://Scripts/GameBootstrap.cs
-res://Scripts/RouteSelectionPanelController.cs

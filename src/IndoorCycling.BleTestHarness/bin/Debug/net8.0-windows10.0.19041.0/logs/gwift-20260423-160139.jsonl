@@ -1,4 +1,0 @@
-{"ts":"2026-04-23T16:01:39.7117218+12:00","type":"session_start","payload":{"logPath":"C:\\Users\\garet\\OneDrive\\gwift\\src\\IndoorCycling.BleTestHarness\\bin\\Debug\\net8.0-windows10.0.19041.0\\logs\\gwift-20260423-160139.jsonl"}}
-{"ts":"2026-04-23T16:01:46.9304316+12:00","type":"command","payload":{"input":"quit"}}
-{"ts":"2026-04-23T16:01:47.0249757+12:00","type":"trainer_event","payload":{"type":"disconnect","ts":"2026-04-23T04:01:47.0247135+00:00","payload":{}}}
-{"ts":"2026-04-23T16:01:47.039029+12:00","type":"session_end","payload":{}}

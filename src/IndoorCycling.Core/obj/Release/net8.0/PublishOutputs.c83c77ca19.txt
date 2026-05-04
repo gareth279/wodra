@@ -1,3 +1,0 @@
-c:\Otago\gwift\src\IndoorCycling.Core\bin\Release\net8.0\publish\IndoorCycling.Core.dll
-c:\Otago\gwift\src\IndoorCycling.Core\bin\Release\net8.0\publish\IndoorCycling.Core.deps.json
-c:\Otago\gwift\src\IndoorCycling.Core\bin\Release\net8.0\publish\IndoorCycling.Core.pdb

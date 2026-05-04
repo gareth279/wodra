@@ -1,5 +1,0 @@
-c:\Otago\gwift\src\IndoorCycling.Trainer\bin\Release\net8.0\publish\IndoorCycling.Trainer.dll
-c:\Otago\gwift\src\IndoorCycling.Trainer\bin\Release\net8.0\publish\IndoorCycling.Trainer.deps.json
-c:\Otago\gwift\src\IndoorCycling.Trainer\bin\Release\net8.0\publish\IndoorCycling.Trainer.pdb
-c:\Otago\gwift\src\IndoorCycling.Trainer\bin\Release\net8.0\publish\IndoorCycling.Core.dll
-c:\Otago\gwift\src\IndoorCycling.Trainer\bin\Release\net8.0\publish\IndoorCycling.Core.pdb
