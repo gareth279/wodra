@@ -318,6 +318,14 @@ layout_mode = 2
 [node name="ModeLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=641568863]
 layout_mode = 2
 
+[node name="RouteLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1976225411]
+layout_mode = 2
+text = "Route: -"
+
+[node name="SegmentLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=856968290]
+layout_mode = 2
+text = "Segment: -"
+
 [node name="StatusLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1115674977]
 layout_mode = 2
 
@@ -462,18 +470,20 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer" unique_id=1636506050]
+[node name="MarginContainer" type="MarginContainer" parent="RouteSelectionPanel/PanelContainer" unique_id=20280134]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=1609611295]
+[node name="VBoxContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer" unique_id=1636506050]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1609611295]
 layout_mode = 2
 text = "Route Selection"
 
-[node name="TestRouteButton" type="Button" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=2019816014]
+[node name="RouteButtonsContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1044305618]
 layout_mode = 2
-text = "Test Route"
 
-[node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/VBoxContainer" unique_id=1373868971]
+[node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1373868971]
 layout_mode = 2
 text = "Back"
 
@@ -494,5 +504,4 @@ text = "Back"
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/ResumeButton" to="RideMenuPanel" method="OnResumeButtonPressed"]
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/BackToMenuButton" to="RideMenuPanel" method="OnBackToMenuButtonPressed"]
 [connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/QuitButton" to="RideMenuPanel" method="OnQuitButtonPressed"]
-[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/VBoxContainer/TestRouteButton" to="RouteSelectionPanel" method="OnTestRoutePressed"]
-[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/VBoxContainer/BackButton" to="RouteSelectionPanel" method="OnBackPressed"]
+[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer/BackButton" to="RouteSelectionPanel" method="OnBackPressed"]

@@ -18,6 +18,10 @@ public sealed class RideFitRecorder
 
 	private double? _startDistanceMeters;
 	private double _lastDistanceMeters;
+	private double _lastRawDistanceMeters;
+	private double _altitudeMeters;
+	private double _totalAscentMeters;
+	private double _totalDescentMeters;
 	private ushort _recordCount;
 
 	public bool IsRecording { get; private set; }
@@ -124,16 +128,51 @@ public sealed class RideFitRecorder
         return finalPath;
     }
 
-	public void RecordSample(RideState rideState, TrainerTelemetry telemetry, double gradientPercent)
+	public void RecordSample(
+		RideState rideState,
+		TrainerTelemetry telemetry,
+		double gradientPercent,
+		RouteSample? routeSample = null)
 	{
 		if (_encoder is null || !IsRecording)
 			return;
 
 		var now = DateTimeOffset.UtcNow;
 
-		_startDistanceMeters ??= rideState.DistanceMeters;
-		_lastDistanceMeters = Math.Max(0, rideState.DistanceMeters - _startDistanceMeters.Value);
+		var rawDistanceMeters = rideState.DistanceMeters;
 
+		if (_startDistanceMeters is null)
+		{
+			_startDistanceMeters = rawDistanceMeters;
+			_lastRawDistanceMeters = rawDistanceMeters;
+		}
+
+		var distanceDeltaMeters = Math.Max(0, rawDistanceMeters - _lastRawDistanceMeters);
+
+		_lastDistanceMeters = Math.Max(0, rawDistanceMeters - _startDistanceMeters.Value);
+
+		double elevationDeltaMeters;
+
+		if (routeSample?.ElevationMeters is not null)
+		{
+			var previousAltitudeMeters = _altitudeMeters;
+			_altitudeMeters = routeSample.ElevationMeters.Value;
+			elevationDeltaMeters = _altitudeMeters - previousAltitudeMeters;
+		}
+		else
+		{
+			elevationDeltaMeters = distanceDeltaMeters * (gradientPercent / 100.0);
+			_altitudeMeters += elevationDeltaMeters;
+		}
+
+		if (elevationDeltaMeters > 0)
+		{
+			_totalAscentMeters += elevationDeltaMeters;
+		}
+		else if (elevationDeltaMeters < 0)
+		{
+			_totalDescentMeters += Math.Abs(elevationDeltaMeters);
+		}
 		var record = new RecordMesg();
 		record.SetTimestamp(ToFitTime(now));
 		record.SetDistance((float)_lastDistanceMeters);
@@ -141,6 +180,13 @@ public sealed class RideFitRecorder
 		record.SetPower(ToUShort(telemetry.PowerWatts));
 		record.SetCadence(ToByte(telemetry.CadenceRpm));
 		record.SetGrade((float)gradientPercent);
+		record.SetAltitude((float)_altitudeMeters);
+
+		if (routeSample?.Latitude is not null && routeSample.Longitude is not null)
+		{
+			record.SetPositionLat(DegreesToSemicircles(routeSample.Latitude.Value));
+			record.SetPositionLong(DegreesToSemicircles(routeSample.Longitude.Value));
+		}
 
 		if (telemetry.HeartRateBpm.HasValue)
 		{
@@ -158,8 +204,22 @@ public sealed class RideFitRecorder
 			powerWatts = telemetry.PowerWatts,
 			cadenceRpm = telemetry.CadenceRpm,
 			heartRateBpm = telemetry.HeartRateBpm,
-			gradientPercent
+			gradientPercent,
+			altitudeMeters = _altitudeMeters,
+			elevationDeltaMeters,
+			totalAscentMeters = _totalAscentMeters,
+			totalDescentMeters = _totalDescentMeters,
+			routeLoopDistanceMeters = routeSample?.LoopDistanceMeters,
+			routeLatitude = routeSample?.Latitude,
+			routeLongitude = routeSample?.Longitude,
+			routeElevationMeters = routeSample?.ElevationMeters,
+			routeSegmentLabel = routeSample?.SegmentLabel
 		});
+	}
+
+	private static int DegreesToSemicircles(double degrees)
+	{
+		return (int)Math.Round(degrees * (int.MaxValue / 180.0));
 	}
 
 	private void StartNewFile()
@@ -179,6 +239,10 @@ public sealed class RideFitRecorder
 
 		_startDistanceMeters = null;
 		_lastDistanceMeters = 0;
+		_lastRawDistanceMeters = 0;
+		_altitudeMeters = 100.0;
+		_totalAscentMeters = 0;
+		_totalDescentMeters = 0;
 		_recordCount = 0;
 
 		IsRecording = true;
@@ -222,6 +286,8 @@ public sealed class RideFitRecorder
 		lap.SetTotalElapsedTime((float)totalElapsedTime.TotalSeconds);
 		lap.SetTotalTimerTime((float)totalTimerTime.TotalSeconds);
 		lap.SetTotalDistance((float)_lastDistanceMeters);
+		lap.SetTotalAscent((ushort)Math.Clamp(Math.Round(_totalAscentMeters), ushort.MinValue, ushort.MaxValue));
+		lap.SetTotalDescent((ushort)Math.Clamp(Math.Round(_totalDescentMeters), ushort.MinValue, ushort.MaxValue));
 
 		_encoder!.Write(lap);
 	}
@@ -240,6 +306,8 @@ public sealed class RideFitRecorder
 		session.SetTotalElapsedTime((float)totalElapsedTime.TotalSeconds);
 		session.SetTotalTimerTime((float)totalTimerTime.TotalSeconds);
 		session.SetTotalDistance((float)_lastDistanceMeters);
+		session.SetTotalAscent((ushort)Math.Clamp(Math.Round(_totalAscentMeters), ushort.MinValue, ushort.MaxValue));
+		session.SetTotalDescent((ushort)Math.Clamp(Math.Round(_totalDescentMeters), ushort.MinValue, ushort.MaxValue));
 		session.SetTrigger(SessionTrigger.ActivityEnd);
 
 		_encoder!.Write(session);

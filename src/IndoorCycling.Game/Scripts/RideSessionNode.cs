@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 public partial class RideSessionNode : Node
 {
 	private HudController? _hudController;
+
+	private RouteDefinition? _currentRoute;
 	private bool _sessionStarted;
 	private bool _trainerSessionActive;
 	private bool _fitReplaySessionActive;
@@ -41,7 +43,7 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 
-	public async Task StartTrainerSessionAsync()
+	public async Task StartTrainerSessionAsync(RouteDefinition? route = null)
 	{
 		if (GameBootstrap.TrainerClient is null)
 		{
@@ -58,7 +60,7 @@ public partial class RideSessionNode : Node
 		{
 			_hudController?.SetStatus("Trainer already connected.");
 		}
-
+		_currentRoute = route ?? RouteCatalog.GetById("test-route");
 		_sessionStarted = true;
 		_trainerSessionActive = true;
 		_fitReplaySessionActive = false;
@@ -71,9 +73,25 @@ public partial class RideSessionNode : Node
 		_trainerCommandDirty = true;
 
 		_hudController?.SetModeText("Trainer");
-		_hudController?.SetStatus("Trainer session started.");
+		//_hudController?.SetStatus("Trainer session started.");
+		_hudController?.SetStatus($"Trainer session started: {_currentRoute?.Name ?? "No route"}");
 
 		GD.Print("Trainer ride session started.");
+	}
+
+	private void UpdateRouteHud()
+	{
+		if (_currentRoute is null || _hudController is null)
+			return;
+
+		var sample = _currentRoute.GetSampleAt(_rideState.DistanceMeters);
+
+		_hudController.SetRouteInfo(
+			_currentRoute.Name,
+			sample.SegmentLabel,
+			sample.LoopDistanceMeters,
+			_currentRoute.DistanceMeters
+		);
 	}
 
 	public async Task StartFitReplaySessionAsync(string fitPath)
@@ -81,6 +99,7 @@ public partial class RideSessionNode : Node
 		_fitReplayClient = new FakeTrainerClient();
 		await _fitReplayClient.ConnectAsync();
 
+		_currentRoute = RouteCatalog.GetById("test-route");
 		_sessionStarted = true;
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
@@ -184,10 +203,17 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus($"Manual gradient offset: {_manualGradientOffsetPercent:+0.0;-0.0;0.0}%");
 	}
 
+	private double GetRouteGradient()
+	{
+		if (_currentRoute is null)
+			return 0;
+
+		return _currentRoute.GetSampleAt(_rideState.DistanceMeters).GradientPercent;
+	}
+
 	private double GetCurrentGradient()
 	{
-		var routeGradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
-		return routeGradient + _manualGradientOffsetPercent;
+		return GetRouteGradient() + _manualGradientOffsetPercent;
 	}
 
 	private bool ShouldSendTrainerSimulationCommand(double gradientPercent)
@@ -291,7 +317,9 @@ public partial class RideSessionNode : Node
 
 		_recordingSampleElapsedSeconds = 0;
 
-		_rideRecorder.RecordSample(_rideState, telemetry, gradient);
+		var routeSample = _currentRoute?.GetSampleAt(_rideState.DistanceMeters);
+
+		_rideRecorder.RecordSample(_rideState, telemetry, gradient, routeSample);
 	}
 
 	public override async void _Process(double delta)
@@ -345,6 +373,7 @@ public partial class RideSessionNode : Node
 			await SendTrainerSimulationCommandAsync(gradient);
 		}
 		RecordRideSampleIfNeeded(delta, telemetry, gradient);
+		UpdateRouteHud();
 		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 	}
 
@@ -426,13 +455,4 @@ public partial class RideSessionNode : Node
 		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 	}
 
-	private static double GetGradientForCurrentDistance(double distanceMeters)
-	{
-		var d = distanceMeters % 3500.0;
-
-		if (d < 500) return 0;
-		if (d < 1500) return 3;
-		if (d < 2500) return 6;
-		return -2;
-	}
 }

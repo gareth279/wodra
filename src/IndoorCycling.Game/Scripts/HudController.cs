@@ -5,6 +5,9 @@ using IndoorCycling.Core.Models;
 public partial class HudController : Control
 {
 	private Label? _modeLabel;
+
+	private Label? _routeLabel;
+	private Label? _segmentLabel;
 	private Label? _statusLabel;
 	private Label? _powerLabel;
 	private Label? _cadenceLabel;
@@ -35,6 +38,8 @@ public partial class HudController : Control
 		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/GradientLabel");
 		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/DistanceLabel");
 		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ElapsedLabel");
+		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
+		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
 
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
 		_gradientDownButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientDownButton");
@@ -144,12 +149,28 @@ public partial class HudController : Control
 		SetModeText("-");
 		SetStatus("Choose a mode to begin.");
 
+		if (_routeLabel is not null) _routeLabel.Text = "Route: -";
+		if (_segmentLabel is not null) _segmentLabel.Text = "Segment: -";
+
 		if (_powerLabel is not null) _powerLabel.Text = "Power: -";
 		if (_cadenceLabel is not null) _cadenceLabel.Text = "Cadence: -";
 		if (_speedLabel is not null) _speedLabel.Text = "Speed: -";
 		if (_gradientLabel is not null) _gradientLabel.Text = "Gradient: -";
 		if (_distanceLabel is not null) _distanceLabel.Text = "Distance: -";
 		if (_elapsedLabel is not null) _elapsedLabel.Text = "Elapsed: 00:00:00";
+	}
+
+	public void SetRouteInfo(string routeName, string segmentName, double loopDistanceMeters, double routeDistanceMeters)
+	{
+		if (_routeLabel is not null)
+		{
+			_routeLabel.Text = $"Route: {routeName} ({loopDistanceMeters / 1000.0:0.00}/{routeDistanceMeters / 1000.0:0.00} km)";
+		}
+
+		if (_segmentLabel is not null)
+		{
+			_segmentLabel.Text = $"Segment: {segmentName}";
+		}
 	}
 
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry telemetry, double elapsedSeconds)
