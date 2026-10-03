@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://cftbuqonfro7b" path="res://Scripts/DeviceConnectionPanelController.cs" id="4_qpsp1"]
 [ext_resource type="Script" uid="uid://nmh53lmgi1yi" path="res://Scripts/RideMenuPanelController.cs" id="6_e67xs"]
 [ext_resource type="Script" uid="uid://bvhod3tfngrgo" path="res://Scripts/RouteSelectionPanelController.cs" id="7_05hhs"]
+[ext_resource type="Script" path="res://Scripts/World/RideWorldView.cs" id="8_world"]
 
 [node name="Control" type="Control" unique_id=141499871]
 custom_minimum_size = Vector2(1024, 768)
@@ -22,6 +23,9 @@ script = ExtResource("1_r0ppa")
 
 [node name="RideSessionNode" type="Node" parent="." unique_id=1280285128]
 script = ExtResource("2_uf0cn")
+
+[node name="RideWorldView" type="Node3D" parent="."]
+script = ExtResource("8_world")
 
 [node name="StartPanel" type="Control" parent="." unique_id=1154518562]
 layout_mode = 1

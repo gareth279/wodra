@@ -18,6 +18,10 @@ public partial class RideSessionNode : Node
 	private FakeTrainerClient? _fitReplayClient;
 
 	private RideState _rideState = RideState.Initial;
+	// Read-only rendering input. This remains the only authority for ride progress.
+	public RideState CurrentRideState => _rideState;
+	public RouteDefinition? CurrentRoute => _currentRoute;
+	public bool IsRideActive => _sessionStarted;
 	private double _elapsedSeconds;
 
 	private RideFitRecorder? _rideRecorder;
