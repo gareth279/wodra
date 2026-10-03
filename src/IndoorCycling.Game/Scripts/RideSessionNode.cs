@@ -23,6 +23,9 @@ public partial class RideSessionNode : Node
 	private RideFitRecorder? _rideRecorder;
 
 	private string? _lastStoppedRecordingPath;
+	public string? LastStoppedRecordingPath => _lastStoppedRecordingPath;
+	private Task _trainerCommandTask = Task.CompletedTask;
+	private bool _quitting;
 	private double _recordingSampleElapsedSeconds;
 	private const double RecordingSampleIntervalSeconds = 1.0;
 	private double _trainerCommandElapsedSeconds;
@@ -39,6 +42,7 @@ public partial class RideSessionNode : Node
 
 	public override void _Ready()
 	{
+		GetTree().AutoAcceptQuit = false;
 		_hudController = GetNodeOrNull<HudController>("../HudController");
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
@@ -115,68 +119,97 @@ public partial class RideSessionNode : Node
 
 	public async Task ExitToMainMenuAsync()
 	{
-		_sessionStarted = false;
-		_trainerSessionActive = false;
-		_fitReplaySessionActive = false;
-		_rideState = RideState.Initial;
-		_elapsedSeconds = 0;
-		_manualGradientOffsetPercent = 0;
-
-		if (GameBootstrap.TrainerClient is not null && GameBootstrap.TrainerClient.IsConnected)
-		{
-			await GameBootstrap.TrainerClient.DisconnectAsync();
-		}
-
-		if (_fitReplayClient is not null && _fitReplayClient.IsConnected)
-		{
-			await _fitReplayClient.DisconnectAsync();
-		}
-
-		_fitReplayClient = null;
-
-		if (_rideRecorder is not null)
-		{
-			_rideRecorder.Stop();
-			_rideRecorder = null;
-			_recordingSampleElapsedSeconds = 0;
-		}
+		await EndRideAsync(disconnectTrainer: true);
 		GameBootstrap.ResetSession();
-
 		_hudController?.ResetHud();
 		_hudController?.SetStatus("Choose a mode to begin.");
-
-		GD.Print("Returned to main menu.");
 	}
 
 	public async Task ExitToRouteSelectionAsync()
 	{
-		_sessionStarted = false;
-		_trainerSessionActive = false;
-		_fitReplaySessionActive = false;
-		_rideState = RideState.Initial;
-		_elapsedSeconds = 0;
-		_manualGradientOffsetPercent = 0;
+		// Keep the paired trainer ready for another route.
+		await EndRideAsync(disconnectTrainer: false);
+		_hudController?.ResetHud();
+		_hudController?.SetStatus("Choose a route.");
+		GameLogger.Log("returned_to_route_selection", new { });
+	}
 
-		if (_rideRecorder is not null)
+	private async Task EndRideAsync(bool disconnectTrainer)
+	{
+		_sessionStarted = false;
+		try
 		{
-			_rideRecorder.Stop();
+			FinaliseRecording();
+		}
+		finally
+		{
+			_trainerSessionActive = false;
+			_fitReplaySessionActive = false;
+			// Finish the existing write before disposing its BLE connection.
+			await _trainerCommandTask;
+			try
+			{
+				if (disconnectTrainer && GameBootstrap.TrainerClient is not null)
+					await GameBootstrap.TrainerClient.DisconnectAsync();
+			}
+			finally
+			{
+				if (_fitReplayClient is not null)
+					await _fitReplayClient.DisconnectAsync();
+				_fitReplayClient = null;
+				_rideState = RideState.Initial;
+				_elapsedSeconds = 0;
+				_manualGradientOffsetPercent = 0;
+			}
+		}
+	}
+
+	public async Task QuitAsync()
+	{
+		if (_quitting) return;
+		_quitting = true;
+		try
+		{
+			await ExitToMainMenuAsync();
+			GetTree().Quit();
+		}
+		catch (Exception ex)
+		{
+			_quitting = false;
+			GameLogger.Log("quit_cleanup_failed", new { ex.Message });
+			_hudController?.SetStatus($"Could not finish session: {ex.Message}");
+		}
+	}
+
+	public override void _Notification(int what)
+	{
+		if (what == NotificationWMCloseRequest)
+			_ = QuitAsync();
+	}
+
+	private void RecordCurrentSample()
+	{
+		if (_rideRecorder?.IsRecording != true) return;
+		var trainer = _trainerSessionActive ? GameBootstrap.TrainerClient : _fitReplayClient;
+		if (trainer is null) return;
+		_rideRecorder.RecordSample(_rideState, trainer.GetLatestTelemetry(),
+			GetCurrentGradient(), _currentRoute?.GetSampleAt(_rideState.DistanceMeters));
+	}
+
+	private string? FinaliseRecording()
+	{
+		if (_rideRecorder is null) return _lastStoppedRecordingPath;
+		try
+		{
+			RecordCurrentSample();
+		}
+		finally
+		{
+			_lastStoppedRecordingPath = _rideRecorder.Stop();
 			_rideRecorder = null;
 			_recordingSampleElapsedSeconds = 0;
 		}
-
-		if (_fitReplayClient is not null && _fitReplayClient.IsConnected)
-		{
-			await _fitReplayClient.DisconnectAsync();
-		}
-
-		_fitReplayClient = null;
-
-		_hudController?.ResetHud();
-		_hudController?.SetStatus("Choose a route.");
-
-		GameLogger.Log("returned_to_route_selection", new { });
-
-		GD.Print("Returned to route selection.");
+		return _lastStoppedRecordingPath;
 	}
 
 	public void IncreaseManualGradient()
@@ -248,8 +281,10 @@ public partial class RideSessionNode : Node
 
 		_rideRecorder ??= new RideFitRecorder();
 
-		var path = _rideRecorder.StartOrResume();
-		_recordingSampleElapsedSeconds = RecordingSampleIntervalSeconds;
+		var path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
+			_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+		RecordCurrentSample();
+		_recordingSampleElapsedSeconds = 0;
 
 		_hudController?.SetStatus($"Recording: {path}");
 	}
@@ -262,6 +297,7 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
+		RecordCurrentSample();
 		_rideRecorder.Pause();
 		_hudController?.SetStatus("Recording paused.");
 	}
@@ -274,11 +310,7 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
-		var path = _rideRecorder.Stop();
-		_lastStoppedRecordingPath = path;
-
-		_rideRecorder = null;
-		_recordingSampleElapsedSeconds = 0;
+		var path = FinaliseRecording();
 
 		_hudController?.SetStatus($"Recording saved: {path}");
 	}
@@ -322,7 +354,7 @@ public partial class RideSessionNode : Node
 		_rideRecorder.RecordSample(_rideState, telemetry, gradient, routeSample);
 	}
 
-	public override async void _Process(double delta)
+	public override void _Process(double delta)
 	{
 		if (!_sessionStarted)
 		{
@@ -333,17 +365,17 @@ public partial class RideSessionNode : Node
 
 		if (_trainerSessionActive)
 		{
-			await ProcessTrainerMode(delta);
+			ProcessTrainerMode(delta);
 			return;
 		}
 
 		if (_fitReplaySessionActive)
 		{
-			await ProcessFitReplayMode(delta);
+			ProcessFitReplayMode(delta);
 		}
 	}
 
-	private async Task ProcessTrainerMode(double delta)
+	private void ProcessTrainerMode(double delta)
 	{
 		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsConnected)
 		{
@@ -368,9 +400,9 @@ public partial class RideSessionNode : Node
 
 		_trainerCommandElapsedSeconds += delta;
 
-		if (ShouldSendTrainerSimulationCommand(gradient))
+		if (_trainerCommandTask.IsCompleted && ShouldSendTrainerSimulationCommand(gradient))
 		{
-			await SendTrainerSimulationCommandAsync(gradient);
+			_trainerCommandTask = SendTrainerSimulationCommandAsync(gradient);
 		}
 		RecordRideSampleIfNeeded(delta, telemetry, gradient);
 		UpdateRouteHud();
@@ -379,6 +411,7 @@ public partial class RideSessionNode : Node
 
 	private async Task SendTrainerSimulationCommandAsync(double gradient)
 	{
+		_trainerCommandDirty = false;
 		GameLogger.Log("trainer_simulation_command_send", new
 		{
 			gradientPercent = gradient,
@@ -397,7 +430,6 @@ public partial class RideSessionNode : Node
 			);
 
 			_lastSentTrainerGradientPercent = gradient;
-			_trainerCommandDirty = false;
 		}
 		catch (Exception ex)
 		{
@@ -419,7 +451,7 @@ public partial class RideSessionNode : Node
 		}
 	}
 
-	private async Task ProcessFitReplayMode(double delta)
+	private void ProcessFitReplayMode(double delta)
 	{
 		if (_fitReplayClient is null || !_fitReplayClient.IsConnected)
 		{
@@ -443,7 +475,7 @@ public partial class RideSessionNode : Node
 		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
 		_rideState = result.NewState;
 
-		await _fitReplayClient.SetSimulationAsync(
+		_ = _fitReplayClient.SetSimulationAsync(
 			new SimulationCommand(
 				GradePercent: gradient,
 				RiderWeightKg: GameBootstrap.RiderProfile.WeightKg,

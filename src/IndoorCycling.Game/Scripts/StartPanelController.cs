@@ -24,6 +24,10 @@ public partial class StartPanelController : Control
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_hudController?.Hide();
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/QuitButton").Pressed += OnQuitPressed;
 
 		if (_fileDialog is not null)
 		{
@@ -84,9 +88,10 @@ public partial class StartPanelController : Control
 		await _rideSessionNode.StartFitReplaySessionAsync(path);
 	}
 
-	private void OnQuitPressed()
+	private async void OnQuitPressed()
 	{
-		GetTree().Quit();
+		if (_rideSessionNode is not null)
+			await _rideSessionNode.QuitAsync();
 	}
 
 	private void SetStatus(string text)

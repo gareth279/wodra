@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/RideFitRecorder.cs" Link="RideFitRecorder.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RouteSample.cs" Link="RouteSample.cs" />
+  </ItemGroup>
+</Project>

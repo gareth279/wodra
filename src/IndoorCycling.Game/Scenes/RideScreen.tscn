@@ -486,22 +486,3 @@ layout_mode = 2
 [node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1373868971]
 layout_mode = 2
 text = "Back"
-
-[connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton" to="StartPanel" method="OnConnectTrainerPressed"]
-[connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer" to="StartPanel" method="OnQuickFakeTrainerPressed"]
-[connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/LoadFitButton" to="StartPanel" method="OnLoadFitPressed"]
-[connection signal="pressed" from="StartPanel/PanelContainer/MarginContainer/VBoxContainer/QuitButton" to="StartPanel" method="OnQuitPressed"]
-[connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton" to="DeviceConnectionPanel" method="OnPairTrainerPressed"]
-[connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer/ActionButton" to="DeviceConnectionPanel" method="OnPairTrainerPressed"]
-[connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer/ActionButton" to="DeviceConnectionPanel" method="OnPairTrainerPressed"]
-[connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/BackButton" to="DeviceConnectionPanel" method="OnBackPressed"]
-[connection signal="pressed" from="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ContinueButton" to="DeviceConnectionPanel" method="OnContinuePressed"]
-[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordStartButton" to="HudController" method="OnRecordStartPressed"]
-[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordPauseButton" to="HudController" method="OnRecordPausePressed"]
-[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/RecordStopButton" to="HudController" method="OnRecordStopPressed"]
-[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton" to="HudController" method="OnSaveToStravaPressed"]
-[connection signal="pressed" from="HudController/BottomBar/MarginContainer/HBoxContainer/MenuButton" to="HudController" method="OnMenuPressed"]
-[connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/ResumeButton" to="RideMenuPanel" method="OnResumeButtonPressed"]
-[connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/BackToMenuButton" to="RideMenuPanel" method="OnBackToMenuButtonPressed"]
-[connection signal="pressed" from="RideMenuPanel/PanelContainer/VBoxContainer/QuitButton" to="RideMenuPanel" method="OnQuitButtonPressed"]
-[connection signal="pressed" from="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer/BackButton" to="RouteSelectionPanel" method="OnBackPressed"]

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Dynastream.Fit;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 
 using FitDateTime = Dynastream.Fit.DateTime;
 using FitFile = Dynastream.Fit.File;
@@ -16,28 +17,25 @@ public sealed class RideFitRecorder
 	private DateTimeOffset _currentResumeStartedAtUtc;
 	private TimeSpan _activeTimeBeforeCurrentResume = TimeSpan.Zero;
 
-	private double? _startDistanceMeters;
-	private double _lastDistanceMeters;
-	private double _lastRawDistanceMeters;
-	private double _altitudeMeters;
-	private double _totalAscentMeters;
-	private double _totalDescentMeters;
+	private RecordingProgress _progress = new();
 	private ushort _recordCount;
 
 	public bool IsRecording { get; private set; }
 	public bool IsPaused { get; private set; }
 	public string? FilePath { get; private set; }
 
-	public string StartOrResume()
+	public string StartOrResume(double rawDistanceMeters, double? routeElevationMeters = null)
 	{
 		if (_encoder is null)
 		{
 			StartNewFile();
+			_progress.Rebase(rawDistanceMeters, routeElevationMeters);
 			return FilePath!;
 		}
 
 		if (IsPaused)
 		{
+			_progress.Rebase(rawDistanceMeters, routeElevationMeters);
 			var now = DateTimeOffset.UtcNow;
 			_currentResumeStartedAtUtc = now;
 			IsPaused = false;
@@ -98,7 +96,7 @@ public sealed class RideFitRecorder
                 filePath = finalPath,
                 totalElapsedSeconds = totalElapsedTime.TotalSeconds,
                 totalTimerSeconds = totalTimerTime.TotalSeconds,
-                totalDistanceMeters = _lastDistanceMeters,
+                totalDistanceMeters = _progress.DistanceMeters,
                 recordCount = _recordCount
             });
         }
@@ -139,48 +137,17 @@ public sealed class RideFitRecorder
 
 		var now = DateTimeOffset.UtcNow;
 
-		var rawDistanceMeters = rideState.DistanceMeters;
+		var elevationDeltaMeters = _progress.Advance(
+			rideState.DistanceMeters, gradientPercent, routeSample?.ElevationMeters);
 
-		if (_startDistanceMeters is null)
-		{
-			_startDistanceMeters = rawDistanceMeters;
-			_lastRawDistanceMeters = rawDistanceMeters;
-		}
-
-		var distanceDeltaMeters = Math.Max(0, rawDistanceMeters - _lastRawDistanceMeters);
-
-		_lastDistanceMeters = Math.Max(0, rawDistanceMeters - _startDistanceMeters.Value);
-
-		double elevationDeltaMeters;
-
-		if (routeSample?.ElevationMeters is not null)
-		{
-			var previousAltitudeMeters = _altitudeMeters;
-			_altitudeMeters = routeSample.ElevationMeters.Value;
-			elevationDeltaMeters = _altitudeMeters - previousAltitudeMeters;
-		}
-		else
-		{
-			elevationDeltaMeters = distanceDeltaMeters * (gradientPercent / 100.0);
-			_altitudeMeters += elevationDeltaMeters;
-		}
-
-		if (elevationDeltaMeters > 0)
-		{
-			_totalAscentMeters += elevationDeltaMeters;
-		}
-		else if (elevationDeltaMeters < 0)
-		{
-			_totalDescentMeters += Math.Abs(elevationDeltaMeters);
-		}
 		var record = new RecordMesg();
 		record.SetTimestamp(ToFitTime(now));
-		record.SetDistance((float)_lastDistanceMeters);
+		record.SetDistance((float)_progress.DistanceMeters);
 		record.SetSpeed((float)(rideState.VirtualSpeedKph / 3.6));
 		record.SetPower(ToUShort(telemetry.PowerWatts));
 		record.SetCadence(ToByte(telemetry.CadenceRpm));
 		record.SetGrade((float)gradientPercent);
-		record.SetAltitude((float)_altitudeMeters);
+		record.SetAltitude((float)_progress.AltitudeMeters);
 
 		if (routeSample?.Latitude is not null && routeSample.Longitude is not null)
 		{
@@ -199,16 +166,16 @@ public sealed class RideFitRecorder
 		GameLogger.Log("ride_recording_sample", new
 		{
 			filePath = FilePath,
-			distanceMeters = _lastDistanceMeters,
+			distanceMeters = _progress.DistanceMeters,
 			speedKph = rideState.VirtualSpeedKph,
 			powerWatts = telemetry.PowerWatts,
 			cadenceRpm = telemetry.CadenceRpm,
 			heartRateBpm = telemetry.HeartRateBpm,
 			gradientPercent,
-			altitudeMeters = _altitudeMeters,
+			altitudeMeters = _progress.AltitudeMeters,
 			elevationDeltaMeters,
-			totalAscentMeters = _totalAscentMeters,
-			totalDescentMeters = _totalDescentMeters,
+			totalAscentMeters = _progress.AscentMeters,
+			totalDescentMeters = _progress.DescentMeters,
 			routeLoopDistanceMeters = routeSample?.LoopDistanceMeters,
 			routeLatitude = routeSample?.Latitude,
 			routeLongitude = routeSample?.Longitude,
@@ -237,12 +204,7 @@ public sealed class RideFitRecorder
 		_currentResumeStartedAtUtc = _startedAtUtc;
 		_activeTimeBeforeCurrentResume = TimeSpan.Zero;
 
-		_startDistanceMeters = null;
-		_lastDistanceMeters = 0;
-		_lastRawDistanceMeters = 0;
-		_altitudeMeters = 100.0;
-		_totalAscentMeters = 0;
-		_totalDescentMeters = 0;
+		_progress = new RecordingProgress();
 		_recordCount = 0;
 
 		IsRecording = true;
@@ -285,9 +247,9 @@ public sealed class RideFitRecorder
 		lap.SetEventType(EventType.Stop);
 		lap.SetTotalElapsedTime((float)totalElapsedTime.TotalSeconds);
 		lap.SetTotalTimerTime((float)totalTimerTime.TotalSeconds);
-		lap.SetTotalDistance((float)_lastDistanceMeters);
-		lap.SetTotalAscent((ushort)Math.Clamp(Math.Round(_totalAscentMeters), ushort.MinValue, ushort.MaxValue));
-		lap.SetTotalDescent((ushort)Math.Clamp(Math.Round(_totalDescentMeters), ushort.MinValue, ushort.MaxValue));
+		lap.SetTotalDistance((float)_progress.DistanceMeters);
+		lap.SetTotalAscent((ushort)Math.Clamp(Math.Round(_progress.AscentMeters), ushort.MinValue, ushort.MaxValue));
+		lap.SetTotalDescent((ushort)Math.Clamp(Math.Round(_progress.DescentMeters), ushort.MinValue, ushort.MaxValue));
 
 		_encoder!.Write(lap);
 	}
@@ -305,9 +267,9 @@ public sealed class RideFitRecorder
 		session.SetNumLaps(1);
 		session.SetTotalElapsedTime((float)totalElapsedTime.TotalSeconds);
 		session.SetTotalTimerTime((float)totalTimerTime.TotalSeconds);
-		session.SetTotalDistance((float)_lastDistanceMeters);
-		session.SetTotalAscent((ushort)Math.Clamp(Math.Round(_totalAscentMeters), ushort.MinValue, ushort.MaxValue));
-		session.SetTotalDescent((ushort)Math.Clamp(Math.Round(_totalDescentMeters), ushort.MinValue, ushort.MaxValue));
+		session.SetTotalDistance((float)_progress.DistanceMeters);
+		session.SetTotalAscent((ushort)Math.Clamp(Math.Round(_progress.AscentMeters), ushort.MinValue, ushort.MaxValue));
+		session.SetTotalDescent((ushort)Math.Clamp(Math.Round(_progress.DescentMeters), ushort.MinValue, ushort.MaxValue));
 		session.SetTrigger(SessionTrigger.ActivityEnd);
 
 		_encoder!.Write(session);

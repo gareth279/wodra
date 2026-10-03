@@ -61,6 +61,12 @@ public partial class DeviceConnectionPanelController : Control
 
 		_continueButton = GetNodeOrNull<Button>("PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/ContinueButton");
 
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton").Pressed += OnPairTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard/MarginContainer/VBoxContainer/ActionButton").Pressed += OnPairTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard/MarginContainer/VBoxContainer/ActionButton").Pressed += OnPairTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/BackButton").Pressed += OnBackPressed;
+		_continueButton!.Pressed += OnContinuePressed;
+
 		Hide();
 		ResetUi();
 	}

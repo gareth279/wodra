@@ -16,6 +16,10 @@ public partial class RideMenuPanelController : Control
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 
+		GetNode<Button>("PanelContainer/VBoxContainer/ResumeButton").Pressed += OnResumeButtonPressed;
+		GetNode<Button>("PanelContainer/VBoxContainer/BackToMenuButton").Pressed += OnBackToMenuButtonPressed;
+		GetNode<Button>("PanelContainer/VBoxContainer/QuitButton").Pressed += OnQuitButtonPressed;
+
 		Hide();
 	}
 
@@ -50,8 +54,9 @@ public partial class RideMenuPanelController : Control
 		}
 	}
 
-	private void OnQuitButtonPressed()
+	private async void OnQuitButtonPressed()
 	{
-		GetTree().Quit();
+		if (_rideSessionNode is not null)
+			await _rideSessionNode.QuitAsync();
 	}
 }
