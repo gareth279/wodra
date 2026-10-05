@@ -90,6 +90,7 @@ public partial class RideWorldView : Node3D
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
         foreach (float offset in new[] { -3.25f, 3.25f })
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+        _routeRoot.AddChild(RoadsideDelineators.Build(_geometry));
         var positions = _geometry.Vertices.Select(v => v.Position).ToArray();
         float minX = positions.Min(p => p.X), maxX = positions.Max(p => p.X);
         float minZ = positions.Min(p => p.Z), maxZ = positions.Max(p => p.Z);
