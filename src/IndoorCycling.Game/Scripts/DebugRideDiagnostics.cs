@@ -1,0 +1,106 @@
+using System;
+using IndoorCycling.Core.Models;
+
+/// <summary>Small, game-independent state for debug snapshot timing and route jumps.</summary>
+public sealed class DebugRideDiagnostics
+{
+    public const double SnapshotIntervalSeconds = 0.5;
+    private double _snapshotAccumulator;
+    private int _markerNumber;
+
+    public bool Enabled { get; private set; }
+    public string? SessionId { get; private set; }
+
+    public void Begin(bool enabled)
+    {
+        Enabled = enabled;
+        SessionId = enabled ? Guid.NewGuid().ToString("N") : null;
+        _snapshotAccumulator = 0;
+        _markerNumber = 0;
+    }
+
+    public bool SnapshotDue(double deltaSeconds)
+    {
+        if (!Enabled) return false;
+        _snapshotAccumulator += Math.Max(0, deltaSeconds);
+        if (_snapshotAccumulator < SnapshotIntervalSeconds) return false;
+        _snapshotAccumulator %= SnapshotIntervalSeconds;
+        return true;
+    }
+
+    public int NextMarkerNumber() => Enabled ? ++_markerNumber : 0;
+
+    public RideDebugSnapshot CreateSnapshot(RideDebugSnapshot state, DateTimeOffset? timestamp = null, int? marker = null)
+    {
+        if (!Enabled || SessionId is null) throw new InvalidOperationException("Debug diagnostics are disabled.");
+        var length = state.routeLengthMeters;
+        var wrapped = length > 0 ? ((state.totalRideDistanceMeters % length) + length) % length : 0;
+        var lap = length > 0 ? (int)Math.Floor(Math.Max(0, state.totalRideDistanceMeters) / length) + 1 : 0;
+        return state with
+        {
+            timestamp = timestamp ?? DateTimeOffset.UtcNow,
+            debugSessionId = SessionId,
+            wrappedRouteDistanceMeters = wrapped,
+            lapNumber = lap,
+            marker = marker
+        };
+    }
+
+    public bool TryApplyDistanceJump(RideState current, double distanceMeters, bool fitRecordingActive,
+        out RideState updated)
+    {
+        updated = current;
+        if (!Enabled || fitRecordingActive || !double.IsFinite(distanceMeters) || distanceMeters < 0) return false;
+        updated = current with { DistanceMeters = distanceMeters, VirtualSpeedKph = 0 };
+        return true;
+    }
+}
+
+/// <summary>Compact JSONL payload. Lowercase property names intentionally serialize as-is.</summary>
+public sealed record RideDebugSnapshot
+{
+    public DateTimeOffset timestamp { get; init; }
+    public string? debugSessionId { get; init; }
+    public int? marker { get; init; }
+    public string trainerMode { get; init; } = "unknown";
+    public string rideState { get; init; } = "running";
+    public bool ridePaused { get; init; }
+    public string fitRecordingState { get; init; } = "inactive";
+    public double elapsedRidingSeconds { get; init; }
+    public bool? trainerConnected { get; init; }
+    public int? rawTrainerPowerWatts { get; init; }
+    public int? rawTrainerCadenceRpm { get; init; }
+    public double? rawTrainerSpeedKph { get; init; }
+    public DateTimeOffset? telemetryTimestamp { get; init; }
+    public double? telemetryAgeSeconds { get; init; }
+    public double virtualSpeedKph { get; init; }
+    public double totalRideDistanceMeters { get; init; }
+    public int currentPowerWatts { get; init; }
+    public double totalSystemMassKg { get; init; }
+    public double routeGradientPercent { get; init; }
+    public double manualGradientOffsetPercent { get; init; }
+    public string? routeId { get; init; }
+    public string? routeName { get; init; }
+    public double routeLengthMeters { get; init; }
+    public double wrappedRouteDistanceMeters { get; init; }
+    public int lapNumber { get; init; }
+    public string? routeSegment { get; init; }
+    public double? routeLatitude { get; init; }
+    public double? routeLongitude { get; init; }
+    public double? routeElevationMeters { get; init; }
+    public int visualSampleBefore { get; init; }
+    public int visualSampleAfter { get; init; }
+    public double visualInterpolation { get; init; }
+    public DebugVector3 visualRoutePosition { get; init; }
+    public DebugVector3 visualTangent { get; init; }
+    public DebugVector3 riderWorldPosition { get; init; }
+    public DebugVector3 riderForward { get; init; }
+    public DebugVector3 riderRotation { get; init; }
+    public DebugVector3? cameraWorldPosition { get; init; }
+    public double? requestedTrainerGradientPercent { get; init; }
+    public double? successfulTrainerGradientPercent { get; init; }
+    public double? secondsSinceTrainerCommand { get; init; }
+    public bool trainerCommandInFlight { get; init; }
+}
+
+public readonly record struct DebugVector3(float x, float y, float z);

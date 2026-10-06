@@ -31,6 +31,7 @@ public partial class RideMenuPanelController : Control
 	}
 	private void OnResumeButtonPressed()
 	{
+		_rideSessionNode?.ResumeRide();
 		Hide();
 	}
 

@@ -18,10 +18,18 @@ public partial class RideSessionNode : Node
 	private FakeTrainerClient? _fitReplayClient;
 
 	private RideState _rideState = RideState.Initial;
+	private readonly RidePauseGate _pauseGate = new();
+	private readonly DebugRideDiagnostics _debugDiagnostics = new();
+	private RideWorldView? _rideWorldView;
+	private TrainerTelemetry? _lastTelemetry;
+	private double? _lastRequestedTrainerGradientPercent;
+	private DateTimeOffset? _lastTrainerCommandAtUtc;
+	private int _lastLoggedLapNumber = 1;
 	// Read-only rendering input. This remains the only authority for ride progress.
 	public RideState CurrentRideState => _rideState;
 	public RouteDefinition? CurrentRoute => _currentRoute;
 	public bool IsRideActive => _sessionStarted;
+	public bool IsRidePaused => _pauseGate.IsPaused;
 	private double _elapsedSeconds;
 
 	private RideFitRecorder? _rideRecorder;
@@ -48,6 +56,7 @@ public partial class RideSessionNode : Node
 	{
 		GetTree().AutoAcceptQuit = false;
 		_hudController = GetNodeOrNull<HudController>("../HudController");
+		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 
@@ -68,21 +77,28 @@ public partial class RideSessionNode : Node
 		{
 			_hudController?.SetStatus("Trainer already connected.");
 		}
+		if (GameBootstrap.DebugModeEnabled)
+			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
 		_currentRoute = route ?? RouteCatalog.GetById("test-route");
 		_sessionStarted = true;
 		_trainerSessionActive = true;
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
+		_pauseGate.Resume();
+		_hudController?.SetRidePaused(false);
 		_elapsedSeconds = 0;
 		_manualGradientOffsetPercent = 0;
 
 		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
 		_lastSentTrainerGradientPercent = null;
 		_trainerCommandDirty = true;
+		BeginDebugRide("trainer");
 
 		_hudController?.SetModeText("Trainer");
 		//_hudController?.SetStatus("Trainer session started.");
 		_hudController?.SetStatus($"Trainer session started: {_currentRoute?.Name ?? "No route"}");
+		if (_debugDiagnostics.Enabled)
+			GameLogger.Log("ride_started", new { mode = DebugTrainerMode, routeId = _currentRoute?.Id, routeName = _currentRoute?.Name });
 
 		GD.Print("Trainer ride session started.");
 	}
@@ -112,11 +128,15 @@ public partial class RideSessionNode : Node
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
 		_rideState = RideState.Initial;
+		_pauseGate.Resume();
+		_hudController?.SetRidePaused(false);
 		_elapsedSeconds = 0;
 		_manualGradientOffsetPercent = 0;
+		BeginDebugRide("fit_replay");
 
 		_hudController?.SetModeText("FIT Replay");
 		_hudController?.SetStatus($"FIT loaded: {fitPath}");
+		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_started", new { mode = "fit_replay", fitPath });
 
 		GD.Print($"FIT replay session selected: {fitPath}");
 	}
@@ -154,7 +174,10 @@ public partial class RideSessionNode : Node
 			try
 			{
 				if (disconnectTrainer && GameBootstrap.TrainerClient is not null)
+				{
 					await GameBootstrap.TrainerClient.DisconnectAsync();
+					if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_disconnected", new { mode = DebugTrainerMode });
+				}
 			}
 			finally
 			{
@@ -162,6 +185,8 @@ public partial class RideSessionNode : Node
 					await _fitReplayClient.DisconnectAsync();
 				_fitReplayClient = null;
 				_rideState = RideState.Initial;
+				_pauseGate.Resume();
+				_hudController?.SetRidePaused(false);
 				_elapsedSeconds = 0;
 				_manualGradientOffsetPercent = 0;
 			}
@@ -253,6 +278,149 @@ public partial class RideSessionNode : Node
 		return GetRouteGradient() + _manualGradientOffsetPercent;
 	}
 
+	private string DebugTrainerMode => GameBootstrap.Mode switch
+	{
+		GameBootstrap.SessionMode.FitReplay => "fit_replay",
+		GameBootstrap.SessionMode.Trainer when GameBootstrap.TrainerClient is FakeTrainerClient => "dummy",
+		GameBootstrap.SessionMode.Trainer => "real",
+		_ => "unknown"
+	};
+
+	private void BeginDebugRide(string mode)
+	{
+		_debugDiagnostics.Begin(GameBootstrap.DebugModeEnabled);
+		_lastLoggedLapNumber = 1;
+		_lastTelemetry = null;
+		_lastRequestedTrainerGradientPercent = null;
+		_lastSentTrainerGradientPercent = null;
+		_lastTrainerCommandAtUtc = null;
+		_hudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
+		if (_debugDiagnostics.Enabled)
+			GameLogger.Log("debug_session_started", new { debugSessionId = _debugDiagnostics.SessionId, mode });
+	}
+
+	private void LogLapWraps(double previousDistance, double newDistance)
+	{
+		if (!_debugDiagnostics.Enabled || _currentRoute is null || _currentRoute.DistanceMeters <= 0) return;
+		var lap = (int)Math.Floor(Math.Max(0, newDistance) / _currentRoute.DistanceMeters) + 1;
+		while (_lastLoggedLapNumber < lap)
+		{
+			_lastLoggedLapNumber++;
+			GameLogger.Log("route_lap_wrapped", new
+			{
+				debugSessionId = _debugDiagnostics.SessionId,
+				completedLap = _lastLoggedLapNumber - 1,
+				totalRideDistanceMeters = newDistance,
+				routeLengthMeters = _currentRoute.DistanceMeters
+			});
+		}
+	}
+
+	private RideDebugSnapshot BuildDebugSnapshot(int? marker = null)
+	{
+		var route = _currentRoute;
+		var routeSample = route?.GetSampleAt(_rideState.DistanceMeters);
+		var world = _rideWorldView?.GetDiagnosticState();
+		var telemetry = _lastTelemetry;
+		var now = DateTimeOffset.UtcNow;
+		var trainer = _trainerSessionActive ? GameBootstrap.TrainerClient : _fitReplayClient;
+		var recordingState = _rideRecorder is null ? "inactive" : _rideRecorder.IsRecording ? "recording" : _rideRecorder.IsPaused ? "paused" : "stopped";
+		var pose = world?.Pose ?? default;
+		var fitState = _fitReplaySessionActive ? "fit_replay" : DebugTrainerMode;
+		var data = new RideDebugSnapshot
+		{
+			marker = marker,
+			trainerMode = fitState,
+			rideState = _pauseGate.IsPaused ? "paused" : "running",
+			ridePaused = _pauseGate.IsPaused,
+			fitRecordingState = recordingState,
+			elapsedRidingSeconds = _elapsedSeconds,
+			trainerConnected = trainer?.IsConnected,
+			rawTrainerPowerWatts = telemetry?.PowerWatts,
+			rawTrainerCadenceRpm = telemetry?.CadenceRpm,
+			rawTrainerSpeedKph = telemetry?.SpeedKph,
+			telemetryTimestamp = telemetry?.Timestamp,
+			telemetryAgeSeconds = telemetry is null ? null : Math.Max(0, (now - telemetry.Timestamp).TotalSeconds),
+			virtualSpeedKph = _rideState.VirtualSpeedKph,
+			totalRideDistanceMeters = _rideState.DistanceMeters,
+			currentPowerWatts = _rideState.CurrentPowerWatts,
+			totalSystemMassKg = GameBootstrap.RiderProfile.WeightKg + GameBootstrap.BikeProfile.WeightKg,
+			routeGradientPercent = routeSample?.GradientPercent ?? 0,
+			manualGradientOffsetPercent = _manualGradientOffsetPercent,
+			routeId = route?.Id,
+			routeName = route?.Name,
+			routeLengthMeters = route?.DistanceMeters ?? 0,
+			routeSegment = routeSample?.SegmentLabel,
+			routeLatitude = routeSample?.Latitude,
+			routeLongitude = routeSample?.Longitude,
+			routeElevationMeters = routeSample?.ElevationMeters,
+			visualSampleBefore = pose.SampleIndexBefore,
+			visualSampleAfter = pose.SampleIndexAfter,
+			visualInterpolation = pose.Interpolation,
+			visualRoutePosition = new DebugVector3(pose.Position.X, pose.Position.Y, pose.Position.Z),
+			visualTangent = new DebugVector3(pose.Forward.X, pose.Forward.Y, pose.Forward.Z),
+			riderWorldPosition = world is null ? default : ToDebugVector(world.Value.RiderWorldPosition),
+			riderForward = world is null ? default : ToDebugVector(world.Value.RiderForward),
+			riderRotation = world is null ? default : ToDebugVector(world.Value.RiderRotation),
+			cameraWorldPosition = world is null ? null : ToDebugVector(world.Value.CameraWorldPosition),
+			requestedTrainerGradientPercent = _lastRequestedTrainerGradientPercent,
+			successfulTrainerGradientPercent = _lastSentTrainerGradientPercent,
+			secondsSinceTrainerCommand = _lastTrainerCommandAtUtc is null ? null : Math.Max(0, (now - _lastTrainerCommandAtUtc.Value).TotalSeconds),
+			trainerCommandInFlight = !_trainerCommandTask.IsCompleted
+		};
+		return _debugDiagnostics.CreateSnapshot(data, now, marker);
+	}
+
+	private static DebugVector3 ToDebugVector(Godot.Vector3 v) => new(v.X, v.Y, v.Z);
+
+	private void WriteDebugSnapshot()
+	{
+		if (!_debugDiagnostics.Enabled) return;
+		var snapshot = BuildDebugSnapshot();
+		GameLogger.Log("debug_ride_snapshot", snapshot);
+		_hudController?.UpdateDebugOverlay(snapshot);
+	}
+
+	public void WriteDebugMarker()
+	{
+		if (!_debugDiagnostics.Enabled || !_sessionStarted) return;
+		var marker = _debugDiagnostics.NextMarkerNumber();
+		var snapshot = BuildDebugSnapshot(marker);
+		GameLogger.Log("debug_marker", snapshot);
+		GD.Print($"DEBUG MARKER {marker} @ ride distance {_rideState.DistanceMeters:F1} m");
+		_hudController?.UpdateDebugOverlay(snapshot);
+	}
+
+	public void JumpToRouteDistance(string distanceText)
+	{
+		if (!_debugDiagnostics.Enabled || !_sessionStarted) return;
+		if (!double.TryParse(distanceText, System.Globalization.NumberStyles.Float,
+			System.Globalization.CultureInfo.InvariantCulture, out var distance))
+		{
+			_hudController?.SetStatus("Enter a valid route distance in metres (for example 5830).");
+			return;
+		}
+		var before = _rideState.DistanceMeters;
+		var hasActiveRecording = _rideRecorder is not null;
+		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance,
+			hasActiveRecording, out var jumped))
+		{
+			_hudController?.SetStatus(hasActiveRecording
+				? "Stop FIT recording before jumping route distance."
+				: "Enter a non-negative distance to jump.");
+			return;
+		}
+		_rideState = jumped;
+		_recordingSampleElapsedSeconds = 0;
+		if (_currentRoute?.DistanceMeters > 0)
+			_lastLoggedLapNumber = (int)Math.Floor(distance / _currentRoute.DistanceMeters) + 1;
+		UpdateRouteHud();
+		var snapshot = BuildDebugSnapshot();
+		GameLogger.Log("debug_distance_jump", new { fromDistanceMeters = before, toDistanceMeters = distance, snapshot });
+		_hudController?.SetStatus($"Debug jump: {before:F1} m → {distance:F1} m; virtual speed reset.");
+		_hudController?.UpdateDebugOverlay(snapshot);
+	}
+
 	private bool ShouldSendTrainerSimulationCommand(double gradientPercent)
 	{
 		if (_trainerCommandElapsedSeconds < TrainerCommandMinIntervalSeconds)
@@ -283,27 +451,59 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
+		var created = _rideRecorder is null;
 		_rideRecorder ??= new RideFitRecorder();
-
-		var path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
-			_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+		var path = _rideRecorder.FilePath;
+		if (created)
+		{
+			path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
+				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+			if (_pauseGate.IsPaused) _rideRecorder.Pause();
+		}
+		else if (!_pauseGate.IsPaused)
+		{
+			path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
+				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+		}
 		RecordCurrentSample();
 		_recordingSampleElapsedSeconds = 0;
 
 		_hudController?.SetStatus($"Recording: {path}");
 	}
 
-	public void PauseRideRecording()
+	public void ToggleRidePause()
 	{
-		if (_rideRecorder is null)
+		if (!_sessionStarted) return;
+		if (_pauseGate.IsPaused)
 		{
-			_hudController?.SetStatus("No active recording to pause.");
+			ResumeRide();
 			return;
 		}
+		if (_rideRecorder?.IsRecording == true)
+		{
+			RecordCurrentSample();
+			_rideRecorder.Pause();
+		}
+		_rideState = _pauseGate.Pause(_rideState);
+		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_paused", new { distanceMeters = _rideState.DistanceMeters, elapsedSeconds = _elapsedSeconds });
+		_hudController?.SetRidePaused(true);
+		_hudController?.SetStatus("Ride paused.");
+	}
 
-		RecordCurrentSample();
-		_rideRecorder.Pause();
-		_hudController?.SetStatus("Recording paused.");
+	public void ResumeRide()
+	{
+		if (!_sessionStarted || !_pauseGate.IsPaused) return;
+		_pauseGate.Resume();
+		_hudController?.SetRidePaused(false);
+		if (_rideRecorder?.IsPaused == true)
+		{
+			_rideRecorder.StartOrResume(_rideState.DistanceMeters,
+				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+			RecordCurrentSample();
+		}
+		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_resumed", new { distanceMeters = _rideState.DistanceMeters, elapsedSeconds = _elapsedSeconds });
+		_recordingSampleElapsedSeconds = 0;
+		_hudController?.SetStatus("Ride resumed.");
 	}
 
 	public void StopRideRecording()
@@ -365,18 +565,12 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
-		_elapsedSeconds += delta;
+		if (!_pauseGate.IsPaused) _elapsedSeconds += delta;
 
-		if (_trainerSessionActive)
-		{
-			ProcessTrainerMode(delta);
-			return;
-		}
+		if (_trainerSessionActive) ProcessTrainerMode(delta);
+		else if (_fitReplaySessionActive) ProcessFitReplayMode(delta);
 
-		if (_fitReplaySessionActive)
-		{
-			ProcessFitReplayMode(delta);
-		}
+		if (_debugDiagnostics.Enabled && _debugDiagnostics.SnapshotDue(delta)) WriteDebugSnapshot();
 	}
 
 	private void ProcessTrainerMode(double delta)
@@ -388,6 +582,16 @@ public partial class RideSessionNode : Node
 		}
 
 		var telemetry = GameBootstrap.TrainerClient.GetLatestTelemetry();
+		_lastTelemetry = telemetry;
+		if (_pauseGate.IsPaused)
+		{
+			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
+				new SimulationTickInput(telemetry, GetCurrentGradient(), 0,
+					GameBootstrap.RiderProfile, GameBootstrap.BikeProfile));
+			UpdateRouteHud();
+			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
+			return;
+		}
 		//var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
 		var gradient = GetCurrentGradient();
 
@@ -399,8 +603,9 @@ public partial class RideSessionNode : Node
 			BikeProfile: GameBootstrap.BikeProfile
 		);
 
-		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
-		_rideState = result.NewState;
+		var previousDistance = _rideState.DistanceMeters;
+		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
+		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_trainerCommandElapsedSeconds += delta;
 
@@ -416,12 +621,16 @@ public partial class RideSessionNode : Node
 	private async Task SendTrainerSimulationCommandAsync(double gradient)
 	{
 		_trainerCommandDirty = false;
+		_lastRequestedTrainerGradientPercent = gradient;
+		_lastTrainerCommandAtUtc = DateTimeOffset.UtcNow;
 		GameLogger.Log("trainer_simulation_command_send", new
 		{
 			gradientPercent = gradient,
 			manualGradientOffsetPercent = _manualGradientOffsetPercent,
 			elapsedSeconds = _elapsedSeconds
 		});
+		if (_debugDiagnostics.Enabled)
+			GameLogger.Log("trainer_simulation_command_requested", new { gradientPercent = gradient });
 
 		try
 		{
@@ -434,6 +643,7 @@ public partial class RideSessionNode : Node
 			);
 
 			_lastSentTrainerGradientPercent = gradient;
+			if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_simulation_command_succeeded", new { gradientPercent = gradient });
 		}
 		catch (Exception ex)
 		{
@@ -467,6 +677,15 @@ public partial class RideSessionNode : Node
 		var gradient = GetCurrentGradient();
 
 		var telemetry = _fitReplayClient.GetLatestTelemetry();
+		_lastTelemetry = telemetry;
+		if (_pauseGate.IsPaused)
+		{
+			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
+				new SimulationTickInput(telemetry, gradient, 0,
+					GameBootstrap.RiderProfile, GameBootstrap.BikeProfile));
+			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
+			return;
+		}
 
 		var input = new SimulationTickInput(
 			Telemetry: telemetry,
@@ -476,8 +695,9 @@ public partial class RideSessionNode : Node
 			BikeProfile: GameBootstrap.BikeProfile
 		);
 
-		var result = GameBootstrap.SimulationEngine.Tick(_rideState, input);
-		_rideState = result.NewState;
+		var previousDistance = _rideState.DistanceMeters;
+		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
+		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_ = _fitReplayClient.SetSimulationAsync(
 			new SimulationCommand(

@@ -2,6 +2,11 @@ using System;
 using System.Linq;
 using Godot;
 
+public readonly record struct RideWorldDiagnostic(
+    VisualRoutePose Pose, Godot.Vector3 RiderWorldPosition,
+    Godot.Vector3 RiderForward, Godot.Vector3 RiderRotation,
+    Godot.Vector3 CameraWorldPosition);
+
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
 {
@@ -14,6 +19,7 @@ public partial class RideWorldView : Node3D
     private ChaseCamera _camera = default!;
     private double _debugElapsed;
     private bool _wasActive;
+    private VisualRoutePose _lastPose;
 
     public override void _Ready()
     {
@@ -59,6 +65,7 @@ public partial class RideWorldView : Node3D
         _camera.Current = true;
         var distance = _session.CurrentRideState.DistanceMeters;
         var pose = _geometry!.GetPoseAtDistance(distance);
+        _lastPose = pose;
         var position = ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 0.04f;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
         _rider.GlobalPosition = position;
@@ -69,9 +76,17 @@ public partial class RideWorldView : Node3D
         {
             _debugElapsed = 0;
             GD.Print($"Ride view: total={distance:F1}m loop={pose.LoopDistanceMeters:F1}/{_geometry.LengthMeters:F1}m " +
+                $"samples={pose.SampleIndexBefore}->{pose.SampleIndexAfter}@{pose.Interpolation:F3} " +
                 $"position={position} segment={_loadedRoute!.GetSampleAt(distance).SegmentLabel} " +
                 $"grade={_loadedRoute.GetGradientAt(distance):F1}%");
         }
+    }
+
+    public RideWorldDiagnostic GetDiagnosticState()
+    {
+        var forward = ProceduralRoad.ToGodot(_lastPose.Forward);
+        return new RideWorldDiagnostic(_lastPose, _rider.GlobalPosition, forward,
+            _rider.GlobalRotation, _camera.GlobalPosition);
     }
 
     private void LoadRoute(RouteDefinition route)
@@ -91,7 +106,7 @@ public partial class RideWorldView : Node3D
         foreach (float offset in new[] { -3.25f, 3.25f })
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
         _routeRoot.AddChild(RoadsideDelineators.Build(_geometry));
-        var positions = _geometry.Vertices.Select(v => v.Position).ToArray();
+        var positions = _geometry.Samples.Select(v => v.Position).ToArray();
         float minX = positions.Min(p => p.X), maxX = positions.Max(p => p.X);
         float minZ = positions.Min(p => p.Z), maxZ = positions.Max(p => p.Z);
         _routeRoot.AddChild(new MeshInstance3D
@@ -103,7 +118,7 @@ public partial class RideWorldView : Node3D
         });
         GameLogger.Log("visual_route_loaded", new
         {
-            route.Id, route.DistanceMeters, vertices = _geometry.Vertices.Count,
+            route.Id, route.DistanceMeters, samples = _geometry.Samples.Count,
             closureCorrectionMeters = _geometry.ClosureCorrection.ToString()
         });
     }

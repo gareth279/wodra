@@ -14,6 +14,8 @@ public partial class StartPanelController : Control
 	private DeviceConnectionPanelController? _deviceConnectionPanel;
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
+	private CheckButton? _debugModeCheckButton;
+	private HudController? _typedHudController;
 
 	public override void _Ready()
 	{
@@ -23,6 +25,11 @@ public partial class StartPanelController : Control
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
+		_typedHudController = _hudController as HudController;
+		_debugModeCheckButton = GetNode<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/DebugModeCheckButton");
+		_debugModeCheckButton.ButtonPressed = GameBootstrap.DebugModeEnabled;
+		_debugModeCheckButton.Toggled += OnDebugModeToggled;
+		_typedHudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
 		_hudController?.Hide();
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
@@ -33,6 +40,13 @@ public partial class StartPanelController : Control
 		{
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
+	}
+
+	private void OnDebugModeToggled(bool enabled)
+	{
+		GameBootstrap.Settings.DebugModeEnabled = enabled;
+		GameBootstrap.Settings.Save();
+		_typedHudController?.SetDebugMode(enabled);
 	}
 
 	private void OnConnectTrainerPressed()

@@ -13,7 +13,13 @@ var tests = new (string Name, Action Run)[]
     ("Low-speed reference is configurable and speed is used above it", LaunchReferenceIsConfigurable),
     ("Speed never becomes negative", SpeedNeverNegative),
     ("Trainer speed telemetry does not determine game speed", TrainerSpeedIsIgnored),
-    ("Mass and bike resistance profile affect acceleration", ProfilesAffectPhysics)
+    ("Mass and bike resistance profile affect acceleration", ProfilesAffectPhysics),
+    ("Ride pause freezes progress and resumes without a distance jump", RidePauseSemantics),
+    ("Repeated ride pause action toggles explicit ride state", RidePauseToggle),
+    ("Debug mode off emits no periodic snapshots", DebugModeOff),
+    ("Debug snapshot contains ride state and calculated lap position", DebugSnapshotFields),
+    ("Debug marker numbering increments", DebugMarkerNumbers),
+    ("Debug distance jump resets speed and blocks active FIT recording", DebugDistanceJump)
 };
 
 var failed = 0;
@@ -145,6 +151,119 @@ static void ProfilesAffectPhysics()
     var lowDragBike = Tick(start, 200, 0, bike: new BikeProfile("Low drag", 9, 0.003, 0.2));
     if (!(light.VirtualSpeedKph > heavy.VirtualSpeedKph && lowDragBike.VirtualSpeedKph > heavy.VirtualSpeedKph))
         throw new Exception("Rider mass / bike road-load values did not affect acceleration as expected.");
+}
+
+static void RidePauseSemantics()
+{
+    var engine = new SimulationEngine();
+    var gate = new RidePauseGate();
+    var input = new SimulationTickInput(new TrainerTelemetry(DateTimeOffset.UnixEpoch, 250, 85, 30),
+        0, 0.1, new RiderProfile("Test", 75), new BikeProfile("Test", 9));
+    var moving = RideState.Initial with { DistanceMeters = 100, ElapsedSeconds = 20, VirtualSpeedKph = 24 };
+    moving = gate.Tick(engine, moving, input);
+    var parked = gate.Pause(moving);
+    Near(0, parked.VirtualSpeedKph, 0);
+    for (var i = 0; i < 50; i++)
+    {
+        parked = gate.Tick(engine, parked, input);
+        Near(moving.DistanceMeters, parked.DistanceMeters, 0);
+        Near(moving.ElapsedSeconds, parked.ElapsedSeconds, 0);
+        Near(0, parked.VirtualSpeedKph, 0);
+    }
+    var resumePosition = parked.DistanceMeters;
+    gate.Resume();
+    Near(resumePosition, parked.DistanceMeters, 0);
+    var resumed = gate.Tick(engine, parked, input);
+    if (resumed.DistanceMeters <= resumePosition || resumed.VirtualSpeedKph <= 0)
+        throw new Exception("Motion did not resume from rest after power was applied.");
+    if (resumed.DistanceMeters - resumePosition > 0.1)
+        throw new Exception("Resume introduced a distance jump.");
+}
+
+static void RidePauseToggle()
+{
+    var engine = new SimulationEngine();
+    var gate = new RidePauseGate(); // No recorder is present: ride pause is independent.
+    var input = new SimulationTickInput(new TrainerTelemetry(DateTimeOffset.UnixEpoch, 200, 80, 20),
+        0, 0.1, new RiderProfile("Test", 75), new BikeProfile("Test", 9));
+    var state = engine.Tick(RideState.Initial, input).NewState;
+    var distance = state.DistanceMeters;
+    for (var i = 0; i < 3; i++)
+    {
+        state = gate.Toggle(state);
+        if (!gate.IsPaused) throw new Exception("Pause action did not enter PAUSED state.");
+        Near(0, state.VirtualSpeedKph, 0);
+        var frozenDistance = state.DistanceMeters;
+        var frozenElapsed = state.ElapsedSeconds;
+        for (var j = 0; j < 10; j++) state = gate.Tick(engine, state, input);
+        Near(frozenDistance, state.DistanceMeters, 0);
+        Near(frozenElapsed, state.ElapsedSeconds, 0);
+
+        state = gate.Toggle(state);
+        if (gate.IsPaused) throw new Exception("Second Pause action did not resume the ride.");
+        Near(0, state.VirtualSpeedKph, 0);
+        Near(frozenDistance, state.DistanceMeters, 0);
+        state = gate.Tick(engine, state, input);
+        if (state.DistanceMeters <= frozenDistance || state.VirtualSpeedKph <= 0)
+            throw new Exception("Ride did not restart from zero speed after toggle resume.");
+    }
+    if (state.DistanceMeters <= distance) throw new Exception("Repeated toggles lost resumed movement.");
+}
+
+static void DebugModeOff()
+{
+    var diagnostics = new DebugRideDiagnostics();
+    diagnostics.Begin(false);
+    if (diagnostics.SnapshotDue(10) || diagnostics.NextMarkerNumber() != 0)
+        throw new Exception("Disabled diagnostics emitted periodic or marker data.");
+}
+
+static void DebugSnapshotFields()
+{
+    var diagnostics = new DebugRideDiagnostics();
+    diagnostics.Begin(true);
+    if (diagnostics.SnapshotDue(0.24) || !diagnostics.SnapshotDue(0.26))
+        throw new Exception("Expected a diagnostic snapshot at the 0.5 second interval.");
+    var snapshot = diagnostics.CreateSnapshot(new RideDebugSnapshot
+    {
+        totalRideDistanceMeters = 5851,
+        routeLengthMeters = 5850,
+        virtualSpeedKph = 27.4,
+        ridePaused = true,
+        rideState = "paused",
+        visualSampleBefore = 585,
+        visualSampleAfter = 586,
+        visualInterpolation = 0.42
+    }, DateTimeOffset.UnixEpoch);
+    if (snapshot.totalRideDistanceMeters != 5851 || snapshot.virtualSpeedKph != 27.4
+        || !snapshot.ridePaused || snapshot.wrappedRouteDistanceMeters != 1 || snapshot.lapNumber != 2
+        || snapshot.debugSessionId != diagnostics.SessionId || snapshot.timestamp != DateTimeOffset.UnixEpoch)
+        throw new Exception("Snapshot omitted ride state or wrapped route fields.");
+}
+
+static void DebugMarkerNumbers()
+{
+    var diagnostics = new DebugRideDiagnostics();
+    diagnostics.Begin(true);
+    if (diagnostics.NextMarkerNumber() != 1 || diagnostics.NextMarkerNumber() != 2)
+        throw new Exception("Debug markers did not increment monotonically.");
+}
+
+static void DebugDistanceJump()
+{
+    var diagnostics = new DebugRideDiagnostics();
+    diagnostics.Begin(true);
+    var current = RideState.Initial with { DistanceMeters = 100, ElapsedSeconds = 30, VirtualSpeedKph = 25 };
+    if (diagnostics.TryApplyDistanceJump(current, 5830, true, out _))
+        throw new Exception("Jump was allowed during active FIT recording.");
+    if (!diagnostics.TryApplyDistanceJump(current, 5830, false, out var jumped))
+        throw new Exception("Debug jump was rejected without active FIT recording.");
+    Near(5830, jumped.DistanceMeters, 0);
+    Near(0, jumped.VirtualSpeedKph, 0);
+    Near(current.ElapsedSeconds, jumped.ElapsedSeconds, 0);
+    diagnostics.Begin(false);
+    if (diagnostics.TryApplyDistanceJump(current, 5830, false, out _))
+        throw new Exception("Jump was allowed outside Debug mode.");
 }
 
 static void Near(double expected, double actual, double tolerance)

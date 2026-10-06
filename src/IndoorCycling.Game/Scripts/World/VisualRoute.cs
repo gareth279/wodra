@@ -3,17 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-public readonly record struct VisualRouteVertex(double DistanceMeters, Vector3 Position);
-public readonly record struct VisualRoutePose(Vector3 Position, Vector3 Forward, double LoopDistanceMeters);
+public readonly record struct VisualRouteSample(double DistanceMeters, Vector3 Position, Vector3 Forward);
+public readonly record struct VisualRoutePose(
+    Vector3 Position, Vector3 Forward, double LoopDistanceMeters,
+    int SampleIndexBefore, int SampleIndexAfter, float Interpolation);
 
-/// <summary>Rendering geometry keyed by domain distance, not by geometric arc length.
+/// <summary>Canonical sampled visual centreline shared by route rendering and rider pose sampling.
 /// Coordinates: +X east, +Y up, -Z north. One unit is one metre.
 /// No trainer or Godot dependencies; route definitions remain authoritative.</summary>
 public sealed class VisualRoute
 {
     private const double EarthRadiusMeters = 6371000;
-    private readonly VisualRouteVertex[] _vertices;
-    public IReadOnlyList<VisualRouteVertex> Vertices => _vertices;
+    private readonly VisualRouteSample[] _samples;
+    public IReadOnlyList<VisualRouteSample> Samples => _samples;
+    // Compatibility alias; this is the same canonical sample array, not a second path.
+    public IReadOnlyList<VisualRouteSample> Vertices => _samples;
     public double LengthMeters { get; }
     public Vector3 ClosureCorrection { get; }
 
@@ -39,14 +43,14 @@ public sealed class VisualRoute
         if (gps is { Length: >= 2 })
             foreach (var point in gps) distances.Add(Math.Clamp(point.DistanceMeters, 0, LengthMeters));
 
-        var raw = new List<VisualRouteVertex>();
+        var raw = new List<(double DistanceMeters, Vector3 Position)>();
         double elevation = 0;
         double previousDistance = 0;
         foreach (var d in distances)
         {
             Vector3 position;
             if (gps is { Length: >= 2 })
-                position = GpsPosition(gps, d);
+                position = GpsPosition(route, gps, d);
             else
             {
                 // A closed circle provides a usable road for routes with only grades.
@@ -57,18 +61,83 @@ public sealed class VisualRoute
                 position = new Vector3((float)(radius * (1 - Math.Cos(angle))),
                     (float)elevation, (float)(-radius * Math.Sin(angle)));
             }
-            raw.Add(new VisualRouteVertex(d, position));
+            raw.Add((d, position));
             previousDistance = d;
         }
         ClosureCorrection = raw[^1].Position - raw[0].Position;
-        _vertices = raw.Select(v =>
+        var corrected = raw.Select(v =>
         {
             var t = Math.Clamp((v.DistanceMeters / LengthMeters - ClosureStartFraction)
                 / (1 - ClosureStartFraction), 0, 1);
             var blend = (float)(t * t * (3 - 2 * t));
-            return v with { Position = v.Position - ClosureCorrection * blend };
+            return (DistanceMeters: v.DistanceMeters, Position: v.Position - ClosureCorrection * blend);
         }).ToArray();
-        _vertices[^1] = _vertices[^1] with { Position = _vertices[0].Position };
+        corrected[^1] = (corrected[^1].DistanceMeters, corrected[0].Position);
+
+        // Authored route metres and GPS geometry metres are not always identical.
+        // Parameterize the centreline by its measured arc length, scaled to the
+        // authoritative lap length, so the rider, ribbons and posts share one map.
+        var cumulative = new double[corrected.Length];
+        for (var i = 1; i < corrected.Length; i++)
+            cumulative[i] = cumulative[i - 1] + Vector3.Distance(corrected[i - 1].Position, corrected[i].Position);
+        if (cumulative[^1] <= 0 || !double.IsFinite(cumulative[^1]))
+            throw new ArgumentException("Visual route centreline must have positive finite length.", nameof(route));
+        var scale = LengthMeters / cumulative[^1];
+        var positions = corrected.Select(v => v.Position).ToArray();
+        _samples = new VisualRouteSample[corrected.Length];
+        for (var i = 0; i < corrected.Length; i++)
+        {
+            var previous = i == 0 || i == corrected.Length - 1 ? corrected.Length - 2 : i - 1;
+            var next = i == 0 || i == corrected.Length - 1 ? 1 : i + 1;
+            var tangent = positions[next] - positions[previous];
+            if (tangent.LengthSquared() < 0.000001f)
+                tangent = i == 0 ? positions[1] - positions[0] : positions[i] - positions[i - 1];
+            _samples[i] = new VisualRouteSample(
+                i == corrected.Length - 1 ? LengthMeters : cumulative[i] * scale,
+                positions[i], Vector3.Normalize(tangent));
+        }
+    }
+
+    private static Vector3 GpsPosition(RouteDefinition route, RoutePoint[] points, double distance)
+    {
+        // The Dunedin source has only one point on its final 121 m return to the
+        // start, so ordinary GPS interpolation creates a straight shortcut across
+        // the Oval. Use a local endpoint-tangent closure arc until tail GPS is added.
+        if (route.Id == "dunedin-one-way-oval-gardens" && points.Length >= 3
+            && IsSameLocation(points[0], points[^1])
+            && distance >= points[^2].DistanceMeters && distance <= points[^1].DistanceMeters)
+        {
+            return DunedinTailClosurePosition(points, distance);
+        }
+
+        return GpsPosition(points, distance);
+    }
+
+    private static bool IsSameLocation(RoutePoint a, RoutePoint b) =>
+        Math.Abs(a.Latitude - b.Latitude) < 1e-9 && Math.Abs(a.Longitude - b.Longitude) < 1e-9;
+
+    private static Vector3 DunedinTailClosurePosition(RoutePoint[] points, double distance)
+    {
+        var start = points[^2];
+        var end = points[^1];
+        var p0 = GpsPosition(points, start.DistanceMeters);
+        var p1 = GpsPosition(points, end.DistanceMeters);
+        var previous = GpsPosition(points, points[^3].DistanceMeters);
+        var next = GpsPosition(points, points[1].DistanceMeters);
+        var span = end.DistanceMeters - start.DistanceMeters;
+        // The authored interval is only 121 m despite its incoming and outgoing
+        // bearings turning back toward one another. Longer local handles form a
+        // broad turn instead of preserving almost the entire interior-cutting chord.
+        var handleLength = (float)span * 2;
+        var tangentStart = Vector3.Normalize(p0 - previous) * handleLength;
+        var tangentEnd = Vector3.Normalize(next - p1) * handleLength;
+        var t = (float)((distance - start.DistanceMeters) / span);
+        var t2 = t * t;
+        var t3 = t2 * t;
+        return p0 * (2 * t3 - 3 * t2 + 1)
+            + tangentStart * (t3 - 2 * t2 + t)
+            + p1 * (-2 * t3 + 3 * t2)
+            + tangentEnd * (t3 - t2);
     }
 
     private static Vector3 GpsPosition(RoutePoint[] points, double distance)
@@ -94,29 +163,22 @@ public sealed class VisualRoute
         return ((distance % LengthMeters) + LengthMeters) % LengthMeters;
     }
 
-    private Vector3 PositionAt(double wrappedDistance)
-    {
-        int low = 0, high = _vertices.Length - 1;
-        while (high - low > 1)
-        {
-            var middle = (low + high) / 2;
-            if (_vertices[middle].DistanceMeters <= wrappedDistance) low = middle;
-            else high = middle;
-        }
-        var a = _vertices[low];
-        var b = _vertices[high];
-        var t = (float)((wrappedDistance - a.DistanceMeters) / (b.DistanceMeters - a.DistanceMeters));
-        return Vector3.Lerp(a.Position, b.Position, t);
-    }
-
     public VisualRoutePose GetPoseAtDistance(double rideDistanceMeters)
     {
         var distance = WrapDistance(rideDistanceMeters);
-        // Symmetric lookaround smooths direction changes and also handles the lap seam.
-        var lookaround = Math.Min(8, LengthMeters / 8);
-        var tangent = PositionAt(WrapDistance(distance + lookaround))
-            - PositionAt(WrapDistance(distance - lookaround));
-        if (tangent.LengthSquared() < 0.000001f) tangent = -Vector3.UnitZ;
-        return new VisualRoutePose(PositionAt(distance), Vector3.Normalize(tangent), distance);
+        int low = 0, high = _samples.Length - 1;
+        while (high - low > 1)
+        {
+            var middle = (low + high) / 2;
+            if (_samples[middle].DistanceMeters <= distance) low = middle;
+            else high = middle;
+        }
+        var a = _samples[low];
+        var b = _samples[high];
+        var t = (float)((distance - a.DistanceMeters) / (b.DistanceMeters - a.DistanceMeters));
+        var forward = Vector3.Lerp(a.Forward, b.Forward, t);
+        if (forward.LengthSquared() < 0.000001f) forward = b.Position - a.Position;
+        return new VisualRoutePose(Vector3.Lerp(a.Position, b.Position, t), Vector3.Normalize(forward),
+            distance, low, high, t);
     }
 }

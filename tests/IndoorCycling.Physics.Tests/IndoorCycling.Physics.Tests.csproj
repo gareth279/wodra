@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/DebugRideDiagnostics.cs" Link="DebugRideDiagnostics.cs" />
   </ItemGroup>
 </Project>

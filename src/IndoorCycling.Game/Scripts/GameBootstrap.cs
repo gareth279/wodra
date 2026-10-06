@@ -19,6 +19,7 @@ public partial class GameBootstrap : Node
 	public static BikeProfile BikeProfile { get; private set; } = default!;
 
 	public static AppSettings Settings { get; private set; } = default!;
+	public static bool DebugModeEnabled => Settings?.DebugModeEnabled == true;
 
 	public static SessionMode Mode { get; private set; } = SessionMode.None;
 	public static string? FitReplayPath { get; private set; }

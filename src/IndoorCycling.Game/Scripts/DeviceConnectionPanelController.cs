@@ -135,6 +135,8 @@ public partial class DeviceConnectionPanelController : Control
 			await _realTrainerClient.SubscribeFtmsTelemetryAsync();
 
 			GameBootstrap.ConfigureRealTrainerMode(_realTrainerClient);
+			if (GameBootstrap.DebugModeEnabled)
+				GameLogger.Log("trainer_connected", new { mode = "real", connected = _realTrainerClient.IsConnected });
 
 			SetCard(_powerDeviceLabel, _powerStatusLabel, "Smart Trainer", "Connected");
 			SetCard(_cadenceDeviceLabel, _cadenceStatusLabel, "Smart Trainer", "Connected");

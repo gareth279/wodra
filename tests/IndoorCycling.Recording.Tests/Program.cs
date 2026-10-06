@@ -57,6 +57,9 @@ var tests = new (string Name, Action Run)[]
     }),
     ("FIT round trip retains active distance and elevation totals", () => FitRoundTrip(false)),
     ("Stopping a paused FIT finalizes it without paused travel", () => FitRoundTrip(true)),
+    ("Ride pause pauses and resumes the same active FIT recording", RidePauseResumesSameRecording),
+    ("Starting recording while paused does not resume ride or FIT timer", StartRecordingWhileRidePaused),
+    ("Stopping FIT recording leaves the ride running", StopRecordingLeavesRideRunning),
     ("Empty recording finalizes as a valid FIT file", EmptyRecording)
 };
 
@@ -121,6 +124,57 @@ static void EmptyRecording() => InTemporaryFolder(() =>
     recorder.StartOrResume(0);
     var path = recorder.Stop()!;
     Near(0, new FitRideLoader().Load(path).Count);
+});
+
+static void RidePauseResumesSameRecording() => InTemporaryFolder(() =>
+{
+    var gate = new RidePauseGate();
+    var recorder = new RideFitRecorder();
+    var state = State(50);
+    var originalPath = recorder.StartOrResume(state.DistanceMeters, 5);
+    recorder.RecordSample(state, Telemetry(), 0, Route(5));
+
+    state = gate.Toggle(state);
+    recorder.Pause();
+    var frozenDistance = state.DistanceMeters;
+    for (var i = 0; i < 10; i++)
+        state = gate.Tick(new SimulationEngine(), state,
+            new SimulationTickInput(Telemetry(), 0, 1, new RiderProfile("Test", 75), new BikeProfile("Test", 9)));
+    recorder.RecordSample(State(900), Telemetry(), 0, Route(99));
+    Near(frozenDistance, state.DistanceMeters);
+    if (!gate.IsPaused || !recorder.IsPaused) throw new Exception("Ride and FIT were not paused together.");
+
+    state = gate.Toggle(state);
+    var resumedPath = recorder.StartOrResume(state.DistanceMeters, 5);
+    if (originalPath != resumedPath || !recorder.IsRecording || gate.IsPaused)
+        throw new Exception("Resume did not continue the existing recording and ride.");
+    recorder.RecordSample(State(state.DistanceMeters + 10), Telemetry(), 0, Route(5));
+    var finalPath = recorder.Stop()!;
+    if (finalPath != originalPath) throw new Exception("Resume created a different FIT file.");
+    Near(10, new FitRideLoader().Load(finalPath)[^1].DistanceMeters!.Value);
+});
+
+static void StartRecordingWhileRidePaused() => InTemporaryFolder(() =>
+{
+    var gate = new RidePauseGate();
+    var state = gate.Pause(State(100));
+    var recorder = new RideFitRecorder();
+    recorder.StartOrResume(state.DistanceMeters, 5);
+    recorder.Pause();
+    if (!gate.IsPaused || !recorder.IsPaused || recorder.IsRecording)
+        throw new Exception("Starting FIT while paused resumed the ride or recording timer.");
+    recorder.Stop();
+});
+
+static void StopRecordingLeavesRideRunning() => InTemporaryFolder(() =>
+{
+    var gate = new RidePauseGate();
+    var recorder = new RideFitRecorder();
+    recorder.StartOrResume(0);
+    var state = gate.Toggle(State(0)); // Paused.
+    state = gate.Toggle(state); // Running again.
+    recorder.Stop();
+    if (gate.IsPaused) throw new Exception("Stopping recording paused the ride.");
 });
 
 static void InTemporaryFolder(Action action)

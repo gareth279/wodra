@@ -8,6 +8,7 @@ public sealed class AppSettings
 	public RiderSettings Rider { get; set; } = new();
 	public RecordingSettings Recording { get; set; } = new();
 	public StravaSettings Strava { get; set; } = new();
+	public bool DebugModeEnabled { get; set; }
 
 	public static string SettingsPath
 	{

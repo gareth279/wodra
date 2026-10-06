@@ -27,6 +27,10 @@ public partial class HudController : Control
 	private Button? _saveToStravaButton;
 	private RideMenuPanelController? _rideMenuPanel;
 	private RideSessionNode? _rideSessionNode;
+	private PanelContainer? _debugOverlay;
+	private Label? _debugSnapshotLabel;
+	private bool _debugModeEnabled;
+	private bool _debugOverlayVisible = true;
 
 	public override void _Ready()
 	{
@@ -103,7 +107,13 @@ public partial class HudController : Control
 
 	private void OnRecordPausePressed()
 	{
-		_rideSessionNode?.PauseRideRecording();
+		_rideSessionNode?.ToggleRidePause();
+	}
+
+	public void SetRidePaused(bool paused)
+	{
+		if (_recordPauseButton is not null)
+			_recordPauseButton.Text = paused ? "Resume" : "Pause";
 	}
 
 	private void OnRecordStopPressed()
@@ -114,6 +124,79 @@ public partial class HudController : Control
 	private void OnSaveToStravaPressed()
 	{
 		_rideSessionNode?.SaveLastRecordingToStrava();
+	}
+
+	public void SetDebugMode(bool enabled)
+	{
+		_debugModeEnabled = enabled;
+		if (enabled) EnsureDebugOverlay();
+		if (_debugOverlay is not null) _debugOverlay.Visible = enabled && _debugOverlayVisible;
+		if (_modeLabel is not null && _modeLabel.Text.Length > 0)
+			_modeLabel.Text = _modeLabel.Text.Replace(" [DEBUG]", "") + (enabled ? " [DEBUG]" : "");
+	}
+
+	private void EnsureDebugOverlay()
+	{
+		if (_debugOverlay is not null) return;
+		_debugOverlay = new PanelContainer
+		{
+			Name = "DebugRideOverlay",
+			AnchorLeft = 0,
+			AnchorRight = 0,
+			AnchorTop = 0,
+			AnchorBottom = 0,
+			OffsetLeft = 12,
+			OffsetRight = 365,
+			OffsetTop = 12,
+			OffsetBottom = 274
+		};
+		var layout = new VBoxContainer();
+		_debugSnapshotLabel = new Label { Text = "DEBUG\nWaiting for ride state…", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		layout.AddChild(_debugSnapshotLabel);
+		var actions = new HBoxContainer();
+		var markButton = new Button { Text = "MARK" };
+		markButton.Pressed += () => _rideSessionNode?.WriteDebugMarker();
+		actions.AddChild(markButton);
+		actions.AddChild(new Label { Text = "Jump to m" });
+		var jumpDistance = new LineEdit { Name = "JumpDistance", PlaceholderText = "5830", CustomMinimumSize = new Vector2(82, 0) };
+		actions.AddChild(jumpDistance);
+		var jumpButton = new Button { Text = "Go" };
+		jumpButton.Pressed += () => _rideSessionNode?.JumpToRouteDistance(jumpDistance.Text);
+		actions.AddChild(jumpButton);
+		layout.AddChild(actions);
+		_debugOverlay.AddChild(layout);
+		AddChild(_debugOverlay);
+		_debugOverlay.Visible = _debugModeEnabled && _debugOverlayVisible;
+	}
+
+	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
+	{
+		if (!_debugModeEnabled || _debugSnapshotLabel is null) return;
+		_debugSnapshotLabel.Text =
+			$"DEBUG\nVirtual: {snapshot.virtualSpeedKph:F1} km/h\n" +
+			$"Trainer: {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "-"} km/h  Power: {snapshot.rawTrainerPowerWatts?.ToString() ?? "-"} W\n" +
+			$"Ride: {snapshot.totalRideDistanceMeters:F1} m\n" +
+			$"Wrapped: {snapshot.wrappedRouteDistanceMeters:F1} / {snapshot.routeLengthMeters:F0} m  Lap: {snapshot.lapNumber}\n" +
+			$"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}%\n" +
+			$"Sample: {snapshot.visualSampleBefore} -> {snapshot.visualSampleAfter} ({snapshot.visualInterpolation:F2})\n" +
+			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
+			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
+	}
+
+	public override void _UnhandledKeyInput(InputEvent @event)
+	{
+		if (!_debugModeEnabled || @event is not InputEventKey key || !key.Pressed || key.Echo) return;
+		if (key.Keycode == Key.F8 && _rideSessionNode?.IsRideActive == true)
+		{
+			_rideSessionNode.WriteDebugMarker();
+			GetViewport().SetInputAsHandled();
+		}
+		else if (key.Keycode == Key.F3 && _rideSessionNode?.IsRideActive == true)
+		{
+			_debugOverlayVisible = !_debugOverlayVisible;
+			if (_debugOverlay is not null) _debugOverlay.Visible = _debugOverlayVisible;
+			GetViewport().SetInputAsHandled();
+		}
 	}
 
 	private void OnMenuPressed()
@@ -135,7 +218,7 @@ public partial class HudController : Control
 	public void SetModeText(string mode)
 	{
 		if (_modeLabel is not null)
-			_modeLabel.Text = $"Mode: {mode}";
+			_modeLabel.Text = $"Mode: {mode}" + (_debugModeEnabled ? " [DEBUG]" : "");
 	}
 
 	public void SetStatus(string status)
@@ -146,6 +229,7 @@ public partial class HudController : Control
 
 	public void ResetHud()
 	{
+		SetRidePaused(false);
 		SetModeText("-");
 		SetStatus("Choose a mode to begin.");
 
