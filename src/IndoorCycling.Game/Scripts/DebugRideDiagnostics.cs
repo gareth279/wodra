@@ -102,6 +102,8 @@ public sealed record RideDebugSnapshot
     public int visibleVegetationChunks { get; init; }
     public int streetFurnitureLoaded { get; init; }
     public int nearbyStreetFurniture { get; init; }
+    public int backgroundStreetsLoaded { get; init; }
+    public int visibleStreetChunks { get; init; }
     public int visualSampleBefore { get; init; }
     public int visualSampleAfter { get; init; }
     public double visualInterpolation { get; init; }

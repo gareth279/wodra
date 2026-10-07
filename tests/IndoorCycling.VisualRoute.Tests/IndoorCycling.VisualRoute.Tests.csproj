@@ -9,6 +9,10 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VisualRoute.cs" Link="VisualRoute.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/CyclistAnimationMath.cs" Link="CyclistAnimationMath.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadRibbonMath.cs" Link="RoadRibbonMath.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BackgroundStreetGeometry.cs" Link="BackgroundStreetGeometry.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadsidePrimitiveMath.cs" Link="RoadsidePrimitiveMath.cs" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.route-points.json"
                       LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.landmarks.json"

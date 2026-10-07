@@ -23,6 +23,7 @@ public sealed class RouteAuthoringConfig
     public BuildingBuildOptions? Buildings { get; init; } = new();
     public VegetationBuildOptions? Vegetation { get; init; } = new();
     public StreetFurnitureBuildOptions? StreetFurniture { get; init; } = new();
+    public BackgroundStreetBuildOptions? BackgroundStreets { get; init; } = new();
     public List<RouteAnchor> LegacyReferencePoints { get; init; } = [];
     public double? ReferenceDistanceMeters { get; init; }
     public BoundingBox Bbox { get; init; } = new(0, 0, 0, 0);
@@ -59,6 +60,7 @@ public sealed class RouteAuthoringConfig
         Buildings?.Validate();
         Vegetation?.Validate();
         StreetFurniture?.Validate();
+        BackgroundStreets?.Validate();
         if (RoutingMode == "roadRef")
         {
             if (!Loop || PreferredRefs.Count == 0 || StartArea is null || TurnaroundArea is null)
@@ -85,6 +87,23 @@ public sealed class RouteAuthoringConfig
         if (Loop && (Math.Abs(Anchors[0].Latitude - Anchors[^1].Latitude) > 0.00001
             || Math.Abs(Anchors[0].Longitude - Anchors[^1].Longitude) > 0.00001))
             throw new InvalidDataException("For loop routes, the final anchor must close onto the first anchor.");
+    }
+}
+
+public sealed class BackgroundStreetBuildOptions
+{
+    public bool Enabled { get; init; }
+    public double SearchRadiusMeters { get; init; } = 200;
+    public double RouteOverlapSuppressionMeters { get; init; } = 8;
+    public double SampleSpacingMeters { get; init; } = 15;
+    public string ElevationCacheDirectory { get; init; } = "routes/cache/elevation";
+    public void Validate()
+    {
+        if (Enabled && (!double.IsFinite(SearchRadiusMeters) || SearchRadiusMeters <= 0 || SearchRadiusMeters > 1000
+            || !double.IsFinite(RouteOverlapSuppressionMeters) || RouteOverlapSuppressionMeters < 0
+            || !double.IsFinite(SampleSpacingMeters) || SampleSpacingMeters is < 10 or > 20
+            || string.IsNullOrWhiteSpace(ElevationCacheDirectory)))
+            throw new InvalidDataException("Background street radius, overlap suppression, sample spacing (10..20m), or elevation cache is invalid.");
     }
 }
 

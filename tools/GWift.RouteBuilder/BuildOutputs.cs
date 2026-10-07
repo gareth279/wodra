@@ -20,7 +20,8 @@ public static class BuildOutputs
     public static async Task WriteAsync(string outputDirectory, RouteAuthoringConfig config, string pbfPath,
         GraphBuildStats graphStats, RouteBuildResult result, double routeSolveSeconds,
         LandmarkExtractionResult? landmarks = null, BuildingExtractionResult? buildings = null,
-        VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null)
+        VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null,
+        BackgroundStreetExtractionResult? backgroundStreets = null)
     {
         Directory.CreateDirectory(outputDirectory);
         var generatedAt = DateTimeOffset.UtcNow;
@@ -34,6 +35,7 @@ public static class BuildOutputs
         var buildingsPath = Path.Combine(outputDirectory, $"{stem}.buildings.json");
         var vegetationPath = Path.Combine(outputDirectory, $"{stem}.vegetation.json");
         var furniturePath = Path.Combine(outputDirectory, $"{stem}.street-furniture.json");
+        var streetsPath = Path.Combine(outputDirectory, $"{stem}.streets.json");
 
         await File.WriteAllTextAsync(geoJsonPath, SerializeGeoJson(config, result, generatedAt));
         var pointsOutput = new
@@ -165,8 +167,22 @@ public static class BuildOutputs
             };
             await File.WriteAllTextAsync(furniturePath, JsonSerializer.Serialize(furnitureData, JsonOptions));
         }
+        if (result.IsValid && backgroundStreets is not null)
+        {
+            var streetData = new { id=config.Id, routeName=config.Name, source="OpenStreetMap", sourcePbfFilename=Path.GetFileName(pbfPath),
+                attribution="© OpenStreetMap contributors, ODbL 1.0", sampleSpacingMeters=config.BackgroundStreets?.SampleSpacingMeters,
+                statistics=new { waysConsidered=backgroundStreets.WaysConsidered, waysIncluded=backgroundStreets.WaysIncluded,
+                    highwayClassCounts=backgroundStreets.HighwayClassCounts, widthSourceCounts=backgroundStreets.WidthSourceCounts,
+                    namedStreetCount=backgroundStreets.NamedStreetCount,totalLengthMeters=backgroundStreets.TotalLengthMeters,
+                    suppressedOverlapMeters=backgroundStreets.SuppressedOverlapMeters,runtimeSampleCount=backgroundStreets.RuntimeSampleCount },
+                streets=backgroundStreets.Streets };
+            var streetJson=JsonSerializer.Serialize(streetData,JsonOptions);
+            await File.WriteAllTextAsync(streetsPath,streetJson);
+            var bundlePath=Path.GetFullPath(Path.Combine("src","IndoorCycling.Game","Data","Routes",$"{stem}.streets.json"));
+            Directory.CreateDirectory(Path.GetDirectoryName(bundlePath)!); await File.WriteAllTextAsync(bundlePath,streetJson);
+        }
         if (result.IsValid)
-            await File.WriteAllTextAsync(previewPath, SerializePreviewHtml(config, result, landmarks, buildings, vegetation, streetFurniture));
+            await File.WriteAllTextAsync(previewPath, SerializePreviewHtml(config, result, landmarks, buildings, vegetation, streetFurniture, backgroundStreets));
         else if (File.Exists(previewPath))
             File.Delete(previewPath);
         if (!result.IsValid && File.Exists(landmarksPath))
@@ -240,7 +256,8 @@ public static class BuildOutputs
 
     public static string SerializePreviewHtml(RouteAuthoringConfig config, RouteBuildResult result,
         LandmarkExtractionResult? landmarks = null, BuildingExtractionResult? buildings = null,
-        VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null)
+        VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null,
+        BackgroundStreetExtractionResult? backgroundStreets = null)
     {
         var candidateWarnings = result.Legs.Select((leg, index) => new PreviewWarning(index,
             leg.FromAnchor, leg.ToAnchor, BuildReviewReasons(leg, config)))
@@ -300,7 +317,9 @@ public static class BuildOutputs
             vegetationAreas = vegetation?.Areas ?? [],
             trees = vegetation?.Trees ?? [],
             streetFurnitureCount = streetFurniture?.Items.Count ?? 0,
-            streetFurniture = streetFurniture?.Items ?? []
+            streetFurniture = streetFurniture?.Items ?? [],
+            streetCount = backgroundStreets?.Streets.Count ?? 0,
+            streets = backgroundStreets?.Streets ?? []
         };
         var json = JsonSerializer.Serialize(data, JsonOptions);
         return PreviewHtmlTemplate.Replace("__ROUTE_REVIEW_DATA__", json, StringComparison.Ordinal);
@@ -388,7 +407,7 @@ public static class BuildOutputs
   </style>
 </head>
 <body>
-<div id="layout"><aside id="panel"><h2 id="route-title">Route review</h2><div id="summary"></div><div id="legend"></div><h3>Map layers</h3><label><input id="buildings-toggle" type="checkbox"> Buildings</label><br><label><input id="vegetation-toggle" type="checkbox"> Vegetation</label><br><label><input id="trees-toggle" type="checkbox"> Trees</label><br><label><input id="street-furniture-toggle" type="checkbox"> Street furniture</label><h3>Landmark candidates</h3><p id="landmark-summary"></p><p class="muted">Click an orange marker to inspect name, category, OSM tags, ID, and route distance. Tree markers appear at zoom 15+.</p><h3>Review notes</h3><div id="warnings"></div><h3>Route sections</h3><ol id="leg-list" class="leg-list"></ol><p class="tile-note">Map tiles load from OpenStreetMap when online. © OpenStreetMap contributors.</p></aside><main id="map" aria-label="Route review map"></main></div>
+<div id="layout"><aside id="panel"><h2 id="route-title">Route review</h2><div id="summary"></div><div id="legend"></div><h3>Map layers</h3><label><input id="buildings-toggle" type="checkbox"> Buildings</label><br><label><input id="vegetation-toggle" type="checkbox"> Vegetation</label><br><label><input id="trees-toggle" type="checkbox"> Trees</label><br><label><input id="street-furniture-toggle" type="checkbox"> Street furniture</label><br><label><input id="streets-toggle" type="checkbox"> Streets</label><h3>Landmark candidates</h3><p id="landmark-summary"></p><p class="muted">Click an orange marker to inspect name, category, OSM tags, ID, and route distance. Tree markers appear at zoom 15+.</p><h3>Review notes</h3><div id="warnings"></div><h3>Route sections</h3><ol id="leg-list" class="leg-list"></ol><p class="tile-note">Map tiles load from OpenStreetMap when online. © OpenStreetMap contributors.</p></aside><main id="map" aria-label="Route review map"></main></div>
 <script type="application/json" id="route-review-data">__ROUTE_REVIEW_DATA__</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -515,6 +534,16 @@ public static class BuildOutputs
     const popup=`<div class="popup-title">${esc(item.category)}</div><div>OSM ${esc(item.osmType)} ${esc(item.osmId)}</div><div>Route chainage: ${fmt(item.nearestRouteDistanceMeters)} m</div><div>Distance from route: ${fmt(item.distanceFromRouteMeters)} m</div><div>Elevation: ${fmt(item.elevationMeters)} m</div><div>Direction: ${item.directionDegrees==null?'route tangent '+fmt(item.routeTangentDegrees)+'°':fmt(item.directionDegrees)+'°'}</div>${item.name?`<div>Name: ${esc(item.name)}</div>`:''}<hr>${tags}`;
     L.marker(point,{icon:L.divIcon({className:'furniture-icon',html:`<span style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:${color};color:white;border:1px solid white;font-size:9px;font-weight:bold">${symbol}</span>`,iconSize:[20,20],iconAnchor:[10,10]})}).bindPopup(popup).addTo(furnitureLayer);
   });
+  const streetLayer=L.layerGroup();
+  const streetColors={motorway:'#30343b',trunk:'#414750',primary:'#525a63',secondary:'#646c75',tertiary:'#777f87',unclassified:'#858d94',residential:'#969da2',service:'#a3a9ad',living_street:'#858b91'};
+  data.streets.forEach(road=>{
+    const line=road.points.map(p=>[p.latitude,p.longitude]);
+    L.polyline(line,{color:streetColors[road.highway]||'#777',weight:Math.max(1,Math.min(8,road.widthMeters)),opacity:.72})
+      .bindPopup(`<b>${esc(road.name||'Unnamed road')}</b><br>Highway: ${esc(road.highway)}<br>OSM way: ${esc(road.osmId)}<br>Width: ${fmt(road.widthMeters)} m (${esc(road.widthSource)})<br>Oneway: ${road.oneway?'yes':'no'}<br>Distance from route: ${fmt(road.distanceFromRouteMeters)} m`).addTo(streetLayer);
+  });
+  const streetsToggle=document.getElementById('streets-toggle');
+  streetsToggle.parentElement.append(` (${data.streetCount} segments)`);
+  streetsToggle.addEventListener('change',()=>streetsToggle.checked?streetLayer.addTo(map):map.removeLayer(streetLayer));
   const furnitureToggle=document.getElementById('street-furniture-toggle');
   furnitureToggle.parentElement.append(` (${data.streetFurnitureCount} items)`);
   furnitureToggle.addEventListener('change',()=>furnitureToggle.checked?furnitureLayer.addTo(map):map.removeLayer(furnitureLayer));

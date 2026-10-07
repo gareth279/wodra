@@ -369,6 +369,8 @@ public partial class RideSessionNode : Node
 		visibleVegetationChunks = world?.VisibleVegetationChunks ?? 0,
 			streetFurnitureLoaded = world?.StreetFurnitureLoaded ?? 0,
 			nearbyStreetFurniture = world?.NearbyStreetFurniture ?? 0,
+			backgroundStreetsLoaded = world?.BackgroundStreetsLoaded ?? 0,
+			visibleStreetChunks = world?.VisibleStreetChunks ?? 0,
 			visualSampleBefore = pose.SampleIndexBefore,
 			visualSampleAfter = pose.SampleIndexAfter,
 			visualInterpolation = pose.Interpolation,

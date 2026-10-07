@@ -56,6 +56,13 @@
     "searchRadiusMeters": 80,
     "elevationCacheDirectory": "routes/cache/elevation"
   },
+  "backgroundStreets": {
+    "enabled": true,
+    "searchRadiusMeters": 200,
+    "routeOverlapSuppressionMeters": 8,
+    "sampleSpacingMeters": 15,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
   "anchors": [],
   "legacyReferencePoints": [
     { "name": "Start", "sourceDistanceMeters": 0, "latitude": -45.88355, "longitude": 170.49850 },

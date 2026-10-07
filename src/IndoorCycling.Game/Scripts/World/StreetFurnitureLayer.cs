@@ -47,8 +47,17 @@ public partial class StreetFurnitureLayer : Node3D
                         var position = ProceduralRoad.ToGodot(mapped);
                         var degrees = item.DirectionDegrees ?? item.RouteTangentDegrees;
                         var rotation = -degrees * Math.PI / 180d;
-                        var basis = new Basis(Vector3.Up, (float)rotation).Scaled(part.Scale);
-                        var offset = basis * part.LocalOffset;
+                        var rotationBasis = new Basis(Vector3.Up, (float)rotation);
+                        var basis = new Basis(rotationBasis.X * part.Scale.X,
+                            rotationBasis.Y * part.Scale.Y, rotationBasis.Z * part.Scale.Z);
+                        var bounds = part.Mesh.GetAabb().Size;
+                        var worldSize = RoadsidePrimitiveMath.WorldAabbSize(
+                            new System.Numerics.Vector3(bounds.X, bounds.Y, bounds.Z),
+                            new System.Numerics.Vector3(part.Scale.X, part.Scale.Y, part.Scale.Z), (float)rotation);
+                        if (!RoadsidePrimitiveMath.IsPlausibleStreetFurnitureSize(worldSize))
+                            throw new InvalidOperationException($"Street-furniture part '{part.Name}' in category '{category.Key}' exceeds the {RoadsidePrimitiveMath.MaximumStreetFurnitureExtentMeters:F0} m primitive bound.");
+                        // Local offsets are in metres; rotate them, but never apply the mesh's size scale to placement.
+                        var offset = rotationBasis * part.LocalOffset;
                         return new Transform3D(basis, position + offset);
                     }).ToArray();
                     var instance = CreateMultiMesh($"{category.Key}-{part.Name}", part.Mesh, part.Material, transforms);
@@ -92,14 +101,22 @@ public partial class StreetFurnitureLayer : Node3D
         var sign = new StandardMaterial3D { AlbedoColor = category is "stop-sign" or "traffic-signal" ? new Color(.78f,.12f,.1f) : new Color(.9f,.8f,.48f), Roughness = 1 };
         var wood = new StandardMaterial3D { AlbedoColor = new Color(.43f,.28f,.15f), Roughness = 1 };
         var gray = new StandardMaterial3D { AlbedoColor = new Color(.34f,.36f,.37f), Roughness = 1 };
+        var signalHousing = new StandardMaterial3D { AlbedoColor = new Color(.055f,.065f,.075f), Roughness = .9f };
+        var signalRed = new StandardMaterial3D { AlbedoColor = new Color(.8f,.035f,.025f), Roughness = .45f };
+        var signalAmber = new StandardMaterial3D { AlbedoColor = new Color(.95f,.48f,.025f), Roughness = .45f };
+        var signalGreen = new StandardMaterial3D { AlbedoColor = new Color(.03f,.55f,.12f), Roughness = .45f };
         Part Cylinder(string name, Material material, Vector3 scale, float y) =>
             new(name, new CylinderMesh { TopRadius = .5f, BottomRadius = .5f, Height = 1, RadialSegments = 6 }, material, scale, new Vector3(0,y,0));
         Part Box(string name, Material material, Vector3 scale, Vector3 offset) =>
             new(name, new BoxMesh { Size = Vector3.One }, material, scale, offset);
+        Part Lens(string name, Material material, float y) =>
+            new(name, new SphereMesh { Radius = .5f, Height = 1, RadialSegments = 8, Rings = 4 }, material,
+                new Vector3(.105f,.105f,.045f), new Vector3(0,y,.132f));
         return category switch
         {
             "street-lamp" => [Cylinder("pole",pole,new(.12f,6,.12f),3), Box("lamp-head",sign,new(.8f,.12f,.2f),new(0,5.9f,-.28f))],
-            "traffic-signal" => [Cylinder("pole",pole,new(.14f,4,.14f),2), Box("signal",sign,new(.38f,1.15f,.32f),new(0,3.9f,0))],
+            "traffic-signal" => [Cylinder("pole",pole,new(.11f,4, .11f),2), Box("signal-housing",signalHousing,new(.30f,.92f,.24f),new(0,3.82f,0)),
+                Lens("signal-red",signalRed,4.12f),Lens("signal-amber",signalAmber,3.83f),Lens("signal-green",signalGreen,3.54f)],
             "stop-sign" or "give-way-sign" or "traffic-sign" => [Cylinder("pole",pole,new(.1f,2.3f,.1f),1.15f), Box("sign",sign,new(.72f,.72f,.09f),new(0,2.15f,0))],
             "bollard" => [Cylinder("bollard",sign,new(.26f,.85f,.26f),.425f)],
             "crossing" => [Cylinder("crossing-post",pole,new(.13f,1.8f,.13f),.9f), Box("crossing-marker",sign,new(.46f,.38f,.12f),new(0,1.65f,0))],

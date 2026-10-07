@@ -550,6 +550,19 @@ var tests = new (string Name, Action Run)[]
             || !html.Contains("123",StringComparison.Ordinal))
             throw new Exception("Street furniture preview layer or item data is missing.");
     }),
+    ("route review exposes surrounding streets by class and detail popup", () =>
+    {
+        var config=Config([new RouteAnchor("Start",0,0,0),new RouteAnchor("Finish",200,0,.002)]);
+        var route=RouteSolver.Build(LineGraph(),config);
+        var road=new BackgroundStreet(55,"Main St","SH 1","residential",false,6,"class",
+            [new(0,.0005,12),new(0,.0006,12.2)],20,80);
+        var data=new BackgroundStreetExtractionResult(1,1,new Dictionary<string,int>{{"residential",1}},
+            new Dictionary<string,int>{{"class",1}},1,10,0,2,[road]);
+        var html=BuildOutputs.SerializePreviewHtml(config,route,backgroundStreets:data);
+        if(!html.Contains("streets-toggle",StringComparison.Ordinal)||!html.Contains("Highway: ${esc(road.highway)}",StringComparison.Ordinal)
+            ||!html.Contains("Main St",StringComparison.Ordinal)||!html.Contains("Oneway:",StringComparison.Ordinal))
+            throw new Exception("Preview street layer or detail popup metadata is missing.");
+    }),
     ("roadRef routing keeps the preferred ref as the route spine", () =>
     {
         var result = RouteSolver.Build(RoadRefLoopGraph(), RoadRefConfig());
@@ -613,7 +626,48 @@ var tests = new (string Name, Action Run)[]
         });
         Equal(first.Centreline.Count, second.Centreline.Count);
         for (var i = 0; i < first.Centreline.Count; i++) Equal(first.Centreline[i], second.Centreline[i]);
-    })
+    }),
+    ("background street extraction allows the requested highway classes", () =>
+    {
+        foreach(var kind in new[]{"motorway","trunk","primary","secondary","tertiary","unclassified","residential","service","living_street"})
+            Equal(true,BackgroundStreetExtractor.IsEligible(new Dictionary<string,string>{{"highway",kind}}));
+    }),
+    ("background streets exclude footways paths private roads and parking aisles", () =>
+    {
+        foreach(var tags in new[]{new Dictionary<string,string>{{"highway","footway"}},new(){{"highway","path"}},new(){{"highway","cycleway"}},new(){{"highway","service"},{"service","driveway"}},new(){{"highway","service"},{"service","parking_aisle"}},new(){{"highway","residential"},{"access","private"}}})
+            Equal(false,BackgroundStreetExtractor.IsEligible(tags));
+    }),
+    ("background street corridor radius is configurable", () =>
+    {
+        Equal(true,BackgroundStreetExtractor.IsWithinCorridor(199,200));Equal(false,BackgroundStreetExtractor.IsWithinCorridor(201,200));
+        Throws<InvalidDataException>(()=>new BackgroundStreetBuildOptions{Enabled=true,SearchRadiusMeters=0}.Validate());
+    }),
+    ("background street width parses explicit metric and feet values", () =>
+    {
+        Near(7.2,BackgroundStreetExtractor.ParseWidth(new Dictionary<string,string>{{"width","7.2 m"}},"residential").WidthMeters);
+        Near(6.096,BackgroundStreetExtractor.ParseWidth(new Dictionary<string,string>{{"width","20 ft"}},"residential").WidthMeters);
+    }),
+    ("background street width uses lane count before class fallback", () =>
+    {
+        var width=BackgroundStreetExtractor.ParseWidth(new Dictionary<string,string>{{"lanes","2"}},"residential");Near(6.4,width.WidthMeters);Equal("lanes",width.Source);
+    }),
+    ("background street width has class fallback", () =>
+    {
+        var width=BackgroundStreetExtractor.ParseWidth(new Dictionary<string,string>(),"service");Near(4.5,width.WidthMeters);Equal("class",width.Source);
+    }),
+    ("background route corridor overlap is suppressed", () =>
+    {
+        Equal(true,BackgroundStreetExtractor.SuppressRouteOverlap(7.9,8));Equal(false,BackgroundStreetExtractor.SuppressRouteOverlap(8.1,8));
+    }),
+    ("background street LINZ metadata carries each densified point elevation", () =>
+    {
+        var road=new BackgroundStreet(42,"Main",null,"residential",false,6,"class",[new(1,2,12.5),new(1.001,2.001,13)],4,100);
+        Equal(12.5,road.Points[0].ElevationMeters);Equal(13d,road.Points[1].ElevationMeters);
+    }),
+    ("background street output ordering is deterministic", () =>
+    {
+        var tags=new Dictionary<string,string>{{"highway","residential"}};var a=JsonSerializer.Serialize(BackgroundStreetExtractor.ParseWidth(tags,"residential"));var b=JsonSerializer.Serialize(BackgroundStreetExtractor.ParseWidth(tags,"residential"));Equal(a,b);
+    }),
 };
 
 var failures = 0;

@@ -4109,7 +4109,7 @@
     "cacheHit": true,
     "cacheBuildSeconds": 74.76499629999999
   },
-  "generatedAtUtc": "2026-10-07T06:00:31.8256071+00:00",
+  "generatedAtUtc": "2026-10-07T18:32:20.2173033+00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -4128,14 +4128,14 @@
         ]
       },
       {
-        "name": "Toitū Te Whenua Land Information New Zealand",
+        "name": "Toit\u016B Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -4185,5 +4185,33 @@
     "profileCsv": "dunedin-one-way-oval-gardens.elevation.csv",
     "elapsedSeconds": 5.294392599957064,
     "method": "centered distance-based moving average and centered gradient on regular samples"
+  },
+  "backgroundStreets": {
+    "waysConsidered": 381,
+    "waysIncluded": 309,
+    "streetSegments": 310,
+    "highwayClassCounts": {
+      "residential": 61,
+      "secondary": 81,
+      "service": 51,
+      "tertiary": 74,
+      "trunk": 19,
+      "unclassified": 23
+    },
+    "namedStreets": 249,
+    "totalLengthMeters": 27023.1312566098,
+    "suppressedOverlapMeters": 6142.694848667443,
+    "widthSourceCounts": {
+      "class": 147,
+      "lanes": 157,
+      "width": 5
+    },
+    "runtimeSampleCount": 3005,
+    "triangleCount": 5390,
+    "meshChunkCount": 31,
+    "routeChunkCount": 14,
+    "sceneNodeImpact": 32,
+    "extractionSeconds": 39.8953624,
+    "elevationSamplingSeconds": 14.6092428
   }
 }

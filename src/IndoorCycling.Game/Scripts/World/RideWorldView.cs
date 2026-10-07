@@ -10,7 +10,8 @@ public readonly record struct RideWorldDiagnostic(
     Godot.Vector3? NearestLandmarkWorldPosition = null, double? NearestLandmarkDistanceMeters = null,
     int BuildingsLoaded = 0, int VisibleBuildingChunks = 0,
       int VegetationAreas = 0, int TreesLoaded = 0, int VisibleVegetationChunks = 0,
-      int StreetFurnitureLoaded = 0, int NearbyStreetFurniture = 0);
+      int StreetFurnitureLoaded = 0, int NearbyStreetFurniture = 0,
+      int BackgroundStreetsLoaded = 0, int VisibleStreetChunks = 0);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -20,12 +21,13 @@ public partial class RideWorldView : Node3D
     private RouteDefinition? _loadedRoute;
     private VisualRoute? _geometry;
     private Node3D? _routeRoot;
-    private Node3D _rider = default!;
+    private CyclistVisual _rider = default!;
     private ChaseCamera _camera = default!;
     private LandmarkLayer? _landmarkLayer;
     private BuildingLayer? _buildingLayer;
     private VegetationLayer? _vegetationLayer;
     private StreetFurnitureLayer? _streetFurnitureLayer;
+    private BackgroundStreetLayer? _backgroundStreetLayer;
     private double _debugElapsed;
     private bool _wasActive;
     private VisualRoutePose _lastPose;
@@ -35,7 +37,8 @@ public partial class RideWorldView : Node3D
         _session = GetNode<RideSessionNode>("../RideSessionNode");
         _camera = new ChaseCamera { Name = "ChaseCamera" };
         AddChild(_camera);
-        _rider = CreateRider();
+        _rider = new CyclistVisual { Name = "CyclistVisual" };
+        _rider.Build();
         AddChild(_rider);
         AddChild(new DirectionalLight3D
         {
@@ -77,13 +80,16 @@ public partial class RideWorldView : Node3D
         _lastPose = pose;
         var position = ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 0.04f;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
-        _rider.GlobalPosition = position;
-        _rider.LookAt(position + forward, Vector3.Up);
+        var rideState = _session.CurrentRideState;
+        _rider.UpdateFromRideState(position, forward, rideState.VirtualSpeedKph,
+            rideState.CurrentCadenceRpm, _loadedRoute!.GetGradientAt(distance),
+            _session.IsRidePaused, delta);
         _camera.Follow(position, forward, delta);
         _landmarkLayer?.UpdateForRideDistance(distance);
         _buildingLayer?.UpdateForRideDistance(distance);
         _vegetationLayer?.UpdateForRideDistance(distance);
         _streetFurnitureLayer?.UpdateForRideDistance(distance);
+        _backgroundStreetLayer?.UpdateForRideDistance(distance);
         _debugElapsed += delta;
         if (DebugPoseLogging && _debugElapsed >= 1)
         {
@@ -108,7 +114,8 @@ public partial class RideWorldView : Node3D
             _buildingLayer?.BuildingsLoaded ?? 0, _buildingLayer?.VisibleChunkCount ?? 0,
             _vegetationLayer?.VegetationAreaCount ?? 0, _vegetationLayer?.TreesLoaded ?? 0,
             _vegetationLayer?.VisibleVegetationChunks ?? 0,
-            _streetFurnitureLayer?.LoadedCount ?? 0, _streetFurnitureLayer?.NearbyCount ?? 0);
+            _streetFurnitureLayer?.LoadedCount ?? 0, _streetFurnitureLayer?.NearbyCount ?? 0,
+            _backgroundStreetLayer?.LoadedStreetCount ?? 0, _backgroundStreetLayer?.VisibleChunkCount ?? 0);
     }
 
     private void LoadRoute(RouteDefinition route)
@@ -124,15 +131,20 @@ public partial class RideWorldView : Node3D
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, new Color(0.28f, 0.45f, 0.22f)));
-        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, new Color(0.17f, 0.18f, 0.2f)));
+        var asphalt = new Color(0.17f, 0.18f, 0.2f);
+        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
+        var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
+        if (junctionFill is not null) _routeRoot.AddChild(junctionFill);
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
         foreach (float offset in new[] { -3.25f, 3.25f })
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+        _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry));
         _routeRoot.AddChild(RoadsideDelineators.Build(_geometry));
         _landmarkLayer = null;
         _buildingLayer = null;
         _vegetationLayer = null;
         _streetFurnitureLayer = null;
+        _backgroundStreetLayer = null;
         RouteVegetationData? vegetationData = null;
         if (route.Id == "dunedin-one-way-oval-gardens")
         {
@@ -169,6 +181,14 @@ public partial class RideWorldView : Node3D
             _routeRoot.AddChild(_streetFurnitureLayer);
             _streetFurnitureLayer.Configure(_geometry, route, furniture);
             _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            var streets=RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
+                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json",route.Id);
+            if(streets is not null){
+                _backgroundStreetLayer=new BackgroundStreetLayer{Name="BackgroundStreets"};
+                _routeRoot.AddChild(_backgroundStreetLayer);
+                _backgroundStreetLayer.Configure(_geometry,streets);
+                _backgroundStreetLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
         }
         var positions = _geometry.Samples.Select(v => v.Position).ToArray();
         float minX = positions.Min(p => p.X), maxX = positions.Max(p => p.X);
@@ -202,41 +222,14 @@ public partial class RideWorldView : Node3D
              streetFurnitureLoaded = _streetFurnitureLayer?.LoadedCount ?? 0,
              streetFurnitureMultiMeshes = _streetFurnitureLayer?.MultiMeshCount ?? 0,
              streetFurnitureSceneNodes = _streetFurnitureLayer?.SceneNodeCount ?? 0,
-             streetFurnitureBuildMilliseconds = _streetFurnitureLayer?.BuildMilliseconds ?? 0
+             streetFurnitureBuildMilliseconds = _streetFurnitureLayer?.BuildMilliseconds ?? 0,
+             backgroundStreetsLoaded = _backgroundStreetLayer?.LoadedStreetCount ?? 0,
+             visibleStreetChunks = _backgroundStreetLayer?.VisibleChunkCount ?? 0,
+             backgroundStreetMeshes = _backgroundStreetLayer?.MeshChunkCount ?? 0,
+             backgroundStreetTriangles = _backgroundStreetLayer?.TriangleCount ?? 0,
+             backgroundStreetBuildMilliseconds = _backgroundStreetLayer?.BuildMilliseconds ?? 0,
+            cyclistNodes = _rider.ApproximateNodeCount,
+            cyclistApproximateTriangles = _rider.ApproximateTriangleCount
         });
-    }
-
-    private static Node3D CreateRider()
-    {
-        var rider = new Node3D { Name = "PlaceholderCyclist" };
-        var dark = new StandardMaterial3D { AlbedoColor = new Color(0.06f, 0.06f, 0.08f), Roughness = 1 };
-        var blue = new StandardMaterial3D { AlbedoColor = new Color(0.12f, 0.45f, 0.95f) };
-        foreach (float z in new[] { -0.65f, 0.65f })
-            rider.AddChild(new MeshInstance3D
-            {
-                Mesh = new CylinderMesh { TopRadius = 0.34f, BottomRadius = 0.34f, Height = 0.09f },
-                Position = new Vector3(0, 0.34f, z), Rotation = new Vector3(0, 0, Mathf.Pi / 2), MaterialOverride = dark
-            });
-        rider.AddChild(new MeshInstance3D
-        {
-            Mesh = new BoxMesh { Size = new Vector3(0.12f, 0.15f, 1.3f) },
-            Position = new Vector3(0, 0.62f, 0), MaterialOverride = blue
-        });
-        rider.AddChild(new MeshInstance3D
-        {
-            Mesh = new CapsuleMesh { Radius = 0.23f, Height = 0.85f },
-            Position = new Vector3(0, 1.18f, 0), Rotation = new Vector3(-0.3f, 0, 0), MaterialOverride = blue
-        });
-        rider.AddChild(new MeshInstance3D
-        {
-            Mesh = new SphereMesh { Radius = 0.19f, Height = 0.38f },
-            Position = new Vector3(0, 1.78f, -0.18f), MaterialOverride = new StandardMaterial3D { AlbedoColor = Colors.Orange }
-        });
-        rider.AddChild(new MeshInstance3D
-        {
-            Mesh = new BoxMesh { Size = new Vector3(0.65f, 0.08f, 0.08f) },
-            Position = new Vector3(0, 0.95f, -0.65f), MaterialOverride = dark
-        });
-        return rider;
     }
 }

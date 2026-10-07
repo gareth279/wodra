@@ -37,6 +37,7 @@ try
             Buildings = config.Buildings,
             Vegetation = config.Vegetation,
             StreetFurniture = config.StreetFurniture,
+            BackgroundStreets = config.BackgroundStreets,
             LegacyReferencePoints = config.LegacyReferencePoints,
             ReferenceDistanceMeters = config.ReferenceDistanceMeters, Bbox = config.Bbox,
             MarginMeters = config.MarginMeters, MaxSnapDistanceMeters = double.Parse(snapText),
@@ -79,8 +80,17 @@ try
         Console.WriteLine($"Street furniture extraction: candidates {streetFurniture.TotalCandidates}, selected {streetFurniture.Items.Count}, inside road ribbon {streetFurniture.ItemsInsideRoadRibbon}");
         streetFurniture = await StreetFurnitureElevationSampler.SampleAsync(streetFurniture, config.StreetFurniture!.ElevationCacheDirectory);
     }
+    BackgroundStreetExtractionResult? backgroundStreets = result.IsValid && config.BackgroundStreets is { Enabled: true } streetOptions
+        ? BackgroundStreetExtractor.Extract(pbf, result.RoutePoints, streetOptions)
+        : null;
+    if (backgroundStreets is not null)
+    {
+        Console.WriteLine($"Background streets: candidate ways {backgroundStreets.WaysConsidered}, included pieces {backgroundStreets.WaysIncluded}, total {backgroundStreets.TotalLengthMeters:F1} m, overlap suppressed {backgroundStreets.SuppressedOverlapMeters:F1} m");
+        Console.WriteLine($"Background street classes: {string.Join(", ", backgroundStreets.HighwayClassCounts.Select(p=>$"{p.Key}={p.Value}"))}; named {backgroundStreets.NamedStreetCount}; width sources {string.Join(", ", backgroundStreets.WidthSourceCounts.Select(p=>$"{p.Key}={p.Value}"))}; samples {backgroundStreets.RuntimeSampleCount}; extraction/elevation seconds {backgroundStreets.GenerationSeconds:F2}");
+        backgroundStreets = await BackgroundStreetElevationSampler.SampleAsync(backgroundStreets, config.BackgroundStreets!.ElevationCacheDirectory);
+    }
     await BuildOutputs.WriteAsync(outputDirectory, config, pbf, graph.Stats, result,
-        solveTimer.Elapsed.TotalSeconds, landmarks, buildings, vegetation, streetFurniture);
+        solveTimer.Elapsed.TotalSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets);
     if (result.IsValid && config.Elevation is { Enabled: true } elevation)
         await ElevationPipelineRunner.RunAsync(outputDirectory, config.Id, elevation);
     return result.IsValid ? 0 : 2;

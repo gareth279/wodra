@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 public static class ProceduralRoad
@@ -8,40 +10,160 @@ public static class ProceduralRoad
     {
         var surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);
-        for (int i = 0; i < route.Samples.Count - 1; i++)
+        var positions = route.Samples.Select(sample => sample.Position).ToArray();
+        var quads = RoadRibbonMath.BuildQuads(positions, width, offset);
+        for (var i = 0; i < quads.Count; i++)
         {
-            var a = Edge(route.Samples[i], width, height, offset);
-            var b = Edge(route.Samples[i + 1], width, height, offset);
-            Vertex(surface, a.Left, a.Normal);
-            Vertex(surface, b.Left, b.Normal);
-            Vertex(surface, a.Right, a.Normal);
-            Vertex(surface, a.Right, a.Normal);
-            Vertex(surface, b.Left, b.Normal);
-            Vertex(surface, b.Right, b.Normal);
+            var quad = quads[i];
+            var up = Vector3.Up * height;
+            AddQuad(surface, ToGodot(quad.StartLeft) + up, ToGodot(quad.EndLeft) + up,
+                ToGodot(quad.StartRight) + up, ToGodot(quad.EndRight) + up, SegmentNormal(route, i));
         }
-        return new MeshInstance3D
-        {
-            Mesh = surface.Commit(),
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = colour,
-                Roughness = 1,
-                CullMode = BaseMaterial3D.CullModeEnum.Disabled
-            }
-        };
+        return CreateSurface("RoadRibbon", surface, colour);
     }
 
-    private static (Vector3 Left, Vector3 Right, Vector3 Normal) Edge(
-        VisualRouteSample sample, float width, float height, float offset)
+    /// <summary>Small asphalt pads join only sharp route discontinuities; no offset ribbon crosses the corner.</summary>
+    public static MeshInstance3D? BuildSharpJoinFills(VisualRoute route, float roadWidth, Color colour)
     {
-        var forward = ToGodot(sample.Forward);
-        var horizontal = new Vector3(forward.X, 0, forward.Z).Normalized();
-        if (horizontal.LengthSquared() < 0.001f) horizontal = Vector3.Forward;
-        var right = horizontal.Cross(Vector3.Up).Normalized();
-        var centre = ToGodot(sample.Position) + Vector3.Up * height + right * offset;
-        return (centre - right * width / 2, centre + right * width / 2,
-            right.Cross(forward).Normalized());
+        var last = route.Samples.Count - 1;
+        var sharp = new List<int>();
+        for (var i = 0; i < last; i++)
+        {
+            var (previous, next) = Neighbours(route, i);
+            if (JoinType(previous, route.Samples[i], next) == RoadJoinType.Discontinuity)
+                sharp.Add(i);
+        }
+        if (sharp.Count == 0) return null;
+
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        var radius = roadWidth / 2 + 0.05f;
+        foreach (var index in sharp)
+        {
+            var center = ToGodot(route.Samples[index].Position) + Vector3.Up * 0.012f;
+            const int sides = 16;
+            for (var side = 0; side < sides; side++)
+            {
+                var a = side * Mathf.Tau / sides;
+                var b = (side + 1) * Mathf.Tau / sides;
+                var first = center + new Vector3(Mathf.Cos(a) * radius, 0, Mathf.Sin(a) * radius);
+                var second = center + new Vector3(Mathf.Cos(b) * radius, 0, Mathf.Sin(b) * radius);
+                Vertex(surface, center, Vector3.Up);
+                Vertex(surface, first, Vector3.Up);
+                Vertex(surface, second, Vector3.Up);
+            }
+        }
+        return CreateSurface("SharpJoinRoadFill", surface, colour);
     }
+
+    public static Node3D BuildKerbsAndFootpaths(VisualRoute route)
+    {
+        var edges = new Node3D { Name = "KerbsAndFootpaths" };
+        var kerbFace = new Color(0.48f, 0.49f, 0.47f);
+        var kerbTop = new Color(0.62f, 0.63f, 0.60f);
+        var footpath = new Color(0.47f, 0.48f, 0.45f);
+        foreach (float side in new[] { -1f, 1f })
+        {
+            edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.5f, 0.005f, 0.14f, kerbFace, true));
+            edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.73f, 0.14f, 0.14f, kerbTop, true));
+            edges.AddChild(BuildProfileRibbon(route, side * 3.73f, side * 6.0f, 0.14f, 0.11f, footpath, true));
+        }
+        return edges;
+    }
+
+    private static MeshInstance3D BuildProfileRibbon(VisualRoute route, float lateralStart, float lateralEnd,
+        float startHeight, float endHeight, Color colour, bool capSharpEnds)
+    {
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        for (var i = 0; i < route.Samples.Count - 1; i++)
+        {
+            var start = ProfileEdge(route, i, lateralStart, lateralEnd, startHeight, endHeight, true);
+            var end = ProfileEdge(route, i + 1, lateralStart, lateralEnd, startHeight, endHeight, false);
+            AddQuad(surface, start.Left, end.Left, start.Right, end.Right, start.Normal);
+            if (capSharpEnds && IsDiscontinuity(route, i)) AddProfileCap(surface, start, SegmentForward(route, i), lateralStart == lateralEnd);
+            if (capSharpEnds && IsDiscontinuity(route, i + 1)) AddProfileCap(surface, end, -SegmentForward(route, i), lateralStart == lateralEnd);
+        }
+        return CreateSurface("RouteEdge", surface, colour);
+    }
+
+    private static (Vector3 Left, Vector3 Right, Vector3 Normal) ProfileEdge(VisualRoute route, int index,
+        float lateralStart, float lateralEnd, float startHeight, float endHeight, bool segmentStart)
+    {
+        var sample = route.Samples[index];
+        var (previous, next) = Neighbours(route, index);
+        var left = ToGodot(sample.Position) + MiterOffset(previous, sample, next, lateralStart, segmentStart) + Vector3.Up * startHeight;
+        var right = ToGodot(sample.Position) + MiterOffset(previous, sample, next, lateralEnd, segmentStart) + Vector3.Up * endHeight;
+        var normal = (right - left).Cross(SegmentForward(route, index, segmentStart)).Normalized();
+        if (normal.LengthSquared() < 0.001f) normal = Vector3.Up;
+        return (left, right, normal);
+    }
+
+    private static void AddProfileCap(SurfaceTool surface,
+        (Vector3 Left, Vector3 Right, Vector3 Normal) section, Vector3 inward, bool verticalFace)
+    {
+        var cap = RoadRibbonMath.BuildSharpEndCap(ToNumerics(section.Left), ToNumerics(section.Right),
+            ToNumerics(inward), 0.08f, verticalFace);
+        var capNormal = (section.Right - section.Left).Cross(inward).Normalized();
+        if (capNormal.LengthSquared() < 0.001f) capNormal = Vector3.Right;
+        AddQuad(surface, ToGodot(cap.StartLeft), ToGodot(cap.EndLeft),
+            ToGodot(cap.StartRight), ToGodot(cap.EndRight), capNormal);
+    }
+
+    private static void AddQuad(SurfaceTool surface, Vector3 aLeft, Vector3 bLeft,
+        Vector3 aRight, Vector3 bRight, Vector3 normal)
+    {
+        Vertex(surface, aLeft, normal);
+        Vertex(surface, bLeft, normal);
+        Vertex(surface, aRight, normal);
+        Vertex(surface, aRight, normal);
+        Vertex(surface, bLeft, normal);
+        Vertex(surface, bRight, normal);
+    }
+
+    private static (VisualRouteSample Previous, VisualRouteSample Next) Neighbours(VisualRoute route, int index)
+    {
+        var last = route.Samples.Count - 1;
+        return (route.Samples[index == 0 ? last - 1 : index - 1],
+            route.Samples[index == last ? 1 : index + 1]);
+    }
+
+    private static Vector3 MiterOffset(VisualRouteSample previous, VisualRouteSample current,
+        VisualRouteSample next, float distance, bool segmentStart) => ToGodot(RoadRibbonMath.OffsetAtJoin(
+            ToNumerics(previous.Position), ToNumerics(current.Position), ToNumerics(next.Position), distance, segmentStart));
+
+    private static RoadJoinType JoinType(VisualRouteSample previous, VisualRouteSample current, VisualRouteSample next) =>
+        RoadRibbonMath.ClassifyJoin(ToNumerics(previous.Position), ToNumerics(current.Position), ToNumerics(next.Position));
+
+    private static bool IsDiscontinuity(VisualRoute route, int index)
+    {
+        var (previous, next) = Neighbours(route, index);
+        return JoinType(previous, route.Samples[index], next) == RoadJoinType.Discontinuity;
+    }
+
+    private static Vector3 SegmentForward(VisualRoute route, int index, bool segmentStart = true)
+    {
+        var from = route.Samples[index].Position;
+        var to = route.Samples[segmentStart ? index + 1 : index - 1].Position;
+        return (ToGodot(to) - ToGodot(from)).Normalized();
+    }
+
+    private static Vector3 SegmentNormal(VisualRoute route, int index)
+    {
+        var forward = SegmentForward(route, index);
+        var horizontal = new Vector3(forward.X, 0, forward.Z).Normalized();
+        return horizontal.Cross(Vector3.Up).Cross(forward).Normalized();
+    }
+
+    private static MeshInstance3D CreateSurface(string name, SurfaceTool surface, Color colour) => new()
+    {
+        Name = name,
+        Mesh = surface.Commit(),
+        MaterialOverride = new StandardMaterial3D
+        {
+            AlbedoColor = colour, Roughness = 1, CullMode = BaseMaterial3D.CullModeEnum.Disabled
+        }
+    };
 
     private static void Vertex(SurfaceTool surface, Vector3 position, Vector3 normal)
     {
@@ -49,5 +171,7 @@ public static class ProceduralRoad
         surface.AddVertex(position);
     }
 
-    public static Vector3 ToGodot(System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
+    private static System.Numerics.Vector3 ToNumerics(Vector3 vector) => new(vector.X, vector.Y, vector.Z);
+    private static System.Numerics.Vector3 ToNumerics(System.Numerics.Vector3 vector) => vector;
+    public static Vector3 ToGodot(System.Numerics.Vector3 vector) => new(vector.X, vector.Y, vector.Z);
 }

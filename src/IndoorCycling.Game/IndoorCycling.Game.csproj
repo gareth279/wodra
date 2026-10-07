@@ -17,6 +17,9 @@
                       LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.street-furniture.json"
                       LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.streets.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json"
+                      Condition="Exists('Data\Routes\dunedin-one-way-oval-gardens.streets.json')" />
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />    
     <ProjectReference Include="..\IndoorCycling.Trainer.Windows\IndoorCycling.Trainer.Windows.csproj" />
