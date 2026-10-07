@@ -8,5 +8,16 @@
   <ItemGroup>
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VisualRoute.cs" Link="VisualRoute.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.route-points.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.landmarks.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.buildings.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.vegetation.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.street-furniture.json"
+                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
   </ItemGroup>
 </Project>

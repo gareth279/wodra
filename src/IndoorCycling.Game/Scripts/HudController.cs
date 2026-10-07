@@ -178,7 +178,14 @@ public partial class HudController : Control
 			$"Ride: {snapshot.totalRideDistanceMeters:F1} m\n" +
 			$"Wrapped: {snapshot.wrappedRouteDistanceMeters:F1} / {snapshot.routeLengthMeters:F0} m  Lap: {snapshot.lapNumber}\n" +
 			$"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}%\n" +
+			$"Elevation: {snapshot.routeElevationMeters?.ToString("F1") ?? "-"} m  Raw: {snapshot.rawRouteElevationMeters?.ToString("F1") ?? "-"} m  Visual Y: {snapshot.visualRelativeElevationMeters?.ToString("F1") ?? "-"} m\n" +
 			$"Sample: {snapshot.visualSampleBefore} -> {snapshot.visualSampleAfter} ({snapshot.visualInterpolation:F2})\n" +
+			$"Landmarks nearby: {snapshot.nearbyLandmarkCount}  Nearest: {snapshot.nearestLandmarkName ?? "-"} " +
+			$"@ {snapshot.nearestLandmarkRouteDistanceMeters?.ToString("F0") ?? "-"} m / " +
+			$"{snapshot.nearestLandmarkDistanceMeters?.ToString("F0") ?? "-"} m away\n" +
+			$"Buildings: {snapshot.buildingsLoaded} loaded  Visible chunks: {snapshot.visibleBuildingChunks}\n" +
+			$"Vegetation areas: {snapshot.vegetationAreas}  Trees loaded: {snapshot.treesLoaded}  Visible chunks: {snapshot.visibleVegetationChunks}\n" +
+			$"Street furniture loaded: {snapshot.streetFurnitureLoaded}  Nearby: {snapshot.nearbyStreetFurniture}\n" +
 			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
 			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
 	}

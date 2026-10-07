@@ -15,15 +15,30 @@ public sealed class VisualRoute
 {
     private const double EarthRadiusMeters = 6371000;
     private readonly VisualRouteSample[] _samples;
+    private readonly RoutePoint? _geographicOrigin;
     public IReadOnlyList<VisualRouteSample> Samples => _samples;
     // Compatibility alias; this is the same canonical sample array, not a second path.
     public IReadOnlyList<VisualRouteSample> Vertices => _samples;
     public double LengthMeters { get; }
     public Vector3 ClosureCorrection { get; }
+    public float GroundPlaneY { get; }
+    public const float GroundClearanceMeters = 10;
 
     // Synthetic/nonclosed data is visually closed over the last quarter of a lap.
     // This affects rendering only, never route grades, ride distance or FIT samples.
     public const double ClosureStartFraction = 0.75;
+
+    /// <summary>Maps WGS84 coordinates into this route's local east/up/south world frame.</summary>
+    public Vector3 GetPositionForCoordinate(double latitude, double longitude, double elevationMeters)
+    {
+        var origin = _geographicOrigin
+            ?? throw new InvalidOperationException("Geographic landmark positions require a route with GPS points.");
+        const double radians = Math.PI / 180;
+        return new Vector3(
+            (float)((longitude - origin.Longitude) * radians * EarthRadiusMeters * Math.Cos(origin.Latitude * radians)),
+            (float)(elevationMeters - origin.ElevationMeters),
+            (float)(-(latitude - origin.Latitude) * radians * EarthRadiusMeters));
+    }
 
     public VisualRoute(RouteDefinition route, double spacingMeters = 10)
     {
@@ -40,6 +55,7 @@ public sealed class VisualRoute
             distances.Add(Math.Clamp(segment.EndMeters, 0, LengthMeters));
         }
         var gps = route.Points?.OrderBy(p => p.DistanceMeters).ToArray();
+        _geographicOrigin = gps is { Length: >= 2 } ? gps[0] : null;
         if (gps is { Length: >= 2 })
             foreach (var point in gps) distances.Add(Math.Clamp(point.DistanceMeters, 0, LengthMeters));
 
@@ -50,7 +66,7 @@ public sealed class VisualRoute
         {
             Vector3 position;
             if (gps is { Length: >= 2 })
-                position = GpsPosition(route, gps, d);
+                position = GpsPosition(gps, d);
             else
             {
                 // A closed circle provides a usable road for routes with only grades.
@@ -96,48 +112,7 @@ public sealed class VisualRoute
                 i == corrected.Length - 1 ? LengthMeters : cumulative[i] * scale,
                 positions[i], Vector3.Normalize(tangent));
         }
-    }
-
-    private static Vector3 GpsPosition(RouteDefinition route, RoutePoint[] points, double distance)
-    {
-        // The Dunedin source has only one point on its final 121 m return to the
-        // start, so ordinary GPS interpolation creates a straight shortcut across
-        // the Oval. Use a local endpoint-tangent closure arc until tail GPS is added.
-        if (route.Id == "dunedin-one-way-oval-gardens" && points.Length >= 3
-            && IsSameLocation(points[0], points[^1])
-            && distance >= points[^2].DistanceMeters && distance <= points[^1].DistanceMeters)
-        {
-            return DunedinTailClosurePosition(points, distance);
-        }
-
-        return GpsPosition(points, distance);
-    }
-
-    private static bool IsSameLocation(RoutePoint a, RoutePoint b) =>
-        Math.Abs(a.Latitude - b.Latitude) < 1e-9 && Math.Abs(a.Longitude - b.Longitude) < 1e-9;
-
-    private static Vector3 DunedinTailClosurePosition(RoutePoint[] points, double distance)
-    {
-        var start = points[^2];
-        var end = points[^1];
-        var p0 = GpsPosition(points, start.DistanceMeters);
-        var p1 = GpsPosition(points, end.DistanceMeters);
-        var previous = GpsPosition(points, points[^3].DistanceMeters);
-        var next = GpsPosition(points, points[1].DistanceMeters);
-        var span = end.DistanceMeters - start.DistanceMeters;
-        // The authored interval is only 121 m despite its incoming and outgoing
-        // bearings turning back toward one another. Longer local handles form a
-        // broad turn instead of preserving almost the entire interior-cutting chord.
-        var handleLength = (float)span * 2;
-        var tangentStart = Vector3.Normalize(p0 - previous) * handleLength;
-        var tangentEnd = Vector3.Normalize(next - p1) * handleLength;
-        var t = (float)((distance - start.DistanceMeters) / span);
-        var t2 = t * t;
-        var t3 = t2 * t;
-        return p0 * (2 * t3 - 3 * t2 + 1)
-            + tangentStart * (t3 - 2 * t2 + t)
-            + p1 * (-2 * t3 + 3 * t2)
-            + tangentEnd * (t3 - t2);
+        GroundPlaneY = positions.Min(p => p.Y) - GroundClearanceMeters;
     }
 
     private static Vector3 GpsPosition(RoutePoint[] points, double distance)

@@ -73,3 +73,7 @@ coverage.xml
 
 # Local NuGet fallback packages
 packages/
+# OpenStreetMap source extracts
+*.osm.pbf
+*.pbf
+routes/cache/

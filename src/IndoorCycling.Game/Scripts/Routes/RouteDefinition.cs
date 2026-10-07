@@ -20,6 +20,8 @@ public sealed record RouteDefinition(
 
 	public double GetGradientAt(double rideDistanceMeters)
 	{
+		if (Points is { Count: >= 2 } points && points[0].GradientPercent.HasValue)
+			return InterpolatePoint(GetLoopDistance(rideDistanceMeters))?.GradientPercent ?? 0;
 		if (DistanceMeters <= 0 || Segments.Count == 0)
 			return 0;
 
@@ -58,7 +60,8 @@ public sealed record RouteDefinition(
 			Latitude: routePoint?.Latitude,
 			Longitude: routePoint?.Longitude,
 			ElevationMeters: routePoint?.ElevationMeters,
-			SegmentLabel: segment?.Label ?? "-"
+			SegmentLabel: segment?.Label ?? "-",
+			RawElevationMeters: routePoint?.RawElevationMeters
 		);
 	}
 
@@ -91,7 +94,11 @@ public sealed record RouteDefinition(
 			DistanceMeters: loopDistanceMeters,
 			Latitude: Lerp(before.Latitude, after.Latitude, ratio),
 			Longitude: Lerp(before.Longitude, after.Longitude, ratio),
-			ElevationMeters: Lerp(before.ElevationMeters, after.ElevationMeters, ratio)
+			ElevationMeters: Lerp(before.ElevationMeters, after.ElevationMeters, ratio),
+			RawElevationMeters: before.RawElevationMeters.HasValue && after.RawElevationMeters.HasValue
+				? Lerp(before.RawElevationMeters.Value, after.RawElevationMeters.Value, ratio) : null,
+			GradientPercent: before.GradientPercent.HasValue && after.GradientPercent.HasValue
+				? Lerp(before.GradientPercent.Value, after.GradientPercent.Value, ratio) : null
 		);
 	}
 

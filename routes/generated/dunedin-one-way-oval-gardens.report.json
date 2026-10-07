@@ -1,0 +1,4189 @@
+{
+  "id": "dunedin-one-way-oval-gardens",
+  "name": "Dunedin One-way: Oval to Gardens Loop",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "routingMode": "roadRef",
+  "preferredRefs": [
+    "SH 1"
+  ],
+  "boundingBox": {
+    "minLatitude": -45.89,
+    "minLongitude": 170.49,
+    "maxLatitude": -45.85,
+    "maxLongitude": 170.52
+  },
+  "profile": "road",
+  "routeCorridorMeters": 225,
+  "detourWarningRatio": 1.6,
+  "detourFailureRatio": 2.2,
+  "maxOutputSpacingMeters": 30,
+  "retainedOsmNodeCount": 150679,
+  "eligibleWayCount": 2198,
+  "graphNodeCount": 11942,
+  "graphEdgeCount": 22164,
+  "anchors": [
+    {
+      "anchor": {
+        "name": "Oval start / finish",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.88355,
+        "longitude": 170.4985
+      },
+      "fromNodeId": 1294068313,
+      "toNodeId": 4974661691,
+      "wayId": 817050462,
+      "snappedCoordinate": {
+        "latitude": -45.882843300000005,
+        "longitude": 170.5004442
+      },
+      "snapDistanceMeters": 169.77265084624375,
+      "bearingDegrees": 21.24838680367236,
+      "directionAlignmentDegrees": 0,
+      "highway": "trunk",
+      "roadName": "Crawford Street",
+      "roadRef": "SH 1"
+    },
+    {
+      "anchor": {
+        "name": "Gardens turnaround in",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.8609,
+        "longitude": 170.5144
+      },
+      "fromNodeId": 11518594624,
+      "toNodeId": 5529730298,
+      "wayId": 1354360470,
+      "snappedCoordinate": {
+        "latitude": -45.862752400000005,
+        "longitude": 170.51167750000002
+      },
+      "snapDistanceMeters": 294.7382254344075,
+      "bearingDegrees": 22.153872781692257,
+      "directionAlignmentDegrees": 0,
+      "highway": "trunk",
+      "roadName": "Great King Street",
+      "roadRef": "SH 1"
+    },
+    {
+      "anchor": {
+        "name": "Gardens turnaround out",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.8609,
+        "longitude": 170.5144
+      },
+      "fromNodeId": 5529730301,
+      "toNodeId": 11518594612,
+      "wayId": 1272470611,
+      "snappedCoordinate": {
+        "latitude": -45.863156000000004,
+        "longitude": 170.5131177
+      },
+      "snapDistanceMeters": 269.7926153634704,
+      "bearingDegrees": 201.25781434191728,
+      "directionAlignmentDegrees": 0,
+      "highway": "trunk",
+      "roadName": "Cumberland Street",
+      "roadRef": "SH 1"
+    },
+    {
+      "anchor": {
+        "name": "Oval closure",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.88355,
+        "longitude": 170.4985
+      },
+      "fromNodeId": 3766380544,
+      "toNodeId": 14158950984,
+      "wayId": 116726397,
+      "snappedCoordinate": {
+        "latitude": -45.8838917,
+        "longitude": 170.50149040000002
+      },
+      "snapDistanceMeters": 234.56857152843742,
+      "bearingDegrees": 201.33971274879528,
+      "directionAlignmentDegrees": 0,
+      "highway": "trunk",
+      "roadName": "Cumberland Street",
+      "roadRef": "SH 1"
+    }
+  ],
+  "legs": [
+    {
+      "fromAnchor": "Oval start / finish",
+      "toAnchor": "Northbound SH1",
+      "straightLineDistanceMeters": 2397.3168200403684,
+      "distanceMeters": 2477.9207378919104,
+      "roadDirectRatio": 1.03362255550778,
+      "maximumCorridorDeviationMeters": 0,
+      "startSnap": {
+        "anchor": {
+          "name": "Oval start / finish",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.88355,
+          "longitude": 170.4985
+        },
+        "fromNodeId": 1294068313,
+        "toNodeId": 4974661691,
+        "wayId": 817050462,
+        "snappedCoordinate": {
+          "latitude": -45.882843300000005,
+          "longitude": 170.5004442
+        },
+        "snapDistanceMeters": 169.77265084624375,
+        "bearingDegrees": 21.24838680367236,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Crawford Street",
+        "roadRef": "SH 1"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Gardens turnaround in",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.8609,
+          "longitude": 170.5144
+        },
+        "fromNodeId": 11518594624,
+        "toNodeId": 5529730298,
+        "wayId": 1354360470,
+        "snappedCoordinate": {
+          "latitude": -45.862752400000005,
+          "longitude": 170.51167750000002
+        },
+        "snapDistanceMeters": 294.7382254344075,
+        "bearingDegrees": 22.153872781692257,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Great King Street",
+        "roadRef": "SH 1"
+      },
+      "status": "passed",
+      "wayIds": [
+        817050462,
+        817050461,
+        819986054,
+        508089760,
+        819986053,
+        1497216966,
+        1497216965,
+        118892276,
+        1497216964,
+        814988410,
+        814988409,
+        823816623,
+        88774359,
+        1272611597,
+        118892275,
+        975638219,
+        88774363,
+        1354360463,
+        114495304,
+        1504754513,
+        1504754512,
+        1504755421,
+        1504754511,
+        1354360465,
+        114495306,
+        1354360466,
+        1548516852,
+        1548516853,
+        17951039,
+        1354360467,
+        1548516836,
+        1548516837,
+        88463076,
+        1354360470
+      ],
+      "ways": [
+        {
+          "wayId": 817050462,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 817050461,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 819986054,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 508089760,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 819986053,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1497216966,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1497216965,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 118892276,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1497216964,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 814988410,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 814988409,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 823816623,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88774359,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272611597,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 118892275,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 975638219,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88774363,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1354360463,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 114495304,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504754513,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504754512,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504755421,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504754511,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1354360465,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 114495306,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1354360466,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516852,
+          "highway": "trunk",
+          "name": "Malcolm Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516853,
+          "highway": "trunk",
+          "name": "Malcolm Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 17951039,
+          "highway": "trunk",
+          "name": "Malcolm Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1354360467,
+          "highway": "trunk",
+          "name": "Malcolm Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516836,
+          "highway": "trunk",
+          "name": "Great King Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516837,
+          "highway": "trunk",
+          "name": "Great King Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88463076,
+          "highway": "trunk",
+          "name": "Great King Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1354360470,
+          "highway": "trunk",
+          "name": "Great King Street",
+          "ref": "SH 1"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.882843300000005,
+          "longitude": 170.5004442
+        },
+        {
+          "latitude": -45.881560400000005,
+          "longitude": 170.5011608
+        },
+        {
+          "latitude": -45.881149900000004,
+          "longitude": 170.5014012
+        },
+        {
+          "latitude": -45.8810201,
+          "longitude": 170.5014797
+        },
+        {
+          "latitude": -45.8802376,
+          "longitude": 170.5019363
+        },
+        {
+          "latitude": -45.879988100000006,
+          "longitude": 170.502084
+        },
+        {
+          "latitude": -45.879961200000004,
+          "longitude": 170.50209990000002
+        },
+        {
+          "latitude": -45.8799251,
+          "longitude": 170.5021213
+        },
+        {
+          "latitude": -45.879845200000005,
+          "longitude": 170.5021686
+        },
+        {
+          "latitude": -45.879749100000005,
+          "longitude": 170.5022228
+        },
+        {
+          "latitude": -45.8794509,
+          "longitude": 170.502397
+        },
+        {
+          "latitude": -45.8790484,
+          "longitude": 170.50262510000002
+        },
+        {
+          "latitude": -45.878879000000005,
+          "longitude": 170.5027273
+        },
+        {
+          "latitude": -45.8787752,
+          "longitude": 170.5027949
+        },
+        {
+          "latitude": -45.8787242,
+          "longitude": 170.5028255
+        },
+        {
+          "latitude": -45.8785122,
+          "longitude": 170.50293670000002
+        },
+        {
+          "latitude": -45.8783575,
+          "longitude": 170.5030139
+        },
+        {
+          "latitude": -45.8782318,
+          "longitude": 170.5030802
+        },
+        {
+          "latitude": -45.8780258,
+          "longitude": 170.50323930000002
+        },
+        {
+          "latitude": -45.878001600000005,
+          "longitude": 170.50325360000002
+        },
+        {
+          "latitude": -45.877956700000006,
+          "longitude": 170.5032803
+        },
+        {
+          "latitude": -45.8778894,
+          "longitude": 170.5033198
+        },
+        {
+          "latitude": -45.8778002,
+          "longitude": 170.50336710000002
+        },
+        {
+          "latitude": -45.8776232,
+          "longitude": 170.5034601
+        },
+        {
+          "latitude": -45.877459900000005,
+          "longitude": 170.5035618
+        },
+        {
+          "latitude": -45.877419800000006,
+          "longitude": 170.5035971
+        },
+        {
+          "latitude": -45.877397800000004,
+          "longitude": 170.50361650000002
+        },
+        {
+          "latitude": -45.8773197,
+          "longitude": 170.503712
+        },
+        {
+          "latitude": -45.877236700000005,
+          "longitude": 170.5038719
+        },
+        {
+          "latitude": -45.8771544,
+          "longitude": 170.50409470000002
+        },
+        {
+          "latitude": -45.8771149,
+          "longitude": 170.5042167
+        },
+        {
+          "latitude": -45.877104300000006,
+          "longitude": 170.5042496
+        },
+        {
+          "latitude": -45.877058600000005,
+          "longitude": 170.5043913
+        },
+        {
+          "latitude": -45.877008200000006,
+          "longitude": 170.5045455
+        },
+        {
+          "latitude": -45.876974000000004,
+          "longitude": 170.5046605
+        },
+        {
+          "latitude": -45.8769348,
+          "longitude": 170.5047912
+        },
+        {
+          "latitude": -45.8768764,
+          "longitude": 170.5049702
+        },
+        {
+          "latitude": -45.8768496,
+          "longitude": 170.50505420000002
+        },
+        {
+          "latitude": -45.8768254,
+          "longitude": 170.5051301
+        },
+        {
+          "latitude": -45.8767203,
+          "longitude": 170.5053889
+        },
+        {
+          "latitude": -45.8766769,
+          "longitude": 170.50545160000001
+        },
+        {
+          "latitude": -45.876618900000004,
+          "longitude": 170.50551660000002
+        },
+        {
+          "latitude": -45.8765355,
+          "longitude": 170.50557650000002
+        },
+        {
+          "latitude": -45.876471200000005,
+          "longitude": 170.505614
+        },
+        {
+          "latitude": -45.8763072,
+          "longitude": 170.505704
+        },
+        {
+          "latitude": -45.8753382,
+          "longitude": 170.506249
+        },
+        {
+          "latitude": -45.8752481,
+          "longitude": 170.50630220000002
+        },
+        {
+          "latitude": -45.8750264,
+          "longitude": 170.5064364
+        },
+        {
+          "latitude": -45.8750191,
+          "longitude": 170.5064408
+        },
+        {
+          "latitude": -45.874993100000005,
+          "longitude": 170.50645490000002
+        },
+        {
+          "latitude": -45.874925000000005,
+          "longitude": 170.50649180000002
+        },
+        {
+          "latitude": -45.8748501,
+          "longitude": 170.5065337
+        },
+        {
+          "latitude": -45.8745957,
+          "longitude": 170.50667610000002
+        },
+        {
+          "latitude": -45.873888400000006,
+          "longitude": 170.50707200000002
+        },
+        {
+          "latitude": -45.8735003,
+          "longitude": 170.5072893
+        },
+        {
+          "latitude": -45.873051700000005,
+          "longitude": 170.5075404
+        },
+        {
+          "latitude": -45.8728964,
+          "longitude": 170.50762730000002
+        },
+        {
+          "latitude": -45.8727925,
+          "longitude": 170.5076854
+        },
+        {
+          "latitude": -45.8727493,
+          "longitude": 170.5077096
+        },
+        {
+          "latitude": -45.8725305,
+          "longitude": 170.5078321
+        },
+        {
+          "latitude": -45.872502600000004,
+          "longitude": 170.5078477
+        },
+        {
+          "latitude": -45.8724305,
+          "longitude": 170.507888
+        },
+        {
+          "latitude": -45.872357400000006,
+          "longitude": 170.5079298
+        },
+        {
+          "latitude": -45.8721769,
+          "longitude": 170.5080331
+        },
+        {
+          "latitude": -45.8709307,
+          "longitude": 170.50874610000002
+        },
+        {
+          "latitude": -45.8706789,
+          "longitude": 170.50889020000002
+        },
+        {
+          "latitude": -45.8706648,
+          "longitude": 170.5088982
+        },
+        {
+          "latitude": -45.870652,
+          "longitude": 170.5089055
+        },
+        {
+          "latitude": -45.8705799,
+          "longitude": 170.50894680000002
+        },
+        {
+          "latitude": -45.870504800000006,
+          "longitude": 170.50898940000002
+        },
+        {
+          "latitude": -45.869980700000006,
+          "longitude": 170.5092861
+        },
+        {
+          "latitude": -45.8697905,
+          "longitude": 170.5093938
+        },
+        {
+          "latitude": -45.8693157,
+          "longitude": 170.5096626
+        },
+        {
+          "latitude": -45.8691461,
+          "longitude": 170.5097586
+        },
+        {
+          "latitude": -45.8688421,
+          "longitude": 170.50993060000002
+        },
+        {
+          "latitude": -45.868813800000005,
+          "longitude": 170.5099466
+        },
+        {
+          "latitude": -45.8688008,
+          "longitude": 170.50995400000002
+        },
+        {
+          "latitude": -45.868719500000005,
+          "longitude": 170.51000000000002
+        },
+        {
+          "latitude": -45.8686432,
+          "longitude": 170.5100395
+        },
+        {
+          "latitude": -45.868397800000004,
+          "longitude": 170.5101663
+        },
+        {
+          "latitude": -45.8682877,
+          "longitude": 170.5102072
+        },
+        {
+          "latitude": -45.868197,
+          "longitude": 170.51022350000002
+        },
+        {
+          "latitude": -45.8680931,
+          "longitude": 170.51022840000002
+        },
+        {
+          "latitude": -45.8679994,
+          "longitude": 170.51022260000002
+        },
+        {
+          "latitude": -45.867980800000005,
+          "longitude": 170.5102208
+        },
+        {
+          "latitude": -45.867913200000004,
+          "longitude": 170.51020780000002
+        },
+        {
+          "latitude": -45.867775,
+          "longitude": 170.5101543
+        },
+        {
+          "latitude": -45.8677159,
+          "longitude": 170.51012250000002
+        },
+        {
+          "latitude": -45.867673100000005,
+          "longitude": 170.51009960000002
+        },
+        {
+          "latitude": -45.8675836,
+          "longitude": 170.51003590000002
+        },
+        {
+          "latitude": -45.867451900000006,
+          "longitude": 170.5099394
+        },
+        {
+          "latitude": -45.8672369,
+          "longitude": 170.50976640000002
+        },
+        {
+          "latitude": -45.8671474,
+          "longitude": 170.50970550000002
+        },
+        {
+          "latitude": -45.8670461,
+          "longitude": 170.50964860000002
+        },
+        {
+          "latitude": -45.8669632,
+          "longitude": 170.5096191
+        },
+        {
+          "latitude": -45.866849800000004,
+          "longitude": 170.5095937
+        },
+        {
+          "latitude": -45.866749000000006,
+          "longitude": 170.5095794
+        },
+        {
+          "latitude": -45.8666667,
+          "longitude": 170.5095751
+        },
+        {
+          "latitude": -45.866603500000004,
+          "longitude": 170.5095794
+        },
+        {
+          "latitude": -45.8665832,
+          "longitude": 170.5095808
+        },
+        {
+          "latitude": -45.8665667,
+          "longitude": 170.5095822
+        },
+        {
+          "latitude": -45.8664703,
+          "longitude": 170.5095942
+        },
+        {
+          "latitude": -45.8663978,
+          "longitude": 170.5096268
+        },
+        {
+          "latitude": -45.8662653,
+          "longitude": 170.5096957
+        },
+        {
+          "latitude": -45.865829500000004,
+          "longitude": 170.5099409
+        },
+        {
+          "latitude": -45.865683600000004,
+          "longitude": 170.5100237
+        },
+        {
+          "latitude": -45.865499,
+          "longitude": 170.51012630000002
+        },
+        {
+          "latitude": -45.865014900000006,
+          "longitude": 170.5103985
+        },
+        {
+          "latitude": -45.8649001,
+          "longitude": 170.5104623
+        },
+        {
+          "latitude": -45.864717600000006,
+          "longitude": 170.51056490000002
+        },
+        {
+          "latitude": -45.864687800000006,
+          "longitude": 170.51058170000002
+        },
+        {
+          "latitude": -45.864610400000004,
+          "longitude": 170.51062520000002
+        },
+        {
+          "latitude": -45.8645373,
+          "longitude": 170.51066640000002
+        },
+        {
+          "latitude": -45.864131500000006,
+          "longitude": 170.5108946
+        },
+        {
+          "latitude": -45.8631976,
+          "longitude": 170.51142000000002
+        },
+        {
+          "latitude": -45.8630858,
+          "longitude": 170.5114829
+        },
+        {
+          "latitude": -45.8628644,
+          "longitude": 170.5116121
+        },
+        {
+          "latitude": -45.8628462,
+          "longitude": 170.5116228
+        },
+        {
+          "latitude": -45.862833300000005,
+          "longitude": 170.5116302
+        },
+        {
+          "latitude": -45.862752400000005,
+          "longitude": 170.51167750000002
+        }
+      ],
+      "sectionType": "northbound"
+    },
+    {
+      "fromAnchor": "Gardens turnaround in",
+      "toAnchor": "Gardens turnaround connector",
+      "straightLineDistanceMeters": 120.21121604250237,
+      "distanceMeters": 120.21137572298886,
+      "roadDirectRatio": 1.0000013283326776,
+      "maximumCorridorDeviationMeters": 0,
+      "startSnap": {
+        "anchor": {
+          "name": "Gardens turnaround in",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.8609,
+          "longitude": 170.5144
+        },
+        "fromNodeId": 11518594624,
+        "toNodeId": 5529730298,
+        "wayId": 1354360470,
+        "snappedCoordinate": {
+          "latitude": -45.862752400000005,
+          "longitude": 170.51167750000002
+        },
+        "snapDistanceMeters": 294.7382254344075,
+        "bearingDegrees": 22.153872781692257,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Great King Street",
+        "roadRef": "SH 1"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Gardens turnaround out",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.8609,
+          "longitude": 170.5144
+        },
+        "fromNodeId": 5529730301,
+        "toNodeId": 11518594612,
+        "wayId": 1272470611,
+        "snappedCoordinate": {
+          "latitude": -45.863156000000004,
+          "longitude": 170.5131177
+        },
+        "snapDistanceMeters": 269.7926153634704,
+        "bearingDegrees": 201.25781434191728,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Cumberland Street",
+        "roadRef": "SH 1"
+      },
+      "status": "passed",
+      "wayIds": [
+        60194027,
+        1548516831
+      ],
+      "ways": [
+        {
+          "wayId": 60194027,
+          "highway": "residential",
+          "name": "Saint David Street"
+        },
+        {
+          "wayId": 1548516831,
+          "highway": "residential",
+          "name": "Saint David Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.862752400000005,
+          "longitude": 170.51167750000002
+        },
+        {
+          "latitude": -45.862783500000006,
+          "longitude": 170.51178670000002
+        },
+        {
+          "latitude": -45.8630587,
+          "longitude": 170.5127702
+        },
+        {
+          "latitude": -45.863112900000004,
+          "longitude": 170.5129636
+        },
+        {
+          "latitude": -45.863128700000004,
+          "longitude": 170.5130202
+        },
+        {
+          "latitude": -45.863156000000004,
+          "longitude": 170.5131177
+        }
+      ],
+      "sectionType": "connector"
+    },
+    {
+      "fromAnchor": "Gardens turnaround out",
+      "toAnchor": "Southbound SH1",
+      "straightLineDistanceMeters": 2475.193752157054,
+      "distanceMeters": 2550.7261497747227,
+      "roadDirectRatio": 1.030515751565648,
+      "maximumCorridorDeviationMeters": 0,
+      "startSnap": {
+        "anchor": {
+          "name": "Gardens turnaround out",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.8609,
+          "longitude": 170.5144
+        },
+        "fromNodeId": 5529730301,
+        "toNodeId": 11518594612,
+        "wayId": 1272470611,
+        "snappedCoordinate": {
+          "latitude": -45.863156000000004,
+          "longitude": 170.5131177
+        },
+        "snapDistanceMeters": 269.7926153634704,
+        "bearingDegrees": 201.25781434191728,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Cumberland Street",
+        "roadRef": "SH 1"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Oval closure",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.88355,
+          "longitude": 170.4985
+        },
+        "fromNodeId": 3766380544,
+        "toNodeId": 14158950984,
+        "wayId": 116726397,
+        "snappedCoordinate": {
+          "latitude": -45.8838917,
+          "longitude": 170.50149040000002
+        },
+        "snapDistanceMeters": 234.56857152843742,
+        "bearingDegrees": 201.33971274879528,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Cumberland Street",
+        "roadRef": "SH 1"
+      },
+      "status": "passed",
+      "wayIds": [
+        1272470611,
+        1272470610,
+        1272470609,
+        1272470608,
+        1272470607,
+        1548516862,
+        629154774,
+        1548516856,
+        1548516857,
+        1548516858,
+        1548516859,
+        88484115,
+        1548516844,
+        1548516843,
+        88484122,
+        1504755416,
+        1504755415,
+        1504754517,
+        1504755420,
+        1504754516,
+        1272470620,
+        88774369,
+        1497214074,
+        629154778,
+        1255450322,
+        1272470623,
+        1497216971,
+        88774365,
+        81349793,
+        118892271,
+        116726397
+      ],
+      "ways": [
+        {
+          "wayId": 1272470611,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470610,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470609,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470608,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470607,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516862,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 629154774,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516856,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516857,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516858,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516859,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88484115,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516844,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1548516843,
+          "highway": "trunk",
+          "name": "Gowland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88484122,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504755416,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504755415,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504754517,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504755420,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1504754516,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470620,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88774369,
+          "highway": "trunk",
+          "name": "Castle Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1497214074,
+          "highway": "trunk",
+          "name": "Anzac Avenue",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 629154778,
+          "highway": "trunk",
+          "name": "Anzac Avenue",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1255450322,
+          "highway": "trunk",
+          "name": "Anzac Avenue",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1272470623,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 1497216971,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 88774365,
+          "highway": "trunk",
+          "name": "Queens Gardens",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 81349793,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 118892271,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        },
+        {
+          "wayId": 116726397,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.863156000000004,
+          "longitude": 170.5131177
+        },
+        {
+          "latitude": -45.8632276,
+          "longitude": 170.5130777
+        },
+        {
+          "latitude": -45.863530700000005,
+          "longitude": 170.51290780000002
+        },
+        {
+          "latitude": -45.863852300000005,
+          "longitude": 170.5127275
+        },
+        {
+          "latitude": -45.8639238,
+          "longitude": 170.5126874
+        },
+        {
+          "latitude": -45.864291400000006,
+          "longitude": 170.5124858
+        },
+        {
+          "latitude": -45.8646078,
+          "longitude": 170.5123045
+        },
+        {
+          "latitude": -45.864755900000006,
+          "longitude": 170.5122196
+        },
+        {
+          "latitude": -45.8649022,
+          "longitude": 170.512136
+        },
+        {
+          "latitude": -45.864922500000006,
+          "longitude": 170.5121244
+        },
+        {
+          "latitude": -45.8649338,
+          "longitude": 170.5121176
+        },
+        {
+          "latitude": -45.8649969,
+          "longitude": 170.5120814
+        },
+        {
+          "latitude": -45.865085300000004,
+          "longitude": 170.5120321
+        },
+        {
+          "latitude": -45.865831,
+          "longitude": 170.5116156
+        },
+        {
+          "latitude": -45.8660221,
+          "longitude": 170.5115002
+        },
+        {
+          "latitude": -45.8661818,
+          "longitude": 170.5114067
+        },
+        {
+          "latitude": -45.866399200000004,
+          "longitude": 170.51128830000002
+        },
+        {
+          "latitude": -45.8667676,
+          "longitude": 170.5110878
+        },
+        {
+          "latitude": -45.866792100000005,
+          "longitude": 170.51107470000002
+        },
+        {
+          "latitude": -45.8668685,
+          "longitude": 170.5110329
+        },
+        {
+          "latitude": -45.8668837,
+          "longitude": 170.51102550000002
+        },
+        {
+          "latitude": -45.8669437,
+          "longitude": 170.5109964
+        },
+        {
+          "latitude": -45.8669523,
+          "longitude": 170.5109922
+        },
+        {
+          "latitude": -45.866961700000004,
+          "longitude": 170.5109878
+        },
+        {
+          "latitude": -45.8670928,
+          "longitude": 170.5109386
+        },
+        {
+          "latitude": -45.867184300000005,
+          "longitude": 170.51092920000002
+        },
+        {
+          "latitude": -45.867338100000005,
+          "longitude": 170.5109295
+        },
+        {
+          "latitude": -45.8674577,
+          "longitude": 170.51094840000002
+        },
+        {
+          "latitude": -45.867564200000004,
+          "longitude": 170.5109861
+        },
+        {
+          "latitude": -45.867642200000006,
+          "longitude": 170.5110223
+        },
+        {
+          "latitude": -45.8677153,
+          "longitude": 170.5110668
+        },
+        {
+          "latitude": -45.8678162,
+          "longitude": 170.5111282
+        },
+        {
+          "latitude": -45.8679858,
+          "longitude": 170.5112315
+        },
+        {
+          "latitude": -45.868039,
+          "longitude": 170.5112626
+        },
+        {
+          "latitude": -45.8681064,
+          "longitude": 170.511302
+        },
+        {
+          "latitude": -45.8682498,
+          "longitude": 170.51139210000002
+        },
+        {
+          "latitude": -45.8683823,
+          "longitude": 170.5114636
+        },
+        {
+          "latitude": -45.8684919,
+          "longitude": 170.51150810000001
+        },
+        {
+          "latitude": -45.8685941,
+          "longitude": 170.5115312
+        },
+        {
+          "latitude": -45.8687015,
+          "longitude": 170.5115423
+        },
+        {
+          "latitude": -45.8687789,
+          "longitude": 170.5115393
+        },
+        {
+          "latitude": -45.8688358,
+          "longitude": 170.51152950000002
+        },
+        {
+          "latitude": -45.868892800000005,
+          "longitude": 170.5115197
+        },
+        {
+          "latitude": -45.869012600000005,
+          "longitude": 170.51147690000002
+        },
+        {
+          "latitude": -45.8690409,
+          "longitude": 170.5114628
+        },
+        {
+          "latitude": -45.869116000000005,
+          "longitude": 170.51142750000002
+        },
+        {
+          "latitude": -45.8691911,
+          "longitude": 170.51138490000002
+        },
+        {
+          "latitude": -45.8697777,
+          "longitude": 170.511052
+        },
+        {
+          "latitude": -45.869831600000005,
+          "longitude": 170.5110214
+        },
+        {
+          "latitude": -45.8704565,
+          "longitude": 170.51068320000002
+        },
+        {
+          "latitude": -45.870634200000005,
+          "longitude": 170.5105789
+        },
+        {
+          "latitude": -45.8708712,
+          "longitude": 170.51044190000002
+        },
+        {
+          "latitude": -45.870898100000005,
+          "longitude": 170.5104264
+        },
+        {
+          "latitude": -45.8709714,
+          "longitude": 170.51038400000002
+        },
+        {
+          "latitude": -45.8710487,
+          "longitude": 170.51033800000002
+        },
+        {
+          "latitude": -45.871375,
+          "longitude": 170.51015790000002
+        },
+        {
+          "latitude": -45.8718115,
+          "longitude": 170.5099169
+        },
+        {
+          "latitude": -45.8718287,
+          "longitude": 170.5099074
+        },
+        {
+          "latitude": -45.872396,
+          "longitude": 170.5095809
+        },
+        {
+          "latitude": -45.872716600000004,
+          "longitude": 170.50939630000002
+        },
+        {
+          "latitude": -45.872750700000005,
+          "longitude": 170.5093773
+        },
+        {
+          "latitude": -45.8728246,
+          "longitude": 170.5093361
+        },
+        {
+          "latitude": -45.8728994,
+          "longitude": 170.50929440000002
+        },
+        {
+          "latitude": -45.872926400000004,
+          "longitude": 170.5092793
+        },
+        {
+          "latitude": -45.8733597,
+          "longitude": 170.50904740000001
+        },
+        {
+          "latitude": -45.8744797,
+          "longitude": 170.5084133
+        },
+        {
+          "latitude": -45.8746023,
+          "longitude": 170.5083553
+        },
+        {
+          "latitude": -45.8747624,
+          "longitude": 170.5082719
+        },
+        {
+          "latitude": -45.8749107,
+          "longitude": 170.50819850000002
+        },
+        {
+          "latitude": -45.875224,
+          "longitude": 170.50801320000002
+        },
+        {
+          "latitude": -45.875234400000004,
+          "longitude": 170.5080076
+        },
+        {
+          "latitude": -45.8752469,
+          "longitude": 170.50800130000002
+        },
+        {
+          "latitude": -45.875321500000005,
+          "longitude": 170.5079617
+        },
+        {
+          "latitude": -45.8753997,
+          "longitude": 170.5079187
+        },
+        {
+          "latitude": -45.8756545,
+          "longitude": 170.50777860000002
+        },
+        {
+          "latitude": -45.8757722,
+          "longitude": 170.5077058
+        },
+        {
+          "latitude": -45.875846800000005,
+          "longitude": 170.5076467
+        },
+        {
+          "latitude": -45.8759597,
+          "longitude": 170.50752630000002
+        },
+        {
+          "latitude": -45.8760495,
+          "longitude": 170.50741250000002
+        },
+        {
+          "latitude": -45.8761268,
+          "longitude": 170.5072895
+        },
+        {
+          "latitude": -45.8762151,
+          "longitude": 170.5071378
+        },
+        {
+          "latitude": -45.876280400000006,
+          "longitude": 170.5069895
+        },
+        {
+          "latitude": -45.8763292,
+          "longitude": 170.50686280000002
+        },
+        {
+          "latitude": -45.8764424,
+          "longitude": 170.50649610000002
+        },
+        {
+          "latitude": -45.8764837,
+          "longitude": 170.50636310000002
+        },
+        {
+          "latitude": -45.876636700000006,
+          "longitude": 170.5059376
+        },
+        {
+          "latitude": -45.8767312,
+          "longitude": 170.50574780000002
+        },
+        {
+          "latitude": -45.876792800000004,
+          "longitude": 170.5056532
+        },
+        {
+          "latitude": -45.8768517,
+          "longitude": 170.50557450000002
+        },
+        {
+          "latitude": -45.876940600000005,
+          "longitude": 170.50547740000002
+        },
+        {
+          "latitude": -45.877033700000005,
+          "longitude": 170.5053992
+        },
+        {
+          "latitude": -45.877396600000004,
+          "longitude": 170.5051746
+        },
+        {
+          "latitude": -45.8774261,
+          "longitude": 170.5051564
+        },
+        {
+          "latitude": -45.877636700000004,
+          "longitude": 170.50503650000002
+        },
+        {
+          "latitude": -45.8781776,
+          "longitude": 170.50472870000002
+        },
+        {
+          "latitude": -45.878194,
+          "longitude": 170.5047193
+        },
+        {
+          "latitude": -45.878300100000004,
+          "longitude": 170.5046589
+        },
+        {
+          "latitude": -45.8784027,
+          "longitude": 170.5045997
+        },
+        {
+          "latitude": -45.8787274,
+          "longitude": 170.5044111
+        },
+        {
+          "latitude": -45.879094,
+          "longitude": 170.5041849
+        },
+        {
+          "latitude": -45.879865800000005,
+          "longitude": 170.503748
+        },
+        {
+          "latitude": -45.8815389,
+          "longitude": 170.5028167
+        },
+        {
+          "latitude": -45.882464500000005,
+          "longitude": 170.50229240000002
+        },
+        {
+          "latitude": -45.8825201,
+          "longitude": 170.5022616
+        },
+        {
+          "latitude": -45.8829883,
+          "longitude": 170.5019952
+        },
+        {
+          "latitude": -45.8837586,
+          "longitude": 170.50156510000002
+        },
+        {
+          "latitude": -45.8838917,
+          "longitude": 170.50149040000002
+        }
+      ],
+      "sectionType": "southbound"
+    },
+    {
+      "fromAnchor": "Oval closure",
+      "toAnchor": "Oval closure connector",
+      "straightLineDistanceMeters": 141.94402733647368,
+      "distanceMeters": 262.32547823579495,
+      "roadDirectRatio": 1.8480909916270092,
+      "maximumCorridorDeviationMeters": 0,
+      "startSnap": {
+        "anchor": {
+          "name": "Oval closure",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.88355,
+          "longitude": 170.4985
+        },
+        "fromNodeId": 3766380544,
+        "toNodeId": 14158950984,
+        "wayId": 116726397,
+        "snappedCoordinate": {
+          "latitude": -45.8838917,
+          "longitude": 170.50149040000002
+        },
+        "snapDistanceMeters": 234.56857152843742,
+        "bearingDegrees": 201.33971274879528,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Cumberland Street",
+        "roadRef": "SH 1"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Oval start / finish",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.88355,
+          "longitude": 170.4985
+        },
+        "fromNodeId": 1294068313,
+        "toNodeId": 4974661691,
+        "wayId": 817050462,
+        "snappedCoordinate": {
+          "latitude": -45.882843300000005,
+          "longitude": 170.5004442
+        },
+        "snapDistanceMeters": 169.77265084624375,
+        "bearingDegrees": 21.24838680367236,
+        "directionAlignmentDegrees": 0,
+        "highway": "trunk",
+        "roadName": "Crawford Street",
+        "roadRef": "SH 1"
+      },
+      "status": "passed",
+      "wayIds": [
+        1556703663,
+        1556703662,
+        381871579,
+        508089734
+      ],
+      "ways": [
+        {
+          "wayId": 1556703663,
+          "highway": "service"
+        },
+        {
+          "wayId": 1556703662,
+          "highway": "service"
+        },
+        {
+          "wayId": 381871579,
+          "highway": "residential",
+          "name": "Vogel Street"
+        },
+        {
+          "wayId": 508089734,
+          "highway": "residential",
+          "name": "Jervois Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8838917,
+          "longitude": 170.50149040000002
+        },
+        {
+          "latitude": -45.8839076,
+          "longitude": 170.5011801
+        },
+        {
+          "latitude": -45.8838711,
+          "longitude": 170.50103860000002
+        },
+        {
+          "latitude": -45.8838658,
+          "longitude": 170.5010182
+        },
+        {
+          "latitude": -45.8838159,
+          "longitude": 170.50096760000002
+        },
+        {
+          "latitude": -45.883740800000005,
+          "longitude": 170.50089150000002
+        },
+        {
+          "latitude": -45.8828212,
+          "longitude": 170.5014018
+        },
+        {
+          "latitude": -45.882808000000004,
+          "longitude": 170.50140660000002
+        },
+        {
+          "latitude": -45.882780700000005,
+          "longitude": 170.5014171
+        },
+        {
+          "latitude": -45.882761900000006,
+          "longitude": 170.50142050000002
+        },
+        {
+          "latitude": -45.882735000000004,
+          "longitude": 170.5014184
+        },
+        {
+          "latitude": -45.8827143,
+          "longitude": 170.5014121
+        },
+        {
+          "latitude": -45.8826878,
+          "longitude": 170.5013988
+        },
+        {
+          "latitude": -45.8826534,
+          "longitude": 170.5013806
+        },
+        {
+          "latitude": -45.8826295,
+          "longitude": 170.5013672
+        },
+        {
+          "latitude": -45.8827183,
+          "longitude": 170.5010632
+        },
+        {
+          "latitude": -45.8827517,
+          "longitude": 170.50095420000002
+        },
+        {
+          "latitude": -45.882809800000004,
+          "longitude": 170.50077190000002
+        },
+        {
+          "latitude": -45.8828231,
+          "longitude": 170.5007224
+        },
+        {
+          "latitude": -45.882831,
+          "longitude": 170.500682
+        },
+        {
+          "latitude": -45.8828353,
+          "longitude": 170.500643
+        },
+        {
+          "latitude": -45.8828368,
+          "longitude": 170.50059480000002
+        },
+        {
+          "latitude": -45.882838,
+          "longitude": 170.50057220000002
+        },
+        {
+          "latitude": -45.882843300000005,
+          "longitude": 170.5004442
+        }
+      ],
+      "sectionType": "connector"
+    }
+  ],
+  "routeRefSummary": {
+    "preferredRefs": [
+      "SH 1"
+    ],
+    "northboundPreferredDistanceMeters": 2477.9207378919104,
+    "southboundPreferredDistanceMeters": 2550.7261497747227,
+    "connectorDistanceMeters": 382.5368539587838,
+    "preferredRefDistanceMeters": 5028.646887666633,
+    "preferredRefPercent": 92.9306253081719,
+    "minimumPreferredRefPercent": 90,
+    "wayIds": [
+      817050462,
+      817050461,
+      819986054,
+      508089760,
+      819986053,
+      1497216966,
+      1497216965,
+      118892276,
+      1497216964,
+      814988410,
+      814988409,
+      823816623,
+      88774359,
+      1272611597,
+      118892275,
+      975638219,
+      88774363,
+      1354360463,
+      114495304,
+      1504754513,
+      1504754512,
+      1504755421,
+      1504754511,
+      1354360465,
+      114495306,
+      1354360466,
+      1548516852,
+      1548516853,
+      17951039,
+      1354360467,
+      1548516836,
+      1548516837,
+      88463076,
+      1354360470,
+      60194027,
+      1548516831,
+      1272470611,
+      1272470610,
+      1272470609,
+      1272470608,
+      1272470607,
+      1548516862,
+      629154774,
+      1548516856,
+      1548516857,
+      1548516858,
+      1548516859,
+      88484115,
+      1548516844,
+      1548516843,
+      88484122,
+      1504755416,
+      1504755415,
+      1504754517,
+      1504755420,
+      1504754516,
+      1272470620,
+      88774369,
+      1497214074,
+      629154778,
+      1255450322,
+      1272470623,
+      1497216971,
+      88774365,
+      81349793,
+      118892271,
+      116726397,
+      1556703663,
+      1556703662,
+      381871579,
+      508089734
+    ],
+    "roadNames": [
+      "Crawford Street",
+      "Queens Gardens",
+      "Cumberland Street",
+      "Malcolm Street",
+      "Great King Street",
+      "Saint David Street",
+      "Gowland Street",
+      "Castle Street",
+      "Anzac Avenue",
+      "Vogel Street",
+      "Jervois Street"
+    ],
+    "nonPreferredConnectors": [
+      {
+        "wayId": 60194027,
+        "highway": "residential",
+        "name": "Saint David Street",
+        "distanceMeters": 91.20961013678661,
+        "reason": "Gardens transition between directed SH1 carriageways"
+      },
+      {
+        "wayId": 1548516831,
+        "highway": "residential",
+        "name": "Saint David Street",
+        "distanceMeters": 29.00176558620226,
+        "reason": "Gardens transition between directed SH1 carriageways"
+      },
+      {
+        "wayId": 1556703663,
+        "highway": "service",
+        "distanceMeters": 24.08357080157882,
+        "reason": "short Oval closure between directed SH1 carriageways"
+      },
+      {
+        "wayId": 1556703662,
+        "highway": "service",
+        "distanceMeters": 30.376920002752904,
+        "reason": "short Oval closure between directed SH1 carriageways"
+      },
+      {
+        "wayId": 381871579,
+        "highway": "residential",
+        "name": "Vogel Street",
+        "distanceMeters": 131.78126337178037,
+        "reason": "short Oval closure between directed SH1 carriageways"
+      },
+      {
+        "wayId": 508089734,
+        "highway": "residential",
+        "name": "Jervois Street",
+        "distanceMeters": 76.08372405968291,
+        "reason": "short Oval closure between directed SH1 carriageways"
+      }
+    ],
+    "isSuspicious": false
+  },
+  "roadSegments": [
+    {
+      "startDistanceMeters": 0,
+      "endDistanceMeters": 153.05708702006578,
+      "wayId": 817050462,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 153.05708702006578,
+      "endDistanceMeters": 202.3501227662606,
+      "wayId": 817050462,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 202.3501227662606,
+      "endDistanceMeters": 218.01022893740887,
+      "wayId": 817050462,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 218.01022893740887,
+      "endDistanceMeters": 311.92513542522175,
+      "wayId": 817050461,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 311.92513542522175,
+      "endDistanceMeters": 341.9318741164717,
+      "wayId": 819986054,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 341.9318741164717,
+      "endDistanceMeters": 345.1663524643611,
+      "wayId": 819986054,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 345.1663524643611,
+      "endDistanceMeters": 349.5088778173127,
+      "wayId": 819986054,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 349.5088778173127,
+      "endDistanceMeters": 359.1182701515336,
+      "wayId": 819986054,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 359.1182701515336,
+      "endDistanceMeters": 370.59826646958277,
+      "wayId": 508089760,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 370.59826646958277,
+      "endDistanceMeters": 406.3937543773208,
+      "wayId": 508089760,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 406.3937543773208,
+      "endDistanceMeters": 454.5069580730977,
+      "wayId": 819986053,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 454.5069580730977,
+      "endDistanceMeters": 474.9373647585182,
+      "wayId": 1497216966,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 474.9373647585182,
+      "endDistanceMeters": 487.61028819178415,
+      "wayId": 1497216965,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 487.61028819178415,
+      "endDistanceMeters": 493.75608040142333,
+      "wayId": 1497216965,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 493.75608040142333,
+      "endDistanceMeters": 518.8519472615685,
+      "wayId": 118892276,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 518.8519472615685,
+      "endDistanceMeters": 537.0623531805436,
+      "wayId": 1497216964,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 537.0623531805436,
+      "endDistanceMeters": 551.9520818953686,
+      "wayId": 814988410,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 551.9520818953686,
+      "endDistanceMeters": 577.9594593612354,
+      "wayId": 814988409,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 577.9594593612354,
+      "endDistanceMeters": 580.8691818874438,
+      "wayId": 814988409,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 580.8691818874438,
+      "endDistanceMeters": 586.2727664188646,
+      "wayId": 814988409,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 586.2727664188646,
+      "endDistanceMeters": 594.3568070392416,
+      "wayId": 823816623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 594.3568070392416,
+      "endDistanceMeters": 604.9296918483293,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 604.9296918483293,
+      "endDistanceMeters": 625.8866250867339,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 625.8866250867339,
+      "endDistanceMeters": 645.678056421049,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 645.678056421049,
+      "endDistanceMeters": 650.907736101887,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 650.907736101887,
+      "endDistanceMeters": 653.7782400735992,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 653.7782400735992,
+      "endDistanceMeters": 665.1832301673741,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 665.1832301673741,
+      "endDistanceMeters": 680.6235513741465,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 680.6235513741465,
+      "endDistanceMeters": 700.1487425874568,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 700.1487425874568,
+      "endDistanceMeters": 710.5645845734477,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 710.5645845734477,
+      "endDistanceMeters": 713.3710122854276,
+      "wayId": 88774359,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 713.3710122854276,
+      "endDistanceMeters": 725.4604201772544,
+      "wayId": 1272611597,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 725.4604201772544,
+      "endDistanceMeters": 738.6477210913623,
+      "wayId": 118892275,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 738.6477210913623,
+      "endDistanceMeters": 748.3285436954975,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 748.3285436954975,
+      "endDistanceMeters": 759.3455233743263,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 759.3455233743263,
+      "endDistanceMeters": 774.6487703876586,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 774.6487703876586,
+      "endDistanceMeters": 781.8018725241626,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 781.8018725241626,
+      "endDistanceMeters": 788.2644859292127,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 788.2644859292127,
+      "endDistanceMeters": 811.4586822510544,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 811.4586822510544,
+      "endDistanceMeters": 818.3033244432353,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 818.3033244432353,
+      "endDistanceMeters": 826.4834220779295,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 826.4834220779295,
+      "endDistanceMeters": 836.8518228298462,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 836.8518228298462,
+      "endDistanceMeters": 844.5685470339213,
+      "wayId": 975638219,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 844.5685470339213,
+      "endDistanceMeters": 864.0901845917018,
+      "wayId": 88774363,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 864.0901845917018,
+      "endDistanceMeters": 979.8041946794469,
+      "wayId": 88774363,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 979.8041946794469,
+      "endDistanceMeters": 990.6363726720314,
+      "wayId": 88774363,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 990.6363726720314,
+      "endDistanceMeters": 1017.3880956783353,
+      "wayId": 1354360463,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1017.3880956783353,
+      "endDistanceMeters": 1018.2683942437607,
+      "wayId": 1354360463,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1018.2683942437607,
+      "endDistanceMeters": 1021.3586717001759,
+      "wayId": 1354360463,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1021.3586717001759,
+      "endDistanceMeters": 1029.4519707373547,
+      "wayId": 1354360463,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1029.4519707373547,
+      "endDistanceMeters": 1038.3898654109405,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1038.3898654109405,
+      "endDistanceMeters": 1068.7500944817,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1068.7500944817,
+      "endDistanceMeters": 1153.1594598693357,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1153.1594598693357,
+      "endDistanceMeters": 1199.4773628155112,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1199.4773628155112,
+      "endDistanceMeters": 1253.0136168477861,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1253.0136168477861,
+      "endDistanceMeters": 1271.5464637725524,
+      "wayId": 114495304,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1271.5464637725524,
+      "endDistanceMeters": 1283.9443734200265,
+      "wayId": 1504754513,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1283.9443734200265,
+      "endDistanceMeters": 1289.1004385081294,
+      "wayId": 1504754513,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1289.1004385081294,
+      "endDistanceMeters": 1315.2130343707402,
+      "wayId": 1504754512,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1315.2130343707402,
+      "endDistanceMeters": 1318.5421752239918,
+      "wayId": 1504754512,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1318.5421752239918,
+      "endDistanceMeters": 1327.1450473287264,
+      "wayId": 1504754512,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1327.1450473287264,
+      "endDistanceMeters": 1335.893926324374,
+      "wayId": 1504755421,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1335.893926324374,
+      "endDistanceMeters": 1357.4993229545323,
+      "wayId": 1504755421,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1357.4993229545323,
+      "endDistanceMeters": 1506.6608862616376,
+      "wayId": 1504754511,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1506.6608862616376,
+      "endDistanceMeters": 1536.8006811549214,
+      "wayId": 1354360465,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1536.8006811549214,
+      "endDistanceMeters": 1538.486440250109,
+      "wayId": 1354360465,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1538.486440250109,
+      "endDistanceMeters": 1540.0178464654427,
+      "wayId": 1354360465,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1540.0178464654427,
+      "endDistanceMeters": 1548.6491379240358,
+      "wayId": 1354360465,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1548.6491379240358,
+      "endDistanceMeters": 1557.6276177635114,
+      "wayId": 114495306,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1557.6276177635114,
+      "endDistanceMeters": 1620.2689019020995,
+      "wayId": 114495306,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1620.2689019020995,
+      "endDistanceMeters": 1643.0026515930128,
+      "wayId": 114495306,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1643.0026515930128,
+      "endDistanceMeters": 1699.7518808121836,
+      "wayId": 114495306,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1699.7518808121836,
+      "endDistanceMeters": 1720.022434155283,
+      "wayId": 114495306,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1720.022434155283,
+      "endDistanceMeters": 1756.3543234221847,
+      "wayId": 1354360466,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1756.3543234221847,
+      "endDistanceMeters": 1759.7362008724303,
+      "wayId": 1354360466,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1759.7362008724303,
+      "endDistanceMeters": 1761.291140849036,
+      "wayId": 1354360466,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1761.291140849036,
+      "endDistanceMeters": 1771.0075738083208,
+      "wayId": 1354360466,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1771.0075738083208,
+      "endDistanceMeters": 1780.026135745567,
+      "wayId": 1548516852,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1780.026135745567,
+      "endDistanceMeters": 1809.0257629468872,
+      "wayId": 1548516852,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1809.0257629468872,
+      "endDistanceMeters": 1821.6712549573397,
+      "wayId": 1548516852,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1821.6712549573397,
+      "endDistanceMeters": 1831.8352920629484,
+      "wayId": 1548516852,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1831.8352920629484,
+      "endDistanceMeters": 1843.394672563278,
+      "wayId": 1548516853,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1843.394672563278,
+      "endDistanceMeters": 1853.8233105878082,
+      "wayId": 1548516853,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1853.8233105878082,
+      "endDistanceMeters": 1855.8962265702767,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1855.8962265702767,
+      "endDistanceMeters": 1863.480095791873,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1863.480095791873,
+      "endDistanceMeters": 1879.395744542505,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1879.395744542505,
+      "endDistanceMeters": 1886.4134721921127,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1886.4134721921127,
+      "endDistanceMeters": 1891.4921773507986,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1891.4921773507986,
+      "endDistanceMeters": 1902.599241990381,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1902.599241990381,
+      "endDistanceMeters": 1919.0395686608233,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1919.0395686608233,
+      "endDistanceMeters": 1946.4433104146835,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1946.4433104146835,
+      "endDistanceMeters": 1957.4558357828614,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1957.4558357828614,
+      "endDistanceMeters": 1969.5508108477288,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1969.5508108477288,
+      "endDistanceMeters": 1979.0476441916962,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1979.0476441916962,
+      "endDistanceMeters": 1991.8095959243033,
+      "wayId": 17951039,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 1991.8095959243033,
+      "endDistanceMeters": 2003.0726001618534,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2003.0726001618534,
+      "endDistanceMeters": 2012.2299971289106,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2012.2299971289106,
+      "endDistanceMeters": 2019.2653989678117,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2019.2653989678117,
+      "endDistanceMeters": 2021.5252573169578,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2021.5252573169578,
+      "endDistanceMeters": 2023.363173097201,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2023.363173097201,
+      "endDistanceMeters": 2034.1225579180718,
+      "wayId": 1354360467,
+      "highway": "trunk",
+      "name": "Malcolm Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2034.1225579180718,
+      "endDistanceMeters": 2042.5701245773191,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2042.5701245773191,
+      "endDistanceMeters": 2058.2395716553265,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2058.2395716553265,
+      "endDistanceMeters": 2110.2847981668187,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2110.2847981668187,
+      "endDistanceMeters": 2127.72899360031,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2127.72899360031,
+      "endDistanceMeters": 2149.739279273451,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2149.739279273451,
+      "endDistanceMeters": 2207.5478609550046,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2207.5478609550046,
+      "endDistanceMeters": 2221.235599857716,
+      "wayId": 1548516836,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2221.235599857716,
+      "endDistanceMeters": 2243.0283206715435,
+      "wayId": 1548516837,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2243.0283206715435,
+      "endDistanceMeters": 2246.588123580614,
+      "wayId": 1548516837,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2246.588123580614,
+      "endDistanceMeters": 2255.8302439038816,
+      "wayId": 1548516837,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2255.8302439038816,
+      "endDistanceMeters": 2264.562211007215,
+      "wayId": 88463076,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2264.562211007215,
+      "endDistanceMeters": 2313.0214906384767,
+      "wayId": 88463076,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2313.0214906384767,
+      "endDistanceMeters": 2424.5512422459683,
+      "wayId": 88463076,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2424.5512422459683,
+      "endDistanceMeters": 2437.9029019431027,
+      "wayId": 88463076,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2437.9029019431027,
+      "endDistanceMeters": 2464.4766045061688,
+      "wayId": 1354360470,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2464.4766045061688,
+      "endDistanceMeters": 2466.663390856864,
+      "wayId": 1354360470,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2466.663390856864,
+      "endDistanceMeters": 2468.2080219609707,
+      "wayId": 1354360470,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2468.2080219609707,
+      "endDistanceMeters": 2477.9207378919104,
+      "wayId": 1354360470,
+      "highway": "trunk",
+      "name": "Great King Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2477.9207378919104,
+      "endDistanceMeters": 2487.056329425635,
+      "wayId": 60194027,
+      "highway": "residential",
+      "name": "Saint David Street"
+    },
+    {
+      "startDistanceMeters": 2487.056329425635,
+      "endDistanceMeters": 2569.130348028697,
+      "wayId": 60194027,
+      "highway": "residential",
+      "name": "Saint David Street"
+    },
+    {
+      "startDistanceMeters": 2569.130348028697,
+      "endDistanceMeters": 2585.273182186802,
+      "wayId": 1548516831,
+      "highway": "residential",
+      "name": "Saint David Street"
+    },
+    {
+      "startDistanceMeters": 2585.273182186802,
+      "endDistanceMeters": 2589.9949329356045,
+      "wayId": 1548516831,
+      "highway": "residential",
+      "name": "Saint David Street"
+    },
+    {
+      "startDistanceMeters": 2589.9949329356045,
+      "endDistanceMeters": 2598.132113614899,
+      "wayId": 1548516831,
+      "highway": "residential",
+      "name": "Saint David Street"
+    },
+    {
+      "startDistanceMeters": 2598.132113614899,
+      "endDistanceMeters": 2606.674937520562,
+      "wayId": 1272470611,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2606.674937520562,
+      "endDistanceMeters": 2642.8547840936094,
+      "wayId": 1272470611,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2642.8547840936094,
+      "endDistanceMeters": 2681.2437183491297,
+      "wayId": 1272470610,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2681.2437183491297,
+      "endDistanceMeters": 2689.7789800742476,
+      "wayId": 1272470609,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2689.7789800742476,
+      "endDistanceMeters": 2733.5336088331383,
+      "wayId": 1272470609,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2733.5336088331383,
+      "endDistanceMeters": 2771.413064208226,
+      "wayId": 1272470609,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2771.413064208226,
+      "endDistanceMeters": 2789.144681351079,
+      "wayId": 1272470609,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2789.144681351079,
+      "endDistanceMeters": 2806.653096329608,
+      "wayId": 1272470608,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2806.653096329608,
+      "endDistanceMeters": 2809.082493125772,
+      "wayId": 1272470608,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2809.082493125772,
+      "endDistanceMeters": 2810.444855954081,
+      "wayId": 1272470608,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2810.444855954081,
+      "endDistanceMeters": 2818.0004264062613,
+      "wayId": 1272470608,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2818.0004264062613,
+      "endDistanceMeters": 2828.5452679480904,
+      "wayId": 1272470607,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2828.5452679480904,
+      "endDistanceMeters": 2917.514044322742,
+      "wayId": 1272470607,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2917.514044322742,
+      "endDistanceMeters": 2940.5656282180935,
+      "wayId": 1272470607,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2940.5656282180935,
+      "endDistanceMeters": 2959.742509263244,
+      "wayId": 1272470607,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2959.742509263244,
+      "endDistanceMeters": 2985.5962543982223,
+      "wayId": 1548516862,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 2985.5962543982223,
+      "endDistanceMeters": 3029.403493677839,
+      "wayId": 629154774,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3029.403493677839,
+      "endDistanceMeters": 3032.3104686064266,
+      "wayId": 629154774,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3032.3104686064266,
+      "endDistanceMeters": 3041.4013934051036,
+      "wayId": 629154774,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3041.4013934051036,
+      "endDistanceMeters": 3043.186034275626,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3043.186034275626,
+      "endDistanceMeters": 3050.227925928311,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3050.227925928311,
+      "endDistanceMeters": 3051.237984361138,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3051.237984361138,
+      "endDistanceMeters": 3052.33733674262,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3052.33733674262,
+      "endDistanceMeters": 3067.4045181807455,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3067.4045181807455,
+      "endDistanceMeters": 3077.604853078748,
+      "wayId": 1548516856,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3077.604853078748,
+      "endDistanceMeters": 3094.706648571389,
+      "wayId": 1548516857,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3094.706648571389,
+      "endDistanceMeters": 3108.085832686616,
+      "wayId": 1548516858,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3108.085832686616,
+      "endDistanceMeters": 3120.28254191107,
+      "wayId": 1548516858,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3120.28254191107,
+      "endDistanceMeters": 3129.3973926803396,
+      "wayId": 1548516858,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3129.3973926803396,
+      "endDistanceMeters": 3138.225843392774,
+      "wayId": 1548516858,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3138.225843392774,
+      "endDistanceMeters": 3150.411052707429,
+      "wayId": 1548516858,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3150.411052707429,
+      "endDistanceMeters": 3170.895678327151,
+      "wayId": 1548516859,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3170.895678327151,
+      "endDistanceMeters": 3177.2825607467025,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3177.2825607467025,
+      "endDistanceMeters": 3185.3741783634287,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3185.3741783634287,
+      "endDistanceMeters": 3202.7787864855004,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3202.7787864855004,
+      "endDistanceMeters": 3218.517842454808,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3218.517842454808,
+      "endDistanceMeters": 3231.182488085086,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3231.182488085086,
+      "endDistanceMeters": 3242.686492545657,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3242.686492545657,
+      "endDistanceMeters": 3254.6597117911087,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3254.6597117911087,
+      "endDistanceMeters": 3263.269332946688,
+      "wayId": 88484115,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3263.269332946688,
+      "endDistanceMeters": 3269.6416598377355,
+      "wayId": 1548516844,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3269.6416598377355,
+      "endDistanceMeters": 3276.025027158515,
+      "wayId": 1548516844,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3276.025027158515,
+      "endDistanceMeters": 3289.7521669168536,
+      "wayId": 1548516843,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3289.7521669168536,
+      "endDistanceMeters": 3293.0829701320054,
+      "wayId": 1548516843,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3293.0829701320054,
+      "endDistanceMeters": 3301.869590742149,
+      "wayId": 1548516843,
+      "highway": "trunk",
+      "name": "Gowland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3301.869590742149,
+      "endDistanceMeters": 3310.8481008558088,
+      "wayId": 88484122,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3310.8481008558088,
+      "endDistanceMeters": 3380.982863186123,
+      "wayId": 88484122,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3380.982863186123,
+      "endDistanceMeters": 3387.4275443879405,
+      "wayId": 88484122,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3387.4275443879405,
+      "endDistanceMeters": 3461.683182835185,
+      "wayId": 88484122,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3461.683182835185,
+      "endDistanceMeters": 3483.028923345374,
+      "wayId": 88484122,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3483.028923345374,
+      "endDistanceMeters": 3511.4366270703795,
+      "wayId": 1504755416,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3511.4366270703795,
+      "endDistanceMeters": 3514.6595229867003,
+      "wayId": 1504755416,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3514.6595229867003,
+      "endDistanceMeters": 3523.446347760964,
+      "wayId": 1504755416,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3523.446347760964,
+      "endDistanceMeters": 3532.7503320265164,
+      "wayId": 1504755415,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3532.7503320265164,
+      "endDistanceMeters": 3571.620325812169,
+      "wayId": 1504755415,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3571.620325812169,
+      "endDistanceMeters": 3623.619780313466,
+      "wayId": 1504755415,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3623.619780313466,
+      "endDistanceMeters": 3625.6688827514818,
+      "wayId": 1504755415,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3625.6688827514818,
+      "endDistanceMeters": 3693.626001088613,
+      "wayId": 1504755415,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3693.626001088613,
+      "endDistanceMeters": 3732.0331955217607,
+      "wayId": 1504754517,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3732.0331955217607,
+      "endDistanceMeters": 3736.100273768109,
+      "wayId": 1504754517,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3736.100273768109,
+      "endDistanceMeters": 3744.9149368460075,
+      "wayId": 1504754517,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3744.9149368460075,
+      "endDistanceMeters": 3753.8368995094065,
+      "wayId": 1504755420,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3753.8368995094065,
+      "endDistanceMeters": 3757.058736308402,
+      "wayId": 1504755420,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3757.058736308402,
+      "endDistanceMeters": 3808.475815417039,
+      "wayId": 1504755420,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3808.475815417039,
+      "endDistanceMeters": 3942.340351947378,
+      "wayId": 1504754516,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3942.340351947378,
+      "endDistanceMeters": 3956.6932960612517,
+      "wayId": 1504754516,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3956.6932960612517,
+      "endDistanceMeters": 3975.6302923132557,
+      "wayId": 1504754516,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3975.6302923132557,
+      "endDistanceMeters": 3993.0721022751054,
+      "wayId": 1272470620,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 3993.0721022751054,
+      "endDistanceMeters": 4030.7474324406544,
+      "wayId": 88774369,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4030.7474324406544,
+      "endDistanceMeters": 4031.982452374772,
+      "wayId": 88774369,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4031.982452374772,
+      "endDistanceMeters": 4033.4554758577733,
+      "wayId": 88774369,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4033.4554758577733,
+      "endDistanceMeters": 4042.2989948074223,
+      "wayId": 88774369,
+      "highway": "trunk",
+      "name": "Castle Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4042.2989948074223,
+      "endDistanceMeters": 4051.609865662702,
+      "wayId": 1497214074,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4051.609865662702,
+      "endDistanceMeters": 4081.9473711899823,
+      "wayId": 1497214074,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4081.9473711899823,
+      "endDistanceMeters": 4096.196912938123,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4096.196912938123,
+      "endDistanceMeters": 4105.670161475397,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4105.670161475397,
+      "endDistanceMeters": 4121.305969633247,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4121.305969633247,
+      "endDistanceMeters": 4134.622131733245,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4134.622131733245,
+      "endDistanceMeters": 4147.4498505874135,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4147.4498505874135,
+      "endDistanceMeters": 4162.757428664265,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4162.757428664265,
+      "endDistanceMeters": 4176.341535930522,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4176.341535930522,
+      "endDistanceMeters": 4187.550957393385,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4187.550957393385,
+      "endDistanceMeters": 4218.604456386439,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4218.604456386439,
+      "endDistanceMeters": 4229.8783501762055,
+      "wayId": 629154778,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4229.8783501762055,
+      "endDistanceMeters": 4266.952261943542,
+      "wayId": 1255450322,
+      "highway": "trunk",
+      "name": "Anzac Avenue",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4266.952261943542,
+      "endDistanceMeters": 4285.0162709822025,
+      "wayId": 1272470623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4285.0162709822025,
+      "endDistanceMeters": 4295.043697222496,
+      "wayId": 1272470623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4295.043697222496,
+      "endDistanceMeters": 4303.988695025633,
+      "wayId": 1272470623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4303.988695025633,
+      "endDistanceMeters": 4316.407300828701,
+      "wayId": 1272470623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4316.407300828701,
+      "endDistanceMeters": 4328.3996841534,
+      "wayId": 1272470623,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4328.3996841534,
+      "endDistanceMeters": 4372.338817817371,
+      "wayId": 1497216971,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4372.338817817371,
+      "endDistanceMeters": 4375.908847398592,
+      "wayId": 1497216971,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4375.908847398592,
+      "endDistanceMeters": 4401.098908668965,
+      "wayId": 1497216971,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4401.098908668965,
+      "endDistanceMeters": 4465.792170787927,
+      "wayId": 88774365,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4465.792170787927,
+      "endDistanceMeters": 4467.755590770481,
+      "wayId": 88774365,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4467.755590770481,
+      "endDistanceMeters": 4480.446132204763,
+      "wayId": 88774365,
+      "highway": "trunk",
+      "name": "Queens Gardens",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4480.446132204763,
+      "endDistanceMeters": 4492.740772692501,
+      "wayId": 81349793,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4492.740772692501,
+      "endDistanceMeters": 4531.685949430639,
+      "wayId": 81349793,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4531.685949430639,
+      "endDistanceMeters": 4576.051751956706,
+      "wayId": 118892271,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4576.051751956706,
+      "endDistanceMeters": 4668.29573542774,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4668.29573542774,
+      "endDistanceMeters": 4867.815313237378,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4867.815313237378,
+      "endDistanceMeters": 4978.450055126818,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4978.450055126818,
+      "endDistanceMeters": 4985.076256793483,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 4985.076256793483,
+      "endDistanceMeters": 5041.072864469265,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 5041.072864469265,
+      "endDistanceMeters": 5132.968826596311,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 5132.968826596311,
+      "endDistanceMeters": 5148.858263389623,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1"
+    },
+    {
+      "startDistanceMeters": 5148.858263389623,
+      "endDistanceMeters": 5172.941834191201,
+      "wayId": 1556703663,
+      "highway": "service"
+    },
+    {
+      "startDistanceMeters": 5172.941834191201,
+      "endDistanceMeters": 5184.622354558424,
+      "wayId": 1556703662,
+      "highway": "service"
+    },
+    {
+      "startDistanceMeters": 5184.622354558424,
+      "endDistanceMeters": 5186.307796631726,
+      "wayId": 1556703662,
+      "highway": "service"
+    },
+    {
+      "startDistanceMeters": 5186.307796631726,
+      "endDistanceMeters": 5193.099522604842,
+      "wayId": 1556703662,
+      "highway": "service"
+    },
+    {
+      "startDistanceMeters": 5193.099522604842,
+      "endDistanceMeters": 5203.318754193953,
+      "wayId": 1556703662,
+      "highway": "service"
+    },
+    {
+      "startDistanceMeters": 5203.318754193953,
+      "endDistanceMeters": 5312.937630812173,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5312.937630812173,
+      "endDistanceMeters": 5314.451700129738,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5314.451700129738,
+      "endDistanceMeters": 5317.594243793588,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5317.594243793588,
+      "endDistanceMeters": 5319.70120991091,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5319.70120991091,
+      "endDistanceMeters": 5322.6967671136845,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5322.6967671136845,
+      "endDistanceMeters": 5325.0495939948,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5325.0495939948,
+      "endDistanceMeters": 5328.170925422027,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5328.170925422027,
+      "endDistanceMeters": 5332.247213573286,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5332.247213573286,
+      "endDistanceMeters": 5335.100017565735,
+      "wayId": 381871579,
+      "highway": "residential",
+      "name": "Vogel Street"
+    },
+    {
+      "startDistanceMeters": 5335.100017565735,
+      "endDistanceMeters": 5360.619179218077,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5360.619179218077,
+      "endDistanceMeters": 5369.83766299571,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5369.83766299571,
+      "endDistanceMeters": 5385.357342669781,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5385.357342669781,
+      "endDistanceMeters": 5389.46443742089,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5389.46443742089,
+      "endDistanceMeters": 5392.712671849263,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5392.712671849263,
+      "endDistanceMeters": 5395.769132202275,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5395.769132202275,
+      "endDistanceMeters": 5399.503822454766,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5399.503822454766,
+      "endDistanceMeters": 5401.258276998768,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    },
+    {
+      "startDistanceMeters": 5401.258276998768,
+      "endDistanceMeters": 5411.1837416254175,
+      "wayId": 508089734,
+      "highway": "residential",
+      "name": "Jervois Street"
+    }
+  ],
+  "nearbyLandmarkCandidatesConsidered": 99,
+  "selectedLandmarkCount": 20,
+  "buildings": {
+    "nearbyCandidates": 895,
+    "selectedCount": 888,
+    "ordinaryWays": 888,
+    "multipolygonRelationsIncluded": 0,
+    "multipolygonRelationsSkipped": 7,
+    "namedBuildings": 145,
+    "explicitHeightCount": 10,
+    "levelsHeightCount": 74,
+    "fallbackHeightCount": 804,
+    "malformedHeights": 0,
+    "malformedOrExcludedRecords": 0,
+    "originalVertices": 7112,
+    "simplifiedVertices": 6269,
+    "largestFootprintVertices": 57,
+    "minimumHeightMeters": 3,
+    "maximumHeightMeters": 33,
+    "medianHeightMeters": 8,
+    "generatedTriangleCount": 14367,
+    "runtimeMeshChunkCount": 16,
+    "runtimeMeshInstanceCount": 16,
+    "extractionSeconds": 62.7100775,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
+  },
+  "vegetation": {
+    "polygonsConsidered": 4319,
+    "polygonsIncluded": 22,
+    "categoryCounts": {
+      "park": 8,
+      "wood": 1,
+      "recreation": 1,
+      "grass": 9,
+      "garden": 3
+    },
+    "namedAreas": 6,
+    "explicitTreeCount": 84,
+    "treeRowCount": 1,
+    "treeRowInstances": 3,
+    "generatedTreeCount": 84,
+    "totalTreeInstances": 171,
+    "treesRejectedForRoadProximity": 0,
+    "treesRejectedForBuildingIntersection": 8,
+    "treesRejectedAsDuplicates": 52,
+    "treesRejectedNearLandmarks": 2,
+    "originalPolygonVertices": 479,
+    "simplifiedPolygonVertices": 254,
+    "largestPolygonVertices": 33,
+    "demSamples": 239,
+    "demCacheHits": 2,
+    "malformedOrSkippedGeometries": 4,
+    "areaGroundOverlays": 22,
+    "areaTriangleCount": 188,
+    "multiMeshCount": 32,
+    "areaMeshInstanceCount": 10,
+    "sceneNodeCount": 43,
+    "generationSeconds": 46.2586813,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
+  },
+  "streetFurniture": {
+    "totalCandidates": 3696,
+    "selectedItems": 345,
+    "categoryCounts": {
+      "crossing": 193,
+      "give-way-sign": 31,
+      "traffic-signal": 59,
+      "stop-sign": 3,
+      "bollard": 5,
+      "bus-stop": 15,
+      "bench": 39
+    },
+    "streetLamps": 0,
+    "trafficSignals": 59,
+    "stopGiveWaySigns": 34,
+    "bollards": 5,
+    "crossings": 193,
+    "busStops": 15,
+    "benches": 39,
+    "malformedOrSkippedItems": 1632,
+    "itemsInsideRoadRibbon": 70,
+    "elevationSamples": 345,
+    "runtimeMultiMeshCount": 129,
+    "totalRenderedInstances": 345,
+    "sceneNodeCount": 130,
+    "generationSeconds": 42.7750838,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "renderedPrimitiveInstances": 763
+  },
+  "actualOsmDistanceMeters": 5411.1837416254175,
+  "finalPointCount": 340,
+  "sourceOsmNodeCount": 254,
+  "maximumAdjacentPointDistanceMeters": 29.83234930716068,
+  "maximumSourceOsmNodeSpacingMeters": 199.51957780963883,
+  "maximumCorridorDeviationMeters": 0,
+  "isValid": true,
+  "errors": [],
+  "warnings": [],
+  "timings": {
+    "nodeScanSeconds": 0,
+    "wayScanSeconds": 0,
+    "graphBuildSeconds": 0,
+    "routeSolveSeconds": 1.634383,
+    "outputGenerationSeconds": 0.014203,
+    "cacheLoadSeconds": 0.121138,
+    "cacheSaveSeconds": 0,
+    "cacheHit": true,
+    "cacheBuildSeconds": 74.76499629999999
+  },
+  "generatedAtUtc": "2026-10-07T06:00:31.8256071+00:00",
+  "elevation": {
+    "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+    "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
+    "license": "CC-BY-4.0",
+    "providers": [
+      {
+        "name": "AAM NZ",
+        "roles": [
+          "producer"
+        ]
+      },
+      {
+        "name": "Otago Regional Council",
+        "roles": [
+          "licensor"
+        ]
+      },
+      {
+        "name": "Toitū Te Whenua Land Information New Zealand",
+        "roles": [
+          "host",
+          "processor"
+        ]
+      }
+    ],
+    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "acquisition": [
+      [
+        "2021-06-23T12:00:00Z",
+        "2021-06-23T12:00:00Z"
+      ]
+    ],
+    "fallbackCollection": null,
+    "resolutionMeters": 1,
+    "verticalDatum": "not declared in STAC collection metadata",
+    "selectedAssets": [
+      {
+        "itemId": "CE17_10000_0303",
+        "url": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/CE17_10000_0303.tiff",
+        "resolution": "1m",
+        "cachedBytes": 8261767,
+        "checksum": "122002d0270a9911edb46bbeab5fc89b08b912a1e26a87ade33a1d56e75ef8dd87b4",
+        "crs": "EPSG:2193",
+        "rasterTags": {
+          "AREA_OR_POINT": "Area"
+        }
+      },
+      {
+        "itemId": "CE17_10000_0403",
+        "url": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/CE17_10000_0403.tiff",
+        "resolution": "1m",
+        "cachedBytes": 10928226,
+        "checksum": "1220b957c71aebe35662a62e4e6a73f8f1c2fe393d6a1705760432d944d156722051",
+        "crs": "EPSG:2193",
+        "rasterTags": {
+          "AREA_OR_POINT": "Area"
+        }
+      }
+    ],
+    "oneMeterCoveragePercent": 100.0,
+    "fallbackCoveragePercent": 0.0,
+    "minimumElevationMeters": 1.5596513237297942,
+    "maximumElevationMeters": 15.853957450585519,
+    "startElevationMeters": 2.3025465887031173,
+    "totalAscentMeters": 18.233424483229665,
+    "totalDescentMeters": 18.23342448322967,
+    "minimumGradientPercent": -2.848149173877379,
+    "maximumGradientPercent": 2.0391624104923105,
+    "averageGradientPercent": 0.021558960059856247,
+    "gradientReviewThresholdPercent": 15.0,
+    "suspiciousGradientDistancesMeters": [],
+    "bridgeTunnelSections": [],
+    "profileCsv": "dunedin-one-way-oval-gardens.elevation.csv",
+    "elapsedSeconds": 5.294392599957064,
+    "method": "centered distance-based moving average and centered gradient on regular samples"
+  }
+}

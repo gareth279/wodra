@@ -1,0 +1,3301 @@
+{
+  "id": "dunedin-one-way-oval-gardens",
+  "routeName": "Dunedin One-way: Oval to Gardens Loop",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "searchRadiusMeters": 200,
+  "statistics": {
+    "polygonsConsidered": 4319,
+    "polygonsIncluded": 22,
+    "categoryCounts": {
+      "park": 8,
+      "wood": 1,
+      "recreation": 1,
+      "grass": 9,
+      "garden": 3
+    },
+    "namedAreas": 6,
+    "explicitTreeCount": 84,
+    "treeRowCount": 1,
+    "treeRowInstances": 3,
+    "generatedTreeCount": 84,
+    "totalTreeInstances": 171,
+    "treesRejectedForRoadProximity": 0,
+    "treesRejectedForBuildingIntersection": 8,
+    "treesRejectedAsDuplicates": 52,
+    "treesRejectedNearLandmarks": 2,
+    "originalPolygonVertices": 479,
+    "simplifiedPolygonVertices": 254,
+    "largestPolygonVertices": 33,
+    "demSamples": 239,
+    "demCacheHits": 2,
+    "malformedOrSkippedGeometries": 4,
+    "areaGroundOverlays": 22,
+    "areaTriangleCount": 188,
+    "multiMeshCount": 32,
+    "areaMeshInstanceCount": 10,
+    "sceneNodeCount": 43,
+    "generationSeconds": 48.443941599999995,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
+  },
+  "areas": [
+    {
+      "osmType": "way",
+      "osmId": 106727129,
+      "name": "Musem Reserve",
+      "category": "park",
+      "baseElevationMeters": 9.095057617685018,
+      "elevationVariationMeters": 1.8860379456304308,
+      "renderGround": true,
+      "areaSquareMeters": 8021.39194430674,
+      "distanceFromRouteMeters": 10.11184260869734,
+      "nearestRouteDistanceMeters": 2125.400148078628,
+      "generatedTreeCount": 17,
+      "originalVertexCount": 25,
+      "elevationSampleCount": 5,
+      "polygon": [
+        [
+          170.50984920000002,
+          -45.8662444
+        ],
+        [
+          170.5100482,
+          -45.8663061
+        ],
+        [
+          170.50995300000002,
+          -45.866477
+        ],
+        [
+          170.5109411,
+          -45.866735000000006
+        ],
+        [
+          170.51134570000002,
+          -45.8660146
+        ],
+        [
+          170.5108892,
+          -45.865891000000005
+        ],
+        [
+          170.51085840000002,
+          -45.865943300000005
+        ],
+        [
+          170.51080530000002,
+          -45.8659291
+        ],
+        [
+          170.5107225,
+          -45.8659381
+        ],
+        [
+          170.5106662,
+          -45.8658918
+        ],
+        [
+          170.51061990000002,
+          -45.865879400000004
+        ],
+        [
+          170.51064920000002,
+          -45.8658261
+        ],
+        [
+          170.5101989,
+          -45.8657042
+        ],
+        [
+          170.51013410000002,
+          -45.865736500000004
+        ],
+        [
+          170.50984920000002,
+          -45.8662444
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 117322518,
+      "name": "Market Reserve",
+      "category": "park",
+      "baseElevationMeters": 2.493822514772589,
+      "elevationVariationMeters": 0.14661811018456206,
+      "renderGround": true,
+      "areaSquareMeters": 9329.630529390015,
+      "distanceFromRouteMeters": 135.88049332178696,
+      "nearestRouteDistanceMeters": 0,
+      "generatedTreeCount": 20,
+      "originalVertexCount": 18,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.4980209,
+          -45.883760800000005
+        ],
+        [
+          170.4979235,
+          -45.8837184
+        ],
+        [
+          170.4978514,
+          -45.883621500000004
+        ],
+        [
+          170.4976235,
+          -45.8835089
+        ],
+        [
+          170.4974541,
+          -45.8832662
+        ],
+        [
+          170.49732930000002,
+          -45.883219700000005
+        ],
+        [
+          170.4970996,
+          -45.882881700000006
+        ],
+        [
+          170.49870270000002,
+          -45.8824016
+        ],
+        [
+          170.4987547,
+          -45.8824139
+        ],
+        [
+          170.49877320000002,
+          -45.8824502
+        ],
+        [
+          170.49874400000002,
+          -45.882539200000004
+        ],
+        [
+          170.4980573,
+          -45.8837473
+        ],
+        [
+          170.4980209,
+          -45.883760800000005
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 324890391,
+      "name": "The Quad",
+      "category": "park",
+      "baseElevationMeters": 14.499173764430747,
+      "elevationVariationMeters": 0.530089333930766,
+      "renderGround": true,
+      "areaSquareMeters": 1161.288423265618,
+      "distanceFromRouteMeters": 118.24471851893978,
+      "nearestRouteDistanceMeters": 2598.1321136215774,
+      "generatedTreeCount": 2,
+      "originalVertexCount": 8,
+      "elevationSampleCount": 5,
+      "polygon": [
+        [
+          170.51448820000002,
+          -45.862233800000006
+        ],
+        [
+          170.51433830000002,
+          -45.862517000000004
+        ],
+        [
+          170.51466480000002,
+          -45.862600900000004
+        ],
+        [
+          170.5146958,
+          -45.8625423
+        ],
+        [
+          170.5148126,
+          -45.862572300000004
+        ],
+        [
+          170.5149316,
+          -45.8623476
+        ],
+        [
+          170.51448820000002,
+          -45.862233800000006
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 372554474,
+      "category": "park",
+      "baseElevationMeters": 14.035338351457613,
+      "elevationVariationMeters": 2.523536327128415,
+      "renderGround": true,
+      "areaSquareMeters": 10134.919471468711,
+      "distanceFromRouteMeters": 15.418718955836098,
+      "nearestRouteDistanceMeters": 880.5147282182905,
+      "generatedTreeCount": 22,
+      "originalVertexCount": 16,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.50385730000002,
+          -45.8757296
+        ],
+        [
+          170.5038111,
+          -45.8758214
+        ],
+        [
+          170.5042974,
+          -45.876599000000006
+        ],
+        [
+          170.5049511,
+          -45.876411700000006
+        ],
+        [
+          170.5055959,
+          -45.876119100000004
+        ],
+        [
+          170.50555680000002,
+          -45.8759
+        ],
+        [
+          170.50516430000002,
+          -45.876062600000004
+        ],
+        [
+          170.50514030000002,
+          -45.876029100000004
+        ],
+        [
+          170.50515990000002,
+          -45.875997600000005
+        ],
+        [
+          170.5050104,
+          -45.8757323
+        ],
+        [
+          170.5050888,
+          -45.8757074
+        ],
+        [
+          170.50497560000002,
+          -45.8755303
+        ],
+        [
+          170.50515240000001,
+          -45.875475400000006
+        ],
+        [
+          170.50507850000002,
+          -45.875357900000004
+        ],
+        [
+          170.50385730000002,
+          -45.8757296
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 372554475,
+      "category": "wood",
+      "baseElevationMeters": 2.7001372954930867,
+      "elevationVariationMeters": 0,
+      "renderGround": true,
+      "areaSquareMeters": 1320.019398800252,
+      "distanceFromRouteMeters": 8.309161544120805,
+      "nearestRouteDistanceMeters": 897.8793036486129,
+      "generatedTreeCount": 6,
+      "originalVertexCount": 17,
+      "elevationSampleCount": 1,
+      "polygon": [
+        [
+          170.5056476,
+          -45.876180100000006
+        ],
+        [
+          170.5051257,
+          -45.876401
+        ],
+        [
+          170.505063,
+          -45.876445800000006
+        ],
+        [
+          170.50480280000002,
+          -45.876523000000006
+        ],
+        [
+          170.50465440000002,
+          -45.876530800000005
+        ],
+        [
+          170.5043238,
+          -45.876625100000005
+        ],
+        [
+          170.50430780000002,
+          -45.8765786
+        ],
+        [
+          170.5044417,
+          -45.876465
+        ],
+        [
+          170.5045877,
+          -45.876484500000004
+        ],
+        [
+          170.50523280000002,
+          -45.876294400000006
+        ],
+        [
+          170.5055959,
+          -45.876119100000004
+        ],
+        [
+          170.5054681,
+          -45.8759297
+        ],
+        [
+          170.50567600000002,
+          -45.875874100000004
+        ],
+        [
+          170.50576320000002,
+          -45.875997000000005
+        ],
+        [
+          170.5056476,
+          -45.876180100000006
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 381860107,
+      "name": "Lower Octagon",
+      "category": "park",
+      "baseElevationMeters": 10.526954609299805,
+      "elevationVariationMeters": 1.8037808059996259,
+      "renderGround": true,
+      "areaSquareMeters": 2311.1462507265464,
+      "distanceFromRouteMeters": 197.6865510594565,
+      "nearestRouteDistanceMeters": 1029.45197074037,
+      "generatedTreeCount": 5,
+      "originalVertexCount": 18,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.50359210000002,
+          -45.8744937
+        ],
+        [
+          170.50350160000002,
+          -45.8744736
+        ],
+        [
+          170.50386500000002,
+          -45.873792900000005
+        ],
+        [
+          170.50396450000002,
+          -45.8738262
+        ],
+        [
+          170.5040476,
+          -45.8738916
+        ],
+        [
+          170.5041152,
+          -45.8739797
+        ],
+        [
+          170.50415900000002,
+          -45.8741452
+        ],
+        [
+          170.5041486,
+          -45.8742132
+        ],
+        [
+          170.5040693,
+          -45.8743476
+        ],
+        [
+          170.50393530000002,
+          -45.874432000000006
+        ],
+        [
+          170.503779,
+          -45.874479400000006
+        ],
+        [
+          170.50359210000002,
+          -45.8744937
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 441113625,
+      "category": "park",
+      "baseElevationMeters": 3.442075130786979,
+      "elevationVariationMeters": 2.0321738831333263,
+      "renderGround": true,
+      "areaSquareMeters": 2344.9162168591406,
+      "distanceFromRouteMeters": 66.86455046008743,
+      "nearestRouteDistanceMeters": 1559.0121913572211,
+      "generatedTreeCount": 5,
+      "originalVertexCount": 10,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.50791510000002,
+          -45.8696319
+        ],
+        [
+          170.50807880000002,
+          -45.8696756
+        ],
+        [
+          170.5080299,
+          -45.869770100000004
+        ],
+        [
+          170.5084155,
+          -45.8698764
+        ],
+        [
+          170.5081925,
+          -45.8702727
+        ],
+        [
+          170.50763400000002,
+          -45.8701195
+        ],
+        [
+          170.50791510000002,
+          -45.8696319
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 468552901,
+      "category": "park",
+      "baseElevationMeters": 9.260549864679115,
+      "elevationVariationMeters": 0.7809945548238595,
+      "renderGround": true,
+      "areaSquareMeters": 1102.500190193009,
+      "distanceFromRouteMeters": 9.036058914580058,
+      "nearestRouteDistanceMeters": 1995.8557090619863,
+      "generatedTreeCount": 2,
+      "originalVertexCount": 10,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.5097129,
+          -45.866602300000004
+        ],
+        [
+          170.51010970000002,
+          -45.8667195
+        ],
+        [
+          170.5098704,
+          -45.8671475
+        ],
+        [
+          170.5098523,
+          -45.8671499
+        ],
+        [
+          170.50972240000002,
+          -45.866893700000006
+        ],
+        [
+          170.5096954,
+          -45.8666968
+        ],
+        [
+          170.5097129,
+          -45.866602300000004
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 468602755,
+      "category": "park",
+      "baseElevationMeters": 1.9659516400750199,
+      "elevationVariationMeters": 0.3979119936414379,
+      "renderGround": true,
+      "areaSquareMeters": 1961.9341575132164,
+      "distanceFromRouteMeters": 191.414599615448,
+      "nearestRouteDistanceMeters": 3619.24924450612,
+      "generatedTreeCount": 4,
+      "originalVertexCount": 13,
+      "elevationSampleCount": 3,
+      "polygon": [
+        [
+          170.5128228,
+          -45.8717531
+        ],
+        [
+          170.51287760000002,
+          -45.8717479
+        ],
+        [
+          170.5131823,
+          -45.871841
+        ],
+        [
+          170.51320840000002,
+          -45.871900600000004
+        ],
+        [
+          170.51237220000002,
+          -45.872421800000005
+        ],
+        [
+          170.51229310000002,
+          -45.872426700000005
+        ],
+        [
+          170.5122449,
+          -45.872392500000004
+        ],
+        [
+          170.5128228,
+          -45.8717531
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 479412249,
+      "category": "recreation",
+      "baseElevationMeters": 9.767620464783866,
+      "elevationVariationMeters": 0.7822812262664804,
+      "renderGround": true,
+      "areaSquareMeters": 1223.6322495040724,
+      "distanceFromRouteMeters": 197.6865510594565,
+      "nearestRouteDistanceMeters": 1029.45197074037,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 14,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.5041152,
+          -45.8739797
+        ],
+        [
+          170.50415900000002,
+          -45.8741452
+        ],
+        [
+          170.5041486,
+          -45.8742132
+        ],
+        [
+          170.5040693,
+          -45.8743476
+        ],
+        [
+          170.50393530000002,
+          -45.874432000000006
+        ],
+        [
+          170.50369360000002,
+          -45.874492700000005
+        ],
+        [
+          170.50400720000002,
+          -45.873859800000005
+        ],
+        [
+          170.5041152,
+          -45.8739797
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 564153548,
+      "name": "Union Lawn",
+      "category": "grass",
+      "baseElevationMeters": 9.867320424165207,
+      "elevationVariationMeters": 0.4385901758233821,
+      "renderGround": true,
+      "areaSquareMeters": 3222.068703914613,
+      "distanceFromRouteMeters": 36.58968357132811,
+      "nearestRouteDistanceMeters": 2903.8677605893513,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 20,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.51231860000001,
+          -45.865482400000005
+        ],
+        [
+          170.51211990000002,
+          -45.8658359
+        ],
+        [
+          170.512448,
+          -45.865926
+        ],
+        [
+          170.5126452,
+          -45.8659303
+        ],
+        [
+          170.5127299,
+          -45.8659089
+        ],
+        [
+          170.51283320000002,
+          -45.8658584
+        ],
+        [
+          170.5129177,
+          -45.865771800000005
+        ],
+        [
+          170.5131327,
+          -45.8654324
+        ],
+        [
+          170.5130881,
+          -45.8653707
+        ],
+        [
+          170.51306160000001,
+          -45.8653762
+        ],
+        [
+          170.5127557,
+          -45.8652929
+        ],
+        [
+          170.5126248,
+          -45.8655157
+        ],
+        [
+          170.51248850000002,
+          -45.8654808
+        ],
+        [
+          170.51246690000002,
+          -45.8655227
+        ],
+        [
+          170.51231860000001,
+          -45.865482400000005
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 565200391,
+      "category": "grass",
+      "baseElevationMeters": 9.102156448155638,
+      "elevationVariationMeters": 0.5093845502786767,
+      "renderGround": true,
+      "areaSquareMeters": 712.6650242903281,
+      "distanceFromRouteMeters": 96.70051924381183,
+      "nearestRouteDistanceMeters": 2881.7651980825226,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 21,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.5132907,
+          -45.8658469
+        ],
+        [
+          170.5132131,
+          -45.8659703
+        ],
+        [
+          170.5131203,
+          -45.8660335
+        ],
+        [
+          170.5129982,
+          -45.866066200000006
+        ],
+        [
+          170.51296680000002,
+          -45.8660268
+        ],
+        [
+          170.5129469,
+          -45.865846600000005
+        ],
+        [
+          170.51323490000001,
+          -45.8657027
+        ],
+        [
+          170.5132907,
+          -45.8658469
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 566473707,
+      "name": "Clocktower Lawn",
+      "category": "grass",
+      "baseElevationMeters": 11.979151778112556,
+      "elevationVariationMeters": 0.1615726793459853,
+      "renderGround": true,
+      "areaSquareMeters": 3643.000798729789,
+      "distanceFromRouteMeters": 143.01553231206998,
+      "nearestRouteDistanceMeters": 2713.446024646977,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 45,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.51503430000002,
+          -45.863756200000005
+        ],
+        [
+          170.514652,
+          -45.864026200000005
+        ],
+        [
+          170.5142557,
+          -45.864676700000004
+        ],
+        [
+          170.51420520000002,
+          -45.8651077
+        ],
+        [
+          170.5142333,
+          -45.865349900000005
+        ],
+        [
+          170.5142776,
+          -45.865389
+        ],
+        [
+          170.5143897,
+          -45.865226400000005
+        ],
+        [
+          170.51435700000002,
+          -45.865067
+        ],
+        [
+          170.5148532,
+          -45.864224
+        ],
+        [
+          170.51496350000002,
+          -45.864169800000006
+        ],
+        [
+          170.5150491,
+          -45.8639991
+        ],
+        [
+          170.51504820000002,
+          -45.863922300000006
+        ],
+        [
+          170.51509080000002,
+          -45.863770900000006
+        ],
+        [
+          170.51503430000002,
+          -45.863756200000005
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 566473708,
+      "category": "grass",
+      "baseElevationMeters": 10.668417875776164,
+      "elevationVariationMeters": 1.7146091726939705,
+      "renderGround": true,
+      "areaSquareMeters": 652.2793339897314,
+      "distanceFromRouteMeters": 117.25940825950973,
+      "nearestRouteDistanceMeters": 2674.0805816181837,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 31,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.5141718,
+          -45.864175800000005
+        ],
+        [
+          170.5142551,
+          -45.864198
+        ],
+        [
+          170.51443790000002,
+          -45.8639327
+        ],
+        [
+          170.5146503,
+          -45.8638306
+        ],
+        [
+          170.51468770000002,
+          -45.863725
+        ],
+        [
+          170.5148019,
+          -45.863626200000006
+        ],
+        [
+          170.5146522,
+          -45.8636465
+        ],
+        [
+          170.51448330000002,
+          -45.8637619
+        ],
+        [
+          170.5142992,
+          -45.8639651
+        ],
+        [
+          170.5141718,
+          -45.864175800000005
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 570821845,
+      "category": "grass",
+      "baseElevationMeters": 2.3808805846804777,
+      "elevationVariationMeters": 0.05003789995852337,
+      "renderGround": true,
+      "areaSquareMeters": 1471.7114403474573,
+      "distanceFromRouteMeters": 104.77490867092226,
+      "nearestRouteDistanceMeters": 4026.589440110366,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 23,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.5094455,
+          -45.8756573
+        ],
+        [
+          170.5095483,
+          -45.8755128
+        ],
+        [
+          170.50973230000002,
+          -45.8753705
+        ],
+        [
+          170.51019010000002,
+          -45.874935300000004
+        ],
+        [
+          170.51141220000002,
+          -45.874034
+        ],
+        [
+          170.5114494,
+          -45.873958800000004
+        ],
+        [
+          170.5092851,
+          -45.875548200000004
+        ],
+        [
+          170.5094455,
+          -45.8756573
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 575535229,
+      "category": "grass",
+      "baseElevationMeters": 2.348831218952962,
+      "elevationVariationMeters": 0.30973481148973603,
+      "renderGround": true,
+      "areaSquareMeters": 1588.2511334653323,
+      "distanceFromRouteMeters": 154.07913139355782,
+      "nearestRouteDistanceMeters": 4529.939427157837,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 50,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.50643240000002,
+          -45.8790841
+        ],
+        [
+          170.50646650000002,
+          -45.8791348
+        ],
+        [
+          170.50640030000002,
+          -45.879272
+        ],
+        [
+          170.5064948,
+          -45.879412800000004
+        ],
+        [
+          170.5062718,
+          -45.8798066
+        ],
+        [
+          170.5062126,
+          -45.879850100000006
+        ],
+        [
+          170.50622660000002,
+          -45.8798888
+        ],
+        [
+          170.5059998,
+          -45.8802676
+        ],
+        [
+          170.50596240000002,
+          -45.8802557
+        ],
+        [
+          170.50597390000001,
+          -45.880236100000005
+        ],
+        [
+          170.5059415,
+          -45.880226900000004
+        ],
+        [
+          170.505922,
+          -45.880259900000006
+        ],
+        [
+          170.5058755,
+          -45.880247100000005
+        ],
+        [
+          170.5062125,
+          -45.879636600000005
+        ],
+        [
+          170.5062648,
+          -45.879232300000005
+        ],
+        [
+          170.50643240000002,
+          -45.8790841
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 617399999,
+      "category": "grass",
+      "baseElevationMeters": 4.8629985821914,
+      "elevationVariationMeters": 0.6191548279110259,
+      "renderGround": true,
+      "areaSquareMeters": 1629.0750401868286,
+      "distanceFromRouteMeters": 21.46477234185244,
+      "nearestRouteDistanceMeters": 1732.70943254383,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 10,
+      "elevationSampleCount": 4,
+      "polygon": [
+        [
+          170.51007660000002,
+          -45.8691107
+        ],
+        [
+          170.510443,
+          -45.8692062
+        ],
+        [
+          170.51028680000002,
+          -45.869444900000005
+        ],
+        [
+          170.5103398,
+          -45.8694612
+        ],
+        [
+          170.5102315,
+          -45.8696598
+        ],
+        [
+          170.50983730000002,
+          -45.8695551
+        ],
+        [
+          170.51007660000002,
+          -45.8691107
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 625848056,
+      "category": "garden",
+      "baseElevationMeters": 2.5341266561462885,
+      "elevationVariationMeters": 0,
+      "renderGround": true,
+      "areaSquareMeters": 505.7025224318613,
+      "distanceFromRouteMeters": 8.129602959589803,
+      "nearestRouteDistanceMeters": 4005.3934893409732,
+      "generatedTreeCount": 1,
+      "originalVertexCount": 45,
+      "elevationSampleCount": 1,
+      "polygon": [
+        [
+          170.5082132,
+          -45.8753085
+        ],
+        [
+          170.5081193,
+          -45.8752477
+        ],
+        [
+          170.508235,
+          -45.875041
+        ],
+        [
+          170.50852590000002,
+          -45.8748726
+        ],
+        [
+          170.5086714,
+          -45.874886100000005
+        ],
+        [
+          170.5088934,
+          -45.8750391
+        ],
+        [
+          170.5087096,
+          -45.875134100000004
+        ],
+        [
+          170.50869310000002,
+          -45.8751248
+        ],
+        [
+          170.50882510000002,
+          -45.8750365
+        ],
+        [
+          170.5087651,
+          -45.874997400000005
+        ],
+        [
+          170.5087554,
+          -45.875004100000005
+        ],
+        [
+          170.50867290000002,
+          -45.874951900000006
+        ],
+        [
+          170.50868340000002,
+          -45.874944600000006
+        ],
+        [
+          170.5086331,
+          -45.874908100000006
+        ],
+        [
+          170.50860690000002,
+          -45.874906
+        ],
+        [
+          170.50857010000001,
+          -45.874934200000006
+        ],
+        [
+          170.5085611,
+          -45.874927400000004
+        ],
+        [
+          170.50849290000002,
+          -45.874990000000004
+        ],
+        [
+          170.50845840000002,
+          -45.8749686
+        ],
+        [
+          170.50837520000002,
+          -45.8750287
+        ],
+        [
+          170.5083662,
+          -45.8750219
+        ],
+        [
+          170.5083174,
+          -45.875055800000005
+        ],
+        [
+          170.5083279,
+          -45.875064200000004
+        ],
+        [
+          170.50824920000002,
+          -45.875122100000006
+        ],
+        [
+          170.5082822,
+          -45.875145100000005
+        ],
+        [
+          170.5082514,
+          -45.875167600000005
+        ],
+        [
+          170.50824020000002,
+          -45.875160300000005
+        ],
+        [
+          170.50819520000002,
+          -45.8751947
+        ],
+        [
+          170.5082049,
+          -45.8752031
+        ],
+        [
+          170.50816890000002,
+          -45.8752292
+        ],
+        [
+          170.5082237,
+          -45.875278800000004
+        ],
+        [
+          170.5082477,
+          -45.8752798
+        ],
+        [
+          170.5082132,
+          -45.8753085
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 625848064,
+      "category": "garden",
+      "baseElevationMeters": 2.439380140025922,
+      "elevationVariationMeters": 0.42714239749298777,
+      "renderGround": true,
+      "areaSquareMeters": 400.6685113926952,
+      "distanceFromRouteMeters": 8.095142165158277,
+      "nearestRouteDistanceMeters": 4003.4595775138405,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 13,
+      "elevationSampleCount": 2,
+      "polygon": [
+        [
+          170.5088934,
+          -45.8750391
+        ],
+        [
+          170.5090178,
+          -45.874944600000006
+        ],
+        [
+          170.50897880000002,
+          -45.8749185
+        ],
+        [
+          170.5089001,
+          -45.874978000000006
+        ],
+        [
+          170.5087077,
+          -45.874844200000005
+        ],
+        [
+          170.5085108,
+          -45.8748214
+        ],
+        [
+          170.50843650000002,
+          -45.874831
+        ],
+        [
+          170.50835990000002,
+          -45.8748798
+        ],
+        [
+          170.508235,
+          -45.875041
+        ],
+        [
+          170.50852590000002,
+          -45.8748726
+        ],
+        [
+          170.5086714,
+          -45.874886100000005
+        ],
+        [
+          170.5088934,
+          -45.8750391
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 710779787,
+      "category": "grass",
+      "baseElevationMeters": 2.3549432843997407,
+      "elevationVariationMeters": 0,
+      "renderGround": true,
+      "areaSquareMeters": 570.5439717641874,
+      "distanceFromRouteMeters": 159.63931726425054,
+      "nearestRouteDistanceMeters": 3968.072805011457,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 41,
+      "elevationSampleCount": 1,
+      "polygon": [
+        [
+          170.5117404,
+          -45.873940600000005
+        ],
+        [
+          170.51181350000002,
+          -45.8739378
+        ],
+        [
+          170.511729,
+          -45.8740685
+        ],
+        [
+          170.5103168,
+          -45.875120300000006
+        ],
+        [
+          170.51025850000002,
+          -45.8752739
+        ],
+        [
+          170.5103248,
+          -45.875357
+        ],
+        [
+          170.51024370000002,
+          -45.8752842
+        ],
+        [
+          170.51024370000002,
+          -45.875188
+        ],
+        [
+          170.5103584,
+          -45.8750354
+        ],
+        [
+          170.51169950000002,
+          -45.87404
+        ],
+        [
+          170.5117404,
+          -45.873940600000005
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 995767100,
+      "category": "grass",
+      "baseElevationMeters": 13.634598894337765,
+      "elevationVariationMeters": 1.333831416795535,
+      "renderGround": true,
+      "areaSquareMeters": 881.5356654726091,
+      "distanceFromRouteMeters": 157.9198407652411,
+      "nearestRouteDistanceMeters": 2003.0726001671055,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 6,
+      "elevationSampleCount": 5,
+      "polygon": [
+        [
+          170.50741240000002,
+          -45.8670939
+        ],
+        [
+          170.50754500000002,
+          -45.86685
+        ],
+        [
+          170.5071557,
+          -45.8667474
+        ],
+        [
+          170.50707590000002,
+          -45.8668945
+        ],
+        [
+          170.507134,
+          -45.8670205
+        ],
+        [
+          170.50741240000002,
+          -45.8670939
+        ]
+      ]
+    },
+    {
+      "osmType": "way",
+      "osmId": 1559284084,
+      "category": "garden",
+      "baseElevationMeters": 11.475671040120966,
+      "elevationVariationMeters": 2.3715698047649223,
+      "renderGround": true,
+      "areaSquareMeters": 395.8636158750299,
+      "distanceFromRouteMeters": 155.160154645289,
+      "nearestRouteDistanceMeters": 2598.1321136215774,
+      "generatedTreeCount": 0,
+      "originalVertexCount": 25,
+      "elevationSampleCount": 3,
+      "polygon": [
+        [
+          170.51559400000002,
+          -45.863146400000005
+        ],
+        [
+          170.5150011,
+          -45.8636324
+        ],
+        [
+          170.5152194,
+          -45.8635408
+        ],
+        [
+          170.5155047,
+          -45.8633224
+        ],
+        [
+          170.5156389,
+          -45.8631838
+        ],
+        [
+          170.5156057,
+          -45.8631888
+        ],
+        [
+          170.51559400000002,
+          -45.863146400000005
+        ]
+      ]
+    }
+  ],
+  "trees": [
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.883571383636976,
+      "longitude": 170.49803872493186,
+      "elevationMeters": 2.340881899715674,
+      "treeType": "broadleaf",
+      "heightMeters": 11.811697998941174,
+      "canopyRadiusMeters": 2.362339599788235,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.883317341790594,
+      "longitude": 170.49786147303288,
+      "elevationMeters": 2.317486257655115,
+      "treeType": "broadleaf",
+      "heightMeters": 10.339420384341482,
+      "canopyRadiusMeters": 2.0678840768682965,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.883300249663684,
+      "longitude": 170.49825830745152,
+      "elevationMeters": 2.424444035226654,
+      "treeType": "broadleaf",
+      "heightMeters": 6.891755038796219,
+      "canopyRadiusMeters": 1.378351007759244,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.883214260784634,
+      "longitude": 170.49834210060814,
+      "elevationMeters": 2.399548139504341,
+      "treeType": "broadleaf",
+      "heightMeters": 7.20970769824874,
+      "canopyRadiusMeters": 1.441941539649748,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88310435564056,
+      "longitude": 170.49835746469782,
+      "elevationMeters": 2.4859122534356066,
+      "treeType": "broadleaf",
+      "heightMeters": 10.014270682281065,
+      "canopyRadiusMeters": 2.002854136456213,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88309558909242,
+      "longitude": 170.49729257931904,
+      "elevationMeters": 2.412670379326359,
+      "treeType": "broadleaf",
+      "heightMeters": 6.733426244926665,
+      "canopyRadiusMeters": 1.3466852489853331,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88308616303724,
+      "longitude": 170.4974501004271,
+      "elevationMeters": 2.226457727217543,
+      "treeType": "broadleaf",
+      "heightMeters": 10.330743105369525,
+      "canopyRadiusMeters": 2.066148621073905,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88307605767571,
+      "longitude": 170.49827390293544,
+      "elevationMeters": 2.392542079602588,
+      "treeType": "broadleaf",
+      "heightMeters": 5.368701965118411,
+      "canopyRadiusMeters": 1.0737403930236822,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88301741592823,
+      "longitude": 170.49746556472485,
+      "elevationMeters": 2.348048908255424,
+      "treeType": "broadleaf",
+      "heightMeters": 5.698313243197424,
+      "canopyRadiusMeters": 1.1396626486394847,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88296044859803,
+      "longitude": 170.49781398305547,
+      "elevationMeters": 2.3661274865552406,
+      "treeType": "broadleaf",
+      "heightMeters": 6.276494336884506,
+      "canopyRadiusMeters": 1.2552988673769012,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.882898449732394,
+      "longitude": 170.49850616845384,
+      "elevationMeters": 2.583677539033527,
+      "treeType": "broadleaf",
+      "heightMeters": 6.682984741096882,
+      "canopyRadiusMeters": 1.3365969482193765,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88288732656247,
+      "longitude": 170.49761921060542,
+      "elevationMeters": 2.512064580990971,
+      "treeType": "broadleaf",
+      "heightMeters": 9.00313726906125,
+      "canopyRadiusMeters": 1.8006274538122502,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88288297995994,
+      "longitude": 170.49821317893185,
+      "elevationMeters": 2.422302142225142,
+      "treeType": "broadleaf",
+      "heightMeters": 5.906805219985375,
+      "canopyRadiusMeters": 1.181361043997075,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88288134577749,
+      "longitude": 170.49771302512784,
+      "elevationMeters": 2.431239796398291,
+      "treeType": "broadleaf",
+      "heightMeters": 9.092095116052985,
+      "canopyRadiusMeters": 1.818419023210597,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88280171045151,
+      "longitude": 170.49740673763074,
+      "elevationMeters": 6.47254139542154,
+      "treeType": "broadleaf",
+      "heightMeters": 8.866513580970377,
+      "canopyRadiusMeters": 1.7733027161940755,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88276222373288,
+      "longitude": 170.49834076450506,
+      "elevationMeters": 2.548134124793644,
+      "treeType": "broadleaf",
+      "heightMeters": 4.04201598275412,
+      "canopyRadiusMeters": 0.808403196550824,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88272127160784,
+      "longitude": 170.49775313106244,
+      "elevationMeters": 3.525019298671271,
+      "treeType": "broadleaf",
+      "heightMeters": 11.66972803170681,
+      "canopyRadiusMeters": 2.3339456063413624,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.88270231709245,
+      "longitude": 170.49837377120954,
+      "elevationMeters": 2.526229933671075,
+      "treeType": "broadleaf",
+      "heightMeters": 4.2843346285499875,
+      "canopyRadiusMeters": 0.8568669257099976,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.882673468524985,
+      "longitude": 170.4982044695894,
+      "elevationMeters": 2.469516681908087,
+      "treeType": "broadleaf",
+      "heightMeters": 7.058389323409093,
+      "canopyRadiusMeters": 1.4116778646818187,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "generated",
+      "osmId": 117322518,
+      "latitude": -45.882531891565854,
+      "longitude": 170.4985088653318,
+      "elevationMeters": 3.3934104050783085,
+      "treeType": "broadleaf",
+      "heightMeters": 9.781310240574706,
+      "canopyRadiusMeters": 1.9562620481149413,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 13875732437,
+      "latitude": -45.880734100000005,
+      "longitude": 170.5017435,
+      "elevationMeters": 2.1235455689294054,
+      "treeType": "generic",
+      "heightMeters": 10.839711995138696,
+      "canopyRadiusMeters": 2.1679423990277393,
+      "nearestRouteDistanceMeters": 255.15906039368838
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87574729253856,
+      "longitude": 170.5038702943269,
+      "elevationMeters": 14.122196344646643,
+      "treeType": "broadleaf",
+      "heightMeters": 9.426976513306133,
+      "canopyRadiusMeters": 1.8853953026612267,
+      "nearestRouteDistanceMeters": 745.6549473024785
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.87659567086207,
+      "longitude": 170.50441643387109,
+      "elevationMeters": 4.483627186206648,
+      "treeType": "broadleaf",
+      "heightMeters": 7.022580124927378,
+      "canopyRadiusMeters": 1.4045160249854758,
+      "nearestRouteDistanceMeters": 747.4786188310206
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87612365541422,
+      "longitude": 170.50415051023924,
+      "elevationMeters": 15.104474768783728,
+      "treeType": "broadleaf",
+      "heightMeters": 9.76962197469814,
+      "canopyRadiusMeters": 1.953924394939628,
+      "nearestRouteDistanceMeters": 749.4793474220791
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.876132368181665,
+      "longitude": 170.50426550591845,
+      "elevationMeters": 15.035454350994907,
+      "treeType": "broadleaf",
+      "heightMeters": 7.7810702444541135,
+      "canopyRadiusMeters": 1.5562140488908227,
+      "nearestRouteDistanceMeters": 757.2719379143925
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.876053939692206,
+      "longitude": 170.50422564051712,
+      "elevationMeters": 14.986386758123718,
+      "treeType": "broadleaf",
+      "heightMeters": 6.9106115304407565,
+      "canopyRadiusMeters": 1.3821223060881513,
+      "nearestRouteDistanceMeters": 761.2630376489067
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.87651786578736,
+      "longitude": 170.5046352344598,
+      "elevationMeters": 7.275420278393039,
+      "treeType": "conifer",
+      "heightMeters": 6.531310732037467,
+      "canopyRadiusMeters": 1.3062621464074935,
+      "nearestRouteDistanceMeters": 768.0852778623637
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.875939107380574,
+      "longitude": 170.50425779023203,
+      "elevationMeters": 14.875791309180745,
+      "treeType": "broadleaf",
+      "heightMeters": 6.271139703218813,
+      "canopyRadiusMeters": 1.2542279406437626,
+      "nearestRouteDistanceMeters": 768.9348916288573
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.87646228691163,
+      "longitude": 170.50467818901993,
+      "elevationMeters": 14.720833287755182,
+      "treeType": "conifer",
+      "heightMeters": 5.104070703763163,
+      "canopyRadiusMeters": 1.0208141407526328,
+      "nearestRouteDistanceMeters": 773.718778011027
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87620886353596,
+      "longitude": 170.50470652425005,
+      "elevationMeters": 14.947052946010047,
+      "treeType": "broadleaf",
+      "heightMeters": 11.642037708306457,
+      "canopyRadiusMeters": 2.3284075416612917,
+      "nearestRouteDistanceMeters": 794.4823534362462
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87634969389954,
+      "longitude": 170.50492559697565,
+      "elevationMeters": 14.740994972516404,
+      "treeType": "broadleaf",
+      "heightMeters": 10.486508402721999,
+      "canopyRadiusMeters": 2.0973016805444,
+      "nearestRouteDistanceMeters": 801.2415008462816
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87630506988637,
+      "longitude": 170.5051575172209,
+      "elevationMeters": 14.526641966701447,
+      "treeType": "broadleaf",
+      "heightMeters": 6.04606199430814,
+      "canopyRadiusMeters": 1.2092123988616281,
+      "nearestRouteDistanceMeters": 849.2123132446678
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.876222773056305,
+      "longitude": 170.5052103892133,
+      "elevationMeters": 14.695136341181957,
+      "treeType": "broadleaf",
+      "heightMeters": 5.100286356199599,
+      "canopyRadiusMeters": 1.0200572712399198,
+      "nearestRouteDistanceMeters": 859.221451857518
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87624252742602,
+      "longitude": 170.50531958455102,
+      "elevationMeters": 14.485866525543573,
+      "treeType": "broadleaf",
+      "heightMeters": 9.9470239620935,
+      "canopyRadiusMeters": 1.9894047924187,
+      "nearestRouteDistanceMeters": 860.1865653340471
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87611475533318,
+      "longitude": 170.50504789814946,
+      "elevationMeters": 14.861941042205562,
+      "treeType": "broadleaf",
+      "heightMeters": 9.285724951298917,
+      "canopyRadiusMeters": 1.8571449902597834,
+      "nearestRouteDistanceMeters": 865.4961796630234
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.875904694970586,
+      "longitude": 170.5043736420708,
+      "elevationMeters": 14.852395221914037,
+      "treeType": "broadleaf",
+      "heightMeters": 8.243093354401974,
+      "canopyRadiusMeters": 1.648618670880395,
+      "nearestRouteDistanceMeters": 868.2135700024492
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.876186511417245,
+      "longitude": 170.50556491183656,
+      "elevationMeters": 6.921105628194673,
+      "treeType": "conifer",
+      "heightMeters": 10.610192909717078,
+      "canopyRadiusMeters": 2.1220385819434155,
+      "nearestRouteDistanceMeters": 872.6602551599332
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87583135300444,
+      "longitude": 170.50436343588882,
+      "elevationMeters": 14.749988072802537,
+      "treeType": "broadleaf",
+      "heightMeters": 4.071668949576957,
+      "canopyRadiusMeters": 0.8143337899153915,
+      "nearestRouteDistanceMeters": 875.5192695069077
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87597710314215,
+      "longitude": 170.50492357563417,
+      "elevationMeters": 14.934706246713393,
+      "treeType": "broadleaf",
+      "heightMeters": 9.18074339382506,
+      "canopyRadiusMeters": 1.8361486787650119,
+      "nearestRouteDistanceMeters": 876.2394071225169
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.87611602592258,
+      "longitude": 170.50560054189634,
+      "elevationMeters": 13.29300360240589,
+      "treeType": "conifer",
+      "heightMeters": 5.588613448423275,
+      "canopyRadiusMeters": 1.117722689684655,
+      "nearestRouteDistanceMeters": 880.9640443180347
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87569286045775,
+      "longitude": 170.5043052306053,
+      "elevationMeters": 14.251428267288029,
+      "treeType": "broadleaf",
+      "heightMeters": 6.135767837108129,
+      "canopyRadiusMeters": 1.2271535674216258,
+      "nearestRouteDistanceMeters": 888.2157488534458
+    },
+    {
+      "source": "generated",
+      "osmId": 372554475,
+      "latitude": -45.87597478734421,
+      "longitude": 170.50558763767359,
+      "elevationMeters": 14.293913224878152,
+      "treeType": "conifer",
+      "heightMeters": 8.65173930194949,
+      "canopyRadiusMeters": 1.730347860389898,
+      "nearestRouteDistanceMeters": 895.223584228843
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87563261104025,
+      "longitude": 170.50443262451432,
+      "elevationMeters": 13.84040348995478,
+      "treeType": "broadleaf",
+      "heightMeters": 10.407066313936447,
+      "canopyRadiusMeters": 2.0814132627872897,
+      "nearestRouteDistanceMeters": 898.0496587193754
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87579205981747,
+      "longitude": 170.50503557096542,
+      "elevationMeters": 14.647594688008652,
+      "treeType": "broadleaf",
+      "heightMeters": 11.108143280112365,
+      "canopyRadiusMeters": 2.221628656022473,
+      "nearestRouteDistanceMeters": 898.5598870644549
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.875691254878554,
+      "longitude": 170.50484380759008,
+      "elevationMeters": 14.512245470860325,
+      "treeType": "broadleaf",
+      "heightMeters": 8.832015760132476,
+      "canopyRadiusMeters": 1.7664031520264953,
+      "nearestRouteDistanceMeters": 903.5842512618266
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87562131403499,
+      "longitude": 170.50462198946573,
+      "elevationMeters": 14.125118348047767,
+      "treeType": "broadleaf",
+      "heightMeters": 10.955268905173856,
+      "canopyRadiusMeters": 2.191053781034771,
+      "nearestRouteDistanceMeters": 904.5645874434072
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.875502136573225,
+      "longitude": 170.5046208099043,
+      "elevationMeters": 12.658032598015167,
+      "treeType": "broadleaf",
+      "heightMeters": 8.621311606261594,
+      "canopyRadiusMeters": 1.724262321252319,
+      "nearestRouteDistanceMeters": 916.8708587206348
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.87548374543875,
+      "longitude": 170.50492354024652,
+      "elevationMeters": 13.897476138487278,
+      "treeType": "broadleaf",
+      "heightMeters": 6.976358335759067,
+      "canopyRadiusMeters": 1.3952716671518135,
+      "nearestRouteDistanceMeters": 927.320136247319
+    },
+    {
+      "source": "generated",
+      "osmId": 372554474,
+      "latitude": -45.875404579455115,
+      "longitude": 170.50507006690506,
+      "elevationMeters": 13.174279630076054,
+      "treeType": "broadleaf",
+      "heightMeters": 7.018272271613971,
+      "canopyRadiusMeters": 1.4036544543227942,
+      "nearestRouteDistanceMeters": 939.6530106068091
+    },
+    {
+      "source": "generated",
+      "osmId": 381860107,
+      "latitude": -45.874477307517324,
+      "longitude": 170.50361796326527,
+      "elevationMeters": 10.76841412788611,
+      "treeType": "broadleaf",
+      "heightMeters": 8.433217489786896,
+      "canopyRadiusMeters": 1.6866434979573794,
+      "nearestRouteDistanceMeters": 990.6363726750466
+    },
+    {
+      "source": "generated",
+      "osmId": 381860107,
+      "latitude": -45.874362540318764,
+      "longitude": 170.50382504392448,
+      "elevationMeters": 9.813428691068202,
+      "treeType": "broadleaf",
+      "heightMeters": 11.927171911366575,
+      "canopyRadiusMeters": 2.385434382273315,
+      "nearestRouteDistanceMeters": 1006.8992173915395
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903541744,
+      "latitude": -45.874396700000005,
+      "longitude": 170.50413450000002,
+      "elevationMeters": 9.027880560260789,
+      "treeType": "generic",
+      "heightMeters": 4.3054949393303605,
+      "canopyRadiusMeters": 0.8610989878660722,
+      "nearestRouteDistanceMeters": 1012.7030513212366
+    },
+    {
+      "source": "generated",
+      "osmId": 381860107,
+      "latitude": -45.874249203443256,
+      "longitude": 170.50399311523768,
+      "elevationMeters": 9.505930873464257,
+      "treeType": "broadleaf",
+      "heightMeters": 5.121590442131637,
+      "canopyRadiusMeters": 1.0243180884263274,
+      "nearestRouteDistanceMeters": 1029.45197074037
+    },
+    {
+      "source": "generated",
+      "osmId": 381860107,
+      "latitude": -45.874202963727456,
+      "longitude": 170.50381794934998,
+      "elevationMeters": 10.15610282985648,
+      "treeType": "broadleaf",
+      "heightMeters": 5.644978570812969,
+      "canopyRadiusMeters": 1.128995714162594,
+      "nearestRouteDistanceMeters": 1029.45197074037
+    },
+    {
+      "source": "generated",
+      "osmId": 381860107,
+      "latitude": -45.87416461040249,
+      "longitude": 170.5040031759233,
+      "elevationMeters": 9.461447739704887,
+      "treeType": "broadleaf",
+      "heightMeters": 5.555837182323908,
+      "canopyRadiusMeters": 1.1111674364647817,
+      "nearestRouteDistanceMeters": 1038.3165766863299
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5847982061,
+      "latitude": -45.874186300000005,
+      "longitude": 170.50426520000002,
+      "elevationMeters": 8.92965894429297,
+      "treeType": "generic",
+      "heightMeters": 5.23961354059675,
+      "canopyRadiusMeters": 1.04792270811935,
+      "nearestRouteDistanceMeters": 1043.3924358125296
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12410450417,
+      "latitude": -45.870966300000006,
+      "longitude": 170.50831060000002,
+      "elevationMeters": 2.4689384697823202,
+      "treeType": "generic",
+      "heightMeters": 4.529323799383728,
+      "canopyRadiusMeters": 0.9058647598767456,
+      "nearestRouteDistanceMeters": 1490.5051831692313
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12410450419,
+      "latitude": -45.8708183,
+      "longitude": 170.50815590000002,
+      "elevationMeters": 2.545619962133694,
+      "treeType": "generic",
+      "heightMeters": 9.597890813515761,
+      "canopyRadiusMeters": 1.9195781627031523,
+      "nearestRouteDistanceMeters": 1501.3609857760155
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12410450418,
+      "latitude": -45.8706455,
+      "longitude": 170.50762350000002,
+      "elevationMeters": 2.8865631122294806,
+      "treeType": "generic",
+      "heightMeters": 9.646526520902565,
+      "canopyRadiusMeters": 1.929305304180513,
+      "nearestRouteDistanceMeters": 1503.9564607523123
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12410450416,
+      "latitude": -45.870567900000005,
+      "longitude": 170.5074518,
+      "elevationMeters": 3.4889593012487667,
+      "treeType": "generic",
+      "heightMeters": 10.02221758187135,
+      "canopyRadiusMeters": 2.00444351637427,
+      "nearestRouteDistanceMeters": 1507.0435518463785
+    },
+    {
+      "source": "generated",
+      "osmId": 441113625,
+      "latitude": -45.870067243572485,
+      "longitude": 170.50769344688257,
+      "elevationMeters": 4.247440104778017,
+      "treeType": "broadleaf",
+      "heightMeters": 6.2487112499831285,
+      "canopyRadiusMeters": 1.2497422499966258,
+      "nearestRouteDistanceMeters": 1566.0969821869512
+    },
+    {
+      "source": "generated",
+      "osmId": 441113625,
+      "latitude": -45.86999461183038,
+      "longitude": 170.50780154478684,
+      "elevationMeters": 3.781328317728095,
+      "treeType": "broadleaf",
+      "heightMeters": 4.741871765733985,
+      "canopyRadiusMeters": 0.9483743531467971,
+      "nearestRouteDistanceMeters": 1576.679731010069
+    },
+    {
+      "source": "generated",
+      "osmId": 441113625,
+      "latitude": -45.870076152790126,
+      "longitude": 170.50826457698415,
+      "elevationMeters": 2.7503285482506143,
+      "treeType": "broadleaf",
+      "heightMeters": 10.94731168987852,
+      "canopyRadiusMeters": 2.189462337975704,
+      "nearestRouteDistanceMeters": 1581.3909478895712
+    },
+    {
+      "source": "generated",
+      "osmId": 441113625,
+      "latitude": -45.869847463965534,
+      "longitude": 170.5081591177479,
+      "elevationMeters": 2.8765981827610165,
+      "treeType": "broadleaf",
+      "heightMeters": 11.721596559078185,
+      "canopyRadiusMeters": 2.344319311815637,
+      "nearestRouteDistanceMeters": 1602.0539694933036
+    },
+    {
+      "source": "generated",
+      "osmId": 441113625,
+      "latitude": -45.86968080254215,
+      "longitude": 170.50796855061378,
+      "elevationMeters": 5.127507333282433,
+      "treeType": "broadleaf",
+      "heightMeters": 7.6095666131065025,
+      "canopyRadiusMeters": 1.5219133226213006,
+      "nearestRouteDistanceMeters": 1613.8840296473047
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497052263,
+      "latitude": -45.8691735,
+      "longitude": 170.5096704,
+      "elevationMeters": 4.722472309194844,
+      "treeType": "generic",
+      "heightMeters": 10.218549841917334,
+      "canopyRadiusMeters": 2.043709968383467,
+      "nearestRouteDistanceMeters": 1714.6839016888784
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424464,
+      "latitude": -45.868644200000006,
+      "longitude": 170.50845360000002,
+      "elevationMeters": 6.551633992694401,
+      "treeType": "generic",
+      "heightMeters": 11.805229606343069,
+      "canopyRadiusMeters": 2.3610459212686137,
+      "nearestRouteDistanceMeters": 1734.911633050409
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424463,
+      "latitude": -45.8685734,
+      "longitude": 170.5084969,
+      "elevationMeters": 6.51698529046289,
+      "treeType": "generic",
+      "heightMeters": 11.41162356370669,
+      "canopyRadiusMeters": 2.2823247127413384,
+      "nearestRouteDistanceMeters": 1743.464973621138
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424458,
+      "latitude": -45.8687842,
+      "longitude": 170.5097983,
+      "elevationMeters": 5.823432169126727,
+      "treeType": "generic",
+      "heightMeters": 10.990891666677587,
+      "canopyRadiusMeters": 2.1981783333355174,
+      "nearestRouteDistanceMeters": 1758.5927890060466
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424435,
+      "latitude": -45.868590700000006,
+      "longitude": 170.5091001,
+      "elevationMeters": 6.508836303835688,
+      "treeType": "generic",
+      "heightMeters": 5.999054234786157,
+      "canopyRadiusMeters": 1.1998108469572315,
+      "nearestRouteDistanceMeters": 1758.8114393419885
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424429,
+      "latitude": -45.8685332,
+      "longitude": 170.5089102,
+      "elevationMeters": 6.41027438824968,
+      "treeType": "generic",
+      "heightMeters": 7.036182683069839,
+      "canopyRadiusMeters": 1.4072365366139679,
+      "nearestRouteDistanceMeters": 1759.374862817282
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424449,
+      "latitude": -45.868670200000004,
+      "longitude": 170.5094151,
+      "elevationMeters": 5.782160119111525,
+      "treeType": "generic",
+      "heightMeters": 4.197275257705056,
+      "canopyRadiusMeters": 0.8394550515410112,
+      "nearestRouteDistanceMeters": 1759.5197858847412
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5903424450,
+      "latitude": -45.8687137,
+      "longitude": 170.5095741,
+      "elevationMeters": 5.76630084214821,
+      "treeType": "generic",
+      "heightMeters": 4.587772995760387,
+      "canopyRadiusMeters": 0.9175545991520775,
+      "nearestRouteDistanceMeters": 1759.528497385199
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497061648,
+      "latitude": -45.867097,
+      "longitude": 170.50985440000002,
+      "elevationMeters": 8.587530755932546,
+      "treeType": "generic",
+      "heightMeters": 7.166187928486768,
+      "canopyRadiusMeters": 1.4332375856973538,
+      "nearestRouteDistanceMeters": 1958.4755631996977
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12496974259,
+      "latitude": -45.867055900000004,
+      "longitude": 170.5098699,
+      "elevationMeters": 8.715717182801884,
+      "treeType": "generic",
+      "heightMeters": 9.90364761328718,
+      "canopyRadiusMeters": 1.9807295226574362,
+      "nearestRouteDistanceMeters": 1962.2945512938359
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497059763,
+      "latitude": -45.8670581,
+      "longitude": 170.50982760000002,
+      "elevationMeters": 8.765772552818882,
+      "treeType": "generic",
+      "heightMeters": 4.195270390238999,
+      "canopyRadiusMeters": 0.8390540780477999,
+      "nearestRouteDistanceMeters": 1963.2597325636307
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12496993792,
+      "latitude": -45.8670215,
+      "longitude": 170.5099084,
+      "elevationMeters": 8.602825822477861,
+      "treeType": "generic",
+      "heightMeters": 4.629218183298113,
+      "canopyRadiusMeters": 0.9258436366596228,
+      "nearestRouteDistanceMeters": 1964.771036731168
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497066155,
+      "latitude": -45.8670144,
+      "longitude": 170.50984480000002,
+      "elevationMeters": 9.066904139698991,
+      "treeType": "generic",
+      "heightMeters": 8.310350051784827,
+      "canopyRadiusMeters": 1.6620700103569654,
+      "nearestRouteDistanceMeters": 1967.3000193467562
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497052956,
+      "latitude": -45.866958100000005,
+      "longitude": 170.50990470000002,
+      "elevationMeters": 9.018184016555317,
+      "treeType": "generic",
+      "heightMeters": 10.598352744685268,
+      "canopyRadiusMeters": 2.1196705489370538,
+      "nearestRouteDistanceMeters": 1974.2794945064234
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497062131,
+      "latitude": -45.8669285,
+      "longitude": 170.5099682,
+      "elevationMeters": 8.628093252237386,
+      "treeType": "generic",
+      "heightMeters": 10.73615512692363,
+      "canopyRadiusMeters": 2.1472310253847264,
+      "nearestRouteDistanceMeters": 1976.2917145562872
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497028133,
+      "latitude": -45.866949000000005,
+      "longitude": 170.50980330000002,
+      "elevationMeters": 9.277935960871087,
+      "treeType": "generic",
+      "heightMeters": 6.858468468597577,
+      "canopyRadiusMeters": 1.3716936937195154,
+      "nearestRouteDistanceMeters": 1977.149990422383
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12496974260,
+      "latitude": -45.8669049,
+      "longitude": 170.509871,
+      "elevationMeters": 9.413380451508711,
+      "treeType": "generic",
+      "heightMeters": 10.956838181450012,
+      "canopyRadiusMeters": 2.1913676362900025,
+      "nearestRouteDistanceMeters": 1982.4471967778863
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497061649,
+      "latitude": -45.866849200000004,
+      "longitude": 170.5099744,
+      "elevationMeters": 8.949520315435137,
+      "treeType": "generic",
+      "heightMeters": 7.611572177789224,
+      "canopyRadiusMeters": 1.5223144355578448,
+      "nearestRouteDistanceMeters": 1987.3329966244423
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497059846,
+      "latitude": -45.8668363,
+      "longitude": 170.5098783,
+      "elevationMeters": 9.395540363349072,
+      "treeType": "generic",
+      "heightMeters": 8.049149139426346,
+      "canopyRadiusMeters": 1.6098298278852692,
+      "nearestRouteDistanceMeters": 1989.8969428729515
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497002651,
+      "latitude": -45.8668192,
+      "longitude": 170.5100257,
+      "elevationMeters": 8.657286171921179,
+      "treeType": "generic",
+      "heightMeters": 11.245691407421877,
+      "canopyRadiusMeters": 2.2491382814843752,
+      "nearestRouteDistanceMeters": 1990.0168818518407
+    },
+    {
+      "source": "generated",
+      "osmId": 468552901,
+      "latitude": -45.86683112410655,
+      "longitude": 170.50978213512278,
+      "elevationMeters": 9.621176027681804,
+      "treeType": "broadleaf",
+      "heightMeters": 11.479261500352202,
+      "canopyRadiusMeters": 2.2958523000704405,
+      "nearestRouteDistanceMeters": 1992.4418945125747
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497068609,
+      "latitude": -45.866755100000006,
+      "longitude": 170.5099934,
+      "elevationMeters": 9.140109242876331,
+      "treeType": "generic",
+      "heightMeters": 5.354710412310382,
+      "canopyRadiusMeters": 1.0709420824620766,
+      "nearestRouteDistanceMeters": 1999.2463598977906
+    },
+    {
+      "source": "generated",
+      "osmId": 468552901,
+      "latitude": -45.86676771553005,
+      "longitude": 170.50979880490905,
+      "elevationMeters": 9.598279798056286,
+      "treeType": "broadleaf",
+      "heightMeters": 10.521082509309508,
+      "canopyRadiusMeters": 2.104216501861902,
+      "nearestRouteDistanceMeters": 1999.3315681219208
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497046153,
+      "latitude": -45.8667479,
+      "longitude": 170.51005070000002,
+      "elevationMeters": 8.951078228346761,
+      "treeType": "generic",
+      "heightMeters": 10.24360681977738,
+      "canopyRadiusMeters": 2.048721363955476,
+      "nearestRouteDistanceMeters": 1999.6069356780554
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497005791,
+      "latitude": -45.8667395,
+      "longitude": 170.50991140000002,
+      "elevationMeters": 9.378164366194522,
+      "treeType": "generic",
+      "heightMeters": 6.309371263621104,
+      "canopyRadiusMeters": 1.2618742527242208,
+      "nearestRouteDistanceMeters": 2001.5967560357349
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497002652,
+      "latitude": -45.866698,
+      "longitude": 170.5099984,
+      "elevationMeters": 9.198854566566126,
+      "treeType": "generic",
+      "heightMeters": 5.620248718485557,
+      "canopyRadiusMeters": 1.1240497436971115,
+      "nearestRouteDistanceMeters": 2007.560257693318
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497006264,
+      "latitude": -45.8666968,
+      "longitude": 170.50974490000002,
+      "elevationMeters": 9.826104942854588,
+      "treeType": "generic",
+      "heightMeters": 10.536734614579425,
+      "canopyRadiusMeters": 2.107346922915885,
+      "nearestRouteDistanceMeters": 2008.407235725084
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497052957,
+      "latitude": -45.8666774,
+      "longitude": 170.50985540000002,
+      "elevationMeters": 9.646552129689818,
+      "treeType": "generic",
+      "heightMeters": 11.256898688174605,
+      "canopyRadiusMeters": 2.251379737634921,
+      "nearestRouteDistanceMeters": 2010.251920361266
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497046154,
+      "latitude": -45.866672200000004,
+      "longitude": 170.50992620000002,
+      "elevationMeters": 9.301480292333302,
+      "treeType": "generic",
+      "heightMeters": 7.219561761090459,
+      "canopyRadiusMeters": 1.4439123522180919,
+      "nearestRouteDistanceMeters": 2010.6304412383897
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12497002653,
+      "latitude": -45.8666464,
+      "longitude": 170.5098072,
+      "elevationMeters": 9.664609604093952,
+      "treeType": "generic",
+      "heightMeters": 10.810227558565137,
+      "canopyRadiusMeters": 2.1620455117130275,
+      "nearestRouteDistanceMeters": 2015.3351889720993
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972772,
+      "latitude": -45.8665601,
+      "longitude": 170.5103627,
+      "elevationMeters": 8.95920200126075,
+      "treeType": "generic",
+      "heightMeters": 8.407995790492457,
+      "canopyRadiusMeters": 1.6815991580984915,
+      "nearestRouteDistanceMeters": 2045.0007809317335
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972666,
+      "latitude": -45.866524500000004,
+      "longitude": 170.5102457,
+      "elevationMeters": 8.944047051722755,
+      "treeType": "generic",
+      "heightMeters": 9.33831343516713,
+      "canopyRadiusMeters": 1.867662687033426,
+      "nearestRouteDistanceMeters": 2045.6385404355606
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015935877,
+      "latitude": -45.866497200000005,
+      "longitude": 170.5101983,
+      "elevationMeters": 9.134740882627431,
+      "treeType": "generic",
+      "heightMeters": 5.651124663298005,
+      "canopyRadiusMeters": 1.130224932659601,
+      "nearestRouteDistanceMeters": 2047.2432776888784
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972773,
+      "latitude": -45.8664276,
+      "longitude": 170.5102075,
+      "elevationMeters": 9.310949953156879,
+      "treeType": "generic",
+      "heightMeters": 10.203672682816755,
+      "canopyRadiusMeters": 2.040734536563351,
+      "nearestRouteDistanceMeters": 2054.7626330882817
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015985080,
+      "latitude": -45.8663843,
+      "longitude": 170.51010000000002,
+      "elevationMeters": 9.91899126543664,
+      "treeType": "generic",
+      "heightMeters": 9.634411533941801,
+      "canopyRadiusMeters": 1.9268823067883603,
+      "nearestRouteDistanceMeters": 2056.455871357896
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015973441,
+      "latitude": -45.8662563,
+      "longitude": 170.50987400000002,
+      "elevationMeters": 10.789616946903763,
+      "treeType": "generic",
+      "heightMeters": 6.772802243959881,
+      "canopyRadiusMeters": 1.3545604487919762,
+      "nearestRouteDistanceMeters": 2064.207520886189
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015976021,
+      "latitude": -45.8662858,
+      "longitude": 170.51008330000002,
+      "elevationMeters": 10.139857234372101,
+      "treeType": "generic",
+      "heightMeters": 11.003566295257624,
+      "canopyRadiusMeters": 2.200713259051525,
+      "nearestRouteDistanceMeters": 2067.065075524362
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015979011,
+      "latitude": -45.866211,
+      "longitude": 170.5099021,
+      "elevationMeters": 10.730189376329431,
+      "treeType": "generic",
+      "heightMeters": 7.4824092799046165,
+      "canopyRadiusMeters": 1.4964818559809234,
+      "nearestRouteDistanceMeters": 2069.691238897395
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015954140,
+      "latitude": -45.8663017,
+      "longitude": 170.5102468,
+      "elevationMeters": 9.43841246286995,
+      "treeType": "generic",
+      "heightMeters": 9.532383176086759,
+      "canopyRadiusMeters": 1.906476635217352,
+      "nearestRouteDistanceMeters": 2070.0370306983045
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866234354833416,
+      "longitude": 170.5102300382964,
+      "elevationMeters": 9.565079667885351,
+      "treeType": "broadleaf",
+      "heightMeters": 10.09119717202898,
+      "canopyRadiusMeters": 2.018239434405796,
+      "nearestRouteDistanceMeters": 2076.536009841659
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866161428303265,
+      "longitude": 170.51014593941855,
+      "elevationMeters": 9.944528727883107,
+      "treeType": "broadleaf",
+      "heightMeters": 5.1876102789309595,
+      "canopyRadiusMeters": 1.037522055786192,
+      "nearestRouteDistanceMeters": 2081.710871460246
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015976019,
+      "latitude": -45.8662233,
+      "longitude": 170.51037970000002,
+      "elevationMeters": 9.308590059258929,
+      "treeType": "generic",
+      "heightMeters": 10.758974756302385,
+      "canopyRadiusMeters": 2.151794951260477,
+      "nearestRouteDistanceMeters": 2081.907803524645
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972537,
+      "latitude": -45.866094700000005,
+      "longitude": 170.509984,
+      "elevationMeters": 10.718273416595519,
+      "treeType": "generic",
+      "heightMeters": 5.549096806888152,
+      "canopyRadiusMeters": 1.1098193613776306,
+      "nearestRouteDistanceMeters": 2084.045367876626
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.8660766600379,
+      "longitude": 170.51019034782684,
+      "elevationMeters": 10.017969816939702,
+      "treeType": "broadleaf",
+      "heightMeters": 9.038855473823862,
+      "canopyRadiusMeters": 1.8077710947647725,
+      "nearestRouteDistanceMeters": 2091.741533904471
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015962434,
+      "latitude": -45.866133700000006,
+      "longitude": 170.51049070000002,
+      "elevationMeters": 9.143108030087399,
+      "treeType": "generic",
+      "heightMeters": 4.021104642100859,
+      "canopyRadiusMeters": 0.8042209284201718,
+      "nearestRouteDistanceMeters": 2094.3196681664645
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866030933965845,
+      "longitude": 170.51026577380895,
+      "elevationMeters": 9.931880761376945,
+      "treeType": "broadleaf",
+      "heightMeters": 9.790375141792662,
+      "canopyRadiusMeters": 1.9580750283585324,
+      "nearestRouteDistanceMeters": 2098.6061222463636
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015906281,
+      "latitude": -45.865958000000006,
+      "longitude": 170.51006080000002,
+      "elevationMeters": 10.661134414737566,
+      "treeType": "generic",
+      "heightMeters": 4.4430807449338765,
+      "canopyRadiusMeters": 0.8886161489867753,
+      "nearestRouteDistanceMeters": 2100.3675409526545
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.865953117648516,
+      "longitude": 170.51018029073748,
+      "elevationMeters": 10.33348578338346,
+      "treeType": "broadleaf",
+      "heightMeters": 9.908497984767298,
+      "canopyRadiusMeters": 1.9816995969534597,
+      "nearestRouteDistanceMeters": 2104.248115665665
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015926964,
+      "latitude": -45.8660604,
+      "longitude": 170.51059690000002,
+      "elevationMeters": 9.00758142786906,
+      "treeType": "generic",
+      "heightMeters": 8.526828859934092,
+      "canopyRadiusMeters": 1.7053657719868185,
+      "nearestRouteDistanceMeters": 2104.908292071625
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015985102,
+      "latitude": -45.8659088,
+      "longitude": 170.51008710000002,
+      "elevationMeters": 10.702455756356011,
+      "treeType": "generic",
+      "heightMeters": 4.781208366566827,
+      "canopyRadiusMeters": 0.9562416733133654,
+      "nearestRouteDistanceMeters": 2106.204196902439
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015932318,
+      "latitude": -45.865859500000006,
+      "longitude": 170.5101191,
+      "elevationMeters": 10.695669160681812,
+      "treeType": "generic",
+      "heightMeters": 7.79663441849059,
+      "canopyRadiusMeters": 1.559326883698118,
+      "nearestRouteDistanceMeters": 2112.253506867231
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.865935012058124,
+      "longitude": 170.5104362604166,
+      "elevationMeters": 9.646279246921468,
+      "treeType": "broadleaf",
+      "heightMeters": 6.013509506604535,
+      "canopyRadiusMeters": 1.202701901320907,
+      "nearestRouteDistanceMeters": 2113.4701131533416
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015973440,
+      "latitude": -45.865978500000004,
+      "longitude": 170.51061950000002,
+      "elevationMeters": 9.117971447644514,
+      "treeType": "generic",
+      "heightMeters": 11.278863034151168,
+      "canopyRadiusMeters": 2.255772606830234,
+      "nearestRouteDistanceMeters": 2114.1873943653927
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015976020,
+      "latitude": -45.865811900000004,
+      "longitude": 170.5101509,
+      "elevationMeters": 10.773244417226984,
+      "treeType": "generic",
+      "heightMeters": 7.409126890023558,
+      "canopyRadiusMeters": 1.4818253780047117,
+      "nearestRouteDistanceMeters": 2118.0809022927847
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015948622,
+      "latitude": -45.865890400000005,
+      "longitude": 170.5105033,
+      "elevationMeters": 9.490516945597129,
+      "treeType": "generic",
+      "heightMeters": 4.269778759100223,
+      "canopyRadiusMeters": 0.8539557518200447,
+      "nearestRouteDistanceMeters": 2119.991345072614
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015941077,
+      "latitude": -45.865821700000005,
+      "longitude": 170.51037440000002,
+      "elevationMeters": 10.063945685130918,
+      "treeType": "generic",
+      "heightMeters": 4.33566731059605,
+      "canopyRadiusMeters": 0.86713346211921,
+      "nearestRouteDistanceMeters": 2123.4276681382576
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015985101,
+      "latitude": -45.8658444,
+      "longitude": 170.5104616,
+      "elevationMeters": 9.738474436031717,
+      "treeType": "generic",
+      "heightMeters": 7.229619948587417,
+      "canopyRadiusMeters": 1.4459239897174836,
+      "nearestRouteDistanceMeters": 2123.561672475253
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015936772,
+      "latitude": -45.865796200000005,
+      "longitude": 170.5102888,
+      "elevationMeters": 10.352727863722398,
+      "treeType": "generic",
+      "heightMeters": 6.506104330640256,
+      "canopyRadiusMeters": 1.3012208661280513,
+      "nearestRouteDistanceMeters": 2123.6287503179924
+    },
+    {
+      "source": "generated",
+      "osmId": 324890391,
+      "latitude": -45.86245593779742,
+      "longitude": 170.51468417515184,
+      "elevationMeters": 14.314531618616183,
+      "treeType": "broadleaf",
+      "heightMeters": 9.05994117509714,
+      "canopyRadiusMeters": 1.8119882350194283,
+      "nearestRouteDistanceMeters": 2598.1321136215774
+    },
+    {
+      "source": "generated",
+      "osmId": 324890391,
+      "latitude": -45.86233125776302,
+      "longitude": 170.51445259170626,
+      "elevationMeters": 14.572210516943962,
+      "treeType": "broadleaf",
+      "heightMeters": 4.488238688084815,
+      "canopyRadiusMeters": 0.897647737616963,
+      "nearestRouteDistanceMeters": 2598.1321136215774
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5158481975,
+      "latitude": -45.8623446,
+      "longitude": 170.51483900000002,
+      "elevationMeters": 14.715011840131883,
+      "treeType": "generic",
+      "heightMeters": 4.549237022687043,
+      "canopyRadiusMeters": 0.9098474045374086,
+      "nearestRouteDistanceMeters": 2598.1321136215774
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5158481976,
+      "latitude": -45.8624835,
+      "longitude": 170.51452510000001,
+      "elevationMeters": 14.339551402238184,
+      "treeType": "generic",
+      "heightMeters": 10.912711426645732,
+      "canopyRadiusMeters": 2.1825422853291463,
+      "nearestRouteDistanceMeters": 2598.1321136215774
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14073925690,
+      "latitude": -45.863172500000005,
+      "longitude": 170.5133973,
+      "elevationMeters": 12.621775080060107,
+      "treeType": "generic",
+      "heightMeters": 11.694489270629063,
+      "canopyRadiusMeters": 2.3388978541258125,
+      "nearestRouteDistanceMeters": 2598.1321136215774
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 12303608931,
+      "latitude": -45.8634129,
+      "longitude": 170.5131624,
+      "elevationMeters": 12.45566137581034,
+      "treeType": "generic",
+      "heightMeters": 9.882828878327235,
+      "canopyRadiusMeters": 1.9765657756654471,
+      "nearestRouteDistanceMeters": 2623.48403773799
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14073931016,
+      "latitude": -45.8655741,
+      "longitude": 170.5132761,
+      "elevationMeters": 9.777009738461118,
+      "treeType": "generic",
+      "heightMeters": 4.689832663102024,
+      "canopyRadiusMeters": 0.9379665326204049,
+      "nearestRouteDistanceMeters": 2844.2853021122974
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14073995069,
+      "latitude": -45.8656184,
+      "longitude": 170.513259,
+      "elevationMeters": 9.68287491540324,
+      "treeType": "generic",
+      "heightMeters": 11.767365810373189,
+      "canopyRadiusMeters": 2.353473162074638,
+      "nearestRouteDistanceMeters": 2849.35619580239
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866037919914945,
+      "longitude": 170.51120152857314,
+      "elevationMeters": 8.737657406901661,
+      "treeType": "broadleaf",
+      "heightMeters": 9.433912728929357,
+      "canopyRadiusMeters": 1.8867825457858716,
+      "nearestRouteDistanceMeters": 2950.925013587555
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86594569810841,
+      "longitude": 170.51081388033617,
+      "elevationMeters": 9.048282629024044,
+      "treeType": "broadleaf",
+      "heightMeters": 7.670810050990664,
+      "canopyRadiusMeters": 1.5341620101981328,
+      "nearestRouteDistanceMeters": 2952.760598555549
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015973181,
+      "latitude": -45.8661095,
+      "longitude": 170.51123460000002,
+      "elevationMeters": 8.807493136346185,
+      "treeType": "generic",
+      "heightMeters": 6.615140501493999,
+      "canopyRadiusMeters": 1.3230281002987998,
+      "nearestRouteDistanceMeters": 2957.3286644226055
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866003869515666,
+      "longitude": 170.5107257801447,
+      "elevationMeters": 8.936384220324202,
+      "treeType": "broadleaf",
+      "heightMeters": 5.822906763672495,
+      "canopyRadiusMeters": 1.164581352734499,
+      "nearestRouteDistanceMeters": 2959.9384590224004
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015956662,
+      "latitude": -45.8661504,
+      "longitude": 170.51122230000001,
+      "elevationMeters": 8.741425513903113,
+      "treeType": "generic",
+      "heightMeters": 11.586899187578421,
+      "canopyRadiusMeters": 2.317379837515684,
+      "nearestRouteDistanceMeters": 2961.5407329266636
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86613504511354,
+      "longitude": 170.5110975011701,
+      "elevationMeters": 8.622540466685999,
+      "treeType": "broadleaf",
+      "heightMeters": 8.843653649650113,
+      "canopyRadiusMeters": 1.7687307299300228,
+      "nearestRouteDistanceMeters": 2963.3707573398747
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972771,
+      "latitude": -45.866189600000006,
+      "longitude": 170.5112032,
+      "elevationMeters": 8.663033599448326,
+      "treeType": "generic",
+      "heightMeters": 10.045817080568945,
+      "canopyRadiusMeters": 2.0091634161137892,
+      "nearestRouteDistanceMeters": 2966.140742304327
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015973439,
+      "latitude": -45.8661249,
+      "longitude": 170.51094080000001,
+      "elevationMeters": 8.602935618467654,
+      "treeType": "generic",
+      "heightMeters": 11.952463414692055,
+      "canopyRadiusMeters": 2.390492682938411,
+      "nearestRouteDistanceMeters": 2966.6183469807897
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5444231700,
+      "latitude": -45.8667522,
+      "longitude": 170.5132608,
+      "elevationMeters": 7.706912811622641,
+      "treeType": "generic",
+      "heightMeters": 5.512492065723074,
+      "canopyRadiusMeters": 1.102498413144615,
+      "nearestRouteDistanceMeters": 2968.1411215092057
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5444231693,
+      "latitude": -45.8666519,
+      "longitude": 170.5128798,
+      "elevationMeters": 8.033371232342333,
+      "treeType": "generic",
+      "heightMeters": 4.230302396562038,
+      "canopyRadiusMeters": 0.8460604793124077,
+      "nearestRouteDistanceMeters": 2968.1735492335097
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015962433,
+      "latitude": -45.866094600000004,
+      "longitude": 170.51072580000002,
+      "elevationMeters": 8.768743763322583,
+      "treeType": "generic",
+      "heightMeters": 9.235918267191433,
+      "canopyRadiusMeters": 1.8471836534382868,
+      "nearestRouteDistanceMeters": 2969.371095307644
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86615440109268,
+      "longitude": 170.51084712947318,
+      "elevationMeters": 8.62887805438809,
+      "treeType": "broadleaf",
+      "heightMeters": 7.743741865911895,
+      "canopyRadiusMeters": 1.548748373182379,
+      "nearestRouteDistanceMeters": 2972.25736384977
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015974009,
+      "latitude": -45.866283200000005,
+      "longitude": 170.5111685,
+      "elevationMeters": 8.443426719109521,
+      "treeType": "generic",
+      "heightMeters": 11.244319182880336,
+      "canopyRadiusMeters": 2.248863836576067,
+      "nearestRouteDistanceMeters": 2976.825001507935
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015970013,
+      "latitude": -45.8661371,
+      "longitude": 170.5106111,
+      "elevationMeters": 9.02249236280986,
+      "treeType": "generic",
+      "heightMeters": 10.945726926330174,
+      "canopyRadiusMeters": 2.189145385266035,
+      "nearestRouteDistanceMeters": 2976.9389806026415
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015935876,
+      "latitude": -45.866324600000006,
+      "longitude": 170.5111425,
+      "elevationMeters": 8.466485695716798,
+      "treeType": "generic",
+      "heightMeters": 8.082039353672299,
+      "canopyRadiusMeters": 1.6164078707344598,
+      "nearestRouteDistanceMeters": 2981.8431892942326
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 5444231692,
+      "latitude": -45.8668302,
+      "longitude": 170.5130565,
+      "elevationMeters": 7.510949390475999,
+      "treeType": "generic",
+      "heightMeters": 7.984494702501978,
+      "canopyRadiusMeters": 1.5968989405003957,
+      "nearestRouteDistanceMeters": 2981.859996916534
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86629763220104,
+      "longitude": 170.510989790671,
+      "elevationMeters": 8.415141260905429,
+      "treeType": "broadleaf",
+      "heightMeters": 5.610558566507612,
+      "canopyRadiusMeters": 1.1221117133015224,
+      "nearestRouteDistanceMeters": 2983.232125482738
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86623641631597,
+      "longitude": 170.51068686559424,
+      "elevationMeters": 8.587723492518533,
+      "treeType": "broadleaf",
+      "heightMeters": 7.5436071208333395,
+      "canopyRadiusMeters": 1.508721424166668,
+      "nearestRouteDistanceMeters": 2985.1846158107196
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866284456901354,
+      "longitude": 170.51086138846338,
+      "elevationMeters": 8.403956966831014,
+      "treeType": "broadleaf",
+      "heightMeters": 7.179717330363596,
+      "canopyRadiusMeters": 1.4359434660727193,
+      "nearestRouteDistanceMeters": 2985.3876889962035
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.86638269629576,
+      "longitude": 170.51094771622664,
+      "elevationMeters": 8.35009034393913,
+      "treeType": "broadleaf",
+      "heightMeters": 11.684688065864538,
+      "canopyRadiusMeters": 2.336937613172908,
+      "nearestRouteDistanceMeters": 2993.2255904452936
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015941076,
+      "latitude": -45.8664454,
+      "longitude": 170.5110835,
+      "elevationMeters": 8.36131043678052,
+      "treeType": "generic",
+      "heightMeters": 11.531124969002128,
+      "canopyRadiusMeters": 2.306224993800426,
+      "nearestRouteDistanceMeters": 2996.0196177881962
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015906280,
+      "latitude": -45.8664968,
+      "longitude": 170.51106190000002,
+      "elevationMeters": 8.37661799282764,
+      "treeType": "generic",
+      "heightMeters": 10.555354136200185,
+      "canopyRadiusMeters": 2.111070827240037,
+      "nearestRouteDistanceMeters": 3001.956797894845
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015972538,
+      "latitude": -45.866466800000005,
+      "longitude": 170.5108013,
+      "elevationMeters": 8.32459868953313,
+      "treeType": "generic",
+      "heightMeters": 9.365514686777853,
+      "canopyRadiusMeters": 1.8731029373555708,
+      "nearestRouteDistanceMeters": 3005.9881087647154
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015936771,
+      "latitude": -45.8665424,
+      "longitude": 170.5110409,
+      "elevationMeters": 8.325460684934717,
+      "treeType": "generic",
+      "heightMeters": 5.998081052190719,
+      "canopyRadiusMeters": 1.1996162104381438,
+      "nearestRouteDistanceMeters": 3007.274439535655
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015956671,
+      "latitude": -45.866594400000004,
+      "longitude": 170.5109749,
+      "elevationMeters": 8.154995674488212,
+      "treeType": "generic",
+      "heightMeters": 6.342956531480908,
+      "canopyRadiusMeters": 1.2685913062961818,
+      "nearestRouteDistanceMeters": 3014.492282580167
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015973182,
+      "latitude": -45.8665894,
+      "longitude": 170.5108664,
+      "elevationMeters": 8.148580000927863,
+      "treeType": "generic",
+      "heightMeters": 6.859150834134486,
+      "canopyRadiusMeters": 1.3718301668268973,
+      "nearestRouteDistanceMeters": 3016.9495305772566
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866481417755004,
+      "longitude": 170.51044365873847,
+      "elevationMeters": 8.85887613463161,
+      "treeType": "broadleaf",
+      "heightMeters": 4.50352569945106,
+      "canopyRadiusMeters": 0.9007051398902122,
+      "nearestRouteDistanceMeters": 3017.321351377751
+    },
+    {
+      "source": "generated",
+      "osmId": 106727129,
+      "latitude": -45.866682214360054,
+      "longitude": 170.51090976421614,
+      "elevationMeters": 8.076649213171425,
+      "treeType": "broadleaf",
+      "heightMeters": 11.33396416926271,
+      "canopyRadiusMeters": 2.2667928338525423,
+      "nearestRouteDistanceMeters": 3025.4103519682053
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015985081,
+      "latitude": -45.866656000000006,
+      "longitude": 170.51071180000002,
+      "elevationMeters": 8.47381483290372,
+      "treeType": "generic",
+      "heightMeters": 5.197302221367077,
+      "canopyRadiusMeters": 1.0394604442734154,
+      "nearestRouteDistanceMeters": 3028.116575067232
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015943898,
+      "latitude": -45.8665907,
+      "longitude": 170.5104571,
+      "elevationMeters": 8.834023379676113,
+      "treeType": "generic",
+      "heightMeters": 9.128271765054913,
+      "canopyRadiusMeters": 1.8256543530109828,
+      "nearestRouteDistanceMeters": 3028.3155186808362
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015962435,
+      "latitude": -45.8666372,
+      "longitude": 170.5106106,
+      "elevationMeters": 8.598503444485141,
+      "treeType": "generic",
+      "heightMeters": 5.909908902192863,
+      "canopyRadiusMeters": 1.1819817804385726,
+      "nearestRouteDistanceMeters": 3028.938614439011
+    },
+    {
+      "source": "osm-tree",
+      "osmId": 14015929944,
+      "latitude": -45.8666895,
+      "longitude": 170.5108082,
+      "elevationMeters": 8.285489507792668,
+      "treeType": "generic",
+      "heightMeters": 11.9810086450942,
+      "canopyRadiusMeters": 2.39620172901884,
+      "nearestRouteDistanceMeters": 3028.954727749522
+    },
+    {
+      "source": "generated",
+      "osmId": 468602755,
+      "latitude": -45.87193158997436,
+      "longitude": 170.51308874291058,
+      "elevationMeters": 2.329672349999823,
+      "treeType": "broadleaf",
+      "heightMeters": 6.677909371674041,
+      "canopyRadiusMeters": 1.3355818743348085,
+      "nearestRouteDistanceMeters": 3547.9921361586407
+    },
+    {
+      "source": "generated",
+      "osmId": 468602755,
+      "latitude": -45.871937932865116,
+      "longitude": 170.5128328523275,
+      "elevationMeters": 2.221067529779125,
+      "treeType": "broadleaf",
+      "heightMeters": 9.529463856300362,
+      "canopyRadiusMeters": 1.9058927712600724,
+      "nearestRouteDistanceMeters": 3555.757688284493
+    },
+    {
+      "source": "generated",
+      "osmId": 468602755,
+      "latitude": -45.87199080830009,
+      "longitude": 170.51302131136765,
+      "elevationMeters": 2.124164683210509,
+      "treeType": "broadleaf",
+      "heightMeters": 6.4122887735032625,
+      "canopyRadiusMeters": 1.2824577547006526,
+      "nearestRouteDistanceMeters": 3556.011803060476
+    },
+    {
+      "source": "generated",
+      "osmId": 468602755,
+      "latitude": -45.87235851478296,
+      "longitude": 170.51239766196753,
+      "elevationMeters": 1.9995990825491263,
+      "treeType": "broadleaf",
+      "heightMeters": 6.446649943438816,
+      "canopyRadiusMeters": 1.2893299886877632,
+      "nearestRouteDistanceMeters": 3611.478110872144
+    },
+    {
+      "source": "tree-row",
+      "osmId": 1556464056,
+      "latitude": -45.8736051694525,
+      "longitude": 170.51119541188126,
+      "elevationMeters": 2.1522489523357997,
+      "treeType": "generic",
+      "heightMeters": 6.196931840060109,
+      "canopyRadiusMeters": 1.2393863680120218,
+      "nearestRouteDistanceMeters": 3775.9859024005423
+    },
+    {
+      "source": "tree-row",
+      "osmId": 1556464056,
+      "latitude": -45.87360011195991,
+      "longitude": 170.5110699155182,
+      "elevationMeters": 1.838713364588953,
+      "treeType": "generic",
+      "heightMeters": 7.624793346586137,
+      "canopyRadiusMeters": 1.5249586693172275,
+      "nearestRouteDistanceMeters": 3778.8514528420674
+    },
+    {
+      "source": "tree-row",
+      "osmId": 1556464056,
+      "latitude": -45.87364124293326,
+      "longitude": 170.51095569555986,
+      "elevationMeters": 1.8822648545365346,
+      "treeType": "generic",
+      "heightMeters": 6.653532799140554,
+      "canopyRadiusMeters": 1.330706559828111,
+      "nearestRouteDistanceMeters": 3786.22510795376
+    },
+    {
+      "source": "generated",
+      "osmId": 625848056,
+      "latitude": -45.87501311211811,
+      "longitude": 170.5083072751677,
+      "elevationMeters": 2.2614905439035713,
+      "treeType": "broadleaf",
+      "heightMeters": 5.9398557221107815,
+      "canopyRadiusMeters": 1.1879711444221563,
+      "nearestRouteDistanceMeters": 4000.3956030189033
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "id": "dunedin-one-way-oval-gardens",
+  "name": "Dunedin One-way: Oval to Gardens Loop",
+  "loop": true,
+  "routingMode": "roadRef",
+  "preferredRefs": [ "SH 1" ],
+  "startArea": { "latitude": -45.88355, "longitude": 170.49850 },
+  "startAreaRadiusMeters": 300,
+  "turnaroundArea": { "latitude": -45.86090, "longitude": 170.51440 },
+  "turnaroundAreaRadiusMeters": 300,
+  "maximumConnectorDistanceMeters": 350,
+  "minimumPreferredRefPercent": 90,
+  "bbox": {
+    "minLatitude": -45.89,
+    "minLongitude": 170.49,
+    "maxLatitude": -45.85,
+    "maxLongitude": 170.52
+  },
+  "marginMeters": 300,
+  "maxSnapDistanceMeters": 150,
+  "routeCorridorMeters": 225,
+  "detourWarningRatio": 1.6,
+  "detourFailureRatio": 2.2,
+  "maxOutputSpacingMeters": 30,
+  "profile": "road",
+  "elevation": {
+    "enabled": true,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
+    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json",
+    "smoothingWindowMeters": 30,
+    "gradientWindowMeters": 25,
+    "resampleIntervalMeters": 5,
+    "maximumBridgeInterpolationMeters": 100,
+    "gradientReviewThresholdPercent": 15
+  },
+  "buildings": {
+    "enabled": true,
+    "searchRadiusMeters": 150,
+    "simplificationToleranceMeters": 0.75,
+    "metersPerLevel": 3,
+    "ordinaryHeightMeters": 8,
+    "smallBuildingHeightMeters": 3.5,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "vegetation": {
+    "enabled": true,
+    "searchRadiusMeters": 200,
+    "simplificationToleranceMeters": 1.0,
+    "generatedTreeCapPerArea": 150,
+    "totalTreeInstanceCap": 1200,
+    "treeRowSpacingMeters": 10,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "streetFurniture": {
+    "enabled": true,
+    "searchRadiusMeters": 80,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "anchors": [],
+  "legacyReferencePoints": [
+    { "name": "Start", "sourceDistanceMeters": 0, "latitude": -45.88355, "longitude": 170.49850 },
+    { "name": "277 m", "sourceDistanceMeters": 277, "latitude": -45.88170, "longitude": 170.50090 },
+    { "name": "615 m", "sourceDistanceMeters": 615, "latitude": -45.87925, "longitude": 170.50347 },
+    { "name": "941 m", "sourceDistanceMeters": 941, "latitude": -45.87690, "longitude": 170.50600 },
+    { "name": "1512 m", "sourceDistanceMeters": 1512, "latitude": -45.87285, "longitude": 170.51053 },
+    { "name": "1991 m", "sourceDistanceMeters": 1991, "latitude": -45.86935, "longitude": 170.51415 },
+    { "name": "2380 m", "sourceDistanceMeters": 2380, "latitude": -45.86638, "longitude": 170.51680 },
+    { "name": "2882 m", "sourceDistanceMeters": 2882, "latitude": -45.86265, "longitude": 170.52045 },
+    { "name": "2942 m", "sourceDistanceMeters": 2942, "latitude": -45.86218, "longitude": 170.52008 },
+    { "name": "3467 m", "sourceDistanceMeters": 3467, "latitude": -45.86595, "longitude": 170.51600 },
+    { "name": "3852 m", "sourceDistanceMeters": 3852, "latitude": -45.86878, "longitude": 170.51312 },
+    { "name": "4356 m", "sourceDistanceMeters": 4356, "latitude": -45.87245, "longitude": 170.50930 },
+    { "name": "4915 m", "sourceDistanceMeters": 4915, "latitude": -45.87656, "longitude": 170.50515 },
+    { "name": "5298 m", "sourceDistanceMeters": 5298, "latitude": -45.87935, "longitude": 170.50225 },
+    { "name": "5729 m", "sourceDistanceMeters": 5729, "latitude": -45.88255, "longitude": 170.49910 },
+    { "name": "Finish", "sourceDistanceMeters": 5850, "latitude": -45.88355, "longitude": 170.49850 }
+  ]
+}

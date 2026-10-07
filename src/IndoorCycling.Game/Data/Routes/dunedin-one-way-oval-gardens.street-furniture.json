@@ -1,0 +1,5266 @@
+{
+  "id": "dunedin-one-way-oval-gardens",
+  "routeName": "Dunedin One-way: Oval to Gardens Loop",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "attribution": "© OpenStreetMap contributors, ODbL 1.0",
+  "searchRadiusMeters": 80,
+  "statistics": {
+    "totalCandidates": 3696,
+    "selectedItems": 345,
+    "categoryCounts": {
+      "crossing": 193,
+      "give-way-sign": 31,
+      "traffic-signal": 59,
+      "stop-sign": 3,
+      "bollard": 5,
+      "bus-stop": 15,
+      "bench": 39
+    },
+    "streetLamps": 0,
+    "trafficSignals": 59,
+    "stopGiveWaySigns": 34,
+    "bollards": 5,
+    "crossings": 193,
+    "busStops": 15,
+    "benches": 39,
+    "malformedOrSkippedItems": 1632,
+    "itemsInsideRoadRibbon": 70,
+    "elevationSamples": 345,
+    "runtimeMultiMeshCount": 129,
+    "totalRenderedInstances": 345,
+    "sceneNodeCount": 130,
+    "generationSeconds": 42.7750838,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "renderedPrimitiveInstances": 763
+  },
+  "items": [
+    {
+      "osmType": "node",
+      "osmId": 4974661704,
+      "category": "crossing",
+      "latitude": -45.8829226,
+      "longitude": 170.500258,
+      "elevationMeters": 2.079994068760537,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 16.89634272416598,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719550,
+      "category": "crossing",
+      "latitude": -45.8828455,
+      "longitude": 170.5003336,
+      "elevationMeters": 2.2548582543529307,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 8.564584502047285,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895175,
+      "category": "crossing",
+      "latitude": -45.882932000000004,
+      "longitude": 170.5003943,
+      "elevationMeters": 2.31717979260222,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 10.592349436650501,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719564,
+      "category": "give-way-sign",
+      "latitude": -45.882904700000005,
+      "longitude": 170.5002485,
+      "elevationMeters": 2.070736132511415,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 16.615794582317125,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575203,
+      "category": "traffic-signal",
+      "latitude": -45.882950300000005,
+      "longitude": 170.500384,
+      "elevationMeters": 2.3208229229540054,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 12.77783297633573,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575204,
+      "category": "traffic-signal",
+      "latitude": -45.8828448,
+      "longitude": 170.500314,
+      "elevationMeters": 2.254136624162258,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 10.079625512239078,
+      "nearestRouteDistanceMeters": 0,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999076,
+      "category": "crossing",
+      "latitude": -45.882653600000005,
+      "longitude": 170.49984220000002,
+      "elevationMeters": 2.2384600483858264,
+      "routeTangentDegrees": 21.24824347324801,
+      "distanceFromRouteMeters": 51.07516658191367,
+      "nearestRouteDistanceMeters": 2.7720170825681723,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999069,
+      "category": "crossing",
+      "latitude": -45.8810492,
+      "longitude": 170.5007444,
+      "elevationMeters": 2.2990662502316477,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 51.306776586210766,
+      "nearestRouteDistanceMeters": 193.5253176695847,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575206,
+      "category": "give-way-sign",
+      "latitude": -45.881033,
+      "longitude": 170.5007543,
+      "elevationMeters": 2.3342703899331596,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 51.277197106468456,
+      "nearestRouteDistanceMeters": 195.48268271996778,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719571,
+      "category": "crossing",
+      "latitude": -45.8811236,
+      "longitude": 170.501205,
+      "elevationMeters": 2.1661254495865436,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 15.167684827101692,
+      "nearestRouteDistanceMeters": 199.32463291552287,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999114,
+      "category": "crossing",
+      "latitude": -45.880957,
+      "longitude": 170.50068810000002,
+      "elevationMeters": 2.5183671154446636,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 59.212811941992285,
+      "nearestRouteDistanceMeters": 201.37358898006437,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999115,
+      "category": "crossing",
+      "latitude": -45.8810093,
+      "longitude": 170.5008792,
+      "elevationMeters": 2.3160632355242603,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 43.319231240447536,
+      "nearestRouteDistanceMeters": 201.57292554850622,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895321,
+      "category": "crossing",
+      "latitude": -45.8811918,
+      "longitude": 170.5015463,
+      "elevationMeters": 2.218590725850683,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 12.15967520827201,
+      "nearestRouteDistanceMeters": 202.27604050003924,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575205,
+      "category": "give-way-sign",
+      "latitude": -45.881185800000004,
+      "longitude": 170.5015255,
+      "elevationMeters": 2.2160101025911962,
+      "routeTangentDegrees": 22.17993539772999,
+      "distanceFromRouteMeters": 10.416859539686278,
+      "nearestRouteDistanceMeters": 202.28600755568112,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719567,
+      "category": "crossing",
+      "latitude": -45.881085600000006,
+      "longitude": 170.5012256,
+      "elevationMeters": 2.183744296148633,
+      "routeTangentDegrees": 22.83185646956315,
+      "distanceFromRouteMeters": 15.302194718829815,
+      "nearestRouteDistanceMeters": 203.6653291583581,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3921308702,
+      "category": "give-way-sign",
+      "latitude": -45.8809282,
+      "longitude": 170.5008163,
+      "elevationMeters": 2.3472508791113618,
+      "routeTangentDegrees": 22.83185646956315,
+      "distanceFromRouteMeters": 51.29432178850925,
+      "nearestRouteDistanceMeters": 207.5020800829863,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999109,
+      "category": "crossing",
+      "latitude": -45.8809133,
+      "longitude": 170.5008239,
+      "elevationMeters": 2.313822337564324,
+      "routeTangentDegrees": 22.83185646956315,
+      "distanceFromRouteMeters": 51.39501093575394,
+      "nearestRouteDistanceMeters": 209.25734470355349,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719569,
+      "category": "give-way-sign",
+      "latitude": -45.8810578,
+      "longitude": 170.5013576,
+      "elevationMeters": 2.255763744195973,
+      "routeTangentDegrees": 22.83185646956315,
+      "distanceFromRouteMeters": 7.084377076625839,
+      "nearestRouteDistanceMeters": 210.47917058976103,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6484540629,
+      "category": "traffic-signal",
+      "latitude": -45.879961,
+      "longitude": 170.5019894,
+      "elevationMeters": 2.3885937326154205,
+      "routeTangentDegrees": 22.397428636756445,
+      "distanceFromRouteMeters": 7.918737879854377,
+      "nearestRouteDistanceMeters": 341.9276762473969,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575211,
+      "category": "traffic-signal",
+      "latitude": -45.879988100000006,
+      "longitude": 170.502084,
+      "elevationMeters": 2.4587874996087105,
+      "routeTangentDegrees": 22.397428636756445,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 341.93187411869116,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6484540625,
+      "category": "crossing",
+      "latitude": -45.8799386,
+      "longitude": 170.50199,
+      "elevationMeters": 2.3478409135495397,
+      "routeTangentDegrees": 22.3665406734836,
+      "distanceFromRouteMeters": 8.823602189357503,
+      "nearestRouteDistanceMeters": 344.2529964062329,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999095,
+      "category": "crossing",
+      "latitude": -45.879961200000004,
+      "longitude": 170.50209990000002,
+      "elevationMeters": 2.463493720318112,
+      "routeTangentDegrees": 22.3665406734836,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 345.1663524665806,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999103,
+      "category": "crossing",
+      "latitude": -45.879749600000004,
+      "longitude": 170.50142340000002,
+      "elevationMeters": 3.831684321126389,
+      "routeTangentDegrees": 22.425191359337305,
+      "distanceFromRouteMeters": 57.38346705447699,
+      "nearestRouteDistanceMeters": 346.93876363665225,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575213,
+      "category": "stop-sign",
+      "latitude": -45.879727100000004,
+      "longitude": 170.5014245,
+      "elevationMeters": 3.988281953112614,
+      "routeTangentDegrees": 22.425191359337305,
+      "distanceFromRouteMeters": 58.25918667072086,
+      "nearestRouteDistanceMeters": 349.28392982655834,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999088,
+      "category": "crossing",
+      "latitude": -45.8798043,
+      "longitude": 170.50194630000001,
+      "elevationMeters": 2.4876342726262086,
+      "routeTangentDegrees": 22.397684409221483,
+      "distanceFromRouteMeters": 17.642982068167203,
+      "nearestRouteDistanceMeters": 356.7661481236472,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 4974661922,
+      "category": "traffic-signal",
+      "latitude": -45.879795800000004,
+      "longitude": 170.50192,
+      "elevationMeters": 2.531454283828859,
+      "routeTangentDegrees": 22.397684409221483,
+      "distanceFromRouteMeters": 19.88542011782516,
+      "nearestRouteDistanceMeters": 356.8642642593517,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895318,
+      "category": "crossing",
+      "latitude": -45.8798661,
+      "longitude": 170.5022925,
+      "elevationMeters": 2.331965615076557,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 9.776961348787092,
+      "nearestRouteDistanceMeters": 360.46035479460085,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575212,
+      "category": "traffic-signal",
+      "latitude": -45.8798734,
+      "longitude": 170.5023219,
+      "elevationMeters": 2.3694206135778093,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 12.192039777828983,
+      "nearestRouteDistanceMeters": 360.536548731665,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575223,
+      "category": "stop-sign",
+      "latitude": -45.879643400000006,
+      "longitude": 170.5016066,
+      "elevationMeters": 3.3729352622619166,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 48.695887890582505,
+      "nearestRouteDistanceMeters": 364.1053634834356,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752228,
+      "category": "crossing",
+      "latitude": -45.879599600000006,
+      "longitude": 170.5015319,
+      "elevationMeters": 3.807593533940249,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 55.85841261090321,
+      "nearestRouteDistanceMeters": 366.52540539672066,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999126,
+      "category": "crossing",
+      "latitude": -45.8796181,
+      "longitude": 170.5016045,
+      "elevationMeters": 3.4170755626557368,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 49.875383216175706,
+      "nearestRouteDistanceMeters": 366.6645635861547,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895377,
+      "category": "crossing",
+      "latitude": -45.879749100000005,
+      "longitude": 170.5022228,
+      "elevationMeters": 2.4221058373167037,
+      "routeTangentDegrees": 21.436714380611875,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 370.5982664718022,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575220,
+      "category": "give-way-sign",
+      "latitude": -45.879128400000006,
+      "longitude": 170.50183030000002,
+      "elevationMeters": 2.582215118626582,
+      "routeTangentDegrees": 21.53056673743754,
+      "distanceFromRouteMeters": 53.96836276993018,
+      "nearestRouteDistanceMeters": 423.65214594995984,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999145,
+      "category": "crossing",
+      "latitude": -45.878985300000004,
+      "longitude": 170.5018899,
+      "elevationMeters": 2.5227439217531002,
+      "routeTangentDegrees": 21.5306375841555,
+      "distanceFromRouteMeters": 55.51639172446365,
+      "nearestRouteDistanceMeters": 440.14692117792777,
+      "tags": {
+        "crossing": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575221,
+      "category": "give-way-sign",
+      "latitude": -45.879108,
+      "longitude": 170.5024821,
+      "elevationMeters": 2.373002056827784,
+      "routeTangentDegrees": 21.5306375841555,
+      "distanceFromRouteMeters": 7.865174471264419,
+      "nearestRouteDistanceMeters": 444.2795886999219,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999153,
+      "category": "crossing",
+      "latitude": -45.8786118,
+      "longitude": 170.50210270000002,
+      "elevationMeters": 2.320192803389904,
+      "routeTangentDegrees": 24.388978282556934,
+      "distanceFromRouteMeters": 56.30524427777756,
+      "nearestRouteDistanceMeters": 482.03164842682946,
+      "tags": {
+        "crossing": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817392731,
+      "category": "crossing",
+      "latitude": -45.8787752,
+      "longitude": 170.5027949,
+      "elevationMeters": 2.475775105052283,
+      "routeTangentDegrees": 24.388978282556934,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 487.6102881940648,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999147,
+      "category": "crossing",
+      "latitude": -45.878700300000006,
+      "longitude": 170.50259010000002,
+      "elevationMeters": 2.3678868546634297,
+      "routeTangentDegrees": 22.67066855358746,
+      "distanceFromRouteMeters": 17.839039041638152,
+      "nearestRouteDistanceMeters": 489.1846660788176,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895304,
+      "category": "crossing",
+      "latitude": -45.878911,
+      "longitude": 170.5035014,
+      "elevationMeters": 2.231498561622334,
+      "routeTangentDegrees": 22.67066855358746,
+      "distanceFromRouteMeters": 56.29457728287829,
+      "nearestRouteDistanceMeters": 493.756080403704,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895315,
+      "category": "crossing",
+      "latitude": -45.878752500000004,
+      "longitude": 170.5029278,
+      "elevationMeters": 2.3691360905396115,
+      "routeTangentDegrees": 22.67066855358746,
+      "distanceFromRouteMeters": 8.521519020268064,
+      "nearestRouteDistanceMeters": 493.756080403704,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752217,
+      "category": "give-way-sign",
+      "latitude": -45.8787384,
+      "longitude": 170.5028767,
+      "elevationMeters": 2.3873645767724847,
+      "routeTangentDegrees": 22.67066855358746,
+      "distanceFromRouteMeters": 4.266411712825398,
+      "nearestRouteDistanceMeters": 493.756080403704,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509999150,
+      "category": "crossing",
+      "latitude": -45.878626600000004,
+      "longitude": 170.5026343,
+      "elevationMeters": 2.321016715278801,
+      "routeTangentDegrees": 20.060539922679084,
+      "distanceFromRouteMeters": 17.625731970916167,
+      "nearestRouteDistanceMeters": 498.87331934909247,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752219,
+      "category": "give-way-sign",
+      "latitude": -45.878498900000004,
+      "longitude": 170.5021968,
+      "elevationMeters": 2.287818152428169,
+      "routeTangentDegrees": 20.060539922679084,
+      "distanceFromRouteMeters": 54.30933562371398,
+      "nearestRouteDistanceMeters": 500.59439382527364,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5522367014,
+      "category": "give-way-sign",
+      "latitude": -45.8785925,
+      "longitude": 170.50277970000002,
+      "elevationMeters": 2.391002139166433,
+      "routeTangentDegrees": 20.060539922679084,
+      "distanceFromRouteMeters": 8.353559129264431,
+      "nearestRouteDistanceMeters": 506.295855634131,
+      "tags": {
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 975638203,
+      "category": "bollard",
+      "latitude": -45.87806775,
+      "longitude": 170.50316025,
+      "elevationMeters": 2.4571291312845664,
+      "routeTangentDegrees": 28.26635766165367,
+      "distanceFromRouteMeters": 3.180719829294618,
+      "nearestRouteDistanceMeters": 570.9530683807945,
+      "tags": {
+        "barrier": "bollard"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12511109337,
+      "category": "crossing",
+      "latitude": -45.8778279,
+      "longitude": 170.502564,
+      "elevationMeters": 3.185318021555507,
+      "routeTangentDegrees": 28.26635766165367,
+      "distanceFromRouteMeters": 56.46423592763358,
+      "nearestRouteDistanceMeters": 572.5841748169846,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895459,
+      "category": "crossing",
+      "latitude": -45.877976700000005,
+      "longitude": 170.50308040000002,
+      "elevationMeters": 2.348694520884089,
+      "routeTangentDegrees": 28.26635766165367,
+      "distanceFromRouteMeters": 13.419598336681824,
+      "nearestRouteDistanceMeters": 576.9427762330223,
+      "tags": {
+        "crossing": "marked",
+        "crossing:island": "no",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575228,
+      "category": "traffic-signal",
+      "latitude": -45.8779988,
+      "longitude": 170.5031542,
+      "elevationMeters": 2.461840646757211,
+      "routeTangentDegrees": 28.26635766165367,
+      "distanceFromRouteMeters": 7.224038123899807,
+      "nearestRouteDistanceMeters": 577.4839301164521,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575227,
+      "category": "traffic-signal",
+      "latitude": -45.8780258,
+      "longitude": 170.50323930000002,
+      "elevationMeters": 2.4017806692300683,
+      "routeTangentDegrees": 28.26635766165367,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 577.959459363516,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3742040040,
+      "category": "traffic-signal",
+      "latitude": -45.877996700000004,
+      "longitude": 170.5031884,
+      "elevationMeters": 2.4949951834298316,
+      "routeTangentDegrees": 22.361487259336002,
+      "distanceFromRouteMeters": 4.875045187843042,
+      "nearestRouteDistanceMeters": 579.4528248904672,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 7691621180,
+      "category": "give-way-sign",
+      "latitude": -45.8779569,
+      "longitude": 170.5030763,
+      "elevationMeters": 2.3205599590842536,
+      "routeTangentDegrees": 22.361487259336002,
+      "distanceFromRouteMeters": 14.584138449197832,
+      "nearestRouteDistanceMeters": 580.2440701895612,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895456,
+      "category": "crossing",
+      "latitude": -45.8779775,
+      "longitude": 170.50316660000001,
+      "elevationMeters": 2.44308374221294,
+      "routeTangentDegrees": 22.361487259336002,
+      "distanceFromRouteMeters": 7.247974549627529,
+      "nearestRouteDistanceMeters": 580.7851799630957,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895457,
+      "category": "crossing",
+      "latitude": -45.878001600000005,
+      "longitude": 170.50325360000002,
+      "elevationMeters": 2.427012062321882,
+      "routeTangentDegrees": 22.361487259336002,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 580.8691818897244,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895461,
+      "category": "crossing",
+      "latitude": -45.877920700000004,
+      "longitude": 170.5031504,
+      "elevationMeters": 2.5012619579939717,
+      "routeTangentDegrees": 22.489171854687868,
+      "distanceFromRouteMeters": 10.822367192287164,
+      "nearestRouteDistanceMeters": 586.1248887408507,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895452,
+      "category": "crossing",
+      "latitude": -45.877981500000004,
+      "longitude": 170.50336950000002,
+      "elevationMeters": 2.2627858246023598,
+      "routeTangentDegrees": 22.225452116834674,
+      "distanceFromRouteMeters": 7.435252210968874,
+      "nearestRouteDistanceMeters": 586.3319255336213,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575229,
+      "category": "traffic-signal",
+      "latitude": -45.8779897,
+      "longitude": 170.5033986,
+      "elevationMeters": 2.225301841667357,
+      "routeTangentDegrees": 22.225452116834674,
+      "distanceFromRouteMeters": 9.865479635650544,
+      "nearestRouteDistanceMeters": 586.3399621833105,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575226,
+      "category": "traffic-signal",
+      "latitude": -45.8778457,
+      "longitude": 170.50315690000002,
+      "elevationMeters": 2.680002366439658,
+      "routeTangentDegrees": 22.225452116834674,
+      "distanceFromRouteMeters": 13.511625822530007,
+      "nearestRouteDistanceMeters": 594.0850367971487,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 2362831793,
+      "category": "crossing",
+      "latitude": -45.8778535,
+      "longitude": 170.5031859,
+      "elevationMeters": 2.6307104325483346,
+      "routeTangentDegrees": 22.225452116834674,
+      "distanceFromRouteMeters": 11.10538340080894,
+      "nearestRouteDistanceMeters": 594.1313207590241,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895451,
+      "category": "crossing",
+      "latitude": -45.877912800000004,
+      "longitude": 170.50340740000001,
+      "elevationMeters": 2.4881959220362724,
+      "routeTangentDegrees": 22.225452116834674,
+      "distanceFromRouteMeters": 7.263402938121259,
+      "nearestRouteDistanceMeters": 594.3568070415222,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895465,
+      "category": "crossing",
+      "latitude": -45.8778002,
+      "longitude": 170.50336710000002,
+      "elevationMeters": 2.521883531028569,
+      "routeTangentDegrees": 20.26256175654794,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 604.9296918506099,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895463,
+      "category": "crossing",
+      "latitude": -45.8777855,
+      "longitude": 170.50331250000002,
+      "elevationMeters": 2.572791795545403,
+      "routeTangentDegrees": 20.092343234636814,
+      "distanceFromRouteMeters": 4.531035279329665,
+      "nearestRouteDistanceMeters": 605.0127481923341,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895464,
+      "category": "crossing",
+      "latitude": -45.8777776,
+      "longitude": 170.5032837,
+      "elevationMeters": 2.553388824053612,
+      "routeTangentDegrees": 20.092343234636814,
+      "distanceFromRouteMeters": 6.926615325370354,
+      "nearestRouteDistanceMeters": 605.0718204212753,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365541,
+      "category": "bus-stop",
+      "latitude": -45.877714000000005,
+      "longitude": 170.5037672,
+      "elevationMeters": 2.472147846998682,
+      "routeTangentDegrees": 20.092343234636814,
+      "distanceFromRouteMeters": 25.795194963257686,
+      "nearestRouteDistanceMeters": 624.5716061042546,
+      "name": "State Highway One, 28",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "State Highway One, 28",
+        "public_transport": "platform",
+        "ref": "1181",
+        "shelter": "no"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 975638202,
+      "category": "bollard",
+      "latitude": -45.87732851538462,
+      "longitude": 170.50371929230766,
+      "elevationMeters": 2.4651436897999974,
+      "routeTangentDegrees": 40.40788630483598,
+      "distanceFromRouteMeters": 1.065262579030736,
+      "nearestRouteDistanceMeters": 664.8027753893981,
+      "tags": {
+        "barrier": "bollard"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9357928862,
+      "category": "bench",
+      "latitude": -45.8775312,
+      "longitude": 170.5042233,
+      "elevationMeters": 2.4933745344328604,
+      "routeTangentDegrees": 62.050517091039524,
+      "distanceFromRouteMeters": 41.677271868686994,
+      "nearestRouteDistanceMeters": 689.3054245942666,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9028559072,
+      "category": "crossing",
+      "latitude": -45.877037400000006,
+      "longitude": 170.50404350000002,
+      "elevationMeters": 2.2394311242185077,
+      "routeTangentDegrees": 65.05905808398632,
+      "distanceFromRouteMeters": 13.467931443480264,
+      "nearestRouteDistanceMeters": 702.0408165721437,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752211,
+      "category": "traffic-signal",
+      "latitude": -45.8770728,
+      "longitude": 170.50414020000002,
+      "elevationMeters": 2.3637278090569374,
+      "routeTangentDegrees": 65.05905808398632,
+      "distanceFromRouteMeters": 6.742023300779867,
+      "nearestRouteDistanceMeters": 707.1687440739752,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575237,
+      "category": "traffic-signal",
+      "latitude": -45.8771149,
+      "longitude": 170.5042167,
+      "elevationMeters": 2.46848534413979,
+      "routeTangentDegrees": 65.05905808398632,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 710.5645845757283,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752210,
+      "category": "traffic-signal",
+      "latitude": -45.8769865,
+      "longitude": 170.5041559,
+      "elevationMeters": 2.414061045597506,
+      "routeTangentDegrees": 65.16617608302573,
+      "distanceFromRouteMeters": 14.933976700425797,
+      "nearestRouteDistanceMeters": 712.2893991930121,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025139,
+      "category": "crossing",
+      "latitude": -45.8770522,
+      "longitude": 170.50419960000002,
+      "elevationMeters": 2.337186334291023,
+      "routeTangentDegrees": 65.16617608302573,
+      "distanceFromRouteMeters": 6.883196875541458,
+      "nearestRouteDistanceMeters": 712.2913399908373,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817392692,
+      "category": "crossing",
+      "latitude": -45.8770723,
+      "longitude": 170.5042194,
+      "elevationMeters": 2.3944575017248453,
+      "routeTangentDegrees": 65.16617608302573,
+      "distanceFromRouteMeters": 4.211095980792126,
+      "nearestRouteDistanceMeters": 712.7437166009724,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 7787120908,
+      "category": "crossing",
+      "latitude": -45.877104300000006,
+      "longitude": 170.5042496,
+      "elevationMeters": 2.449934669121488,
+      "routeTangentDegrees": 65.16617608302573,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 713.3710122877081,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9028559068,
+      "category": "crossing",
+      "latitude": -45.877002600000004,
+      "longitude": 170.50421550000002,
+      "elevationMeters": 2.298142738471551,
+      "routeTangentDegrees": 65.14427567297662,
+      "distanceFromRouteMeters": 11.370610072709926,
+      "nearestRouteDistanceMeters": 715.7290981862948,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 7787120913,
+      "category": "crossing",
+      "latitude": -45.877037,
+      "longitude": 170.5043282,
+      "elevationMeters": 2.344062621428878,
+      "routeTangentDegrees": 65.14427567297662,
+      "distanceFromRouteMeters": 4.232590594367835,
+      "nearestRouteDistanceMeters": 722.0376549772539,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 1272611608,
+      "category": "bollard",
+      "latitude": -45.877021850000006,
+      "longitude": 170.50440065000004,
+      "elevationMeters": 2.3277940869677507,
+      "routeTangentDegrees": 64.85120906295066,
+      "distanceFromRouteMeters": 3.3914464242953675,
+      "nearestRouteDistanceMeters": 727.8522358503369,
+      "tags": {
+        "barrier": "bollard"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025143,
+      "category": "crossing",
+      "latitude": -45.8769365,
+      "longitude": 170.5044238,
+      "elevationMeters": 2.1485055408356524,
+      "routeTangentDegrees": 64.85120906295066,
+      "distanceFromRouteMeters": 11.220696651268705,
+      "nearestRouteDistanceMeters": 733.5076670098687,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575238,
+      "category": "traffic-signal",
+      "latitude": -45.8769215,
+      "longitude": 170.5044172,
+      "elevationMeters": 2.1783719097754832,
+      "routeTangentDegrees": 64.85120906295066,
+      "distanceFromRouteMeters": 12.94764490728343,
+      "nearestRouteDistanceMeters": 733.7539857711588,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817392689,
+      "category": "crossing",
+      "latitude": -45.8769665,
+      "longitude": 170.5044747,
+      "elevationMeters": 2.1755461156404285,
+      "routeTangentDegrees": 64.85120906295066,
+      "distanceFromRouteMeters": 6.526518758408698,
+      "nearestRouteDistanceMeters": 735.6568814586458,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924471,
+      "category": "crossing",
+      "latitude": -45.876974000000004,
+      "longitude": 170.5046605,
+      "elevationMeters": 2.366807391433314,
+      "routeTangentDegrees": 66.86966457164328,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 748.3285436977781,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 7787120910,
+      "category": "crossing",
+      "latitude": -45.876559300000004,
+      "longitude": 170.5056984,
+      "elevationMeters": 2.223031572705005,
+      "routeTangentDegrees": 22.098673961195516,
+      "distanceFromRouteMeters": 9.739189324109118,
+      "nearestRouteDistanceMeters": 837.9499643678463,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1030286783,
+      "category": "give-way-sign",
+      "latitude": -45.876550900000005,
+      "longitude": 170.5056848,
+      "elevationMeters": 2.2688839282512165,
+      "routeTangentDegrees": 22.098673961195516,
+      "distanceFromRouteMeters": 8.412307891160664,
+      "nearestRouteDistanceMeters": 838.4193043868654,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712715895,
+      "category": "traffic-signal",
+      "latitude": -45.8750264,
+      "longitude": 170.5064364,
+      "elevationMeters": 3.98146996669073,
+      "routeTangentDegrees": 22.852565256785624,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1017.3880956813505,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025238,
+      "category": "crossing",
+      "latitude": -45.875151100000004,
+      "longitude": 170.5070188,
+      "elevationMeters": 3.229935194765852,
+      "routeTangentDegrees": 20.68497259603447,
+      "distanceFromRouteMeters": 47.0469316501358,
+      "nearestRouteDistanceMeters": 1020.3427353911012,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025209,
+      "category": "crossing",
+      "latitude": -45.874993100000005,
+      "longitude": 170.50645490000002,
+      "elevationMeters": 3.9644519075560494,
+      "routeTangentDegrees": 20.68497259603447,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1021.3586717031911,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712715896,
+      "category": "traffic-signal",
+      "latitude": -45.874969500000006,
+      "longitude": 170.50665410000002,
+      "elevationMeters": 3.7430406913474523,
+      "routeTangentDegrees": 20.66902309242181,
+      "distanceFromRouteMeters": 13.502581074522121,
+      "nearestRouteDistanceMeters": 1029.2572523538367,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924468,
+      "category": "crossing",
+      "latitude": -45.8749528,
+      "longitude": 170.5065935,
+      "elevationMeters": 3.7985462427538703,
+      "routeTangentDegrees": 20.66902309242181,
+      "distanceFromRouteMeters": 8.457637634729581,
+      "nearestRouteDistanceMeters": 1029.3387457869649,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025153,
+      "category": "crossing",
+      "latitude": -45.8748961,
+      "longitude": 170.50639030000002,
+      "elevationMeters": 4.037797371372121,
+      "routeTangentDegrees": 21.279853588847743,
+      "distanceFromRouteMeters": 8.488330964615338,
+      "nearestRouteDistanceMeters": 1029.594615367956,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712715897,
+      "category": "traffic-signal",
+      "latitude": -45.874886100000005,
+      "longitude": 170.5063552,
+      "elevationMeters": 4.112423645356828,
+      "routeTangentDegrees": 21.279853588847743,
+      "distanceFromRouteMeters": 11.423947989121292,
+      "nearestRouteDistanceMeters": 1029.64456594294,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712715898,
+      "category": "traffic-signal",
+      "latitude": -45.874692,
+      "longitude": 170.5056721,
+      "elevationMeters": 4.840405036237728,
+      "routeTangentDegrees": 21.279853588847743,
+      "distanceFromRouteMeters": 68.53486774334864,
+      "nearestRouteDistanceMeters": 1030.5632329436428,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520330716,
+      "category": "crossing",
+      "latitude": -45.874681300000006,
+      "longitude": 170.5056346,
+      "elevationMeters": 4.883906679455092,
+      "routeTangentDegrees": 21.279853588847743,
+      "distanceFromRouteMeters": 71.67187651556223,
+      "nearestRouteDistanceMeters": 1030.618276341479,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025213,
+      "category": "crossing",
+      "latitude": -45.8748501,
+      "longitude": 170.5065337,
+      "elevationMeters": 3.923502988688626,
+      "routeTangentDegrees": 21.279853588847743,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1038.3898654139557,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025212,
+      "category": "crossing",
+      "latitude": -45.874866600000004,
+      "longitude": 170.50659900000002,
+      "elevationMeters": 3.7611608950830466,
+      "routeTangentDegrees": 21.291532150134458,
+      "distanceFromRouteMeters": 5.376488784113081,
+      "nearestRouteDistanceMeters": 1038.5160349524076,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12558438861,
+      "category": "crossing",
+      "latitude": -45.8745673,
+      "longitude": 170.5065733,
+      "elevationMeters": 3.503286055346625,
+      "routeTangentDegrees": 21.291168920097164,
+      "distanceFromRouteMeters": 8.561987858179949,
+      "nearestRouteDistanceMeters": 1068.8027024300238,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12558438859,
+      "category": "crossing",
+      "latitude": -45.8743587,
+      "longitude": 170.5058189,
+      "elevationMeters": 4.377000622351233,
+      "routeTangentDegrees": 21.291168920097164,
+      "distanceFromRouteMeters": 71.40194675550664,
+      "nearestRouteDistanceMeters": 1069.207976355432,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 10564098609,
+      "category": "bus-stop",
+      "latitude": -45.8740972,
+      "longitude": 170.50592020000002,
+      "elevationMeters": 3.7508219388418813,
+      "routeTangentDegrees": 21.291251162670903,
+      "distanceFromRouteMeters": 74.65334235757284,
+      "nearestRouteDistanceMeters": 1099.1482449845635,
+      "name": "InterCity bus stop",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "InterCity bus stop",
+        "public_transport": "platform",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365542,
+      "category": "bus-stop",
+      "latitude": -45.8740383,
+      "longitude": 170.5069133,
+      "elevationMeters": 2.6673728326882373,
+      "routeTangentDegrees": 21.29133339595171,
+      "distanceFromRouteMeters": 5.395329342486474,
+      "nearestRouteDistanceMeters": 1133.167738589477,
+      "name": "Cumberland St, outside Countdown",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Cumberland St, outside Countdown",
+        "public_transport": "platform",
+        "ref": "4",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768883220,
+      "category": "traffic-signal",
+      "latitude": -45.8725305,
+      "longitude": 170.5078321,
+      "elevationMeters": 1.698062551930007,
+      "routeTangentDegrees": 21.296579800690267,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1315.2130343741296,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466494,
+      "category": "crossing",
+      "latitude": -45.8725253,
+      "longitude": 170.5079307,
+      "elevationMeters": 1.5435489979014503,
+      "routeTangentDegrees": 21.271222250515166,
+      "distanceFromRouteMeters": 6.9038200710758515,
+      "nearestRouteDistanceMeters": 1318.521211371086,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466495,
+      "category": "crossing",
+      "latitude": -45.872502600000004,
+      "longitude": 170.5078477,
+      "elevationMeters": 1.6843887116423943,
+      "routeTangentDegrees": 21.271222250515166,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1318.5421752273812,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924467,
+      "category": "crossing",
+      "latitude": -45.872452100000004,
+      "longitude": 170.50796730000002,
+      "elevationMeters": 1.695022119844853,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 6.592404839081709,
+      "nearestRouteDistanceMeters": 1327.1845418323928,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025161,
+      "category": "crossing",
+      "latitude": -45.8724031,
+      "longitude": 170.5077908,
+      "elevationMeters": 1.6858689273241967,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 8.11849763448917,
+      "nearestRouteDistanceMeters": 1327.1921280171355,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025100,
+      "category": "crossing",
+      "latitude": -45.8724615,
+      "longitude": 170.5080019,
+      "elevationMeters": 1.6905290904342694,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 9.467781389089007,
+      "nearestRouteDistanceMeters": 1327.2043009567076,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768883219,
+      "category": "traffic-signal",
+      "latitude": -45.872383400000004,
+      "longitude": 170.507721,
+      "elevationMeters": 1.6725756511424659,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 13.949431465558602,
+      "nearestRouteDistanceMeters": 1327.2284016466122,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768883223,
+      "category": "traffic-signal",
+      "latitude": -45.8724865,
+      "longitude": 170.5080938,
+      "elevationMeters": 1.7504115453027407,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 17.106334109306392,
+      "nearestRouteDistanceMeters": 1327.2533776829648,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466490,
+      "category": "crossing",
+      "latitude": -45.8723789,
+      "longitude": 170.5080039,
+      "elevationMeters": 1.5942497905521629,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 6.214266940886168,
+      "nearestRouteDistanceMeters": 1335.794838613713,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466489,
+      "category": "crossing",
+      "latitude": -45.872357400000006,
+      "longitude": 170.5079298,
+      "elevationMeters": 1.7412750795590173,
+      "routeTangentDegrees": 21.709210990384918,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1335.8939263277634,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3744918729,
+      "category": "bus-stop",
+      "latitude": -45.8711469,
+      "longitude": 170.50853550000002,
+      "elevationMeters": 2.0739188802562887,
+      "routeTangentDegrees": 21.72073559692484,
+      "distanceFromRouteMeters": 6.2505442423947395,
+      "nearestRouteDistanceMeters": 1478.2931929472693,
+      "name": "Cumberland St, outside New World",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Cumberland St, outside New World",
+        "public_transport": "platform",
+        "ref": "5",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768862882,
+      "category": "traffic-signal",
+      "latitude": -45.8706789,
+      "longitude": 170.50889020000002,
+      "elevationMeters": 2.850443417100492,
+      "routeTangentDegrees": 21.725651166961256,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1536.800681159974,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466507,
+      "category": "crossing",
+      "latitude": -45.870652,
+      "longitude": 170.5089055,
+      "elevationMeters": 2.9026618134494773,
+      "routeTangentDegrees": 21.65790342638428,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1540.0178464704952,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025167,
+      "category": "crossing",
+      "latitude": -45.870549800000006,
+      "longitude": 170.50883720000002,
+      "elevationMeters": 2.9313064808190767,
+      "routeTangentDegrees": 21.744133806244804,
+      "distanceFromRouteMeters": 9.121715648139816,
+      "nearestRouteDistanceMeters": 1548.614382730596,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924466,
+      "category": "crossing",
+      "latitude": -45.870596400000004,
+      "longitude": 170.50900710000002,
+      "elevationMeters": 2.9422465512494327,
+      "routeTangentDegrees": 21.552127686199583,
+      "distanceFromRouteMeters": 5.0161712998646975,
+      "nearestRouteDistanceMeters": 1548.6576974545046,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025096,
+      "category": "crossing",
+      "latitude": -45.870607400000004,
+      "longitude": 170.50904740000001,
+      "elevationMeters": 2.9085860527061547,
+      "routeTangentDegrees": 21.552127686199583,
+      "distanceFromRouteMeters": 8.3674857738581,
+      "nearestRouteDistanceMeters": 1548.6662475391583,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466533,
+      "category": "crossing",
+      "latitude": -45.8705219,
+      "longitude": 170.5090494,
+      "elevationMeters": 2.8995743982672773,
+      "routeTangentDegrees": 21.552127686199583,
+      "distanceFromRouteMeters": 5.019082444447106,
+      "nearestRouteDistanceMeters": 1557.5655941213015,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466534,
+      "category": "crossing",
+      "latitude": -45.870504800000006,
+      "longitude": 170.50898940000002,
+      "elevationMeters": 3.0498532660048543,
+      "routeTangentDegrees": 21.552127686199583,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1557.6276177685638,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736674,
+      "category": "traffic-signal",
+      "latitude": -45.8688421,
+      "longitude": 170.50993060000002,
+      "elevationMeters": 5.318423453245523,
+      "routeTangentDegrees": 21.502511602229617,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1756.3543234274368,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5903424451,
+      "category": "bench",
+      "latitude": -45.8686778,
+      "longitude": 170.50940970000002,
+      "elevationMeters": 6.016456990630651,
+      "routeTangentDegrees": 21.48806551147328,
+      "distanceFromRouteMeters": 44.219892587067385,
+      "nearestRouteDistanceMeters": 1758.5802919916969,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5903424452,
+      "category": "bench",
+      "latitude": -45.8687194,
+      "longitude": 170.50956870000002,
+      "elevationMeters": 5.851601227972887,
+      "routeTangentDegrees": 21.48806551147328,
+      "distanceFromRouteMeters": 31.070460896765855,
+      "nearestRouteDistanceMeters": 1758.7855886016985,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466547,
+      "category": "crossing",
+      "latitude": -45.8688008,
+      "longitude": 170.50995400000002,
+      "elevationMeters": 5.337110329641737,
+      "routeTangentDegrees": 21.621271013146668,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1761.2911408542882,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736664,
+      "category": "traffic-signal",
+      "latitude": -45.8687662,
+      "longitude": 170.5101663,
+      "elevationMeters": 5.3784193983916495,
+      "routeTangentDegrees": 21.503111700690795,
+      "distanceFromRouteMeters": 13.883105222454859,
+      "nearestRouteDistanceMeters": 1770.8958669217263,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025090,
+      "category": "crossing",
+      "latitude": -45.868746200000004,
+      "longitude": 170.5100949,
+      "elevationMeters": 5.402863848449286,
+      "routeTangentDegrees": 21.503111700690795,
+      "distanceFromRouteMeters": 7.924524668137593,
+      "nearestRouteDistanceMeters": 1770.9386151047254,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025171,
+      "category": "crossing",
+      "latitude": -45.868687,
+      "longitude": 170.50988130000002,
+      "elevationMeters": 5.468843517815039,
+      "routeTangentDegrees": 19.822856361348784,
+      "distanceFromRouteMeters": 9.871342626001438,
+      "nearestRouteDistanceMeters": 1771.2906829050291,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736665,
+      "category": "traffic-signal",
+      "latitude": -45.868668,
+      "longitude": 170.5098106,
+      "elevationMeters": 5.517924323141214,
+      "routeTangentDegrees": 19.822856361348784,
+      "distanceFromRouteMeters": 15.7374212588919,
+      "nearestRouteDistanceMeters": 1771.4218972778986,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466573,
+      "category": "crossing",
+      "latitude": -45.8686432,
+      "longitude": 170.5100395,
+      "elevationMeters": 5.661795810754882,
+      "routeTangentDegrees": 19.822856361348784,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1780.026135750819,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365554,
+      "category": "bus-stop",
+      "latitude": -45.8685708,
+      "longitude": 170.5099883,
+      "elevationMeters": 5.602270186259469,
+      "routeTangentDegrees": 19.78812327247698,
+      "distanceFromRouteMeters": 6.455552925699915,
+      "nearestRouteDistanceMeters": 1786.2592272210982,
+      "name": "Malcom St, cnr Frederick St",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Malcom St, cnr Frederick St",
+        "public_transport": "platform",
+        "ref": "1139",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12508860686,
+      "category": "crossing",
+      "latitude": -45.868109000000004,
+      "longitude": 170.510119,
+      "elevationMeters": 6.339708777366272,
+      "routeTangentDegrees": 1.8808379558645925,
+      "distanceFromRouteMeters": 8.407857843352911,
+      "nearestRouteDistanceMeters": 1841.349618145314,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736693,
+      "category": "give-way-sign",
+      "latitude": -45.867994,
+      "longitude": 170.51031790000002,
+      "elevationMeters": 6.925441747263792,
+      "routeTangentDegrees": 356.14493883958556,
+      "distanceFromRouteMeters": 7.402425799174345,
+      "nearestRouteDistanceMeters": 1853.9263108233242,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025088,
+      "category": "crossing",
+      "latitude": -45.867993000000006,
+      "longitude": 170.5103297,
+      "elevationMeters": 6.983994988392637,
+      "routeTangentDegrees": 356.14493883958556,
+      "distanceFromRouteMeters": 8.321468031763926,
+      "nearestRouteDistanceMeters": 1853.975828052832,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12508860685,
+      "category": "crossing",
+      "latitude": -45.867956400000004,
+      "longitude": 170.5101003,
+      "elevationMeters": 6.6461405956013735,
+      "routeTangentDegrees": 352.373081176841,
+      "distanceFromRouteMeters": 8.887274144727238,
+      "nearestRouteDistanceMeters": 1859.823664295819,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025074,
+      "category": "crossing",
+      "latitude": -45.8671963,
+      "longitude": 170.5098802,
+      "elevationMeters": 8.189258355310084,
+      "routeTangentDegrees": 330.7381898555604,
+      "distanceFromRouteMeters": 9.893606364962562,
+      "nearestRouteDistanceMeters": 1946.074807699651,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736691,
+      "category": "give-way-sign",
+      "latitude": -45.8672009,
+      "longitude": 170.5098675,
+      "elevationMeters": 8.209353517036954,
+      "routeTangentDegrees": 330.7381898555604,
+      "distanceFromRouteMeters": 8.785732563082613,
+      "nearestRouteDistanceMeters": 1946.1092324923093,
+      "tags": {
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12497062132,
+      "category": "bench",
+      "latitude": -45.866873700000006,
+      "longitude": 170.50993630000002,
+      "elevationMeters": 9.051459268428163,
+      "routeTangentDegrees": 351.13513120851746,
+      "distanceFromRouteMeters": 25.800450956841647,
+      "nearestRouteDistanceMeters": 1985.0958746650979,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466590,
+      "category": "crossing",
+      "latitude": -45.8667182,
+      "longitude": 170.510196,
+      "elevationMeters": 8.601670012230871,
+      "routeTangentDegrees": 357.9163961792128,
+      "distanceFromRouteMeters": 47.83526256921828,
+      "nearestRouteDistanceMeters": 2004.759338380617,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736688,
+      "category": "traffic-signal",
+      "latitude": -45.866603500000004,
+      "longitude": 170.5095794,
+      "elevationMeters": 9.74531562725405,
+      "routeTangentDegrees": 2.7124721110766927,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2019.2653989730638,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466595,
+      "category": "crossing",
+      "latitude": -45.8665667,
+      "longitude": 170.5095822,
+      "elevationMeters": 9.820343016843394,
+      "routeTangentDegrees": 3.3812581303926095,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2023.3631731024532,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736689,
+      "category": "traffic-signal",
+      "latitude": -45.8665201,
+      "longitude": 170.5097749,
+      "elevationMeters": 9.62492614425437,
+      "routeTangentDegrees": 4.95404120024142,
+      "distanceFromRouteMeters": 14.417285478228647,
+      "nearestRouteDistanceMeters": 2029.8139820707927,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924448,
+      "category": "crossing",
+      "latitude": -45.8665116,
+      "longitude": 170.5097442,
+      "elevationMeters": 9.671067883551714,
+      "routeTangentDegrees": 4.95404120024142,
+      "distanceFromRouteMeters": 11.967487725926475,
+      "nearestRouteDistanceMeters": 2030.550333617493,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025191,
+      "category": "crossing",
+      "latitude": -45.866440000000004,
+      "longitude": 170.5094817,
+      "elevationMeters": 10.152219555839416,
+      "routeTangentDegrees": 17.385866894696278,
+      "distanceFromRouteMeters": 9.319509258181707,
+      "nearestRouteDistanceMeters": 2034.7350268288121,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6842508087,
+      "category": "traffic-signal",
+      "latitude": -45.8664324,
+      "longitude": 170.50945330000002,
+      "elevationMeters": 10.233124780694059,
+      "routeTangentDegrees": 17.385866894696278,
+      "distanceFromRouteMeters": 11.670538174216372,
+      "nearestRouteDistanceMeters": 2034.884434194294,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466611,
+      "category": "crossing",
+      "latitude": -45.8664189,
+      "longitude": 170.50969990000002,
+      "elevationMeters": 9.870236186062357,
+      "routeTangentDegrees": 17.385866894696278,
+      "distanceFromRouteMeters": 6.102519902070118,
+      "nearestRouteDistanceMeters": 2042.0223504120602,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466610,
+      "category": "crossing",
+      "latitude": -45.8663978,
+      "longitude": 170.5096268,
+      "elevationMeters": 10.01744083477234,
+      "routeTangentDegrees": 17.385866894696278,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2042.5701245825712,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14015985082,
+      "category": "bench",
+      "latitude": -45.866294700000005,
+      "longitude": 170.5101319,
+      "elevationMeters": 9.953146755456325,
+      "routeTangentDegrees": 21.39476084912178,
+      "distanceFromRouteMeters": 32.63966592514356,
+      "nearestRouteDistanceMeters": 2067.5163622644895,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14015926966,
+      "category": "bench",
+      "latitude": -45.8661904,
+      "longitude": 170.5099275,
+      "elevationMeters": 10.47745810705741,
+      "routeTangentDegrees": 21.39476084912178,
+      "distanceFromRouteMeters": 13.67309631730041,
+      "nearestRouteDistanceMeters": 2072.541442007374,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736649,
+      "category": "traffic-signal",
+      "latitude": -45.864717600000006,
+      "longitude": 170.51056490000002,
+      "elevationMeters": 12.806180863457362,
+      "routeTangentDegrees": 21.37960237531587,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2243.0283206769222,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025304,
+      "category": "crossing",
+      "latitude": -45.864703500000005,
+      "longitude": 170.5106393,
+      "elevationMeters": 12.663139636803987,
+      "routeTangentDegrees": 21.433787032495843,
+      "distanceFromRouteMeters": 4.789529213044985,
+      "nearestRouteDistanceMeters": 2246.588123585993,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025309,
+      "category": "crossing",
+      "latitude": -45.864687800000006,
+      "longitude": 170.51058170000002,
+      "elevationMeters": 12.850363588837087,
+      "routeTangentDegrees": 21.433787032495843,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2246.588123585993,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025200,
+      "category": "crossing",
+      "latitude": -45.8645822,
+      "longitude": 170.5105234,
+      "elevationMeters": 13.033567726350526,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 8.483217001268043,
+      "nearestRouteDistanceMeters": 2255.8693519952108,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736650,
+      "category": "traffic-signal",
+      "latitude": -45.864574000000005,
+      "longitude": 170.5104938,
+      "elevationMeters": 13.074725764745306,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 10.949866510946723,
+      "nearestRouteDistanceMeters": 2255.880763607826,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924445,
+      "category": "crossing",
+      "latitude": -45.8646271,
+      "longitude": 170.51068850000001,
+      "elevationMeters": 12.889167756152776,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 5.241005682086041,
+      "nearestRouteDistanceMeters": 2255.8923516430655,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519000049,
+      "category": "crossing",
+      "latitude": -45.864637900000005,
+      "longitude": 170.5107289,
+      "elevationMeters": 12.807742726963163,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 8.591725728125976,
+      "nearestRouteDistanceMeters": 2255.917338907011,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736648,
+      "category": "traffic-signal",
+      "latitude": -45.8646539,
+      "longitude": 170.5107892,
+      "elevationMeters": 12.73787261161361,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 13.588056329308827,
+      "nearestRouteDistanceMeters": 2255.96703421813,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025326,
+      "category": "crossing",
+      "latitude": -45.8645373,
+      "longitude": 170.51066640000002,
+      "elevationMeters": 13.108234721942114,
+      "routeTangentDegrees": 21.428762450991314,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2264.5622110125937,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025325,
+      "category": "crossing",
+      "latitude": -45.864555,
+      "longitude": 170.5107332,
+      "elevationMeters": 12.927139811431744,
+      "routeTangentDegrees": 21.38507160657889,
+      "distanceFromRouteMeters": 5.533953986805079,
+      "nearestRouteDistanceMeters": 2264.615602867936,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084721643,
+      "category": "traffic-signal",
+      "latitude": -45.8628644,
+      "longitude": 170.5116121,
+      "elevationMeters": 15.840229221236875,
+      "routeTangentDegrees": 22.115740866969873,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2464.4766045122487,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11518594624,
+      "category": "crossing",
+      "latitude": -45.862833300000005,
+      "longitude": 170.5116302,
+      "elevationMeters": 15.903645349601536,
+      "routeTangentDegrees": 21.775371606096883,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2468.2080219670506,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084721642,
+      "category": "traffic-signal",
+      "latitude": -45.862712900000005,
+      "longitude": 170.5115337,
+      "elevationMeters": 16.004981229598172,
+      "routeTangentDegrees": 22.153889754568127,
+      "distanceFromRouteMeters": 11.969224826402323,
+      "nearestRouteDistanceMeters": 2477.7897279750264,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11518594628,
+      "category": "crossing",
+      "latitude": -45.8627222,
+      "longitude": 170.5115682,
+      "elevationMeters": 15.982635878373543,
+      "routeTangentDegrees": 22.153889754568127,
+      "distanceFromRouteMeters": 9.105018453154303,
+      "nearestRouteDistanceMeters": 2477.8393577704796,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11518594618,
+      "category": "crossing",
+      "latitude": -45.8626814,
+      "longitude": 170.5117122,
+      "elevationMeters": 16.051165783547223,
+      "routeTangentDegrees": 22.153889754568127,
+      "distanceFromRouteMeters": 8.339558308200795,
+      "nearestRouteDistanceMeters": 2477.9207378979904,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11518594619,
+      "category": "crossing",
+      "latitude": -45.862708100000006,
+      "longitude": 170.5118035,
+      "elevationMeters": 15.802745514649642,
+      "routeTangentDegrees": 112.24314867925136,
+      "distanceFromRouteMeters": 8.252638940881353,
+      "nearestRouteDistanceMeters": 2485.086722154838,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9721924444,
+      "category": "crossing",
+      "latitude": -45.862783500000006,
+      "longitude": 170.51178670000002,
+      "elevationMeters": 15.770047978254544,
+      "routeTangentDegrees": 112.24314867925136,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2487.056329431715,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8540271779,
+      "category": "bench",
+      "latitude": -45.8629788,
+      "longitude": 170.512998,
+      "elevationMeters": 13.464564368260246,
+      "routeTangentDegrees": 111.92181859798006,
+      "distanceFromRouteMeters": 14.827547261617585,
+      "nearestRouteDistanceMeters": 2582.1773357137927,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736635,
+      "category": "traffic-signal",
+      "latitude": -45.863112900000004,
+      "longitude": 170.5129636,
+      "elevationMeters": 13.018980652930924,
+      "routeTangentDegrees": 111.92181859798006,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2585.2731821934804,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025290,
+      "category": "crossing",
+      "latitude": -45.863128700000004,
+      "longitude": 170.5130202,
+      "elevationMeters": 12.859409277236661,
+      "routeTangentDegrees": 111.84411538401588,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2589.994932942283,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365711,
+      "category": "bus-stop",
+      "latitude": -45.8630281,
+      "longitude": 170.51329560000002,
+      "elevationMeters": 12.751467791643421,
+      "routeTangentDegrees": 111.90422804407723,
+      "distanceFromRouteMeters": 19.79954919492735,
+      "nearestRouteDistanceMeters": 2598.1321136215774,
+      "name": "Cumberland St, 764",
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Cumberland St, 764",
+        "public_transport": "platform",
+        "ref": "1010",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600754,
+      "category": "crossing",
+      "latitude": -45.8630902,
+      "longitude": 170.5131557,
+      "elevationMeters": 12.950564430344786,
+      "routeTangentDegrees": 111.90422804407723,
+      "distanceFromRouteMeters": 7.886135465457149,
+      "nearestRouteDistanceMeters": 2598.1321136215774,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736636,
+      "category": "traffic-signal",
+      "latitude": -45.8630495,
+      "longitude": 170.51317930000002,
+      "elevationMeters": 13.018201857529835,
+      "routeTangentDegrees": 111.90422804407723,
+      "distanceFromRouteMeters": 12.766793800234385,
+      "nearestRouteDistanceMeters": 2598.1321136215774,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9946860461,
+      "category": "traffic-signal",
+      "latitude": -45.8631967,
+      "longitude": 170.5132577,
+      "elevationMeters": 12.623875144008153,
+      "routeTangentDegrees": 201.25779998854733,
+      "distanceFromRouteMeters": 11.743880086621171,
+      "nearestRouteDistanceMeters": 2598.4193722060922,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14073884556,
+      "category": "bollard",
+      "latitude": -45.8633455,
+      "longitude": 170.51377860000002,
+      "elevationMeters": 12.54570206136332,
+      "routeTangentDegrees": 201.25779998854733,
+      "distanceFromRouteMeters": 55.333281940088334,
+      "nearestRouteDistanceMeters": 2599.2153499988376,
+      "tags": {
+        "barrier": "bollard"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155503,
+      "category": "crossing",
+      "latitude": -45.8632438,
+      "longitude": 170.51314190000002,
+      "elevationMeters": 12.566521627065528,
+      "routeTangentDegrees": 201.25779998854733,
+      "distanceFromRouteMeters": 5.286071690464729,
+      "nearestRouteDistanceMeters": 2606.5513399400306,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11518594612,
+      "category": "crossing",
+      "latitude": -45.8632276,
+      "longitude": 170.5130777,
+      "elevationMeters": 12.775927002977753,
+      "routeTangentDegrees": 201.25779998854733,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2606.67493752724,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12303588779,
+      "category": "bench",
+      "latitude": -45.8633492,
+      "longitude": 170.51319740000002,
+      "elevationMeters": 12.465668378307875,
+      "routeTangentDegrees": 201.32293063210872,
+      "distanceFromRouteMeters": 13.5509287665873,
+      "nearestRouteDistanceMeters": 2615.9003078013952,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 900121911,
+      "category": "bus-stop",
+      "latitude": -45.8636743,
+      "longitude": 170.51292370000002,
+      "elevationMeters": 11.912480698724389,
+      "routeTangentDegrees": 201.3260500128457,
+      "distanceFromRouteMeters": 6.95388872138738,
+      "nearestRouteDistanceMeters": 2657.2812592432674,
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "public_transport": "platform",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5940146622,
+      "category": "crossing",
+      "latitude": -45.863936200000005,
+      "longitude": 170.5127305,
+      "elevationMeters": 11.787362527051135,
+      "routeTangentDegrees": 200.9018854449383,
+      "distanceFromRouteMeters": 3.6096274189623725,
+      "nearestRouteDistanceMeters": 2689.8764047373693,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600766,
+      "category": "crossing",
+      "latitude": -45.8639552,
+      "longitude": 170.5127961,
+      "elevationMeters": 11.700662592927735,
+      "routeTangentDegrees": 200.9018854449383,
+      "distanceFromRouteMeters": 9.108655249980552,
+      "nearestRouteDistanceMeters": 2690.037849242239,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600764,
+      "category": "crossing",
+      "latitude": -45.8646357,
+      "longitude": 170.51240800000002,
+      "elevationMeters": 10.702420183859678,
+      "routeTangentDegrees": 201.75289949989818,
+      "distanceFromRouteMeters": 8.593196034862233,
+      "nearestRouteDistanceMeters": 2771.324407267034,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433475323,
+      "category": "crossing",
+      "latitude": -45.864625700000005,
+      "longitude": 170.5123704,
+      "elevationMeters": 10.736353965417852,
+      "routeTangentDegrees": 201.75289949989818,
+      "distanceFromRouteMeters": 5.477007149410607,
+      "nearestRouteDistanceMeters": 2771.370624507996,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736646,
+      "category": "traffic-signal",
+      "latitude": -45.8649022,
+      "longitude": 170.512136,
+      "elevationMeters": 10.622465339379787,
+      "routeTangentDegrees": 201.69838449405222,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2806.6530963363775,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600769,
+      "category": "crossing",
+      "latitude": -45.8649338,
+      "longitude": 170.5121176,
+      "elevationMeters": 10.583705548010382,
+      "routeTangentDegrees": 202.73581769671222,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2810.4448559608504,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736647,
+      "category": "traffic-signal",
+      "latitude": -45.865031900000005,
+      "longitude": 170.5122379,
+      "elevationMeters": 10.391606153802885,
+      "routeTangentDegrees": 201.7762920568628,
+      "distanceFromRouteMeters": 12.696969330376447,
+      "nearestRouteDistanceMeters": 2817.1189777721534,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600771,
+      "category": "crossing",
+      "latitude": -45.865023,
+      "longitude": 170.5122034,
+      "elevationMeters": 10.399418436684122,
+      "routeTangentDegrees": 201.7762920568628,
+      "distanceFromRouteMeters": 9.849101557536612,
+      "nearestRouteDistanceMeters": 2817.190994908338,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025287,
+      "category": "crossing",
+      "latitude": -45.864971000000004,
+      "longitude": 170.51198390000002,
+      "elevationMeters": 10.417181575805609,
+      "routeTangentDegrees": 201.22363816023528,
+      "distanceFromRouteMeters": 8.080018462332168,
+      "nearestRouteDistanceMeters": 2818.048801625105,
+      "tags": {
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025301,
+      "category": "crossing",
+      "latitude": -45.865085300000004,
+      "longitude": 170.5120321,
+      "elevationMeters": 10.385165141951767,
+      "routeTangentDegrees": 201.22363816023528,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2828.54526795486,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155531,
+      "category": "crossing",
+      "latitude": -45.865101,
+      "longitude": 170.5120889,
+      "elevationMeters": 10.248585430198256,
+      "routeTangentDegrees": 201.2527780703249,
+      "distanceFromRouteMeters": 4.7317567051776726,
+      "nearestRouteDistanceMeters": 2828.578074367445,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9198645013,
+      "category": "bench",
+      "latitude": -45.866069200000005,
+      "longitude": 170.51234340000002,
+      "elevationMeters": 9.030968018700028,
+      "routeTangentDegrees": 202.80672636939374,
+      "distanceFromRouteMeters": 62.21414756889081,
+      "nearestRouteDistanceMeters": 2920.0860589190356,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9198645014,
+      "category": "bench",
+      "latitude": -45.8660614,
+      "longitude": 170.5123121,
+      "elevationMeters": 9.030261631637245,
+      "routeTangentDegrees": 202.80672636939374,
+      "distanceFromRouteMeters": 59.64389450434126,
+      "nearestRouteDistanceMeters": 2920.225968378103,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9198645016,
+      "category": "bench",
+      "latitude": -45.8660275,
+      "longitude": 170.5121841,
+      "elevationMeters": 9.051158942999786,
+      "routeTangentDegrees": 202.80672636939374,
+      "distanceFromRouteMeters": 49.04665401855863,
+      "nearestRouteDistanceMeters": 2920.5928913556722,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9198671917,
+      "category": "bench",
+      "latitude": -45.8660197,
+      "longitude": 170.51215280000002,
+      "elevationMeters": 9.06797922999979,
+      "routeTangentDegrees": 202.80672636939374,
+      "distanceFromRouteMeters": 46.47639955240378,
+      "nearestRouteDistanceMeters": 2920.7328017147483,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 900121913,
+      "category": "bus-stop",
+      "latitude": -45.8659188,
+      "longitude": 170.5116481,
+      "elevationMeters": 8.922607763143775,
+      "routeTangentDegrees": 202.80672636939374,
+      "distanceFromRouteMeters": 6.10406011889286,
+      "nearestRouteDistanceMeters": 2925.538228045493,
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "public_transport": "platform",
+        "shelter": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5512816373,
+      "category": "crossing",
+      "latitude": -45.8661818,
+      "longitude": 170.5114067,
+      "elevationMeters": 8.928374306433795,
+      "routeTangentDegrees": 202.18003344487624,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 2959.7425092703265,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14073923765,
+      "category": "bench",
+      "latitude": -45.866452800000005,
+      "longitude": 170.5114455,
+      "elevationMeters": 8.4364121048806,
+      "routeTangentDegrees": 200.7554617600072,
+      "distanceFromRouteMeters": 13.493990278051276,
+      "nearestRouteDistanceMeters": 2986.856053910316,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365710,
+      "category": "bus-stop",
+      "latitude": -45.8664519,
+      "longitude": 170.511435,
+      "elevationMeters": 8.49304470571439,
+      "routeTangentDegrees": 200.7554617600072,
+      "distanceFromRouteMeters": 12.698286496015037,
+      "nearestRouteDistanceMeters": 2987.050585217919,
+      "name": "Cumberland St, 594",
+      "tags": {
+        "bench": "separate",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Cumberland St, 594",
+        "public_transport": "platform",
+        "ref": "1009",
+        "shelter": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736686,
+      "category": "traffic-signal",
+      "latitude": -45.8667676,
+      "longitude": 170.5110878,
+      "elevationMeters": 8.14180169581486,
+      "routeTangentDegrees": 200.7553988435009,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3029.403493684952,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600781,
+      "category": "crossing",
+      "latitude": -45.866792100000005,
+      "longitude": 170.51107470000002,
+      "elevationMeters": 8.136564571731006,
+      "routeTangentDegrees": 200.42144540251275,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3032.31046861354,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3744918728,
+      "category": "bus-stop",
+      "latitude": -45.866666,
+      "longitude": 170.510491,
+      "elevationMeters": 8.562618595146638,
+      "routeTangentDegrees": 200.85559957543495,
+      "distanceFromRouteMeters": 47.22567525839314,
+      "nearestRouteDistanceMeters": 3035.297513988101,
+      "name": "Albany St, Musem Reserve",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "no",
+        "name": "Albany St, Musem Reserve",
+        "public_transport": "platform",
+        "ref": "16",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155496,
+      "category": "traffic-signal",
+      "latitude": -45.86683,
+      "longitude": 170.5108994,
+      "elevationMeters": 8.165230180378787,
+      "routeTangentDegrees": 200.85559957543495,
+      "distanceFromRouteMeters": 11.18350584588151,
+      "nearestRouteDistanceMeters": 3041.080876540734,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025282,
+      "category": "crossing",
+      "latitude": -45.8668375,
+      "longitude": 170.51092640000002,
+      "elevationMeters": 8.112565254339344,
+      "routeTangentDegrees": 200.85559957543495,
+      "distanceFromRouteMeters": 8.933014986840144,
+      "nearestRouteDistanceMeters": 3041.1159280880547,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5512816374,
+      "category": "crossing",
+      "latitude": -45.8668685,
+      "longitude": 170.5110329,
+      "elevationMeters": 8.087585380078453,
+      "routeTangentDegrees": 200.85559957543495,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3041.4013934122167,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14243090523,
+      "category": "crossing",
+      "latitude": -45.8668732,
+      "longitude": 170.5110502,
+      "elevationMeters": 8.053303540918897,
+      "routeTangentDegrees": 198.726744251228,
+      "distanceFromRouteMeters": 1.4363824534192169,
+      "nearestRouteDistanceMeters": 3041.4662870666866,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600469,
+      "category": "crossing",
+      "latitude": -45.866896600000004,
+      "longitude": 170.5111362,
+      "elevationMeters": 7.911377070129559,
+      "routeTangentDegrees": 198.726744251228,
+      "distanceFromRouteMeters": 8.578058376974573,
+      "nearestRouteDistanceMeters": 3041.7926545850455,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736684,
+      "category": "traffic-signal",
+      "latitude": -45.866906,
+      "longitude": 170.5111708,
+      "elevationMeters": 7.897398432550781,
+      "routeTangentDegrees": 198.726744251228,
+      "distanceFromRouteMeters": 11.450821706639392,
+      "nearestRouteDistanceMeters": 3041.9224425385078,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14243090522,
+      "category": "crossing",
+      "latitude": -45.8668837,
+      "longitude": 170.51102550000002,
+      "elevationMeters": 8.072149098717357,
+      "routeTangentDegrees": 198.726744251228,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3043.186034282739,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14243090524,
+      "category": "crossing",
+      "latitude": -45.8669437,
+      "longitude": 170.5109964,
+      "elevationMeters": 8.00962884060276,
+      "routeTangentDegrees": 198.66078070743762,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3050.227925935424,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433595066,
+      "category": "crossing",
+      "latitude": -45.8671437,
+      "longitude": 170.51171010000002,
+      "elevationMeters": 7.452663981631881,
+      "routeTangentDegrees": 194.64509287843694,
+      "distanceFromRouteMeters": 59.225779032382434,
+      "nearestRouteDistanceMeters": 3057.7774435998513,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736692,
+      "category": "give-way-sign",
+      "latitude": -45.867350300000005,
+      "longitude": 170.5108346,
+      "elevationMeters": 7.77212756272894,
+      "routeTangentDegrees": 173.72059120553968,
+      "distanceFromRouteMeters": 7.452160621438928,
+      "nearestRouteDistanceMeters": 3095.2513987762204,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025276,
+      "category": "crossing",
+      "latitude": -45.867352600000004,
+      "longitude": 170.5108216,
+      "elevationMeters": 7.84103673482463,
+      "routeTangentDegrees": 173.72059120553968,
+      "distanceFromRouteMeters": 8.480651463465433,
+      "nearestRouteDistanceMeters": 3095.395518358222,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025269,
+      "category": "crossing",
+      "latitude": -45.868105400000005,
+      "longitude": 170.5111812,
+      "elevationMeters": 6.202628200020541,
+      "routeTangentDegrees": 157.85155679947434,
+      "distanceFromRouteMeters": 8.621026843731153,
+      "nearestRouteDistanceMeters": 3181.7449926529684,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466580,
+      "category": "crossing",
+      "latitude": -45.868853400000006,
+      "longitude": 170.51076700000002,
+      "elevationMeters": 4.797705754715128,
+      "routeTangentDegrees": 193.96946284472045,
+      "distanceFromRouteMeters": 57.612019451550864,
+      "nearestRouteDistanceMeters": 3285.842128399041,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5665101086,
+      "category": "traffic-signal",
+      "latitude": -45.869012600000005,
+      "longitude": 170.51147690000002,
+      "elevationMeters": 4.686855992863605,
+      "routeTangentDegrees": 193.96946284472045,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3289.752166923967,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12414873942,
+      "category": "crossing",
+      "latitude": -45.869053,
+      "longitude": 170.51161710000002,
+      "elevationMeters": 4.453771280718414,
+      "routeTangentDegrees": 199.1326901522561,
+      "distanceFromRouteMeters": 11.72776787160338,
+      "nearestRouteDistanceMeters": 3290.4384950146487,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736682,
+      "category": "give-way-sign",
+      "latitude": -45.8688669,
+      "longitude": 170.5107595,
+      "elevationMeters": 4.764990452912684,
+      "routeTangentDegrees": 199.1326901522561,
+      "distanceFromRouteMeters": 57.78670039112539,
+      "nearestRouteDistanceMeters": 3292.651212855769,
+      "tags": {
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5940146614,
+      "category": "crossing",
+      "latitude": -45.869021200000006,
+      "longitude": 170.5113962,
+      "elevationMeters": 4.5181267041112285,
+      "routeTangentDegrees": 199.1326901522561,
+      "distanceFromRouteMeters": 5.589642952755607,
+      "nearestRouteDistanceMeters": 3292.7035149387066,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466582,
+      "category": "crossing",
+      "latitude": -45.8690409,
+      "longitude": 170.5114628,
+      "elevationMeters": 4.643939531862172,
+      "routeTangentDegrees": 199.1326901522561,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3293.0829701391185,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600715,
+      "category": "crossing",
+      "latitude": -45.8692428,
+      "longitude": 170.51220020000002,
+      "elevationMeters": 3.9021238554206947,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 61.24412826146185,
+      "nearestRouteDistanceMeters": 3296.660541247755,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736660,
+      "category": "traffic-signal",
+      "latitude": -45.8690701,
+      "longitude": 170.51125820000001,
+      "elevationMeters": 4.508461939463347,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 14.045369012879462,
+      "nearestRouteDistanceMeters": 3301.096234394127,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025259,
+      "category": "crossing",
+      "latitude": -45.8690901,
+      "longitude": 170.511333,
+      "elevationMeters": 4.480306882056421,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 7.8495204251735435,
+      "nearestRouteDistanceMeters": 3301.4083799274804,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155502,
+      "category": "crossing",
+      "latitude": -45.869100100000004,
+      "longitude": 170.51136960000002,
+      "elevationMeters": 4.485247285707262,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 4.810464309921693,
+      "nearestRouteDistanceMeters": 3301.583719654332,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025297,
+      "category": "crossing",
+      "latitude": -45.869145800000005,
+      "longitude": 170.5115364,
+      "elevationMeters": 4.515111810436114,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 9.059335252079315,
+      "nearestRouteDistanceMeters": 3301.869590749262,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736661,
+      "category": "traffic-signal",
+      "latitude": -45.8691654,
+      "longitude": 170.51160800000002,
+      "elevationMeters": 4.449208924624128,
+      "routeTangentDegrees": 198.12268636384638,
+      "distanceFromRouteMeters": 15.015984165489868,
+      "nearestRouteDistanceMeters": 3301.869590749262,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 14084736658,
+      "category": "give-way-sign",
+      "latitude": -45.869376800000005,
+      "longitude": 170.5121249,
+      "elevationMeters": 3.8853905241857705,
+      "routeTangentDegrees": 201.552586250826,
+      "distanceFromRouteMeters": 60.87384025070261,
+      "nearestRouteDistanceMeters": 3309.005875271802,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466540,
+      "category": "crossing",
+      "latitude": -45.8691757,
+      "longitude": 170.51132990000002,
+      "elevationMeters": 4.392956669550266,
+      "routeTangentDegrees": 201.552586250826,
+      "distanceFromRouteMeters": 4.589687628118157,
+      "nearestRouteDistanceMeters": 3310.819763985401,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11520466541,
+      "category": "crossing",
+      "latitude": -45.8691911,
+      "longitude": 170.51138490000002,
+      "elevationMeters": 4.471558858274365,
+      "routeTangentDegrees": 201.552586250826,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3310.848100862922,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600786,
+      "category": "crossing",
+      "latitude": -45.8693954,
+      "longitude": 170.5121144,
+      "elevationMeters": 3.872933604224411,
+      "routeTangentDegrees": 201.56162429214973,
+      "distanceFromRouteMeters": 60.87753564028647,
+      "nearestRouteDistanceMeters": 3311.218530180156,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365553,
+      "category": "bus-stop",
+      "latitude": -45.869439400000005,
+      "longitude": 170.51131750000002,
+      "elevationMeters": 4.091488809328997,
+      "routeTangentDegrees": 201.56155539741542,
+      "distanceFromRouteMeters": 5.293361733071452,
+      "nearestRouteDistanceMeters": 3338.4435404714877,
+      "name": "Castle St, 289",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Castle St, 289",
+        "public_transport": "platform",
+        "ref": "169",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768862878,
+      "category": "traffic-signal",
+      "latitude": -45.8708712,
+      "longitude": 170.51044190000002,
+      "elevationMeters": 2.6461253657682344,
+      "routeTangentDegrees": 201.9242703574629,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3511.4366270778232,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600803,
+      "category": "crossing",
+      "latitude": -45.871095100000005,
+      "longitude": 170.51115570000002,
+      "elevationMeters": 2.3694858610227536,
+      "routeTangentDegrees": 201.86069355176602,
+      "distanceFromRouteMeters": 60.56042084811106,
+      "nearestRouteDistanceMeters": 3513.9652622104586,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600798,
+      "category": "crossing",
+      "latitude": -45.870898100000005,
+      "longitude": 170.5104264,
+      "elevationMeters": 2.6223553057194464,
+      "routeTangentDegrees": 201.86069355176602,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3514.659522994144,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155513,
+      "category": "crossing",
+      "latitude": -45.8708788,
+      "longitude": 170.5103564,
+      "elevationMeters": 2.419044891378309,
+      "routeTangentDegrees": 201.93747910009043,
+      "distanceFromRouteMeters": 5.828914288160066,
+      "nearestRouteDistanceMeters": 3514.693579066078,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768862872,
+      "category": "give-way-sign",
+      "latitude": -45.871112100000005,
+      "longitude": 170.51114610000002,
+      "elevationMeters": 2.3861102117659763,
+      "routeTangentDegrees": 201.93747910009043,
+      "distanceFromRouteMeters": 60.576193598389594,
+      "nearestRouteDistanceMeters": 3515.9152190452473,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768862875,
+      "category": "traffic-signal",
+      "latitude": -45.8710121,
+      "longitude": 170.51052940000002,
+      "elevationMeters": 2.5686947743259654,
+      "routeTangentDegrees": 201.93747910009043,
+      "distanceFromRouteMeters": 12.13285633491792,
+      "nearestRouteDistanceMeters": 3523.4386505818898,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600800,
+      "category": "crossing",
+      "latitude": -45.871003900000005,
+      "longitude": 170.5105,
+      "elevationMeters": 2.5630028635856146,
+      "routeTangentDegrees": 201.93747910009043,
+      "distanceFromRouteMeters": 9.680811921971495,
+      "nearestRouteDistanceMeters": 3523.443256955362,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155512,
+      "category": "crossing",
+      "latitude": -45.8709562,
+      "longitude": 170.51032410000002,
+      "elevationMeters": 2.5601115047719873,
+      "routeTangentDegrees": 202.5063037100135,
+      "distanceFromRouteMeters": 4.931360638335518,
+      "nearestRouteDistanceMeters": 3523.6601185322356,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025253,
+      "category": "crossing",
+      "latitude": -45.870946100000005,
+      "longitude": 170.51028440000002,
+      "elevationMeters": 2.5047820698250765,
+      "routeTangentDegrees": 202.5063037100135,
+      "distanceFromRouteMeters": 8.200826830587305,
+      "nearestRouteDistanceMeters": 3523.7991418249094,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768862876,
+      "category": "traffic-signal",
+      "latitude": -45.8709263,
+      "longitude": 170.51021210000002,
+      "elevationMeters": 2.599073436408541,
+      "routeTangentDegrees": 202.5063037100135,
+      "distanceFromRouteMeters": 14.214902429022048,
+      "nearestRouteDistanceMeters": 3523.9078628017387,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600888,
+      "category": "crossing",
+      "latitude": -45.8710487,
+      "longitude": 170.51033800000002,
+      "elevationMeters": 2.5198908367949877,
+      "routeTangentDegrees": 202.5063037100135,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3532.75033203396,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600886,
+      "category": "crossing",
+      "latitude": -45.871036100000005,
+      "longitude": 170.5102909,
+      "elevationMeters": 2.444248639935472,
+      "routeTangentDegrees": 201.02203485517126,
+      "distanceFromRouteMeters": 3.9064799979148033,
+      "nearestRouteDistanceMeters": 3532.7506589138543,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365552,
+      "category": "bus-stop",
+      "latitude": -45.8713592,
+      "longitude": 170.51026950000002,
+      "elevationMeters": 2.0998171032472093,
+      "routeTangentDegrees": 201.02197853016014,
+      "distanceFromRouteMeters": 7.4349715377145325,
+      "nearestRouteDistanceMeters": 3566.880878876636,
+      "name": "Castle St, 201",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Castle St, 201",
+        "public_transport": "platform",
+        "ref": "170",
+        "shelter": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155518,
+      "category": "traffic-signal",
+      "latitude": -45.872716600000004,
+      "longitude": 170.50939630000002,
+      "elevationMeters": 1.5852387835180952,
+      "routeTangentDegrees": 201.84585606280874,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3732.0331955294464,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 7847620352,
+      "category": "crossing",
+      "latitude": -45.8727329,
+      "longitude": 170.5093133,
+      "elevationMeters": 1.4293224220918985,
+      "routeTangentDegrees": 201.20337638897104,
+      "distanceFromRouteMeters": 5.3353054609199635,
+      "nearestRouteDistanceMeters": 3736.0470741052627,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600866,
+      "category": "crossing",
+      "latitude": -45.872750700000005,
+      "longitude": 170.5093773,
+      "elevationMeters": 1.5827017081911596,
+      "routeTangentDegrees": 201.20337638897104,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3736.100273775795,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768883226,
+      "category": "traffic-signal",
+      "latitude": -45.872785500000006,
+      "longitude": 170.5091926,
+      "elevationMeters": 1.5615718464290933,
+      "routeTangentDegrees": 201.21463162802297,
+      "distanceFromRouteMeters": 11.930136679756968,
+      "nearestRouteDistanceMeters": 3744.882062315961,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155520,
+      "category": "crossing",
+      "latitude": -45.872807800000004,
+      "longitude": 170.5092745,
+      "elevationMeters": 1.5569777594729375,
+      "routeTangentDegrees": 201.21463162802297,
+      "distanceFromRouteMeters": 5.121856599889975,
+      "nearestRouteDistanceMeters": 3744.8992062973907,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025249,
+      "category": "crossing",
+      "latitude": -45.872798700000004,
+      "longitude": 170.50924080000001,
+      "elevationMeters": 1.5221236841397463,
+      "routeTangentDegrees": 201.21463162802297,
+      "distanceFromRouteMeters": 7.92025389319329,
+      "nearestRouteDistanceMeters": 3744.9000243296787,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433601009,
+      "category": "crossing",
+      "latitude": -45.8728568,
+      "longitude": 170.5094502,
+      "elevationMeters": 1.599697495124717,
+      "routeTangentDegrees": 201.21379025253216,
+      "distanceFromRouteMeters": 9.530598971932525,
+      "nearestRouteDistanceMeters": 3745.0563579807003,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13768883229,
+      "category": "traffic-signal",
+      "latitude": -45.8728751,
+      "longitude": 170.5095159,
+      "elevationMeters": 1.6144889763914079,
+      "routeTangentDegrees": 201.21379025253216,
+      "distanceFromRouteMeters": 15.008716536290276,
+      "nearestRouteDistanceMeters": 3745.1127980221668,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11816155519,
+      "category": "crossing",
+      "latitude": -45.872882700000005,
+      "longitude": 170.50923590000002,
+      "elevationMeters": 1.4421470495060722,
+      "routeTangentDegrees": 201.21379025253216,
+      "distanceFromRouteMeters": 4.894088890729321,
+      "nearestRouteDistanceMeters": 3753.744613170264,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433601042,
+      "category": "crossing",
+      "latitude": -45.8728994,
+      "longitude": 170.50929440000002,
+      "elevationMeters": 1.525578383647415,
+      "routeTangentDegrees": 201.21379025253216,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 3753.836899517092,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12747449808,
+      "category": "bus-stop",
+      "latitude": -45.8730988,
+      "longitude": 170.50928380000002,
+      "elevationMeters": 1.3663655313999463,
+      "routeTangentDegrees": 200.4368562854958,
+      "distanceFromRouteMeters": 7.0201512403137345,
+      "nearestRouteDistanceMeters": 3774.9004833261693,
+      "name": "Castle St, crn St Andrew St",
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Castle St, crn St Andrew St",
+        "public_transport": "platform",
+        "ref": "5047"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433601013,
+      "category": "crossing",
+      "latitude": -45.8733883,
+      "longitude": 170.50914690000002,
+      "elevationMeters": 1.4423726032249986,
+      "routeTangentDegrees": 201.513653346492,
+      "distanceFromRouteMeters": 8.332760655983366,
+      "nearestRouteDistanceMeters": 3808.6094844681256,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13478938029,
+      "category": "crossing",
+      "latitude": -45.8744828,
+      "longitude": 170.50945910000002,
+      "elevationMeters": 2.1504322417024477,
+      "routeTangentDegrees": 201.5134169802494,
+      "distanceFromRouteMeters": 75.4492734264151,
+      "nearestRouteDistanceMeters": 3912.9701496848247,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365551,
+      "category": "bus-stop",
+      "latitude": -45.874300000000005,
+      "longitude": 170.5085,
+      "elevationMeters": 1.9283305742275405,
+      "routeTangentDegrees": 201.51333818470732,
+      "distanceFromRouteMeters": 1.0831780472257015,
+      "nearestRouteDistanceMeters": 3921.289255790241,
+      "name": "Castle St, 53",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Castle St, 53",
+        "public_transport": "platform",
+        "ref": "168",
+        "shelter": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 12403342072,
+      "category": "crossing",
+      "latitude": -45.874711700000006,
+      "longitude": 170.5092631,
+      "elevationMeters": 2.450607064993444,
+      "routeTangentDegrees": 198.23059979081094,
+      "distanceFromRouteMeters": 70.55743705237074,
+      "nearestRouteDistanceMeters": 3946.2610181874943,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8947775319,
+      "category": "bollard",
+      "latitude": -45.8748364,
+      "longitude": 170.5091341,
+      "elevationMeters": 2.444950376217471,
+      "routeTangentDegrees": 199.9348295437092,
+      "distanceFromRouteMeters": 65.55503929821379,
+      "nearestRouteDistanceMeters": 3960.6074872372355,
+      "tags": {
+        "barrier": "bollard"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433601001,
+      "category": "crossing",
+      "latitude": -45.874679400000005,
+      "longitude": 170.5084271,
+      "elevationMeters": 1.9675257004675595,
+      "routeTangentDegrees": 199.9348295437092,
+      "distanceFromRouteMeters": 8.148518223100105,
+      "nearestRouteDistanceMeters": 3962.8575310754286,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600979,
+      "category": "crossing",
+      "latitude": -45.874896400000004,
+      "longitude": 170.5091236,
+      "elevationMeters": 2.5927165700454946,
+      "routeTangentDegrees": 199.9348295437092,
+      "distanceFromRouteMeters": 67.06552759742677,
+      "nearestRouteDistanceMeters": 3967.1565900445116,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433601003,
+      "category": "crossing",
+      "latitude": -45.8747683,
+      "longitude": 170.5083849,
+      "elevationMeters": 2.037786573376753,
+      "routeTangentDegrees": 199.9348295437092,
+      "distanceFromRouteMeters": 8.447639130014492,
+      "nearestRouteDistanceMeters": 3973.2643400205193,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 10536397602,
+      "category": "stop-sign",
+      "latitude": -45.8747666,
+      "longitude": 170.5083542,
+      "elevationMeters": 2.0475477081801383,
+      "routeTangentDegrees": 199.9348295437092,
+      "distanceFromRouteMeters": 6.148891903530333,
+      "nearestRouteDistanceMeters": 3973.896977298396,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922556,
+      "category": "bench",
+      "latitude": -45.874923700000004,
+      "longitude": 170.50863760000001,
+      "elevationMeters": 2.34981795412527,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 32.61008503592854,
+      "nearestRouteDistanceMeters": 3983.3638498280625,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922557,
+      "category": "bench",
+      "latitude": -45.874938900000004,
+      "longitude": 170.5086631,
+      "elevationMeters": 2.3858925069328962,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 35.027147470780086,
+      "nearestRouteDistanceMeters": 3984.3186442609162,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922555,
+      "category": "bench",
+      "latitude": -45.874941,
+      "longitude": 170.5085544,
+      "elevationMeters": 2.3240904665553765,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 27.14711593033788,
+      "nearestRouteDistanceMeters": 3987.281029985882,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922558,
+      "category": "bench",
+      "latitude": -45.875012000000005,
+      "longitude": 170.50876960000002,
+      "elevationMeters": 2.628518188497862,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 45.470334028325645,
+      "nearestRouteDistanceMeters": 3989.317406572239,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922554,
+      "category": "bench",
+      "latitude": -45.8749587,
+      "longitude": 170.5085296,
+      "elevationMeters": 2.3453419292421636,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 25.97312464317108,
+      "nearestRouteDistanceMeters": 3989.7673045285305,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922559,
+      "category": "bench",
+      "latitude": -45.875026600000005,
+      "longitude": 170.5087944,
+      "elevationMeters": 2.6910078026423623,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 47.81442070420153,
+      "nearestRouteDistanceMeters": 3990.2267807220474,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922560,
+      "category": "bench",
+      "latitude": -45.8750548,
+      "longitude": 170.50879510000001,
+      "elevationMeters": 2.7459315238203557,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 48.887325522307975,
+      "nearestRouteDistanceMeters": 3993.0721022840153,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922561,
+      "category": "bench",
+      "latitude": -45.875071000000005,
+      "longitude": 170.5087704,
+      "elevationMeters": 2.723664746805526,
+      "routeTangentDegrees": 199.01356709945182,
+      "distanceFromRouteMeters": 47.727996881312876,
+      "nearestRouteDistanceMeters": 3993.0721022840153,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922553,
+      "category": "bench",
+      "latitude": -45.8750386,
+      "longitude": 170.50835790000002,
+      "elevationMeters": 2.309590700941575,
+      "routeTangentDegrees": 202.3808577123308,
+      "distanceFromRouteMeters": 16.82581658215626,
+      "nearestRouteDistanceMeters": 4001.5239550390215,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922552,
+      "category": "bench",
+      "latitude": -45.875052700000005,
+      "longitude": 170.5083362,
+      "elevationMeters": 2.2957351821786536,
+      "routeTangentDegrees": 202.3808577123308,
+      "distanceFromRouteMeters": 15.869390219806252,
+      "nearestRouteDistanceMeters": 4003.613362289328,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922551,
+      "category": "bench",
+      "latitude": -45.875177,
+      "longitude": 170.50823340000002,
+      "elevationMeters": 2.3592174106691983,
+      "routeTangentDegrees": 202.3808008479499,
+      "distanceFromRouteMeters": 13.773113714573768,
+      "nearestRouteDistanceMeters": 4019.4240553078134,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922550,
+      "category": "bench",
+      "latitude": -45.8751942,
+      "longitude": 170.50821090000002,
+      "elevationMeters": 2.3551198036404632,
+      "routeTangentDegrees": 202.3808008479499,
+      "distanceFromRouteMeters": 12.890671500429523,
+      "nearestRouteDistanceMeters": 4021.85578055515,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922549,
+      "category": "bench",
+      "latitude": -45.8752506,
+      "longitude": 170.5081929,
+      "elevationMeters": 2.4581718258855565,
+      "routeTangentDegrees": 202.3808008479499,
+      "distanceFromRouteMeters": 13.990030646069455,
+      "nearestRouteDistanceMeters": 4028.1853656759945,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922548,
+      "category": "bench",
+      "latitude": -45.875266200000006,
+      "longitude": 170.5082192,
+      "elevationMeters": 2.5254263572249225,
+      "routeTangentDegrees": 202.3808008479499,
+      "distanceFromRouteMeters": 16.53319592150889,
+      "nearestRouteDistanceMeters": 4029.0140930851194,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752207,
+      "category": "traffic-signal",
+      "latitude": -45.875224,
+      "longitude": 170.50801320000002,
+      "elevationMeters": 2.297662538742603,
+      "routeTangentDegrees": 202.3808008479499,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4030.747432449586,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922547,
+      "category": "bench",
+      "latitude": -45.875336700000005,
+      "longitude": 170.5084052,
+      "elevationMeters": 2.843022591974185,
+      "routeTangentDegrees": 199.3357871734856,
+      "distanceFromRouteMeters": 32.810939108628205,
+      "nearestRouteDistanceMeters": 4032.524438601227,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922024,
+      "category": "crossing",
+      "latitude": -45.8752469,
+      "longitude": 170.50800130000002,
+      "elevationMeters": 2.2934777210415827,
+      "routeTangentDegrees": 199.3357871734856,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4033.455475866705,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922544,
+      "category": "bench",
+      "latitude": -45.8753352,
+      "longitude": 170.50832340000002,
+      "elevationMeters": 2.7360668315439343,
+      "routeTangentDegrees": 200.28311671957573,
+      "distanceFromRouteMeters": 26.793257927105408,
+      "nearestRouteDistanceMeters": 4034.0209164505154,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922546,
+      "category": "bench",
+      "latitude": -45.875351900000005,
+      "longitude": 170.5083849,
+      "elevationMeters": 2.8463796308272626,
+      "routeTangentDegrees": 200.28311671957573,
+      "distanceFromRouteMeters": 31.90286180125022,
+      "nearestRouteDistanceMeters": 4034.112243179975,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5908922545,
+      "category": "bench",
+      "latitude": -45.8753534,
+      "longitude": 170.5083504,
+      "elevationMeters": 2.792021323402261,
+      "routeTangentDegrees": 200.28311671957573,
+      "distanceFromRouteMeters": 29.455431639269353,
+      "nearestRouteDistanceMeters": 4035.194573615755,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752206,
+      "category": "traffic-signal",
+      "latitude": -45.8752751,
+      "longitude": 170.50778830000002,
+      "elevationMeters": 2.397813044819344,
+      "routeTangentDegrees": 200.28311671957573,
+      "distanceFromRouteMeters": 14.38016450445363,
+      "nearestRouteDistanceMeters": 4042.113041662252,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025240,
+      "category": "crossing",
+      "latitude": -45.875288100000006,
+      "longitude": 170.5078369,
+      "elevationMeters": 2.314297035609773,
+      "routeTangentDegrees": 200.28311671957573,
+      "distanceFromRouteMeters": 10.349923406551007,
+      "nearestRouteDistanceMeters": 4042.164654237709,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3456274160,
+      "category": "bench",
+      "latitude": -45.875285600000005,
+      "longitude": 170.5075022,
+      "elevationMeters": 2.774766481096874,
+      "routeTangentDegrees": 200.94847078873232,
+      "distanceFromRouteMeters": 34.64873806061122,
+      "nearestRouteDistanceMeters": 4051.2892475244594,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025230,
+      "category": "crossing",
+      "latitude": -45.8753997,
+      "longitude": 170.5079187,
+      "elevationMeters": 2.340991550389444,
+      "routeTangentDegrees": 200.94847078873232,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4051.6098656716335,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6513153154,
+      "category": "give-way-sign",
+      "latitude": -45.8756785,
+      "longitude": 170.50789310000002,
+      "elevationMeters": 2.432050598136168,
+      "routeTangentDegrees": 200.9473690941434,
+      "distanceFromRouteMeters": 9.232361825622085,
+      "nearestRouteDistanceMeters": 4081.2706564185864,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11433600994,
+      "category": "crossing",
+      "latitude": -45.875672,
+      "longitude": 170.50786100000002,
+      "elevationMeters": 2.429260141925408,
+      "routeTangentDegrees": 200.9473690941434,
+      "distanceFromRouteMeters": 6.653154514533686,
+      "nearestRouteDistanceMeters": 4081.484089576223,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13687321609,
+      "category": "give-way-sign",
+      "latitude": -45.8763372,
+      "longitude": 170.50650330000002,
+      "elevationMeters": 2.018262227650723,
+      "routeTangentDegrees": 246.087406770737,
+      "distanceFromRouteMeters": 10.467706823783503,
+      "nearestRouteDistanceMeters": 4213.353350744592,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058798,
+      "category": "crossing",
+      "latitude": -45.8763565,
+      "longitude": 170.5064418,
+      "elevationMeters": 2.094030103188193,
+      "routeTangentDegrees": 246.087406770737,
+      "distanceFromRouteMeters": 10.435686445211113,
+      "nearestRouteDistanceMeters": 4218.575590448423,
+      "tags": {
+        "crossing": "uncontrolled",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058784,
+      "category": "crossing",
+      "latitude": -45.8764424,
+      "longitude": 170.50649610000002,
+      "elevationMeters": 2.323375075827758,
+      "routeTangentDegrees": 246.087406770737,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4218.604456395408,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058804,
+      "category": "give-way-sign",
+      "latitude": -45.876289,
+      "longitude": 170.5063526,
+      "elevationMeters": 2.076042194825628,
+      "routeTangentDegrees": 245.96186841411253,
+      "distanceFromRouteMeters": 20.103200969989977,
+      "nearestRouteDistanceMeters": 4221.801874848549,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11519025219,
+      "category": "crossing",
+      "latitude": -45.8763492,
+      "longitude": 170.5063441,
+      "elevationMeters": 2.17008932866799,
+      "routeTangentDegrees": 245.96186841411253,
+      "distanceFromRouteMeters": 14.257837982684958,
+      "nearestRouteDistanceMeters": 4225.129557276148,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058800,
+      "category": "give-way-sign",
+      "latitude": -45.876368,
+      "longitude": 170.5063445,
+      "elevationMeters": 2.196367270051751,
+      "routeTangentDegrees": 245.96186841411253,
+      "distanceFromRouteMeters": 12.33605462018433,
+      "nearestRouteDistanceMeters": 4225.952812631067,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058818,
+      "category": "give-way-sign",
+      "latitude": -45.876444500000005,
+      "longitude": 170.50635440000002,
+      "elevationMeters": 2.2944370304573103,
+      "routeTangentDegrees": 245.96186841411253,
+      "distanceFromRouteMeters": 4.255169707525766,
+      "nearestRouteDistanceMeters": 4228.717902131762,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058817,
+      "category": "give-way-sign",
+      "latitude": -45.876603100000004,
+      "longitude": 170.50577810000001,
+      "elevationMeters": 2.245456766340705,
+      "routeTangentDegrees": 234.42939391437312,
+      "distanceFromRouteMeters": 10.221648546536017,
+      "nearestRouteDistanceMeters": 4274.822473565037,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058809,
+      "category": "crossing",
+      "latitude": -45.8765872,
+      "longitude": 170.5057418,
+      "elevationMeters": 2.2657209069362736,
+      "routeTangentDegrees": 234.42939391437312,
+      "distanceFromRouteMeters": 13.294415140270447,
+      "nearestRouteDistanceMeters": 4276.079794350397,
+      "tags": {
+        "crossing": "uncontrolled",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9359559135,
+      "category": "bench",
+      "latitude": -45.8770484,
+      "longitude": 170.5056385,
+      "elevationMeters": 2.821389425979875,
+      "routeTangentDegrees": 210.31817452387895,
+      "distanceFromRouteMeters": 16.816713900765563,
+      "nearestRouteDistanceMeters": 4320.459158296472,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9359559134,
+      "category": "bench",
+      "latitude": -45.8771208,
+      "longitude": 170.5055988,
+      "elevationMeters": 2.669947957939681,
+      "routeTangentDegrees": 203.310209368296,
+      "distanceFromRouteMeters": 18.023049898778556,
+      "nearestRouteDistanceMeters": 4331.179793154219,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752213,
+      "category": "traffic-signal",
+      "latitude": -45.877396600000004,
+      "longitude": 170.5051746,
+      "elevationMeters": 2.5395294755758373,
+      "routeTangentDegrees": 203.31014137148946,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4372.338817826426,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895433,
+      "category": "crossing",
+      "latitude": -45.8774261,
+      "longitude": 170.5051564,
+      "elevationMeters": 2.5194259764578146,
+      "routeTangentDegrees": 203.24436034897406,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4375.908847407647,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752212,
+      "category": "traffic-signal",
+      "latitude": -45.877400900000005,
+      "longitude": 170.50491430000002,
+      "elevationMeters": 2.340174094201853,
+      "routeTangentDegrees": 201.6214184614538,
+      "distanceFromRouteMeters": 18.455588551446386,
+      "nearestRouteDistanceMeters": 4380.209732836902,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5522366954,
+      "category": "crossing",
+      "latitude": -45.8774292,
+      "longitude": 170.5049322,
+      "elevationMeters": 2.3097931148217703,
+      "routeTangentDegrees": 201.6214184614538,
+      "distanceFromRouteMeters": 16.00786447115818,
+      "nearestRouteDistanceMeters": 4382.624539543447,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817400197,
+      "category": "crossing",
+      "latitude": -45.8774494,
+      "longitude": 170.5049452,
+      "elevationMeters": 2.290669547242185,
+      "routeTangentDegrees": 201.6214184614538,
+      "distanceFromRouteMeters": 14.24465520632585,
+      "nearestRouteDistanceMeters": 4384.341812660472,
+      "tags": {
+        "crossing": "traffic_signals",
+        "crossing:island": "no",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9357928865,
+      "category": "bench",
+      "latitude": -45.877499300000004,
+      "longitude": 170.5044808,
+      "elevationMeters": 2.5231669830930143,
+      "routeTangentDegrees": 201.6119040386266,
+      "distanceFromRouteMeters": 45.621546059901476,
+      "nearestRouteDistanceMeters": 4402.73929642007,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9357928864,
+      "category": "bench",
+      "latitude": -45.877622200000005,
+      "longitude": 170.5045412,
+      "elevationMeters": 2.4871572734559244,
+      "routeTangentDegrees": 201.6119040386266,
+      "distanceFromRouteMeters": 36.24103851392027,
+      "nearestRouteDistanceMeters": 4413.7222498670135,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9357928863,
+      "category": "bench",
+      "latitude": -45.877686700000005,
+      "longitude": 170.5042467,
+      "elevationMeters": 2.38617005044697,
+      "routeTangentDegrees": 201.61184038472175,
+      "distanceFromRouteMeters": 54.79478096285913,
+      "nearestRouteDistanceMeters": 4428.787002896915,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1030118774,
+      "category": "traffic-signal",
+      "latitude": -45.8781776,
+      "longitude": 170.50472870000002,
+      "elevationMeters": 2.429595376055463,
+      "routeTangentDegrees": 201.61177671692803,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4465.792170797105,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9245604568,
+      "category": "crossing",
+      "latitude": -45.878194,
+      "longitude": 170.5047193,
+      "elevationMeters": 2.4138214802429303,
+      "routeTangentDegrees": 201.7536534478536,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4467.7555907796595,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5522366930,
+      "category": "crossing",
+      "latitude": -45.8782143,
+      "longitude": 170.5045283,
+      "elevationMeters": 2.1999243314342776,
+      "routeTangentDegrees": 201.6194128273346,
+      "distanceFromRouteMeters": 12.913930766396472,
+      "nearestRouteDistanceMeters": 4475.301713980949,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8084521503,
+      "category": "traffic-signal",
+      "latitude": -45.8781978,
+      "longitude": 170.5044669,
+      "elevationMeters": 2.1850187810909603,
+      "routeTangentDegrees": 201.6194128273346,
+      "distanceFromRouteMeters": 18.00865668790515,
+      "nearestRouteDistanceMeters": 4475.347305975689,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817392691,
+      "category": "crossing",
+      "latitude": -45.878091700000006,
+      "longitude": 170.504073,
+      "elevationMeters": 2.23881122888454,
+      "routeTangentDegrees": 201.6194128273346,
+      "distanceFromRouteMeters": 50.70306599381526,
+      "nearestRouteDistanceMeters": 4475.614235466858,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9245604565,
+      "category": "crossing",
+      "latitude": -45.878339700000005,
+      "longitude": 170.50477930000002,
+      "elevationMeters": 2.3745341952857295,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 10.290055761727517,
+      "nearestRouteDistanceMeters": 4481.057950327177,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 2734857430,
+      "category": "traffic-signal",
+      "latitude": -45.878350100000006,
+      "longitude": 170.50481090000002,
+      "elevationMeters": 2.4202954190422465,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 12.991042288649073,
+      "nearestRouteDistanceMeters": 4481.219213325105,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9245604563,
+      "category": "crossing",
+      "latitude": -45.878288000000005,
+      "longitude": 170.5044886,
+      "elevationMeters": 2.1174395963252666,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 12.734728636122554,
+      "nearestRouteDistanceMeters": 4484.111679996532,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing",
+        "tactile_paving": "incorrect"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 4961308723,
+      "category": "crossing",
+      "latitude": -45.878168300000006,
+      "longitude": 170.504031,
+      "elevationMeters": 2.0952959232894663,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 50.56697975275858,
+      "nearestRouteDistanceMeters": 4484.965036657399,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11817400198,
+      "category": "crossing",
+      "latitude": -45.8782134,
+      "longitude": 170.5040041,
+      "elevationMeters": 2.0842194770046643,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 50.62997001243578,
+      "nearestRouteDistanceMeters": 4490.394713684292,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9245604564,
+      "category": "crossing",
+      "latitude": -45.8784027,
+      "longitude": 170.5045997,
+      "elevationMeters": 2.311392654919164,
+      "routeTangentDegrees": 201.8851519782767,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 4492.74077270168,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895371,
+      "category": "crossing",
+      "latitude": -45.8788622,
+      "longitude": 170.50362900000002,
+      "elevationMeters": 2.227059027308633,
+      "routeTangentDegrees": 203.24616017507677,
+      "distanceFromRouteMeters": 49.71236516544074,
+      "nearestRouteDistanceMeters": 4569.353631397649,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752218,
+      "category": "give-way-sign",
+      "latitude": -45.8790648,
+      "longitude": 170.5040755,
+      "elevationMeters": 2.1089530183267957,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 9.06947564995681,
+      "nearestRouteDistanceMeters": 4576.136007375898,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895366,
+      "category": "crossing",
+      "latitude": -45.879056600000006,
+      "longitude": 170.50404460000001,
+      "elevationMeters": 2.107041059193084,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 11.629209440353982,
+      "nearestRouteDistanceMeters": 4576.164722933089,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895325,
+      "category": "crossing",
+      "latitude": -45.878966600000005,
+      "longitude": 170.5037069,
+      "elevationMeters": 2.2486389722351467,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 39.61970361784689,
+      "nearestRouteDistanceMeters": 4576.438854286056,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752216,
+      "category": "give-way-sign",
+      "latitude": -45.8789536,
+      "longitude": 170.50365820000002,
+      "elevationMeters": 2.2616631740754576,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 43.65709656334036,
+      "nearestRouteDistanceMeters": 4576.476213680486,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13712752215,
+      "category": "give-way-sign",
+      "latitude": -45.878917200000004,
+      "longitude": 170.5035239,
+      "elevationMeters": 2.2426504982485373,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 54.813439377642204,
+      "nearestRouteDistanceMeters": 4576.52235441957,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895361,
+      "category": "crossing",
+      "latitude": -45.8790059,
+      "longitude": 170.5035469,
+      "elevationMeters": 2.26131707488662,
+      "routeTangentDegrees": 201.50883701788658,
+      "distanceFromRouteMeters": 49.5406800944639,
+      "nearestRouteDistanceMeters": 4585.045675012306,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058839,
+      "category": "bench",
+      "latitude": -45.879690200000006,
+      "longitude": 170.50325560000002,
+      "elevationMeters": 2.1197268135992817,
+      "routeTangentDegrees": 201.50863340892414,
+      "distanceFromRouteMeters": 42.621387985088695,
+      "nearestRouteDistanceMeters": 4664.104866957183,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895330,
+      "category": "crossing",
+      "latitude": -45.8796874,
+      "longitude": 170.50316660000001,
+      "elevationMeters": 2.2633740408767062,
+      "routeTangentDegrees": 201.50863340892414,
+      "distanceFromRouteMeters": 49.14526898305104,
+      "nearestRouteDistanceMeters": 4666.34118739749,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11671058838,
+      "category": "bench",
+      "latitude": -45.8797251,
+      "longitude": 170.50322590000002,
+      "elevationMeters": 2.0906631016071184,
+      "routeTangentDegrees": 201.18162692624313,
+      "distanceFromRouteMeters": 43.33830641011869,
+      "nearestRouteDistanceMeters": 4668.310902443528,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895429,
+      "category": "crossing",
+      "latitude": -45.880281200000006,
+      "longitude": 170.5041296,
+      "elevationMeters": 2.4380150941149132,
+      "routeTangentDegrees": 201.18154388882004,
+      "distanceFromRouteMeters": 44.233534444042505,
+      "nearestRouteDistanceMeters": 4700.692158245799,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895383,
+      "category": "crossing",
+      "latitude": -45.880011800000005,
+      "longitude": 170.50303010000002,
+      "elevationMeters": 2.1896308523422,
+      "routeTangentDegrees": 201.18154388882004,
+      "distanceFromRouteMeters": 45.95201559791468,
+      "nearestRouteDistanceMeters": 4703.5131111504625,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895400,
+      "category": "crossing",
+      "latitude": -45.881527500000004,
+      "longitude": 170.5031026,
+      "elevationMeters": 2.1399417108696843,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 20.177761850322607,
+      "nearestRouteDistanceMeters": 4858.637036155467,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6467568611,
+      "category": "give-way-sign",
+      "latitude": -45.8814873,
+      "longitude": 170.50293820000002,
+      "elevationMeters": 2.3592574361796324,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 6.6965473331142755,
+      "nearestRouteDistanceMeters": 4859.067060209035,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6468731979,
+      "category": "crossing",
+      "latitude": -45.8813102,
+      "longitude": 170.50226310000002,
+      "elevationMeters": 3.8912578953453227,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 49.14640145082806,
+      "nearestRouteDistanceMeters": 4859.586628526519,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575208,
+      "category": "give-way-sign",
+      "latitude": -45.881325200000006,
+      "longitude": 170.5022547,
+      "elevationMeters": 3.814586472662892,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 49.15003700995104,
+      "nearestRouteDistanceMeters": 4861.376807313914,
+      "tags": {
+        "direction": "forward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895298,
+      "category": "crossing",
+      "latitude": -45.8813504,
+      "longitude": 170.5021274,
+      "elevationMeters": 3.3708155804369166,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 57.32585864090682,
+      "nearestRouteDistanceMeters": 4867.550050859196,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895335,
+      "category": "crossing",
+      "latitude": -45.881405400000006,
+      "longitude": 170.50232770000002,
+      "elevationMeters": 3.3154385765427032,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 40.65879478086216,
+      "nearestRouteDistanceMeters": 4867.650430210681,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575210,
+      "category": "give-way-sign",
+      "latitude": -45.881507500000005,
+      "longitude": 170.50270170000002,
+      "elevationMeters": 2.4538533807912453,
+      "routeTangentDegrees": 201.18112867745944,
+      "distanceFromRouteMeters": 9.562049074012231,
+      "nearestRouteDistanceMeters": 4867.776087864864,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 13129575209,
+      "category": "give-way-sign",
+      "latitude": -45.8814374,
+      "longitude": 170.5021919,
+      "elevationMeters": 3.4095089449306952,
+      "routeTangentDegrees": 201.52053148770506,
+      "distanceFromRouteMeters": 49.132871409610914,
+      "nearestRouteDistanceMeters": 4875.057595285204,
+      "tags": {
+        "direction": "backward",
+        "highway": "give_way"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6468731980,
+      "category": "crossing",
+      "latitude": -45.8814505,
+      "longitude": 170.5021845,
+      "elevationMeters": 3.3858801850367093,
+      "routeTangentDegrees": 201.52053148770506,
+      "distanceFromRouteMeters": 49.13139175195228,
+      "nearestRouteDistanceMeters": 4876.622825946302,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6483719559,
+      "category": "crossing",
+      "latitude": -45.8824386,
+      "longitude": 170.50211860000002,
+      "elevationMeters": 2.3290745815238783,
+      "routeTangentDegrees": 201.0879843830509,
+      "distanceFromRouteMeters": 13.58846614035744,
+      "nearestRouteDistanceMeters": 4980.603471605455,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 5657715142,
+      "category": "crossing",
+      "latitude": -45.8830274,
+      "longitude": 170.5021844,
+      "elevationMeters": 1.8685807380148618,
+      "routeTangentDegrees": 201.60787119396554,
+      "distanceFromRouteMeters": 15.217034242735837,
+      "nearestRouteDistanceMeters": 5039.721928168395,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895223,
+      "category": "crossing",
+      "latitude": -45.884472300000006,
+      "longitude": 170.5009789,
+      "elevationMeters": 2.2735480586558006,
+      "routeTangentDegrees": 265.78996025899943,
+      "distanceFromRouteMeters": 64.6942555250047,
+      "nearestRouteDistanceMeters": 5172.941834205774,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895228,
+      "category": "crossing",
+      "latitude": -45.8844271,
+      "longitude": 170.50051000000002,
+      "elevationMeters": 2.2297676770759303,
+      "routeTangentDegrees": 290.46656532966324,
+      "distanceFromRouteMeters": 73.77568045316012,
+      "nearestRouteDistanceMeters": 5186.307796646299,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895242,
+      "category": "crossing",
+      "latitude": -45.884326900000005,
+      "longitude": 170.5004489,
+      "elevationMeters": 2.0646912580149,
+      "routeTangentDegrees": 290.46656532966324,
+      "distanceFromRouteMeters": 67.60653553932612,
+      "nearestRouteDistanceMeters": 5186.307796646299,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895258,
+      "category": "crossing",
+      "latitude": -45.884257100000006,
+      "longitude": 170.500605,
+      "elevationMeters": 2.22278962082941,
+      "routeTangentDegrees": 290.46656532966324,
+      "distanceFromRouteMeters": 54.00100483186031,
+      "nearestRouteDistanceMeters": 5186.307796646299,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895272,
+      "category": "crossing",
+      "latitude": -45.8843815,
+      "longitude": 170.500648,
+      "elevationMeters": 2.1790601043135696,
+      "routeTangentDegrees": 290.46656532966324,
+      "distanceFromRouteMeters": 64.10424412711829,
+      "nearestRouteDistanceMeters": 5186.307796646299,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 3850680453,
+      "category": "crossing",
+      "latitude": -45.882761900000006,
+      "longitude": 170.50142050000002,
+      "elevationMeters": 2.31857050567322,
+      "routeTangentDegrees": 7.175537633825684,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 5319.701209926095,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1294068338,
+      "category": "crossing",
+      "latitude": -45.882580700000005,
+      "longitude": 170.50153160000002,
+      "elevationMeters": 2.3884926741796173,
+      "routeTangentDegrees": 338.67934264073745,
+      "distanceFromRouteMeters": 13.834207010425468,
+      "nearestRouteDistanceMeters": 5335.1000175809195,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895390,
+      "category": "crossing",
+      "latitude": -45.8824046,
+      "longitude": 170.5016468,
+      "elevationMeters": 2.500297629339753,
+      "routeTangentDegrees": 338.67934264073745,
+      "distanceFromRouteMeters": 33.07262134062606,
+      "nearestRouteDistanceMeters": 5335.1000175809195,
+      "tags": {
+        "crossing": "marked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365665,
+      "category": "bus-stop",
+      "latitude": -45.882782000000006,
+      "longitude": 170.500934,
+      "elevationMeters": 2.359178105170545,
+      "routeTangentDegrees": 245.40041901098223,
+      "distanceFromRouteMeters": 2.412531081591009,
+      "nearestRouteDistanceMeters": 5372.661860551972,
+      "name": "Jervois St, cnr Crawford St",
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Jervois St, cnr Crawford St",
+        "public_transport": "platform",
+        "ref": "1182"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1294068317,
+      "category": "traffic-signal",
+      "latitude": -45.8828368,
+      "longitude": 170.50059480000002,
+      "elevationMeters": 2.2415233878552607,
+      "routeTangentDegrees": 267.4402845708006,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 5399.503822469951,
+      "tags": {
+        "highway": "traffic_signals"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11509895283,
+      "category": "crossing",
+      "latitude": -45.882838,
+      "longitude": 170.50057220000002,
+      "elevationMeters": 2.234748266126113,
+      "routeTangentDegrees": 265.6381863693906,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 5401.258277013953,
+      "tags": {
+        "crossing": "traffic_signals",
+        "highway": "crossing"
+      }
+    }
+  ]
+}

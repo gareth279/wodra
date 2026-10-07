@@ -4,5 +4,6 @@ public sealed record RouteSample(
 	double? Latitude,
 	double? Longitude,
 	double? ElevationMeters,
-	string SegmentLabel
+	string SegmentLabel,
+	double? RawElevationMeters = null
 );

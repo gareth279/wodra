@@ -88,6 +88,20 @@ public sealed record RideDebugSnapshot
     public double? routeLatitude { get; init; }
     public double? routeLongitude { get; init; }
     public double? routeElevationMeters { get; init; }
+    public double? rawRouteElevationMeters { get; init; }
+    public double? visualRelativeElevationMeters { get; init; }
+    public int nearbyLandmarkCount { get; init; }
+    public string? nearestLandmarkName { get; init; }
+    public double? nearestLandmarkRouteDistanceMeters { get; init; }
+    public DebugVector3? nearestLandmarkWorldPosition { get; init; }
+    public double? nearestLandmarkDistanceMeters { get; init; }
+    public int buildingsLoaded { get; init; }
+    public int visibleBuildingChunks { get; init; }
+    public int vegetationAreas { get; init; }
+    public int treesLoaded { get; init; }
+    public int visibleVegetationChunks { get; init; }
+    public int streetFurnitureLoaded { get; init; }
+    public int nearbyStreetFurniture { get; init; }
     public int visualSampleBefore { get; init; }
     public int visualSampleAfter { get; init; }
     public double visualInterpolation { get; init; }
