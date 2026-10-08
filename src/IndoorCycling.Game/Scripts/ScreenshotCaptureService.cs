@@ -9,22 +9,44 @@ using Godot;
 public sealed class ScreenshotCaptureService
 {
     private readonly HudController _hud;
+    private readonly Func<Guid?>? _activityIdProvider;
     private readonly List<CapturedScreenshot> _capturedMedia = [];
     private readonly HashSet<string> _reservedStems = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<Task<CapturedScreenshot?>> _pendingCaptures = [];
     private bool _captureInProgress;
 
     public IReadOnlyList<CapturedScreenshot> CapturedMedia => _capturedMedia;
 
-    public ScreenshotCaptureService(HudController hud) => _hud = hud;
+    public ScreenshotCaptureService(HudController hud, Func<Guid?>? activityIdProvider = null)
+    {
+        _hud = hud;
+        _activityIdProvider = activityIdProvider;
+    }
 
     public Task<CapturedScreenshot?> CaptureCleanAsync(RideDebugSnapshot? snapshot = null) =>
-        CaptureAsync(ScreenshotCaptureMode.Clean, snapshot, null);
+        Track(CaptureAsync(ScreenshotCaptureMode.Clean, snapshot, null));
 
     public Task<CapturedScreenshot?> CaptureHudAsync(RideDebugSnapshot? snapshot = null) =>
-        CaptureAsync(ScreenshotCaptureMode.Hud, snapshot, null);
+        Track(CaptureAsync(ScreenshotCaptureMode.Hud, snapshot, null));
 
     public Task<CapturedScreenshot?> CaptureDebugMarkerAsync(RideDebugSnapshot snapshot) =>
-        CaptureAsync(ScreenshotCapturePolicy.ForDebugMarker(), snapshot, snapshot.marker);
+        Track(CaptureAsync(ScreenshotCapturePolicy.ForDebugMarker(), snapshot, snapshot.marker));
+
+    private Task<CapturedScreenshot?> Track(Task<CapturedScreenshot?> capture)
+    {
+        _pendingCaptures.Add(capture);
+        return capture;
+    }
+
+    public async Task FlushPendingCapturesAsync()
+    {
+        while (_pendingCaptures.Count > 0)
+        {
+            var pending = _pendingCaptures.ToArray();
+            _pendingCaptures.Clear();
+            await Task.WhenAll(pending);
+        }
+    }
 
     private async Task<CapturedScreenshot?> CaptureAsync(ScreenshotCaptureMode mode,
         RideDebugSnapshot? snapshot, int? markerNumber)
@@ -110,7 +132,7 @@ public sealed class ScreenshotCaptureService
             catch (Exception ex) { GD.PushWarning($"Screenshot saved, but its metadata sidecar failed: {ex.Message}"); }
         }
 
-        var captured = new CapturedScreenshot(imagePath, sidecarPath, timestamp, mode, markerNumber);
+        var captured = new CapturedScreenshot(imagePath, sidecarPath, timestamp, mode, markerNumber, _activityIdProvider?.Invoke());
         _capturedMedia.Add(captured);
         _hud.ShowScreenshotToast("Screenshot saved");
         GD.Print($"Screenshot saved: {imagePath}");

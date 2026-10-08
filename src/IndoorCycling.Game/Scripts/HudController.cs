@@ -30,7 +30,8 @@ public partial class HudController : Control
 	private RideMenuPanelController? _rideMenuPanel;
 	private RideSessionNode? _rideSessionNode;
 	private PanelContainer? _debugOverlay;
-	private Label? _debugSnapshotLabel;
+	private Label? _debugSummaryLabel;
+	private Label? _debugDiagnosticsLabel;
 	private bool _debugModeEnabled;
 	private bool _debugOverlayVisible = true;
 	private ScreenshotCaptureService? _screenshotCapture;
@@ -59,7 +60,7 @@ public partial class HudController : Control
 		_saveToStravaButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
-		_screenshotCapture = new ScreenshotCaptureService(this);
+		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId);
 		_screenshotToast = new Label
 		{
 			Name = "ScreenshotToast", Text = "Screenshot saved", Visible = false,
@@ -160,19 +161,45 @@ public partial class HudController : Control
 			AnchorTop = 0,
 			AnchorBottom = 0,
 			OffsetLeft = 12,
-			OffsetRight = 365,
+			OffsetRight = 372,
 			OffsetTop = 12,
-			OffsetBottom = 274
+			OffsetBottom = 520,
+			ClipContents = true
 		};
 		var layout = new VBoxContainer();
-		_debugSnapshotLabel = new Label { Text = "DEBUG\nWaiting for ride state…", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-		layout.AddChild(_debugSnapshotLabel);
+		layout.AddThemeConstantOverride("separation", 5);
+		_debugSummaryLabel = new Label
+		{
+			Name = "DebugRideSummary", Text = "DEBUG\nWaiting for ride state…",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		layout.AddChild(_debugSummaryLabel);
+		var diagnosticsScroll = new ScrollContainer
+		{
+			Name = "DebugDiagnosticsScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+			HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+			VerticalScrollMode = ScrollContainer.ScrollMode.Auto
+		};
+		_debugDiagnosticsLabel = new Label
+		{
+			Name = "DebugDiagnostics", AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		diagnosticsScroll.AddChild(_debugDiagnosticsLabel);
+		layout.AddChild(diagnosticsScroll);
 		var actions = new HBoxContainer();
+		actions.Name = "DebugControls";
+		actions.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		var markButton = new Button { Text = "MARK" };
 		markButton.Pressed += () => _rideSessionNode?.WriteDebugMarker();
 		actions.AddChild(markButton);
 		actions.AddChild(new Label { Text = "Jump to m" });
-		var jumpDistance = new LineEdit { Name = "JumpDistance", PlaceholderText = "5830", CustomMinimumSize = new Vector2(82, 0) };
+		var jumpDistance = new LineEdit
+		{
+			Name = "JumpDistance", PlaceholderText = "5830", CustomMinimumSize = new Vector2(82, 0),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
 		actions.AddChild(jumpDistance);
 		var jumpButton = new Button { Text = "Go" };
 		jumpButton.Pressed += () => _rideSessionNode?.JumpToRouteDistance(jumpDistance.Text);
@@ -180,13 +207,22 @@ public partial class HudController : Control
 		layout.AddChild(actions);
 		_debugOverlay.AddChild(layout);
 		AddChild(_debugOverlay);
+		GetViewport().SizeChanged += UpdateDebugOverlayLayout;
+		UpdateDebugOverlayLayout();
 		_debugOverlay.Visible = _debugModeEnabled && _debugOverlayVisible;
+	}
+
+	private void UpdateDebugOverlayLayout()
+	{
+		if (_debugOverlay is null) return;
+		var height = Math.Clamp(GetViewportRect().Size.Y - 120, 320, 620);
+		_debugOverlay.OffsetBottom = 12 + height;
 	}
 
 	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
 	{
-		if (!_debugModeEnabled || _debugSnapshotLabel is null) return;
-		_debugSnapshotLabel.Text =
+		if (!_debugModeEnabled || _debugSummaryLabel is null || _debugDiagnosticsLabel is null) return;
+		_debugSummaryLabel.Text =
 			$"DEBUG\nVirtual: {snapshot.virtualSpeedKph:F1} km/h\n" +
 			$"Trainer: {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "-"} km/h  Power: {snapshot.rawTrainerPowerWatts?.ToString() ?? "-"} W\n" +
 			$"Ride: {snapshot.totalRideDistanceMeters:F1} m\n" +
@@ -194,6 +230,14 @@ public partial class HudController : Control
 			$"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}%\n" +
 			$"Elevation: {snapshot.routeElevationMeters?.ToString("F1") ?? "-"} m  Raw: {snapshot.rawRouteElevationMeters?.ToString("F1") ?? "-"} m  Visual Y: {snapshot.visualRelativeElevationMeters?.ToString("F1") ?? "-"} m\n" +
 			$"Sample: {snapshot.visualSampleBefore} -> {snapshot.visualSampleAfter} ({snapshot.visualInterpolation:F2})\n" +
+			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
+			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
+		var carRejects = snapshot.ambientCarTooCloseToRider + snapshot.ambientCarOutsideSpawnRadius
+			+ snapshot.ambientCarNoEligiblePath + snapshot.ambientCarInvalidTransform + snapshot.ambientCarInvalidOrShortPaths;
+		var pedestrianRejects = snapshot.ambientPedestrianTooCloseToRider + snapshot.ambientPedestrianOutsideSpawnRadius
+			+ snapshot.ambientPedestrianNoValidPath + snapshot.ambientPedestrianInvalidTransform
+			+ snapshot.ambientPedestrianInvalidOrShortPaths;
+		_debugDiagnosticsLabel.Text =
 			$"Landmarks nearby: {snapshot.nearbyLandmarkCount}  Nearest: {snapshot.nearestLandmarkName ?? "-"} " +
 			$"@ {snapshot.nearestLandmarkRouteDistanceMeters?.ToString("F0") ?? "-"} m / " +
 			$"{snapshot.nearestLandmarkDistanceMeters?.ToString("F0") ?? "-"} m away\n" +
@@ -201,9 +245,12 @@ public partial class HudController : Control
 			$"Vegetation areas: {snapshot.vegetationAreas}  Trees loaded: {snapshot.treesLoaded}  Visible chunks: {snapshot.visibleVegetationChunks}\n" +
 			$"Street furniture loaded: {snapshot.streetFurnitureLoaded}  Nearby: {snapshot.nearbyStreetFurniture}\n" +
 			$"Terrain near chunks: {snapshot.terrainNearChunks}  far chunks: {snapshot.terrainFarChunks}  visible terrain chunks: {snapshot.terrainVisibleChunks}\n" +
-			$"Near spacing: {snapshot.terrainNearSpacingMeters:F0} m  Far spacing: {snapshot.terrainFarSpacingMeters:F0} m\n" +
-			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
-			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
+			$"Terrain spacing: near {snapshot.terrainNearSpacingMeters:F0} m  far {snapshot.terrainFarSpacingMeters:F0} m\n" +
+			$"Cars: {snapshot.ambientCars}/{snapshot.ambientCarTarget}  Pedestrians: {snapshot.ambientPedestrians}/{snapshot.ambientPedestrianTarget}\n" +
+			$"AI riders: {snapshot.aiRiderCount}  Nearest AI: {(snapshot.nearestAiRiderName is null ? "-" : $"{snapshot.nearestAiRiderName} {snapshot.nearestAiRiderRelativeDistanceMeters:+0;-0;0} m / {snapshot.nearestAiRiderSpeedKph:F0} km/h")}\n" +
+			$"Paths: cars {snapshot.ambientEligibleCarPaths}  pedestrians {snapshot.ambientEligiblePedestrianPaths}\n" +
+			$"Spawns/rejects: cars {Math.Max(0, snapshot.ambientCarSpawnAttempts - carRejects)}/{carRejects}  pedestrians {Math.Max(0, snapshot.ambientPedestrianSpawnAttempts - pedestrianRejects)}/{pedestrianRejects}\n" +
+			$"First: car {snapshot.firstAmbientCarDistanceMeters?.ToString("F0") ?? "-"} m  pedestrian {snapshot.firstAmbientPedestrianDistanceMeters?.ToString("F0") ?? "-"} m";
 	}
 
 	public bool DebugOverlayCaptureVisible => _debugOverlay?.Visible ?? false;
@@ -211,6 +258,8 @@ public partial class HudController : Control
 
 	public Task<CapturedScreenshot?> CaptureDebugScreenshotAsync(RideDebugSnapshot snapshot) =>
 		_screenshotCapture?.CaptureDebugMarkerAsync(snapshot) ?? Task.FromResult<CapturedScreenshot?>(null);
+
+	public Task FlushScreenshotCapturesAsync() => _screenshotCapture?.FlushPendingCapturesAsync() ?? Task.CompletedTask;
 
 	public void SetDebugOverlayForCapture(bool visible)
 	{

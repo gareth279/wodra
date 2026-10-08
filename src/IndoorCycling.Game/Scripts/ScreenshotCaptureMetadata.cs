@@ -26,7 +26,7 @@ public static class ScreenshotCaptureFailurePolicy
 }
 
 public sealed record CapturedScreenshot(string ImagePath, string? SidecarPath,
-    DateTimeOffset CapturedAt, ScreenshotCaptureMode Mode, int? MarkerNumber);
+    DateTimeOffset CapturedAt, ScreenshotCaptureMode Mode, int? MarkerNumber, Guid? ActivityId = null);
 
 /// <summary>Compact screenshot metadata; deliberately excludes bulky diagnostic payloads.</summary>
 public sealed record ScreenshotMetadata

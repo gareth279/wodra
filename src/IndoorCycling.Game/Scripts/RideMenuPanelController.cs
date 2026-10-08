@@ -8,6 +8,7 @@ public partial class RideMenuPanelController : Control
 	private Control? _startPanel;
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
+	private RideHistoryPanelController? _rideHistoryPanel;
 
 	public override void _Ready()
 	{
@@ -15,6 +16,7 @@ public partial class RideMenuPanelController : Control
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
+		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
 
 		GetNode<Button>("PanelContainer/VBoxContainer/ResumeButton").Pressed += OnResumeButtonPressed;
 		GetNode<Button>("PanelContainer/VBoxContainer/BackToMenuButton").Pressed += OnBackToMenuButtonPressed;
@@ -44,6 +46,11 @@ public partial class RideMenuPanelController : Control
 
 		Hide();
 		_hudController?.Hide();
+		if (_rideSessionNode?.LastCompletedActivityDraft is { } draft)
+		{
+			_rideHistoryPanel?.ShowCompletedSummary(draft, _rideSessionNode.LastCompletedActivityId);
+			return;
+		}
 		_startPanel?.Show();
 		if (GameBootstrap.TrainerClient is not null)
 		{

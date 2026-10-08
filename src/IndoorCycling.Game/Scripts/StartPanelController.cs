@@ -16,6 +16,7 @@ public partial class StartPanelController : Control
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private CheckButton? _debugModeCheckButton;
 	private HudController? _typedHudController;
+	private RideHistoryPanelController? _rideHistoryPanel;
 
 	public override void _Ready()
 	{
@@ -26,6 +27,7 @@ public partial class StartPanelController : Control
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_typedHudController = _hudController as HudController;
+		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
 		_debugModeCheckButton = GetNode<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/DebugModeCheckButton");
 		_debugModeCheckButton.ButtonPressed = GameBootstrap.DebugModeEnabled;
 		_debugModeCheckButton.Toggled += OnDebugModeToggled;
@@ -34,6 +36,7 @@ public partial class StartPanelController : Control
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/HistoryButton").Pressed += () => _rideHistoryPanel?.ShowHistory();
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/QuitButton").Pressed += OnQuitPressed;
 
 		if (_fileDialog is not null)

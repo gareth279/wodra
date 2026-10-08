@@ -18,27 +18,11 @@ public sealed class SimulationEngine : ISimulationEngine
         var oldSpeedMps = Math.Max(0, currentState.VirtualSpeedKph / 3.6);
         var massKg = Math.Max(1, PositiveOrZero(input.RiderProfile.WeightKg)
             + PositiveOrZero(input.BikeProfile.WeightKg));
-        var gradientRadians = Math.Atan(input.GradientPercent / 100.0);
-        var gravityForceNewtons = massKg * _physics.GravityMps2 * Math.Sin(gradientRadians);
-        var rollingForceNewtons = massKg * _physics.GravityMps2
-            * PositiveOrZero(input.BikeProfile.RollingResistanceCoefficient)
-            * Math.Cos(gradientRadians);
-        var aeroForceNewtons = 0.5 * _physics.AirDensityKgPerCubicMeter
-            * PositiveOrZero(input.BikeProfile.DragCoefficientArea)
-            * oldSpeedMps * oldSpeedMps;
-        var driveForceNewtons = Math.Max(0, telemetry.PowerWatts) * _physics.DrivetrainEfficiency
-            / Math.Max(oldSpeedMps, _physics.PowerForceReferenceSpeedMps);
-        var netForceNewtons = driveForceNewtons - gravityForceNewtons
-            - rollingForceNewtons - aeroForceNewtons;
-        var accelerationMps2 = netForceNewtons / massKg;
-        var unboundedNewSpeedMps = oldSpeedMps + accelerationMps2 * deltaSeconds;
-        var newSpeedMps = Math.Max(0, unboundedNewSpeedMps);
-
-        // Semi-implicit speed integration with trapezoidal distance keeps game progress
-        // consistent with acceleration without consulting trainer-reported speed.
-        var deltaDistanceMeters = unboundedNewSpeedMps < 0 && accelerationMps2 < 0
-            ? oldSpeedMps * oldSpeedMps / (2 * -accelerationMps2)
-            : (oldSpeedMps + newSpeedMps) / 2.0 * deltaSeconds;
+        var step = CyclingPhysicsMath.Advance(oldSpeedMps, telemetry.PowerWatts, input.GradientPercent,
+            massKg, input.BikeProfile.RollingResistanceCoefficient, input.BikeProfile.DragCoefficientArea,
+            deltaSeconds, _physics);
+        var newSpeedMps = step.SpeedMetersPerSecond;
+        var deltaDistanceMeters = step.DistanceMeters;
         var speedKph = newSpeedMps * 3.6;
 
         var elevationGainMeters = input.GradientPercent > 0

@@ -4,6 +4,8 @@ using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
 using IndoorCycling.Trainer.Implementations;
 using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class RideSessionNode : Node
@@ -31,6 +33,14 @@ public partial class RideSessionNode : Node
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
 	private double _elapsedSeconds;
+	private Guid? _currentActivityId;
+	private Guid? _currentRiderProfileId;
+	private DateTimeOffset _activityStartedAtUtc;
+	private string? _currentActivityFitPath;
+	private readonly RideActivityAccumulator _activityAccumulator = new();
+	public Guid? CurrentActivityId => _currentActivityId;
+	public Guid? LastCompletedActivityId { get; private set; }
+	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
 
 	private RideFitRecorder? _rideRecorder;
 
@@ -80,6 +90,23 @@ public partial class RideSessionNode : Node
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
 		_currentRoute = route ?? RouteCatalog.GetById("test-route");
+		_currentActivityId = Guid.NewGuid();
+		_currentRiderProfileId = null;
+		try
+		{
+			var rider = await GameBootstrap.GetPersistentRiderAsync();
+			_currentRiderProfileId = rider.Id;
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("ride_history_profile_unavailable", new { message = ex.Message });
+			GD.PushWarning($"Ride history is unavailable; this ride will still run: {ex.Message}");
+		}
+		_activityStartedAtUtc = DateTimeOffset.UtcNow;
+		_currentActivityFitPath = null;
+		_activityAccumulator.Reset();
+		LastCompletedActivityId = null;
+		LastCompletedActivityDraft = null;
 		_sessionStarted = true;
 		_trainerSessionActive = true;
 		_fitReplaySessionActive = false;
@@ -124,6 +151,8 @@ public partial class RideSessionNode : Node
 		await _fitReplayClient.ConnectAsync();
 
 		_currentRoute = RouteCatalog.GetById("test-route");
+		_currentActivityId = null;
+		_currentRiderProfileId = null;
 		_sessionStarted = true;
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
@@ -160,10 +189,41 @@ public partial class RideSessionNode : Node
 
 	private async Task EndRideAsync(bool disconnectTrainer)
 	{
+		var wasActiveTrainerRide = _sessionStarted && _trainerSessionActive;
 		_sessionStarted = false;
+		string? fitPath = null;
 		try
 		{
-			FinaliseRecording();
+			try { fitPath = FinaliseRecording(); }
+			catch (Exception ex)
+			{
+				GameLogger.Log("ride_finalise_failed", new { message = ex.Message });
+				GD.PushWarning($"FIT file could not be finalized; the ride will still be saved: {ex.Message}");
+			}
+			if (wasActiveTrainerRide && _currentActivityId is { } activityId && _currentRoute is { } route)
+			{
+				if (_hudController is not null) await _hudController.FlushScreenshotCapturesAsync();
+				var draft = _activityAccumulator.CreateDraft(activityId, _currentRiderProfileId ?? Guid.Empty,
+					route.Id, route.Name, _activityStartedAtUtc, _rideState.DistanceMeters, route.DistanceMeters,
+					_rideState.ElevationGainMeters,
+					fitPath is not null && File.Exists(fitPath) ? fitPath : _currentActivityFitPath is not null && File.Exists(_currentActivityFitPath) ? _currentActivityFitPath : null);
+				LastCompletedActivityDraft = draft;
+				LastCompletedActivityId = activityId;
+				if (_currentRiderProfileId is { } riderId && GameBootstrap.RideHistory is { } history)
+				{
+					var media = (_hudController?.CapturedScreenshots ?? Array.Empty<CapturedScreenshot>())
+						.Where(s => s.ActivityId == activityId && File.Exists(s.ImagePath))
+						.Select(s => new RideActivityMedia(Guid.NewGuid(), activityId, s.ImagePath, s.SidecarPath,
+							s.CapturedAt.ToUniversalTime(), s.Mode.ToString(), s.MarkerNumber)).ToArray();
+					try { await history.SaveCompletedActivityAsync(draft, media); }
+					catch (Exception ex) { GameLogger.Log("ride_history_save_failed", new { activityId, message = ex.Message }); GD.PushWarning($"Ride finished, but ride history could not be saved: {ex.Message}"); }
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("ride_history_finalize_failed", new { message = ex.Message });
+			GD.PushWarning($"Ride ended, but its history summary could not be completed: {ex.Message}");
 		}
 		finally
 		{
@@ -189,6 +249,8 @@ public partial class RideSessionNode : Node
 				_hudController?.SetRidePaused(false);
 				_elapsedSeconds = 0;
 				_manualGradientOffsetPercent = 0;
+				_currentActivityId = null;
+				_currentRiderProfileId = null;
 			}
 		}
 	}
@@ -227,7 +289,7 @@ public partial class RideSessionNode : Node
 
 	private string? FinaliseRecording()
 	{
-		if (_rideRecorder is null) return _lastStoppedRecordingPath;
+		if (_rideRecorder is null) return null;
 		try
 		{
 			RecordCurrentSample();
@@ -235,6 +297,8 @@ public partial class RideSessionNode : Node
 		finally
 		{
 			_lastStoppedRecordingPath = _rideRecorder.Stop();
+			if (_currentActivityId is not null && _lastStoppedRecordingPath is not null && File.Exists(_lastStoppedRecordingPath))
+				_currentActivityFitPath = _lastStoppedRecordingPath;
 			_rideRecorder = null;
 			_recordingSampleElapsedSeconds = 0;
 		}
@@ -381,6 +445,45 @@ public partial class RideSessionNode : Node
 			nearestStreetFurnitureRelocated = world?.NearestStreetFurniture?.Relocated,
 			backgroundStreetsLoaded = world?.BackgroundStreetsLoaded ?? 0,
 			visibleStreetChunks = world?.VisibleStreetChunks ?? 0,
+			ambientCars = world?.AmbientCars ?? 0,
+			ambientCarTarget = AmbientActorTuning.TargetCars,
+			ambientPedestrians = world?.AmbientPedestrians ?? 0,
+			ambientPedestrianTarget = AmbientActorTuning.TargetPedestrians,
+			ambientEligibleCarPaths = world?.EligibleCarPaths ?? 0,
+			ambientEligiblePedestrianPaths = world?.EligiblePedestrianPaths ?? 0,
+			ambientCarSpawnAttempts = world?.CarSpawnAttempts ?? 0,
+			ambientPedestrianSpawnAttempts = world?.PedestrianSpawnAttempts ?? 0,
+			ambientCarOutsideSpawnRadius = world?.CarOutsideSpawnRadius ?? 0,
+			ambientPedestrianOutsideSpawnRadius = world?.PedestrianOutsideSpawnRadius ?? 0,
+			ambientCarTooCloseToRider = world?.CarTooCloseToRider ?? 0,
+			ambientPedestrianTooCloseToRider = world?.PedestrianTooCloseToRider ?? 0,
+			ambientCarNoEligiblePath = world?.CarNoEligiblePath ?? 0,
+			ambientPedestrianNoValidPath = world?.PedestrianNoValidPath ?? 0,
+			ambientCarInvalidTransform = world?.CarInvalidTransform ?? 0,
+			ambientPedestrianInvalidTransform = world?.PedestrianInvalidTransform ?? 0,
+			ambientCarIllegalOnewayDirections = world?.CarIllegalOnewayDirections ?? 0,
+			ambientTotalStreetPolylines = world?.TotalStreetPolylines ?? 0,
+			ambientEligibleStreetPolylines = world?.EligibleStreetPolylines ?? 0,
+			ambientCarInvalidOrShortPaths = world?.InvalidOrShortCarPaths ?? 0,
+			ambientPedestrianInvalidOrShortPaths = world?.InvalidOrShortPedestrianPaths ?? 0,
+			ambientPedestrianSeamOrEndSamplesExcluded = world?.PedestrianSeamOrEndSamplesExcluded ?? 0,
+			firstAmbientCarPosition = world?.FirstCarPosition is { } carPosition ? ToDebugVector(carPosition) : null,
+			firstAmbientCarDistanceMeters = world?.FirstCarDistance,
+			firstAmbientCarRoadName = world?.FirstCarRoadName,
+			firstAmbientCarRoadClass = world?.FirstCarRoadClass,
+			firstAmbientCarSpeedMetersPerSecond = world?.FirstCarSpeedMps,
+			firstAmbientCarVisible = world?.FirstCarVisible,
+			firstAmbientPedestrianPosition = world?.FirstPedestrianPosition is { } pedPosition ? ToDebugVector(pedPosition) : null,
+			firstAmbientPedestrianDistanceMeters = world?.FirstPedestrianDistance,
+			firstAmbientPedestrianSpeedMetersPerSecond = world?.FirstPedestrianSpeedMps,
+			firstAmbientPedestrianVisible = world?.FirstPedestrianVisible,
+			aiRiderCount = world?.AiRiders ?? 0,
+			nearestAiRiderName = world?.NearestAiName,
+			nearestAiRiderRelativeDistanceMeters = world?.NearestAiRelativeDistanceMeters,
+			nearestAiRiderSpeedKph = world?.NearestAiSpeedKph,
+			nearestAiRiders = world?.NearestAiRiders?.Select(rider => new AiRiderDebugSnapshot(
+				rider.Name, rider.RelativeDistanceMeters, rider.RouteDistanceMeters, rider.SpeedKph,
+				rider.PowerWatts, rider.CadenceRpm)).ToArray() ?? Array.Empty<AiRiderDebugSnapshot>(),
 			terrainNearChunks = world?.NearTerrainChunks ?? 0,
 			terrainFarChunks = world?.FarTerrainChunks ?? 0,
 			terrainVisibleChunks = world?.VisibleTerrainChunks ?? 0,
@@ -600,11 +703,14 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
-		if (!_pauseGate.IsPaused) _elapsedSeconds += delta;
+		var activeDelta = _pauseGate.IsPaused ? 0 : delta;
+		if (activeDelta > 0) _elapsedSeconds += activeDelta;
 
 		if (_trainerSessionActive) ProcessTrainerMode(delta);
 		else if (_fitReplaySessionActive) ProcessFitReplayMode(delta);
 
+		if (_trainerSessionActive || _fitReplaySessionActive)
+			_activityAccumulator.AddFrame(activeDelta, _rideState.VirtualSpeedKph, _lastTelemetry?.PowerWatts, _lastTelemetry?.CadenceRpm, _rideState.ElevationGainMeters);
 		if (_debugDiagnostics.Enabled && _debugDiagnostics.SnapshotDue(delta)) WriteDebugSnapshot();
 	}
 

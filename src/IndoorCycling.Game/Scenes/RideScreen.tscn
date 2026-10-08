@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://nmh53lmgi1yi" path="res://Scripts/RideMenuPanelController.cs" id="6_e67xs"]
 [ext_resource type="Script" uid="uid://bvhod3tfngrgo" path="res://Scripts/RouteSelectionPanelController.cs" id="7_05hhs"]
 [ext_resource type="Script" path="res://Scripts/World/RideWorldView.cs" id="8_world"]
+[ext_resource type="Script" path="res://Scripts/RideHistoryPanelController.cs" id="9_history"]
 
 [node name="Control" type="Control" unique_id=141499871]
 custom_minimum_size = Vector2(1024, 768)
@@ -20,6 +21,9 @@ grow_vertical = 2
 
 [node name="GameBootstrap" type="Node" parent="." unique_id=437395488]
 script = ExtResource("1_r0ppa")
+
+[node name="RideHistoryPanel" type="Control" parent="."]
+script = ExtResource("9_history")
 
 [node name="RideSessionNode" type="Node" parent="." unique_id=1280285128]
 script = ExtResource("2_uf0cn")
@@ -95,6 +99,10 @@ text = "Test with Dummy Trainer"
 [node name="LoadFitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=449877992]
 layout_mode = 2
 text = "Load Fit File"
+
+[node name="HistoryButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Ride History"
 
 [node name="QuitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=847293783]
 layout_mode = 2

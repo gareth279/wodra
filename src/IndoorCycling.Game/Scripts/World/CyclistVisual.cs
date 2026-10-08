@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using IndoorCycling.Core.Models;
 
 /// <summary>Procedural articulated rider and road-bike proxy. It consumes ride state and never simulates it.</summary>
 public partial class CyclistVisual : Node3D
@@ -10,16 +11,33 @@ public partial class CyclistVisual : Node3D
 
     private static readonly Dimensions Size = new(1.78, .35f, 1.02f, .17f, .39f, .10f,
         .80f, .25f, 1.57f, -.22f, 1.00f, .21f, 1.34f, -.13f, .43f, .43f);
-    private static readonly Color BikeColor = new(.12f,.63f,.72f);
-    private static readonly Color JerseyColor = new(.88f,.23f,.13f);
-    private readonly StandardMaterial3D _frameMaterial = Material(BikeColor);
-    private readonly StandardMaterial3D _tyreMaterial = Material(new Color(.025f,.03f,.04f));
-    private readonly StandardMaterial3D _rimMaterial = Material(new Color(.67f,.72f,.76f));
-    private readonly StandardMaterial3D _metalMaterial = Material(new Color(.28f,.31f,.34f));
-    private readonly StandardMaterial3D _jerseyMaterial = Material(JerseyColor);
-    private readonly StandardMaterial3D _shortsMaterial = Material(new Color(.07f,.09f,.12f));
-    private readonly StandardMaterial3D _skinMaterial = Material(new Color(.78f,.57f,.43f));
-    private readonly StandardMaterial3D _shoeMaterial = Material(new Color(.88f,.87f,.79f));
+    private static readonly CylinderMesh RodMesh = new() { TopRadius = .5f, BottomRadius = .5f, Height = 1, RadialSegments = 8 };
+    private static readonly BoxMesh UnitBoxMesh = new() { Size = Vector3.One };
+    private static readonly SphereMesh UnitSphereMesh = new() { Radius = .5f, Height = 1, RadialSegments = 12, Rings = 8 };
+    private static readonly TorusMesh TyreMesh = new() { InnerRadius = .315f, OuterRadius = .35f, Rings = 8, RingSegments = 20 };
+    private static readonly TorusMesh RimMesh = new() { InnerRadius = .289f, OuterRadius = .301f, Rings = 6, RingSegments = 20 };
+    private static readonly StandardMaterial3D[] FramePalette = [
+        Material(new Color(.12f,.63f,.72f)), Material(new Color(.20f,.38f,.63f)),
+        Material(new Color(.72f,.37f,.12f)), Material(new Color(.27f,.48f,.27f))];
+    private static readonly StandardMaterial3D[] JerseyPalette = [
+        Material(new Color(.88f,.23f,.13f)), Material(new Color(.18f,.42f,.78f)),
+        Material(new Color(.87f,.66f,.16f)), Material(new Color(.34f,.62f,.38f)),
+        Material(new Color(.66f,.34f,.68f)), Material(new Color(.91f,.91f,.88f))];
+    private static readonly StandardMaterial3D TyreMaterial = Material(new Color(.025f,.03f,.04f));
+    private static readonly StandardMaterial3D RimMaterial = Material(new Color(.67f,.72f,.76f));
+    private static readonly StandardMaterial3D MetalMaterial = Material(new Color(.28f,.31f,.34f));
+    private static readonly StandardMaterial3D ShortsMaterial = Material(new Color(.07f,.09f,.12f));
+    private static readonly StandardMaterial3D SkinMaterial = Material(new Color(.78f,.57f,.43f));
+    private static readonly StandardMaterial3D ShoeMaterial = Material(new Color(.88f,.87f,.79f));
+    private static readonly StandardMaterial3D HelmetMaterial = Material(new Color(.95f,.75f,.12f));
+    private StandardMaterial3D _frameMaterial = FramePalette[0];
+    private StandardMaterial3D _tyreMaterial = TyreMaterial;
+    private StandardMaterial3D _rimMaterial = RimMaterial;
+    private StandardMaterial3D _metalMaterial = MetalMaterial;
+    private StandardMaterial3D _jerseyMaterial = JerseyPalette[0];
+    private StandardMaterial3D _shortsMaterial = ShortsMaterial;
+    private StandardMaterial3D _skinMaterial = SkinMaterial;
+    private StandardMaterial3D _shoeMaterial = ShoeMaterial;
     private Node3D _frontWheel = default!;
     private Node3D _rearWheel = default!;
     private MeshInstance3D _leftCrank = default!;
@@ -49,10 +67,12 @@ public partial class CyclistVisual : Node3D
     public int ApproximateNodeCount => CountNodes(this);
     public int ApproximateTriangleCount => 3000;
 
-    public void Build()
+    public void Build(int visualVariant = 0)
     {
         if (_built) return;
         _built = true;
+        _frameMaterial = FramePalette[Math.Abs(visualVariant) % FramePalette.Length];
+        _jerseyMaterial = JerseyPalette[Math.Abs(visualVariant) % JerseyPalette.Length];
         var rearZ = Size.Wheelbase / 2;
         var frontZ = -Size.Wheelbase / 2;
         var wheelY = Size.WheelRadius;
@@ -81,7 +101,7 @@ public partial class CyclistVisual : Node3D
         AddRod("Torso",new Vector3(0,Size.HipY,Size.HipZ),new Vector3(0,Size.ShoulderY,Size.ShoulderZ),.19f,_jerseyMaterial);
         AddSphere("Shorts",new Vector3(0,.99f,.20f),new Vector3(.29f,.22f,.26f),_shortsMaterial);
         AddSphere("Head",new Vector3(0,Size.HeadY,Size.HeadZ),new Vector3(.16f,.19f,.16f),_skinMaterial);
-        AddSphere("Helmet",new Vector3(0,1.70f,Size.HeadZ),new Vector3(.19f,.12f,.21f),Material(new Color(.95f,.75f,.12f)));
+        AddSphere("Helmet",new Vector3(0,1.70f,Size.HeadZ),new Vector3(.19f,.12f,.21f),HelmetMaterial);
         AddSphere("LeftHand",new Vector3(-.30f,.91f,-.47f),new Vector3(.075f,.065f,.08f),_skinMaterial);
         AddSphere("RightHand",new Vector3(.30f,.91f,-.47f),new Vector3(.075f,.065f,.08f),_skinMaterial);
         AddRod("LeftUpperArm",new Vector3(-.17f,1.32f,-.13f),new Vector3(-.28f,1.11f,-.34f),.052f,_jerseyMaterial);
@@ -102,6 +122,16 @@ public partial class CyclistVisual : Node3D
         _leftKnee=AddSphere("LeftKnee",Vector3.Zero,new Vector3(.105f,.105f,.105f),_shortsMaterial);
         _rightKnee=AddSphere("RightKnee",Vector3.Zero,new Vector3(.105f,.105f,.105f),_shortsMaterial);
         UpdatePedalingGeometry();
+    }
+
+    public void UpdateFromRiderState(RiderState rider, VisualRoutePose routePose,
+        double gradientPercent, double deltaSeconds)
+    {
+        var input = RiderVisualInputMath.Create(rider, routePose, gradientPercent);
+        var position = input.Position;
+        UpdateFromRideState(new Vector3(position.X, position.Y, position.Z),
+            new Vector3(input.Forward.X, input.Forward.Y, input.Forward.Z), input.SpeedKph,
+            input.CadenceRpm, input.GradientPercent, input.Paused, deltaSeconds);
     }
 
     public void UpdateFromRideState(Vector3 routePosition, Vector3 routeForward, double virtualSpeedKph,
@@ -160,16 +190,14 @@ public partial class CyclistVisual : Node3D
     private Node3D AddWheel(string name,Vector3 position)
     {
         var wheel=new Node3D{Name=name,Position=position}; AddChild(wheel);
-        var tyre=new TorusMesh{InnerRadius=Size.WheelRadius-.035f,OuterRadius=Size.WheelRadius,Rings=8,RingSegments=20};
-        var rim=new TorusMesh{InnerRadius=Size.WheelRadius-.061f,OuterRadius=Size.WheelRadius-.049f,Rings=6,RingSegments=20};
-        foreach(var pair in new[]{(Mesh:tyre,Material:_tyreMaterial),(Mesh:rim,Material:_rimMaterial)})
+        foreach(var pair in new[]{(Mesh:TyreMesh,Material:_tyreMaterial),(Mesh:RimMesh,Material:_rimMaterial)})
             wheel.AddChild(new MeshInstance3D{Mesh=pair.Mesh,Rotation=new Vector3(0,0,-Mathf.Pi/2),MaterialOverride=pair.Material});
         return wheel;
     }
 
     private MeshInstance3D AddRod(string name,Vector3 a,Vector3 b,float radius,Material material)
     {
-        var rod=new MeshInstance3D{Name=name,Mesh=new CylinderMesh{TopRadius=.5f,BottomRadius=.5f,Height=1,RadialSegments=8},MaterialOverride=material};
+        var rod=new MeshInstance3D{Name=name,Mesh=RodMesh,MaterialOverride=material};
         AddChild(rod); SetRod(rod,a,b,radius); return rod;
     }
     private static void SetRod(MeshInstance3D rod,Vector3 a,Vector3 b,float radius)
@@ -185,11 +213,11 @@ public partial class CyclistVisual : Node3D
     }
     private MeshInstance3D AddBox(string name,Vector3 size,Vector3 position,Material material)
     {
-        var mesh=new MeshInstance3D{Name=name,Mesh=new BoxMesh{Size=size},Position=position,MaterialOverride=material}; AddChild(mesh); return mesh;
+        var mesh=new MeshInstance3D{Name=name,Mesh=UnitBoxMesh,Position=position,Scale=size,MaterialOverride=material}; AddChild(mesh); return mesh;
     }
     private MeshInstance3D AddSphere(string name,Vector3 position,Vector3 scale,Material material)
     {
-        var mesh=new MeshInstance3D{Name=name,Mesh=new SphereMesh{Radius=.5f,Height=1,RadialSegments=12,Rings=8},Position=position,Scale=scale,MaterialOverride=material}; AddChild(mesh); return mesh;
+        var mesh=new MeshInstance3D{Name=name,Mesh=UnitSphereMesh,Position=position,Scale=scale,MaterialOverride=material}; AddChild(mesh); return mesh;
     }
     private static StandardMaterial3D Material(Color color)=>new(){AlbedoColor=color,Roughness=.88f};
     private static int CountNodes(Node node)

@@ -1,6 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
+
+public sealed record AiRiderDebugState(string Name, double RelativeDistanceMeters,
+    double RouteDistanceMeters, double SpeedKph, int PowerWatts, int CadenceRpm);
 
 public readonly record struct RideWorldDiagnostic(
     VisualRoutePose Pose, Godot.Vector3 RiderWorldPosition,
@@ -19,17 +25,43 @@ public readonly record struct RideWorldDiagnostic(
       int TerrainChunksLoaded = 0, int VisibleTerrainChunks = 0, double TerrainSpacingMeters = 0,
       int NearTerrainChunks = 0, int FarTerrainChunks = 0, int VisibleNearTerrainChunks = 0,
       int VisibleFarTerrainChunks = 0, double FarTerrainSpacingMeters = 0,
-      int RoadMarkingsLoaded = 0, int NearbyCrossings = 0);
+      int RoadMarkingsLoaded = 0, int NearbyCrossings = 0,
+      int AmbientCars = 0, int AmbientPedestrians = 0,
+      int EligibleCarPaths = 0, int EligiblePedestrianPaths = 0,
+      long CarSpawnAttempts = 0, long PedestrianSpawnAttempts = 0,
+      long CarOutsideSpawnRadius = 0, long PedestrianOutsideSpawnRadius = 0,
+      long CarTooCloseToRider = 0, long PedestrianTooCloseToRider = 0,
+      long CarNoEligiblePath = 0, long PedestrianNoValidPath = 0,
+      long CarInvalidTransform = 0, long PedestrianInvalidTransform = 0,
+      long CarIllegalOnewayDirections = 0,
+      int TotalStreetPolylines = 0, int EligibleStreetPolylines = 0,
+      int InvalidOrShortCarPaths = 0, int InvalidOrShortPedestrianPaths = 0,
+      int PedestrianSeamOrEndSamplesExcluded = 0,
+      Godot.Vector3? FirstCarPosition = null, double? FirstCarDistance = null,
+      string? FirstCarRoadName = null, string? FirstCarRoadClass = null,
+      double? FirstCarSpeedMps = null, bool? FirstCarVisible = null,
+      Godot.Vector3? FirstPedestrianPosition = null, double? FirstPedestrianDistance = null,
+      double? FirstPedestrianSpeedMps = null, bool? FirstPedestrianVisible = null,
+      int AiRiders = 0, string? NearestAiName = null,
+      double? NearestAiRelativeDistanceMeters = null, double? NearestAiSpeedKph = null,
+      IReadOnlyList<AiRiderDebugState>? NearestAiRiders = null);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
 {
     [Export] public bool DebugPoseLogging { get; set; }
+    [Export] public int AiRiderTargetCount { get; set; } = AiRiderPopulation.DefaultTargetCount;
+    [Export] public int AiRiderMaximumCount { get; set; } = AiRiderPopulation.DefaultMaximumCount;
+    [Export] public int AiRiderRandomSeed { get; set; } = AiRiderPopulation.DefaultSeed;
     private RideSessionNode _session = default!;
     private RouteDefinition? _loadedRoute;
     private VisualRoute? _geometry;
     private Node3D? _routeRoot;
     private CyclistVisual _rider = default!;
+    private Node3D? _aiVisualRoot;
+    private LocalRiderStateSource? _riderStateSource;
+    private AiRiderPopulation? _aiPopulation;
+    private readonly Dictionary<string, CyclistVisual> _riderVisuals = new(StringComparer.Ordinal);
     private ChaseCamera _camera = default!;
     private LandmarkLayer? _landmarkLayer;
     private BuildingLayer? _buildingLayer;
@@ -37,6 +69,7 @@ public partial class RideWorldView : Node3D
     private StreetFurnitureLayer? _streetFurnitureLayer;
     private RoadMarkingLayer? _roadMarkingLayer;
     private BackgroundStreetLayer? _backgroundStreetLayer;
+    private AmbientActorManager? _ambientActorManager;
     private TerrainLayer? _terrainLayer;
     private double _debugElapsed;
     private bool _wasActive;
@@ -50,6 +83,7 @@ public partial class RideWorldView : Node3D
         _rider = new CyclistVisual { Name = "CyclistVisual" };
         _rider.Build();
         AddChild(_rider);
+        _riderVisuals["player"] = _rider;
         AddChild(new DirectionalLight3D
         {
             Name = "Sun",
@@ -113,16 +147,22 @@ public partial class RideWorldView : Node3D
         var distance = _session.CurrentRideState.DistanceMeters;
         var pose = _geometry!.GetPoseAtDistance(distance);
         _lastPose = pose;
-        var routePosition = ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 0.04f;
-        var forward = ProceduralRoad.ToGodot(pose.Forward);
-        var riderPositionN = RiderLaneMath.OffsetPosition(
-            new System.Numerics.Vector3(routePosition.X, routePosition.Y, routePosition.Z),
-            new System.Numerics.Vector3(forward.X, forward.Y, forward.Z));
-        var position = new Vector3(riderPositionN.X, riderPositionN.Y, riderPositionN.Z);
         var rideState = _session.CurrentRideState;
-        _rider.UpdateFromRideState(position, forward, rideState.VirtualSpeedKph,
-            rideState.CurrentCadenceRpm, _loadedRoute!.GetGradientAt(distance),
-            _session.IsRidePaused, delta);
+        var routeLength = _geometry.LengthMeters;
+        var wrappedDistance = _geometry.WrapDistance(distance);
+        var playerState = new RiderState("player", "You", _loadedRoute!.Id, distance, wrappedDistance,
+            (int)Math.Floor(distance / routeLength) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+            Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
+            rideState.CurrentCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
+        _riderStateSource!.Update(playerState, routeLength, _loadedRoute.GetGradientAt, delta);
+        foreach (var riderState in _riderStateSource.GetRiders())
+        {
+            if (!_riderVisuals.TryGetValue(riderState.RiderId, out var visual)) continue;
+            var riderPose = _geometry.GetPoseAtDistance(riderState.WrappedRouteDistanceMeters);
+            visual.UpdateFromRiderState(riderState, riderPose, _loadedRoute.GetGradientAt(riderState.WrappedRouteDistanceMeters), delta);
+        }
+        var position = _rider.GlobalPosition;
+        var forward = ProceduralRoad.ToGodot(pose.Forward);
         _camera.Follow(position, forward, delta);
         _landmarkLayer?.UpdateForRideDistance(distance);
         _buildingLayer?.UpdateForRideDistance(distance);
@@ -131,6 +171,8 @@ public partial class RideWorldView : Node3D
         _roadMarkingLayer?.UpdateForRideDistance(distance);
         _backgroundStreetLayer?.UpdateForRideDistance(distance);
         _terrainLayer?.UpdateForRideDistance(distance);
+        _ambientActorManager?.UpdateForRider(new System.Numerics.Vector3(position.X, position.Y, position.Z),
+            delta, _session.IsRidePaused);
         _debugElapsed += delta;
         if (DebugPoseLogging && _debugElapsed >= 1)
         {
@@ -166,6 +208,8 @@ public partial class RideWorldView : Node3D
         var forward = ProceduralRoad.ToGodot(_lastPose.Forward);
         var distance = _session.CurrentRideState.DistanceMeters;
         var landmarks = _landmarkLayer?.GetDebugState(distance, _rider.GlobalPosition) ?? default;
+        var nearestAi = GetNearestAiDebugStates();
+        var nearestAiRider = nearestAi.FirstOrDefault();
         return new RideWorldDiagnostic(_lastPose, _rider.GlobalPosition, forward,
             _rider.GlobalRotation, _camera.GlobalPosition, landmarks.NearbyCount, landmarks.Name,
             landmarks.RouteDistanceMeters, landmarks.WorldPosition, landmarks.RiderDistanceMeters,
@@ -187,11 +231,71 @@ public partial class RideWorldView : Node3D
             _terrainLayer?.VisibleNearTerrainChunks ?? 0, _terrainLayer?.VisibleFarTerrainChunks ?? 0,
             _terrainLayer?.FarTerrainSpacingMeters ?? 0,
             _roadMarkingLayer?.LoadedMarkingCount ?? 0,
-            _roadMarkingLayer?.NearbyCrossingCount ?? 0);
+            _roadMarkingLayer?.NearbyCrossingCount ?? 0,
+            _ambientActorManager?.ActiveCarCount ?? 0,
+            _ambientActorManager?.ActivePedestrianCount ?? 0,
+            _ambientActorManager?.CarPathCount ?? 0, _ambientActorManager?.PedestrianPathCount ?? 0,
+            _ambientActorManager?.CarSpawnAttempts ?? 0, _ambientActorManager?.PedestrianSpawnAttempts ?? 0,
+            _ambientActorManager?.CarOutsideSpawnRadius ?? 0, _ambientActorManager?.PedestrianOutsideSpawnRadius ?? 0,
+            _ambientActorManager?.CarTooCloseToRider ?? 0, _ambientActorManager?.PedestrianTooCloseToRider ?? 0,
+            _ambientActorManager?.CarNoEligiblePath ?? 0, _ambientActorManager?.PedestrianNoValidPath ?? 0,
+            _ambientActorManager?.CarInvalidTransform ?? 0, _ambientActorManager?.PedestrianInvalidTransform ?? 0,
+            _ambientActorManager?.CarIllegalOnewayDirections ?? 0,
+            _ambientActorManager?.TotalStreetPolylines ?? 0, _ambientActorManager?.EligibleStreetPolylines ?? 0,
+            _ambientActorManager?.InvalidOrShortCarPaths ?? 0, _ambientActorManager?.InvalidOrShortPedestrianPaths ?? 0,
+            _ambientActorManager?.PedestrianSeamOrEndSamplesExcluded ?? 0,
+            AmbientPosition(_ambientActorManager?.FirstCarState), AmbientDistance(_ambientActorManager?.FirstCarState),
+            _ambientActorManager?.FirstCarRoadName, _ambientActorManager?.FirstCarRoadClass,
+            _ambientActorManager?.FirstCarState?.SpeedMetersPerSecond, _ambientActorManager?.FirstCarVisible,
+            AmbientPosition(_ambientActorManager?.FirstPedestrianState), AmbientDistance(_ambientActorManager?.FirstPedestrianState),
+            _ambientActorManager?.FirstPedestrianState?.SpeedMetersPerSecond, _ambientActorManager?.FirstPedestrianVisible,
+            Math.Max(0, ( _riderStateSource?.GetRiders().Count ?? 1) - 1),
+            nearestAiRider?.Name, nearestAiRider?.RelativeDistanceMeters, nearestAiRider?.SpeedKph, nearestAi);
     }
+
+    private IReadOnlyList<AiRiderDebugState> GetNearestAiDebugStates()
+    {
+        if (_riderStateSource is null || _geometry is null) return Array.Empty<AiRiderDebugState>();
+        var riders = _riderStateSource.GetRiders();
+        var player = riders.FirstOrDefault(rider => rider.RiderId == "player");
+        if (player is null) return Array.Empty<AiRiderDebugState>();
+        return riders.Where(rider => rider.RiderId != "player")
+            .Select(rider => new AiRiderDebugState(rider.DisplayName,
+                AiRiderPopulation.RelativeDistance(rider.WrappedRouteDistanceMeters,
+                    player.WrappedRouteDistanceMeters, _geometry.LengthMeters),
+                rider.RouteDistanceMeters, rider.VirtualSpeedMps * 3.6,
+                rider.PowerWatts, rider.CadenceRpm))
+            .OrderBy(rider => Math.Abs(rider.RelativeDistanceMeters)).Take(3).ToArray();
+    }
+
+    private Godot.Vector3? AmbientPosition(AmbientActorState? state) => state is { } value
+        ? new Godot.Vector3(value.WorldPosition.X, value.WorldPosition.Y, value.WorldPosition.Z) : null;
+    private double? AmbientDistance(AmbientActorState? state) => state is { } value
+        ? System.Numerics.Vector3.Distance(value.WorldPosition,
+            new System.Numerics.Vector3(_rider.GlobalPosition.X, _rider.GlobalPosition.Y, _rider.GlobalPosition.Z)) : null;
 
     private void LoadRoute(RouteDefinition route)
     {
+        if (_aiVisualRoot is not null)
+        {
+            RemoveChild(_aiVisualRoot);
+            _aiVisualRoot.QueueFree();
+            _aiVisualRoot = null;
+        }
+        _riderVisuals.Clear();
+        _riderVisuals["player"] = _rider;
+        _aiPopulation = new AiRiderPopulation(AiRiderTargetCount, AiRiderMaximumCount, AiRiderRandomSeed);
+        _riderStateSource = new LocalRiderStateSource(_aiPopulation);
+        _aiVisualRoot = new Node3D { Name = "AiRiderVisuals" };
+        AddChild(_aiVisualRoot);
+        for (var i = 0; i < _aiPopulation.Controllers.Count; i++)
+        {
+            var controller = _aiPopulation.Controllers[i];
+            var aiVisual = new CyclistVisual { Name = $"AiCyclist{i + 1:D2}_{controller.Profile.DisplayName}" };
+            aiVisual.Build(i + 1);
+            _aiVisualRoot.AddChild(aiVisual);
+            _riderVisuals[controller.RiderId] = aiVisual;
+        }
         if (_routeRoot is not null)
         {
             RemoveChild(_routeRoot);
@@ -218,6 +322,7 @@ public partial class RideWorldView : Node3D
         _streetFurnitureLayer = null;
         _roadMarkingLayer = null;
         _backgroundStreetLayer = null;
+        _ambientActorManager = null;
         _terrainLayer = null;
         RouteVegetationData? vegetationData = null;
         if (route.Id == "dunedin-one-way-oval-gardens")
@@ -273,6 +378,9 @@ public partial class RideWorldView : Node3D
                 _routeRoot.AddChild(_backgroundStreetLayer);
                 _backgroundStreetLayer.Configure(_geometry,streets);
                 _backgroundStreetLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+                _ambientActorManager = new AmbientActorManager { Name = "AmbientActors", RandomSeed = AmbientActorTuning.DefaultSeed };
+                _routeRoot.AddChild(_ambientActorManager);
+                _ambientActorManager.Configure(_geometry, streets);
             }
         }
         var positions = _geometry.Samples.Select(v => v.Position).ToArray();
@@ -331,10 +439,14 @@ public partial class RideWorldView : Node3D
              visibleFarTerrainChunks = _terrainLayer?.VisibleFarTerrainChunks ?? 0,
              farTerrainSpacingMeters = _terrainLayer?.FarTerrainSpacingMeters ?? 0,
              terrainTriangles = _terrainLayer?.TerrainTriangleCount ?? 0,
-             terrainRoadClearanceAdjustedVertices = _terrainLayer?.RoadClearanceAdjustedVertices ?? 0,
-             terrainBuildMilliseconds = _terrainLayer?.BuildMilliseconds ?? 0,
+            terrainRoadClearanceAdjustedVertices = _terrainLayer?.RoadClearanceAdjustedVertices ?? 0,
+            terrainBuildMilliseconds = _terrainLayer?.BuildMilliseconds ?? 0,
             cyclistNodes = _rider.ApproximateNodeCount,
-            cyclistApproximateTriangles = _rider.ApproximateTriangleCount
+            cyclistApproximateTriangles = _rider.ApproximateTriangleCount,
+            aiRiders = _riderVisuals.Count - 1,
+            aiCyclistNodesPerRider = _riderVisuals.Values.FirstOrDefault(visual => !ReferenceEquals(visual, _rider))?.ApproximateNodeCount ?? 0,
+            aiCyclistTotalNodes = _riderVisuals.Where(pair => pair.Key != "player").Sum(pair => pair.Value.ApproximateNodeCount),
+            aiCyclistApproximateTriangles = _riderVisuals.Where(pair => pair.Key != "player").Sum(pair => pair.Value.ApproximateTriangleCount)
         });
     }
 }

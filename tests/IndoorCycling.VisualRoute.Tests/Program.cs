@@ -1,7 +1,308 @@
 using System.Numerics;
+using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("cars use the left lane in each permitted direction", () =>
+    {
+        var road = new AmbientRoadInput(10, "residential", false, 6.4, [Vector3.Zero, new Vector3(30,0,0)]);
+        var paths = AmbientActorMath.BuildCarPaths([road]); Equal(2, paths.Count);
+        var forward = paths.Single(path => path.Direction == 1).Points[0];
+        var reverse = paths.Single(path => path.Direction == -1).Points[0];
+        Near(0, forward.X); Near(-AmbientActorMath.MaximumLaneOffsetMeters, forward.Z);
+        Near(30, reverse.X); Near(AmbientActorMath.MaximumLaneOffsetMeters, reverse.Z);
+    }),
+    ("one-way roads prohibit reverse car travel and ineligible paths are excluded", () =>
+    {
+        var oneWay = new AmbientRoadInput(1, "primary", true, 8, [Vector3.Zero, new Vector3(25,0,0)]);
+        var footway = new AmbientRoadInput(2, "footway", false, 4, [Vector3.Zero, new Vector3(25,0,0)]);
+        var paths = AmbientActorMath.BuildCarPaths([oneWay, footway]);
+        Equal(1, paths.Count); Equal(1, paths[0].Direction); Equal(1L, paths[0].SourceId);
+    }),
+    ("car eligibility and category speeds match the initial road classes", () =>
+    {
+        foreach (var road in new[] { "trunk", "primary", "secondary", "tertiary", "residential", "unclassified" })
+            if (!AmbientActorMath.IsEligibleRoad(road)) throw new Exception($"{road} should be eligible.");
+        if (AmbientActorMath.IsEligibleRoad("service") || AmbientActorMath.IsEligibleRoad("cycleway")) throw new Exception("Non-car path was eligible.");
+        var range = AmbientActorMath.CarSpeedRange("residential");
+        Near(25 / 3.6f, range.MinimumMetersPerSecond); Near(40 / 3.6f, range.MaximumMetersPerSecond);
+    }),
+    ("cumulative polyline interpolation follows its selected segments", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1,
+            [Vector3.Zero, new Vector3(3,0,0), new Vector3(3,0,4)], new AmbientSpeedRange(1,2));
+        var sample = path.Sample(5.5);
+        Near(3, sample.Position.X); Near(0, sample.Position.Y); Near(2.5f, sample.Position.Z);
+        Near(1, sample.Heading.Length());
+    }),
+    ("car actor advances only along its selected street polyline", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 7, 1,
+            [Vector3.Zero, new Vector3(10,0,0), new Vector3(10,0,10)], new AmbientSpeedRange(2,3));
+        var start = path.Sample(5);
+        var state = new AmbientActorState(4, AmbientActorKind.Car, start.Position, start.Heading, 2, true);
+        var moved = AmbientActorMath.Advance(state, path, 5, 2, false);
+        Near(9, moved.WorldPosition.X); Near(0, moved.WorldPosition.Z);
+    }),
+    ("actors despawn at a path end without jumping to another path", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1, [Vector3.Zero, new Vector3(5,0,0)], new AmbientSpeedRange(2,2));
+        var state = new AmbientActorState(1, AmbientActorKind.Car, Vector3.Zero, Vector3.UnitX, 2, true);
+        var ended = AmbientActorMath.Advance(state, path, 4, 1, false);
+        if (ended.Active) throw new Exception("Actor should be inactive after reaching its path end.");
+    }),
+    ("spawn selection is deterministic with a fixed seed", () =>
+    {
+        AmbientActorPath[] paths = [new AmbientActorPath(AmbientActorKind.Car, 1, 1,
+            [new Vector3(100,0,0), new Vector3(500,0,0)], new AmbientSpeedRange(1,2))];
+        var a = AmbientActorMath.TrySelectSpawn(paths, Vector3.Zero, 50, 600, new Random(84721), 1, out var first);
+        var b = AmbientActorMath.TrySelectSpawn(paths, Vector3.Zero, 50, 600, new Random(84721), 1, out var second);
+        if (!a || !b || first != second) throw new Exception("Fixed seed did not reproduce a spawn selection.");
+    }),
+    ("spawning rejects a car inside its minimum rider distance", () =>
+    {
+        AmbientActorPath[] paths = [new AmbientActorPath(AmbientActorKind.Car, 1, 1,
+            [new Vector3(0,0,0), new Vector3(10,0,0)], new AmbientSpeedRange(1,2))];
+        if (AmbientActorMath.TrySelectSpawn(paths, Vector3.Zero, 25, 50, new Random(1), 20, out _))
+            throw new Exception("A too-close car was selected for spawning.");
+    }),
+    ("pedestrian paths follow the footpath side beyond asphalt", () =>
+    {
+        var paths = AmbientActorMath.BuildFootpathPaths(StraightAmbientRoute(), 100);
+        if (paths.Count < 4) throw new Exception("Expected both footpaths and walking directions.");
+        foreach (var point in paths.SelectMany(path => path.Points))
+        {
+            var lateral = Math.Abs(point.Z);
+            if (lateral < 3.7 || lateral > 6.1) throw new Exception($"Pedestrian is not on the footpath: {point}.");
+        }
+    }),
+    ("pedestrians support forward and reverse walking on each footpath", () =>
+    {
+        var paths = AmbientActorMath.BuildFootpathPaths(StraightAmbientRoute(), 100);
+        if (!paths.Any(path => path.Direction == 1) || !paths.Any(path => path.Direction == -1))
+            throw new Exception("Both walking directions should be available.");
+        foreach (var group in paths.GroupBy(path => path.SourceId))
+            if (group.Count() != 2) throw new Exception("Each footpath side should have two directed paths.");
+    }),
+    ("walking speed bounds stay within the configured range", () =>
+    {
+        Near(1.1f, AmbientActorMath.PedestrianMinimumSpeedMetersPerSecond);
+        Near(1.7f, AmbientActorMath.PedestrianMaximumSpeedMetersPerSecond);
+        foreach (var path in AmbientActorMath.BuildFootpathPaths(StraightAmbientRoute(), 100))
+        {
+            if (path.SpeedRange.MinimumMetersPerSecond < 1.1f || path.SpeedRange.MaximumMetersPerSecond > 1.7f)
+                throw new Exception("Walking speed range fell outside the configured bounds.");
+        }
+    }),
+    ("pause freezes actor movement and resume advances it", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Pedestrian, 1, 1,
+            [Vector3.Zero, new Vector3(20,0,0)], new AmbientSpeedRange(1.4f,1.4f));
+        var state = new AmbientActorState(1, AmbientActorKind.Pedestrian, Vector3.Zero, Vector3.UnitX, 1.4f, true);
+        var paused = AmbientActorMath.Advance(state, path, 0, 2, true); if (paused != state) throw new Exception("Paused actor advanced.");
+        var resumed = AmbientActorMath.Advance(state, path, 0, 2, false); Near(2.8f, resumed.WorldPosition.X);
+    }),
+    ("actors outside the world-space visibility radius are culled", () =>
+    {
+        if (AmbientActorMath.IsVisible(new Vector3(101,0,0), Vector3.Zero, 100)) throw new Exception("Distant actor remained visible.");
+        if (!AmbientActorMath.IsVisible(new Vector3(99,0,0), Vector3.Zero, 100)) throw new Exception("Nearby actor was culled.");
+    }),
+    ("zero and short path segments never produce non-finite transforms", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1,
+            [Vector3.Zero, Vector3.Zero, new Vector3(.001f,0,0), new Vector3(.001f,0,0)], new AmbientSpeedRange(1,2));
+        var sample = path.Sample(.0005);
+        if (!float.IsFinite(sample.Position.X + sample.Position.Y + sample.Position.Z + sample.Heading.X + sample.Heading.Y + sample.Heading.Z)
+            || path.IsUsable) throw new Exception("Short path should be safely rejected without producing NaN values.");
+        var tooShort = new AmbientActorPath(AmbientActorKind.Pedestrian, 2, 1, [Vector3.Zero, Vector3.Zero], new AmbientSpeedRange(1,2));
+        if (tooShort.IsUsable) throw new Exception("Zero-length path was considered usable.");
+    }),
+    ("the bundled Dunedin streets produce only permitted car paths and safe footpaths", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
+        var bundle = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
+        var roads = bundle.Streets.Select(street => new AmbientRoadInput(street.OsmId, street.Highway, street.Oneway,
+            street.WidthMeters, BackgroundStreetGeometry.ConvertPoints(route, street.Points))).ToArray();
+        var cars = AmbientActorMath.BuildCarPaths(roads);
+        var oneWayIds = bundle.Streets.Where(street => street.Oneway).Select(street => street.OsmId).ToHashSet();
+        if (cars.Any(path => oneWayIds.Contains(path.SourceId) && path.Direction < 0))
+            throw new Exception("Bundled one-way street produced reverse traffic.");
+        var pedPaths = AmbientActorMath.BuildFootpathPaths(route.Samples.Select(sample =>
+            new AmbientRouteSample(sample.DistanceMeters, sample.Position, sample.Forward)).ToArray(), route.LengthMeters);
+        if (pedPaths.Count == 0) throw new Exception("Dunedin route produced no footpath paths.");
+        var seam = route.Samples[0].Position;
+        if (pedPaths.SelectMany(path => path.Points).Any(point => Vector3.Distance(point, seam) < 6))
+            throw new Exception("Pedestrian path crossed the lap seam exclusion.");
+    }),
+    ("bundled ambient paths cover 600m and 1200m and deterministic spawning reaches targets", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
+        var bundle = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
+        var roads = bundle.Streets.Select(street => new AmbientRoadInput(street.OsmId, street.Highway,
+            street.Oneway, street.WidthMeters, BackgroundStreetGeometry.ConvertPoints(route, street.Points), street.Name)).ToArray();
+        var paths = AmbientActorMath.BuildCarPaths(roads);
+        var eligible = roads.Where(road => AmbientActorMath.IsEligibleRoad(road.Highway)).ToArray();
+        var categories = new[] { "trunk", "primary", "secondary", "tertiary", "residential", "unclassified" }
+            .Select(category => $"{category}={roads.Count(road => road.Highway.Equals(category, StringComparison.OrdinalIgnoreCase))}");
+        Console.WriteLine($"AMBIENT BUNDLE streets={roads.Length} eligible-polylines={eligible.Length} directed-paths={paths.Count} oneway={roads.Count(road => road.Oneway)} eligible-oneway={eligible.Count(road => road.Oneway)} classes[{string.Join(", ", categories)}]");
+        foreach (var distance in new[] { 600d, 1200d, 3000d })
+        {
+            var pose = route.GetPoseAtDistance(distance);
+            var lane = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward);
+            var nearest = paths.SelectMany(path => path.Points).Min(point => Vector3.Distance(point, lane));
+            var within = eligible.Count(road => road.Points.Any(point => Vector3.Distance(point, lane) <= 300));
+            var carSpawn = AmbientActorMath.TrySelectSpawn(paths, lane, 100,
+                300, new Random(84721), 100, out var carSelection);
+            var pedPaths = AmbientActorMath.BuildFootpathPaths(route.Samples.Select(sample =>
+                new AmbientRouteSample(sample.DistanceMeters, sample.Position, sample.Forward)).ToArray(), route.LengthMeters,
+                exclusionMeters: 6);
+            var pedNearest = pedPaths.SelectMany(path => path.Points).Min(point => Vector3.Distance(point, lane));
+            var pedSpawn = AmbientActorMath.TrySelectSpawn(pedPaths, lane,
+                35, 160, new Random(84721), 100, out var pedestrianSelection);
+            Console.WriteLine($"AMBIENT at={distance:F0}m rider-local={lane} nearest-car-path={nearest:F1}m nearby-streets={within} car-candidate={carSpawn} candidate-distance={(carSpawn ? Vector3.Distance(carSelection.Position, lane) : -1):F1}m nearest-footpath={pedNearest:F1}m pedestrian-candidate={pedSpawn} candidate-distance={(pedSpawn ? Vector3.Distance(pedestrianSelection.Position, lane) : -1):F1}m");
+            if (within == 0 || !carSpawn || !pedSpawn) throw new Exception($"Ambient candidate missing at route distance {distance} m.");
+        }
+        var routePose = route.GetPoseAtDistance(600);
+        var rider = RiderLaneMath.OffsetPosition(routePose.Position, routePose.Forward);
+        var carRng = new Random(84721);
+        var pedPathsAt600 = AmbientActorMath.BuildFootpathPaths(route.Samples.Select(sample =>
+            new AmbientRouteSample(sample.DistanceMeters, sample.Position, sample.Forward)).ToArray(), route.LengthMeters,
+            exclusionMeters: 6);
+        Console.WriteLine($"AMBIENT PEDESTRIAN valid-directed-paths={pedPathsAt600.Count} valid-sections={pedPathsAt600.Count / 4} valid-directed-length={pedPathsAt600.Sum(path => path.LengthMeters):F0}m excluded-seam-samples={AmbientActorMath.CountFootpathSamplesExcludedNearSeams(route.Samples.Select(sample => new AmbientRouteSample(sample.DistanceMeters, sample.Position, sample.Forward)).ToArray(), route.LengthMeters)}");
+        var carCount = 0; var pedestrianCount = 0;
+        for (var i = 0; i < 15; i++)
+            if (AmbientActorMath.TrySelectSpawn(paths, rider, 100, 300, carRng, Math.Min(100, paths.Count * 3), out _)) carCount++;
+        for (var i = 0; i < 10; i++)
+            if (AmbientActorMath.TrySelectSpawn(pedPathsAt600, rider, 35, 160, carRng, Math.Min(100, pedPathsAt600.Count * 3), out _)) pedestrianCount++;
+        if (carCount == 0 || pedestrianCount == 0) throw new Exception("Deterministic Dunedin spawn simulation produced zero actors.");
+        Console.WriteLine($"AMBIENT deterministic initial population at 600m cars={carCount}/15 pedestrians={pedestrianCount}/10");
+    }),
+    ("RiderState has no Godot or persistence assembly dependency", () =>
+    {
+        var references = typeof(RiderState).Assembly.GetReferencedAssemblies().Select(reference => reference.Name ?? "").ToArray();
+        if (references.Any(name => name.Contains("Godot", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Persistence", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Sqlite", StringComparison.OrdinalIgnoreCase)))
+            throw new Exception($"RiderState assembly has an engine or persistence dependency: {string.Join(",", references)}");
+    }),
+    ("AI target power produces finite speed and distance progression", () =>
+    {
+        var controller = new AiRiderController(new AiRiderProfile("Test", 190, 84, 75, .005, .32, 0, 1.7, 7.5));
+        var player = TestRider(0, 0, 1000);
+        controller.PlaceRelativeTo(player, 1000);
+        controller.Update(1000, _ => 0, 30, false);
+        var state = controller.State;
+        if (!double.IsFinite(state.VirtualSpeedMps) || !double.IsFinite(state.RouteDistanceMeters)
+            || state.VirtualSpeedMps <= 0 || state.RouteDistanceMeters <= 0)
+            throw new Exception($"AI progression was invalid: {state}.");
+    }),
+    ("uphill grade slows an otherwise identical AI rider", () =>
+    {
+        var profile = new AiRiderProfile("Test", 190, 84, 75, .005, .32, 0, 1.7, 8);
+        var flat = new AiRiderController(profile); var uphill = new AiRiderController(profile);
+        var player = TestRider(0, 0, 1000); flat.PlaceRelativeTo(player, 1000); uphill.PlaceRelativeTo(player, 1000);
+        flat.Update(1000, _ => 0, 15, false); uphill.Update(1000, _ => 8, 15, false);
+        if (!(uphill.State.VirtualSpeedMps < flat.State.VirtualSpeedMps)) throw new Exception("Uphill AI was not slower than its flat comparison.");
+    }),
+    ("downhill grade increases AI speed compared with flat terrain", () =>
+    {
+        var profile = new AiRiderProfile("Test", 190, 84, 75, .005, .32, 0, 1.7, 8);
+        var flat = new AiRiderController(profile); var downhill = new AiRiderController(profile);
+        var player = TestRider(0, 0, 1000); flat.PlaceRelativeTo(player, 1000); downhill.PlaceRelativeTo(player, 1000);
+        flat.Update(1000, _ => 0, 15, false); downhill.Update(1000, _ => -6, 15, false);
+        if (!(downhill.State.VirtualSpeedMps > flat.State.VirtualSpeedMps)) throw new Exception("Downhill AI did not accelerate relative to flat terrain.");
+    }),
+    ("AI route position wraps and lap count increments at route length", () =>
+    {
+        var controller = new AiRiderController(new AiRiderProfile("Test", 200, 80, 75, .005, .32, 0, 1.7, 8));
+        controller.PlaceRelativeTo(TestRider(98, 98, 100), 100);
+        controller.Update(100, _ => 0, 1, false);
+        if (controller.State.LapNumber != 2 || controller.State.WrappedRouteDistanceMeters >= 10)
+            throw new Exception($"Expected second lap near route start, got {controller.State}.");
+    }),
+    ("paused AI freezes route distance, speed and simulation time", () =>
+    {
+        var controller = new AiRiderController(new AiRiderProfile("Test", 200, 80, 75, .005, .32, 0, 1.7, 8));
+        controller.PlaceRelativeTo(TestRider(20, 20, 1000), 1000);
+        var before = controller.State; controller.Update(1000, _ => 5, 10, true); var after = controller.State;
+        Near((float)before.RouteDistanceMeters, (float)after.RouteDistanceMeters);
+        Near((float)before.VirtualSpeedMps, (float)after.VirtualSpeedMps);
+        Near((float)before.SimulationTimeSeconds, (float)after.SimulationTimeSeconds);
+        if (!after.Paused) throw new Exception("Paused state was not exposed to the rider visual.");
+    }),
+    ("AI profiles are deterministic and stay within requested power cadence and mass ranges", () =>
+    {
+        var first = AiRiderPopulation.CreateProfiles(8, 84721); var second = AiRiderPopulation.CreateProfiles(8, 84721);
+        if (!first.SequenceEqual(second)) throw new Exception("Fixed AI seed did not reproduce its profiles.");
+        foreach (var profile in first)
+            if (profile.TargetPowerWatts is < 120 or > 280 || profile.CadenceRpm is < 70 or > 95
+                || profile.TotalMassKg is < 65 or > 90) throw new Exception($"AI profile outside requested range: {profile}.");
+        if (!first.Any(profile => profile.TargetPowerWatts <= 160)
+            || !first.Any(profile => profile.TargetPowerWatts is >= 170 and <= 220)
+            || !first.Any(profile => profile.TargetPowerWatts >= 230)) throw new Exception("Expected easy/moderate/strong power groups.");
+    }),
+    ("AI riders spawn around player with separation and remain inside the left lane", () =>
+    {
+        var population = new AiRiderPopulation(seed: 84721);
+        foreach (var profile in population.Profiles)
+        {
+            if (Math.Abs(profile.InitialRelativeDistanceMeters) < 25) throw new Exception("AI spawned too near the player.");
+            if (profile.LateralOffsetMeters is < 1.2 or > 2.2) throw new Exception("AI lateral offset left the left-lane range.");
+        }
+        if (!population.Profiles.Any(profile => profile.InitialRelativeDistanceMeters > 0)
+            || !population.Profiles.Any(profile => profile.InitialRelativeDistanceMeters < 0))
+            throw new Exception("AI population must spawn both ahead of and behind the player.");
+    }),
+    ("overlap separation avoids exact visual stacking", () =>
+    {
+        var riders = new[] { TestRider(100, 100, 1000),
+            TestRider(100, 100, 1000) with { RiderId = "ai-a", DisplayName = "A", LateralOffsetMeters = 1.75 },
+            TestRider(100, 100, 1000) with { RiderId = "ai-b", DisplayName = "B", LateralOffsetMeters = 1.75 } };
+        var offsets = AiRiderPopulation.ResolveVisualOverlapOffsets(riders, 1000);
+        if (Math.Abs(offsets["ai-a"] - offsets["ai-b"]) < .001
+            || Math.Abs(offsets["ai-a"] - offsets["player"]) < .001
+            || Math.Abs(offsets["ai-b"] - offsets["player"]) < .001)
+            throw new Exception("Overlapping rider visual offsets remained stacked.");
+    }),
+    ("relative rider distance chooses the short signed path across the lap seam", () =>
+    {
+        Near(10, (float)AiRiderPopulation.RelativeDistance(5, 995, 1000));
+        Near(-10, (float)AiRiderPopulation.RelativeDistance(995, 5, 1000));
+    }),
+    ("rider visual mapping applies each independent state speed cadence and lane offset", () =>
+    {
+        var pose = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!).GetPoseAtDistance(600);
+        var first = RiderVisualInputMath.Create(TestRider(600, 600, 5495) with
+            { VirtualSpeedMps = 8, CadenceRpm = 72, LateralOffsetMeters = 1.3 }, pose, 2);
+        var second = RiderVisualInputMath.Create(TestRider(600, 600, 5495) with
+            { RiderId = "ai-b", VirtualSpeedMps = 11, CadenceRpm = 91, LateralOffsetMeters = 2.1, Paused = true }, pose, 2);
+        Near(28.8f, (float)first.SpeedKph); Near(39.6f, (float)second.SpeedKph);
+        if (first.CadenceRpm == second.CadenceRpm || first.Position == second.Position || !second.Paused)
+            throw new Exception("Independent rider states did not produce independent visual inputs.");
+    }),
+    ("AI simulation does not mutate player RideState or change player physics results", () =>
+    {
+        var state = new RideState(10, 900, 20, 2, 25, 210, 84);
+        var input = new SimulationTickInput(new TrainerTelemetry(DateTimeOffset.UnixEpoch, 210, 84, 25),
+            2, .25, new RiderProfile("Player", 75), new BikeProfile("Bike", 9));
+        var engine = new SimulationEngine(); var baseline = engine.Tick(state, input).NewState;
+        var population = new AiRiderPopulation();
+        population.Update(TestRider(state.DistanceMeters, 900, 5495), 5495, _ => 5, 20);
+        var after = engine.Tick(state, input).NewState;
+        if (state.DistanceMeters != 900 || state.VirtualSpeedKph != 25 || baseline != after)
+            throw new Exception("AI update altered player state or player physics output.");
+    }),
+    ("local rider source returns the player and the configured AI population", () =>
+    {
+        var source = new LocalRiderStateSource(new AiRiderPopulation());
+        source.Update(TestRider(1000, 1000, 5495), 5495, _ => 0, .25);
+        var riders = source.GetRiders();
+        if (riders.Count != 9 || riders[0].RiderId != "player" || riders.Count(rider => rider.RiderId != "player") != 8)
+            throw new Exception("Source boundary did not expose player plus eight AI states.");
+    }),
     ("60 rpm advances one crank revolution per second", () =>
     {
         Near((float)Math.Tau,(float)CyclistAnimationMath.CrankAngularSpeedRadiansPerSecond(60));
@@ -1118,6 +1419,17 @@ static RouteDefinition GpsRoute() => new("gps", "GPS", "", 400,
     [new RoutePoint(0, 0, 0, 20), new RoutePoint(100, 0, 0.001, 30),
      new RoutePoint(200, 0.001, 0.001, 30), new RoutePoint(300, 0.001, 0, 20),
      new RoutePoint(400, 0, 0, 20)]);
+
+static RiderState TestRider(double routeDistance, double wrappedDistance, double routeLength) =>
+    new("player", "You", "test-route", routeDistance, ((wrappedDistance % routeLength) + routeLength) % routeLength,
+        (int)Math.Floor(routeDistance / routeLength) + 1, 1.75, 8, 180, 80, false, 0);
+
+static AmbientRouteSample[] StraightAmbientRoute() =>
+[
+    new AmbientRouteSample(0, new Vector3(0,0,0), Vector3.UnitX),
+    new AmbientRouteSample(50, new Vector3(50,0,0), Vector3.UnitX),
+    new AmbientRouteSample(100, new Vector3(100,0,0), Vector3.UnitX)
+];
 
 static VisualRoute MarkingTestRoute()
 {

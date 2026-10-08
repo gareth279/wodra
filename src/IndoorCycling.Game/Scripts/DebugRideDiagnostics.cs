@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using IndoorCycling.Core.Models;
 
 /// <summary>Small, game-independent state for debug snapshot timing and route jumps.</summary>
@@ -114,6 +115,43 @@ public sealed record RideDebugSnapshot
     public bool? nearestStreetFurnitureRelocated { get; init; }
     public int backgroundStreetsLoaded { get; init; }
     public int visibleStreetChunks { get; init; }
+    public int ambientCars { get; init; }
+    public int ambientCarTarget { get; init; }
+    public int ambientPedestrians { get; init; }
+    public int ambientPedestrianTarget { get; init; }
+    public int ambientEligibleCarPaths { get; init; }
+    public int ambientEligiblePedestrianPaths { get; init; }
+    public long ambientCarSpawnAttempts { get; init; }
+    public long ambientPedestrianSpawnAttempts { get; init; }
+    public long ambientCarOutsideSpawnRadius { get; init; }
+    public long ambientPedestrianOutsideSpawnRadius { get; init; }
+    public long ambientCarTooCloseToRider { get; init; }
+    public long ambientPedestrianTooCloseToRider { get; init; }
+    public long ambientCarNoEligiblePath { get; init; }
+    public long ambientPedestrianNoValidPath { get; init; }
+    public long ambientCarInvalidTransform { get; init; }
+    public long ambientPedestrianInvalidTransform { get; init; }
+    public long ambientCarIllegalOnewayDirections { get; init; }
+    public int ambientTotalStreetPolylines { get; init; }
+    public int ambientEligibleStreetPolylines { get; init; }
+    public int ambientCarInvalidOrShortPaths { get; init; }
+    public int ambientPedestrianInvalidOrShortPaths { get; init; }
+    public int ambientPedestrianSeamOrEndSamplesExcluded { get; init; }
+    public DebugVector3? firstAmbientCarPosition { get; init; }
+    public double? firstAmbientCarDistanceMeters { get; init; }
+    public string? firstAmbientCarRoadName { get; init; }
+    public string? firstAmbientCarRoadClass { get; init; }
+    public double? firstAmbientCarSpeedMetersPerSecond { get; init; }
+    public bool? firstAmbientCarVisible { get; init; }
+    public DebugVector3? firstAmbientPedestrianPosition { get; init; }
+    public double? firstAmbientPedestrianDistanceMeters { get; init; }
+    public double? firstAmbientPedestrianSpeedMetersPerSecond { get; init; }
+    public bool? firstAmbientPedestrianVisible { get; init; }
+    public int aiRiderCount { get; init; }
+    public string? nearestAiRiderName { get; init; }
+    public double? nearestAiRiderRelativeDistanceMeters { get; init; }
+    public double? nearestAiRiderSpeedKph { get; init; }
+    public IReadOnlyList<AiRiderDebugSnapshot> nearestAiRiders { get; init; } = Array.Empty<AiRiderDebugSnapshot>();
     public int terrainNearChunks { get; init; }
     public int terrainFarChunks { get; init; }
     public int terrainVisibleChunks { get; init; }
@@ -133,5 +171,8 @@ public sealed record RideDebugSnapshot
     public double? secondsSinceTrainerCommand { get; init; }
     public bool trainerCommandInFlight { get; init; }
 }
+
+public sealed record AiRiderDebugSnapshot(string name, double relativeDistanceMeters,
+    double routeDistanceMeters, double speedKph, int powerWatts, int cadenceRpm);
 
 public readonly record struct DebugVector3(float x, float y, float z);
