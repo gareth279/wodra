@@ -2,6 +2,21 @@ namespace GWift.RouteBuilder;
 
 public sealed record RoutedPath(IReadOnlyList<RoadNode> Nodes, IReadOnlyList<RoadEdge> Edges, double DistanceMeters);
 
+public static class RoutedPathValidation
+{
+    public static void ValidateConnected(RoutedPath path)
+    {
+        if (path.Nodes.Count != path.Edges.Count + 1)
+            throw new InvalidOperationException("Routed path node and edge counts do not form a connected graph path.");
+        for (var i = 0; i < path.Edges.Count; i++)
+        {
+            var edge = path.Edges[i];
+            if (edge.FromNodeId != path.Nodes[i].Id || edge.ToNodeId != path.Nodes[i + 1].Id)
+                throw new InvalidOperationException($"Routed path has an unrepresented chord between nodes {path.Nodes[i].Id} and {path.Nodes[i + 1].Id}.");
+        }
+    }
+}
+
 public static class RouteSolver
 {
     private const int MaximumSnapCandidates = 8;

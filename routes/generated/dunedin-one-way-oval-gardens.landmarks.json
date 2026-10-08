@@ -2,8 +2,8 @@
   "id": "dunedin-one-way-oval-gardens",
   "routeName": "Dunedin One-way: Oval to Gardens Loop",
   "searchRadiusMeters": 150,
-  "nearbyCandidatesConsidered": 99,
-  "deduplicatedCandidateCount": 97,
+  "nearbyCandidatesConsidered": 100,
+  "deduplicatedCandidateCount": 98,
   "selectedCount": 20,
   "source": "OpenStreetMap",
   "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
@@ -14,7 +14,7 @@
       "latitude": -45.86569859333334,
       "longitude": 170.5108181533334,
       "distanceFromRouteMeters": 11.39243543519624,
-      "nearestRouteDistanceMeters": 2944.3095665812352,
+      "nearestRouteDistanceMeters": 3098.4147447688324,
       "osmType": "way",
       "osmId": 159929111,
       "tags": {
@@ -31,7 +31,7 @@
       "latitude": -45.87725120999998,
       "longitude": 170.50580412999994,
       "distanceFromRouteMeters": 12.154977387837368,
-      "nearestRouteDistanceMeters": 4248.336974965716,
+      "nearestRouteDistanceMeters": 4402.442153153314,
       "osmType": "way",
       "osmId": 88748713,
       "tags": {
@@ -48,7 +48,7 @@
       "latitude": -45.877452600000005,
       "longitude": 170.50375970000002,
       "distanceFromRouteMeters": 12.391072067388597,
-      "nearestRouteDistanceMeters": 656.3243198586458,
+      "nearestRouteDistanceMeters": 810.4294980462435,
       "osmType": "node",
       "osmId": 2361033630,
       "tags": {
@@ -63,7 +63,7 @@
       "latitude": -45.8782380425,
       "longitude": 170.5053242975,
       "distanceFromRouteMeters": 14.572218655928095,
-      "nearestRouteDistanceMeters": 4459.110162730928,
+      "nearestRouteDistanceMeters": 4613.215340918527,
       "osmType": "relation",
       "osmId": 9490732,
       "tags": {
@@ -79,7 +79,7 @@
       "latitude": -45.8776248,
       "longitude": 170.5032013,
       "distanceFromRouteMeters": 18.754098716386476,
-      "nearestRouteDistanceMeters": 618.8370124387554,
+      "nearestRouteDistanceMeters": 772.9421906263531,
       "osmType": "node",
       "osmId": 2361033631,
       "tags": {
@@ -94,7 +94,7 @@
       "latitude": -45.86624677273559,
       "longitude": 170.5160496672464,
       "distanceFromRouteMeters": 4.929572057347579,
-      "nearestRouteDistanceMeters": 3556.2895310167455,
+      "nearestRouteDistanceMeters": 3710.3947092043427,
       "osmType": "relation",
       "osmId": 2140346,
       "tags": {
@@ -111,7 +111,7 @@
       "latitude": -45.87452114,
       "longitude": 170.50763247,
       "distanceFromRouteMeters": 9.883175289645385,
-      "nearestRouteDistanceMeters": 3956.2842415064806,
+      "nearestRouteDistanceMeters": 4110.389419694078,
       "osmType": "way",
       "osmId": 381884371,
       "tags": {
@@ -127,7 +127,7 @@
       "latitude": -45.877598600000006,
       "longitude": 170.5043625,
       "distanceFromRouteMeters": 50.06878129746782,
-      "nearestRouteDistanceMeters": 4416.377749126469,
+      "nearestRouteDistanceMeters": 4570.482927314068,
       "osmType": "node",
       "osmId": 1708656921,
       "tags": {
@@ -142,7 +142,7 @@
       "latitude": -45.8769792,
       "longitude": 170.5056863,
       "distanceFromRouteMeters": 15.470784991661953,
-      "nearestRouteDistanceMeters": 4310.035130209678,
+      "nearestRouteDistanceMeters": 4464.140308397276,
       "osmType": "node",
       "osmId": 11801323187,
       "tags": {
@@ -157,7 +157,7 @@
       "latitude": -45.87736263409091,
       "longitude": 170.50445148636368,
       "distanceFromRouteMeters": 6.902449123648697,
-      "nearestRouteDistanceMeters": 652.7444897307861,
+      "nearestRouteDistanceMeters": 806.8496679183837,
       "osmType": "relation",
       "osmId": 17442926,
       "tags": {
@@ -172,7 +172,7 @@
       "latitude": -45.875367000000004,
       "longitude": 170.50882810000002,
       "distanceFromRouteMeters": 64.38900476838536,
-      "nearestRouteDistanceMeters": 4021.4296141986415,
+      "nearestRouteDistanceMeters": 4175.534792386239,
       "osmType": "node",
       "osmId": 4118935990,
       "tags": {
@@ -187,7 +187,7 @@
       "latitude": -45.8778841,
       "longitude": 170.5017575,
       "distanceFromRouteMeters": 109.44967524247286,
-      "nearestRouteDistanceMeters": 551.9520818976491,
+      "nearestRouteDistanceMeters": 706.0572600852468,
       "osmType": "node",
       "osmId": 11801423940,
       "tags": {
@@ -202,7 +202,7 @@
       "latitude": -45.87833007142858,
       "longitude": 170.5050915,
       "distanceFromRouteMeters": 30.77022708003535,
-      "nearestRouteDistanceMeters": 4464.497863168465,
+      "nearestRouteDistanceMeters": 4618.603041356064,
       "osmType": "way",
       "osmId": 625253565,
       "tags": {
@@ -217,7 +217,7 @@
       "latitude": -45.8776645,
       "longitude": 170.5018603,
       "distanceFromRouteMeters": 113.04817189264526,
-      "nearestRouteDistanceMeters": 562.788868712766,
+      "nearestRouteDistanceMeters": 716.8940469003636,
       "osmType": "node",
       "osmId": 2361033629,
       "tags": {
@@ -233,7 +233,7 @@
       "latitude": -45.8774073,
       "longitude": 170.50438400000002,
       "distanceFromRouteMeters": 34.942644706973496,
-      "nearestRouteDistanceMeters": 708.5976705363735,
+      "nearestRouteDistanceMeters": 862.7028487239711,
       "osmType": "node",
       "osmId": 3759972769,
       "tags": {
@@ -247,7 +247,7 @@
       "latitude": -45.87520266666668,
       "longitude": 170.508946952381,
       "distanceFromRouteMeters": 42.430448092965754,
-      "nearestRouteDistanceMeters": 4054.524395833505,
+      "nearestRouteDistanceMeters": 4208.629574021103,
       "osmType": "way",
       "osmId": 88748723,
       "tags": {
@@ -262,7 +262,7 @@
       "latitude": -45.875760561538456,
       "longitude": 170.50716341538464,
       "distanceFromRouteMeters": 18.62467997108858,
-      "nearestRouteDistanceMeters": 4129.508306662061,
+      "nearestRouteDistanceMeters": 4283.6134848496595,
       "osmType": "relation",
       "osmId": 5683338,
       "tags": {
@@ -277,7 +277,7 @@
       "latitude": -45.8662967,
       "longitude": 170.51051990000002,
       "distanceFromRouteMeters": 59.67409286006012,
-      "nearestRouteDistanceMeters": 2996.022805780606,
+      "nearestRouteDistanceMeters": 3150.1279839682034,
       "osmType": "node",
       "osmId": 1227565154,
       "tags": {
@@ -291,7 +291,7 @@
       "latitude": -45.8794856,
       "longitude": 170.50269790000002,
       "distanceFromRouteMeters": 23.08357538336149,
-      "nearestRouteDistanceMeters": 411.35293210853064,
+      "nearestRouteDistanceMeters": 565.4581102961282,
       "osmType": "node",
       "osmId": 3921322442,
       "tags": {
@@ -305,7 +305,7 @@
       "latitude": -45.880149800000005,
       "longitude": 170.50242060000002,
       "distanceFromRouteMeters": 30.941494081858952,
-      "nearestRouteDistanceMeters": 335.2361362838082,
+      "nearestRouteDistanceMeters": 489.3413144714059,
       "osmType": "node",
       "osmId": 3921329561,
       "tags": {

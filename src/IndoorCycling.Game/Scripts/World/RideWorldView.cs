@@ -18,7 +18,8 @@ public readonly record struct RideWorldDiagnostic(
       StreetFurnitureLayer.NearestFurnitureDebug? NearestStreetFurniture = null,
       int TerrainChunksLoaded = 0, int VisibleTerrainChunks = 0, double TerrainSpacingMeters = 0,
       int NearTerrainChunks = 0, int FarTerrainChunks = 0, int VisibleNearTerrainChunks = 0,
-      int VisibleFarTerrainChunks = 0, double FarTerrainSpacingMeters = 0);
+      int VisibleFarTerrainChunks = 0, double FarTerrainSpacingMeters = 0,
+      int RoadMarkingsLoaded = 0, int NearbyCrossings = 0);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -34,6 +35,7 @@ public partial class RideWorldView : Node3D
     private BuildingLayer? _buildingLayer;
     private VegetationLayer? _vegetationLayer;
     private StreetFurnitureLayer? _streetFurnitureLayer;
+    private RoadMarkingLayer? _roadMarkingLayer;
     private BackgroundStreetLayer? _backgroundStreetLayer;
     private TerrainLayer? _terrainLayer;
     private double _debugElapsed;
@@ -126,6 +128,7 @@ public partial class RideWorldView : Node3D
         _buildingLayer?.UpdateForRideDistance(distance);
         _vegetationLayer?.UpdateForRideDistance(distance);
         _streetFurnitureLayer?.UpdateForRideDistance(distance);
+        _roadMarkingLayer?.UpdateForRideDistance(distance);
         _backgroundStreetLayer?.UpdateForRideDistance(distance);
         _terrainLayer?.UpdateForRideDistance(distance);
         _debugElapsed += delta;
@@ -153,6 +156,8 @@ public partial class RideWorldView : Node3D
                         $"source={nearestFurniture.SourcePosition} visual={nearestFurniture.VisualPosition} " +
                         $"relocated={(nearestFurniture.Relocated ? "yes" : "no")} suppressed={(nearestFurniture.ProxySuppressed ? "yes" : "no")}");
             }
+            if (_roadMarkingLayer is { } markingLayer)
+                GD.Print($"Road markings loaded: {markingLayer.LoadedMarkingCount}; nearby crossings: {markingLayer.NearbyCrossingCount}");
         }
     }
 
@@ -180,7 +185,9 @@ public partial class RideWorldView : Node3D
             _terrainLayer?.TerrainSpacingMeters ?? 0,
             _terrainLayer?.NearTerrainChunks ?? 0, _terrainLayer?.FarTerrainChunks ?? 0,
             _terrainLayer?.VisibleNearTerrainChunks ?? 0, _terrainLayer?.VisibleFarTerrainChunks ?? 0,
-            _terrainLayer?.FarTerrainSpacingMeters ?? 0);
+            _terrainLayer?.FarTerrainSpacingMeters ?? 0,
+            _roadMarkingLayer?.LoadedMarkingCount ?? 0,
+            _roadMarkingLayer?.NearbyCrossingCount ?? 0);
     }
 
     private void LoadRoute(RouteDefinition route)
@@ -209,6 +216,7 @@ public partial class RideWorldView : Node3D
         _buildingLayer = null;
         _vegetationLayer = null;
         _streetFurnitureLayer = null;
+        _roadMarkingLayer = null;
         _backgroundStreetLayer = null;
         _terrainLayer = null;
         RouteVegetationData? vegetationData = null;
@@ -254,6 +262,10 @@ public partial class RideWorldView : Node3D
             _routeRoot.AddChild(_streetFurnitureLayer);
             _streetFurnitureLayer.Configure(_geometry, route, furniture);
             _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            _roadMarkingLayer = new RoadMarkingLayer { Name = "RoadMarkings" };
+            _routeRoot.AddChild(_roadMarkingLayer);
+            _roadMarkingLayer.Configure(_geometry, furniture);
+            _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             var streets=RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
                 "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json",route.Id);
             if(streets is not null){
@@ -301,6 +313,10 @@ public partial class RideWorldView : Node3D
              streetFurnitureMultiMeshes = _streetFurnitureLayer?.MultiMeshCount ?? 0,
              streetFurnitureSceneNodes = _streetFurnitureLayer?.SceneNodeCount ?? 0,
              streetFurnitureBuildMilliseconds = _streetFurnitureLayer?.BuildMilliseconds ?? 0,
+             roadMarkingsLoaded = _roadMarkingLayer?.LoadedMarkingCount ?? 0,
+             roadMarkingTriangles = _roadMarkingLayer?.MarkingTriangleCount ?? 0,
+             roadMarkingMeshInstances = _roadMarkingLayer?.MeshInstanceCount ?? 0,
+             nearbyCrossings = _roadMarkingLayer?.NearbyCrossingCount ?? 0,
              backgroundStreetsLoaded = _backgroundStreetLayer?.LoadedStreetCount ?? 0,
              visibleStreetChunks = _backgroundStreetLayer?.VisibleChunkCount ?? 0,
              backgroundStreetMeshes = _backgroundStreetLayer?.MeshChunkCount ?? 0,

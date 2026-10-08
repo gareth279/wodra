@@ -9,7 +9,7 @@ internal sealed record RoadGraphCacheData(string CacheKey, List<RoadNode> Nodes,
 
 public static class RoadGraphCache
 {
-    private const int RoadFilteringVersion = 2;
+    private const int RoadFilteringVersion = 3;
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
     public static string GetCacheKey(string pbfPath, RouteAuthoringConfig config)

@@ -19,6 +19,8 @@ try
     var cacheDirectory = options.TryGetValue("--cache-dir", out var cacheArg)
         ? cacheArg.Equals("none", StringComparison.OrdinalIgnoreCase) ? null : cacheArg
         : Path.Combine("routes", "cache");
+    var routeOnly = options.TryGetValue("--route-only", out var routeOnlyArg)
+        && bool.TryParse(routeOnlyArg, out var parsedRouteOnly) && parsedRouteOnly;
 
     var config = JsonSerializer.Deserialize<RouteAuthoringConfig>(await File.ReadAllTextAsync(configPath),
         new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
@@ -49,20 +51,39 @@ try
         };
     config.Validate();
 
+    var hasApprovedPoints = options.TryGetValue("--approved-route-points", out var approvedPointsPath);
+    var hasApprovedReport = options.TryGetValue("--approved-report", out var approvedReportPath);
+    if (hasApprovedPoints != hasApprovedReport)
+        throw new ArgumentException("--approved-route-points and --approved-report must be supplied together.");
+
     Console.WriteLine($"Reading local OSM PBF: {Path.GetFileName(pbf)}");
-    var graph = PbfRoadGraphLoader.Load(pbf, config, cacheDirectory);
-    var solveTimer = Stopwatch.StartNew();
-    var result = RouteSolver.Build(graph.Graph, config);
-    solveTimer.Stop();
-    var landmarks = result.IsValid ? LandmarkExtractor.Extract(pbf, result.RoutePoints) : null;
-    BuildingExtractionResult? buildings = result.IsValid && config.Buildings is { Enabled: true } buildingOptions
+    GraphBuildStats graphStats;
+    RouteBuildResult result;
+    double routeSolveSeconds;
+    if (hasApprovedPoints)
+    {
+        (result, graphStats, routeSolveSeconds) = await LoadApprovedRouteAsync(
+            approvedPointsPath!, approvedReportPath!, config);
+        Console.WriteLine("Using approved route points and report directly; route optimization was skipped.");
+    }
+    else
+    {
+        var graph = PbfRoadGraphLoader.Load(pbf, config, cacheDirectory);
+        var solveTimer = Stopwatch.StartNew();
+        result = RouteSolver.Build(graph.Graph, config);
+        solveTimer.Stop();
+        routeSolveSeconds = solveTimer.Elapsed.TotalSeconds;
+        graphStats = graph.Stats;
+    }
+    var landmarks = result.IsValid && !routeOnly ? LandmarkExtractor.Extract(pbf, result.RoutePoints) : null;
+    BuildingExtractionResult? buildings = result.IsValid && !routeOnly && config.Buildings is { Enabled: true } buildingOptions
         ? BuildingExtractor.Extract(pbf, result.RoutePoints, buildingOptions.SearchRadiusMeters,
             buildingOptions.SimplificationToleranceMeters, buildingOptions.MetersPerLevel,
             buildingOptions.OrdinaryHeightMeters, buildingOptions.SmallBuildingHeightMeters)
         : null;
     if (buildings is not null)
         buildings = await BuildingElevationSampler.SampleAsync(buildings, config.Buildings!.ElevationCacheDirectory);
-    VegetationExtractionResult? vegetation = result.IsValid && config.Vegetation is { Enabled: true } vegetationOptions
+    VegetationExtractionResult? vegetation = result.IsValid && !routeOnly && config.Vegetation is { Enabled: true } vegetationOptions
         ? VegetationExtractor.Extract(pbf, result.RoutePoints, buildings?.Buildings ?? [], landmarks?.Landmarks,
             vegetationOptions.SearchRadiusMeters, vegetationOptions.SimplificationToleranceMeters,
             vegetationOptions.TreeRowSpacingMeters, vegetationOptions.GeneratedTreeCapPerArea,
@@ -73,7 +94,7 @@ try
         Console.WriteLine($"Vegetation extraction: polygons {vegetation.PolygonsIncluded}/{vegetation.PolygonsConsidered}; explicit trees {vegetation.ExplicitTreeCount}; tree rows {vegetation.TreeRowCount} ({vegetation.TreeRowInstances} instances); generated {vegetation.GeneratedTreeCount}; rejected road/building/duplicate/landmark {vegetation.TreesRejectedForRoadProximity}/{vegetation.TreesRejectedForBuildingIntersection}/{vegetation.TreesRejectedAsDuplicates}/{vegetation.TreesRejectedNearLandmarks}");
         vegetation = await VegetationElevationSampler.SampleAsync(vegetation, config.Vegetation!.ElevationCacheDirectory);
     }
-    StreetFurnitureExtractionResult? streetFurniture = result.IsValid && config.StreetFurniture is { Enabled: true } furnitureOptions
+    StreetFurnitureExtractionResult? streetFurniture = result.IsValid && !routeOnly && config.StreetFurniture is { Enabled: true } furnitureOptions
         ? StreetFurnitureExtractor.Extract(pbf, result.RoutePoints, furnitureOptions.SearchRadiusMeters)
         : null;
     if (streetFurniture is not null)
@@ -81,20 +102,38 @@ try
         Console.WriteLine($"Street furniture extraction: candidates {streetFurniture.TotalCandidates}, selected {streetFurniture.Items.Count}, inside road ribbon {streetFurniture.ItemsInsideRoadRibbon}");
         streetFurniture = await StreetFurnitureElevationSampler.SampleAsync(streetFurniture, config.StreetFurniture!.ElevationCacheDirectory);
     }
-    BackgroundStreetExtractionResult? backgroundStreets = result.IsValid && config.BackgroundStreets is { Enabled: true } streetOptions
+    BackgroundStreetExtractionResult? backgroundStreets = result.IsValid && !routeOnly && config.BackgroundStreets is { Enabled: true } streetOptions
         ? BackgroundStreetExtractor.Extract(pbf, result.RoutePoints, streetOptions)
         : null;
+    if (result.IsValid && routeOnly && options.TryGetValue("--streets-json", out var streetsJsonPath))
+    {
+        using var streetsDocument = JsonDocument.Parse(await File.ReadAllTextAsync(streetsJsonPath));
+        var root = streetsDocument.RootElement;
+        var statistics = root.GetProperty("statistics");
+        var streets = root.GetProperty("streets").Deserialize<List<BackgroundStreet>>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        backgroundStreets = new BackgroundStreetExtractionResult(
+            statistics.GetProperty("waysConsidered").GetInt32(),
+            statistics.GetProperty("waysIncluded").GetInt32(),
+            statistics.GetProperty("highwayClassCounts").Deserialize<Dictionary<string, int>>() ?? [],
+            statistics.GetProperty("widthSourceCounts").Deserialize<Dictionary<string, int>>() ?? [],
+            statistics.GetProperty("namedStreetCount").GetInt32(),
+            statistics.GetProperty("totalLengthMeters").GetDouble(),
+            statistics.GetProperty("suppressedOverlapMeters").GetDouble(),
+            statistics.GetProperty("runtimeSampleCount").GetInt32(), streets);
+    }
     if (backgroundStreets is not null)
     {
         Console.WriteLine($"Background streets: candidate ways {backgroundStreets.WaysConsidered}, included pieces {backgroundStreets.WaysIncluded}, total {backgroundStreets.TotalLengthMeters:F1} m, overlap suppressed {backgroundStreets.SuppressedOverlapMeters:F1} m");
         Console.WriteLine($"Background street classes: {string.Join(", ", backgroundStreets.HighwayClassCounts.Select(p=>$"{p.Key}={p.Value}"))}; named {backgroundStreets.NamedStreetCount}; width sources {string.Join(", ", backgroundStreets.WidthSourceCounts.Select(p=>$"{p.Key}={p.Value}"))}; samples {backgroundStreets.RuntimeSampleCount}; extraction/elevation seconds {backgroundStreets.GenerationSeconds:F2}");
         backgroundStreets = await BackgroundStreetElevationSampler.SampleAsync(backgroundStreets, config.BackgroundStreets!.ElevationCacheDirectory);
     }
-    await BuildOutputs.WriteAsync(outputDirectory, config, pbf, graph.Stats, result,
-        solveTimer.Elapsed.TotalSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets);
-    if (result.IsValid && config.Elevation is { Enabled: true } elevation)
+    await BuildOutputs.WriteAsync(outputDirectory, config, pbf, graphStats, result,
+        routeSolveSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets,
+        bundleBackgroundStreets: !options.ContainsKey("--no-bundle-streets"));
+    if (!routeOnly && result.IsValid && config.Elevation is { Enabled: true } elevation)
         await ElevationPipelineRunner.RunAsync(outputDirectory, config.Id, elevation);
-    if (result.IsValid && config.Terrain is { Enabled: true } terrain)
+    if (!routeOnly && result.IsValid && config.Terrain is { Enabled: true } terrain)
         await TerrainPipelineRunner.RunAsync(outputDirectory, config.Id, terrain);
     return result.IsValid ? 0 : 2;
 }
@@ -116,11 +155,60 @@ static Dictionary<string, string> ParseOptions(string[] args)
     return result;
 }
 
+static async Task<(RouteBuildResult Result, GraphBuildStats GraphStats, double RouteSolveSeconds)>
+    LoadApprovedRouteAsync(string routePointsPath, string reportPath, RouteAuthoringConfig config)
+{
+    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+    using var pointsDocument = JsonDocument.Parse(await File.ReadAllTextAsync(routePointsPath));
+    var pointsRoot = pointsDocument.RootElement;
+    if (!string.Equals(pointsRoot.GetProperty("id").GetString(), config.Id, StringComparison.Ordinal)
+        || !pointsRoot.GetProperty("isValid").GetBoolean())
+        throw new InvalidDataException("Approved route-points file is invalid or belongs to another route.");
+    var points = pointsRoot.GetProperty("points").Deserialize<RoutePointOutput[]>(jsonOptions) ?? [];
+    var report = JsonSerializer.Deserialize<BuildReport>(await File.ReadAllTextAsync(reportPath), jsonOptions)
+        ?? throw new InvalidDataException("Approved route report is empty.");
+    if (!report.IsValid || report.Id != config.Id || points.Length < 2
+        || points.Length != report.FinalPointCount
+        || Math.Abs(points[^1].DistanceMeters - report.ActualOsmDistanceMeters) > 0.001
+        || Math.Abs(pointsRoot.GetProperty("actualOsmDistanceMeters").GetDouble() - report.ActualOsmDistanceMeters) > 0.001)
+        throw new InvalidDataException("Approved route-points and report metadata do not agree.");
+    if (points[0].DistanceMeters != 0
+        || Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
+        || Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9)
+        throw new InvalidDataException("Approved route is not closed at its lap seam.");
+    if (points.Any(point => !double.IsFinite(point.DistanceMeters + point.Latitude + point.Longitude))
+        || points.Zip(points.Skip(1), (a, b) => b.DistanceMeters - a.DistanceMeters)
+            .Any(gap => gap <= 0 || gap > config.MaxOutputSpacingMeters + 0.02))
+        throw new InvalidDataException("Approved route contains invalid points or exceeds configured sample spacing.");
+
+    var closure = report.Legs.SingleOrDefault(leg => leg.FromAnchor == "Oval closure");
+    if (closure is null || !closure.WayIds.SequenceEqual([116726397L, 508089766L]))
+        throw new InvalidDataException("Approved route report does not contain the reviewed Cumberland/Wolseley closure.");
+    foreach (var exclusion in config.ExcludedClosureEdges)
+        if (report.RoadSegments.Any(segment => segment.WayId == exclusion.WayId
+            && ((segment.FromNodeId == exclusion.FromNodeId && segment.ToNodeId == exclusion.ToNodeId)
+                || (segment.FromNodeId == exclusion.ToNodeId && segment.ToNodeId == exclusion.FromNodeId))))
+            throw new InvalidDataException($"Approved route contains excluded OSM edge {exclusion.WayId}:{exclusion.FromNodeId}-{exclusion.ToNodeId}.");
+
+    var centreline = points.Select(point => new GeoPoint(point.Latitude, point.Longitude)).ToArray();
+    var result = new RouteBuildResult(centreline, points, report.Anchors, report.Legs,
+        report.ActualOsmDistanceMeters, report.MaximumAdjacentPointDistanceMeters,
+        report.MaximumSourceOsmNodeSpacingMeters, report.MaximumCorridorDeviationMeters,
+        report.SourceOsmNodeCount, Math.Max(0, report.FinalPointCount - report.SourceOsmNodeCount),
+        true, report.Warnings, report.Errors, report.RouteRefSummary, report.RoadSegments);
+    var stats = new GraphBuildStats(report.RetainedOsmNodeCount, report.EligibleWayCount,
+        report.GraphNodeCount, report.GraphEdgeCount, report.Timings.NodeScanSeconds,
+        report.Timings.WayScanSeconds, report.Timings.GraphBuildSeconds, report.Timings.CacheHit,
+        report.Timings.CacheLoadSeconds, report.Timings.CacheSaveSeconds, report.Timings.CacheBuildSeconds);
+    return (result, stats, report.Timings.RouteSolveSeconds);
+}
+
 static void PrintHelp() => Console.WriteLine("""
 GWift.RouteBuilder builds offline route centreline files from a local OpenStreetMap PBF.
 
 Usage:
   dotnet run --project tools/GWift.RouteBuilder -- build --pbf <file.osm.pbf> --config <route.json> --output <directory>
-       [--max-snap-meters <metres>] [--cache-dir <directory|none>]
+       [--max-snap-meters <metres>] [--cache-dir <directory|none>] [--route-only true] [--streets-json <existing-file>]
+       [--approved-route-points <file> --approved-report <file>] [--no-bundle-streets true]
   dotnet run --project tools/GWift.RouteBuilder -- --help
 """);

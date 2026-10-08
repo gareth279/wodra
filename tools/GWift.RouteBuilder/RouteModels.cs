@@ -5,6 +5,12 @@ namespace GWift.RouteBuilder;
 public sealed record GeoPoint(double Latitude, double Longitude);
 public sealed record RouteAnchor(string Name, double SourceDistanceMeters, double Latitude, double Longitude);
 public sealed record BoundingBox(double MinLatitude, double MinLongitude, double MaxLatitude, double MaxLongitude);
+public sealed record ClosureEdgeExclusion(long WayId, long FromNodeId, long ToNodeId, string Reason)
+{
+    public bool Matches(RoadEdge edge) => edge.WayId == WayId
+        && ((edge.FromNodeId == FromNodeId && edge.ToNodeId == ToNodeId)
+            || (edge.FromNodeId == ToNodeId && edge.ToNodeId == FromNodeId));
+}
 
 public sealed class RouteAuthoringConfig
 {
@@ -13,6 +19,7 @@ public sealed class RouteAuthoringConfig
     public bool Loop { get; init; }
     public string RoutingMode { get; init; } = "anchors";
     public List<string> PreferredRefs { get; init; } = [];
+    public List<ClosureEdgeExclusion> ExcludedClosureEdges { get; init; } = [];
     public GeoPoint? StartArea { get; init; }
     public GeoPoint? TurnaroundArea { get; init; }
     public double StartAreaRadiusMeters { get; init; } = 250;
@@ -56,6 +63,9 @@ public sealed class RouteAuthoringConfig
         if (RoadCostMultipliers.Any(pair => string.IsNullOrWhiteSpace(pair.Key)
             || !double.IsFinite(pair.Value) || pair.Value < 1))
             throw new InvalidDataException("Road cost multipliers must be finite values greater than or equal to 1.");
+        if (ExcludedClosureEdges.Any(edge => edge.WayId <= 0 || edge.FromNodeId <= 0 || edge.ToNodeId <= 0
+            || edge.FromNodeId == edge.ToNodeId || string.IsNullOrWhiteSpace(edge.Reason)))
+            throw new InvalidDataException("Excluded closure edges require a positive OSM way ID, two distinct node IDs, and a reason.");
         if (RoutingMode is not ("anchors" or "roadRef")) throw new InvalidDataException("routingMode must be 'anchors' or 'roadRef'.");
         Elevation?.Validate();
         Terrain?.Validate(Elevation);
@@ -252,9 +262,14 @@ public sealed record RoutedLeg(string FromAnchor, string ToAnchor, double Straig
     IReadOnlyList<SnapCandidate> AlternativeStartCandidates, IReadOnlyList<SnapCandidate> AlternativeEndCandidates,
     IReadOnlyList<GeoPoint> Centreline, string SectionType = "road");
 public sealed record RoadWaySummary(long WayId, string Highway, string? Name, string? Ref,
-    string? Bridge = null, string? Tunnel = null, string? Layer = null);
+    string? Bridge = null, string? Tunnel = null, string? Layer = null, string? Oneway = null,
+    string? Access = null, string? Bicycle = null, string? Vehicle = null,
+    string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null);
 public sealed record RoutedRoadSegment(double StartDistanceMeters, double EndDistanceMeters, long WayId,
-    string Highway, string? Name, string? Ref, string? Bridge, string? Tunnel, string? Layer);
+    string Highway, string? Name, string? Ref, string? Bridge, string? Tunnel, string? Layer,
+    long FromNodeId = 0, long ToNodeId = 0, string? Oneway = null, string? Access = null,
+    string? Bicycle = null, string? Vehicle = null, string? MotorVehicle = null, string? Motorcar = null,
+    string? OnewayBicycle = null);
 public sealed record NonPreferredConnector(long WayId, string Highway, string? Name, string? Ref,
     double DistanceMeters, string Reason);
 public sealed record RouteRefSummary(IReadOnlyList<string> PreferredRefs,
@@ -298,6 +313,7 @@ public sealed class BuildReport
     public IReadOnlyList<RoutedLeg> Legs { get; init; } = [];
     public RouteRefSummary? RouteRefSummary { get; init; }
     public IReadOnlyList<RoutedRoadSegment> RoadSegments { get; init; } = [];
+    public IReadOnlyList<ClosureEdgeExclusion> ExcludedClosureEdges { get; init; } = [];
     public int NearbyLandmarkCandidatesConsidered { get; init; }
     public int SelectedLandmarkCount { get; init; }
     public BuildingReport? Buildings { get; init; }

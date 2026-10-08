@@ -67,29 +67,27 @@ public static class RouteCatalog
 
 	private static RouteDefinition CreateDunedinRoute()
 	{
-		const double oldRouteLengthMeters = 5850;
+		// Chainages follow the approved route's OSM way transitions; they are not scaled from the retired route.
 		RouteSegment[] segments =
 		[
-			new(0, 277, 0.36, "Oval onto Cumberland"),
-			new(277, 615, -0.30, "Cumberland south section"),
-			new(615, 941, -0.31, "Cumberland to High Street"),
-			new(941, 1512, 0.18, "Cumberland central"),
-			new(1512, 1991, 0.21, "Cumberland to Albany"),
-			new(1991, 2380, 0.51, "Cumberland gentle rise"),
-			new(2380, 2882, 0.40, "Approach to Gardens"),
-			new(2882, 2942, 0.00, "Turn at Gardens"),
-			new(2942, 3467, -0.19, "Great King southbound"),
-			new(3467, 3852, -0.26, "Great King to Albany"),
-			new(3852, 4356, -0.20, "Castle central"),
-			new(4356, 4915, -0.18, "Castle to High Street"),
-			new(4915, 5298, 0.00, "Castle lower flat"),
-			new(5298, 5729, -0.23, "Return to Oval"),
-			new(5729, 5850, 0.00, "Oval finish")
+			new(0, 740.377944606337, 0, "Crawford Street northbound"),
+			new(740.377944606337, 998.6737252213936, 0, "Queens Gardens northbound"),
+			new(998.6737252213936, 1925.1127519957927, 0, "Cumberland Street northbound"),
+			new(1925.1127519957927, 2188.2277361055435, 0, "Malcolm Street"),
+			new(2188.2277361055435, 2632.0259160793826, 0, "Great King Street to Gardens"),
+			new(2632.0259160793826, 2752.237291802371, 0, "Gardens turnaround connector"),
+			new(2752.237291802371, 3195.5065715925757, 0, "Cumberland Street southbound"),
+			new(3195.5065715925757, 3455.974768929621, 0, "Gowland Street"),
+			new(3455.974768929621, 4196.404172994895, 0, "Castle Street"),
+			new(4196.404172994895, 4421.057440131015, 0, "Anzac Avenue"),
+			new(4421.057440131015, 4634.551310392236, 0, "Queens Gardens southbound"),
+			new(4634.551310392236, 5377.550175433017, 0, "Cumberland Street to Oval"),
+			new(5377.550175433017, 5495.292819082555, 0, "Wolseley Street closure")
 		];
 		return RouteDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
 			"GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json",
 			"dunedin-one-way-oval-gardens", "Dunedin One-way: Oval to Gardens Loop",
 			"OSM SH1 one-way loop from the Oval to Gardens and back. Geometry © OpenStreetMap contributors, ODbL 1.0.",
-			oldRouteLengthMeters, segments);
+			segments);
 	}
 }

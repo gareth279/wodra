@@ -233,7 +233,23 @@ public static class BuildingExtractor
     private static bool ValidPolygon(IReadOnlyList<GeoPoint> points)
     {
         if (points.Count < 4 || GeoMath.HaversineMeters(points[0], points[^1]) > .05) return false;
-        return points.Take(points.Count - 1).Distinct().Count() >= 3;
+        if (points.Take(points.Count - 1).Distinct().Count() < 3) return false;
+        var originLatitude = points.Average(point => point.Latitude);
+        var originLongitude = points.Average(point => point.Longitude);
+        const double radians = Math.PI / 180;
+        var scaleX = 6371000 * Math.Cos(originLatitude * radians) * radians;
+        var scaleY = 6371000 * radians;
+        var twiceArea = 0d;
+        for (var i = 0; i < points.Count - 1; i++)
+        {
+            var a = ((points[i].Longitude - originLongitude) * scaleX,
+                -(points[i].Latitude - originLatitude) * scaleY);
+            var b = ((points[i + 1].Longitude - originLongitude) * scaleX,
+                -(points[i + 1].Latitude - originLatitude) * scaleY);
+            twiceArea += a.Item1 * b.Item2 - b.Item1 * a.Item2;
+        }
+        // Tiny OSM slivers quantize to zero area in the runtime's single-precision mesh frame.
+        return double.IsFinite(twiceArea) && Math.Abs(twiceArea) >= 0.2;
     }
 
     private static (double Distance, double RouteDistance) PolygonToRoute(IReadOnlyList<GeoPoint> polygon, IReadOnlyList<RoutePointOutput> route)

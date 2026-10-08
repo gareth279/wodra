@@ -7,5 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../tools/GWift.RouteBuilder/GWift.RouteBuilder.csproj" />
+    <EmbeddedResource Include="../../routes/generated/dunedin-one-way-oval-gardens.report.json"
+                      LogicalName="GWift.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json" />
   </ItemGroup>
 </Project>

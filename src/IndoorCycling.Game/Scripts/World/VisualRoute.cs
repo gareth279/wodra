@@ -90,6 +90,19 @@ public sealed class VisualRoute
         }).ToArray();
         corrected[^1] = (corrected[^1].DistanceMeters, corrected[0].Position);
 
+        // Segment boundaries can coincide with an authored GPS point after the
+        // local-frame conversion to float. Collapse only those redundant samples;
+        // retaining them would create equal arc-length chainages and zero-area ribbon faces.
+        var distinctCorrected = new List<(double DistanceMeters, Vector3 Position)>(corrected.Length);
+        for (var i = 0; i < corrected.Length; i++)
+        {
+            if (i > 0 && i < corrected.Length - 1
+                && corrected[i].Position == corrected[i - 1].Position)
+                continue;
+            distinctCorrected.Add(corrected[i]);
+        }
+        corrected = distinctCorrected.ToArray();
+
         // Authored route metres and GPS geometry metres are not always identical.
         // Parameterize the centreline by its measured arc length, scaled to the
         // authoritative lap length, so the rider, ribbons and posts share one map.

@@ -2,7 +2,9 @@ namespace GWift.RouteBuilder;
 
 public sealed record RoadNode(long Id, GeoPoint Coordinate);
 public sealed record RoadEdge(long FromNodeId, long ToNodeId, double LengthMeters, double CostMeters,
-    long WayId, string Highway, string? Name, string? Ref, string? Bridge = null, string? Tunnel = null, string? Layer = null);
+    long WayId, string Highway, string? Name, string? Ref, string? Bridge = null, string? Tunnel = null,
+    string? Layer = null, string? Oneway = null, string? Access = null, string? Bicycle = null,
+    string? Vehicle = null, string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null);
 
 public sealed class RoadGraph
 {
@@ -38,10 +40,16 @@ public sealed class RoadGraph
             AddNode(new RoadNode(bId, b));
             var length = GeoMath.HaversineMeters(a, b);
             if (!double.IsFinite(length) || length <= 0) continue;
-            var forward = new RoadEdge(aId, bId, length, length, wayId, highway, name, reference, bridge, tunnel, layer);
-            var reverse = new RoadEdge(bId, aId, length, length, wayId, highway, name, reference, bridge, tunnel, layer);
+            var forward = CreateEdge(aId, bId);
+            var reverse = CreateEdge(bId, aId);
             if (oneway >= 0) AddEdge(forward);
             if (oneway <= 0) AddEdge(reverse);
+
+            RoadEdge CreateEdge(long from, long to) => new(from, to, length, length, wayId,
+                highway, name, reference, bridge, tunnel, layer, tags.GetValueOrDefault("oneway"),
+                tags.GetValueOrDefault("access"), tags.GetValueOrDefault("bicycle"),
+                tags.GetValueOrDefault("vehicle"), tags.GetValueOrDefault("motor_vehicle"),
+                tags.GetValueOrDefault("motorcar"), tags.GetValueOrDefault("oneway:bicycle"));
         }
     }
 
@@ -77,8 +85,13 @@ public static class RoadEligibility
     {
         highway = tags.GetValueOrDefault("highway") ?? "";
         if (string.IsNullOrWhiteSpace(highway)) return false;
-        if (EqualsTag(tags, "access", "no") || EqualsTag(tags, "access", "private")
-            || EqualsTag(tags, "bicycle", "no")) return false;
+        var bicycle = tags.GetValueOrDefault("bicycle");
+        if (IsDenied(bicycle)) return false;
+        var bicycleExplicitlyAllowed = bicycle is not null
+            && (bicycle.Equals("yes", StringComparison.OrdinalIgnoreCase)
+                || bicycle.Equals("designated", StringComparison.OrdinalIgnoreCase)
+                || bicycle.Equals("permissive", StringComparison.OrdinalIgnoreCase));
+        if (!bicycleExplicitlyAllowed && IsDenied(tags.GetValueOrDefault("access"))) return false;
         if (AllowedHighways.Contains(highway)) return true;
         if (highway.Equals("path", StringComparison.OrdinalIgnoreCase))
             return IsYesOrDesignated(tags.GetValueOrDefault("bicycle"));
@@ -119,6 +132,10 @@ public static class RoadEligibility
             || value.Equals("permissive", StringComparison.OrdinalIgnoreCase)
             || value.Equals("1", StringComparison.OrdinalIgnoreCase)
             || value.Equals("true", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsDenied(string? value) => value is not null
+        && (value.Equals("no", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("private", StringComparison.OrdinalIgnoreCase));
 
     private static bool EqualsTag(IReadOnlyDictionary<string, string> tags, string key, string value) =>
         tags.TryGetValue(key, out var tagValue) && tagValue.Equals(value, StringComparison.OrdinalIgnoreCase);

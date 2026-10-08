@@ -19,10 +19,10 @@ public static class RouteDataLoader
 	};
 
 	/// <summary>
-	/// Loads OSM positions and generated LINZ elevation/gradient values. Legacy segments supply labels only.
+	/// Loads OSM positions and generated LINZ elevation/gradient values with chainages authored against that geometry.
 	/// </summary>
 	public static RouteDefinition LoadEmbedded(Assembly assembly, string resourceName, string id, string name,
-		string description, double oldRouteLengthMeters, IReadOnlyList<RouteSegment> oldSegments)
+		string description, IReadOnlyList<RouteSegment> segments)
 	{
 		using var stream = assembly.GetManifestResourceStream(resourceName)
 			?? throw new InvalidDataException($"Embedded route data resource '{resourceName}' was not found.");
@@ -50,20 +50,25 @@ public static class RouteDataLoader
 		if (points[0].DistanceMeters != 0 || Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
 			|| Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9)
 			throw new InvalidDataException($"Embedded route data resource '{resourceName}' does not close at the loop seam.");
-		if (!double.IsFinite(oldRouteLengthMeters) || oldRouteLengthMeters <= 0)
-			throw new ArgumentOutOfRangeException(nameof(oldRouteLengthMeters));
 		if (points.Any(point => point.ElevationMeters is not { } elevation || !double.IsFinite(elevation)
 			|| point.RawElevationMeters is not { } raw || !double.IsFinite(raw)
 			|| point.GradientPercent is not { } gradient || !double.IsFinite(gradient)))
 			throw new InvalidDataException($"Embedded route data resource '{resourceName}' has no complete generated elevation and gradient profile.");
 
-		var scale = routeLengthMeters / oldRouteLengthMeters;
-		// Legacy section positions are retained for descriptive labels only. Gradient authority is generated per-point data.
-		var remappedSegments = oldSegments.Select(segment => new RouteSegment(
-			segment.StartMeters * scale, segment.EndMeters * scale,
-			0, segment.Label)).ToArray();
+		if (segments.Count == 0 || Math.Abs(segments[0].StartMeters) > 0.001
+			|| Math.Abs(segments[^1].EndMeters - routeLengthMeters) > 0.001)
+			throw new InvalidDataException($"Route segments for '{id}' must cover the generated route chainage.");
+		for (var i = 0; i < segments.Count; i++)
+		{
+			var segment = segments[i];
+			if (!double.IsFinite(segment.StartMeters) || !double.IsFinite(segment.EndMeters)
+				|| segment.EndMeters <= segment.StartMeters || string.IsNullOrWhiteSpace(segment.Label)
+				|| segment.EndMeters > routeLengthMeters + 0.001
+				|| (i > 0 && Math.Abs(segment.StartMeters - segments[i - 1].EndMeters) > 0.001))
+				throw new InvalidDataException($"Route segments for '{id}' contain invalid or gapped chainage.");
+		}
 		var routePoints = points.Select(point => new RoutePoint(point.DistanceMeters,
 			point.Latitude, point.Longitude, point.ElevationMeters!.Value, point.RawElevationMeters, point.GradientPercent)).ToArray();
-		return new RouteDefinition(id, name, description, routeLengthMeters, remappedSegments, routePoints);
+		return new RouteDefinition(id, name, description, routeLengthMeters, segments, routePoints);
 	}
 }

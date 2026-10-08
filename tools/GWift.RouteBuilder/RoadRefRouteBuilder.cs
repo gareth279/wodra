@@ -53,7 +53,8 @@ internal static class RoadRefRouteBuilder
         for (var from = 0; from < startNodes.Length; from++)
         for (var to = 0; to < startNodes.Length; to++)
             closurePaths[from, to] = FindShortestPath(graph, startNodes[from], startNodes[to],
-                _ => true, config.Profile, config.RoadCostMultipliers);
+                edge => !config.ExcludedClosureEdges.Any(exclusion => exclusion.Matches(edge)),
+                config.Profile, config.RoadCostMultipliers);
 
         LoopChoice? best = null;
         var bestScore = double.PositiveInfinity;
@@ -179,16 +180,19 @@ internal static class RoadRefRouteBuilder
 
         void AddSection(string name, string sectionType, RoutedPath path, AnchorSnap from, AnchorSnap to)
         {
+            RoutedPathValidation.ValidateConnected(path);
             var sectionPoints = path.Nodes.Select(node => node.Coordinate).ToArray();
             foreach (var point in sectionPoints)
                 if (allPoints.Count == 0 || GeoMath.HaversineMeters(allPoints[^1], point) > 0.001)
                     allPoints.Add(point);
-            var ways = path.Edges.Select(edge => new RoadWaySummary(edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer))
+            var ways = path.Edges.Select(ToWaySummary)
                 .DistinctBy(way => way.WayId).ToArray();
             foreach (var edge in path.Edges)
             {
                 roadSegments.Add(new RoutedRoadSegment(sectionDistance, sectionDistance + edge.LengthMeters,
-                    edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer));
+                    edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer,
+                    edge.FromNodeId, edge.ToNodeId, edge.Oneway, edge.Access, edge.Bicycle,
+                    edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle));
                 sectionDistance += edge.LengthMeters;
             }
             var distance = path.Edges.Sum(edge => edge.LengthMeters);
@@ -198,6 +202,10 @@ internal static class RoadRefRouteBuilder
                 from, to, "passed", ways.Select(way => way.WayId).ToArray(), ways, [], [], sectionPoints, sectionType));
         }
     }
+
+    private static RoadWaySummary ToWaySummary(RoadEdge edge) => new(edge.WayId, edge.Highway,
+        edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer, edge.Oneway, edge.Access,
+        edge.Bicycle, edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle);
 
     private static long[] NodesNearArea(RoadGraph graph, IReadOnlyList<RoadEdge> preferredEdges,
         GeoPoint area, double radiusMeters) => preferredEdges

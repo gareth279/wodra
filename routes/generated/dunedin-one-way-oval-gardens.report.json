@@ -19,9 +19,9 @@
   "detourFailureRatio": 2.2,
   "maxOutputSpacingMeters": 30,
   "retainedOsmNodeCount": 150679,
-  "eligibleWayCount": 2198,
-  "graphNodeCount": 11942,
-  "graphEdgeCount": 22164,
+  "eligibleWayCount": 2205,
+  "graphNodeCount": 12003,
+  "graphEdgeCount": 22290,
   "anchors": [
     {
       "anchor": {
@@ -30,15 +30,15 @@
         "latitude": -45.88355,
         "longitude": 170.4985
       },
-      "fromNodeId": 1294068313,
-      "toNodeId": 4974661691,
-      "wayId": 817050462,
+      "fromNodeId": 1294068086,
+      "toNodeId": 14156414792,
+      "wayId": 118892272,
       "snappedCoordinate": {
-        "latitude": -45.882843300000005,
-        "longitude": 170.5004442
+        "latitude": -45.8841346,
+        "longitude": 170.4997213
       },
-      "snapDistanceMeters": 169.77265084624375,
-      "bearingDegrees": 21.24838680367236,
+      "snapDistanceMeters": 114.7270165857649,
+      "bearingDegrees": 21.442767528236857,
       "directionAlignmentDegrees": 0,
       "highway": "trunk",
       "roadName": "Crawford Street",
@@ -93,15 +93,15 @@
         "latitude": -45.88355,
         "longitude": 170.4985
       },
-      "fromNodeId": 3766380544,
-      "toNodeId": 14158950984,
+      "fromNodeId": 14158950984,
+      "toNodeId": 14158946273,
       "wayId": 116726397,
       "snappedCoordinate": {
-        "latitude": -45.8838917,
-        "longitude": 170.50149040000002
+        "latitude": -45.884339700000005,
+        "longitude": 170.501239
       },
-      "snapDistanceMeters": 234.56857152843742,
-      "bearingDegrees": 201.33971274879528,
+      "snapDistanceMeters": 229.4758374310597,
+      "bearingDegrees": 201.33713904797145,
       "directionAlignmentDegrees": 0,
       "highway": "trunk",
       "roadName": "Cumberland Street",
@@ -112,9 +112,9 @@
     {
       "fromAnchor": "Oval start / finish",
       "toAnchor": "Northbound SH1",
-      "straightLineDistanceMeters": 2397.3168200403684,
-      "distanceMeters": 2477.9207378919104,
-      "roadDirectRatio": 1.03362255550778,
+      "straightLineDistanceMeters": 2551.42074863128,
+      "distanceMeters": 2632.0259160793826,
+      "roadDirectRatio": 1.0315922677556588,
       "maximumCorridorDeviationMeters": 0,
       "startSnap": {
         "anchor": {
@@ -123,15 +123,15 @@
           "latitude": -45.88355,
           "longitude": 170.4985
         },
-        "fromNodeId": 1294068313,
-        "toNodeId": 4974661691,
-        "wayId": 817050462,
+        "fromNodeId": 1294068086,
+        "toNodeId": 14156414792,
+        "wayId": 118892272,
         "snappedCoordinate": {
-          "latitude": -45.882843300000005,
-          "longitude": 170.5004442
+          "latitude": -45.8841346,
+          "longitude": 170.4997213
         },
-        "snapDistanceMeters": 169.77265084624375,
-        "bearingDegrees": 21.24838680367236,
+        "snapDistanceMeters": 114.7270165857649,
+        "bearingDegrees": 21.442767528236857,
         "directionAlignmentDegrees": 0,
         "highway": "trunk",
         "roadName": "Crawford Street",
@@ -160,6 +160,7 @@
       },
       "status": "passed",
       "wayIds": [
+        118892272,
         817050462,
         817050461,
         819986054,
@@ -197,213 +198,313 @@
       ],
       "ways": [
         {
+          "wayId": 118892272,
+          "highway": "trunk",
+          "name": "Crawford Street",
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
+        },
+        {
           "wayId": 817050462,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 817050461,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 819986054,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 508089760,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 819986053,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1497216966,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1497216965,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 118892276,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1497216964,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 814988410,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 814988409,
           "highway": "trunk",
           "name": "Crawford Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 823816623,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88774359,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272611597,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 118892275,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 975638219,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88774363,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1354360463,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 114495304,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504754513,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504754512,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504755421,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504754511,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1354360465,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 114495306,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1354360466,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516852,
           "highway": "trunk",
           "name": "Malcolm Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516853,
           "highway": "trunk",
           "name": "Malcolm Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 17951039,
           "highway": "trunk",
           "name": "Malcolm Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1354360467,
           "highway": "trunk",
           "name": "Malcolm Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516836,
           "highway": "trunk",
           "name": "Great King Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516837,
           "highway": "trunk",
           "name": "Great King Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88463076,
           "highway": "trunk",
           "name": "Great King Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1354360470,
           "highway": "trunk",
           "name": "Great King Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         }
       ],
       "alternativeStartCandidates": [],
       "alternativeEndCandidates": [],
       "centreline": [
+        {
+          "latitude": -45.8841346,
+          "longitude": 170.4997213
+        },
+        {
+          "latitude": -45.8836713,
+          "longitude": 170.4999827
+        },
+        {
+          "latitude": -45.883653,
+          "longitude": 170.49999300000002
+        },
+        {
+          "latitude": -45.883363700000004,
+          "longitude": 170.50015140000002
+        },
+        {
+          "latitude": -45.882950300000005,
+          "longitude": 170.500384
+        },
+        {
+          "latitude": -45.882932000000004,
+          "longitude": 170.5003943
+        },
         {
           "latitude": -45.882843300000005,
           "longitude": 170.5004442
@@ -945,12 +1046,14 @@
         {
           "wayId": 60194027,
           "highway": "residential",
-          "name": "Saint David Street"
+          "name": "Saint David Street",
+          "oneway": "yes"
         },
         {
           "wayId": 1548516831,
           "highway": "residential",
-          "name": "Saint David Street"
+          "name": "Saint David Street",
+          "oneway": "yes"
         }
       ],
       "alternativeStartCandidates": [],
@@ -986,9 +1089,9 @@
     {
       "fromAnchor": "Gardens turnaround out",
       "toAnchor": "Southbound SH1",
-      "straightLineDistanceMeters": 2475.193752157054,
-      "distanceMeters": 2550.7261497747227,
-      "roadDirectRatio": 1.030515751565648,
+      "straightLineDistanceMeters": 2528.6749146054754,
+      "distanceMeters": 2604.207312576526,
+      "roadDirectRatio": 1.0298703473249091,
       "maximumCorridorDeviationMeters": 0,
       "startSnap": {
         "anchor": {
@@ -1018,15 +1121,15 @@
           "latitude": -45.88355,
           "longitude": 170.4985
         },
-        "fromNodeId": 3766380544,
-        "toNodeId": 14158950984,
+        "fromNodeId": 14158950984,
+        "toNodeId": 14158946273,
         "wayId": 116726397,
         "snappedCoordinate": {
-          "latitude": -45.8838917,
-          "longitude": 170.50149040000002
+          "latitude": -45.884339700000005,
+          "longitude": 170.501239
         },
-        "snapDistanceMeters": 234.56857152843742,
-        "bearingDegrees": 201.33971274879528,
+        "snapDistanceMeters": 229.4758374310597,
+        "bearingDegrees": 201.33713904797145,
         "directionAlignmentDegrees": 0,
         "highway": "trunk",
         "roadName": "Cumberland Street",
@@ -1071,187 +1174,249 @@
           "wayId": 1272470611,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470610,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470609,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470608,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470607,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516862,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 629154774,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516856,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516857,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516858,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516859,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88484115,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516844,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1548516843,
           "highway": "trunk",
           "name": "Gowland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88484122,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504755416,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504755415,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504754517,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504755420,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1504754516,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470620,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88774369,
           "highway": "trunk",
           "name": "Castle Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1497214074,
           "highway": "trunk",
           "name": "Anzac Avenue",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 629154778,
           "highway": "trunk",
           "name": "Anzac Avenue",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1255450322,
           "highway": "trunk",
           "name": "Anzac Avenue",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1272470623,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 1497216971,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 88774365,
           "highway": "trunk",
           "name": "Queens Gardens",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 81349793,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 118892271,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
           "wayId": 116726397,
           "highway": "trunk",
           "name": "Cumberland Street",
-          "ref": "SH 1"
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         }
       ],
       "alternativeStartCandidates": [],
@@ -1684,6 +1849,10 @@
         {
           "latitude": -45.8838917,
           "longitude": 170.50149040000002
+        },
+        {
+          "latitude": -45.884339700000005,
+          "longitude": 170.501239
         }
       ],
       "sectionType": "southbound"
@@ -1691,9 +1860,9 @@
     {
       "fromAnchor": "Oval closure",
       "toAnchor": "Oval closure connector",
-      "straightLineDistanceMeters": 141.94402733647368,
-      "distanceMeters": 262.32547823579495,
-      "roadDirectRatio": 1.8480909916270092,
+      "straightLineDistanceMeters": 119.66920069998683,
+      "distanceMeters": 138.84821468879875,
+      "roadDirectRatio": 1.1602669181094816,
       "maximumCorridorDeviationMeters": 0,
       "startSnap": {
         "anchor": {
@@ -1702,15 +1871,15 @@
           "latitude": -45.88355,
           "longitude": 170.4985
         },
-        "fromNodeId": 3766380544,
-        "toNodeId": 14158950984,
+        "fromNodeId": 14158950984,
+        "toNodeId": 14158946273,
         "wayId": 116726397,
         "snappedCoordinate": {
-          "latitude": -45.8838917,
-          "longitude": 170.50149040000002
+          "latitude": -45.884339700000005,
+          "longitude": 170.501239
         },
-        "snapDistanceMeters": 234.56857152843742,
-        "bearingDegrees": 201.33971274879528,
+        "snapDistanceMeters": 229.4758374310597,
+        "bearingDegrees": 201.33713904797145,
         "directionAlignmentDegrees": 0,
         "highway": "trunk",
         "roadName": "Cumberland Street",
@@ -1723,15 +1892,15 @@
           "latitude": -45.88355,
           "longitude": 170.4985
         },
-        "fromNodeId": 1294068313,
-        "toNodeId": 4974661691,
-        "wayId": 817050462,
+        "fromNodeId": 1294068086,
+        "toNodeId": 14156414792,
+        "wayId": 118892272,
         "snappedCoordinate": {
-          "latitude": -45.882843300000005,
-          "longitude": 170.5004442
+          "latitude": -45.8841346,
+          "longitude": 170.4997213
         },
-        "snapDistanceMeters": 169.77265084624375,
-        "bearingDegrees": 21.24838680367236,
+        "snapDistanceMeters": 114.7270165857649,
+        "bearingDegrees": 21.442767528236857,
         "directionAlignmentDegrees": 0,
         "highway": "trunk",
         "roadName": "Crawford Street",
@@ -1739,129 +1908,62 @@
       },
       "status": "passed",
       "wayIds": [
-        1556703663,
-        1556703662,
-        381871579,
-        508089734
+        116726397,
+        508089766
       ],
       "ways": [
         {
-          "wayId": 1556703663,
-          "highway": "service"
+          "wayId": 116726397,
+          "highway": "trunk",
+          "name": "Cumberland Street",
+          "ref": "SH 1",
+          "oneway": "yes",
+          "bicycle": "yes"
         },
         {
-          "wayId": 1556703662,
-          "highway": "service"
-        },
-        {
-          "wayId": 381871579,
+          "wayId": 508089766,
           "highway": "residential",
-          "name": "Vogel Street"
-        },
-        {
-          "wayId": 508089734,
-          "highway": "residential",
-          "name": "Jervois Street"
+          "name": "Wolseley Street"
         }
       ],
       "alternativeStartCandidates": [],
       "alternativeEndCandidates": [],
       "centreline": [
         {
-          "latitude": -45.8838917,
-          "longitude": 170.50149040000002
+          "latitude": -45.884339700000005,
+          "longitude": 170.501239
         },
         {
-          "latitude": -45.8839076,
-          "longitude": 170.5011801
+          "latitude": -45.884401000000004,
+          "longitude": 170.50120460000002
         },
         {
-          "latitude": -45.8838711,
-          "longitude": 170.50103860000002
+          "latitude": -45.884516500000004,
+          "longitude": 170.5011398
         },
         {
-          "latitude": -45.8838658,
-          "longitude": 170.5010182
+          "latitude": -45.884472300000006,
+          "longitude": 170.5009789
         },
         {
-          "latitude": -45.8838159,
-          "longitude": 170.50096760000002
+          "latitude": -45.8843815,
+          "longitude": 170.500648
         },
         {
-          "latitude": -45.883740800000005,
-          "longitude": 170.50089150000002
+          "latitude": -45.884354800000004,
+          "longitude": 170.5005508
         },
         {
-          "latitude": -45.8828212,
-          "longitude": 170.5014018
+          "latitude": -45.884326900000005,
+          "longitude": 170.5004489
         },
         {
-          "latitude": -45.882808000000004,
-          "longitude": 170.50140660000002
+          "latitude": -45.884168900000006,
+          "longitude": 170.4998721
         },
         {
-          "latitude": -45.882780700000005,
-          "longitude": 170.5014171
-        },
-        {
-          "latitude": -45.882761900000006,
-          "longitude": 170.50142050000002
-        },
-        {
-          "latitude": -45.882735000000004,
-          "longitude": 170.5014184
-        },
-        {
-          "latitude": -45.8827143,
-          "longitude": 170.5014121
-        },
-        {
-          "latitude": -45.8826878,
-          "longitude": 170.5013988
-        },
-        {
-          "latitude": -45.8826534,
-          "longitude": 170.5013806
-        },
-        {
-          "latitude": -45.8826295,
-          "longitude": 170.5013672
-        },
-        {
-          "latitude": -45.8827183,
-          "longitude": 170.5010632
-        },
-        {
-          "latitude": -45.8827517,
-          "longitude": 170.50095420000002
-        },
-        {
-          "latitude": -45.882809800000004,
-          "longitude": 170.50077190000002
-        },
-        {
-          "latitude": -45.8828231,
-          "longitude": 170.5007224
-        },
-        {
-          "latitude": -45.882831,
-          "longitude": 170.500682
-        },
-        {
-          "latitude": -45.8828353,
-          "longitude": 170.500643
-        },
-        {
-          "latitude": -45.8828368,
-          "longitude": 170.50059480000002
-        },
-        {
-          "latitude": -45.882838,
-          "longitude": 170.50057220000002
-        },
-        {
-          "latitude": -45.882843300000005,
-          "longitude": 170.5004442
+          "latitude": -45.8841346,
+          "longitude": 170.4997213
         }
       ],
       "sectionType": "connector"
@@ -1871,13 +1973,14 @@
     "preferredRefs": [
       "SH 1"
     ],
-    "northboundPreferredDistanceMeters": 2477.9207378919104,
-    "southboundPreferredDistanceMeters": 2550.7261497747227,
-    "connectorDistanceMeters": 382.5368539587838,
-    "preferredRefDistanceMeters": 5028.646887666633,
-    "preferredRefPercent": 92.9306253081719,
+    "northboundPreferredDistanceMeters": 2632.0259160793826,
+    "southboundPreferredDistanceMeters": 2604.207312576526,
+    "connectorDistanceMeters": 259.0595904117876,
+    "preferredRefDistanceMeters": 5257.338799710026,
+    "preferredRefPercent": 95.6698573271289,
     "minimumPreferredRefPercent": 90,
     "wayIds": [
+      118892272,
       817050462,
       817050461,
       819986054,
@@ -1945,10 +2048,7 @@
       81349793,
       118892271,
       116726397,
-      1556703663,
-      1556703662,
-      381871579,
-      508089734
+      508089766
     ],
     "roadNames": [
       "Crawford Street",
@@ -1960,8 +2060,7 @@
       "Gowland Street",
       "Castle Street",
       "Anzac Avenue",
-      "Vogel Street",
-      "Jervois Street"
+      "Wolseley Street"
     ],
     "nonPreferredConnectors": [
       {
@@ -1979,29 +2078,10 @@
         "reason": "Gardens transition between directed SH1 carriageways"
       },
       {
-        "wayId": 1556703663,
-        "highway": "service",
-        "distanceMeters": 24.08357080157882,
-        "reason": "short Oval closure between directed SH1 carriageways"
-      },
-      {
-        "wayId": 1556703662,
-        "highway": "service",
-        "distanceMeters": 30.376920002752904,
-        "reason": "short Oval closure between directed SH1 carriageways"
-      },
-      {
-        "wayId": 381871579,
+        "wayId": 508089766,
         "highway": "residential",
-        "name": "Vogel Street",
-        "distanceMeters": 131.78126337178037,
-        "reason": "short Oval closure between directed SH1 carriageways"
-      },
-      {
-        "wayId": 508089734,
-        "highway": "residential",
-        "name": "Jervois Street",
-        "distanceMeters": 76.08372405968291,
+        "name": "Wolseley Street",
+        "distanceMeters": 117.7426436346809,
         "reason": "short Oval closure between directed SH1 carriageways"
       }
     ],
@@ -2010,2024 +2090,2953 @@
   "roadSegments": [
     {
       "startDistanceMeters": 0,
-      "endDistanceMeters": 153.05708702006578,
+      "endDistanceMeters": 55.34759277330336,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 1294068086,
+      "toNodeId": 14156414792,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 55.34759277330336,
+      "endDistanceMeters": 57.533072562402594,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 14156414792,
+      "toNodeId": 1294068311,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 57.533072562402594,
+      "endDistanceMeters": 91.95916042100957,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 1294068311,
+      "toNodeId": 4974661700,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 91.95916042100957,
+      "endDistanceMeters": 141.32734518710143,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 4974661700,
+      "toNodeId": 13129575203,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 141.32734518710143,
+      "endDistanceMeters": 143.51282875082202,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 13129575203,
+      "toNodeId": 11509895175,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 143.51282875082202,
+      "endDistanceMeters": 154.10517818747252,
+      "wayId": 118892272,
+      "highway": "trunk",
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "fromNodeId": 11509895175,
+      "toNodeId": 1294068313,
+      "oneway": "yes",
+      "bicycle": "yes"
+    },
+    {
+      "startDistanceMeters": 154.10517818747252,
+      "endDistanceMeters": 307.1622652075383,
       "wayId": 817050462,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068313,
+      "toNodeId": 4974661691,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 153.05708702006578,
-      "endDistanceMeters": 202.3501227662606,
+      "startDistanceMeters": 307.1622652075383,
+      "endDistanceMeters": 356.4553009537331,
       "wayId": 817050462,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4974661691,
+      "toNodeId": 1294068289,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 202.3501227662606,
-      "endDistanceMeters": 218.01022893740887,
+      "startDistanceMeters": 356.4553009537331,
+      "endDistanceMeters": 372.11540712488136,
       "wayId": 817050462,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068289,
+      "toNodeId": 4974661689,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 218.01022893740887,
-      "endDistanceMeters": 311.92513542522175,
+      "startDistanceMeters": 372.11540712488136,
+      "endDistanceMeters": 466.0303136126943,
       "wayId": 817050461,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4974661689,
+      "toNodeId": 4974661717,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 311.92513542522175,
-      "endDistanceMeters": 341.9318741164717,
+      "startDistanceMeters": 466.0303136126943,
+      "endDistanceMeters": 496.0370523039442,
       "wayId": 819986054,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4974661717,
+      "toNodeId": 13129575211,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 341.9318741164717,
-      "endDistanceMeters": 345.1663524643611,
+      "startDistanceMeters": 496.0370523039442,
+      "endDistanceMeters": 499.27153065183364,
       "wayId": 819986054,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13129575211,
+      "toNodeId": 11509999095,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 345.1663524643611,
-      "endDistanceMeters": 349.5088778173127,
+      "startDistanceMeters": 499.27153065183364,
+      "endDistanceMeters": 503.6140560047852,
       "wayId": 819986054,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11509999095,
+      "toNodeId": 7967854814,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 349.5088778173127,
-      "endDistanceMeters": 359.1182701515336,
+      "startDistanceMeters": 503.6140560047852,
+      "endDistanceMeters": 513.223448339006,
       "wayId": 819986054,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7967854814,
+      "toNodeId": 1294068353,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 359.1182701515336,
-      "endDistanceMeters": 370.59826646958277,
+      "startDistanceMeters": 513.223448339006,
+      "endDistanceMeters": 524.7034446570552,
       "wayId": 508089760,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068353,
+      "toNodeId": 11509895377,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 370.59826646958277,
-      "endDistanceMeters": 406.3937543773208,
+      "startDistanceMeters": 524.7034446570552,
+      "endDistanceMeters": 560.4989325647933,
       "wayId": 508089760,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11509895377,
+      "toNodeId": 2362831804,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 406.3937543773208,
-      "endDistanceMeters": 454.5069580730977,
+      "startDistanceMeters": 560.4989325647933,
+      "endDistanceMeters": 608.6121362605702,
       "wayId": 819986053,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 2362831804,
+      "toNodeId": 2362831803,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 454.5069580730977,
-      "endDistanceMeters": 474.9373647585182,
+      "startDistanceMeters": 608.6121362605702,
+      "endDistanceMeters": 629.0425429459907,
       "wayId": 1497216966,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 2362831803,
+      "toNodeId": 2362831791,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 474.9373647585182,
-      "endDistanceMeters": 487.61028819178415,
+      "startDistanceMeters": 629.0425429459907,
+      "endDistanceMeters": 641.7154663792567,
       "wayId": 1497216965,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 2362831791,
+      "toNodeId": 11817392731,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 487.61028819178415,
-      "endDistanceMeters": 493.75608040142333,
+      "startDistanceMeters": 641.7154663792567,
+      "endDistanceMeters": 647.8612585888958,
       "wayId": 1497216965,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11817392731,
+      "toNodeId": 1294068160,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 493.75608040142333,
-      "endDistanceMeters": 518.8519472615685,
+      "startDistanceMeters": 647.8612585888958,
+      "endDistanceMeters": 672.957125449041,
       "wayId": 118892276,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068160,
+      "toNodeId": 2362831790,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 518.8519472615685,
-      "endDistanceMeters": 537.0623531805436,
+      "startDistanceMeters": 672.957125449041,
+      "endDistanceMeters": 691.167531368016,
       "wayId": 1497216964,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 2362831790,
+      "toNodeId": 13712656250,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 537.0623531805436,
-      "endDistanceMeters": 551.9520818953686,
+      "startDistanceMeters": 691.167531368016,
+      "endDistanceMeters": 706.0572600828409,
       "wayId": 814988410,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712656250,
+      "toNodeId": 4961308719,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 551.9520818953686,
-      "endDistanceMeters": 577.9594593612354,
+      "startDistanceMeters": 706.0572600828409,
+      "endDistanceMeters": 732.0646375487078,
       "wayId": 814988409,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4961308719,
+      "toNodeId": 13129575227,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 577.9594593612354,
-      "endDistanceMeters": 580.8691818874438,
+      "startDistanceMeters": 732.0646375487078,
+      "endDistanceMeters": 734.9743600749161,
       "wayId": 814988409,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13129575227,
+      "toNodeId": 11509895457,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 580.8691818874438,
-      "endDistanceMeters": 586.2727664188646,
+      "startDistanceMeters": 734.9743600749161,
+      "endDistanceMeters": 740.377944606337,
       "wayId": 814988409,
       "highway": "trunk",
       "name": "Crawford Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11509895457,
+      "toNodeId": 3755246041,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 586.2727664188646,
-      "endDistanceMeters": 594.3568070392416,
+      "startDistanceMeters": 740.377944606337,
+      "endDistanceMeters": 748.461985226714,
       "wayId": 823816623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246041,
+      "toNodeId": 7691621181,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 594.3568070392416,
-      "endDistanceMeters": 604.9296918483293,
+      "startDistanceMeters": 748.461985226714,
+      "endDistanceMeters": 759.0348700358016,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7691621181,
+      "toNodeId": 11509895465,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 604.9296918483293,
-      "endDistanceMeters": 625.8866250867339,
+      "startDistanceMeters": 759.0348700358016,
+      "endDistanceMeters": 779.9918032742063,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11509895465,
+      "toNodeId": 1030286742,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 625.8866250867339,
-      "endDistanceMeters": 645.678056421049,
+      "startDistanceMeters": 779.9918032742063,
+      "endDistanceMeters": 799.7832346085213,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286742,
+      "toNodeId": 5522366936,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 645.678056421049,
-      "endDistanceMeters": 650.907736101887,
+      "startDistanceMeters": 799.7832346085213,
+      "endDistanceMeters": 805.0129142893594,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5522366936,
+      "toNodeId": 11519025128,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 650.907736101887,
-      "endDistanceMeters": 653.7782400735992,
+      "startDistanceMeters": 805.0129142893594,
+      "endDistanceMeters": 807.8834182610716,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025128,
+      "toNodeId": 1030286700,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 653.7782400735992,
-      "endDistanceMeters": 665.1832301673741,
+      "startDistanceMeters": 807.8834182610716,
+      "endDistanceMeters": 819.2884083548464,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286700,
+      "toNodeId": 5522453543,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 665.1832301673741,
-      "endDistanceMeters": 680.6235513741465,
+      "startDistanceMeters": 819.2884083548464,
+      "endDistanceMeters": 834.7287295616188,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5522453543,
+      "toNodeId": 3755246044,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 680.6235513741465,
-      "endDistanceMeters": 700.1487425874568,
+      "startDistanceMeters": 834.7287295616188,
+      "endDistanceMeters": 854.2539207749292,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246044,
+      "toNodeId": 1030286761,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 700.1487425874568,
-      "endDistanceMeters": 710.5645845734477,
+      "startDistanceMeters": 854.2539207749292,
+      "endDistanceMeters": 864.6697627609201,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286761,
+      "toNodeId": 13129575237,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 710.5645845734477,
-      "endDistanceMeters": 713.3710122854276,
+      "startDistanceMeters": 864.6697627609201,
+      "endDistanceMeters": 867.4761904728999,
       "wayId": 88774359,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13129575237,
+      "toNodeId": 7787120908,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 713.3710122854276,
-      "endDistanceMeters": 725.4604201772544,
+      "startDistanceMeters": 867.4761904728999,
+      "endDistanceMeters": 879.5655983647267,
       "wayId": 1272611597,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7787120908,
+      "toNodeId": 1030286681,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 725.4604201772544,
-      "endDistanceMeters": 738.6477210913623,
+      "startDistanceMeters": 879.5655983647267,
+      "endDistanceMeters": 892.7528992788347,
       "wayId": 118892275,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286681,
+      "toNodeId": 1745215362,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 738.6477210913623,
-      "endDistanceMeters": 748.3285436954975,
+      "startDistanceMeters": 892.7528992788347,
+      "endDistanceMeters": 902.4337218829698,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1745215362,
+      "toNodeId": 9721924471,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 748.3285436954975,
-      "endDistanceMeters": 759.3455233743263,
+      "startDistanceMeters": 902.4337218829698,
+      "endDistanceMeters": 913.4507015617986,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9721924471,
+      "toNodeId": 1030286769,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 759.3455233743263,
-      "endDistanceMeters": 774.6487703876586,
+      "startDistanceMeters": 913.4507015617986,
+      "endDistanceMeters": 928.753948575131,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286769,
+      "toNodeId": 5522366966,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 774.6487703876586,
-      "endDistanceMeters": 781.8018725241626,
+      "startDistanceMeters": 928.753948575131,
+      "endDistanceMeters": 935.907050711635,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5522366966,
+      "toNodeId": 9028559098,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 781.8018725241626,
-      "endDistanceMeters": 788.2644859292127,
+      "startDistanceMeters": 935.907050711635,
+      "endDistanceMeters": 942.369664116685,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9028559098,
+      "toNodeId": 1030286754,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 788.2644859292127,
-      "endDistanceMeters": 811.4586822510544,
+      "startDistanceMeters": 942.369664116685,
+      "endDistanceMeters": 965.5638604385267,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286754,
+      "toNodeId": 1030286735,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 811.4586822510544,
-      "endDistanceMeters": 818.3033244432353,
+      "startDistanceMeters": 965.5638604385267,
+      "endDistanceMeters": 972.4085026307076,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286735,
+      "toNodeId": 13712752209,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 818.3033244432353,
-      "endDistanceMeters": 826.4834220779295,
+      "startDistanceMeters": 972.4085026307076,
+      "endDistanceMeters": 980.5886002654019,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712752209,
+      "toNodeId": 1030286749,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 826.4834220779295,
-      "endDistanceMeters": 836.8518228298462,
+      "startDistanceMeters": 980.5886002654019,
+      "endDistanceMeters": 990.9570010173186,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286749,
+      "toNodeId": 12533577771,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 836.8518228298462,
-      "endDistanceMeters": 844.5685470339213,
+      "startDistanceMeters": 990.9570010173186,
+      "endDistanceMeters": 998.6737252213936,
       "wayId": 975638219,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577771,
+      "toNodeId": 1030286746,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 844.5685470339213,
-      "endDistanceMeters": 864.0901845917018,
+      "startDistanceMeters": 998.6737252213936,
+      "endDistanceMeters": 1018.1953627791742,
       "wayId": 88774363,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286746,
+      "toNodeId": 5522366973,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 864.0901845917018,
-      "endDistanceMeters": 979.8041946794469,
+      "startDistanceMeters": 1018.1953627791742,
+      "endDistanceMeters": 1133.9093728669193,
       "wayId": 88774363,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5522366973,
+      "toNodeId": 12533577772,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 979.8041946794469,
-      "endDistanceMeters": 990.6363726720314,
+      "startDistanceMeters": 1133.9093728669193,
+      "endDistanceMeters": 1144.7415508595036,
       "wayId": 88774363,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577772,
+      "toNodeId": 12533577766,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 990.6363726720314,
-      "endDistanceMeters": 1017.3880956783353,
+      "startDistanceMeters": 1144.7415508595036,
+      "endDistanceMeters": 1171.4932738658074,
       "wayId": 1354360463,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577766,
+      "toNodeId": 13712715895,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1017.3880956783353,
-      "endDistanceMeters": 1018.2683942437607,
+      "startDistanceMeters": 1171.4932738658074,
+      "endDistanceMeters": 1172.3735724312328,
       "wayId": 1354360463,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712715895,
+      "toNodeId": 12533577769,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1018.2683942437607,
-      "endDistanceMeters": 1021.3586717001759,
+      "startDistanceMeters": 1172.3735724312328,
+      "endDistanceMeters": 1175.463849887648,
       "wayId": 1354360463,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577769,
+      "toNodeId": 11519025209,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1021.3586717001759,
-      "endDistanceMeters": 1029.4519707373547,
+      "startDistanceMeters": 1175.463849887648,
+      "endDistanceMeters": 1183.5571489248266,
       "wayId": 1354360463,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025209,
+      "toNodeId": 1030286734,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1029.4519707373547,
-      "endDistanceMeters": 1038.3898654109405,
+      "startDistanceMeters": 1183.5571489248266,
+      "endDistanceMeters": 1192.4950435984124,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286734,
+      "toNodeId": 11519025213,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1038.3898654109405,
-      "endDistanceMeters": 1068.7500944817,
+      "startDistanceMeters": 1192.4950435984124,
+      "endDistanceMeters": 1222.8552726691719,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025213,
+      "toNodeId": 12558438860,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1068.7500944817,
-      "endDistanceMeters": 1153.1594598693357,
+      "startDistanceMeters": 1222.8552726691719,
+      "endDistanceMeters": 1307.2646380568076,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12558438860,
+      "toNodeId": 3755246051,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1153.1594598693357,
-      "endDistanceMeters": 1199.4773628155112,
+      "startDistanceMeters": 1307.2646380568076,
+      "endDistanceMeters": 1353.5825410029831,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246051,
+      "toNodeId": 1319773744,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1199.4773628155112,
-      "endDistanceMeters": 1253.0136168477861,
+      "startDistanceMeters": 1353.5825410029831,
+      "endDistanceMeters": 1407.118795035258,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1319773744,
+      "toNodeId": 3755246053,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1253.0136168477861,
-      "endDistanceMeters": 1271.5464637725524,
+      "startDistanceMeters": 1407.118795035258,
+      "endDistanceMeters": 1425.6516419600243,
       "wayId": 114495304,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246053,
+      "toNodeId": 13768883222,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1271.5464637725524,
-      "endDistanceMeters": 1283.9443734200265,
+      "startDistanceMeters": 1425.6516419600243,
+      "endDistanceMeters": 1438.0495516074984,
       "wayId": 1504754513,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768883222,
+      "toNodeId": 14158946247,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1283.9443734200265,
-      "endDistanceMeters": 1289.1004385081294,
+      "startDistanceMeters": 1438.0495516074984,
+      "endDistanceMeters": 1443.2056166956013,
       "wayId": 1504754513,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14158946247,
+      "toNodeId": 13768883221,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1289.1004385081294,
-      "endDistanceMeters": 1315.2130343707402,
+      "startDistanceMeters": 1443.2056166956013,
+      "endDistanceMeters": 1469.318212558212,
       "wayId": 1504754512,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768883221,
+      "toNodeId": 13768883220,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1315.2130343707402,
-      "endDistanceMeters": 1318.5421752239918,
+      "startDistanceMeters": 1469.318212558212,
+      "endDistanceMeters": 1472.6473534114637,
       "wayId": 1504754512,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768883220,
+      "toNodeId": 11520466495,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1318.5421752239918,
-      "endDistanceMeters": 1327.1450473287264,
+      "startDistanceMeters": 1472.6473534114637,
+      "endDistanceMeters": 1481.2502255161983,
       "wayId": 1504754512,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466495,
+      "toNodeId": 3755246055,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1327.1450473287264,
-      "endDistanceMeters": 1335.893926324374,
+      "startDistanceMeters": 1481.2502255161983,
+      "endDistanceMeters": 1489.9991045118459,
       "wayId": 1504755421,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246055,
+      "toNodeId": 11520466489,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1335.893926324374,
-      "endDistanceMeters": 1357.4993229545323,
+      "startDistanceMeters": 1489.9991045118459,
+      "endDistanceMeters": 1511.6045011420042,
       "wayId": 1504755421,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466489,
+      "toNodeId": 13768890814,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1357.4993229545323,
-      "endDistanceMeters": 1506.6608862616376,
+      "startDistanceMeters": 1511.6045011420042,
+      "endDistanceMeters": 1660.7660644491095,
       "wayId": 1504754511,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768890814,
+      "toNodeId": 6328433727,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1506.6608862616376,
-      "endDistanceMeters": 1536.8006811549214,
+      "startDistanceMeters": 1660.7660644491095,
+      "endDistanceMeters": 1690.9058593423933,
       "wayId": 1354360465,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 6328433727,
+      "toNodeId": 13768862882,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1536.8006811549214,
-      "endDistanceMeters": 1538.486440250109,
+      "startDistanceMeters": 1690.9058593423933,
+      "endDistanceMeters": 1692.5916184375808,
       "wayId": 1354360465,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768862882,
+      "toNodeId": 12533577768,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1538.486440250109,
-      "endDistanceMeters": 1540.0178464654427,
+      "startDistanceMeters": 1692.5916184375808,
+      "endDistanceMeters": 1694.1230246529146,
       "wayId": 1354360465,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577768,
+      "toNodeId": 11520466507,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1540.0178464654427,
-      "endDistanceMeters": 1548.6491379240358,
+      "startDistanceMeters": 1694.1230246529146,
+      "endDistanceMeters": 1702.7543161115077,
       "wayId": 1354360465,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466507,
+      "toNodeId": 5665101099,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1548.6491379240358,
-      "endDistanceMeters": 1557.6276177635114,
+      "startDistanceMeters": 1702.7543161115077,
+      "endDistanceMeters": 1711.7327959509832,
       "wayId": 114495306,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101099,
+      "toNodeId": 11520466534,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1557.6276177635114,
-      "endDistanceMeters": 1620.2689019020995,
+      "startDistanceMeters": 1711.7327959509832,
+      "endDistanceMeters": 1774.3740800895714,
       "wayId": 114495306,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466534,
+      "toNodeId": 10201020593,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1620.2689019020995,
-      "endDistanceMeters": 1643.0026515930128,
+      "startDistanceMeters": 1774.3740800895714,
+      "endDistanceMeters": 1797.1078297804847,
       "wayId": 114495306,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 10201020593,
+      "toNodeId": 5903424155,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1643.0026515930128,
-      "endDistanceMeters": 1699.7518808121836,
+      "startDistanceMeters": 1797.1078297804847,
+      "endDistanceMeters": 1853.8570589996555,
       "wayId": 114495306,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5903424155,
+      "toNodeId": 6533448218,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1699.7518808121836,
-      "endDistanceMeters": 1720.022434155283,
+      "startDistanceMeters": 1853.8570589996555,
+      "endDistanceMeters": 1874.127612342755,
       "wayId": 114495306,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 6533448218,
+      "toNodeId": 12533577774,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1720.022434155283,
-      "endDistanceMeters": 1756.3543234221847,
+      "startDistanceMeters": 1874.127612342755,
+      "endDistanceMeters": 1910.4595016096566,
       "wayId": 1354360466,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577774,
+      "toNodeId": 14084736674,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1756.3543234221847,
-      "endDistanceMeters": 1759.7362008724303,
+      "startDistanceMeters": 1910.4595016096566,
+      "endDistanceMeters": 1913.8413790599022,
       "wayId": 1354360466,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736674,
+      "toNodeId": 12533577775,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1759.7362008724303,
-      "endDistanceMeters": 1761.291140849036,
+      "startDistanceMeters": 1913.8413790599022,
+      "endDistanceMeters": 1915.396319036508,
       "wayId": 1354360466,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577775,
+      "toNodeId": 11520466547,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1761.291140849036,
-      "endDistanceMeters": 1771.0075738083208,
+      "startDistanceMeters": 1915.396319036508,
+      "endDistanceMeters": 1925.1127519957927,
       "wayId": 1354360466,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466547,
+      "toNodeId": 5665101073,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1771.0075738083208,
-      "endDistanceMeters": 1780.026135745567,
+      "startDistanceMeters": 1925.1127519957927,
+      "endDistanceMeters": 1934.1313139330389,
       "wayId": 1548516852,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101073,
+      "toNodeId": 11520466573,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1780.026135745567,
-      "endDistanceMeters": 1809.0257629468872,
+      "startDistanceMeters": 1934.1313139330389,
+      "endDistanceMeters": 1963.130941134359,
       "wayId": 1548516852,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466573,
+      "toNodeId": 4650515962,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1809.0257629468872,
-      "endDistanceMeters": 1821.6712549573397,
+      "startDistanceMeters": 1963.130941134359,
+      "endDistanceMeters": 1975.7764331448116,
       "wayId": 1548516852,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4650515962,
+      "toNodeId": 5665101080,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1821.6712549573397,
-      "endDistanceMeters": 1831.8352920629484,
+      "startDistanceMeters": 1975.7764331448116,
+      "endDistanceMeters": 1985.9404702504203,
       "wayId": 1548516852,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101080,
+      "toNodeId": 4650515961,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1831.8352920629484,
-      "endDistanceMeters": 1843.394672563278,
+      "startDistanceMeters": 1985.9404702504203,
+      "endDistanceMeters": 1997.4998507507498,
       "wayId": 1548516853,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4650515961,
+      "toNodeId": 1032491601,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1843.394672563278,
-      "endDistanceMeters": 1853.8233105878082,
+      "startDistanceMeters": 1997.4998507507498,
+      "endDistanceMeters": 2007.9284887752801,
       "wayId": 1548516853,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1032491601,
+      "toNodeId": 1306426753,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1853.8233105878082,
-      "endDistanceMeters": 1855.8962265702767,
+      "startDistanceMeters": 2007.9284887752801,
+      "endDistanceMeters": 2010.0014047577486,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1306426753,
+      "toNodeId": 12508860684,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1855.8962265702767,
-      "endDistanceMeters": 1863.480095791873,
+      "startDistanceMeters": 2010.0014047577486,
+      "endDistanceMeters": 2017.585273979345,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12508860684,
+      "toNodeId": 4650515958,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1863.480095791873,
-      "endDistanceMeters": 1879.395744542505,
+      "startDistanceMeters": 2017.585273979345,
+      "endDistanceMeters": 2033.500922729977,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4650515958,
+      "toNodeId": 4650515957,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1879.395744542505,
-      "endDistanceMeters": 1886.4134721921127,
+      "startDistanceMeters": 2033.500922729977,
+      "endDistanceMeters": 2040.5186503795846,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4650515957,
+      "toNodeId": 14084796663,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1886.4134721921127,
-      "endDistanceMeters": 1891.4921773507986,
+      "startDistanceMeters": 2040.5186503795846,
+      "endDistanceMeters": 2045.5973555382704,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084796663,
+      "toNodeId": 4650515956,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1891.4921773507986,
-      "endDistanceMeters": 1902.599241990381,
+      "startDistanceMeters": 2045.5973555382704,
+      "endDistanceMeters": 2056.704420177853,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4650515956,
+      "toNodeId": 1227604133,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1902.599241990381,
-      "endDistanceMeters": 1919.0395686608233,
+      "startDistanceMeters": 2056.704420177853,
+      "endDistanceMeters": 2073.144746848295,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1227604133,
+      "toNodeId": 1197839988,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1919.0395686608233,
-      "endDistanceMeters": 1946.4433104146835,
+      "startDistanceMeters": 2073.144746848295,
+      "endDistanceMeters": 2100.5484886021554,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1197839988,
+      "toNodeId": 1032491595,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1946.4433104146835,
-      "endDistanceMeters": 1957.4558357828614,
+      "startDistanceMeters": 2100.5484886021554,
+      "endDistanceMeters": 2111.561013970333,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1032491595,
+      "toNodeId": 5665101082,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1957.4558357828614,
-      "endDistanceMeters": 1969.5508108477288,
+      "startDistanceMeters": 2111.561013970333,
+      "endDistanceMeters": 2123.6559890352005,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101082,
+      "toNodeId": 5555630203,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1969.5508108477288,
-      "endDistanceMeters": 1979.0476441916962,
+      "startDistanceMeters": 2123.6559890352005,
+      "endDistanceMeters": 2133.152822379168,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5555630203,
+      "toNodeId": 12532913438,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1979.0476441916962,
-      "endDistanceMeters": 1991.8095959243033,
+      "startDistanceMeters": 2133.152822379168,
+      "endDistanceMeters": 2145.914774111775,
       "wayId": 17951039,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12532913438,
+      "toNodeId": 5512816381,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 1991.8095959243033,
-      "endDistanceMeters": 2003.0726001618534,
+      "startDistanceMeters": 2145.914774111775,
+      "endDistanceMeters": 2157.177778349325,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5512816381,
+      "toNodeId": 1032491618,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2003.0726001618534,
-      "endDistanceMeters": 2012.2299971289106,
+      "startDistanceMeters": 2157.177778349325,
+      "endDistanceMeters": 2166.335175316382,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1032491618,
+      "toNodeId": 12532913439,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2012.2299971289106,
-      "endDistanceMeters": 2019.2653989678117,
+      "startDistanceMeters": 2166.335175316382,
+      "endDistanceMeters": 2173.370577155283,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12532913439,
+      "toNodeId": 14084736688,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2019.2653989678117,
-      "endDistanceMeters": 2021.5252573169578,
+      "startDistanceMeters": 2173.370577155283,
+      "endDistanceMeters": 2175.6304355044294,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736688,
+      "toNodeId": 1197840008,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2021.5252573169578,
-      "endDistanceMeters": 2023.363173097201,
+      "startDistanceMeters": 2175.6304355044294,
+      "endDistanceMeters": 2177.4683512846727,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1197840008,
+      "toNodeId": 11520466595,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2023.363173097201,
-      "endDistanceMeters": 2034.1225579180718,
+      "startDistanceMeters": 2177.4683512846727,
+      "endDistanceMeters": 2188.2277361055435,
       "wayId": 1354360467,
       "highway": "trunk",
       "name": "Malcolm Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466595,
+      "toNodeId": 1027530860,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2034.1225579180718,
-      "endDistanceMeters": 2042.5701245773191,
+      "startDistanceMeters": 2188.2277361055435,
+      "endDistanceMeters": 2196.675302764791,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027530860,
+      "toNodeId": 11520466610,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2042.5701245773191,
-      "endDistanceMeters": 2058.2395716553265,
+      "startDistanceMeters": 2196.675302764791,
+      "endDistanceMeters": 2212.3447498427986,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466610,
+      "toNodeId": 12533577776,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2058.2395716553265,
-      "endDistanceMeters": 2110.2847981668187,
+      "startDistanceMeters": 2212.3447498427986,
+      "endDistanceMeters": 2264.389976354291,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577776,
+      "toNodeId": 7655105263,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2110.2847981668187,
-      "endDistanceMeters": 2127.72899360031,
+      "startDistanceMeters": 2264.389976354291,
+      "endDistanceMeters": 2281.834171787782,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7655105263,
+      "toNodeId": 2338769951,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2127.72899360031,
-      "endDistanceMeters": 2149.739279273451,
+      "startDistanceMeters": 2281.834171787782,
+      "endDistanceMeters": 2303.844457460923,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 2338769951,
+      "toNodeId": 6696065307,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2149.739279273451,
-      "endDistanceMeters": 2207.5478609550046,
+      "startDistanceMeters": 2303.844457460923,
+      "endDistanceMeters": 2361.6530391424767,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 6696065307,
+      "toNodeId": 7655094681,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2207.5478609550046,
-      "endDistanceMeters": 2221.235599857716,
+      "startDistanceMeters": 2361.6530391424767,
+      "endDistanceMeters": 2375.340778045188,
       "wayId": 1548516836,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7655094681,
+      "toNodeId": 12533577777,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2221.235599857716,
-      "endDistanceMeters": 2243.0283206715435,
+      "startDistanceMeters": 2375.340778045188,
+      "endDistanceMeters": 2397.1334988590156,
       "wayId": 1548516837,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577777,
+      "toNodeId": 14084736649,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2243.0283206715435,
-      "endDistanceMeters": 2246.588123580614,
+      "startDistanceMeters": 2397.1334988590156,
+      "endDistanceMeters": 2400.6933017680863,
       "wayId": 1548516837,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736649,
+      "toNodeId": 11519025309,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2246.588123580614,
-      "endDistanceMeters": 2255.8302439038816,
+      "startDistanceMeters": 2400.6933017680863,
+      "endDistanceMeters": 2409.9354220913538,
       "wayId": 1548516837,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025309,
+      "toNodeId": 4643393011,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2255.8302439038816,
-      "endDistanceMeters": 2264.562211007215,
+      "startDistanceMeters": 2409.9354220913538,
+      "endDistanceMeters": 2418.667389194687,
       "wayId": 88463076,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4643393011,
+      "toNodeId": 11519025326,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2264.562211007215,
-      "endDistanceMeters": 2313.0214906384767,
+      "startDistanceMeters": 2418.667389194687,
+      "endDistanceMeters": 2467.126668825949,
       "wayId": 88463076,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025326,
+      "toNodeId": 7655172965,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2313.0214906384767,
-      "endDistanceMeters": 2424.5512422459683,
+      "startDistanceMeters": 2467.126668825949,
+      "endDistanceMeters": 2578.6564204334404,
       "wayId": 88463076,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7655172965,
+      "toNodeId": 6328433712,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2424.5512422459683,
-      "endDistanceMeters": 2437.9029019431027,
+      "startDistanceMeters": 2578.6564204334404,
+      "endDistanceMeters": 2592.008080130575,
       "wayId": 88463076,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 6328433712,
+      "toNodeId": 12237535110,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2437.9029019431027,
-      "endDistanceMeters": 2464.4766045061688,
+      "startDistanceMeters": 2592.008080130575,
+      "endDistanceMeters": 2618.581782693641,
       "wayId": 1354360470,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12237535110,
+      "toNodeId": 14084721643,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2464.4766045061688,
-      "endDistanceMeters": 2466.663390856864,
+      "startDistanceMeters": 2618.581782693641,
+      "endDistanceMeters": 2620.7685690443363,
       "wayId": 1354360470,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084721643,
+      "toNodeId": 12539488711,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2466.663390856864,
-      "endDistanceMeters": 2468.2080219609707,
+      "startDistanceMeters": 2620.7685690443363,
+      "endDistanceMeters": 2622.313200148443,
       "wayId": 1354360470,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12539488711,
+      "toNodeId": 11518594624,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2468.2080219609707,
-      "endDistanceMeters": 2477.9207378919104,
+      "startDistanceMeters": 2622.313200148443,
+      "endDistanceMeters": 2632.0259160793826,
       "wayId": 1354360470,
       "highway": "trunk",
       "name": "Great King Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11518594624,
+      "toNodeId": 5529730298,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2477.9207378919104,
-      "endDistanceMeters": 2487.056329425635,
+      "startDistanceMeters": 2632.0259160793826,
+      "endDistanceMeters": 2641.161507613107,
       "wayId": 60194027,
       "highway": "residential",
-      "name": "Saint David Street"
+      "name": "Saint David Street",
+      "fromNodeId": 5529730298,
+      "toNodeId": 9721924444,
+      "oneway": "yes"
     },
     {
-      "startDistanceMeters": 2487.056329425635,
-      "endDistanceMeters": 2569.130348028697,
+      "startDistanceMeters": 2641.161507613107,
+      "endDistanceMeters": 2723.235526216169,
       "wayId": 60194027,
       "highway": "residential",
-      "name": "Saint David Street"
+      "name": "Saint David Street",
+      "fromNodeId": 9721924444,
+      "toNodeId": 14084736639,
+      "oneway": "yes"
     },
     {
-      "startDistanceMeters": 2569.130348028697,
-      "endDistanceMeters": 2585.273182186802,
+      "startDistanceMeters": 2723.235526216169,
+      "endDistanceMeters": 2739.378360374274,
       "wayId": 1548516831,
       "highway": "residential",
-      "name": "Saint David Street"
+      "name": "Saint David Street",
+      "fromNodeId": 14084736639,
+      "toNodeId": 14084736635,
+      "oneway": "yes"
     },
     {
-      "startDistanceMeters": 2585.273182186802,
-      "endDistanceMeters": 2589.9949329356045,
+      "startDistanceMeters": 2739.378360374274,
+      "endDistanceMeters": 2744.1001111230767,
       "wayId": 1548516831,
       "highway": "residential",
-      "name": "Saint David Street"
+      "name": "Saint David Street",
+      "fromNodeId": 14084736635,
+      "toNodeId": 11519025290,
+      "oneway": "yes"
     },
     {
-      "startDistanceMeters": 2589.9949329356045,
-      "endDistanceMeters": 2598.132113614899,
+      "startDistanceMeters": 2744.1001111230767,
+      "endDistanceMeters": 2752.237291802371,
       "wayId": 1548516831,
       "highway": "residential",
-      "name": "Saint David Street"
+      "name": "Saint David Street",
+      "fromNodeId": 11519025290,
+      "toNodeId": 5529730301,
+      "oneway": "yes"
     },
     {
-      "startDistanceMeters": 2598.132113614899,
-      "endDistanceMeters": 2606.674937520562,
+      "startDistanceMeters": 2752.237291802371,
+      "endDistanceMeters": 2760.780115708034,
       "wayId": 1272470611,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5529730301,
+      "toNodeId": 11518594612,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2606.674937520562,
-      "endDistanceMeters": 2642.8547840936094,
+      "startDistanceMeters": 2760.780115708034,
+      "endDistanceMeters": 2796.9599622810815,
       "wayId": 1272470611,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11518594612,
+      "toNodeId": 11816155487,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2642.8547840936094,
-      "endDistanceMeters": 2681.2437183491297,
+      "startDistanceMeters": 2796.9599622810815,
+      "endDistanceMeters": 2835.348896536602,
       "wayId": 1272470610,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155487,
+      "toNodeId": 11816155489,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2681.2437183491297,
-      "endDistanceMeters": 2689.7789800742476,
+      "startDistanceMeters": 2835.348896536602,
+      "endDistanceMeters": 2843.8841582617197,
       "wayId": 1272470609,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155489,
+      "toNodeId": 3766442574,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2689.7789800742476,
-      "endDistanceMeters": 2733.5336088331383,
+      "startDistanceMeters": 2843.8841582617197,
+      "endDistanceMeters": 2887.6387870206104,
       "wayId": 1272470609,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3766442574,
+      "toNodeId": 5532371891,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2733.5336088331383,
-      "endDistanceMeters": 2771.413064208226,
+      "startDistanceMeters": 2887.6387870206104,
+      "endDistanceMeters": 2925.518242395698,
       "wayId": 1272470609,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5532371891,
+      "toNodeId": 11382127307,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2771.413064208226,
-      "endDistanceMeters": 2789.144681351079,
+      "startDistanceMeters": 2925.518242395698,
+      "endDistanceMeters": 2943.249859538551,
       "wayId": 1272470609,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11382127307,
+      "toNodeId": 11816155491,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2789.144681351079,
-      "endDistanceMeters": 2806.653096329608,
+      "startDistanceMeters": 2943.249859538551,
+      "endDistanceMeters": 2960.7582745170803,
       "wayId": 1272470608,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155491,
+      "toNodeId": 14084736646,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2806.653096329608,
-      "endDistanceMeters": 2809.082493125772,
+      "startDistanceMeters": 2960.7582745170803,
+      "endDistanceMeters": 2963.187671313244,
       "wayId": 1272470608,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736646,
+      "toNodeId": 12533577779,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2809.082493125772,
-      "endDistanceMeters": 2810.444855954081,
+      "startDistanceMeters": 2963.187671313244,
+      "endDistanceMeters": 2964.550034141553,
       "wayId": 1272470608,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12533577779,
+      "toNodeId": 11433600769,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2810.444855954081,
-      "endDistanceMeters": 2818.0004264062613,
+      "startDistanceMeters": 2964.550034141553,
+      "endDistanceMeters": 2972.1056045937335,
       "wayId": 1272470608,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433600769,
+      "toNodeId": 3766442575,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2818.0004264062613,
-      "endDistanceMeters": 2828.5452679480904,
+      "startDistanceMeters": 2972.1056045937335,
+      "endDistanceMeters": 2982.6504461355626,
       "wayId": 1272470607,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3766442575,
+      "toNodeId": 11519025301,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2828.5452679480904,
-      "endDistanceMeters": 2917.514044322742,
+      "startDistanceMeters": 2982.6504461355626,
+      "endDistanceMeters": 3071.619222510214,
       "wayId": 1272470607,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025301,
+      "toNodeId": 1185435926,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2917.514044322742,
-      "endDistanceMeters": 2940.5656282180935,
+      "startDistanceMeters": 3071.619222510214,
+      "endDistanceMeters": 3094.6708064055656,
       "wayId": 1272470607,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1185435926,
+      "toNodeId": 5510451907,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2940.5656282180935,
-      "endDistanceMeters": 2959.742509263244,
+      "startDistanceMeters": 3094.6708064055656,
+      "endDistanceMeters": 3113.847687450716,
       "wayId": 1272470607,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5510451907,
+      "toNodeId": 5512816373,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2959.742509263244,
-      "endDistanceMeters": 2985.5962543982223,
+      "startDistanceMeters": 3113.847687450716,
+      "endDistanceMeters": 3139.7014325856944,
       "wayId": 1548516862,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5512816373,
+      "toNodeId": 14084736687,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 2985.5962543982223,
-      "endDistanceMeters": 3029.403493677839,
+      "startDistanceMeters": 3139.7014325856944,
+      "endDistanceMeters": 3183.508671865311,
       "wayId": 629154774,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736687,
+      "toNodeId": 14084736686,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3029.403493677839,
-      "endDistanceMeters": 3032.3104686064266,
+      "startDistanceMeters": 3183.508671865311,
+      "endDistanceMeters": 3186.4156467938988,
       "wayId": 629154774,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736686,
+      "toNodeId": 11433600781,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3032.3104686064266,
-      "endDistanceMeters": 3041.4013934051036,
+      "startDistanceMeters": 3186.4156467938988,
+      "endDistanceMeters": 3195.5065715925757,
       "wayId": 629154774,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433600781,
+      "toNodeId": 5512816374,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3041.4013934051036,
-      "endDistanceMeters": 3043.186034275626,
+      "startDistanceMeters": 3195.5065715925757,
+      "endDistanceMeters": 3197.291212463098,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5512816374,
+      "toNodeId": 14243090522,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3043.186034275626,
-      "endDistanceMeters": 3050.227925928311,
+      "startDistanceMeters": 3197.291212463098,
+      "endDistanceMeters": 3204.333104115783,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14243090522,
+      "toNodeId": 14243090524,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3050.227925928311,
-      "endDistanceMeters": 3051.237984361138,
+      "startDistanceMeters": 3204.333104115783,
+      "endDistanceMeters": 3205.34316254861,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14243090524,
+      "toNodeId": 11816155495,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3051.237984361138,
-      "endDistanceMeters": 3052.33733674262,
+      "startDistanceMeters": 3205.34316254861,
+      "endDistanceMeters": 3206.4425149300923,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155495,
+      "toNodeId": 1027818820,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3052.33733674262,
-      "endDistanceMeters": 3067.4045181807455,
+      "startDistanceMeters": 3206.4425149300923,
+      "endDistanceMeters": 3221.5096963682176,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818820,
+      "toNodeId": 1027818807,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3067.4045181807455,
-      "endDistanceMeters": 3077.604853078748,
+      "startDistanceMeters": 3221.5096963682176,
+      "endDistanceMeters": 3231.71003126622,
       "wayId": 1548516856,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818807,
+      "toNodeId": 14084736680,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3077.604853078748,
-      "endDistanceMeters": 3094.706648571389,
+      "startDistanceMeters": 3231.71003126622,
+      "endDistanceMeters": 3248.811826758861,
       "wayId": 1548516857,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736680,
+      "toNodeId": 1306426750,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3094.706648571389,
-      "endDistanceMeters": 3108.085832686616,
+      "startDistanceMeters": 3248.811826758861,
+      "endDistanceMeters": 3262.191010874088,
       "wayId": 1548516858,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1306426750,
+      "toNodeId": 1027818811,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3108.085832686616,
-      "endDistanceMeters": 3120.28254191107,
+      "startDistanceMeters": 3262.191010874088,
+      "endDistanceMeters": 3274.387720098542,
       "wayId": 1548516858,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818811,
+      "toNodeId": 6842497284,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3120.28254191107,
-      "endDistanceMeters": 3129.3973926803396,
+      "startDistanceMeters": 3274.387720098542,
+      "endDistanceMeters": 3283.5025708678118,
       "wayId": 1548516858,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 6842497284,
+      "toNodeId": 1027818818,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3129.3973926803396,
-      "endDistanceMeters": 3138.225843392774,
+      "startDistanceMeters": 3283.5025708678118,
+      "endDistanceMeters": 3292.331021580246,
       "wayId": 1548516858,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818818,
+      "toNodeId": 9285546078,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3138.225843392774,
-      "endDistanceMeters": 3150.411052707429,
+      "startDistanceMeters": 3292.331021580246,
+      "endDistanceMeters": 3304.516230894901,
       "wayId": 1548516858,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9285546078,
+      "toNodeId": 14084736681,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3150.411052707429,
-      "endDistanceMeters": 3170.895678327151,
+      "startDistanceMeters": 3304.516230894901,
+      "endDistanceMeters": 3325.000856514623,
       "wayId": 1548516859,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736681,
+      "toNodeId": 5541748940,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3170.895678327151,
-      "endDistanceMeters": 3177.2825607467025,
+      "startDistanceMeters": 3325.000856514623,
+      "endDistanceMeters": 3331.3877389341746,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5541748940,
+      "toNodeId": 1027818816,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3177.2825607467025,
-      "endDistanceMeters": 3185.3741783634287,
+      "startDistanceMeters": 3331.3877389341746,
+      "endDistanceMeters": 3339.479356550901,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818816,
+      "toNodeId": 1027818806,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3185.3741783634287,
-      "endDistanceMeters": 3202.7787864855004,
+      "startDistanceMeters": 3339.479356550901,
+      "endDistanceMeters": 3356.8839646729725,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818806,
+      "toNodeId": 1027818808,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3202.7787864855004,
-      "endDistanceMeters": 3218.517842454808,
+      "startDistanceMeters": 3356.8839646729725,
+      "endDistanceMeters": 3372.62302064228,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818808,
+      "toNodeId": 1027818805,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3218.517842454808,
-      "endDistanceMeters": 3231.182488085086,
+      "startDistanceMeters": 3372.62302064228,
+      "endDistanceMeters": 3385.287666272558,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818805,
+      "toNodeId": 1027818812,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3231.182488085086,
-      "endDistanceMeters": 3242.686492545657,
+      "startDistanceMeters": 3385.287666272558,
+      "endDistanceMeters": 3396.791670733129,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818812,
+      "toNodeId": 1027818819,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3242.686492545657,
-      "endDistanceMeters": 3254.6597117911087,
+      "startDistanceMeters": 3396.791670733129,
+      "endDistanceMeters": 3408.764889978581,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818819,
+      "toNodeId": 5665101092,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3254.6597117911087,
-      "endDistanceMeters": 3263.269332946688,
+      "startDistanceMeters": 3408.764889978581,
+      "endDistanceMeters": 3417.37451113416,
       "wayId": 88484115,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101092,
+      "toNodeId": 5541748941,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3263.269332946688,
-      "endDistanceMeters": 3269.6416598377355,
+      "startDistanceMeters": 3417.37451113416,
+      "endDistanceMeters": 3423.7468380252076,
       "wayId": 1548516844,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5541748941,
+      "toNodeId": 14084736659,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3269.6416598377355,
-      "endDistanceMeters": 3276.025027158515,
+      "startDistanceMeters": 3423.7468380252076,
+      "endDistanceMeters": 3430.130205345987,
       "wayId": 1548516844,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14084736659,
+      "toNodeId": 5541748945,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3276.025027158515,
-      "endDistanceMeters": 3289.7521669168536,
+      "startDistanceMeters": 3430.130205345987,
+      "endDistanceMeters": 3443.8573451043258,
       "wayId": 1548516843,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5541748945,
+      "toNodeId": 5665101086,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3289.7521669168536,
-      "endDistanceMeters": 3293.0829701320054,
+      "startDistanceMeters": 3443.8573451043258,
+      "endDistanceMeters": 3447.1881483194775,
       "wayId": 1548516843,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101086,
+      "toNodeId": 11520466582,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3293.0829701320054,
-      "endDistanceMeters": 3301.869590742149,
+      "startDistanceMeters": 3447.1881483194775,
+      "endDistanceMeters": 3455.974768929621,
       "wayId": 1548516843,
       "highway": "trunk",
       "name": "Gowland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466582,
+      "toNodeId": 5665101084,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3301.869590742149,
-      "endDistanceMeters": 3310.8481008558088,
+      "startDistanceMeters": 3455.974768929621,
+      "endDistanceMeters": 3464.953279043281,
       "wayId": 88484122,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5665101084,
+      "toNodeId": 11520466541,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3310.8481008558088,
-      "endDistanceMeters": 3380.982863186123,
+      "startDistanceMeters": 3464.953279043281,
+      "endDistanceMeters": 3535.088041373595,
       "wayId": 88484122,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11520466541,
+      "toNodeId": 9721901014,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3380.982863186123,
-      "endDistanceMeters": 3387.4275443879405,
+      "startDistanceMeters": 3535.088041373595,
+      "endDistanceMeters": 3541.5327225754127,
       "wayId": 88484122,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9721901014,
+      "toNodeId": 1027818814,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3387.4275443879405,
-      "endDistanceMeters": 3461.683182835185,
+      "startDistanceMeters": 3541.5327225754127,
+      "endDistanceMeters": 3615.788361022657,
       "wayId": 88484122,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818814,
+      "toNodeId": 5903424158,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3461.683182835185,
-      "endDistanceMeters": 3483.028923345374,
+      "startDistanceMeters": 3615.788361022657,
+      "endDistanceMeters": 3637.134101532846,
       "wayId": 88484122,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5903424158,
+      "toNodeId": 13768862879,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3483.028923345374,
-      "endDistanceMeters": 3511.4366270703795,
+      "startDistanceMeters": 3637.134101532846,
+      "endDistanceMeters": 3665.5418052578516,
       "wayId": 1504755416,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768862879,
+      "toNodeId": 13768862878,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3511.4366270703795,
-      "endDistanceMeters": 3514.6595229867003,
+      "startDistanceMeters": 3665.5418052578516,
+      "endDistanceMeters": 3668.7647011741724,
       "wayId": 1504755416,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768862878,
+      "toNodeId": 11433600798,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3514.6595229867003,
-      "endDistanceMeters": 3523.446347760964,
+      "startDistanceMeters": 3668.7647011741724,
+      "endDistanceMeters": 3677.551525948436,
       "wayId": 1504755416,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433600798,
+      "toNodeId": 1019496667,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3523.446347760964,
-      "endDistanceMeters": 3532.7503320265164,
+      "startDistanceMeters": 3677.551525948436,
+      "endDistanceMeters": 3686.8555102139885,
       "wayId": 1504755415,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1019496667,
+      "toNodeId": 11433600888,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3532.7503320265164,
-      "endDistanceMeters": 3571.620325812169,
+      "startDistanceMeters": 3686.8555102139885,
+      "endDistanceMeters": 3725.725503999641,
       "wayId": 1504755415,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433600888,
+      "toNodeId": 14156349789,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3571.620325812169,
-      "endDistanceMeters": 3623.619780313466,
+      "startDistanceMeters": 3725.725503999641,
+      "endDistanceMeters": 3777.724958500938,
       "wayId": 1504755415,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 14156349789,
+      "toNodeId": 7655252225,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3623.619780313466,
-      "endDistanceMeters": 3625.6688827514818,
+      "startDistanceMeters": 3777.724958500938,
+      "endDistanceMeters": 3779.774060938954,
       "wayId": 1504755415,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 7655252225,
+      "toNodeId": 3766382759,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3625.6688827514818,
-      "endDistanceMeters": 3693.626001088613,
+      "startDistanceMeters": 3779.774060938954,
+      "endDistanceMeters": 3847.731179276085,
       "wayId": 1504755415,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3766382759,
+      "toNodeId": 13768883228,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3693.626001088613,
-      "endDistanceMeters": 3732.0331955217607,
+      "startDistanceMeters": 3847.731179276085,
+      "endDistanceMeters": 3886.138373709233,
       "wayId": 1504754517,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13768883228,
+      "toNodeId": 11816155518,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3732.0331955217607,
-      "endDistanceMeters": 3736.100273768109,
+      "startDistanceMeters": 3886.138373709233,
+      "endDistanceMeters": 3890.2054519555813,
       "wayId": 1504754517,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155518,
+      "toNodeId": 11433600866,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3736.100273768109,
-      "endDistanceMeters": 3744.9149368460075,
+      "startDistanceMeters": 3890.2054519555813,
+      "endDistanceMeters": 3899.0201150334797,
       "wayId": 1504754517,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433600866,
+      "toNodeId": 1027818817,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3744.9149368460075,
-      "endDistanceMeters": 3753.8368995094065,
+      "startDistanceMeters": 3899.0201150334797,
+      "endDistanceMeters": 3907.9420776968786,
       "wayId": 1504755420,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1027818817,
+      "toNodeId": 11433601042,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3753.8368995094065,
-      "endDistanceMeters": 3757.058736308402,
+      "startDistanceMeters": 3907.9420776968786,
+      "endDistanceMeters": 3911.163914495874,
       "wayId": 1504755420,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11433601042,
+      "toNodeId": 11816155517,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3757.058736308402,
-      "endDistanceMeters": 3808.475815417039,
+      "startDistanceMeters": 3911.163914495874,
+      "endDistanceMeters": 3962.580993604511,
       "wayId": 1504755420,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155517,
+      "toNodeId": 1294068092,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3808.475815417039,
-      "endDistanceMeters": 3942.340351947378,
+      "startDistanceMeters": 3962.580993604511,
+      "endDistanceMeters": 4096.445530134851,
       "wayId": 1504754516,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068092,
+      "toNodeId": 1030119052,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3942.340351947378,
-      "endDistanceMeters": 3956.6932960612517,
+      "startDistanceMeters": 4096.445530134851,
+      "endDistanceMeters": 4110.798474248724,
       "wayId": 1504754516,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030119052,
+      "toNodeId": 10536397608,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3956.6932960612517,
-      "endDistanceMeters": 3975.6302923132557,
+      "startDistanceMeters": 4110.798474248724,
+      "endDistanceMeters": 4129.735470500728,
       "wayId": 1504754516,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 10536397608,
+      "toNodeId": 1294068105,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3975.6302923132557,
-      "endDistanceMeters": 3993.0721022751054,
+      "startDistanceMeters": 4129.735470500728,
+      "endDistanceMeters": 4147.177280462578,
       "wayId": 1272470620,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068105,
+      "toNodeId": 11816155516,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 3993.0721022751054,
-      "endDistanceMeters": 4030.7474324406544,
+      "startDistanceMeters": 4147.177280462578,
+      "endDistanceMeters": 4184.852610628127,
       "wayId": 88774369,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11816155516,
+      "toNodeId": 13712752207,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4030.7474324406544,
-      "endDistanceMeters": 4031.982452374772,
+      "startDistanceMeters": 4184.852610628127,
+      "endDistanceMeters": 4186.087630562244,
       "wayId": 88774369,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712752207,
+      "toNodeId": 12532913492,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4031.982452374772,
-      "endDistanceMeters": 4033.4554758577733,
+      "startDistanceMeters": 4186.087630562244,
+      "endDistanceMeters": 4187.560654045245,
       "wayId": 88774369,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 12532913492,
+      "toNodeId": 5908922024,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4033.4554758577733,
-      "endDistanceMeters": 4042.2989948074223,
+      "startDistanceMeters": 4187.560654045245,
+      "endDistanceMeters": 4196.404172994895,
       "wayId": 88774369,
       "highway": "trunk",
       "name": "Castle Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 5908922024,
+      "toNodeId": 1199569667,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4042.2989948074223,
-      "endDistanceMeters": 4051.609865662702,
+      "startDistanceMeters": 4196.404172994895,
+      "endDistanceMeters": 4205.715043850175,
       "wayId": 1497214074,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569667,
+      "toNodeId": 11519025230,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4051.609865662702,
-      "endDistanceMeters": 4081.9473711899823,
+      "startDistanceMeters": 4205.715043850175,
+      "endDistanceMeters": 4236.052549377455,
       "wayId": 1497214074,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11519025230,
+      "toNodeId": 150941063,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4081.9473711899823,
-      "endDistanceMeters": 4096.196912938123,
+      "startDistanceMeters": 4236.052549377455,
+      "endDistanceMeters": 4250.302091125596,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 150941063,
+      "toNodeId": 1199569590,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4096.196912938123,
-      "endDistanceMeters": 4105.670161475397,
+      "startDistanceMeters": 4250.302091125596,
+      "endDistanceMeters": 4259.7753396628705,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569590,
+      "toNodeId": 1199569816,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4105.670161475397,
-      "endDistanceMeters": 4121.305969633247,
+      "startDistanceMeters": 4259.7753396628705,
+      "endDistanceMeters": 4275.41114782072,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569816,
+      "toNodeId": 1030286740,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4121.305969633247,
-      "endDistanceMeters": 4134.622131733245,
+      "startDistanceMeters": 4275.41114782072,
+      "endDistanceMeters": 4288.727309920718,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286740,
+      "toNodeId": 1030286814,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4134.622131733245,
-      "endDistanceMeters": 4147.4498505874135,
+      "startDistanceMeters": 4288.727309920718,
+      "endDistanceMeters": 4301.5550287748865,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286814,
+      "toNodeId": 1030286772,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4147.4498505874135,
-      "endDistanceMeters": 4162.757428664265,
+      "startDistanceMeters": 4301.5550287748865,
+      "endDistanceMeters": 4316.862606851738,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286772,
+      "toNodeId": 1030286807,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4162.757428664265,
-      "endDistanceMeters": 4176.341535930522,
+      "startDistanceMeters": 4316.862606851738,
+      "endDistanceMeters": 4330.446714117995,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286807,
+      "toNodeId": 13687321608,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4176.341535930522,
-      "endDistanceMeters": 4187.550957393385,
+      "startDistanceMeters": 4330.446714117995,
+      "endDistanceMeters": 4341.656135580858,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13687321608,
+      "toNodeId": 1030286729,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4187.550957393385,
-      "endDistanceMeters": 4218.604456386439,
+      "startDistanceMeters": 4341.656135580858,
+      "endDistanceMeters": 4372.709634573912,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286729,
+      "toNodeId": 11671058784,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4218.604456386439,
-      "endDistanceMeters": 4229.8783501762055,
+      "startDistanceMeters": 4372.709634573912,
+      "endDistanceMeters": 4383.9835283636785,
       "wayId": 629154778,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11671058784,
+      "toNodeId": 1030286705,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4229.8783501762055,
-      "endDistanceMeters": 4266.952261943542,
+      "startDistanceMeters": 4383.9835283636785,
+      "endDistanceMeters": 4421.057440131015,
       "wayId": 1255450322,
       "highway": "trunk",
       "name": "Anzac Avenue",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286705,
+      "toNodeId": 1030286670,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4266.952261943542,
-      "endDistanceMeters": 4285.0162709822025,
+      "startDistanceMeters": 4421.057440131015,
+      "endDistanceMeters": 4439.1214491696755,
       "wayId": 1272470623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286670,
+      "toNodeId": 1030286751,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4285.0162709822025,
-      "endDistanceMeters": 4295.043697222496,
+      "startDistanceMeters": 4439.1214491696755,
+      "endDistanceMeters": 4449.148875409969,
       "wayId": 1272470623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286751,
+      "toNodeId": 13712656257,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4295.043697222496,
-      "endDistanceMeters": 4303.988695025633,
+      "startDistanceMeters": 4449.148875409969,
+      "endDistanceMeters": 4458.093873213106,
       "wayId": 1272470623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712656257,
+      "toNodeId": 1030286674,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4303.988695025633,
-      "endDistanceMeters": 4316.407300828701,
+      "startDistanceMeters": 4458.093873213106,
+      "endDistanceMeters": 4470.512479016174,
       "wayId": 1272470623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286674,
+      "toNodeId": 13687321612,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4316.407300828701,
-      "endDistanceMeters": 4328.3996841534,
+      "startDistanceMeters": 4470.512479016174,
+      "endDistanceMeters": 4482.504862340873,
       "wayId": 1272470623,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13687321612,
+      "toNodeId": 1030286752,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4328.3996841534,
-      "endDistanceMeters": 4372.338817817371,
+      "startDistanceMeters": 4482.504862340873,
+      "endDistanceMeters": 4526.443996004844,
       "wayId": 1497216971,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030286752,
+      "toNodeId": 13712752213,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4372.338817817371,
-      "endDistanceMeters": 4375.908847398592,
+      "startDistanceMeters": 4526.443996004844,
+      "endDistanceMeters": 4530.014025586065,
       "wayId": 1497216971,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 13712752213,
+      "toNodeId": 11509895433,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4375.908847398592,
-      "endDistanceMeters": 4401.098908668965,
+      "startDistanceMeters": 4530.014025586065,
+      "endDistanceMeters": 4555.204086856438,
       "wayId": 1497216971,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 11509895433,
+      "toNodeId": 3755246034,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4401.098908668965,
-      "endDistanceMeters": 4465.792170787927,
+      "startDistanceMeters": 4555.204086856438,
+      "endDistanceMeters": 4619.8973489754,
       "wayId": 88774365,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246034,
+      "toNodeId": 1030118774,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4465.792170787927,
-      "endDistanceMeters": 4467.755590770481,
+      "startDistanceMeters": 4619.8973489754,
+      "endDistanceMeters": 4621.860768957954,
       "wayId": 88774365,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1030118774,
+      "toNodeId": 9245604568,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4467.755590770481,
-      "endDistanceMeters": 4480.446132204763,
+      "startDistanceMeters": 4621.860768957954,
+      "endDistanceMeters": 4634.551310392236,
       "wayId": 88774365,
       "highway": "trunk",
       "name": "Queens Gardens",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9245604568,
+      "toNodeId": 3755246036,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4480.446132204763,
-      "endDistanceMeters": 4492.740772692501,
+      "startDistanceMeters": 4634.551310392236,
+      "endDistanceMeters": 4646.845950879974,
       "wayId": 81349793,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3755246036,
+      "toNodeId": 9245604564,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4492.740772692501,
-      "endDistanceMeters": 4531.685949430639,
+      "startDistanceMeters": 4646.845950879974,
+      "endDistanceMeters": 4685.791127618112,
       "wayId": 81349793,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 9245604564,
+      "toNodeId": 1199569817,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4531.685949430639,
-      "endDistanceMeters": 4576.051751956706,
+      "startDistanceMeters": 4685.791127618112,
+      "endDistanceMeters": 4730.156930144179,
       "wayId": 118892271,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569817,
+      "toNodeId": 1294068449,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4576.051751956706,
-      "endDistanceMeters": 4668.29573542774,
+      "startDistanceMeters": 4730.156930144179,
+      "endDistanceMeters": 4822.400913615213,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068449,
+      "toNodeId": 1199569446,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4668.29573542774,
-      "endDistanceMeters": 4867.815313237378,
+      "startDistanceMeters": 4822.400913615213,
+      "endDistanceMeters": 5021.920491424851,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569446,
+      "toNodeId": 1199569784,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4867.815313237378,
-      "endDistanceMeters": 4978.450055126818,
+      "startDistanceMeters": 5021.920491424851,
+      "endDistanceMeters": 5132.555233314291,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1199569784,
+      "toNodeId": 1294068413,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4978.450055126818,
-      "endDistanceMeters": 4985.076256793483,
+      "startDistanceMeters": 5132.555233314291,
+      "endDistanceMeters": 5139.181434980956,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1294068413,
+      "toNodeId": 4974661706,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 4985.076256793483,
-      "endDistanceMeters": 5041.072864469265,
+      "startDistanceMeters": 5139.181434980956,
+      "endDistanceMeters": 5195.178042656738,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 4974661706,
+      "toNodeId": 1383726179,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5041.072864469265,
-      "endDistanceMeters": 5132.968826596311,
+      "startDistanceMeters": 5195.178042656738,
+      "endDistanceMeters": 5287.074004783784,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 1383726179,
+      "toNodeId": 3766380544,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5132.968826596311,
-      "endDistanceMeters": 5148.858263389623,
+      "startDistanceMeters": 5287.074004783784,
+      "endDistanceMeters": 5302.963441577096,
       "wayId": 116726397,
       "highway": "trunk",
       "name": "Cumberland Street",
-      "ref": "SH 1"
+      "ref": "SH 1",
+      "fromNodeId": 3766380544,
+      "toNodeId": 14158950984,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5148.858263389623,
-      "endDistanceMeters": 5172.941834191201,
-      "wayId": 1556703663,
-      "highway": "service"
+      "startDistanceMeters": 5302.963441577096,
+      "endDistanceMeters": 5356.444604378899,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1",
+      "fromNodeId": 14158950984,
+      "toNodeId": 14158946273,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5172.941834191201,
-      "endDistanceMeters": 5184.622354558424,
-      "wayId": 1556703662,
-      "highway": "service"
+      "startDistanceMeters": 5356.444604378899,
+      "endDistanceMeters": 5363.762470432702,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1",
+      "fromNodeId": 14158946273,
+      "toNodeId": 14158950990,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5184.622354558424,
-      "endDistanceMeters": 5186.307796631726,
-      "wayId": 1556703662,
-      "highway": "service"
+      "startDistanceMeters": 5363.762470432702,
+      "endDistanceMeters": 5377.550175433017,
+      "wayId": 116726397,
+      "highway": "trunk",
+      "name": "Cumberland Street",
+      "ref": "SH 1",
+      "fromNodeId": 14158950990,
+      "toNodeId": 1294068062,
+      "oneway": "yes",
+      "bicycle": "yes"
     },
     {
-      "startDistanceMeters": 5186.307796631726,
-      "endDistanceMeters": 5193.099522604842,
-      "wayId": 1556703662,
-      "highway": "service"
-    },
-    {
-      "startDistanceMeters": 5193.099522604842,
-      "endDistanceMeters": 5203.318754193953,
-      "wayId": 1556703662,
-      "highway": "service"
-    },
-    {
-      "startDistanceMeters": 5203.318754193953,
-      "endDistanceMeters": 5312.937630812173,
-      "wayId": 381871579,
+      "startDistanceMeters": 5377.550175433017,
+      "endDistanceMeters": 5390.939103931863,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 1294068062,
+      "toNodeId": 11509895223
     },
     {
-      "startDistanceMeters": 5312.937630812173,
-      "endDistanceMeters": 5314.451700129738,
-      "wayId": 381871579,
+      "startDistanceMeters": 5390.939103931863,
+      "endDistanceMeters": 5418.470153535181,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 11509895223,
+      "toNodeId": 11509895272
     },
     {
-      "startDistanceMeters": 5314.451700129738,
-      "endDistanceMeters": 5317.594243793588,
-      "wayId": 381871579,
+      "startDistanceMeters": 5418.470153535181,
+      "endDistanceMeters": 5426.5583936696985,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 11509895272,
+      "toNodeId": 1294068097
     },
     {
-      "startDistanceMeters": 5317.594243793588,
-      "endDistanceMeters": 5319.70120991091,
-      "wayId": 381871579,
+      "startDistanceMeters": 5426.5583936696985,
+      "endDistanceMeters": 5435.034024431233,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 1294068097,
+      "toNodeId": 11509895242
     },
     {
-      "startDistanceMeters": 5319.70120991091,
-      "endDistanceMeters": 5322.6967671136845,
-      "wayId": 381871579,
+      "startDistanceMeters": 5435.034024431233,
+      "endDistanceMeters": 5483.012978396503,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 11509895242,
+      "toNodeId": 11509895260
     },
     {
-      "startDistanceMeters": 5322.6967671136845,
-      "endDistanceMeters": 5325.0495939948,
-      "wayId": 381871579,
+      "startDistanceMeters": 5483.012978396503,
+      "endDistanceMeters": 5495.2928190676985,
+      "wayId": 508089766,
       "highway": "residential",
-      "name": "Vogel Street"
-    },
-    {
-      "startDistanceMeters": 5325.0495939948,
-      "endDistanceMeters": 5328.170925422027,
-      "wayId": 381871579,
-      "highway": "residential",
-      "name": "Vogel Street"
-    },
-    {
-      "startDistanceMeters": 5328.170925422027,
-      "endDistanceMeters": 5332.247213573286,
-      "wayId": 381871579,
-      "highway": "residential",
-      "name": "Vogel Street"
-    },
-    {
-      "startDistanceMeters": 5332.247213573286,
-      "endDistanceMeters": 5335.100017565735,
-      "wayId": 381871579,
-      "highway": "residential",
-      "name": "Vogel Street"
-    },
-    {
-      "startDistanceMeters": 5335.100017565735,
-      "endDistanceMeters": 5360.619179218077,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5360.619179218077,
-      "endDistanceMeters": 5369.83766299571,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5369.83766299571,
-      "endDistanceMeters": 5385.357342669781,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5385.357342669781,
-      "endDistanceMeters": 5389.46443742089,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5389.46443742089,
-      "endDistanceMeters": 5392.712671849263,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5392.712671849263,
-      "endDistanceMeters": 5395.769132202275,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5395.769132202275,
-      "endDistanceMeters": 5399.503822454766,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5399.503822454766,
-      "endDistanceMeters": 5401.258276998768,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
-    },
-    {
-      "startDistanceMeters": 5401.258276998768,
-      "endDistanceMeters": 5411.1837416254175,
-      "wayId": 508089734,
-      "highway": "residential",
-      "name": "Jervois Street"
+      "name": "Wolseley Street",
+      "fromNodeId": 11509895260,
+      "toNodeId": 1294068086
     }
   ],
-  "nearbyLandmarkCandidatesConsidered": 99,
+  "excludedClosureEdges": [
+    {
+      "wayId": 381871579,
+      "fromNodeId": 14158950981,
+      "toNodeId": 5802260307,
+      "reason": "Avoid the approximately 110 m straight Vogel Street OSM edge that crosses the grass connector."
+    }
+  ],
+  "nearbyLandmarkCandidatesConsidered": 100,
   "selectedLandmarkCount": 20,
   "buildings": {
-    "nearbyCandidates": 895,
-    "selectedCount": 888,
-    "ordinaryWays": 888,
+    "nearbyCandidates": 910,
+    "selectedCount": 902,
+    "ordinaryWays": 902,
     "multipolygonRelationsIncluded": 0,
     "multipolygonRelationsSkipped": 7,
     "namedBuildings": 145,
     "explicitHeightCount": 10,
     "levelsHeightCount": 74,
-    "fallbackHeightCount": 804,
+    "fallbackHeightCount": 818,
     "malformedHeights": 0,
-    "malformedOrExcludedRecords": 0,
-    "originalVertices": 7112,
-    "simplifiedVertices": 6269,
+    "malformedOrExcludedRecords": 1,
+    "originalVertices": 7207,
+    "simplifiedVertices": 6349,
     "largestFootprintVertices": 57,
     "minimumHeightMeters": 3,
     "maximumHeightMeters": 33,
     "medianHeightMeters": 8,
-    "generatedTriangleCount": 14367,
+    "generatedTriangleCount": 14537,
     "runtimeMeshChunkCount": 16,
     "runtimeMeshInstanceCount": 16,
-    "extractionSeconds": 62.7100775,
+    "extractionSeconds": 60.9471681,
     "sourcePbfFilename": "new-zealand-261005.osm.pbf",
     "visualCategoryCounts": {
-      "generic": 680,
-      "commercial/retail": 94,
+      "commercial/retail": 98,
+      "generic": 690,
       "civic/public": 14,
       "residential": 39,
       "office": 1,
@@ -4036,7 +5045,7 @@
       "historic": 4
     },
     "roofShapeTagCounts": {
-      "untagged": 855,
+      "untagged": 869,
       "gabled": 7,
       "flat": 17,
       "hipped": 4,
@@ -4049,16 +5058,16 @@
     "explicitBuildingColourCount": 19,
     "explicitRoofColourCount": 8,
     "explicitMaterialTagCount": 7,
-    "effectiveFlatRoofCount": 881,
-    "roofedBuildingCount": 888,
+    "effectiveFlatRoofCount": 895,
+    "roofedBuildingCount": 902,
     "effectiveGabledRoofCount": 5,
     "effectiveHippedRoofCount": 2,
     "flatRoofFallbackCount": 9,
-    "windowDetailedBuildingCount": 515,
-    "visualFacadeTriangleCount": 10772,
-    "visualRoofTriangleCount": 3623,
-    "visualWindowTriangleCount": 65308,
-    "visualTriangleCount": 79703,
+    "windowDetailedBuildingCount": 536,
+    "visualFacadeTriangleCount": 10904,
+    "visualRoofTriangleCount": 3661,
+    "visualWindowTriangleCount": 68764,
+    "visualTriangleCount": 83329,
     "facadePaletteVariantCount": 10,
     "runtimeSharedMaterialCount": 3,
     "visualRuntimeMeshChunkCount": 16,
@@ -4066,71 +5075,71 @@
     "visualRuntimeSurfaceCount": 48
   },
   "vegetation": {
-    "polygonsConsidered": 4319,
-    "polygonsIncluded": 22,
+    "polygonsConsidered": 4348,
+    "polygonsIncluded": 25,
     "categoryCounts": {
-      "park": 8,
+      "park": 9,
       "wood": 1,
       "recreation": 1,
-      "grass": 9,
-      "garden": 3
+      "grass": 10,
+      "garden": 4
     },
-    "namedAreas": 6,
+    "namedAreas": 7,
     "explicitTreeCount": 84,
     "treeRowCount": 1,
     "treeRowInstances": 3,
-    "generatedTreeCount": 84,
-    "totalTreeInstances": 171,
+    "generatedTreeCount": 236,
+    "totalTreeInstances": 323,
     "treesRejectedForRoadProximity": 0,
     "treesRejectedForBuildingIntersection": 8,
-    "treesRejectedAsDuplicates": 52,
+    "treesRejectedAsDuplicates": 69,
     "treesRejectedNearLandmarks": 2,
-    "originalPolygonVertices": 479,
-    "simplifiedPolygonVertices": 254,
+    "originalPolygonVertices": 639,
+    "simplifiedPolygonVertices": 303,
     "largestPolygonVertices": 33,
-    "demSamples": 239,
+    "demSamples": 397,
     "demCacheHits": 2,
     "malformedOrSkippedGeometries": 4,
-    "areaGroundOverlays": 22,
-    "areaTriangleCount": 188,
-    "multiMeshCount": 32,
+    "areaGroundOverlays": 25,
+    "areaTriangleCount": 228,
+    "multiMeshCount": 27,
     "areaMeshInstanceCount": 10,
-    "sceneNodeCount": 43,
-    "generationSeconds": 46.2586813,
+    "sceneNodeCount": 38,
+    "generationSeconds": 48.3075426,
     "sourcePbfFilename": "new-zealand-261005.osm.pbf"
   },
   "streetFurniture": {
-    "totalCandidates": 3696,
-    "selectedItems": 345,
+    "totalCandidates": 3765,
+    "selectedItems": 346,
     "categoryCounts": {
-      "crossing": 193,
-      "give-way-sign": 31,
+      "crossing": 194,
       "traffic-signal": 59,
+      "give-way-sign": 31,
+      "bus-stop": 15,
       "stop-sign": 3,
       "bollard": 5,
-      "bus-stop": 15,
       "bench": 39
     },
     "streetLamps": 0,
     "trafficSignals": 59,
     "stopGiveWaySigns": 34,
     "bollards": 5,
-    "crossings": 193,
+    "crossings": 194,
     "busStops": 15,
     "benches": 39,
     "malformedOrSkippedItems": 1632,
-    "itemsInsideRoadRibbon": 70,
-    "elevationSamples": 345,
-    "runtimeMultiMeshCount": 129,
-    "totalRenderedInstances": 345,
-    "sceneNodeCount": 130,
-    "generationSeconds": 42.7750838,
-    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-    "renderedPrimitiveInstances": 763
+    "itemsInsideRoadRibbon": 72,
+    "elevationSamples": 346,
+    "runtimeMultiMeshCount": 128,
+    "totalRenderedInstances": 346,
+    "renderedPrimitiveInstances": 765,
+    "sceneNodeCount": 129,
+    "generationSeconds": 38.728071699999994,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
   },
-  "actualOsmDistanceMeters": 5411.1837416254175,
-  "finalPointCount": 340,
-  "sourceOsmNodeCount": 254,
+  "actualOsmDistanceMeters": 5495.2928190676985,
+  "finalPointCount": 334,
+  "sourceOsmNodeCount": 246,
   "maximumAdjacentPointDistanceMeters": 29.83234930716068,
   "maximumSourceOsmNodeSpacingMeters": 199.51957780963883,
   "maximumCorridorDeviationMeters": 0,
@@ -4141,14 +5150,14 @@
     "nodeScanSeconds": 0,
     "wayScanSeconds": 0,
     "graphBuildSeconds": 0,
-    "routeSolveSeconds": 1.634383,
-    "outputGenerationSeconds": 0.014203,
-    "cacheLoadSeconds": 0.121138,
+    "routeSolveSeconds": 1.5877706,
+    "outputGenerationSeconds": 0.0118,
+    "cacheLoadSeconds": 0.1535664,
     "cacheSaveSeconds": 0,
     "cacheHit": true,
-    "cacheBuildSeconds": 74.76499629999999
+    "cacheBuildSeconds": 73.1767993
   },
-  "generatedAtUtc": "2026-10-07T18:32:20.2173033+00:00",
+  "generatedAtUtc": "2026-10-08T05:13:35.8735488+00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -4167,14 +5176,14 @@
         ]
       },
       {
-        "name": "Toitū Te Whenua Land Information New Zealand",
+        "name": "Toit\u016b Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -4210,52 +5219,24 @@
     ],
     "oneMeterCoveragePercent": 100.0,
     "fallbackCoveragePercent": 0.0,
-    "minimumElevationMeters": 1.5596513237297942,
-    "maximumElevationMeters": 15.853957450585519,
-    "startElevationMeters": 2.3025465887031173,
-    "totalAscentMeters": 18.233424483229665,
-    "totalDescentMeters": 18.23342448322967,
-    "minimumGradientPercent": -2.848149173877379,
-    "maximumGradientPercent": 2.0391624104923105,
-    "averageGradientPercent": 0.021558960059856247,
+    "minimumElevationMeters": 1.5612945082877994,
+    "maximumElevationMeters": 15.854350941292314,
+    "startElevationMeters": 2.224669716685874,
+    "totalAscentMeters": 18.164954589432845,
+    "totalDescentMeters": 18.16495458943285,
+    "minimumGradientPercent": -2.835758704264393,
+    "maximumGradientPercent": 2.044506415132264,
+    "averageGradientPercent": 0.012282147303886586,
     "gradientReviewThresholdPercent": 15.0,
     "suspiciousGradientDistancesMeters": [],
     "bridgeTunnelSections": [],
     "profileCsv": "dunedin-one-way-oval-gardens.elevation.csv",
-    "elapsedSeconds": 5.294392599957064,
+    "elapsedSeconds": 4.579775799997151,
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
-  "backgroundStreets": {
-    "waysConsidered": 381,
-    "waysIncluded": 309,
-    "streetSegments": 310,
-    "highwayClassCounts": {
-      "residential": 61,
-      "secondary": 81,
-      "service": 51,
-      "tertiary": 74,
-      "trunk": 19,
-      "unclassified": 23
-    },
-    "namedStreets": 249,
-    "totalLengthMeters": 27023.1312566098,
-    "suppressedOverlapMeters": 6142.694848667443,
-    "widthSourceCounts": {
-      "class": 147,
-      "lanes": 157,
-      "width": 5
-    },
-    "runtimeSampleCount": 3005,
-    "triangleCount": 5390,
-    "meshChunkCount": 31,
-    "routeChunkCount": 14,
-    "sceneNodeImpact": 32,
-    "extractionSeconds": 39.8953624,
-    "elevationSamplingSeconds": 14.6092428
-  },
   "terrain": {
-    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0303.tiff",
@@ -4268,46 +5249,46 @@
     "near": {
       "radiusMeters": 250.0,
       "spacingMeters": 10.0,
-      "vertices": 18422,
-      "triangles": 35950,
-      "chunks": 44,
-      "areaSquareMeters": 1797500.0
+      "vertices": 19009,
+      "triangles": 37098,
+      "chunks": 45,
+      "areaSquareMeters": 1854900.0
     },
     "far": {
       "radiusMeters": 750.0,
       "spacingMeters": 25.0,
-      "vertices": 6292,
-      "triangles": 11738,
-      "chunks": 33,
-      "areaSquareMeters": 3668125.0,
+      "vertices": 6336,
+      "triangles": 11818,
+      "chunks": 36,
+      "areaSquareMeters": 3693125.0,
       "transitionOverlapMeters": 10.0,
       "verticalBiasMeters": 0.15,
-      "transitionVerticesClampedBelowNear": 1123
+      "transitionVerticesClampedBelowNear": 1158
     },
-    "combinedTriangleCount": 47688,
-    "combinedChunkCount": 77,
+    "combinedTriangleCount": 48916,
+    "combinedChunkCount": 81,
     "extentMeters": {
-      "minX": -450.0,
-      "maxX": 1725.0,
-      "minZ": -2975.0,
-      "maxZ": 875.0
+      "minX": -400.0,
+      "maxX": 1775.0,
+      "minZ": -3125.0,
+      "maxZ": 800.0
     },
-    "minimumSourceElevationMeters": -1.374412008677422,
-    "maximumSourceElevationMeters": 130.08347086824077,
-    "vertexCount": 24714,
-    "triangleCount": 47688,
-    "chunkCount": 77,
-    "runtimeMeshInstanceCount": 77,
-    "coveredAreaSquareMeters": 5465625.0,
+    "minimumSourceElevationMeters": -1.403690491510887,
+    "maximumSourceElevationMeters": 130.2216589045526,
+    "vertexCount": 25345,
+    "triangleCount": 48916,
+    "chunkCount": 81,
+    "runtimeMeshInstanceCount": 81,
+    "coveredAreaSquareMeters": 5548025.0,
     "noDataCells": 8,
     "interpolatedVertices": 4,
     "roadClearanceRadiusMeters": 5.0,
     "roadClearanceMeters": 0.15,
-    "roadClearanceAdjustedVertices": 388,
+    "roadClearanceAdjustedVertices": 398,
     "visualDownwardBiasMeters": 0.08,
     "bundleFile": "dunedin-one-way-oval-gardens.terrain.json",
-    "bundleBytes": 975987,
-    "generationSeconds": 1.918123000000378,
+    "bundleBytes": 1004106,
+    "generationSeconds": 1.9398529999998573,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   }
 }

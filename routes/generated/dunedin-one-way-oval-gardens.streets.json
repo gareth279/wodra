@@ -6,32 +6,30 @@
   "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
-    "waysConsidered": 381,
-    "waysIncluded": 309,
-    "streetSegments": 310,
+    "waysConsidered": 397,
+    "waysIncluded": 327,
     "highwayClassCounts": {
-      "residential": 61,
-      "secondary": 81,
-      "service": 51,
-      "tertiary": 74,
-      "trunk": 19,
-      "unclassified": 23
+      "residential": 65,
+      "secondary": 87,
+      "service": 52,
+      "tertiary": 79,
+      "trunk": 20,
+      "unclassified": 24
     },
     "widthSourceCounts": {
-      "class": 147,
-      "lanes": 157,
+      "class": 153,
+      "lanes": 169,
       "width": 5
     },
-    "namedStreetCount": 249,
-    "totalLengthMeters": 27023.1312566098,
-    "suppressedOverlapMeters": 6142.694848667443,
-    "runtimeSampleCount": 3005
+    "namedStreetCount": 265,
+    "totalLengthMeters": 28576.394311371823,
+    "suppressedOverlapMeters": 6267.763409122355,
+    "runtimeSampleCount": 3215
   },
   "streets": [
     {
       "osmId": 17943870,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -318,13 +316,80 @@
           "elevationMeters": 2.3440001010894775
         }
       ],
-      "distanceFromRouteMeters": 177.14017344546897,
-      "nearestRouteDistanceMeters": 4483.970086141144
+      "distanceFromRouteMeters": 177.1405021068641,
+      "nearestRouteDistanceMeters": 4638.080647336149
+    },
+    {
+      "osmId": 17945024,
+      "name": "Crawford Street",
+      "ref": "SH 1",
+      "highway": "trunk",
+      "oneway": true,
+      "widthMeters": 9.600000000000001,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8859695,
+          "longitude": 170.4989509,
+          "elevationMeters": 2.25600004196167
+        },
+        {
+          "latitude": -45.885921100000004,
+          "longitude": 170.49893260000002,
+          "elevationMeters": 2.2789998054504395
+        },
+        {
+          "latitude": -45.885862700000004,
+          "longitude": 170.498915,
+          "elevationMeters": 2.2909998893737793
+        },
+        {
+          "latitude": -45.8858042,
+          "longitude": 170.49890620000002,
+          "elevationMeters": 2.2899999618530273
+        },
+        {
+          "latitude": -45.885738700000005,
+          "longitude": 170.498904,
+          "elevationMeters": 2.2699999809265137
+        },
+        {
+          "latitude": -45.8856644,
+          "longitude": 170.49890670000002,
+          "elevationMeters": 2.243000030517578
+        },
+        {
+          "latitude": -45.885569000000004,
+          "longitude": 170.49893120000002,
+          "elevationMeters": 2.202000141143799
+        },
+        {
+          "latitude": -45.8854975,
+          "longitude": 170.49895890000002,
+          "elevationMeters": 2.2300000190734863
+        },
+        {
+          "latitude": -45.8854233,
+          "longitude": 170.4989978,
+          "elevationMeters": 2.2750000953674316
+        },
+        {
+          "latitude": -45.8853956,
+          "longitude": 170.4990124,
+          "elevationMeters": 2.2850000858306885
+        },
+        {
+          "latitude": -45.8853408,
+          "longitude": 170.49904260000002,
+          "elevationMeters": 2.302000045776367
+        }
+      ],
+      "distanceFromRouteMeters": 144.04854692780495,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 17949940,
       "name": "Liverpool Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -352,12 +417,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 454.5154892593901
+      "nearestRouteDistanceMeters": 608.6245494341047
     },
     {
       "osmId": 17950665,
       "name": "Emily Siedeberg Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -424,13 +488,12 @@
           "elevationMeters": 6.60099983215332
         }
       ],
-      "distanceFromRouteMeters": 14.807324732094386,
-      "nearestRouteDistanceMeters": 3097.809342045939
+      "distanceFromRouteMeters": 14.807356257479336,
+      "nearestRouteDistanceMeters": 3251.9195425810453
     },
     {
       "osmId": 18215481,
       "name": "Dowling Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6.4,
@@ -502,13 +565,11 @@
           "elevationMeters": 12.425999641418457
         }
       ],
-      "distanceFromRouteMeters": 27.594797420130355,
-      "nearestRouteDistanceMeters": 699.2548654260403
+      "distanceFromRouteMeters": 27.594810480879275,
+      "nearestRouteDistanceMeters": 853.3640042756188
     },
     {
       "osmId": 19781983,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -545,13 +606,12 @@
           "elevationMeters": 2.697999954223633
         }
       ],
-      "distanceFromRouteMeters": 155.85871168935034,
-      "nearestRouteDistanceMeters": 4899.056281044603
+      "distanceFromRouteMeters": 155.8590023297363,
+      "nearestRouteDistanceMeters": 5053.166998304309
     },
     {
       "osmId": 19782029,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -588,13 +648,12 @@
           "elevationMeters": 2.4639999866485596
         }
       ],
-      "distanceFromRouteMeters": 193.3238418572465,
-      "nearestRouteDistanceMeters": 3853.2115357271846
+      "distanceFromRouteMeters": 193.32420240984533,
+      "nearestRouteDistanceMeters": 4007.321655812484
     },
     {
       "osmId": 19783192,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -711,13 +770,12 @@
           "elevationMeters": 2.4529998302459717
         }
       ],
-      "distanceFromRouteMeters": 44.227930042888566,
-      "nearestRouteDistanceMeters": 4709.432444064539
+      "distanceFromRouteMeters": 44.228012900768995,
+      "nearestRouteDistanceMeters": 4863.543272721084
     },
     {
       "osmId": 19792244,
       "name": "Police Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -780,12 +838,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4867.805008113676
+      "nearestRouteDistanceMeters": 5021.915945557388
     },
     {
       "osmId": 19805261,
       "name": "Union Street West",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -872,13 +929,12 @@
           "elevationMeters": 13.640000343322754
         }
       ],
-      "distanceFromRouteMeters": 46.34849803850445,
-      "nearestRouteDistanceMeters": 2255.9893116741364
+      "distanceFromRouteMeters": 46.348584583903325,
+      "nearestRouteDistanceMeters": 2410.099032599005
     },
     {
       "osmId": 19805263,
       "name": "Saint David Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 13.8,
@@ -956,12 +1012,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 19867970,
       "name": "Park Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6.4,
@@ -1118,13 +1173,12 @@
           "elevationMeters": 15.961999893188477
         }
       ],
-      "distanceFromRouteMeters": 126.868202717274,
-      "nearestRouteDistanceMeters": 2465.910361181582
+      "distanceFromRouteMeters": 126.8684368627789,
+      "nearestRouteDistanceMeters": 2620.0200190395412
     },
     {
       "osmId": 19869344,
       "name": "Jervois Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -1177,12 +1231,310 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4978.442064224667
+      "nearestRouteDistanceMeters": 5132.553033758048
+    },
+    {
+      "osmId": 19960715,
+      "name": "Gordon Street",
+      "highway": "tertiary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.885085100000005,
+          "longitude": 170.498467,
+          "elevationMeters": 2.1480000019073486
+        },
+        {
+          "latitude": -45.885138100000006,
+          "longitude": 170.49852610000002,
+          "elevationMeters": 2.0989999771118164
+        },
+        {
+          "latitude": -45.885167,
+          "longitude": 170.4985595,
+          "elevationMeters": 2.065000057220459
+        },
+        {
+          "latitude": -45.8852014,
+          "longitude": 170.49861,
+          "elevationMeters": 2.062999963760376
+        },
+        {
+          "latitude": -45.8852192,
+          "longitude": 170.49864050000002,
+          "elevationMeters": 2.0989999771118164
+        },
+        {
+          "latitude": -45.8852338,
+          "longitude": 170.49867550000002,
+          "elevationMeters": 2.066999912261963
+        },
+        {
+          "latitude": -45.885260800000005,
+          "longitude": 170.4987682,
+          "elevationMeters": 2.0959999561309814
+        },
+        {
+          "latitude": -45.885298500000005,
+          "longitude": 170.49889900000002,
+          "elevationMeters": 2.2679998874664307
+        },
+        {
+          "latitude": -45.8853049,
+          "longitude": 170.4989213,
+          "elevationMeters": 2.313999891281128
+        },
+        {
+          "latitude": -45.885325300000005,
+          "longitude": 170.4989893,
+          "elevationMeters": 2.359999895095825
+        },
+        {
+          "latitude": -45.8853408,
+          "longitude": 170.49904260000002,
+          "elevationMeters": 2.302000045776367
+        },
+        {
+          "latitude": -45.8853768,
+          "longitude": 170.49916810000002,
+          "elevationMeters": 2.1419999599456787
+        },
+        {
+          "latitude": -45.885412800000005,
+          "longitude": 170.49929360000002,
+          "elevationMeters": 2.2139999866485596
+        },
+        {
+          "latitude": -45.88545703333334,
+          "longitude": 170.49944886666668,
+          "elevationMeters": 2.1710000038146973
+        },
+        {
+          "latitude": -45.88550126666667,
+          "longitude": 170.49960413333335,
+          "elevationMeters": 2.11899995803833
+        },
+        {
+          "latitude": -45.885545500000006,
+          "longitude": 170.49975940000002,
+          "elevationMeters": 2.1009998321533203
+        },
+        {
+          "latitude": -45.885574600000005,
+          "longitude": 170.49986180000002,
+          "elevationMeters": 2.2130000591278076
+        },
+        {
+          "latitude": -45.8856039,
+          "longitude": 170.499963,
+          "elevationMeters": 2.1100001335144043
+        },
+        {
+          "latitude": -45.885644600000006,
+          "longitude": 170.5001039,
+          "elevationMeters": 2.125
+        },
+        {
+          "latitude": -45.8856693,
+          "longitude": 170.5001776,
+          "elevationMeters": 2.1470000743865967
+        },
+        {
+          "latitude": -45.8856951,
+          "longitude": 170.5002387,
+          "elevationMeters": 2.1730000972747803
+        },
+        {
+          "latitude": -45.8857148,
+          "longitude": 170.5002667,
+          "elevationMeters": 2.193000078201294
+        },
+        {
+          "latitude": -45.8857396,
+          "longitude": 170.5002963,
+          "elevationMeters": 2.190999984741211
+        },
+        {
+          "latitude": -45.8857684,
+          "longitude": 170.50031620000001,
+          "elevationMeters": 2.200000047683716
+        },
+        {
+          "latitude": -45.8857987,
+          "longitude": 170.5003292,
+          "elevationMeters": 2.2100000381469727
+        },
+        {
+          "latitude": -45.885828000000004,
+          "longitude": 170.5003279,
+          "elevationMeters": 2.2239999771118164
+        },
+        {
+          "latitude": -45.88592273333334,
+          "longitude": 170.50031570000002,
+          "elevationMeters": 2.2699999809265137
+        },
+        {
+          "latitude": -45.886017466666665,
+          "longitude": 170.5003035,
+          "elevationMeters": 2.240000009536743
+        },
+        {
+          "latitude": -45.8861122,
+          "longitude": 170.50029130000001,
+          "elevationMeters": 2.1410000324249268
+        }
+      ],
+      "distanceFromRouteMeters": 143.52805803193965,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 20361764,
+      "name": "Manor Place",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.8823603,
+          "longitude": 170.4990927,
+          "elevationMeters": 3.383000135421753
+        },
+        {
+          "latitude": -45.8823315,
+          "longitude": 170.49898530000002,
+          "elevationMeters": 3.5179998874664307
+        },
+        {
+          "latitude": -45.8823139,
+          "longitude": 170.49889810000002,
+          "elevationMeters": 3.4230000972747803
+        },
+        {
+          "latitude": -45.8823066,
+          "longitude": 170.4988586,
+          "elevationMeters": 3.4230000972747803
+        },
+        {
+          "latitude": -45.882302300000006,
+          "longitude": 170.498835,
+          "elevationMeters": 3.5250000953674316
+        },
+        {
+          "latitude": -45.8822993,
+          "longitude": 170.4987948,
+          "elevationMeters": 3.629000186920166
+        },
+        {
+          "latitude": -45.8822993,
+          "longitude": 170.49874200000002,
+          "elevationMeters": 3.6610000133514404
+        },
+        {
+          "latitude": -45.8823048,
+          "longitude": 170.49869710000002,
+          "elevationMeters": 3.763000011444092
+        },
+        {
+          "latitude": -45.8823157,
+          "longitude": 170.49864190000002,
+          "elevationMeters": 3.810999870300293
+        },
+        {
+          "latitude": -45.8823285,
+          "longitude": 170.49858930000002,
+          "elevationMeters": 3.88700008392334
+        },
+        {
+          "latitude": -45.882363133333335,
+          "longitude": 170.49846680000002,
+          "elevationMeters": 4.084000110626221
+        },
+        {
+          "latitude": -45.88239776666667,
+          "longitude": 170.4983443,
+          "elevationMeters": 4.335000038146973
+        },
+        {
+          "latitude": -45.882432400000006,
+          "longitude": 170.4982218,
+          "elevationMeters": 4.496999740600586
+        },
+        {
+          "latitude": -45.88248345000001,
+          "longitude": 170.49805271666668,
+          "elevationMeters": 4.72599983215332
+        },
+        {
+          "latitude": -45.882534500000006,
+          "longitude": 170.49788363333334,
+          "elevationMeters": 4.99399995803833
+        },
+        {
+          "latitude": -45.88258555,
+          "longitude": 170.49771455,
+          "elevationMeters": 5.539000034332275
+        },
+        {
+          "latitude": -45.882636600000005,
+          "longitude": 170.49754546666668,
+          "elevationMeters": 6.5329999923706055
+        },
+        {
+          "latitude": -45.88268765000001,
+          "longitude": 170.49737638333335,
+          "elevationMeters": 7.873000144958496
+        },
+        {
+          "latitude": -45.882738700000004,
+          "longitude": 170.4972073,
+          "elevationMeters": 9.362000465393066
+        },
+        {
+          "latitude": -45.88278888333334,
+          "longitude": 170.4970548,
+          "elevationMeters": 10.734999656677246
+        },
+        {
+          "latitude": -45.88283906666667,
+          "longitude": 170.49690230000002,
+          "elevationMeters": 12.227999687194824
+        },
+        {
+          "latitude": -45.882889250000005,
+          "longitude": 170.49674980000003,
+          "elevationMeters": 13.553999900817871
+        },
+        {
+          "latitude": -45.88293943333334,
+          "longitude": 170.49659730000002,
+          "elevationMeters": 14.980000495910645
+        },
+        {
+          "latitude": -45.88298961666667,
+          "longitude": 170.4964448,
+          "elevationMeters": 16.79199981689453
+        },
+        {
+          "latitude": -45.883039800000006,
+          "longitude": 170.49629230000002,
+          "elevationMeters": 18.60300064086914
+        },
+        {
+          "latitude": -45.8830703,
+          "longitude": 170.49619760000002,
+          "elevationMeters": 19.453998565673828
+        }
+      ],
+      "distanceFromRouteMeters": 116.98378989614386,
+      "nearestRouteDistanceMeters": 166.23867604240004
     },
     {
       "osmId": 21436162,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 6.4,
@@ -1259,13 +1611,12 @@
           "elevationMeters": 2.5869998931884766
         }
       ],
-      "distanceFromRouteMeters": 20.912724905190892,
-      "nearestRouteDistanceMeters": 4076.761058723381
+      "distanceFromRouteMeters": 20.912764208112584,
+      "nearestRouteDistanceMeters": 4230.8714947849585
     },
     {
       "osmId": 27505307,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -1302,13 +1653,12 @@
           "elevationMeters": 12.425999641418457
         }
       ],
-      "distanceFromRouteMeters": 145.05881470948427,
-      "nearestRouteDistanceMeters": 663.7821049226733
+      "distanceFromRouteMeters": 145.05899593074534,
+      "nearestRouteDistanceMeters": 817.8909304633497
     },
     {
       "osmId": 27695753,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -1326,12 +1676,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 359.1253675628541
+      "nearestRouteDistanceMeters": 513.2343995174112
     },
     {
       "osmId": 48330237,
       "name": "Hope Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -1518,13 +1867,12 @@
           "elevationMeters": 35.68600082397461
         }
       ],
-      "distanceFromRouteMeters": 132.7478025136339,
-      "nearestRouteDistanceMeters": 42.00624609746397
+      "distanceFromRouteMeters": 132.74805097984293,
+      "nearestRouteDistanceMeters": 196.11498968931218
     },
     {
       "osmId": 48330911,
       "name": "Birch Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -1546,13 +1894,12 @@
           "elevationMeters": 2.4830000400543213
         }
       ],
-      "distanceFromRouteMeters": 148.91065474363253,
-      "nearestRouteDistanceMeters": 4728.667998330298
+      "distanceFromRouteMeters": 148.9109337171504,
+      "nearestRouteDistanceMeters": 4882.7786803889485
     },
     {
       "osmId": 48330915,
       "name": "Dunbar Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6.3,
@@ -1624,13 +1971,12 @@
           "elevationMeters": 2.065999984741211
         }
       ],
-      "distanceFromRouteMeters": 20.103381405212865,
-      "nearestRouteDistanceMeters": 4221.780717619147
+      "distanceFromRouteMeters": 20.103388592407132,
+      "nearestRouteDistanceMeters": 4375.8913872484
     },
     {
       "osmId": 48330916,
       "name": "Burlington Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6.4,
@@ -1667,13 +2013,12 @@
           "elevationMeters": 11.035999298095703
         }
       ],
-      "distanceFromRouteMeters": 117.94577240778025,
-      "nearestRouteDistanceMeters": 737.4397755363073
+      "distanceFromRouteMeters": 117.9458183025389,
+      "nearestRouteDistanceMeters": 891.5488356289849
     },
     {
       "osmId": 48331413,
       "name": "Ethel McMIllan Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -1700,13 +2045,12 @@
           "elevationMeters": 7.24399995803833
         }
       ],
-      "distanceFromRouteMeters": 52.9576008439037,
-      "nearestRouteDistanceMeters": 3098.1281702976
+      "distanceFromRouteMeters": 52.957713592747865,
+      "nearestRouteDistanceMeters": 3252.23840258867
     },
     {
       "osmId": 48331414,
       "name": "Ethel Benjamin Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -1778,13 +2122,12 @@
           "elevationMeters": 7.535000324249268
         }
       ],
-      "distanceFromRouteMeters": 22.55950097067763,
-      "nearestRouteDistanceMeters": 3231.1585340866723
+      "distanceFromRouteMeters": 22.559548192757006,
+      "nearestRouteDistanceMeters": 3385.268775478535
     },
     {
       "osmId": 48331415,
       "name": "Harrow Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6.4,
@@ -1941,13 +2284,12 @@
           "elevationMeters": 2.4019999504089355
         }
       ],
-      "distanceFromRouteMeters": 191.2455202230574,
-      "nearestRouteDistanceMeters": 3513.437137477423
+      "distanceFromRouteMeters": 191.24587519011487,
+      "nearestRouteDistanceMeters": 3667.547160026112
     },
     {
       "osmId": 48331416,
       "name": "Grange Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -2029,13 +2371,12 @@
           "elevationMeters": 6.286999702453613
         }
       ],
-      "distanceFromRouteMeters": 60.85715863964011,
-      "nearestRouteDistanceMeters": 3301.845435143929
+      "distanceFromRouteMeters": 60.85727210582943,
+      "nearestRouteDistanceMeters": 3455.955681996289
     },
     {
       "osmId": 48331431,
       "name": "Bath Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6,
@@ -2127,13 +2468,12 @@
           "elevationMeters": 6.619999885559082
         }
       ],
-      "distanceFromRouteMeters": 138.67190858595652,
-      "nearestRouteDistanceMeters": 1076.5589626185863
+      "distanceFromRouteMeters": 138.67216799920158,
+      "nearestRouteDistanceMeters": 1230.6682326143186
     },
     {
       "osmId": 48331486,
       "name": "Leith Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -2335,13 +2675,12 @@
           "elevationMeters": 1.6019999980926514
         }
       ],
-      "distanceFromRouteMeters": 121.63198907373166,
-      "nearestRouteDistanceMeters": 3301.856207233066
+      "distanceFromRouteMeters": 121.6322158029145,
+      "nearestRouteDistanceMeters": 3455.966274998836
     },
     {
       "osmId": 48331487,
       "name": "Vire Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -2398,13 +2737,12 @@
           "elevationMeters": 2.7320001125335693
         }
       ],
-      "distanceFromRouteMeters": 122.17752443878793,
-      "nearestRouteDistanceMeters": 3351.824140385114
+      "distanceFromRouteMeters": 122.1777521562737,
+      "nearestRouteDistanceMeters": 3505.934221824499
     },
     {
       "osmId": 48331489,
       "name": "Bow Lane",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -2462,12 +2800,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3808.4490819446996
+      "nearestRouteDistanceMeters": 3962.559473309071
     },
     {
       "osmId": 48473118,
       "name": "Willis Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -2719,13 +3056,12 @@
           "elevationMeters": 2.5820000171661377
         }
       ],
-      "distanceFromRouteMeters": 117.90604278520398,
-      "nearestRouteDistanceMeters": 4371.955915813085
+      "distanceFromRouteMeters": 117.90625706290443,
+      "nearestRouteDistanceMeters": 4526.066523447642
     },
     {
       "osmId": 48473230,
       "name": "Bombay Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -2802,13 +3138,12 @@
           "elevationMeters": 2.319000005722046
         }
       ],
-      "distanceFromRouteMeters": 105.82757119989773,
-      "nearestRouteDistanceMeters": 4134.596838749102
+      "distanceFromRouteMeters": 105.82769794777498,
+      "nearestRouteDistanceMeters": 4288.707340424035
     },
     {
       "osmId": 48482484,
       "name": "Albany Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -2845,13 +3180,12 @@
           "elevationMeters": 26.916000366210938
         }
       ],
-      "distanceFromRouteMeters": 172.4189125056012,
-      "nearestRouteDistanceMeters": 2042.5853434951196
+      "distanceFromRouteMeters": 172.4192466620224,
+      "nearestRouteDistanceMeters": 2196.695071912611
     },
     {
       "osmId": 48482488,
       "name": "Regent Road",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -2928,13 +3262,11 @@
           "elevationMeters": 33.117000579833984
         }
       ],
-      "distanceFromRouteMeters": 124.47198246954558,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "distanceFromRouteMeters": 124.47220552898925,
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 48565456,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -3026,13 +3358,12 @@
           "elevationMeters": 2.7350001335144043
         }
       ],
-      "distanceFromRouteMeters": 105.89702205285815,
-      "nearestRouteDistanceMeters": 4710.360998346495
+      "distanceFromRouteMeters": 105.89722044339526,
+      "nearestRouteDistanceMeters": 4864.471737714226
     },
     {
       "osmId": 60197777,
       "name": "Saint David Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -3074,13 +3405,12 @@
           "elevationMeters": 12.587000846862793
         }
       ],
-      "distanceFromRouteMeters": 168.3332312624489,
-      "nearestRouteDistanceMeters": 2598.442753575667
+      "distanceFromRouteMeters": 168.33354632247543,
+      "nearestRouteDistanceMeters": 2752.5525846676387
     },
     {
       "osmId": 60197783,
       "name": "Castle Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -3192,13 +3522,12 @@
           "elevationMeters": 15.39699935913086
         }
       ],
-      "distanceFromRouteMeters": 122.7336805516509,
-      "nearestRouteDistanceMeters": 2598.118776156506
+      "distanceFromRouteMeters": 122.73393634539133,
+      "nearestRouteDistanceMeters": 2752.2288522514036
     },
     {
       "osmId": 60197784,
       "name": "Montgomery Avenue",
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -3290,13 +3619,12 @@
           "elevationMeters": 13.295999526977539
         }
       ],
-      "distanceFromRouteMeters": 186.44378331918622,
-      "nearestRouteDistanceMeters": 2598.118776156506
+      "distanceFromRouteMeters": 186.44418495709655,
+      "nearestRouteDistanceMeters": 2752.2288522514036
     },
     {
       "osmId": 73533101,
       "name": "Walsh Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -3338,13 +3666,12 @@
           "elevationMeters": 8.045999526977539
         }
       ],
-      "distanceFromRouteMeters": 17.50092120986833,
-      "nearestRouteDistanceMeters": 1948.0482486901974
+      "distanceFromRouteMeters": 17.500952008410778,
+      "nearestRouteDistanceMeters": 2102.1579367925406
     },
     {
       "osmId": 76328862,
       "name": "High Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -3396,13 +3723,12 @@
           "elevationMeters": 4.565999984741211
         }
       ],
-      "distanceFromRouteMeters": 129.23444241668423,
-      "nearestRouteDistanceMeters": 542.6336291070867
+      "distanceFromRouteMeters": 129.23468780028543,
+      "nearestRouteDistanceMeters": 696.7425342980886
     },
     {
       "osmId": 77332455,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -3434,13 +3760,12 @@
           "elevationMeters": 2.302000045776367
         }
       ],
-      "distanceFromRouteMeters": 28.125500967999116,
-      "nearestRouteDistanceMeters": 3967.638472442772
+      "distanceFromRouteMeters": 28.125554527656146,
+      "nearestRouteDistanceMeters": 4121.748869524491
     },
     {
       "osmId": 87888214,
       "name": "Union Place",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -3478,12 +3803,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2817.982199514336
+      "nearestRouteDistanceMeters": 2972.0923387074877
     },
     {
       "osmId": 88477643,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -3640,13 +3964,12 @@
           "elevationMeters": 3.0989999771118164
         }
       ],
-      "distanceFromRouteMeters": 119.84069051816742,
-      "nearestRouteDistanceMeters": 1432.6340583029828
+      "distanceFromRouteMeters": 119.84091338694364,
+      "nearestRouteDistanceMeters": 1586.7434552546208
     },
     {
       "osmId": 88477644,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -3783,13 +4106,12 @@
           "elevationMeters": 4.2129998207092285
         }
       ],
-      "distanceFromRouteMeters": 47.171144688744114,
-      "nearestRouteDistanceMeters": 3301.845435143929
+      "distanceFromRouteMeters": 47.17123271160473,
+      "nearestRouteDistanceMeters": 3455.955681996289
     },
     {
       "osmId": 88477645,
       "name": "Great King Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -3886,8 +4208,8 @@
           "elevationMeters": 7.103000164031982
         }
       ],
-      "distanceFromRouteMeters": 22.76699993686546,
-      "nearestRouteDistanceMeters": 1980.0363780752023
+      "distanceFromRouteMeters": 22.76704783070813,
+      "nearestRouteDistanceMeters": 2134.1461187104287
     },
     {
       "osmId": 88482313,
@@ -3935,12 +4257,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1327.165935559253
+      "nearestRouteDistanceMeters": 1481.275478946014
     },
     {
       "osmId": 88484118,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -3977,13 +4298,12 @@
           "elevationMeters": 3.5139999389648438
         }
       ],
-      "distanceFromRouteMeters": 76.02467667225946,
-      "nearestRouteDistanceMeters": 1548.360575659439
+      "distanceFromRouteMeters": 76.02481801022995,
+      "nearestRouteDistanceMeters": 1702.4700715841802
     },
     {
       "osmId": 88623668,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4015,13 +4335,12 @@
           "elevationMeters": 7.790999889373779
         }
       ],
-      "distanceFromRouteMeters": 167.28958061908455,
-      "nearestRouteDistanceMeters": 1031.0930663339054
+      "distanceFromRouteMeters": 167.2898936147646,
+      "nearestRouteDistanceMeters": 1185.2022817903865
     },
     {
       "osmId": 88774362,
       "name": "Queens Gardens",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -4059,12 +4378,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 594.3672585154873
+      "nearestRouteDistanceMeters": 748.476363995492
     },
     {
       "osmId": 106733488,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4216,8 +4534,8 @@
           "elevationMeters": 14.650999069213867
         }
       ],
-      "distanceFromRouteMeters": 119.29592265748487,
-      "nearestRouteDistanceMeters": 2409.417371666946
+      "distanceFromRouteMeters": 119.2961455238146,
+      "nearestRouteDistanceMeters": 2563.527029896409
     },
     {
       "osmId": 106733489,
@@ -4304,13 +4622,12 @@
           "elevationMeters": 13.233999252319336
         }
       ],
-      "distanceFromRouteMeters": 28.54411366265539,
-      "nearestRouteDistanceMeters": 2598.118776156506
+      "distanceFromRouteMeters": 28.544122254531334,
+      "nearestRouteDistanceMeters": 2752.2288522514036
     },
     {
       "osmId": 106733496,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4402,13 +4719,12 @@
           "elevationMeters": 10.518000602722168
         }
       ],
-      "distanceFromRouteMeters": 124.19609012231214,
-      "nearestRouteDistanceMeters": 2034.1378708820005
+      "distanceFromRouteMeters": 124.19635084515438,
+      "nearestRouteDistanceMeters": 2188.2475976746373
     },
     {
       "osmId": 106733497,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4490,13 +4806,12 @@
           "elevationMeters": 16.45199966430664
         }
       ],
-      "distanceFromRouteMeters": 121.62835554831007,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "distanceFromRouteMeters": 121.62855906225049,
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 106733504,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -4633,13 +4948,64 @@
           "elevationMeters": 7.610000133514404
         }
       ],
-      "distanceFromRouteMeters": 59.855390996312465,
-      "nearestRouteDistanceMeters": 3044.276831948661
+      "distanceFromRouteMeters": 59.85550677186754,
+      "nearestRouteDistanceMeters": 3198.3869572027024
+    },
+    {
+      "osmId": 106844038,
+      "name": "Gordon Street",
+      "highway": "tertiary",
+      "oneway": false,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8845297,
+          "longitude": 170.49816560000002,
+          "elevationMeters": 2.1679999828338623
+        },
+        {
+          "latitude": -45.8845724,
+          "longitude": 170.49819440000002,
+          "elevationMeters": 2.1649999618530273
+        },
+        {
+          "latitude": -45.8846245,
+          "longitude": 170.49822210000002,
+          "elevationMeters": 2.1470000743865967
+        },
+        {
+          "latitude": -45.8847339,
+          "longitude": 170.49828026666668,
+          "elevationMeters": 2.1610000133514404
+        },
+        {
+          "latitude": -45.8848433,
+          "longitude": 170.49833843333334,
+          "elevationMeters": 2.1510000228881836
+        },
+        {
+          "latitude": -45.8849527,
+          "longitude": 170.4983966,
+          "elevationMeters": 2.128000020980835
+        },
+        {
+          "latitude": -45.885018900000006,
+          "longitude": 170.4984318,
+          "elevationMeters": 2.136000156402588
+        },
+        {
+          "latitude": -45.885085100000005,
+          "longitude": 170.498467,
+          "elevationMeters": 2.1480000019073486
+        }
+      ],
+      "distanceFromRouteMeters": 127.84287701589594,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 114216144,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4671,13 +5037,12 @@
           "elevationMeters": 12.891999244689941
         }
       ],
-      "distanceFromRouteMeters": 36.45738274851866,
-      "nearestRouteDistanceMeters": 2036.9624873471964
+      "distanceFromRouteMeters": 36.4574542948534,
+      "nearestRouteDistanceMeters": 2191.072169884945
     },
     {
       "osmId": 114216146,
       "name": "Harrow Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4779,13 +5144,12 @@
           "elevationMeters": 1.9839999675750732
         }
       ],
-      "distanceFromRouteMeters": 183.1260297175399,
-      "nearestRouteDistanceMeters": 3615.9065545744647
+      "distanceFromRouteMeters": 183.1263735160457,
+      "nearestRouteDistanceMeters": 3770.0166266249817
     },
     {
       "osmId": 114216148,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -4862,13 +5226,12 @@
           "elevationMeters": 8.07800006866455
         }
       ],
-      "distanceFromRouteMeters": 120.48361992581657,
-      "nearestRouteDistanceMeters": 428.325860996184
+      "distanceFromRouteMeters": 120.48384457158672,
+      "nearestRouteDistanceMeters": 582.4347362920734
     },
     {
       "osmId": 114216150,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -4905,13 +5268,139 @@
           "elevationMeters": 9.331000328063965
         }
       ],
-      "distanceFromRouteMeters": 32.13367720722993,
-      "nearestRouteDistanceMeters": 2024.5339800606685
+      "distanceFromRouteMeters": 32.133745933060865,
+      "nearestRouteDistanceMeters": 2178.6437186119206
+    },
+    {
+      "osmId": 114216155,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.884797600000006,
+          "longitude": 170.49771610000002,
+          "elevationMeters": 2.322999954223633
+        },
+        {
+          "latitude": -45.88490035000001,
+          "longitude": 170.49765630000002,
+          "elevationMeters": 2.323000192642212
+        },
+        {
+          "latitude": -45.885003100000006,
+          "longitude": 170.49759650000001,
+          "elevationMeters": 2.3369998931884766
+        },
+        {
+          "latitude": -45.8851244,
+          "longitude": 170.49752700000002,
+          "elevationMeters": 2.330000162124634
+        },
+        {
+          "latitude": -45.885238666666666,
+          "longitude": 170.4974614666667,
+          "elevationMeters": 2.2809998989105225
+        },
+        {
+          "latitude": -45.88535293333334,
+          "longitude": 170.49739593333334,
+          "elevationMeters": 2.240000009536743
+        },
+        {
+          "latitude": -45.8854672,
+          "longitude": 170.4973304,
+          "elevationMeters": 2.2330000400543213
+        },
+        {
+          "latitude": -45.885590416666666,
+          "longitude": 170.49726043333334,
+          "elevationMeters": 2.2100000381469727
+        },
+        {
+          "latitude": -45.88571363333333,
+          "longitude": 170.49719046666667,
+          "elevationMeters": 2.2070000171661377
+        },
+        {
+          "latitude": -45.885836850000004,
+          "longitude": 170.4971205,
+          "elevationMeters": 2.185999870300293
+        },
+        {
+          "latitude": -45.88596006666667,
+          "longitude": 170.49705053333335,
+          "elevationMeters": 2.184000015258789
+        },
+        {
+          "latitude": -45.886083283333335,
+          "longitude": 170.49698056666668,
+          "elevationMeters": 2.2130000591278076
+        },
+        {
+          "latitude": -45.8862065,
+          "longitude": 170.4969106,
+          "elevationMeters": 2.255000114440918
+        },
+        {
+          "latitude": -45.8863185,
+          "longitude": 170.49685035,
+          "elevationMeters": 2.260999917984009
+        },
+        {
+          "latitude": -45.8864305,
+          "longitude": 170.4967901,
+          "elevationMeters": 2.2829999923706055
+        },
+        {
+          "latitude": -45.886535566666666,
+          "longitude": 170.4967305,
+          "elevationMeters": 2.2730000019073486
+        },
+        {
+          "latitude": -45.886640633333336,
+          "longitude": 170.4966709,
+          "elevationMeters": 2.3369998931884766
+        },
+        {
+          "latitude": -45.886745700000006,
+          "longitude": 170.49661129999998,
+          "elevationMeters": 2.319999933242798
+        },
+        {
+          "latitude": -45.88685076666667,
+          "longitude": 170.4965517,
+          "elevationMeters": 2.3589999675750732
+        },
+        {
+          "latitude": -45.88695583333333,
+          "longitude": 170.4964921,
+          "elevationMeters": 2.3519999980926514
+        },
+        {
+          "latitude": -45.8870609,
+          "longitude": 170.4964325,
+          "elevationMeters": 2.38100004196167
+        },
+        {
+          "latitude": -45.887149550000004,
+          "longitude": 170.49638645,
+          "elevationMeters": 2.374000072479248
+        },
+        {
+          "latitude": -45.887238200000006,
+          "longitude": 170.4963404,
+          "elevationMeters": 2.434000015258789
+        }
+      ],
+      "distanceFromRouteMeters": 171.85680572636505,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 114216157,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -5123,13 +5612,12 @@
           "elevationMeters": 10.510000228881836
         }
       ],
-      "distanceFromRouteMeters": 125.80149836260303,
-      "nearestRouteDistanceMeters": 41.51026499366394
+      "distanceFromRouteMeters": 125.80173382730229,
+      "nearestRouteDistanceMeters": 195.61901855790063
     },
     {
       "osmId": 114495303,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -5236,13 +5724,12 @@
           "elevationMeters": 2.574000120162964
         }
       ],
-      "distanceFromRouteMeters": 38.24869399689473,
-      "nearestRouteDistanceMeters": 3523.3120826065824
+      "distanceFromRouteMeters": 38.248764913074645,
+      "nearestRouteDistanceMeters": 3677.4223358147487
     },
     {
       "osmId": 114495305,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -5279,13 +5766,11 @@
           "elevationMeters": 2.7230000495910645
         }
       ],
-      "distanceFromRouteMeters": 32.0318874106459,
-      "nearestRouteDistanceMeters": 1029.0307938995948
+      "distanceFromRouteMeters": 32.031947833592405,
+      "nearestRouteDistanceMeters": 1183.1402981851454
     },
     {
       "osmId": 116455610,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -5497,13 +5982,12 @@
           "elevationMeters": 2.885999917984009
         }
       ],
-      "distanceFromRouteMeters": 150.8097949926164,
-      "nearestRouteDistanceMeters": 3998.0930766933084
+      "distanceFromRouteMeters": 150.81007284347592,
+      "nearestRouteDistanceMeters": 4152.2032913541125
     },
     {
       "osmId": 116455613,
       "name": "Thomas Burns Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -5685,13 +6169,12 @@
           "elevationMeters": 2.1600000858306885
         }
       ],
-      "distanceFromRouteMeters": 100.51173430466254,
-      "nearestRouteDistanceMeters": 4116.964389707379
+      "distanceFromRouteMeters": 100.5118739186684,
+      "nearestRouteDistanceMeters": 4271.074668190135
     },
     {
       "osmId": 116455617,
       "name": "Thomas Burns Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -5923,13 +6406,12 @@
           "elevationMeters": 2.3510000705718994
         }
       ],
-      "distanceFromRouteMeters": 105.82757119989773,
-      "nearestRouteDistanceMeters": 4134.596838749102
+      "distanceFromRouteMeters": 105.82769794777498,
+      "nearestRouteDistanceMeters": 4288.707340424035
     },
     {
       "osmId": 116455627,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -5966,13 +6448,12 @@
           "elevationMeters": 2.180999994277954
         }
       ],
-      "distanceFromRouteMeters": 119.21171498275558,
-      "nearestRouteDistanceMeters": 4474.815955461927
+      "distanceFromRouteMeters": 119.21193698555497,
+      "nearestRouteDistanceMeters": 4628.926602038823
     },
     {
       "osmId": 116455647,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -6214,13 +6695,12 @@
           "elevationMeters": 2.5809998512268066
         }
       ],
-      "distanceFromRouteMeters": 149.3568358791958,
-      "nearestRouteDistanceMeters": 4877.4634862643825
+      "distanceFromRouteMeters": 149.35711439508978,
+      "nearestRouteDistanceMeters": 5031.574206824647
     },
     {
       "osmId": 116533502,
       "name": "Ward Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -6417,13 +6897,12 @@
           "elevationMeters": 2.8919999599456787
         }
       ],
-      "distanceFromRouteMeters": 176.10301065877118,
-      "nearestRouteDistanceMeters": 3993.0456792564755
+      "distanceFromRouteMeters": 176.10333785559013,
+      "nearestRouteDistanceMeters": 4147.156121174268
     },
     {
       "osmId": 116549665,
       "name": "Hyde Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -6520,8 +6999,8 @@
           "elevationMeters": 3.2929999828338623
         }
       ],
-      "distanceFromRouteMeters": 181.5343192531662,
-      "nearestRouteDistanceMeters": 3301.845435143929
+      "distanceFromRouteMeters": 181.534658047499,
+      "nearestRouteDistanceMeters": 3455.955681996289
     },
     {
       "osmId": 116726397,
@@ -6532,36 +7011,6 @@
       "widthMeters": 9.600000000000001,
       "widthSource": "lanes",
       "points": [
-        {
-          "latitude": -45.8840037,
-          "longitude": 170.50142755000002,
-          "elevationMeters": 2.3289999961853027
-        },
-        {
-          "latitude": -45.8841157,
-          "longitude": 170.5013647,
-          "elevationMeters": 2.3450000286102295
-        },
-        {
-          "latitude": -45.884227700000004,
-          "longitude": 170.50130185,
-          "elevationMeters": 2.378000020980835
-        },
-        {
-          "latitude": -45.884339700000005,
-          "longitude": 170.501239,
-          "elevationMeters": 2.4060001373291016
-        },
-        {
-          "latitude": -45.884401000000004,
-          "longitude": 170.50120460000002,
-          "elevationMeters": 2.421999931335449
-        },
-        {
-          "latitude": -45.884516500000004,
-          "longitude": 170.5011398,
-          "elevationMeters": 2.432999849319458
-        },
         {
           "latitude": -45.884634850000005,
           "longitude": 170.5010781,
@@ -6594,7 +7043,188 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4576.036642562921
+      "nearestRouteDistanceMeters": 4730.147497138564
+    },
+    {
+      "osmId": 117322519,
+      "highway": "unclassified",
+      "oneway": true,
+      "widthMeters": 3.2,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8863992,
+          "longitude": 170.50013470000002,
+          "elevationMeters": 2.069999933242798
+        },
+        {
+          "latitude": -45.8865022,
+          "longitude": 170.50004327500002,
+          "elevationMeters": 2.0930001735687256
+        },
+        {
+          "latitude": -45.886605200000005,
+          "longitude": 170.49995185,
+          "elevationMeters": 2.117999792098999
+        },
+        {
+          "latitude": -45.8867082,
+          "longitude": 170.499860425,
+          "elevationMeters": 2.11899995803833
+        },
+        {
+          "latitude": -45.886811200000004,
+          "longitude": 170.49976900000001,
+          "elevationMeters": 2.0329999923706055
+        },
+        {
+          "latitude": -45.8868322,
+          "longitude": 170.4997362,
+          "elevationMeters": 2.01200008392334
+        },
+        {
+          "latitude": -45.8868475,
+          "longitude": 170.49969040000002,
+          "elevationMeters": 2.01200008392334
+        },
+        {
+          "latitude": -45.8868566,
+          "longitude": 170.4996264,
+          "elevationMeters": 2.056999921798706
+        },
+        {
+          "latitude": -45.886852700000006,
+          "longitude": 170.4995646,
+          "elevationMeters": 2.0889999866485596
+        },
+        {
+          "latitude": -45.8868329,
+          "longitude": 170.49951470000002,
+          "elevationMeters": 2.116000175476074
+        },
+        {
+          "latitude": -45.8868068,
+          "longitude": 170.4994914,
+          "elevationMeters": 2.0920000076293945
+        },
+        {
+          "latitude": -45.886771700000004,
+          "longitude": 170.49947,
+          "elevationMeters": 2.118000030517578
+        },
+        {
+          "latitude": -45.8866956,
+          "longitude": 170.49943040000002,
+          "elevationMeters": 2.1519999504089355
+        },
+        {
+          "latitude": -45.8866281,
+          "longitude": 170.49939550000002,
+          "elevationMeters": 2.125999927520752
+        },
+        {
+          "latitude": -45.8865074,
+          "longitude": 170.49933465,
+          "elevationMeters": 2.202000141143799
+        },
+        {
+          "latitude": -45.8863867,
+          "longitude": 170.4992738,
+          "elevationMeters": 2.2320001125335693
+        },
+        {
+          "latitude": -45.886284950000004,
+          "longitude": 170.4992205,
+          "elevationMeters": 2.183000087738037
+        },
+        {
+          "latitude": -45.886183200000005,
+          "longitude": 170.4991672,
+          "elevationMeters": 2.1480000019073486
+        },
+        {
+          "latitude": -45.88608145,
+          "longitude": 170.4991139,
+          "elevationMeters": 2.1480000019073486
+        },
+        {
+          "latitude": -45.8859797,
+          "longitude": 170.4990606,
+          "elevationMeters": 2.1649999618530273
+        },
+        {
+          "latitude": -45.885905,
+          "longitude": 170.49903110000002,
+          "elevationMeters": 2.1440000534057617
+        },
+        {
+          "latitude": -45.885824,
+          "longitude": 170.49900730000002,
+          "elevationMeters": 2.0759999752044678
+        },
+        {
+          "latitude": -45.8857623,
+          "longitude": 170.4989974,
+          "elevationMeters": 2.0220000743865967
+        },
+        {
+          "latitude": -45.8856915,
+          "longitude": 170.49899430000002,
+          "elevationMeters": 2.006999969482422
+        },
+        {
+          "latitude": -45.8856278,
+          "longitude": 170.49900530000002,
+          "elevationMeters": 2.0210001468658447
+        },
+        {
+          "latitude": -45.8855839,
+          "longitude": 170.49902170000001,
+          "elevationMeters": 1.9789999723434448
+        },
+        {
+          "latitude": -45.8855269,
+          "longitude": 170.4990458,
+          "elevationMeters": 2.0230000019073486
+        },
+        {
+          "latitude": -45.885487000000005,
+          "longitude": 170.4990687,
+          "elevationMeters": 2.072000026702881
+        },
+        {
+          "latitude": -45.885463300000005,
+          "longitude": 170.4990837,
+          "elevationMeters": 2.0820000171661377
+        },
+        {
+          "latitude": -45.8854477,
+          "longitude": 170.49910540000002,
+          "elevationMeters": 2.1080000400543213
+        },
+        {
+          "latitude": -45.885431800000006,
+          "longitude": 170.49914170000002,
+          "elevationMeters": 2.1419999599456787
+        },
+        {
+          "latitude": -45.8854253,
+          "longitude": 170.49916760000002,
+          "elevationMeters": 2.1679999828338623
+        },
+        {
+          "latitude": -45.88542,
+          "longitude": 170.4991994,
+          "elevationMeters": 2.2200000286102295
+        },
+        {
+          "latitude": -45.885412800000005,
+          "longitude": 170.49929360000002,
+          "elevationMeters": 2.2139999866485596
+        }
+      ],
+      "distanceFromRouteMeters": 145.10929143858593,
+      "nearestRouteDistanceMeters": 5474.0732201064575
     },
     {
       "osmId": 117353998,
@@ -6656,8 +7286,8 @@
           "elevationMeters": 1.9839999675750732
         }
       ],
-      "distanceFromRouteMeters": 198.73231617453567,
-      "nearestRouteDistanceMeters": 3635.7545883394005
+      "distanceFromRouteMeters": 198.73268515745826,
+      "nearestRouteDistanceMeters": 3789.8646347133154
     },
     {
       "osmId": 118892272,
@@ -6722,76 +7352,6 @@
           "latitude": -45.8841776,
           "longitude": 170.49969710000002,
           "elevationMeters": 2.2739999294281006
-        },
-        {
-          "latitude": -45.8841346,
-          "longitude": 170.4997213,
-          "elevationMeters": 2.300999879837036
-        },
-        {
-          "latitude": -45.884018775,
-          "longitude": 170.49978665,
-          "elevationMeters": 2.2899999618530273
-        },
-        {
-          "latitude": -45.88390295000001,
-          "longitude": 170.499852,
-          "elevationMeters": 2.259999990463257
-        },
-        {
-          "latitude": -45.883787125000005,
-          "longitude": 170.49991735,
-          "elevationMeters": 2.2899999618530273
-        },
-        {
-          "latitude": -45.8836713,
-          "longitude": 170.4999827,
-          "elevationMeters": 2.2769999504089355
-        },
-        {
-          "latitude": -45.883653,
-          "longitude": 170.49999300000002,
-          "elevationMeters": 2.2799999713897705
-        },
-        {
-          "latitude": -45.88355656666667,
-          "longitude": 170.5000458,
-          "elevationMeters": 2.2790000438690186
-        },
-        {
-          "latitude": -45.88346013333334,
-          "longitude": 170.50009860000003,
-          "elevationMeters": 2.2960000038146973
-        },
-        {
-          "latitude": -45.883363700000004,
-          "longitude": 170.50015140000002,
-          "elevationMeters": 2.2909998893737793
-        },
-        {
-          "latitude": -45.88326035,
-          "longitude": 170.50020955000002,
-          "elevationMeters": 2.2960000038146973
-        },
-        {
-          "latitude": -45.883157000000004,
-          "longitude": 170.5002677,
-          "elevationMeters": 2.322000026702881
-        },
-        {
-          "latitude": -45.88305365000001,
-          "longitude": 170.50032585,
-          "elevationMeters": 2.322000026702881
-        },
-        {
-          "latitude": -45.882950300000005,
-          "longitude": 170.500384,
-          "elevationMeters": 2.319999933242798
-        },
-        {
-          "latitude": -45.882932000000004,
-          "longitude": 170.5003943,
-          "elevationMeters": 2.321000099182129
         }
       ],
       "distanceFromRouteMeters": 0,
@@ -6800,7 +7360,6 @@
     {
       "osmId": 119005989,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -6837,13 +7396,12 @@
           "elevationMeters": 1.7379999160766602
         }
       ],
-      "distanceFromRouteMeters": 151.51819564206315,
-      "nearestRouteDistanceMeters": 3748.3753400037667
+      "distanceFromRouteMeters": 151.51847938667825,
+      "nearestRouteDistanceMeters": 3902.4854951422963
     },
     {
       "osmId": 119006048,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -6875,13 +7433,12 @@
           "elevationMeters": 4.562000274658203
         }
       ],
-      "distanceFromRouteMeters": 48.56790205971813,
-      "nearestRouteDistanceMeters": 1030.424661216123
+      "distanceFromRouteMeters": 48.567992929355576,
+      "nearestRouteDistanceMeters": 1184.534049514427
     },
     {
       "osmId": 125594119,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -6933,13 +7490,11 @@
           "elevationMeters": 10.518000602722168
         }
       ],
-      "distanceFromRouteMeters": 154.50599332438378,
-      "nearestRouteDistanceMeters": 1775.40297462138
+      "distanceFromRouteMeters": 154.50628797521946,
+      "nearestRouteDistanceMeters": 1929.5124364782057
     },
     {
       "osmId": 135350902,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -6981,13 +7536,11 @@
           "elevationMeters": 2.306999921798706
         }
       ],
-      "distanceFromRouteMeters": 146.23836936539104,
-      "nearestRouteDistanceMeters": 4527.775838675981
+      "distanceFromRouteMeters": 146.2386401890081,
+      "nearestRouteDistanceMeters": 4681.886458129146
     },
     {
       "osmId": 135350903,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -7029,13 +7582,12 @@
           "elevationMeters": 2.00600004196167
         }
       ],
-      "distanceFromRouteMeters": 133.77872352120954,
-      "nearestRouteDistanceMeters": 4519.165068291857
+      "distanceFromRouteMeters": 133.77897127040112,
+      "nearestRouteDistanceMeters": 4673.275703800096
     },
     {
       "osmId": 135723023,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -7102,13 +7654,11 @@
           "elevationMeters": 4.465000152587891
         }
       ],
-      "distanceFromRouteMeters": 79.33051286125202,
-      "nearestRouteDistanceMeters": 1089.505331057355
+      "distanceFromRouteMeters": 79.33066126467408,
+      "nearestRouteDistanceMeters": 1243.6146912553932
     },
     {
       "osmId": 152382701,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -7155,13 +7705,12 @@
           "elevationMeters": 2.763000011444092
         }
       ],
-      "distanceFromRouteMeters": 22.450625899135407,
-      "nearestRouteDistanceMeters": 645.6890389447109
+      "distanceFromRouteMeters": 22.45066434046927,
+      "nearestRouteDistanceMeters": 799.7981592372273
     },
     {
       "osmId": 178288507,
       "name": "Fairley Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -7203,13 +7752,12 @@
           "elevationMeters": 2.134999990463257
         }
       ],
-      "distanceFromRouteMeters": 188.43784661613768,
-      "nearestRouteDistanceMeters": 4134.596838749102
+      "distanceFromRouteMeters": 188.4380361427046,
+      "nearestRouteDistanceMeters": 4288.707340424035
     },
     {
       "osmId": 225051539,
       "name": "Clarendon Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -7267,12 +7815,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3170.872442201718
+      "nearestRouteDistanceMeters": 3324.982666921114
     },
     {
       "osmId": 225051723,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -7370,12 +7916,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2940.545068111902
+      "nearestRouteDistanceMeters": 3094.655242926426
     },
     {
       "osmId": 226829508,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -7452,13 +7996,11 @@
           "elevationMeters": 12.300999641418457
         }
       ],
-      "distanceFromRouteMeters": 194.2226113625541,
-      "nearestRouteDistanceMeters": 2605.4818012732476
+      "distanceFromRouteMeters": 194.22297487830565,
+      "nearestRouteDistanceMeters": 2759.591596663286
     },
     {
       "osmId": 227417701,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -7485,13 +8027,12 @@
           "elevationMeters": 7.094000339508057
         }
       ],
-      "distanceFromRouteMeters": 143.6910051126094,
-      "nearestRouteDistanceMeters": 3158.2765100093375
+      "distanceFromRouteMeters": 143.69126754511024,
+      "nearestRouteDistanceMeters": 3312.3869531714195
     },
     {
       "osmId": 227628906,
       "name": "Water Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -7543,13 +8084,12 @@
           "elevationMeters": 2.374000072479248
         }
       ],
-      "distanceFromRouteMeters": 29.53177329722028,
-      "nearestRouteDistanceMeters": 492.8163393317739
+      "distanceFromRouteMeters": 29.53182747747232,
+      "nearestRouteDistanceMeters": 646.9253671628196
     },
     {
       "osmId": 227628907,
       "name": "Water Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -7582,12 +8122,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 474.946204612946
+      "nearestRouteDistanceMeters": 629.0552713904027
     },
     {
       "osmId": 227628909,
       "name": "Water Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -7620,12 +8159,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 518.8613671203536
+      "nearestRouteDistanceMeters": 672.9704468863204
     },
     {
       "osmId": 227628911,
       "name": "Queens Gardens",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -7668,12 +8206,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4480.429667637832
+      "nearestRouteDistanceMeters": 4634.540491841219
     },
     {
       "osmId": 227628915,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -7705,13 +8242,11 @@
           "elevationMeters": 4.164000034332275
         }
       ],
-      "distanceFromRouteMeters": 76.43783507842957,
-      "nearestRouteDistanceMeters": 592.8853415573475
+      "distanceFromRouteMeters": 76.43797621863253,
+      "nearestRouteDistanceMeters": 746.994331228088
     },
     {
       "osmId": 227628917,
-      "name": null,
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -7734,12 +8269,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 406.40159930404775
+      "nearestRouteDistanceMeters": 560.5106455123065
     },
     {
       "osmId": 227628918,
       "name": "Liverpool Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -7806,13 +8340,12 @@
           "elevationMeters": 7.796000003814697
         }
       ],
-      "distanceFromRouteMeters": 22.054993132067864,
-      "nearestRouteDistanceMeters": 431.4807227585387
+      "distanceFromRouteMeters": 22.05503425434584,
+      "nearestRouteDistanceMeters": 585.5897437955879
     },
     {
       "osmId": 259144677,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -7914,13 +8447,12 @@
           "elevationMeters": 3.5380001068115234
         }
       ],
-      "distanceFromRouteMeters": 119.32140338700214,
-      "nearestRouteDistanceMeters": 1293.533091468106
+      "distanceFromRouteMeters": 119.3216265868031,
+      "nearestRouteDistanceMeters": 1447.6424512935753
     },
     {
       "osmId": 259284145,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -7987,8 +8519,8 @@
           "elevationMeters": 5.706999778747559
         }
       ],
-      "distanceFromRouteMeters": 131.80103159538808,
-      "nearestRouteDistanceMeters": 588.8682304084329
+      "distanceFromRouteMeters": 131.80127496209698,
+      "nearestRouteDistanceMeters": 742.9771352919354
     },
     {
       "osmId": 260576704,
@@ -8050,13 +8582,12 @@
           "elevationMeters": 2.1410000324249268
         }
       ],
-      "distanceFromRouteMeters": 137.01012222401917,
-      "nearestRouteDistanceMeters": 5172.9423780506
+      "distanceFromRouteMeters": 70.80860875311299,
+      "nearestRouteDistanceMeters": 5377.553965372314
     },
     {
       "osmId": 265886941,
       "name": "Grange Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -8158,13 +8689,12 @@
           "elevationMeters": 2.5429999828338623
         }
       ],
-      "distanceFromRouteMeters": 60.55819484127842,
-      "nearestRouteDistanceMeters": 3513.9412210343285
+      "distanceFromRouteMeters": 60.558307242155585,
+      "nearestRouteDistanceMeters": 3668.051438360678
     },
     {
       "osmId": 268130613,
       "name": "Water Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -8232,12 +8762,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4576.036642562921
+      "nearestRouteDistanceMeters": 4730.147497138564
     },
     {
       "osmId": 273392939,
       "name": "Union Street West",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 3.2,
@@ -8280,12 +8809,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2817.982199514336
+      "nearestRouteDistanceMeters": 2972.0923387074877
     },
     {
       "osmId": 372554472,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -8382,8 +8909,8 @@
           "elevationMeters": 14.651000022888184
         }
       ],
-      "distanceFromRouteMeters": 54.425459394219075,
-      "nearestRouteDistanceMeters": 854.4564049829766
+      "distanceFromRouteMeters": 54.42556173075422,
+      "nearestRouteDistanceMeters": 1008.5657344346056
     },
     {
       "osmId": 376305727,
@@ -8425,18 +8952,226 @@
           "elevationMeters": 1.7379999160766602
         }
       ],
-      "distanceFromRouteMeters": 128.2100724137665,
-      "nearestRouteDistanceMeters": 3746.222193695361
+      "distanceFromRouteMeters": 128.21031250979917,
+      "nearestRouteDistanceMeters": 3900.332382110684
+    },
+    {
+      "osmId": 381871577,
+      "name": "Gordon Street",
+      "highway": "tertiary",
+      "oneway": true,
+      "widthMeters": 3.2,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.884037600000006,
+          "longitude": 170.4981415,
+          "elevationMeters": 2.36299991607666
+        },
+        {
+          "latitude": -45.8841478,
+          "longitude": 170.49811960000002,
+          "elevationMeters": 2.2139999866485596
+        },
+        {
+          "latitude": -45.8842122,
+          "longitude": 170.4980906,
+          "elevationMeters": 2.249000072479248
+        },
+        {
+          "latitude": -45.884260700000006,
+          "longitude": 170.4980822,
+          "elevationMeters": 2.2130000591278076
+        },
+        {
+          "latitude": -45.8843096,
+          "longitude": 170.4980877,
+          "elevationMeters": 2.239000082015991
+        },
+        {
+          "latitude": -45.884351900000006,
+          "longitude": 170.4980985,
+          "elevationMeters": 2.2150001525878906
+        },
+        {
+          "latitude": -45.8844301,
+          "longitude": 170.4981256,
+          "elevationMeters": 2.1989998817443848
+        },
+        {
+          "latitude": -45.8845297,
+          "longitude": 170.49816560000002,
+          "elevationMeters": 2.1679999828338623
+        }
+      ],
+      "distanceFromRouteMeters": 122.78160115478609,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 381871578,
+      "name": "Gordon Street",
+      "highway": "tertiary",
+      "oneway": true,
+      "widthMeters": 3.2,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8846245,
+          "longitude": 170.49822210000002,
+          "elevationMeters": 2.1470000743865967
+        },
+        {
+          "latitude": -45.884573100000004,
+          "longitude": 170.4981463,
+          "elevationMeters": 2.127000093460083
+        },
+        {
+          "latitude": -45.8845514,
+          "longitude": 170.49810480000002,
+          "elevationMeters": 2.0280001163482666
+        },
+        {
+          "latitude": -45.884536700000005,
+          "longitude": 170.4980735,
+          "elevationMeters": 2.062000036239624
+        },
+        {
+          "latitude": -45.8845267,
+          "longitude": 170.4980365,
+          "elevationMeters": 2.1080000400543213
+        },
+        {
+          "latitude": -45.884524600000006,
+          "longitude": 170.4980003,
+          "elevationMeters": 2.13100004196167
+        },
+        {
+          "latitude": -45.8845286,
+          "longitude": 170.497958,
+          "elevationMeters": 2.1590001583099365
+        },
+        {
+          "latitude": -45.884538000000006,
+          "longitude": 170.4979269,
+          "elevationMeters": 2.255000114440918
+        },
+        {
+          "latitude": -45.884565800000004,
+          "longitude": 170.49787700000002,
+          "elevationMeters": 2.2829999923706055
+        },
+        {
+          "latitude": -45.8845873,
+          "longitude": 170.49785540000002,
+          "elevationMeters": 2.32099986076355
+        },
+        {
+          "latitude": -45.884619900000004,
+          "longitude": 170.4978321,
+          "elevationMeters": 2.3350000381469727
+        },
+        {
+          "latitude": -45.8846737,
+          "longitude": 170.49778830000002,
+          "elevationMeters": 2.3509998321533203
+        }
+      ],
+      "distanceFromRouteMeters": 128.21464214478993,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 381871579,
       "name": "Vogel Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
       "widthSource": "class",
       "points": [
+        {
+          "latitude": -45.8826295,
+          "longitude": 170.5013672,
+          "elevationMeters": 2.378999948501587
+        },
+        {
+          "latitude": -45.8826534,
+          "longitude": 170.5013806,
+          "elevationMeters": 2.4010000228881836
+        },
+        {
+          "latitude": -45.8826878,
+          "longitude": 170.5013988,
+          "elevationMeters": 2.378000020980835
+        },
+        {
+          "latitude": -45.8827143,
+          "longitude": 170.5014121,
+          "elevationMeters": 2.3320000171661377
+        },
+        {
+          "latitude": -45.882735000000004,
+          "longitude": 170.5014184,
+          "elevationMeters": 2.2920000553131104
+        },
+        {
+          "latitude": -45.882761900000006,
+          "longitude": 170.50142050000002,
+          "elevationMeters": 2.322999954223633
+        },
+        {
+          "latitude": -45.882780700000005,
+          "longitude": 170.5014171,
+          "elevationMeters": 2.2990000247955322
+        },
+        {
+          "latitude": -45.882808000000004,
+          "longitude": 170.50140660000002,
+          "elevationMeters": 2.1649999618530273
+        },
+        {
+          "latitude": -45.8828212,
+          "longitude": 170.5014018,
+          "elevationMeters": 2.140000104904175
+        },
+        {
+          "latitude": -45.882936150000006,
+          "longitude": 170.5013380125,
+          "elevationMeters": 2.1059999465942383
+        },
+        {
+          "latitude": -45.8830511,
+          "longitude": 170.501274225,
+          "elevationMeters": 2.0360000133514404
+        },
+        {
+          "latitude": -45.88316605,
+          "longitude": 170.5012104375,
+          "elevationMeters": 2.050999879837036
+        },
+        {
+          "latitude": -45.883281000000004,
+          "longitude": 170.50114665,
+          "elevationMeters": 2.072000026702881
+        },
+        {
+          "latitude": -45.88339595000001,
+          "longitude": 170.50108286250003,
+          "elevationMeters": 2.0920000076293945
+        },
+        {
+          "latitude": -45.883510900000005,
+          "longitude": 170.50101907500002,
+          "elevationMeters": 2.125
+        },
+        {
+          "latitude": -45.88362585,
+          "longitude": 170.5009552875,
+          "elevationMeters": 2.1459999084472656
+        },
+        {
+          "latitude": -45.883740800000005,
+          "longitude": 170.50089150000002,
+          "elevationMeters": 2.1410000324249268
+        },
         {
           "latitude": -45.883852950000005,
           "longitude": 170.50082927500003,
@@ -8461,12 +9196,19 @@
           "latitude": -45.884257100000006,
           "longitude": 170.500605,
           "elevationMeters": 2.2139999866485596
-        },
-        {
-          "latitude": -45.884354800000004,
-          "longitude": 170.5005508,
-          "elevationMeters": 2.180000066757202
-        },
+        }
+      ],
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 5426.570725749748
+    },
+    {
+      "osmId": 381871579,
+      "name": "Vogel Street",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
         {
           "latitude": -45.8844271,
           "longitude": 170.50051000000002,
@@ -8519,12 +9261,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5335.106665941015
+      "nearestRouteDistanceMeters": 5426.570725749748
     },
     {
       "osmId": 442694815,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -8561,13 +9302,12 @@
           "elevationMeters": 2.50600004196167
         }
       ],
-      "distanceFromRouteMeters": 198.11416284055647,
-      "nearestRouteDistanceMeters": 3779.0302798767925
+      "distanceFromRouteMeters": 198.11453769093183,
+      "nearestRouteDistanceMeters": 3933.1403841526635
     },
     {
       "osmId": 506378344,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -8714,13 +9454,12 @@
           "elevationMeters": 2.3600001335144043
         }
       ],
-      "distanceFromRouteMeters": 51.08264962366941,
-      "nearestRouteDistanceMeters": 2.7662759005423574
+      "distanceFromRouteMeters": 51.08274523589089,
+      "nearestRouteDistanceMeters": 156.87512727615845
     },
     {
       "osmId": 506378347,
       "name": "Vogel Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -8847,13 +9586,225 @@
           "elevationMeters": 2.174999952316284
         }
       ],
-      "distanceFromRouteMeters": 45.690436961502336,
-      "nearestRouteDistanceMeters": 4719.595076605296
+      "distanceFromRouteMeters": 45.6905225592854,
+      "nearestRouteDistanceMeters": 4873.706038692495
+    },
+    {
+      "osmId": 508089734,
+      "name": "Jervois Street",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.882838,
+          "longitude": 170.50057220000002,
+          "elevationMeters": 2.2239999771118164
+        },
+        {
+          "latitude": -45.8828368,
+          "longitude": 170.50059480000002,
+          "elevationMeters": 2.257999897003174
+        },
+        {
+          "latitude": -45.8828353,
+          "longitude": 170.500643,
+          "elevationMeters": 2.2619998455047607
+        },
+        {
+          "latitude": -45.882831,
+          "longitude": 170.500682,
+          "elevationMeters": 2.254999876022339
+        },
+        {
+          "latitude": -45.8828231,
+          "longitude": 170.5007224,
+          "elevationMeters": 2.294999837875366
+        },
+        {
+          "latitude": -45.882809800000004,
+          "longitude": 170.50077190000002,
+          "elevationMeters": 2.3340001106262207
+        },
+        {
+          "latitude": -45.88278075,
+          "longitude": 170.50086305000002,
+          "elevationMeters": 2.367000102996826
+        },
+        {
+          "latitude": -45.8827517,
+          "longitude": 170.50095420000002,
+          "elevationMeters": 2.3959999084472656
+        },
+        {
+          "latitude": -45.8827183,
+          "longitude": 170.5010632,
+          "elevationMeters": 2.4210000038146973
+        },
+        {
+          "latitude": -45.8826739,
+          "longitude": 170.5012152,
+          "elevationMeters": 2.4119999408721924
+        },
+        {
+          "latitude": -45.8826295,
+          "longitude": 170.5013672,
+          "elevationMeters": 2.378999948501587
+        }
+      ],
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 154.10892496132976
+    },
+    {
+      "osmId": 508089744,
+      "name": "Melville Street",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.885003100000006,
+          "longitude": 170.49759650000001,
+          "elevationMeters": 2.3369998931884766
+        },
+        {
+          "latitude": -45.884972100000006,
+          "longitude": 170.4974943,
+          "elevationMeters": 2.324000120162964
+        },
+        {
+          "latitude": -45.8849516,
+          "longitude": 170.497429,
+          "elevationMeters": 2.1640000343322754
+        },
+        {
+          "latitude": -45.8849401,
+          "longitude": 170.4973965,
+          "elevationMeters": 2.1019999980926514
+        },
+        {
+          "latitude": -45.884921500000004,
+          "longitude": 170.497364,
+          "elevationMeters": 2.0850000381469727
+        },
+        {
+          "latitude": -45.884900800000004,
+          "longitude": 170.4973467,
+          "elevationMeters": 2.0929999351501465
+        },
+        {
+          "latitude": -45.8848683,
+          "longitude": 170.49732500000002,
+          "elevationMeters": 2.118000030517578
+        },
+        {
+          "latitude": -45.884761250000004,
+          "longitude": 170.49725345000002,
+          "elevationMeters": 2.3010001182556152
+        },
+        {
+          "latitude": -45.8846542,
+          "longitude": 170.49718190000002,
+          "elevationMeters": 2.5169999599456787
+        },
+        {
+          "latitude": -45.88454715,
+          "longitude": 170.49711035,
+          "elevationMeters": 2.8350000381469727
+        },
+        {
+          "latitude": -45.884440100000006,
+          "longitude": 170.4970388,
+          "elevationMeters": 3.2649998664855957
+        },
+        {
+          "latitude": -45.884393700000004,
+          "longitude": 170.49700570000002,
+          "elevationMeters": 3.513000011444092
+        },
+        {
+          "latitude": -45.884290033333336,
+          "longitude": 170.49693186666667,
+          "elevationMeters": 4.184999942779541
+        },
+        {
+          "latitude": -45.88418636666667,
+          "longitude": 170.49685803333335,
+          "elevationMeters": 5.1419997215271
+        },
+        {
+          "latitude": -45.8840827,
+          "longitude": 170.4967842,
+          "elevationMeters": 6.170000076293945
+        }
+      ],
+      "distanceFromRouteMeters": 190.75296624696932,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 508089746,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8847688,
+          "longitude": 170.49760830000002,
+          "elevationMeters": 2.3359999656677246
+        },
+        {
+          "latitude": -45.8846691,
+          "longitude": 170.49766420000003,
+          "elevationMeters": 2.2779998779296875
+        },
+        {
+          "latitude": -45.884569400000004,
+          "longitude": 170.49772010000004,
+          "elevationMeters": 2.2899999618530273
+        },
+        {
+          "latitude": -45.884469700000004,
+          "longitude": 170.49777600000002,
+          "elevationMeters": 2.2890000343322754
+        },
+        {
+          "latitude": -45.884370000000004,
+          "longitude": 170.49783190000002,
+          "elevationMeters": 2.2680001258850098
+        }
+      ],
+      "distanceFromRouteMeters": 148.5994417263558,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 508089750,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.8850974,
+          "longitude": 170.49742400000002,
+          "elevationMeters": 2.328000068664551
+        },
+        {
+          "latitude": -45.884972100000006,
+          "longitude": 170.4974943,
+          "elevationMeters": 2.324000120162964
+        }
+      ],
+      "distanceFromRouteMeters": 195.9554411823583,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 508089754,
       "name": "Police Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -8886,12 +9837,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 218.0147641108296
+      "nearestRouteDistanceMeters": 372.12375262699817
     },
     {
       "osmId": 508089755,
       "name": "Police Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6.4,
@@ -8953,13 +9903,12 @@
           "elevationMeters": 8.729000091552734
         }
       ],
-      "distanceFromRouteMeters": 19.47921425367986,
-      "nearestRouteDistanceMeters": 201.9410567025679
+      "distanceFromRouteMeters": 19.4792502442084,
+      "nearestRouteDistanceMeters": 356.0500106600446
     },
     {
       "osmId": 508089756,
       "name": "Police Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -8997,47 +9946,16 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 153.06028434732013
+      "nearestRouteDistanceMeters": 307.1692526395001
     },
     {
       "osmId": 508089759,
       "name": "Jervois Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
       "widthSource": "class",
       "points": [
-        {
-          "latitude": -45.883363700000004,
-          "longitude": 170.50015140000002,
-          "elevationMeters": 2.2909998893737793
-        },
-        {
-          "latitude": -45.8832899,
-          "longitude": 170.5001468,
-          "elevationMeters": 2.2720000743865967
-        },
-        {
-          "latitude": -45.883197900000006,
-          "longitude": 170.5001531,
-          "elevationMeters": 2.2239999771118164
-        },
-        {
-          "latitude": -45.88310855,
-          "longitude": 170.50020315,
-          "elevationMeters": 2.197000026702881
-        },
-        {
-          "latitude": -45.8830192,
-          "longitude": 170.5002532,
-          "elevationMeters": 2.197999954223633
-        },
-        {
-          "latitude": -45.8829974,
-          "longitude": 170.5002627,
-          "elevationMeters": 2.1680002212524414
-        },
         {
           "latitude": -45.8829725,
           "longitude": 170.5002665,
@@ -9074,13 +9992,12 @@
           "elevationMeters": 2.257999897003174
         }
       ],
-      "distanceFromRouteMeters": 16.618158103308676,
-      "nearestRouteDistanceMeters": 0
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 91.96144056808444
     },
     {
       "osmId": 508089762,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -9167,13 +10084,12 @@
           "elevationMeters": 2.36299991607666
         }
       ],
-      "distanceFromRouteMeters": 117.25093104156069,
-      "nearestRouteDistanceMeters": 0
+      "distanceFromRouteMeters": 117.10972862722521,
+      "nearestRouteDistanceMeters": 148.35170977658098
     },
     {
       "osmId": 508089763,
       "name": "Jervois Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -9246,80 +10162,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 0
-    },
-    {
-      "osmId": 508089766,
-      "name": "Wolseley Street",
-      "ref": null,
-      "highway": "residential",
-      "oneway": false,
-      "widthMeters": 6,
-      "widthSource": "class",
-      "points": [
-        {
-          "latitude": -45.8841346,
-          "longitude": 170.4997213,
-          "elevationMeters": 2.300999879837036
-        },
-        {
-          "latitude": -45.884168900000006,
-          "longitude": 170.4998721,
-          "elevationMeters": 2.0980000495910645
-        },
-        {
-          "latitude": -45.884208400000006,
-          "longitude": 170.5000163,
-          "elevationMeters": 2.1640000343322754
-        },
-        {
-          "latitude": -45.884247900000005,
-          "longitude": 170.5001605,
-          "elevationMeters": 2.118000030517578
-        },
-        {
-          "latitude": -45.884287400000005,
-          "longitude": 170.50030470000002,
-          "elevationMeters": 2.11899995803833
-        },
-        {
-          "latitude": -45.884326900000005,
-          "longitude": 170.5004489,
-          "elevationMeters": 2.065000057220459
-        },
-        {
-          "latitude": -45.884354800000004,
-          "longitude": 170.5005508,
-          "elevationMeters": 2.180000066757202
-        },
-        {
-          "latitude": -45.8843815,
-          "longitude": 170.500648,
-          "elevationMeters": 2.178999900817871
-        },
-        {
-          "latitude": -45.88442690000001,
-          "longitude": 170.50081345,
-          "elevationMeters": 2.239000082015991
-        },
-        {
-          "latitude": -45.884472300000006,
-          "longitude": 170.5009789,
-          "elevationMeters": 2.2730000019073486
-        },
-        {
-          "latitude": -45.884516500000004,
-          "longitude": 170.5011398,
-          "elevationMeters": 2.432999849319458
-        }
-      ],
-      "distanceFromRouteMeters": 64.10672458727585,
-      "nearestRouteDistanceMeters": 5186.310565544947
+      "nearestRouteDistanceMeters": 154.10892496132976
     },
     {
       "osmId": 508099143,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -9401,13 +10248,12 @@
           "elevationMeters": 5.706999778747559
         }
       ],
-      "distanceFromRouteMeters": 129.23444241668423,
-      "nearestRouteDistanceMeters": 542.6336291070867
+      "distanceFromRouteMeters": 129.23468780028543,
+      "nearestRouteDistanceMeters": 696.7425342980886
     },
     {
       "osmId": 508099145,
       "name": "Manse Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -9439,13 +10285,12 @@
           "elevationMeters": 10.193999290466309
         }
       ],
-      "distanceFromRouteMeters": 187.93674824241614,
-      "nearestRouteDistanceMeters": 427.05295283013675
+      "distanceFromRouteMeters": 187.93709865681757,
+      "nearestRouteDistanceMeters": 581.1617285077157
     },
     {
       "osmId": 508099157,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -9592,13 +10437,12 @@
           "elevationMeters": 3.0920000076293945
         }
       ],
-      "distanceFromRouteMeters": 116.87373853501427,
-      "nearestRouteDistanceMeters": 41.558202894894244
+      "distanceFromRouteMeters": 116.87395728948101,
+      "nearestRouteDistanceMeters": 195.66696947020912
     },
     {
       "osmId": 508099159,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 9.600000000000001,
@@ -9625,13 +10469,12 @@
           "elevationMeters": 9.527999877929688
         }
       ],
-      "distanceFromRouteMeters": 120.39923069479323,
-      "nearestRouteDistanceMeters": 358.1133460423974
+      "distanceFromRouteMeters": 120.39945245826821,
+      "nearestRouteDistanceMeters": 512.2221948711147
     },
     {
       "osmId": 508099161,
       "name": "Manse Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -9688,13 +10531,12 @@
           "elevationMeters": 10.0910005569458
         }
       ],
-      "distanceFromRouteMeters": 127.84512961384877,
-      "nearestRouteDistanceMeters": 363.2299588680714
+      "distanceFromRouteMeters": 127.84536829242997,
+      "nearestRouteDistanceMeters": 517.3388045553329
     },
     {
       "osmId": 508099163,
       "name": "Stafford Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -9726,8 +10568,8 @@
           "elevationMeters": 10.0910005569458
         }
       ],
-      "distanceFromRouteMeters": 127.84512961384877,
-      "nearestRouteDistanceMeters": 363.2299588680714
+      "distanceFromRouteMeters": 127.84536829242997,
+      "nearestRouteDistanceMeters": 517.3388045553329
     },
     {
       "osmId": 511211289,
@@ -9769,13 +10611,12 @@
           "elevationMeters": 2.2980000972747803
         }
       ],
-      "distanceFromRouteMeters": 184.1295428653218,
-      "nearestRouteDistanceMeters": 5186.310565544947
+      "distanceFromRouteMeters": 100.03398679173166,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 511223397,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -9882,13 +10723,12 @@
           "elevationMeters": 14.114999771118164
         }
       ],
-      "distanceFromRouteMeters": 79.54278894696046,
-      "nearestRouteDistanceMeters": 973.9208441985787
+      "distanceFromRouteMeters": 79.54293755790205,
+      "nearestRouteDistanceMeters": 1128.0301695733433
     },
     {
       "osmId": 539360515,
       "name": "Vogel Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -10030,13 +10870,12 @@
           "elevationMeters": 2.38100004196167
         }
       ],
-      "distanceFromRouteMeters": 13.836153669819243,
-      "nearestRouteDistanceMeters": 5335.106665941015
+      "distanceFromRouteMeters": 45.6905225592854,
+      "nearestRouteDistanceMeters": 4873.706038692495
     },
     {
       "osmId": 539367037,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -10073,13 +10912,11 @@
           "elevationMeters": 4.64300012588501
         }
       ],
-      "distanceFromRouteMeters": 177.8047234094642,
-      "nearestRouteDistanceMeters": 568.6767738181552
+      "distanceFromRouteMeters": 177.8050206083646,
+      "nearestRouteDistanceMeters": 722.7855500752119
     },
     {
       "osmId": 565347648,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -10106,13 +10943,11 @@
           "elevationMeters": 12.831999778747559
         }
       ],
-      "distanceFromRouteMeters": 105.1028872765791,
-      "nearestRouteDistanceMeters": 892.3094723226535
+      "distanceFromRouteMeters": 105.1030836418216,
+      "nearestRouteDistanceMeters": 1046.4187369152748
     },
     {
       "osmId": 576938053,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -10140,12 +10975,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2689.7635017393955
+      "nearestRouteDistanceMeters": 2843.873603928354
     },
     {
       "osmId": 592337543,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -10177,13 +11010,11 @@
           "elevationMeters": 2.8450000286102295
         }
       ],
-      "distanceFromRouteMeters": 77.87038383030442,
-      "nearestRouteDistanceMeters": 1622.1106993762
+      "distanceFromRouteMeters": 77.87052905414545,
+      "nearestRouteDistanceMeters": 1776.2202149102013
     },
     {
       "osmId": 592337546,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -10245,13 +11076,11 @@
           "elevationMeters": 2.8450000286102295
         }
       ],
-      "distanceFromRouteMeters": 48.906293057035235,
-      "nearestRouteDistanceMeters": 1661.5371215444907
+      "distanceFromRouteMeters": 48.90638426938729,
+      "nearestRouteDistanceMeters": 1815.646691107279
     },
     {
       "osmId": 592911859,
-      "name": null,
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6,
@@ -10298,13 +11127,11 @@
           "elevationMeters": 2.446000099182129
         }
       ],
-      "distanceFromRouteMeters": 20.27052556200808,
-      "nearestRouteDistanceMeters": 4766.776358002037
+      "distanceFromRouteMeters": 20.27056353739562,
+      "nearestRouteDistanceMeters": 4920.887237582945
     },
     {
       "osmId": 592911860,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -10336,13 +11163,12 @@
           "elevationMeters": 2.446000099182129
         }
       ],
-      "distanceFromRouteMeters": 36.20921883405049,
-      "nearestRouteDistanceMeters": 4693.626513364869
+      "distanceFromRouteMeters": 36.209286669445966,
+      "nearestRouteDistanceMeters": 4847.737349217904
     },
     {
       "osmId": 611495094,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -10369,13 +11195,12 @@
           "elevationMeters": 2.3889999389648438
         }
       ],
-      "distanceFromRouteMeters": 11.05970595385523,
-      "nearestRouteDistanceMeters": 360.52956126799717
+      "distanceFromRouteMeters": 11.05972660161035,
+      "nearestRouteDistanceMeters": 514.6386098427374
     },
     {
       "osmId": 611495094,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -10427,13 +11252,11 @@
           "elevationMeters": 2.368000030517578
         }
       ],
-      "distanceFromRouteMeters": 11.05970595385523,
-      "nearestRouteDistanceMeters": 360.52956126799717
+      "distanceFromRouteMeters": 11.05972660161035,
+      "nearestRouteDistanceMeters": 514.6386098427374
     },
     {
       "osmId": 625232919,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -10491,12 +11314,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1643.021798166213
+      "nearestRouteDistanceMeters": 1797.1314342699343
     },
     {
       "osmId": 625232923,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -10519,12 +11340,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3461.6576830924405
+      "nearestRouteDistanceMeters": 3615.767974734237
     },
     {
       "osmId": 629154770,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -10586,13 +11406,12 @@
           "elevationMeters": 2.0460000038146973
         }
       ],
-      "distanceFromRouteMeters": 76.32211965868619,
-      "nearestRouteDistanceMeters": 3927.778397776292
+      "distanceFromRouteMeters": 76.32226200087398,
+      "nearestRouteDistanceMeters": 4081.8887115024395
     },
     {
       "osmId": 689021070,
       "name": "Cresswell Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -10834,13 +11653,12 @@
           "elevationMeters": 2.6040000915527344
         }
       ],
-      "distanceFromRouteMeters": 115.40870082323423,
-      "nearestRouteDistanceMeters": 4188.976867423294
+      "distanceFromRouteMeters": 115.40874167861804,
+      "nearestRouteDistanceMeters": 4343.0872614682585
     },
     {
       "osmId": 772999267,
       "name": "The Octagon",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.3,
@@ -10907,13 +11725,12 @@
           "elevationMeters": 10.008999824523926
         }
       ],
-      "distanceFromRouteMeters": 194.3857035850593,
-      "nearestRouteDistanceMeters": 1031.291188143928
+      "distanceFromRouteMeters": 194.38606727707926,
+      "nearestRouteDistanceMeters": 1185.4003641652548
     },
     {
       "osmId": 772999268,
       "name": "The Octagon",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -10960,13 +11777,12 @@
           "elevationMeters": 9.03700065612793
         }
       ],
-      "distanceFromRouteMeters": 194.3857035850593,
-      "nearestRouteDistanceMeters": 1031.291188143928
+      "distanceFromRouteMeters": 194.38606727707926,
+      "nearestRouteDistanceMeters": 1185.4003641652548
     },
     {
       "osmId": 772999269,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -10988,13 +11804,12 @@
           "elevationMeters": 6.619999885559082
         }
       ],
-      "distanceFromRouteMeters": 139.31491578318887,
-      "nearestRouteDistanceMeters": 1030.879132566843
+      "distanceFromRouteMeters": 139.31517643879363,
+      "nearestRouteDistanceMeters": 1184.988388734426
     },
     {
       "osmId": 817050458,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -11012,12 +11827,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 359.1253675628541
+      "nearestRouteDistanceMeters": 513.2343995174112
     },
     {
       "osmId": 817050459,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -11039,13 +11853,12 @@
           "elevationMeters": 3.5900001525878906
         }
       ],
-      "distanceFromRouteMeters": 36.92858228818339,
-      "nearestRouteDistanceMeters": 356.74929069083606
+      "distanceFromRouteMeters": 36.9286503069796,
+      "nearestRouteDistanceMeters": 510.858265831073
     },
     {
       "osmId": 817050460,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -11067,13 +11880,11 @@
           "elevationMeters": 3.0940001010894775
         }
       ],
-      "distanceFromRouteMeters": 19.887397642060716,
-      "nearestRouteDistanceMeters": 356.8696867660722
+      "distanceFromRouteMeters": 19.8874342726802,
+      "nearestRouteDistanceMeters": 510.978687818606
     },
     {
       "osmId": 819465425,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -11120,13 +11931,11 @@
           "elevationMeters": 2.2850000858306885
         }
       ],
-      "distanceFromRouteMeters": 107.61455660230443,
-      "nearestRouteDistanceMeters": 5203.322585384266
+      "distanceFromRouteMeters": 9.501814179446257,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 819729877,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -11294,12 +12103,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2313.031510672119
+      "nearestRouteDistanceMeters": 2467.1413158676587
     },
     {
       "osmId": 819729878,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -11326,13 +12133,11 @@
           "elevationMeters": 11.687999725341797
         }
       ],
-      "distanceFromRouteMeters": 40.60886378301951,
-      "nearestRouteDistanceMeters": 2750.2331152748766
+      "distanceFromRouteMeters": 40.60893927222878,
+      "nearestRouteDistanceMeters": 2904.34329464044
     },
     {
       "osmId": 820874663,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -11449,13 +12254,12 @@
           "elevationMeters": 2.4679999351501465
         }
       ],
-      "distanceFromRouteMeters": 35.40814793030603,
-      "nearestRouteDistanceMeters": 4512.960786422516
+      "distanceFromRouteMeters": 35.40821350381279,
+      "nearestRouteDistanceMeters": 4667.071567399315
     },
     {
       "osmId": 835828842,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -11487,13 +12291,12 @@
           "elevationMeters": 6.0980000495910645
         }
       ],
-      "distanceFromRouteMeters": 197.45662275167612,
-      "nearestRouteDistanceMeters": 1547.9235127237653
+      "distanceFromRouteMeters": 197.45698984456672,
+      "nearestRouteDistanceMeters": 1702.03282844751
     },
     {
       "osmId": 837610231,
       "name": "High Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -11520,13 +12323,11 @@
           "elevationMeters": 8.159000396728516
         }
       ],
-      "distanceFromRouteMeters": 194.16764602850978,
-      "nearestRouteDistanceMeters": 472.2868409103181
+      "distanceFromRouteMeters": 194.1680016728649,
+      "nearestRouteDistanceMeters": 626.3956080514414
     },
     {
       "osmId": 854395515,
-      "name": null,
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6,
@@ -11573,13 +12374,11 @@
           "elevationMeters": 2.238999843597412
         }
       ],
-      "distanceFromRouteMeters": 20.27052556200808,
-      "nearestRouteDistanceMeters": 4766.776358002037
+      "distanceFromRouteMeters": 20.27056353739562,
+      "nearestRouteDistanceMeters": 4920.887237582945
     },
     {
       "osmId": 854395516,
-      "name": null,
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -11742,12 +12541,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5041.0662977768025
+      "nearestRouteDistanceMeters": 5195.177285527443
     },
     {
       "osmId": 854395519,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -11779,13 +12576,11 @@
           "elevationMeters": 2.8489999771118164
         }
       ],
-      "distanceFromRouteMeters": 194.537719371626,
-      "nearestRouteDistanceMeters": 4699.536771262095
+      "distanceFromRouteMeters": 194.53808382420343,
+      "nearestRouteDistanceMeters": 4853.647378868323
     },
     {
       "osmId": 854395520,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -11892,13 +12687,12 @@
           "elevationMeters": 2.8910000324249268
         }
       ],
-      "distanceFromRouteMeters": 186.0658005549269,
-      "nearestRouteDistanceMeters": 4692.480808477966
+      "distanceFromRouteMeters": 186.06614913596712,
+      "nearestRouteDistanceMeters": 4846.591426400891
     },
     {
       "osmId": 910285682,
       "name": "Dowling Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -12025,13 +12819,12 @@
           "elevationMeters": 20.35700035095215
         }
       ],
-      "distanceFromRouteMeters": 145.05881470948427,
-      "nearestRouteDistanceMeters": 663.7821049226733
+      "distanceFromRouteMeters": 145.05899593074534,
+      "nearestRouteDistanceMeters": 817.8909304633497
     },
     {
       "osmId": 910814187,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -12068,13 +12861,12 @@
           "elevationMeters": 2.1469998359680176
         }
       ],
-      "distanceFromRouteMeters": 73.74365215721666,
-      "nearestRouteDistanceMeters": 1327.6197144126636
+      "distanceFromRouteMeters": 73.7437893199278,
+      "nearestRouteDistanceMeters": 1481.729148716633
     },
     {
       "osmId": 910814188,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -12111,13 +12903,12 @@
           "elevationMeters": 2.696000099182129
         }
       ],
-      "distanceFromRouteMeters": 119.0431768827995,
-      "nearestRouteDistanceMeters": 1327.8963002371734
+      "distanceFromRouteMeters": 119.04339830233063,
+      "nearestRouteDistanceMeters": 1482.0056675327226
     },
     {
       "osmId": 910814189,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -12174,13 +12965,12 @@
           "elevationMeters": 3.5380001068115234
         }
       ],
-      "distanceFromRouteMeters": 128.22953111016363,
-      "nearestRouteDistanceMeters": 1146.1344974984145
+      "distanceFromRouteMeters": 128.22977098887534,
+      "nearestRouteDistanceMeters": 1300.2438024873368
     },
     {
       "osmId": 910814190,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -12207,13 +12997,106 @@
           "elevationMeters": 14.451000213623047
         }
       ],
-      "distanceFromRouteMeters": 168.09557812438433,
-      "nearestRouteDistanceMeters": 675.0602518957834
+      "distanceFromRouteMeters": 168.09570752585174,
+      "nearestRouteDistanceMeters": 829.169053811481
+    },
+    {
+      "osmId": 910814191,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.884037600000006,
+          "longitude": 170.4981415,
+          "elevationMeters": 2.36299991607666
+        },
+        {
+          "latitude": -45.8840918,
+          "longitude": 170.4980925,
+          "elevationMeters": 2.3970000743865967
+        },
+        {
+          "latitude": -45.8841932,
+          "longitude": 170.4980352,
+          "elevationMeters": 2.4190001487731934
+        },
+        {
+          "latitude": -45.884294600000004,
+          "longitude": 170.49797790000002,
+          "elevationMeters": 2.378999948501587
+        },
+        {
+          "latitude": -45.884396,
+          "longitude": 170.49792060000001,
+          "elevationMeters": 2.3929998874664307
+        }
+      ],
+      "distanceFromRouteMeters": 122.78160115478609,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 910814192,
+      "name": "Gordon Street",
+      "highway": "tertiary",
+      "oneway": false,
+      "widthMeters": 7.5,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.884370000000004,
+          "longitude": 170.49783190000002,
+          "elevationMeters": 2.2680001258850098
+        },
+        {
+          "latitude": -45.8843905,
+          "longitude": 170.49790130000002,
+          "elevationMeters": 2.3980000019073486
+        },
+        {
+          "latitude": -45.884396,
+          "longitude": 170.49792060000001,
+          "elevationMeters": 2.3929998874664307
+        },
+        {
+          "latitude": -45.884410900000006,
+          "longitude": 170.4979735,
+          "elevationMeters": 2.3580000400543213
+        },
+        {
+          "latitude": -45.8844257,
+          "longitude": 170.49802060000002,
+          "elevationMeters": 2.2879998683929443
+        },
+        {
+          "latitude": -45.8844426,
+          "longitude": 170.4980563,
+          "elevationMeters": 2.2339999675750732
+        },
+        {
+          "latitude": -45.884453300000004,
+          "longitude": 170.49807890000002,
+          "elevationMeters": 2.24399995803833
+        },
+        {
+          "latitude": -45.8844889,
+          "longitude": 170.4981277,
+          "elevationMeters": 2.2200000286102295
+        },
+        {
+          "latitude": -45.8845297,
+          "longitude": 170.49816560000002,
+          "elevationMeters": 2.1679999828338623
+        }
+      ],
+      "distanceFromRouteMeters": 128.20368216536377,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 911433136,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -12241,7 +13124,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3041.3792138443964
+      "nearestRouteDistanceMeters": 3195.48941664683
     },
     {
       "osmId": 925018290,
@@ -12283,13 +13166,12 @@
           "elevationMeters": 1.6019999980926514
         }
       ],
-      "distanceFromRouteMeters": 53.98729927865948,
-      "nearestRouteDistanceMeters": 3745.462749366465
+      "distanceFromRouteMeters": 53.98740037942427,
+      "nearestRouteDistanceMeters": 3899.573045469164
     },
     {
       "osmId": 925021930,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -12331,8 +13213,8 @@
           "elevationMeters": 2.3470001220703125
         }
       ],
-      "distanceFromRouteMeters": 62.28233781778611,
-      "nearestRouteDistanceMeters": 3954.6376570331604
+      "distanceFromRouteMeters": 62.28245888917428,
+      "nearestRouteDistanceMeters": 4108.748010032137
     },
     {
       "osmId": 967152133,
@@ -12369,13 +13251,12 @@
           "elevationMeters": 1.715999960899353
         }
       ],
-      "distanceFromRouteMeters": 176.1772040702255,
-      "nearestRouteDistanceMeters": 3688.5520278646204
+      "distanceFromRouteMeters": 176.17753117545374,
+      "nearestRouteDistanceMeters": 3842.6621235409375
     },
     {
       "osmId": 975638198,
       "name": "Dowling Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12407,13 +13288,12 @@
           "elevationMeters": 2.261000156402588
         }
       ],
-      "distanceFromRouteMeters": 7.0831335538413365,
-      "nearestRouteDistanceMeters": 719.5754726846365
+      "distanceFromRouteMeters": 7.083136250204524,
+      "nearestRouteDistanceMeters": 873.6846850714737
     },
     {
       "osmId": 975638201,
       "name": "Burlington Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12431,12 +13311,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 738.6630742882517
+      "nearestRouteDistanceMeters": 892.7723320697455
     },
     {
       "osmId": 975638220,
       "name": "Dowling Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12473,13 +13352,12 @@
           "elevationMeters": 3.2880001068115234
         }
       ],
-      "distanceFromRouteMeters": 6.808463498246635,
-      "nearestRouteDistanceMeters": 698.7173305142916
+      "distanceFromRouteMeters": 6.808466720724701,
+      "nearestRouteDistanceMeters": 852.8265055475389
     },
     {
       "osmId": 981246463,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -12511,13 +13389,11 @@
           "elevationMeters": 6.559999942779541
         }
       ],
-      "distanceFromRouteMeters": 35.40437938367994,
-      "nearestRouteDistanceMeters": 1772.0105932036022
+      "distanceFromRouteMeters": 35.404446901643226,
+      "nearestRouteDistanceMeters": 1926.1202179566596
     },
     {
       "osmId": 996522799,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -12544,13 +13420,11 @@
           "elevationMeters": 8.03600025177002
         }
       ],
-      "distanceFromRouteMeters": 197.41063557435075,
-      "nearestRouteDistanceMeters": 1582.4695917079985
+      "distanceFromRouteMeters": 197.41100375718347,
+      "nearestRouteDistanceMeters": 1736.578920021757
     },
     {
       "osmId": 996522804,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -12587,13 +13461,12 @@
           "elevationMeters": 7.630000114440918
         }
       ],
-      "distanceFromRouteMeters": 188.86195597006616,
-      "nearestRouteDistanceMeters": 1618.6714344829275
+      "distanceFromRouteMeters": 188.862308209092,
+      "nearestRouteDistanceMeters": 1772.7807858549043
     },
     {
       "osmId": 1001701828,
       "name": "Leith Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -12695,13 +13568,12 @@
           "elevationMeters": 3.703000068664551
         }
       ],
-      "distanceFromRouteMeters": 121.63198907373166,
-      "nearestRouteDistanceMeters": 3301.856207233066
+      "distanceFromRouteMeters": 121.6322158029145,
+      "nearestRouteDistanceMeters": 3455.966274998836
     },
     {
       "osmId": 1075896520,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12718,13 +13590,12 @@
           "elevationMeters": 2.00600004196167
         }
       ],
-      "distanceFromRouteMeters": 133.77872352120954,
-      "nearestRouteDistanceMeters": 4519.165068291857
+      "distanceFromRouteMeters": 133.77897127040112,
+      "nearestRouteDistanceMeters": 4673.275703800096
     },
     {
       "osmId": 1075901299,
       "name": "Birch Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -12766,13 +13637,12 @@
           "elevationMeters": 2.4079999923706055
         }
       ],
-      "distanceFromRouteMeters": 165.50841010988515,
-      "nearestRouteDistanceMeters": 4731.239132169471
+      "distanceFromRouteMeters": 165.50872017811687,
+      "nearestRouteDistanceMeters": 4885.3497908498875
     },
     {
       "osmId": 1085542918,
       "name": "Thomas Burns Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12819,13 +13689,12 @@
           "elevationMeters": 2.8980000019073486
         }
       ],
-      "distanceFromRouteMeters": 120.29661666349877,
-      "nearestRouteDistanceMeters": 4072.0761877979526
+      "distanceFromRouteMeters": 120.29684274635154,
+      "nearestRouteDistanceMeters": 4226.186479560441
     },
     {
       "osmId": 1085542919,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -12887,13 +13756,11 @@
           "elevationMeters": 2.569000005722046
         }
       ],
-      "distanceFromRouteMeters": 152.9180509835625,
-      "nearestRouteDistanceMeters": 3968.755851494499
+      "distanceFromRouteMeters": 152.9183421868508,
+      "nearestRouteDistanceMeters": 4122.866076473109
     },
     {
       "osmId": 1115400377,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -12926,12 +13793,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3380.957954386479
+      "nearestRouteDistanceMeters": 3535.068224257539
     },
     {
       "osmId": 1130563799,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -12964,12 +13830,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3956.6667718660074
+      "nearestRouteDistanceMeters": 4110.777205050625
     },
     {
       "osmId": 1227418299,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -13022,12 +13886,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2771.3958240303095
+      "nearestRouteDistanceMeters": 2925.50594942373
     },
     {
       "osmId": 1230034792,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -13054,13 +13916,12 @@
           "elevationMeters": 3.609999895095825
         }
       ],
-      "distanceFromRouteMeters": 120.8865548647848,
-      "nearestRouteDistanceMeters": 1516.6267615870413
+      "distanceFromRouteMeters": 120.88677966346509,
+      "nearestRouteDistanceMeters": 1670.7361817450399
     },
     {
       "osmId": 1232297896,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -13247,13 +14108,12 @@
           "elevationMeters": 2.364000082015991
         }
       ],
-      "distanceFromRouteMeters": 111.48497033489637,
-      "nearestRouteDistanceMeters": 4475.534121982008
+      "distanceFromRouteMeters": 111.48517794851479,
+      "nearestRouteDistanceMeters": 4629.644780175478
     },
     {
       "osmId": 1255450325,
       "name": "Dunbar Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6.3,
@@ -13271,12 +14131,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4229.85675032491
+      "nearestRouteDistanceMeters": 4383.967402239627
     },
     {
       "osmId": 1255450326,
       "name": "Dunbar Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6.3,
@@ -13298,13 +14157,12 @@
           "elevationMeters": 2.190000057220459
         }
       ],
-      "distanceFromRouteMeters": 12.336167077219411,
-      "nearestRouteDistanceMeters": 4225.931536645276
+      "distanceFromRouteMeters": 12.336171487543561,
+      "nearestRouteDistanceMeters": 4380.0422012824565
     },
     {
       "osmId": 1271889477,
       "name": "Hope Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -13326,8 +14184,8 @@
           "elevationMeters": 4.113999843597412
         }
       ],
-      "distanceFromRouteMeters": 116.87373853501427,
-      "nearestRouteDistanceMeters": 41.558202894894244
+      "distanceFromRouteMeters": 116.87395728948101,
+      "nearestRouteDistanceMeters": 195.66696947020912
     },
     {
       "osmId": 1272470612,
@@ -13365,12 +14223,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2598.118776156506
+      "nearestRouteDistanceMeters": 2752.2288522514036
     },
     {
       "osmId": 1272611614,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -13398,12 +14255,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4042.272786321451
+      "nearestRouteDistanceMeters": 4196.383242975953
     },
     {
       "osmId": 1272971626,
       "name": "Roberts Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6,
@@ -13455,13 +14311,190 @@
           "elevationMeters": 2.4799997806549072
         }
       ],
-      "distanceFromRouteMeters": 197.4770719122718,
-      "nearestRouteDistanceMeters": 4986.360449515894
+      "distanceFromRouteMeters": 197.4774397155243,
+      "nearestRouteDistanceMeters": 5140.47112986089
+    },
+    {
+      "osmId": 1272971675,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.884972100000006,
+          "longitude": 170.4974943,
+          "elevationMeters": 2.324000120162964
+        },
+        {
+          "latitude": -45.88487045000001,
+          "longitude": 170.4975513,
+          "elevationMeters": 2.299999952316284
+        },
+        {
+          "latitude": -45.8847688,
+          "longitude": 170.49760830000002,
+          "elevationMeters": 2.3359999656677246
+        }
+      ],
+      "distanceFromRouteMeters": 178.1395850742492,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 1272971676,
+      "name": "Princes Street",
+      "highway": "secondary",
+      "oneway": true,
+      "widthMeters": 6.4,
+      "widthSource": "lanes",
+      "points": [
+        {
+          "latitude": -45.884396,
+          "longitude": 170.49792060000001,
+          "elevationMeters": 2.3929998874664307
+        },
+        {
+          "latitude": -45.8844972,
+          "longitude": 170.49786340000003,
+          "elevationMeters": 2.3889999389648438
+        },
+        {
+          "latitude": -45.8845984,
+          "longitude": 170.4978062,
+          "elevationMeters": 2.378999948501587
+        },
+        {
+          "latitude": -45.8846737,
+          "longitude": 170.49778830000002,
+          "elevationMeters": 2.3509998321533203
+        },
+        {
+          "latitude": -45.884797600000006,
+          "longitude": 170.49771610000002,
+          "elevationMeters": 2.322999954223633
+        }
+      ],
+      "distanceFromRouteMeters": 142.40673803877266,
+      "nearestRouteDistanceMeters": 0
+    },
+    {
+      "osmId": 1272971679,
+      "name": "Vogel Street",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.885499800000005,
+          "longitude": 170.4999041,
+          "elevationMeters": 2.240000009536743
+        },
+        {
+          "latitude": -45.885574600000005,
+          "longitude": 170.49986180000002,
+          "elevationMeters": 2.2130000591278076
+        },
+        {
+          "latitude": -45.8856161,
+          "longitude": 170.4998485,
+          "elevationMeters": 2.2109999656677246
+        },
+        {
+          "latitude": -45.8856757,
+          "longitude": 170.4998142,
+          "elevationMeters": 2.075000047683716
+        },
+        {
+          "latitude": -45.88579006,
+          "longitude": 170.49974848,
+          "elevationMeters": 2.00600004196167
+        },
+        {
+          "latitude": -45.88590442,
+          "longitude": 170.49968276,
+          "elevationMeters": 1.9989999532699585
+        },
+        {
+          "latitude": -45.88601878,
+          "longitude": 170.49961704,
+          "elevationMeters": 2.000999927520752
+        },
+        {
+          "latitude": -45.886133140000005,
+          "longitude": 170.49955132000002,
+          "elevationMeters": 2.004999876022339
+        },
+        {
+          "latitude": -45.8862475,
+          "longitude": 170.4994856,
+          "elevationMeters": 2.0360000133514404
+        },
+        {
+          "latitude": -45.886300600000006,
+          "longitude": 170.49945200000002,
+          "elevationMeters": 2.055999994277954
+        },
+        {
+          "latitude": -45.8863265,
+          "longitude": 170.49942670000001,
+          "elevationMeters": 2.058000087738037
+        },
+        {
+          "latitude": -45.886335,
+          "longitude": 170.49941320000002,
+          "elevationMeters": 2.058000087738037
+        },
+        {
+          "latitude": -45.886343200000006,
+          "longitude": 170.4994,
+          "elevationMeters": 2.072000026702881
+        },
+        {
+          "latitude": -45.8863585,
+          "longitude": 170.4993662,
+          "elevationMeters": 2.135999917984009
+        },
+        {
+          "latitude": -45.8863749,
+          "longitude": 170.49931700000002,
+          "elevationMeters": 2.190000057220459
+        },
+        {
+          "latitude": -45.8863867,
+          "longitude": 170.4992738,
+          "elevationMeters": 2.2320001125335693
+        }
+      ],
+      "distanceFromRouteMeters": 136.80864724191133,
+      "nearestRouteDistanceMeters": 5426.41823590861
+    },
+    {
+      "osmId": 1272971680,
+      "name": "Jervois Street",
+      "highway": "residential",
+      "oneway": false,
+      "widthMeters": 6,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.8826295,
+          "longitude": 170.5013672,
+          "elevationMeters": 2.378999948501587
+        },
+        {
+          "latitude": -45.882580700000005,
+          "longitude": 170.50153160000002,
+          "elevationMeters": 2.38100004196167
+        }
+      ],
+      "distanceFromRouteMeters": 50.06137420209609,
+      "nearestRouteDistanceMeters": 5166.259431457856
     },
     {
       "osmId": 1328137556,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -13478,13 +14511,12 @@
           "elevationMeters": 2.2680001258850098
         }
       ],
-      "distanceFromRouteMeters": 141.25352120289074,
-      "nearestRouteDistanceMeters": 4518.732963283412
+      "distanceFromRouteMeters": 141.25378279490454,
+      "nearestRouteDistanceMeters": 4672.843587464395
     },
     {
       "osmId": 1328137557,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -13511,13 +14543,12 @@
           "elevationMeters": 2.375999927520752
         }
       ],
-      "distanceFromRouteMeters": 137.53010986248023,
-      "nearestRouteDistanceMeters": 4511.962641220888
+      "distanceFromRouteMeters": 137.53036455898678,
+      "nearestRouteDistanceMeters": 4666.073268928514
     },
     {
       "osmId": 1328137558,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -13549,13 +14580,12 @@
           "elevationMeters": 2.197999954223633
         }
       ],
-      "distanceFromRouteMeters": 141.25352120289074,
-      "nearestRouteDistanceMeters": 4518.732963283412
+      "distanceFromRouteMeters": 141.25378279490454,
+      "nearestRouteDistanceMeters": 4672.843587464395
     },
     {
       "osmId": 1328137559,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -13932,13 +14962,12 @@
           "elevationMeters": 2.320000171661377
         }
       ],
-      "distanceFromRouteMeters": 146.23836936539104,
-      "nearestRouteDistanceMeters": 4527.775838675981
+      "distanceFromRouteMeters": 146.2386401890081,
+      "nearestRouteDistanceMeters": 4681.886458129146
     },
     {
       "osmId": 1328137560,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -13955,13 +14984,11 @@
           "elevationMeters": 2.180999994277954
         }
       ],
-      "distanceFromRouteMeters": 133.77872352120954,
-      "nearestRouteDistanceMeters": 4519.165068291857
+      "distanceFromRouteMeters": 133.77897127040112,
+      "nearestRouteDistanceMeters": 4673.275703800096
     },
     {
       "osmId": 1328137561,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -14008,13 +15035,12 @@
           "elevationMeters": 2.364000082015991
         }
       ],
-      "distanceFromRouteMeters": 111.89872535963207,
-      "nearestRouteDistanceMeters": 4465.216417075275
+      "distanceFromRouteMeters": 111.89893376590115,
+      "nearestRouteDistanceMeters": 4619.327071679822
     },
     {
       "osmId": 1328137562,
       "name": "Wharf Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -14031,13 +15057,12 @@
           "elevationMeters": 2.197999954223633
         }
       ],
-      "distanceFromRouteMeters": 137.53010986248023,
-      "nearestRouteDistanceMeters": 4511.962641220888
+      "distanceFromRouteMeters": 137.53036455898678,
+      "nearestRouteDistanceMeters": 4666.073268928514
     },
     {
       "osmId": 1328137563,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -14059,13 +15084,12 @@
           "elevationMeters": 2.364000082015991
         }
       ],
-      "distanceFromRouteMeters": 158.85361950720954,
-      "nearestRouteDistanceMeters": 4505.342247582573
+      "distanceFromRouteMeters": 158.85391369342082,
+      "nearestRouteDistanceMeters": 4659.452841344869
     },
     {
       "osmId": 1328137564,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -14092,13 +15116,12 @@
           "elevationMeters": 2.2289998531341553
         }
       ],
-      "distanceFromRouteMeters": 152.30220898694637,
-      "nearestRouteDistanceMeters": 4498.22829745189
+      "distanceFromRouteMeters": 152.30249104038623,
+      "nearestRouteDistanceMeters": 4652.338898872767
     },
     {
       "osmId": 1334459227,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14130,13 +15153,12 @@
           "elevationMeters": 3.381999969482422
         }
       ],
-      "distanceFromRouteMeters": 153.48555278062878,
-      "nearestRouteDistanceMeters": 1327.672171572865
+      "distanceFromRouteMeters": 153.48583826275404,
+      "nearestRouteDistanceMeters": 1481.7814877921385
     },
     {
       "osmId": 1334459230,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14183,13 +15205,12 @@
           "elevationMeters": 3.9040000438690186
         }
       ],
-      "distanceFromRouteMeters": 121.04544181811079,
-      "nearestRouteDistanceMeters": 1548.098785095054
+      "distanceFromRouteMeters": 121.04566685447831,
+      "nearestRouteDistanceMeters": 1702.2082141809703
     },
     {
       "osmId": 1334459232,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -14217,12 +15238,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1029.4726383039251
+      "nearestRouteDistanceMeters": 1183.5820971175604
     },
     {
       "osmId": 1334596461,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -14260,12 +15280,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1327.165935559253
+      "nearestRouteDistanceMeters": 1481.275478946014
     },
     {
       "osmId": 1334596462,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -14288,12 +15307,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1548.6690107978327
+      "nearestRouteDistanceMeters": 1702.7786195509743
     },
     {
       "osmId": 1334596463,
       "name": "Burlington Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14355,13 +15373,12 @@
           "elevationMeters": 2.1670000553131104
         }
       ],
-      "distanceFromRouteMeters": 11.22082853379606,
-      "nearestRouteDistanceMeters": 733.522177393349
+      "distanceFromRouteMeters": 11.220832900016267,
+      "nearestRouteDistanceMeters": 887.6314074958542
     },
     {
       "osmId": 1339799747,
       "name": "Roberts Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": true,
       "widthMeters": 6,
@@ -14403,13 +15420,12 @@
           "elevationMeters": 2.7159998416900635
         }
       ],
-      "distanceFromRouteMeters": 187.55249122020552,
-      "nearestRouteDistanceMeters": 4972.307643716867
+      "distanceFromRouteMeters": 187.55284096214712,
+      "nearestRouteDistanceMeters": 5126.4183356052245
     },
     {
       "osmId": 1343576626,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -14432,12 +15448,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3975.603820286072
+      "nearestRouteDistanceMeters": 4129.714258214484
     },
     {
       "osmId": 1343576901,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -14469,13 +15483,12 @@
           "elevationMeters": 2.4810001850128174
         }
       ],
-      "distanceFromRouteMeters": 158.0331738689899,
-      "nearestRouteDistanceMeters": 4867.425808147963
+      "distanceFromRouteMeters": 158.03346993289833,
+      "nearestRouteDistanceMeters": 5021.536516003965
     },
     {
       "osmId": 1354295530,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14517,13 +15530,12 @@
           "elevationMeters": 14.017000198364258
         }
       ],
-      "distanceFromRouteMeters": 87.17746607901829,
-      "nearestRouteDistanceMeters": 2040.54182332654
+      "distanceFromRouteMeters": 87.17763716173722,
+      "nearestRouteDistanceMeters": 2194.651444228811
     },
     {
       "osmId": 1354295531,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14560,13 +15572,12 @@
           "elevationMeters": 14.017000198364258
         }
       ],
-      "distanceFromRouteMeters": 119.78305320865965,
-      "nearestRouteDistanceMeters": 2060.4852136486015
+      "distanceFromRouteMeters": 119.78327697906745,
+      "nearestRouteDistanceMeters": 2214.59477129927
     },
     {
       "osmId": 1354295532,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14583,8 +15594,8 @@
           "elevationMeters": 14.437999725341797
         }
       ],
-      "distanceFromRouteMeters": 119.74050003274158,
-      "nearestRouteDistanceMeters": 2073.7697203809184
+      "distanceFromRouteMeters": 119.7407237236545,
+      "nearestRouteDistanceMeters": 2227.8792819022988
     },
     {
       "osmId": 1354360469,
@@ -14662,12 +15673,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 1379197189,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -14739,13 +15748,12 @@
           "elevationMeters": 15.687000274658203
         }
       ],
-      "distanceFromRouteMeters": 115.4526355688784,
-      "nearestRouteDistanceMeters": 2465.080252944383
+      "distanceFromRouteMeters": 115.4528486460329,
+      "nearestRouteDistanceMeters": 2619.1899277935577
     },
     {
       "osmId": 1379197192,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14767,13 +15775,12 @@
           "elevationMeters": 15.565999984741211
         }
       ],
-      "distanceFromRouteMeters": 120.38648899261189,
-      "nearestRouteDistanceMeters": 2449.5362358535854
+      "distanceFromRouteMeters": 120.38671164699623,
+      "nearestRouteDistanceMeters": 2603.645899463644
     },
     {
       "osmId": 1379197194,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14795,13 +15802,11 @@
           "elevationMeters": 16.291000366210938
         }
       ],
-      "distanceFromRouteMeters": 121.39738407812051,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "distanceFromRouteMeters": 121.39759673156716,
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 1379197196,
-      "name": null,
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -14883,13 +15888,12 @@
           "elevationMeters": 16.291000366210938
         }
       ],
-      "distanceFromRouteMeters": 121.04909893554975,
-      "nearestRouteDistanceMeters": 2456.2883375116626
+      "distanceFromRouteMeters": 121.0493228154289,
+      "nearestRouteDistanceMeters": 2610.398002187407
     },
     {
       "osmId": 1431801297,
       "name": "Fryatt Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -14906,13 +15910,12 @@
           "elevationMeters": 2.2760000228881836
         }
       ],
-      "distanceFromRouteMeters": 169.65154750150825,
-      "nearestRouteDistanceMeters": 4492.724461407659
+      "distanceFromRouteMeters": 169.6518621169133,
+      "nearestRouteDistanceMeters": 4646.835289292576
     },
     {
       "osmId": 1431801298,
       "name": "Mason Street",
-      "ref": null,
       "highway": "unclassified",
       "oneway": false,
       "widthMeters": 6,
@@ -14959,13 +15962,12 @@
           "elevationMeters": 2.371999979019165
         }
       ],
-      "distanceFromRouteMeters": 171.31041742819934,
-      "nearestRouteDistanceMeters": 4009.144212581426
+      "distanceFromRouteMeters": 171.31073304925513,
+      "nearestRouteDistanceMeters": 4163.254399587847
     },
     {
       "osmId": 1497214075,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 6.4,
@@ -14998,12 +16000,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4081.92135627161
+      "nearestRouteDistanceMeters": 4236.031823846933
     },
     {
       "osmId": 1497214076,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -15035,13 +16036,12 @@
           "elevationMeters": 5.01099967956543
         }
       ],
-      "distanceFromRouteMeters": 79.6786158788287,
-      "nearestRouteDistanceMeters": 1065.0473776767024
+      "distanceFromRouteMeters": 79.67876493244722,
+      "nearestRouteDistanceMeters": 1219.1567304160903
     },
     {
       "osmId": 1497214077,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -15078,13 +16078,12 @@
           "elevationMeters": 6.309999942779541
         }
       ],
-      "distanceFromRouteMeters": 79.71788353236629,
-      "nearestRouteDistanceMeters": 990.261135116395
+      "distanceFromRouteMeters": 79.71803047533409,
+      "nearestRouteDistanceMeters": 1144.370461006872
     },
     {
       "osmId": 1497214078,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -15106,13 +16105,12 @@
           "elevationMeters": 5.688000202178955
         }
       ],
-      "distanceFromRouteMeters": 109.9859393789804,
-      "nearestRouteDistanceMeters": 1030.643763586747
+      "distanceFromRouteMeters": 109.98614516061826,
+      "nearestRouteDistanceMeters": 1184.7530624331962
     },
     {
       "osmId": 1497214079,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -15144,13 +16142,12 @@
           "elevationMeters": 5.01099967956543
         }
       ],
-      "distanceFromRouteMeters": 80.26069209449838,
-      "nearestRouteDistanceMeters": 1030.777534419293
+      "distanceFromRouteMeters": 80.26084226075389,
+      "nearestRouteDistanceMeters": 1184.8868766269293
     },
     {
       "osmId": 1497214080,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -15172,13 +16169,12 @@
           "elevationMeters": 4.319000244140625
         }
       ],
-      "distanceFromRouteMeters": 31.215199976259168,
-      "nearestRouteDistanceMeters": 1030.0711933428195
+      "distanceFromRouteMeters": 31.215258379315177,
+      "nearestRouteDistanceMeters": 1184.1806068315855
     },
     {
       "osmId": 1497214081,
       "name": "Stuart Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -15211,12 +16207,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1029.4726383039251
+      "nearestRouteDistanceMeters": 1183.5820971175604
     },
     {
       "osmId": 1497214087,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -15268,13 +16263,12 @@
           "elevationMeters": 2.314000129699707
         }
       ],
-      "distanceFromRouteMeters": 54.31383473627017,
-      "nearestRouteDistanceMeters": 500.60032724895945
+      "distanceFromRouteMeters": 54.31393799994081,
+      "nearestRouteDistanceMeters": 654.7093269603478
     },
     {
       "osmId": 1497214088,
       "name": "Bond Street",
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -15331,13 +16325,12 @@
           "elevationMeters": 2.552000045776367
         }
       ],
-      "distanceFromRouteMeters": 53.924952398103905,
-      "nearestRouteDistanceMeters": 430.17823646802475
+      "distanceFromRouteMeters": 53.925052942994995,
+      "nearestRouteDistanceMeters": 584.2872102343448
     },
     {
       "osmId": 1497214089,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -15374,13 +16367,12 @@
           "elevationMeters": 3.315999984741211
         }
       ],
-      "distanceFromRouteMeters": 53.520419024405214,
-      "nearestRouteDistanceMeters": 376.43460977014297
+      "distanceFromRouteMeters": 53.52051798078052,
+      "nearestRouteDistanceMeters": 530.5435663158383
     },
     {
       "osmId": 1497214090,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -15402,13 +16394,12 @@
           "elevationMeters": 3.315999984741211
         }
       ],
-      "distanceFromRouteMeters": 53.520419024405214,
-      "nearestRouteDistanceMeters": 376.43460977014297
+      "distanceFromRouteMeters": 53.52051798078052,
+      "nearestRouteDistanceMeters": 530.5435663158383
     },
     {
       "osmId": 1497214091,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -15440,13 +16431,12 @@
           "elevationMeters": 4.25
         }
       ],
-      "distanceFromRouteMeters": 53.0664695054575,
-      "nearestRouteDistanceMeters": 333.51258301586455
+      "distanceFromRouteMeters": 53.06656724893455,
+      "nearestRouteDistanceMeters": 487.62152638209164
     },
     {
       "osmId": 1497214092,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -15468,13 +16458,12 @@
           "elevationMeters": 3.2709999084472656
         }
       ],
-      "distanceFromRouteMeters": 49.72479184950449,
-      "nearestRouteDistanceMeters": 353.6639745050026
+      "distanceFromRouteMeters": 49.724883437653176,
+      "nearestRouteDistanceMeters": 507.77292925057776
     },
     {
       "osmId": 1497214093,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -15511,13 +16500,12 @@
           "elevationMeters": 9.527999877929688
         }
       ],
-      "distanceFromRouteMeters": 68.31672653079119,
-      "nearestRouteDistanceMeters": 356.12763456851235
+      "distanceFromRouteMeters": 68.31685236344468,
+      "nearestRouteDistanceMeters": 510.2365618557777
     },
     {
       "osmId": 1497214094,
       "name": "Bond Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -15549,13 +16537,12 @@
           "elevationMeters": 3.4739999771118164
         }
       ],
-      "distanceFromRouteMeters": 46.55266749796772,
-      "nearestRouteDistanceMeters": 359.8034727981501
+      "distanceFromRouteMeters": 46.55275440878442,
+      "nearestRouteDistanceMeters": 513.9124366915285
     },
     {
       "osmId": 1497214095,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -15577,13 +16564,12 @@
           "elevationMeters": 4.099999904632568
         }
       ],
-      "distanceFromRouteMeters": 57.24903264703211,
-      "nearestRouteDistanceMeters": 359.6768325217248
+      "distanceFromRouteMeters": 57.24913952727015,
+      "nearestRouteDistanceMeters": 513.7857806954361
     },
     {
       "osmId": 1497214096,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -15605,13 +16591,12 @@
           "elevationMeters": 3.0940001010894775
         }
       ],
-      "distanceFromRouteMeters": 36.92858228818339,
-      "nearestRouteDistanceMeters": 356.74929069083606
+      "distanceFromRouteMeters": 36.9286503069796,
+      "nearestRouteDistanceMeters": 510.858265831073
     },
     {
       "osmId": 1497214097,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -15628,13 +16613,12 @@
           "elevationMeters": 3.4739999771118164
         }
       ],
-      "distanceFromRouteMeters": 46.55266749796772,
-      "nearestRouteDistanceMeters": 359.8034727981501
+      "distanceFromRouteMeters": 46.55275440878442,
+      "nearestRouteDistanceMeters": 513.9124366915285
     },
     {
       "osmId": 1497214098,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -15656,13 +16640,12 @@
           "elevationMeters": 5.046000003814697
         }
       ],
-      "distanceFromRouteMeters": 59.73050060494643,
-      "nearestRouteDistanceMeters": 353.3163829883149
+      "distanceFromRouteMeters": 59.730610622620915,
+      "nearestRouteDistanceMeters": 507.425322432874
     },
     {
       "osmId": 1497214099,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 7.5,
@@ -15679,13 +16662,12 @@
           "elevationMeters": 4.25
         }
       ],
-      "distanceFromRouteMeters": 49.72479184950449,
-      "nearestRouteDistanceMeters": 353.6639745050026
+      "distanceFromRouteMeters": 49.724883437653176,
+      "nearestRouteDistanceMeters": 507.77292925057776
     },
     {
       "osmId": 1497214101,
       "name": "Jetty Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -15707,13 +16689,12 @@
           "elevationMeters": 2.5270001888275146
         }
       ],
-      "distanceFromRouteMeters": 14.961961619390053,
-      "nearestRouteDistanceMeters": 356.98751896678135
+      "distanceFromRouteMeters": 14.961989177843586,
+      "nearestRouteDistanceMeters": 511.0965275347627
     },
     {
       "osmId": 1497214102,
       "name": "Stafford Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 7.5,
@@ -15745,13 +16726,12 @@
           "elevationMeters": 10.607999801635742
         }
       ],
-      "distanceFromRouteMeters": 137.19751771429367,
-      "nearestRouteDistanceMeters": 356.7941516131992
+      "distanceFromRouteMeters": 137.19777041855193,
+      "nearestRouteDistanceMeters": 510.90297452330725
     },
     {
       "osmId": 1497214103,
       "name": "Manse Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -15773,13 +16753,12 @@
           "elevationMeters": 10.687000274658203
         }
       ],
-      "distanceFromRouteMeters": 167.81817420041702,
-      "nearestRouteDistanceMeters": 407.2822901506832
+      "distanceFromRouteMeters": 167.81848710305908,
+      "nearestRouteDistanceMeters": 561.3910896912087
     },
     {
       "osmId": 1497214104,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 9.600000000000001,
@@ -15801,13 +16780,12 @@
           "elevationMeters": 8.942999839782715
         }
       ],
-      "distanceFromRouteMeters": 120.71535547553624,
-      "nearestRouteDistanceMeters": 421.9945619459331
+      "distanceFromRouteMeters": 120.71558055338522,
+      "nearestRouteDistanceMeters": 576.1034350630091
     },
     {
       "osmId": 1497214105,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -15829,13 +16807,12 @@
           "elevationMeters": 9.831999778747559
         }
       ],
-      "distanceFromRouteMeters": 127.84512961384877,
-      "nearestRouteDistanceMeters": 363.2299588680714
+      "distanceFromRouteMeters": 127.84536829242997,
+      "nearestRouteDistanceMeters": 517.3388045553329
     },
     {
       "osmId": 1497214106,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -15867,13 +16844,12 @@
           "elevationMeters": 7.796000003814697
         }
       ],
-      "distanceFromRouteMeters": 129.56847610879893,
-      "nearestRouteDistanceMeters": 381.05974848633065
+      "distanceFromRouteMeters": 129.56871567394026,
+      "nearestRouteDistanceMeters": 535.168592067649
     },
     {
       "osmId": 1497214107,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": true,
       "widthMeters": 9.600000000000001,
@@ -15910,13 +16886,12 @@
           "elevationMeters": 10.0910005569458
         }
       ],
-      "distanceFromRouteMeters": 126.4852146738865,
-      "nearestRouteDistanceMeters": 314.91796627580663
+      "distanceFromRouteMeters": 126.48544764783003,
+      "nearestRouteDistanceMeters": 469.0267923485085
     },
     {
       "osmId": 1497216960,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -15983,13 +16958,12 @@
           "elevationMeters": 5.706999778747559
         }
       ],
-      "distanceFromRouteMeters": 19.680484945070898,
-      "nearestRouteDistanceMeters": 585.9334702272097
+      "distanceFromRouteMeters": 19.68052114714215,
+      "nearestRouteDistanceMeters": 740.0425431270208
     },
     {
       "osmId": 1497216961,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -16011,13 +16985,12 @@
           "elevationMeters": 2.4730000495910645
         }
       ],
-      "distanceFromRouteMeters": 7.275351230469696,
-      "nearestRouteDistanceMeters": 586.2074407229371
+      "distanceFromRouteMeters": 7.275364613411432,
+      "nearestRouteDistanceMeters": 740.3165326046019
     },
     {
       "osmId": 1497216967,
       "name": "Queens Gardens",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -16045,12 +17018,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 586.2831230273855
+      "nearestRouteDistanceMeters": 740.3922260147092
     },
     {
       "osmId": 1497216968,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -16097,13 +17069,12 @@
           "elevationMeters": 2.618000030517578
         }
       ],
-      "distanceFromRouteMeters": 7.4565025376651874,
-      "nearestRouteDistanceMeters": 594.2151170651721
+      "distanceFromRouteMeters": 7.45651630587669,
+      "nearestRouteDistanceMeters": 748.3242112456583
     },
     {
       "osmId": 1497216969,
       "name": "Queens Gardens",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -16131,12 +17102,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4480.429667637832
+      "nearestRouteDistanceMeters": 4634.540491841219
     },
     {
       "osmId": 1497216975,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16153,13 +17123,12 @@
           "elevationMeters": 14.392000198364258
         }
       ],
-      "distanceFromRouteMeters": 185.87806423127594,
-      "nearestRouteDistanceMeters": 714.6513423319911
+      "distanceFromRouteMeters": 185.87813499018065,
+      "nearestRouteDistanceMeters": 868.7602521124219
     },
     {
       "osmId": 1497216976,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16191,13 +17160,12 @@
           "elevationMeters": 14.46500015258789
         }
       ],
-      "distanceFromRouteMeters": 189.5269255179831,
-      "nearestRouteDistanceMeters": 711.0647322962044
+      "distanceFromRouteMeters": 189.52699754661575,
+      "nearestRouteDistanceMeters": 865.17362991715
     },
     {
       "osmId": 1497216977,
       "name": "Princes Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16234,13 +17202,12 @@
           "elevationMeters": 14.777999877929688
         }
       ],
-      "distanceFromRouteMeters": 189.15142257428502,
-      "nearestRouteDistanceMeters": 680.6357389369956
+      "distanceFromRouteMeters": 189.15151866590583,
+      "nearestRouteDistanceMeters": 834.7448957137503
     },
     {
       "osmId": 1497216979,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -16262,13 +17229,12 @@
           "elevationMeters": 14.395000457763672
         }
       ],
-      "distanceFromRouteMeters": 175.05477965694703,
-      "nearestRouteDistanceMeters": 724.8421393474322
+      "distanceFromRouteMeters": 175.05484629571123,
+      "nearestRouteDistanceMeters": 878.9510849970823
     },
     {
       "osmId": 1497216980,
       "name": "Moray Place",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16295,13 +17261,12 @@
           "elevationMeters": 14.299999237060547
         }
       ],
-      "distanceFromRouteMeters": 163.83188270964186,
-      "nearestRouteDistanceMeters": 738.3947407870274
+      "distanceFromRouteMeters": 163.83194645948694,
+      "nearestRouteDistanceMeters": 892.503726496534
     },
     {
       "osmId": 1504754500,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16338,13 +17303,12 @@
           "elevationMeters": 2.696000099182129
         }
       ],
-      "distanceFromRouteMeters": 119.0431768827995,
-      "nearestRouteDistanceMeters": 1327.8963002371734
+      "distanceFromRouteMeters": 119.04339830233063,
+      "nearestRouteDistanceMeters": 1482.0056675327226
     },
     {
       "osmId": 1504754502,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -16381,13 +17345,12 @@
           "elevationMeters": 2.4780001640319824
         }
       ],
-      "distanceFromRouteMeters": 119.0431768827995,
-      "nearestRouteDistanceMeters": 1327.8963002371734
+      "distanceFromRouteMeters": 119.04339830233063,
+      "nearestRouteDistanceMeters": 1482.0056675327226
     },
     {
       "osmId": 1504754504,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -16409,13 +17372,12 @@
           "elevationMeters": 2.7720000743865967
         }
       ],
-      "distanceFromRouteMeters": 119.80623204655258,
-      "nearestRouteDistanceMeters": 1363.9921190036378
+      "distanceFromRouteMeters": 119.80645485124607,
+      "nearestRouteDistanceMeters": 1518.101495749815
     },
     {
       "osmId": 1504754505,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16437,13 +17399,12 @@
           "elevationMeters": 2.8589999675750732
         }
       ],
-      "distanceFromRouteMeters": 120.18502474044864,
-      "nearestRouteDistanceMeters": 1382.285854027684
+      "distanceFromRouteMeters": 120.18524824958624,
+      "nearestRouteDistanceMeters": 1536.3952356111856
     },
     {
       "osmId": 1504754507,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 6.4,
@@ -16465,13 +17426,12 @@
           "elevationMeters": 2.9600000381469727
         }
       ],
-      "distanceFromRouteMeters": 120.35184238052368,
-      "nearestRouteDistanceMeters": 1397.516114374262
+      "distanceFromRouteMeters": 120.35206619989347,
+      "nearestRouteDistanceMeters": 1551.625500205113
     },
     {
       "osmId": 1504754508,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -16503,13 +17463,12 @@
           "elevationMeters": 2.931000232696533
         }
       ],
-      "distanceFromRouteMeters": 117.180732793099,
-      "nearestRouteDistanceMeters": 1402.7770582160592
+      "distanceFromRouteMeters": 117.18095071512867,
+      "nearestRouteDistanceMeters": 1556.8864502978531
     },
     {
       "osmId": 1504754509,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": true,
       "widthMeters": 3.2,
@@ -16531,13 +17490,12 @@
           "elevationMeters": 3.0989999771118164
         }
       ],
-      "distanceFromRouteMeters": 119.84069051816742,
-      "nearestRouteDistanceMeters": 1432.6340583029828
+      "distanceFromRouteMeters": 119.84091338694364,
+      "nearestRouteDistanceMeters": 1586.7434552546208
     },
     {
       "osmId": 1504754510,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16569,8 +17527,8 @@
           "elevationMeters": 2.0199999809265137
         }
       ],
-      "distanceFromRouteMeters": 53.24217561276843,
-      "nearestRouteDistanceMeters": 1327.4878508933994
+      "distanceFromRouteMeters": 53.242274642867166,
+      "nearestRouteDistanceMeters": 1481.5973155217982
     },
     {
       "osmId": 1504754514,
@@ -16613,7 +17571,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3744.888242489845
+      "nearestRouteDistanceMeters": 3898.998616914699
     },
     {
       "osmId": 1504754515,
@@ -16635,8 +17593,8 @@
           "elevationMeters": 1.6950000524520874
         }
       ],
-      "distanceFromRouteMeters": 51.21327225256461,
-      "nearestRouteDistanceMeters": 3744.764481421937
+      "distanceFromRouteMeters": 51.21336815741371,
+      "nearestRouteDistanceMeters": 3898.874930265681
     },
     {
       "osmId": 1504754518,
@@ -16679,7 +17637,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3744.888242489845
+      "nearestRouteDistanceMeters": 3898.998616914699
     },
     {
       "osmId": 1504754519,
@@ -16701,13 +17659,12 @@
           "elevationMeters": 1.593999981880188
         }
       ],
-      "distanceFromRouteMeters": 122.79695323530528,
-      "nearestRouteDistanceMeters": 3746.1405088099514
+      "distanceFromRouteMeters": 122.797183194315,
+      "nearestRouteDistanceMeters": 3900.2507050715717
     },
     {
       "osmId": 1504754520,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16739,13 +17696,12 @@
           "elevationMeters": 2.437999963760376
         }
       ],
-      "distanceFromRouteMeters": 187.2980760839799,
-      "nearestRouteDistanceMeters": 3769.093915954825
+      "distanceFromRouteMeters": 187.29843046931566,
+      "nearestRouteDistanceMeters": 3923.204032871913
     },
     {
       "osmId": 1504754521,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16762,13 +17718,12 @@
           "elevationMeters": 2.2849998474121094
         }
       ],
-      "distanceFromRouteMeters": 180.6550617902546,
-      "nearestRouteDistanceMeters": 3764.591851538694
+      "distanceFromRouteMeters": 180.655403606391,
+      "nearestRouteDistanceMeters": 3918.7019766402736
     },
     {
       "osmId": 1504754522,
       "name": "Saint Andrew Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16810,13 +17765,12 @@
           "elevationMeters": 2.2950000762939453
         }
       ],
-      "distanceFromRouteMeters": 160.75369388063214,
-      "nearestRouteDistanceMeters": 3933.2455857334976
+      "distanceFromRouteMeters": 160.7539936892929,
+      "nearestRouteDistanceMeters": 4087.3557769012386
     },
     {
       "osmId": 1504755410,
       "name": "Anzac Avenue",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -16863,8 +17817,8 @@
           "elevationMeters": 1.7379999160766602
         }
       ],
-      "distanceFromRouteMeters": 123.59138758900215,
-      "nearestRouteDistanceMeters": 3810.5755964236528
+      "distanceFromRouteMeters": 123.59161808926314,
+      "nearestRouteDistanceMeters": 3964.6858066834357
     },
     {
       "osmId": 1504755411,
@@ -16916,13 +17870,12 @@
           "elevationMeters": 1.7379999160766602
         }
       ],
-      "distanceFromRouteMeters": 151.51819564206315,
-      "nearestRouteDistanceMeters": 3748.3753400037667
+      "distanceFromRouteMeters": 151.51847938667825,
+      "nearestRouteDistanceMeters": 3902.4854951422963
     },
     {
       "osmId": 1504755412,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -16959,13 +17912,12 @@
           "elevationMeters": 2.6080000400543213
         }
       ],
-      "distanceFromRouteMeters": 24.6432550517762,
-      "nearestRouteDistanceMeters": 3524.0740707516156
+      "distanceFromRouteMeters": 24.64330037323831,
+      "nearestRouteDistanceMeters": 3678.1844188760824
     },
     {
       "osmId": 1504755413,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -16993,12 +17945,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3523.420433268911
+      "nearestRouteDistanceMeters": 3677.530743631319
     },
     {
       "osmId": 1504755414,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17026,12 +17977,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3523.420433268911
+      "nearestRouteDistanceMeters": 3677.530743631319
     },
     {
       "osmId": 1504755417,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17059,12 +18009,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1548.6690107978327
+      "nearestRouteDistanceMeters": 1702.7786195509743
     },
     {
       "osmId": 1504755418,
       "name": "Hanover Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -17091,13 +18040,12 @@
           "elevationMeters": 3.307999849319458
         }
       ],
-      "distanceFromRouteMeters": 38.354544017281256,
-      "nearestRouteDistanceMeters": 1548.515983234051
+      "distanceFromRouteMeters": 38.35461532246329,
+      "nearestRouteDistanceMeters": 1702.6255350658867
     },
     {
       "osmId": 1547376397,
       "name": "Ethel McMIllan Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17119,13 +18067,12 @@
           "elevationMeters": 6.902000427246094
         }
       ],
-      "distanceFromRouteMeters": 20.481726749258957,
-      "nearestRouteDistanceMeters": 3140.9030589708173
+      "distanceFromRouteMeters": 20.48176416683224,
+      "nearestRouteDistanceMeters": 3295.0133055580845
     },
     {
       "osmId": 1547376547,
       "name": "Ethel McMIllan Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17152,13 +18099,12 @@
           "elevationMeters": 7.001999855041504
         }
       ],
-      "distanceFromRouteMeters": 28.076993071182812,
-      "nearestRouteDistanceMeters": 3141.1744125838677
+      "distanceFromRouteMeters": 28.07704436436515,
+      "nearestRouteDistanceMeters": 3295.2846710178346
     },
     {
       "osmId": 1547376548,
       "name": "Ethel McMIllan Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17175,13 +18121,11 @@
           "elevationMeters": 7.131999969482422
         }
       ],
-      "distanceFromRouteMeters": 47.49201890252875,
-      "nearestRouteDistanceMeters": 3114.2370671037074
+      "distanceFromRouteMeters": 47.492115378523664,
+      "nearestRouteDistanceMeters": 3268.3473231580374
     },
     {
       "osmId": 1548516833,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -17218,13 +18162,11 @@
           "elevationMeters": 12.422999382019043
         }
       ],
-      "distanceFromRouteMeters": 47.240612138926814,
-      "nearestRouteDistanceMeters": 2598.3085372337405
+      "distanceFromRouteMeters": 47.24070055657543,
+      "nearestRouteDistanceMeters": 2752.418544599625
     },
     {
       "osmId": 1548516834,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -17246,13 +18188,12 @@
           "elevationMeters": 12.389999389648438
         }
       ],
-      "distanceFromRouteMeters": 30.260245824878275,
-      "nearestRouteDistanceMeters": 2598.3273685642607
+      "distanceFromRouteMeters": 30.26030246131171,
+      "nearestRouteDistanceMeters": 2752.4374006590406
     },
     {
       "osmId": 1548516835,
       "name": "Union Street West",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17285,12 +18226,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2255.8414949327835
+      "nearestRouteDistanceMeters": 2409.9512837382345
     },
     {
       "osmId": 1548516838,
       "name": "Union Street West",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6.4,
@@ -17323,12 +18263,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2255.8414949327835
+      "nearestRouteDistanceMeters": 2409.9512837382345
     },
     {
       "osmId": 1548516842,
       "name": "Grange Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -17360,13 +18299,12 @@
           "elevationMeters": 6.797000408172607
         }
       ],
-      "distanceFromRouteMeters": 142.38226293819554,
-      "nearestRouteDistanceMeters": 3199.5023044136215
+      "distanceFromRouteMeters": 142.3825204624222,
+      "nearestRouteDistanceMeters": 3353.612763778569
     },
     {
       "osmId": 1548516845,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -17419,12 +18357,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1771.0254477647509
+      "nearestRouteDistanceMeters": 1925.1351209464294
     },
     {
       "osmId": 1548516846,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17462,12 +18399,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3301.845435143929
+      "nearestRouteDistanceMeters": 3455.955681996289
     },
     {
       "osmId": 1548516847,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17500,12 +18436,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3301.845435143929
+      "nearestRouteDistanceMeters": 3455.955681996289
     },
     {
       "osmId": 1548516848,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 16,
@@ -17542,13 +18477,12 @@
           "elevationMeters": 7.103000164031982
         }
       ],
-      "distanceFromRouteMeters": 86.15068322686001,
-      "nearestRouteDistanceMeters": 1773.4584786279845
+      "distanceFromRouteMeters": 86.1508475206214,
+      "nearestRouteDistanceMeters": 1927.5680339755284
     },
     {
       "osmId": 1548516849,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17581,12 +18515,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1771.0254477647509
+      "nearestRouteDistanceMeters": 1925.1351209464294
     },
     {
       "osmId": 1548516850,
       "name": "Frederick Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -17623,13 +18556,12 @@
           "elevationMeters": 7.9720001220703125
         }
       ],
-      "distanceFromRouteMeters": 121.41642337326225,
-      "nearestRouteDistanceMeters": 1774.4699559823466
+      "distanceFromRouteMeters": 121.4166549205948,
+      "nearestRouteDistanceMeters": 1928.5794630983896
     },
     {
       "osmId": 1548516851,
       "name": "Great King Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -17666,13 +18598,12 @@
           "elevationMeters": 6.564000129699707
         }
       ],
-      "distanceFromRouteMeters": 121.41642337326225,
-      "nearestRouteDistanceMeters": 1774.4699559823466
+      "distanceFromRouteMeters": 121.4166549205948,
+      "nearestRouteDistanceMeters": 1928.5794630983896
     },
     {
       "osmId": 1548516854,
       "name": "Emily Siedeberg Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17700,12 +18631,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3094.6842239629286
+      "nearestRouteDistanceMeters": 3248.794431354695
     },
     {
       "osmId": 1548516855,
       "name": "Emily Siedeberg Place",
-      "ref": null,
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -17733,12 +18663,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1853.8407183259774
+      "nearestRouteDistanceMeters": 2007.9504030174223
     },
     {
       "osmId": 1548516860,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 6.4,
@@ -17760,13 +18689,12 @@
           "elevationMeters": 7.753000259399414
         }
       ],
-      "distanceFromRouteMeters": 38.68313569583533,
-      "nearestRouteDistanceMeters": 3043.1873548305916
+      "distanceFromRouteMeters": 38.683210518861905,
+      "nearestRouteDistanceMeters": 3197.2975075020368
     },
     {
       "osmId": 1548516861,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17794,12 +18722,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3041.3792138443964
+      "nearestRouteDistanceMeters": 3195.48941664683
     },
     {
       "osmId": 1548516863,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17827,12 +18754,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2034.1378708820005
+      "nearestRouteDistanceMeters": 2188.2475976746373
     },
     {
       "osmId": 1548516864,
       "name": "Albany Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -17860,12 +18786,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2034.1378708820005
+      "nearestRouteDistanceMeters": 2188.2475976746373
     },
     {
       "osmId": 1548516865,
       "name": "Walsh Street",
-      "ref": null,
       "highway": "residential",
       "oneway": true,
       "widthMeters": 6,
@@ -17893,7 +18818,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1946.4591541651514
+      "nearestRouteDistanceMeters": 2100.5688708220205
     },
     {
       "osmId": 1548516871,
@@ -17930,8 +18855,8 @@
           "elevationMeters": 19.046998977661133
         }
       ],
-      "distanceFromRouteMeters": 186.21497700212723,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "distanceFromRouteMeters": 186.21502984914665,
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 1548516873,
@@ -17953,13 +18878,11 @@
           "elevationMeters": 18.45199966430664
         }
       ],
-      "distanceFromRouteMeters": 176.19561441428797,
-      "nearestRouteDistanceMeters": 2477.92677548611
+      "distanceFromRouteMeters": 176.1956643896091,
+      "nearestRouteDistanceMeters": 2632.0366286984836
     },
     {
       "osmId": 1548518280,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18026,13 +18949,11 @@
           "elevationMeters": 7.7179999351501465
         }
       ],
-      "distanceFromRouteMeters": 30.166386794529362,
-      "nearestRouteDistanceMeters": 1902.1393535799284
+      "distanceFromRouteMeters": 30.166438982182463,
+      "nearestRouteDistanceMeters": 2056.249100334911
     },
     {
       "osmId": 1548518285,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18070,12 +18991,11 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1886.4306715741864
+      "nearestRouteDistanceMeters": 2040.5403607574196
     },
     {
       "osmId": 1548518288,
       "name": "George Street",
-      "ref": null,
       "highway": "secondary",
       "oneway": false,
       "widthMeters": 9.600000000000001,
@@ -18112,13 +19032,12 @@
           "elevationMeters": 13.598000526428223
         }
       ],
-      "distanceFromRouteMeters": 120.75671929013586,
-      "nearestRouteDistanceMeters": 2042.5853434951196
+      "distanceFromRouteMeters": 120.75695587753232,
+      "nearestRouteDistanceMeters": 2196.695071912611
     },
     {
       "osmId": 1548772673,
       "name": "Rattray Street",
-      "ref": null,
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 12.8,
@@ -18155,13 +19074,11 @@
           "elevationMeters": 5.706999778747559
         }
       ],
-      "distanceFromRouteMeters": 131.80103159538808,
-      "nearestRouteDistanceMeters": 588.8682304084329
+      "distanceFromRouteMeters": 131.80127496209698,
+      "nearestRouteDistanceMeters": 742.9771352919354
     },
     {
       "osmId": 1556462146,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18224,12 +19141,10 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3571.59415973388
+      "nearestRouteDistanceMeters": 3725.704483811217
     },
     {
       "osmId": 1556462147,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18306,13 +19221,11 @@
           "elevationMeters": 1.9300000667572021
         }
       ],
-      "distanceFromRouteMeters": 32.238032687040686,
-      "nearestRouteDistanceMeters": 3571.355923772486
+      "distanceFromRouteMeters": 32.23809321520264,
+      "nearestRouteDistanceMeters": 3725.466201262909
     },
     {
       "osmId": 1556462157,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18359,13 +19272,11 @@
           "elevationMeters": 2.360999822616577
         }
       ],
-      "distanceFromRouteMeters": 199.90450272061474,
-      "nearestRouteDistanceMeters": 3719.7909443267217
+      "distanceFromRouteMeters": 199.90487383312976,
+      "nearestRouteDistanceMeters": 3873.9010139183147
     },
     {
       "osmId": 1556464074,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18402,13 +19313,11 @@
           "elevationMeters": 2.0820000171661377
         }
       ],
-      "distanceFromRouteMeters": 20.420139739840828,
-      "nearestRouteDistanceMeters": 4803.090689692237
+      "distanceFromRouteMeters": 20.42017799552001,
+      "nearestRouteDistanceMeters": 4957.2015792741595
     },
     {
       "osmId": 1556464076,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18495,13 +19404,11 @@
           "elevationMeters": 2.0869998931884766
         }
       ],
-      "distanceFromRouteMeters": 20.163039539171656,
-      "nearestRouteDistanceMeters": 4917.26332750566
+      "distanceFromRouteMeters": 20.163077138568802,
+      "nearestRouteDistanceMeters": 5071.374249637228
     },
     {
       "osmId": 1556464082,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18538,13 +19445,11 @@
           "elevationMeters": 2.13100004196167
         }
       ],
-      "distanceFromRouteMeters": 20.278741413871074,
-      "nearestRouteDistanceMeters": 4850.823035105787
+      "distanceFromRouteMeters": 20.27877940465048,
+      "nearestRouteDistanceMeters": 5004.933938324151
     },
     {
       "osmId": 1556701811,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18581,13 +19486,11 @@
           "elevationMeters": 2.825000047683716
         }
       ],
-      "distanceFromRouteMeters": 61.830231902144696,
-      "nearestRouteDistanceMeters": 1379.47441131556
+      "distanceFromRouteMeters": 61.83034688836565,
+      "nearestRouteDistanceMeters": 1533.5838785297108
     },
     {
       "osmId": 1556701813,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18624,13 +19527,47 @@
           "elevationMeters": 2.544999837875366
         }
       ],
-      "distanceFromRouteMeters": 61.28970267331775,
-      "nearestRouteDistanceMeters": 1365.0632974525627
+      "distanceFromRouteMeters": 61.28981665431179,
+      "nearestRouteDistanceMeters": 1519.1727612148004
+    },
+    {
+      "osmId": 1556703662,
+      "highway": "service",
+      "oneway": false,
+      "widthMeters": 4.5,
+      "widthSource": "class",
+      "points": [
+        {
+          "latitude": -45.883740800000005,
+          "longitude": 170.50089150000002,
+          "elevationMeters": 2.1410000324249268
+        },
+        {
+          "latitude": -45.8838159,
+          "longitude": 170.50096760000002,
+          "elevationMeters": 2.0209999084472656
+        },
+        {
+          "latitude": -45.8838658,
+          "longitude": 170.5010182,
+          "elevationMeters": 2.2669999599456787
+        },
+        {
+          "latitude": -45.8838711,
+          "longitude": 170.50103860000002,
+          "elevationMeters": 2.2760000228881836
+        },
+        {
+          "latitude": -45.8839076,
+          "longitude": 170.5011801,
+          "elevationMeters": 2.312999963760376
+        }
+      ],
+      "distanceFromRouteMeters": 21.732553179382087,
+      "nearestRouteDistanceMeters": 5313.35449859182
     },
     {
       "osmId": 1556703664,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18662,18 +19599,21 @@
           "elevationMeters": 2.2950000762939453
         }
       ],
-      "distanceFromRouteMeters": 39.608610974059566,
-      "nearestRouteDistanceMeters": 5172.9423780506
+      "distanceFromRouteMeters": 19.71673218258866,
+      "nearestRouteDistanceMeters": 5426.687408322518
     },
     {
       "osmId": 1556703666,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
       "widthSource": "class",
       "points": [
+        {
+          "latitude": -45.8839076,
+          "longitude": 170.5011801,
+          "elevationMeters": 2.312999963760376
+        },
         {
           "latitude": -45.88401926666667,
           "longitude": 170.50112213333333,
@@ -18690,18 +19630,21 @@
           "elevationMeters": 2.2950000762939453
         }
       ],
-      "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5172.9423780506
+      "distanceFromRouteMeters": 20.716596765473355,
+      "nearestRouteDistanceMeters": 5352.950087702365
     },
     {
       "osmId": 1556703667,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
       "widthSource": "class",
       "points": [
+        {
+          "latitude": -45.8838711,
+          "longitude": 170.50103860000002,
+          "elevationMeters": 2.2760000228881836
+        },
         {
           "latitude": -45.883982466666666,
           "longitude": 170.50097910000002,
@@ -18718,13 +19661,11 @@
           "elevationMeters": 2.252000093460083
         }
       ],
-      "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5184.624843806133
+      "distanceFromRouteMeters": 24.259219308268463,
+      "nearestRouteDistanceMeters": 5410.392151000659
     },
     {
       "osmId": 1556704193,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18756,13 +19697,11 @@
           "elevationMeters": 2.2340002059936523
         }
       ],
-      "distanceFromRouteMeters": 93.29413190114015,
-      "nearestRouteDistanceMeters": 5172.713181004733
+      "distanceFromRouteMeters": 27.29499630253546,
+      "nearestRouteDistanceMeters": 5377.553965372314
     },
     {
       "osmId": 1556704194,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18784,13 +19723,11 @@
           "elevationMeters": 2.2720000743865967
         }
       ],
-      "distanceFromRouteMeters": 70.23756177769118,
-      "nearestRouteDistanceMeters": 5155.281027434027
+      "distanceFromRouteMeters": 24.494825243983747,
+      "nearestRouteDistanceMeters": 5369.107887032633
     },
     {
       "osmId": 1556704195,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18812,13 +19749,11 @@
           "elevationMeters": 2.2139999866485596
         }
       ],
-      "distanceFromRouteMeters": 77.83772586648578,
-      "nearestRouteDistanceMeters": 5148.854265550051
+      "distanceFromRouteMeters": 40.90196620626584,
+      "nearestRouteDistanceMeters": 5369.193015000841
     },
     {
       "osmId": 1556704196,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18840,13 +19775,11 @@
           "elevationMeters": 2.258000135421753
         }
       ],
-      "distanceFromRouteMeters": 74.09360092541064,
-      "nearestRouteDistanceMeters": 5148.854265550051
+      "distanceFromRouteMeters": 33.320157876927766,
+      "nearestRouteDistanceMeters": 5369.146331381069
     },
     {
       "osmId": 1556704200,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18888,13 +19821,11 @@
           "elevationMeters": 2.2880001068115234
         }
       ],
-      "distanceFromRouteMeters": 128.57412597840903,
-      "nearestRouteDistanceMeters": 5172.9423780506
+      "distanceFromRouteMeters": 60.824098371391756,
+      "nearestRouteDistanceMeters": 5377.553965372314
     },
     {
       "osmId": 1556704201,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18926,13 +19857,11 @@
           "elevationMeters": 2.2669999599456787
         }
       ],
-      "distanceFromRouteMeters": 104.26390201672456,
-      "nearestRouteDistanceMeters": 5148.854265550051
+      "distanceFromRouteMeters": 49.04409014195982,
+      "nearestRouteDistanceMeters": 5377.553965372314
     },
     {
       "osmId": 1556705131,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -18964,13 +19893,11 @@
           "elevationMeters": 2.378999948501587
         }
       ],
-      "distanceFromRouteMeters": 104.4491306783613,
-      "nearestRouteDistanceMeters": 5203.322585384266
+      "distanceFromRouteMeters": 5.135346773666825,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 1556705133,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": false,
       "widthMeters": 4.5,
@@ -19027,13 +19954,11 @@
           "elevationMeters": 2.1649999618530273
         }
       ],
-      "distanceFromRouteMeters": 149.2643471200364,
-      "nearestRouteDistanceMeters": 5186.925293501902
+      "distanceFromRouteMeters": 59.843389793890225,
+      "nearestRouteDistanceMeters": 0
     },
     {
       "osmId": 1563141319,
-      "name": null,
-      "ref": null,
       "highway": "service",
       "oneway": true,
       "widthMeters": 4.5,
@@ -19080,8 +20005,8 @@
           "elevationMeters": 7.019000053405762
         }
       ],
-      "distanceFromRouteMeters": 181.79347019185292,
-      "nearestRouteDistanceMeters": 3196.413799389661
+      "distanceFromRouteMeters": 181.793798998418,
+      "nearestRouteDistanceMeters": 3350.524320052053
     }
   ]
 }

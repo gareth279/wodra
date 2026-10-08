@@ -9,6 +9,14 @@
   "turnaroundArea": { "latitude": -45.86090, "longitude": 170.51440 },
   "turnaroundAreaRadiusMeters": 300,
   "maximumConnectorDistanceMeters": 350,
+  "excludedClosureEdges": [
+    {
+      "wayId": 381871579,
+      "fromNodeId": 14158950981,
+      "toNodeId": 5802260307,
+      "reason": "Avoid the approximately 110 m straight Vogel Street OSM edge that crosses the grass connector."
+    }
+  ],
   "minimumPreferredRefPercent": 90,
   "bbox": {
     "minLatitude": -45.89,

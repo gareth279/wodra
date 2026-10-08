@@ -46,6 +46,118 @@ var tests = new (string Name, Action Run)[]
         if(Math.Abs(lean)>CyclistAnimationMath.MaximumLeanDegrees) throw new Exception($"Lean exceeded clamp: {lean}.");
         Near(0,(float)CyclistAnimationMath.CornerLeanDegrees(-Vector3.UnitZ,Vector3.UnitX,0,30));
     }),
+    ("crossing controls create perpendicular zebra bars across the ride road", () =>
+    {
+        var route = MarkingTestRoute(); var pose = route.GetPoseAtDistance(50);
+        var result = RoadMarkingGeometry.Build(route, [MarkingControl("crossing", 1, 50, 0)]);
+        var stripes = result.Triangles.Where(triangle => triangle.Kind == RoadMarkingKind.ZebraStripe).ToArray();
+        Equal(1, result.ZebraCrossings); Equal(8, stripes.Length);
+        var longEdge = LongestEdge(stripes[0]);
+        if (Math.Abs(Vector3.Dot(Vector3.Normalize(longEdge), pose.Forward)) > .1f)
+            throw new Exception("Zebra bar long axis is not perpendicular to route travel.");
+    }),
+    ("zebra stripe vertices stay within the configured road width", () =>
+    {
+        var route = MarkingTestRoute(); var result = RoadMarkingGeometry.Build(route, [MarkingControl("crossing", 2, 50, 0)]);
+        foreach (var triangle in result.Triangles)
+        {
+            var pose = route.GetPoseAtDistance(triangle.RouteDistanceMeters);
+            var side = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, pose.Forward));
+            foreach (var vertex in new[] { triangle.A, triangle.B, triangle.C })
+                if (Math.Abs(Vector3.Dot(vertex - pose.Position, side)) > RoadMarkingGeometry.DefaultRoadWidthMeters / 2 - .19f)
+                    throw new Exception("Zebra stripe extends beyond the asphalt width.");
+        }
+    }),
+    ("nearby crossing nodes deduplicate by chainage and orientation", () =>
+    {
+        var result = RoadMarkingGeometry.Build(MarkingTestRoute(),
+            [MarkingControl("crossing", 3, 100, 1), MarkingControl("crossing", 4, 104, 0)]);
+        Equal(2, result.NearbyCrossingSources); Equal(1, result.ZebraCrossings);
+        Equal(1, result.CrossingDuplicatesSuppressed);
+    }),
+    ("signal stop line is placed before its control point", () =>
+    {
+        var result = RoadMarkingGeometry.Build(MarkingTestRoute(), [MarkingControl("traffic-signal", 5, 100, 0)]);
+        Equal(1, result.TrafficSignalLines);
+        var triangle = result.Triangles.First(item => item.Kind == RoadMarkingKind.TrafficSignalLine);
+        if (Math.Abs(100 - RoadMarkingGeometry.ControlLineApproachMeters - triangle.RouteDistanceMeters) > .001)
+            throw new Exception("Signal line is not 4.5 m before its control point.");
+    }),
+    ("stop-line orientation follows the local route tangent on a curved route", () =>
+    {
+        var route = MarkingTestRoute(); var distance = 150d; var forward = route.GetPoseAtDistance(distance).Forward;
+        var result = RoadMarkingGeometry.Build(route, [MarkingControl("stop-sign", 6, distance, 0)]);
+        var triangle = result.Triangles.First(item => item.Kind == RoadMarkingKind.StopLine);
+        if (Math.Abs(Vector3.Dot(Vector3.Normalize(LongestEdge(triangle)), forward)) > .1f)
+            throw new Exception("Transverse stop line did not follow the local curved-route tangent.");
+    }),
+    ("give-way control emits a segmented transverse line", () =>
+    {
+        var result = RoadMarkingGeometry.Build(MarkingTestRoute(), [MarkingControl("give-way-sign", 7, 100, 0)]);
+        Equal(1, result.GiveWayLines);
+        Equal(16, result.Triangles.Count(item => item.Kind == RoadMarkingKind.GiveWayDash));
+    }),
+    ("distant crossing controls are excluded", () =>
+    {
+        var result = RoadMarkingGeometry.Build(MarkingTestRoute(), [MarkingControl("crossing", 8, 100, 8.01)]);
+        Equal(1, result.CrossingSourcesConsidered); Equal(0, result.NearbyCrossingSources);
+        Equal(0, result.ZebraCrossings); Equal(0, result.MarkingTriangleCount);
+        var configured = RoadMarkingGeometry.Build(MarkingTestRoute(), [MarkingControl("crossing", 8, 100, 8.01)],
+            options: new RoadMarkingOptions { MaximumCrossingDistanceFromRouteMeters = 8.1 });
+        Equal(1, configured.ZebraCrossings);
+    }),
+    ("road marking triangles are finite and nondegenerate", () =>
+    {
+        var result = RoadMarkingGeometry.Build(MarkingTestRoute(),
+            [MarkingControl("crossing", 9, 100, 0), MarkingControl("traffic-signal", 10, 150, 0),
+             MarkingControl("stop-sign", 11, 220, 0), MarkingControl("give-way-sign", 12, 310, 0)]);
+        foreach (var triangle in result.Triangles)
+        {
+            if (new[] { triangle.A, triangle.B, triangle.C }.Any(p => !float.IsFinite(p.X + p.Y + p.Z)))
+                throw new Exception("Road marking has a non-finite vertex.");
+            if (Vector3.Cross(triangle.B - triangle.A, triangle.C - triangle.A).LengthSquared() < 1e-8f)
+                throw new Exception("Road marking has a degenerate triangle.");
+        }
+    }),
+    ("road marking paint has a small constant asphalt offset", () =>
+    {
+        var route = MarkingTestRoute(); var result = RoadMarkingGeometry.Build(route, [MarkingControl("crossing", 13, 100, 0)]);
+        Near(RoadMarkingGeometry.RoadMarkingYOffsetMeters, result.Triangles[0].A.Y, .0001f);
+    }),
+    ("road marking generation is deterministic", () =>
+    {
+        var controls = new[] { MarkingControl("crossing", 14, 100, 0), MarkingControl("give-way-sign", 15, 200, 2) };
+        var first = RoadMarkingGeometry.Build(MarkingTestRoute(), controls);
+        var second = RoadMarkingGeometry.Build(MarkingTestRoute(), controls);
+        if (!first.Triangles.SequenceEqual(second.Triangles))
+            throw new Exception("Repeated marking generation returned different triangle geometry.");
+        Equal(first.ZebraCrossings, second.ZebraCrossings);
+    }),
+    ("marking generation does not change rider lane placement", () =>
+    {
+        var route = MarkingTestRoute(); var pose = route.GetPoseAtDistance(100);
+        var riderBefore = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward);
+        _ = RoadMarkingGeometry.Build(route, [MarkingControl("crossing", 16, 100, 0)]);
+        var riderAfter = RiderLaneMath.OffsetPosition(route.GetPoseAtDistance(100).Position, route.GetPoseAtDistance(100).Forward);
+        NearVector(riderBefore, riderAfter);
+        Near((float)RiderLaneMath.RiderLateralOffsetMeters, Vector3.Distance(pose.Position, riderAfter));
+    }),
+    ("bundled Dunedin crossing and control markings are filtered and counted", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
+        var data = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", "dunedin-one-way-oval-gardens");
+        var result = RoadMarkingGeometry.Build(route, data.Items.Select(item =>
+            new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters)));
+        var meshChunks = result.Triangles.Select(item => (int)(item.RouteDistanceMeters / RoadMarkingGeometry.SpatialChunkLengthMeters)).Distinct().Count();
+        Console.WriteLine($"ROAD MARKING PREVIEW crossings={result.CrossingSourcesConsidered} considered, {result.NearbyCrossingSources} near, {result.ZebraCrossings} rendered, {result.CrossingDuplicatesSuppressed} deduplicated; signal={result.TrafficSignalLines}, stop={result.StopLines}, give-way={result.GiveWayLines}; triangles={result.MarkingTriangleCount}; meshes={meshChunks}, layer+meshes={meshChunks + 1}");
+        Equal(194, result.CrossingSourcesConsidered);
+        if (result.ZebraCrossings >= result.CrossingSourcesConsidered || result.ZebraCrossings == 0)
+            throw new Exception("Dunedin crossings were not meaningfully filtered and deduplicated.");
+        if (result.Triangles.Any(triangle => !double.IsFinite(triangle.RouteDistanceMeters)
+            || triangle.RouteDistanceMeters < 0 || triangle.RouteDistanceMeters >= route.LengthMeters))
+            throw new Exception("Bundled road marking references an invalid wrapped route distance.");
+    }),
     ("GPS uses first point as origin and east/north/up metre coordinates", () =>
     {
         var route = GpsRoute();
@@ -129,7 +241,8 @@ var tests = new (string Name, Action Run)[]
             var before = geometry.GetPoseAtDistance(route.DistanceMeters - 0.01);
             var after = geometry.GetPoseAtDistance(0.01);
             if (Vector3.Distance(before.Position, after.Position) > 0.1f) throw new Exception($"Position seam: {route.Id}");
-            if (Vector3.Dot(before.Forward, after.Forward) < 0.99f) throw new Exception($"Direction seam: {route.Id}");
+            if (route.Id != "dunedin-one-way-oval-gardens" && Vector3.Dot(before.Forward, after.Forward) < 0.99f)
+                throw new Exception($"Direction seam: {route.Id}");
             for (double d = 0; d < route.DistanceMeters; d += 3.7)
             {
                 var pose = geometry.GetPoseAtDistance(d);
@@ -168,8 +281,9 @@ var tests = new (string Name, Action Run)[]
         var after = geometry.GetPoseAtDistance(0.01);
         if (Vector3.Distance(before.Position, after.Position) > 0.1f)
             throw new Exception("Wrapped position jumped at the lap seam.");
-        if (Vector3.Dot(before.Forward, after.Forward) < 0.99f)
-            throw new Exception("Tangent changed abruptly at the lap seam.");
+        if (RoadRibbonMath.ClassifyJoin(geometry.Samples[^2].Position, geometry.Samples[^1].Position,
+                geometry.Samples[1].Position) != RoadJoinType.Discontinuity)
+            throw new Exception("The approved Dunedin closure is expected to retain generic sharp-join handling.");
         Near((float)length, (float)geometry.Vertices[^1].DistanceMeters, 0.001f);
     }),
     ("Dunedin loads the generated OSM centreline and exact route length", () =>
@@ -177,9 +291,8 @@ var tests = new (string Name, Action Run)[]
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var points = route.Points!;
         if (points.Count <= 16) throw new Exception($"Expected dense generated OSM points, found {points.Count}.");
-        Near(5411.183741640602f, (float)route.DistanceMeters, 0.001f);
+        Near(5495.2928f, (float)route.DistanceMeters, 0.001f);
         Near((float)points[^1].DistanceMeters, (float)route.DistanceMeters, 0.0001f);
-        if (route.DistanceMeters == 5850) throw new Exception("Legacy route distance remains authoritative.");
         for (var i = 1; i < points.Count; i++)
             if (points[i].DistanceMeters <= points[i - 1].DistanceMeters)
                 throw new Exception($"Generated route distances are not increasing at point {i}.");
@@ -313,7 +426,7 @@ var tests = new (string Name, Action Run)[]
         Equal(false,BuildingVisualStyle.ShouldAddFacadeDetail(80.01));
         Equal(false,BuildingVisualStyle.ShouldAddFacadeDetail(double.NaN));
     }),
-    ("Dunedin building footprints, base elevations, and heights match original bundle", () =>
+    ("Dunedin building footprints, base elevations, and heights match regenerated bundle", () =>
     {
         var route=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var buildings=RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
@@ -326,14 +439,14 @@ var tests = new (string Name, Action Run)[]
             foreach(var point in b.Footprint){writer.Write(point.Longitude);writer.Write(point.Latitude);}
         }
         var hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(buffer.ToArray())).ToLowerInvariant();
-        Equal("b8a97cd9ca042fec11dd402e77f2f4c30f4f12f501879b8bade193f4c73f7123",hash);
+        Equal("7ecdb45d8ca83b0c2a24afe1f1295f9fce401ac8360a319cdc30d1a7dba5f7dc",hash);
     }),
     ("bundled vegetation elevations and feature metadata load correctly", () =>
     {
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
             "GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
-        if (vegetation.Areas.Count != 22 || vegetation.Trees.Count != 171)
+        if (vegetation.Areas.Count != 25 || vegetation.Trees.Count != 323)
             throw new Exception($"Unexpected vegetation bundle sizes: {vegetation.Areas.Count} areas, {vegetation.Trees.Count} trees.");
         if (vegetation.Areas.Any(area => area.BaseElevationMeters is null || !double.IsFinite(area.BaseElevationMeters.Value)
                 || area.Polygon.Length < 4 || area.Polygon.Any(point => point.Length != 2)))
@@ -392,7 +505,7 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"OSM {area.OsmType} {area.OsmId} did not create a valid surface mesh.");
             triangleCount += triangles.Length / 3;
         }
-        if (triangleCount != 188) throw new Exception($"Expected 188 vegetation triangles, got {triangleCount}.");
+        if (triangleCount != 228) throw new Exception($"Expected 228 vegetation triangles, got {triangleCount}.");
     }),
     ("all bundled OSM footprints can be batched into valid extrusion meshes", () =>
     {
@@ -407,20 +520,25 @@ var tests = new (string Name, Action Run)[]
                 var local = geometry.GetPositionForCoordinate(point.Latitude, point.Longitude, building.BaseElevationMeters!.Value);
                 return local;
             }).ToArray();
-            var mesh = BuildingMeshGeometry.Extrude(ring, (float)building.HeightMeters);
+            Vector3[] mesh;
+            try { mesh = BuildingMeshGeometry.Extrude(ring, (float)building.HeightMeters); }
+            catch (ArgumentException ex) { throw new Exception($"OSM {building.OsmType} {building.OsmId}: {ex.Message}", ex); }
             if (mesh.Length == 0 || mesh.Length % 3 != 0) throw new Exception($"OSM {building.OsmType} {building.OsmId} made an invalid mesh.");
         }
     }),
     ("Dunedin uses generated LINZ elevations and one shared route gradient", () =>
     {
-        const double oldLength = 5850;
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
-        var scale = route.DistanceMeters / oldLength;
         var segments = route.Segments;
-        Near((float)(277 * scale), (float)segments[0].EndMeters, 0.0001f);
-        Near((float)(2882 * scale), (float)segments[6].EndMeters, 0.0001f);
-        Near((float)(2942 * scale), (float)segments[8].StartMeters, 0.0001f);
-        Near((float)route.DistanceMeters, (float)segments[^1].EndMeters, 0.0001f);
+        Equal("Crawford Street northbound", segments[0].Label);
+        Equal("Gardens turnaround connector", segments[5].Label);
+        Equal("Wolseley Street closure", segments[^1].Label);
+        Near(2632.026f, (float)segments[4].EndMeters, 0.001f);
+        Near(2752.237f, (float)segments[5].EndMeters, 0.001f);
+        Near(5377.550f, (float)segments[^1].StartMeters, 0.001f);
+        Near((float)route.DistanceMeters, (float)segments[^1].EndMeters, 0.001f);
+        for (var i = 1; i < segments.Count; i++)
+            Near((float)segments[i - 1].EndMeters, (float)segments[i].StartMeters, 0.001f);
         foreach (var segment in segments)
         {
             Near(0, (float)segment.GradientPercent);
@@ -574,7 +692,7 @@ var tests = new (string Name, Action Run)[]
         Console.WriteLine($"BUILDING STYLE REPORT category={string.Join(',',buildings.GroupBy(b=>b.VisualCategory).OrderBy(g=>g.Key).Select(g=>$"{g.Key}:{g.Count()}"))}; " +
             $"flat/gabled/hipped={flat}/{gabled}/{hipped}; fallback={fallback}; detailed={detailed}; " +
             $"triangles={triangles} facade={facade} roof={roof} windows={windows}; chunks={chunkCount}; instances={chunkCount}; surfaces={surfaceCount}; shared materials=3; palette variants={BuildingVisualStyle.PaletteCount}; geometryBuildMs={buildTimer.Elapsed.TotalMilliseconds:F1}");
-        if(buildings.Count!=888 || detailed==0 || gabled+hipped==0 || triangles>100000)
+        if(buildings.Count!=902 || detailed==0 || gabled+hipped==0 || triangles>100000)
             throw new Exception("Dunedin visual geometry counts are outside the expected lightweight range.");
     }),
     ("sharp-seam kerb tops terminate without horizontal cap triangles", () =>
@@ -652,6 +770,9 @@ var tests = new (string Name, Action Run)[]
                 Vector3.Normalize(samples[1].Position-closing.Position)), -1, 1))*180/MathF.PI:F2} deg");
         var positions = samples.Select(s => s.Position).ToArray();
         var distances = samples.Select(s => s.DistanceMeters).ToArray();
+        for (var i = 1; i < distances.Length; i++)
+            if (distances[i] <= distances[i - 1])
+                throw new Exception($"Non-increasing VisualRoute sample distance at {i - 1}->{i}: {distances[i - 1]:R} -> {distances[i]:R}; positions {positions[i - 1]} -> {positions[i]}.");
         var dunedinProfiles = AllProfiles(positions, distances);
         AssertExcluded(dunedinProfiles, route.LengthMeters, gap);
         var near5406 = Enumerable.Range(0, samples.Count).MinBy(i => Math.Abs(samples[i].DistanceMeters - 5406));
@@ -847,7 +968,7 @@ var tests = new (string Name, Action Run)[]
         if (a.MinimumSourceElevationMeters > minRoute || a.MaximumSourceElevationMeters < maxRoute)
             throw new Exception("Terrain DEM elevation range does not contain the known route elevation range.");
         Equal(10d, a.SpacingMeters);
-        Equal(44, a.Chunks.Length);
+        Equal(45, a.Chunks.Length);
         Equal(4, a.InterpolatedVertices);
         Equal(250d, a.NearRadiusMeters);
         Equal(750d, a.FarRadiusMeters);
@@ -904,6 +1025,29 @@ var tests = new (string Name, Action Run)[]
         var route=new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var distance=1234.5;var before=route.GetPoseAtDistance(distance);_ = RiderLaneMath.OffsetPosition(before.Position,before.Forward);
         Near((float)distance,(float)route.GetPoseAtDistance(distance).LoopDistanceMeters);
+    }),
+    ("Dunedin authoritative route excludes the Vogel Street grass-crossing edge", () =>
+    {
+        var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
+        const double originLatitude = -45.8832;
+        const double originLongitude = 170.501;
+        const double scaleX = 111320 * 0.6967;
+        const double scaleY = 111132;
+        Vector2 Local(double latitude, double longitude) => new(
+            (float)((longitude - originLongitude) * scaleX), (float)((latitude - originLatitude) * scaleY));
+        var a = Local(-45.8837408, 170.5008915); // node 14158950981
+        var b = Local(-45.8828212, 170.5014018); // node 5802260307
+        var edge = b - a;
+        var minimumDistance = double.PositiveInfinity;
+        foreach (var point in route.Points!)
+        {
+            var p = Local(point.Latitude, point.Longitude);
+            var fraction = edge.LengthSquared() > 1e-8f
+                ? Math.Clamp(Vector2.Dot(p - a, edge) / edge.LengthSquared(), 0, 1) : 0;
+            minimumDistance = Math.Min(minimumDistance, Vector2.Distance(p, a + edge * fraction));
+        }
+        if (minimumDistance < 5)
+            throw new Exception($"Authoritative route still follows the excluded Vogel edge (nearest route sample {minimumDistance:F1} m).");
     }),
     ("chase camera follow and look targets use the offset rider anchor", () =>
     {
@@ -974,6 +1118,21 @@ static RouteDefinition GpsRoute() => new("gps", "GPS", "", 400,
     [new RoutePoint(0, 0, 0, 20), new RoutePoint(100, 0, 0.001, 30),
      new RoutePoint(200, 0.001, 0.001, 30), new RoutePoint(300, 0.001, 0, 20),
      new RoutePoint(400, 0, 0, 20)]);
+
+static VisualRoute MarkingTestRoute()
+{
+    var source = GpsRoute();
+    return new VisualRoute(source with { Points = source.Points!.Select(point => point with { ElevationMeters = 20 }).ToArray() });
+}
+
+static RoadMarkingControl MarkingControl(string category, long id, double routeDistance, double distanceFromRoute) =>
+    new(category, id, routeDistance, distanceFromRoute);
+
+static Vector3 LongestEdge(RoadMarkingTriangle triangle)
+{
+    var edges = new[] { triangle.B - triangle.A, triangle.C - triangle.B, triangle.A - triangle.C };
+    return edges.MaxBy(edge => edge.LengthSquared());
+}
 
 static Vector3[] SyntheticSharpLoop() =>
 [

@@ -21,7 +21,7 @@ public static class BuildOutputs
         GraphBuildStats graphStats, RouteBuildResult result, double routeSolveSeconds,
         LandmarkExtractionResult? landmarks = null, BuildingExtractionResult? buildings = null,
         VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null,
-        BackgroundStreetExtractionResult? backgroundStreets = null)
+        BackgroundStreetExtractionResult? backgroundStreets = null, bool bundleBackgroundStreets = true)
     {
         Directory.CreateDirectory(outputDirectory);
         var generatedAt = DateTimeOffset.UtcNow;
@@ -67,6 +67,7 @@ public static class BuildOutputs
             SourcePbfFilename = Path.GetFileName(pbfPath),
             RoutingMode = config.RoutingMode,
             PreferredRefs = config.PreferredRefs,
+            ExcludedClosureEdges = config.ExcludedClosureEdges,
             BoundingBox = config.Bbox,
             Profile = config.Profile,
             RouteCorridorMeters = config.RouteCorridorMeters,
@@ -178,8 +179,11 @@ public static class BuildOutputs
                 streets=backgroundStreets.Streets };
             var streetJson=JsonSerializer.Serialize(streetData,JsonOptions);
             await File.WriteAllTextAsync(streetsPath,streetJson);
-            var bundlePath=Path.GetFullPath(Path.Combine("src","IndoorCycling.Game","Data","Routes",$"{stem}.streets.json"));
-            Directory.CreateDirectory(Path.GetDirectoryName(bundlePath)!); await File.WriteAllTextAsync(bundlePath,streetJson);
+            if (bundleBackgroundStreets)
+            {
+                var bundlePath=Path.GetFullPath(Path.Combine("src","IndoorCycling.Game","Data","Routes",$"{stem}.streets.json"));
+                Directory.CreateDirectory(Path.GetDirectoryName(bundlePath)!); await File.WriteAllTextAsync(bundlePath,streetJson);
+            }
         }
         if (result.IsValid)
             await File.WriteAllTextAsync(previewPath, SerializePreviewHtml(config, result, landmarks, buildings, vegetation, streetFurniture, backgroundStreets));
@@ -379,9 +383,19 @@ public static class BuildOutputs
             var width=Math.Min(ring.Max(p=>p.X)-ring.Min(p=>p.X),ring.Max(p=>p.Z)-ring.Min(p=>p.Z));
             var roofHeight=BuildingVisualStyle.ResolveRoofHeight((float)building.HeightMeters,width,
                 tags.GetValueOrDefault("roof:height"),tags.GetValueOrDefault("roof:levels"));
-            var styled=BuildingMeshGeometry.BuildStyled(ring,(float)building.HeightMeters,shape,roofHeight,
-                BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"),(float)building.HeightMeters),
-                BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters));
+            BuildingMeshGeometry.StyledMesh styled;
+            try
+            {
+                styled=BuildingMeshGeometry.BuildStyled(ring,(float)building.HeightMeters,shape,roofHeight,
+                    BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"),(float)building.HeightMeters),
+                    BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters));
+            }
+            catch (ArgumentException)
+            {
+                // Match BuildingLayer's handling of degenerate footprints so route authoring can still report
+                // the valid meshes and retain the source footprint for diagnostics.
+                continue;
+            }
             facade+=styled.FacadeTriangleCount;roof+=styled.RoofTriangleCount;windows+=styled.WindowTriangleCount;
             if(styled.WindowCount>0)
             {
@@ -512,7 +526,7 @@ public static class BuildOutputs
     const sectionColor = leg.sectionType === 'northbound' ? '#dc2626' : leg.sectionType === 'southbound' ? '#2563eb' : leg.sectionType === 'connector' ? '#f97316' : palette[index % palette.length];
     const color = flagged && !isRoadRef ? '#dc2626' : sectionColor;
     const line = L.polyline(route,{color,weight:flagged?7:5,opacity:.9}).addTo(map);
-    const wayText = leg.ways.map(w => `#${w.wayId} ${esc(w.name || w.highway)}${w.ref ? ` (${esc(w.ref)})` : ''}`).join('<br>') || 'No way metadata';
+    const wayText = leg.ways.map(w => `#${w.wayId} ${esc(w.name || w.highway)}${w.ref ? ` (${esc(w.ref)})` : ''} · oneway=${esc(w.oneway || 'no')} · access=${esc(w.access || 'default')}${w.bicycle?` · bicycle=${esc(w.bicycle)}`:''}`).join('<br>') || 'No way metadata';
     const popup = `<div class="popup-title">${esc(leg.from)} → ${esc(leg.to)}</div><div>Section: ${esc(leg.sectionType)}</div><div>Direct anchor distance: ${fmt(leg.directDistanceMeters)} m</div><div>Routed OSM distance: ${fmt(leg.routedDistanceMeters)} m</div><div>Road/direct ratio: ${fmt(leg.roadDirectRatio,2)}</div><div>Maximum corridor deviation: ${fmt(leg.maximumCorridorDeviationMeters)} m</div><div>Status: ${esc(leg.status)}${flagged?' · questionable':''}</div><hr>${wayText}`;
     line.bindPopup(popup);
     legLayers.push(line);

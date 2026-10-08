@@ -140,6 +140,18 @@ var tests = new (string Name, Action Run)[]
         Equal<RawBuilding?>(null, BuildingExtractor.CreateClosedWay(7, [1,2,3,4], tags, coords));
         Equal<RawBuilding?>(null, BuildingExtractor.CreateClosedWay(8, [1,2,3,4,1], new Dictionary<string,string>{{"building","no"}}, coords));
     }),
+    ("zero-area OSM building polygons are rejected", () =>
+    {
+        var coords = new Dictionary<long, GeoPoint> { [1] = new(0, 0), [2] = new(.0001, .0001), [3] = new(0, .0001), [4] = new(.0001, 0) };
+        var tags = new Dictionary<string, string> { ["building"] = "yes" };
+        Equal<RawBuilding?>(null, BuildingExtractor.CreateClosedWay(9, [1, 2, 3, 4, 1], tags, coords));
+        var tiny = new Dictionary<long, GeoPoint>
+        {
+            [1] = new(-45.870714, 170.5102883), [2] = new(-45.8707125, 170.5102843),
+            [3] = new(-45.8707119, 170.5102800), [4] = new(-45.8707121, 170.5102755)
+        };
+        Equal<RawBuilding?>(null, BuildingExtractor.CreateClosedWay(10, [1, 2, 3, 4, 1], tags, tiny));
+    }),
     ("building polygon distance uses closest edges rather than centroid", () =>
     {
         var polygon = new[] { new GeoPoint(.0001,.0002), new GeoPoint(.0001,.0018), new GeoPoint(.0002,.0018),
@@ -415,6 +427,23 @@ var tests = new (string Name, Action Run)[]
             Equal(0, graph.EdgeCount);
         }
     }),
+    ("explicit public bicycle access permits a generally private road", () =>
+    {
+        var graph = DirectedTwoNodeGraph(new Dictionary<string, string>
+        {
+            ["highway"] = "residential", ["access"] = "private", ["bicycle"] = "yes"
+        });
+        _ = RouteSolver.FindPath(graph, 1, 2, new(0, 0), new(0, 0.001), 20);
+    }),
+    ("routed path validation rejects a synthetic chord but accepts represented long OSM edge", () =>
+    {
+        var a = new RoadNode(1, new(0, 0));
+        var b = new RoadNode(2, new(0, 0.001));
+        var edge = new RoadEdge(1, 2, 111, 111, 42, "residential", "Long mapped segment", null);
+        RoutedPathValidation.ValidateConnected(new RoutedPath([a, b], [edge], 111));
+        var chord = edge with { FromNodeId = 1, ToNodeId = 3 };
+        Throws<InvalidOperationException>(() => RoutedPathValidation.ValidateConnected(new RoutedPath([a, b], [chord], 111)));
+    }),
     ("roundabouts are one-way unless explicitly overridden for bicycles", () =>
     {
         var coords = new Dictionary<long, GeoPoint> { [1] = new(0, 0), [2] = new(0, 0.001) };
@@ -615,6 +644,45 @@ var tests = new (string Name, Action Run)[]
         if (!result.Legs.Where(leg => leg.SectionType == "connector").Any(leg => leg.WayIds.Contains(301)))
             throw new Exception("The Oval closure connector was not used.");
     }),
+    ("roadRef closure exclusion selects a connected alternate OSM path deterministically", () =>
+    {
+        var graph = RoadRefLoopGraph(includeClosureAlternative: true);
+        var config = RoadRefConfig([new(301, 3, 1, "test exclusion")]);
+        var first = RouteSolver.Build(graph, config);
+        var second = RouteSolver.Build(graph, config);
+        var closure = first.Legs.Single(leg => leg.ToAnchor == "Oval closure connector");
+        if (closure.WayIds.Contains(301) || !closure.WayIds.Contains(302))
+            throw new Exception("Closure did not avoid the excluded edge and use the connected alternative.");
+        Equal(first.Centreline.Count, second.Centreline.Count);
+        for (var i = 0; i < first.Centreline.Count; i++) Equal(first.Centreline[i], second.Centreline[i]);
+        Equal(first.Centreline[0], first.Centreline[^1]);
+        if (first.MaximumAdjacentDistanceMeters > config.MaxOutputSpacingMeters + 0.01)
+            throw new Exception("Route output spacing exceeded the configured maximum.");
+    }),
+    ("authoritative Dunedin report retains the approved closure and excludes the Vogel grass edge", () =>
+    {
+        using var reportStream = typeof(Program).Assembly.GetManifestResourceStream(
+            "GWift.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json")
+            ?? throw new Exception("Embedded authoritative Dunedin report is missing.");
+        using var report = JsonDocument.Parse(reportStream);
+        var root = report.RootElement;
+        Near(5495.2928190676985, root.GetProperty("actualOsmDistanceMeters").GetDouble(), 0.001);
+        var closure = root.GetProperty("legs").EnumerateArray()
+            .Single(leg => leg.GetProperty("fromAnchor").GetString() == "Oval closure");
+        var wayIds = closure.GetProperty("wayIds").EnumerateArray().Select(way => way.GetInt64()).ToArray();
+        if (!wayIds.SequenceEqual([116726397L, 508089766L]))
+            throw new Exception($"Unexpected authoritative closure ways: {string.Join(",", wayIds)}.");
+        var roadSegments = root.GetProperty("roadSegments").EnumerateArray().ToArray();
+        if (roadSegments.Any(edge => edge.GetProperty("wayId").GetInt64() == 381871579
+            && ((edge.GetProperty("fromNodeId").GetInt64() == 14158950981 && edge.GetProperty("toNodeId").GetInt64() == 5802260307)
+                || (edge.GetProperty("fromNodeId").GetInt64() == 5802260307 && edge.GetProperty("toNodeId").GetInt64() == 14158950981))))
+            throw new Exception("Authoritative route contains the excluded Vogel Street grass-crossing edge.");
+        var cumberland = closure.GetProperty("ways").EnumerateArray().Single(way => way.GetProperty("wayId").GetInt64() == 116726397);
+        Equal("yes", cumberland.GetProperty("oneway").GetString());
+        Equal("yes", cumberland.GetProperty("bicycle").GetString());
+        if (root.GetProperty("maximumAdjacentPointDistanceMeters").GetDouble() > 30.01)
+            throw new Exception("Authoritative route point spacing exceeds its configured maximum.");
+    }),
     ("roadRef loop travels out and back on separate directed carriageways", () =>
     {
         var result = RouteSolver.Build(RoadRefLoopGraph(), RoadRefConfig());
@@ -727,13 +795,13 @@ static RoadGraph DirectedTwoNodeGraph(Dictionary<string, string> tags)
     return graph;
 }
 
-static RoadGraph RoadRefLoopGraph(bool includeShortcuts = false)
+static RoadGraph RoadRefLoopGraph(bool includeShortcuts = false, bool includeClosureAlternative = false)
 {
     var graph = new RoadGraph();
     var coordinates = new Dictionary<long, GeoPoint>
     {
         [1] = new(0, 0), [2] = new(0.008, 0.01),
-        [3] = new(0, 0.0001), [4] = new(0.008, 0.0101)
+        [3] = new(0, 0.0001), [4] = new(0.008, 0.0101), [5] = new(-0.00005, 0.00005)
     };
     graph.AddWay(100, [1, 2], new Dictionary<string, string>
         { ["highway"] = "trunk", ["oneway"] = "yes", ["ref"] = "SH 1", ["name"] = "Northbound SH1" }, coordinates);
@@ -743,6 +811,9 @@ static RoadGraph RoadRefLoopGraph(bool includeShortcuts = false)
         { ["highway"] = "residential", ["name"] = "Gardens connector" }, coordinates);
     graph.AddWay(301, [3, 1], new Dictionary<string, string>
         { ["highway"] = "service", ["name"] = "Oval connector" }, coordinates);
+    if (includeClosureAlternative)
+        graph.AddWay(302, [3, 5, 1], new Dictionary<string, string>
+            { ["highway"] = "residential", ["name"] = "Connected Oval alternative" }, coordinates);
     if (includeShortcuts)
     {
         graph.AddWay(900, [1, 4], new Dictionary<string, string>
@@ -753,12 +824,13 @@ static RoadGraph RoadRefLoopGraph(bool includeShortcuts = false)
     return graph;
 }
 
-static RouteAuthoringConfig RoadRefConfig() => new()
+static RouteAuthoringConfig RoadRefConfig(List<ClosureEdgeExclusion>? exclusions = null) => new()
 {
     Id = "road-ref-test", Name = "Road ref test", Loop = true, RoutingMode = "roadRef",
     PreferredRefs = ["SH 1"], StartArea = new(0, 0), TurnaroundArea = new(0.008, 0.01005),
     StartAreaRadiusMeters = 15, TurnaroundAreaRadiusMeters = 15,
     MaximumConnectorDistanceMeters = 20, MinimumPreferredRefPercent = 90,
+    ExcludedClosureEdges = exclusions ?? [],
     MaxOutputSpacingMeters = 30, Bbox = new(-1, -1, 1, 1)
 };
 
