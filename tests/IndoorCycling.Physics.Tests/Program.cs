@@ -1,5 +1,6 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using System.Text.Json;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -19,6 +20,11 @@ var tests = new (string Name, Action Run)[]
     ("Debug mode off emits no periodic snapshots", DebugModeOff),
     ("Debug snapshot contains ride state and calculated lap position", DebugSnapshotFields),
     ("Debug marker numbering increments", DebugMarkerNumbers),
+    ("Screenshot filename and marker sidecar share collision-safe names", ScreenshotNames),
+    ("Screenshot sidecar contains compact ride metadata", ScreenshotMetadataFields),
+    ("F12 selects clean or visible HUD capture", ScreenshotModeSelection),
+    ("Screenshot directory falls back when Pictures is unavailable", ScreenshotDirectoryFallback),
+    ("Screenshot failure does not interrupt debug marker creation", ScreenshotFailureKeepsMarker),
     ("Debug distance jump resets speed and blocks active FIT recording", DebugDistanceJump)
 };
 
@@ -247,6 +253,83 @@ static void DebugMarkerNumbers()
     diagnostics.Begin(true);
     if (diagnostics.NextMarkerNumber() != 1 || diagnostics.NextMarkerNumber() != 2)
         throw new Exception("Debug markers did not increment monotonically.");
+}
+
+static void ScreenshotNames()
+{
+    var timestamp = new DateTimeOffset(2026, 10, 8, 14, 23, 15, TimeSpan.FromHours(13));
+    var calls = 0;
+    var stem = ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.DebugMarker, 3,
+        path => ++calls <= 2); // First stem's PNG and JSON exist.
+    if (!stem.Contains("20261008-142315-marker-003-002", StringComparison.Ordinal))
+        throw new Exception($"Unexpected collision-safe marker stem: {stem}");
+    if (Path.GetFileNameWithoutExtension(stem + ".png") != Path.GetFileNameWithoutExtension(stem + ".json")
+        || !stem.Contains("marker-003", StringComparison.Ordinal))
+        throw new Exception("Marker PNG/JSON names did not remain associated.");
+    if (ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.Clean, null, _ => false)
+        != "gwift-20261008-142315-clean") throw new Exception("Clean filename format changed unexpectedly.");
+}
+
+static void ScreenshotMetadataFields()
+{
+    var snapshot = new RideDebugSnapshot
+    {
+        timestamp = DateTimeOffset.UnixEpoch, marker = 3, routeId = "test-route", routeName = "Test Route",
+        totalRideDistanceMeters = 1200, wrappedRouteDistanceMeters = 200, lapNumber = 2,
+        virtualSpeedKph = 31.2, rawTrainerSpeedKph = 30.8, rawTrainerPowerWatts = 240,
+        rawTrainerCadenceRpm = 88, routeGradientPercent = 2.5, routeElevationMeters = 43,
+        visualSampleBefore = 12, visualSampleAfter = 13, visualInterpolation = .4,
+        riderWorldPosition = new DebugVector3(1, 2, 3), cameraWorldPosition = new DebugVector3(4, 5, 6),
+        ridePaused = false, fitRecordingState = "recording", nearestLandmarkName = "Bridge",
+        nearestLandmarkDistanceMeters = 24, nearbyLandmarkCount = 2, buildingsLoaded = 7,
+        visibleBuildingChunks = 3, vegetationAreas = 4, treesLoaded = 9, visibleVegetationChunks = 2,
+        terrainNearChunks = 8, terrainFarChunks = 6, terrainVisibleChunks = 10
+    };
+    using var json = JsonDocument.Parse(ScreenshotCaptureFileStore.SerializeSidecar(snapshot));
+    var root = json.RootElement;
+    if (root.GetProperty("marker").GetInt32() != 3 || root.GetProperty("routeId").GetString() != "test-route"
+        || root.GetProperty("wrappedRouteDistanceMeters").GetDouble() != 200
+        || root.GetProperty("powerWatts").GetInt32() != 240 || root.GetProperty("nearTerrainChunks").GetInt32() != 8)
+        throw new Exception("Screenshot sidecar omitted requested ride metadata.");
+    if (root.EnumerateObject().Count() > 40) throw new Exception("Screenshot sidecar is no longer compact.");
+}
+
+static void ScreenshotModeSelection()
+{
+    if (ScreenshotCapturePolicy.ForF12(false) != ScreenshotCaptureMode.Clean
+        || ScreenshotCapturePolicy.ForF12(true) != ScreenshotCaptureMode.Hud
+        || ScreenshotCapturePolicy.ForDebugMarker() != ScreenshotCaptureMode.DebugMarker)
+        throw new Exception("Screenshot capture modes do not match their requested controls.");
+}
+
+static void ScreenshotDirectoryFallback()
+{
+    var root = Path.Combine(Path.GetTempPath(), "gwift-screenshot-test-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+        var blocker = Path.Combine(root, "pictures-file");
+        File.WriteAllText(blocker, "not a directory");
+        var fallback = Path.Combine(root, "godot-user-data");
+        var resolved = ScreenshotCaptureFileStore.CreateScreenshotDirectory(blocker, fallback);
+        if (resolved != Path.Combine(fallback, "screenshots") || !Directory.Exists(resolved))
+            throw new Exception("Screenshot store did not create its user-data fallback.");
+        try { ScreenshotCaptureFileStore.CreateScreenshotDirectory(blocker, blocker); }
+        catch (IOException) { return; }
+        throw new Exception("Screenshot directory failure was not reported when both locations failed.");
+    }
+    finally { Directory.Delete(root, recursive: true); }
+}
+
+static void ScreenshotFailureKeepsMarker()
+{
+    var diagnostics = new DebugRideDiagnostics(); diagnostics.Begin(true);
+    var marker = diagnostics.NextMarkerNumber();
+    var loggedMarker = marker;
+    var failureReported = false;
+    var saved = ScreenshotCaptureFailurePolicy.TryCapture(() => throw new IOException("disk full"), _ => failureReported = true);
+    if (saved || !failureReported || loggedMarker != 1 || diagnostics.NextMarkerNumber() != 2)
+        throw new Exception("Screenshot failure suppressed or altered debug marker numbering.");
 }
 
 static void DebugDistanceJump()

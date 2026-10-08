@@ -11,7 +11,11 @@ public partial class StreetFurnitureLayer : Node3D
     private const double VisibleDistanceMeters = 900;
     private const double NearbyDistanceMeters = 100;
     private sealed record Chunk(double CenterDistanceMeters, IReadOnlyList<Node3D> Nodes);
+    private sealed record PlacedItem(RouteStreetFurnitureItemData Item, StreetFurnitureVisualPlacement Placement);
+    public readonly record struct NearestFurnitureDebug(long OsmId,string Category,Godot.Vector3 SourcePosition,
+        Godot.Vector3 VisualPosition,bool Relocated,bool ProxySuppressed);
     private readonly List<Chunk> _chunks = [];
+    private readonly List<PlacedItem> _placements = [];
     private IReadOnlyList<RouteStreetFurnitureItemData> _items = [];
     private double _routeLengthMeters;
 
@@ -20,6 +24,10 @@ public partial class StreetFurnitureLayer : Node3D
     public int MultiMeshCount { get; private set; }
     public int SceneNodeCount => 1 + _chunks.Sum(chunk => chunk.Nodes.Count);
     public double BuildMilliseconds { get; private set; }
+    public int SourceItemsInsideRideRoad { get; private set; }
+    public int PhysicalProxiesSuppressed { get; private set; }
+    public int ProxiesRelocatedRoadside { get; private set; }
+    public int IntentionallyRetainedInRoad { get; private set; }
 
     public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteStreetFurnitureData data)
     {
@@ -28,23 +36,35 @@ public partial class StreetFurnitureLayer : Node3D
         _routeLengthMeters = route.DistanceMeters;
         _items = data.Items;
         LoadedCount = data.Items.Count;
+        foreach(var item in data.Items)
+        {
+            var source = visualRoute.GetPositionForCoordinate(item.Latitude,item.Longitude,item.ElevationMeters!.Value);
+            var nearest = visualRoute.GetPoseAtDistance(item.NearestRouteDistanceMeters);
+            var placement=StreetFurniturePlacementMath.Place(item.Category,source,nearest.Position,nearest.Forward,
+                item.DistanceFromRouteMeters,ProceduralRoad.WidthMeters);
+            _placements.Add(new PlacedItem(item,placement));
+            if(item.DistanceFromRouteMeters<ProceduralRoad.WidthMeters/2)SourceItemsInsideRideRoad++;
+            if(placement.ProxySuppressed)PhysicalProxiesSuppressed++;
+            if(placement.Relocated)ProxiesRelocatedRoadside++;
+            if(placement.RetainedInRoad)IntentionallyRetainedInRoad++;
+        }
         var nodesByChunk = new Dictionary<int, List<Node3D>>();
         var centers = new Dictionary<int, double>();
-        var chunks = data.Items.GroupBy(item => ChunkIndex(item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
+        var chunks = _placements.Where(placed=>!placed.Placement.ProxySuppressed)
+            .GroupBy(placed => ChunkIndex(placed.Item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
         foreach (var chunk in chunks)
         {
             var nodes = new List<Node3D>();
-            foreach (var category in chunk.GroupBy(item => item.Category, StringComparer.Ordinal).OrderBy(group => group.Key, StringComparer.Ordinal))
+            foreach (var category in chunk.GroupBy(placed => placed.Item.Category, StringComparer.Ordinal).OrderBy(group => group.Key, StringComparer.Ordinal))
             {
                 var items = category.ToArray();
                 var parts = Parts(category.Key);
                 foreach (var part in parts)
                 {
-                    var transforms = items.Select(item =>
+                    var transforms = items.Select(placed =>
                     {
-                        var elevation = item.ElevationMeters!.Value;
-                        var mapped = visualRoute.GetPositionForCoordinate(item.Latitude, item.Longitude, elevation);
-                        var position = ProceduralRoad.ToGodot(mapped);
+                        var item=placed.Item;
+                        var position = ProceduralRoad.ToGodot(placed.Placement.VisualPosition);
                         var degrees = item.DirectionDegrees ?? item.RouteTangentDegrees;
                         var rotation = -degrees * Math.PI / 180d;
                         var rotationBasis = new Basis(Vector3.Up, (float)rotation);
@@ -82,6 +102,16 @@ public partial class StreetFurnitureLayer : Node3D
             var visible = RouteDistance(chunk.CenterDistanceMeters, wrapped) <= VisibleDistanceMeters;
             foreach (var node in chunk.Nodes) node.Visible = visible;
         }
+    }
+
+    public NearestFurnitureDebug? GetNearestDebugState(double rideDistanceMeters)
+    {
+        var nearest=_placements.OrderBy(placed=>RouteDistance(placed.Item.NearestRouteDistanceMeters,Wrap(rideDistanceMeters))).FirstOrDefault();
+        if(nearest is null)return null;
+        var source=ProceduralRoad.ToGodot(nearest.Placement.SourcePosition);
+        var visual=ProceduralRoad.ToGodot(nearest.Placement.VisualPosition);
+        return new NearestFurnitureDebug(nearest.Item.OsmId,nearest.Item.Category,source,visual,
+            nearest.Placement.Relocated,nearest.Placement.ProxySuppressed);
     }
 
     private int ChunkIndex(double distance) => Math.Clamp((int)(distance / ChunkLengthMeters), 0,

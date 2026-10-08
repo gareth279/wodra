@@ -11,7 +11,14 @@ public readonly record struct RideWorldDiagnostic(
     int BuildingsLoaded = 0, int VisibleBuildingChunks = 0,
       int VegetationAreas = 0, int TreesLoaded = 0, int VisibleVegetationChunks = 0,
       int StreetFurnitureLoaded = 0, int NearbyStreetFurniture = 0,
-      int BackgroundStreetsLoaded = 0, int VisibleStreetChunks = 0);
+      int BackgroundStreetsLoaded = 0, int VisibleStreetChunks = 0,
+      int StreetFurnitureInsideRideRoad = 0, int StreetFurnitureProxiesSuppressed = 0,
+      int StreetFurnitureProxiesRelocated = 0, int StreetFurnitureIntentionallyRetainedInRoad = 0,
+      float RiderLateralOffsetMeters = RiderLaneMath.RiderLateralOffsetMeters,
+      StreetFurnitureLayer.NearestFurnitureDebug? NearestStreetFurniture = null,
+      int TerrainChunksLoaded = 0, int VisibleTerrainChunks = 0, double TerrainSpacingMeters = 0,
+      int NearTerrainChunks = 0, int FarTerrainChunks = 0, int VisibleNearTerrainChunks = 0,
+      int VisibleFarTerrainChunks = 0, double FarTerrainSpacingMeters = 0);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -28,6 +35,7 @@ public partial class RideWorldView : Node3D
     private VegetationLayer? _vegetationLayer;
     private StreetFurnitureLayer? _streetFurnitureLayer;
     private BackgroundStreetLayer? _backgroundStreetLayer;
+    private TerrainLayer? _terrainLayer;
     private double _debugElapsed;
     private bool _wasActive;
     private VisualRoutePose _lastPose;
@@ -42,17 +50,42 @@ public partial class RideWorldView : Node3D
         AddChild(_rider);
         AddChild(new DirectionalLight3D
         {
-            Name = "Sun", RotationDegrees = new Vector3(-45, -30, 0), LightEnergy = 1.2f
+            Name = "Sun",
+            // A fixed late-morning angle gives the route visible lateral shading
+            // without introducing an animated time-of-day system.
+            RotationDegrees = new Vector3(-38, -32, 0),
+            LightColor = new Color(1.0f, 0.97f, 0.92f),
+            LightEnergy = 0.82f,
+            ShadowEnabled = true,
+            DirectionalShadowMode = DirectionalLight3D.ShadowMode.Orthogonal,
+            DirectionalShadowMaxDistance = 180,
+            ShadowOpacity = 0.52f
         });
+        var sky = new Sky
+        {
+            SkyMaterial = new ProceduralSkyMaterial
+            {
+                SkyTopColor = new Color(0.22f, 0.43f, 0.69f),
+                SkyHorizonColor = new Color(0.68f, 0.79f, 0.86f),
+                GroundBottomColor = new Color(0.34f, 0.39f, 0.34f),
+                GroundHorizonColor = new Color(0.67f, 0.75f, 0.76f),
+                SkyCurve = 0.18f,
+                GroundCurve = 0.12f,
+                SunAngleMax = 12,
+                SunCurve = 0.12f
+            }
+        };
         AddChild(new WorldEnvironment
         {
             Environment = new Godot.Environment
             {
-                BackgroundMode = Godot.Environment.BGMode.Color,
-                BackgroundColor = new Color(0.55f, 0.73f, 0.9f),
-                AmbientLightSource = Godot.Environment.AmbientSource.Color,
-                AmbientLightColor = new Color(0.8f, 0.85f, 1),
-                AmbientLightEnergy = 0.6f
+                BackgroundMode = Godot.Environment.BGMode.Sky,
+                Sky = sky,
+                AmbientLightSource = Godot.Environment.AmbientSource.Sky,
+                AmbientLightSkyContribution = 0.72f,
+                AmbientLightEnergy = 0.53f,
+                TonemapMode = Godot.Environment.ToneMapper.Filmic,
+                TonemapExposure = 0.92f
             }
         });
         Hide();
@@ -78,8 +111,12 @@ public partial class RideWorldView : Node3D
         var distance = _session.CurrentRideState.DistanceMeters;
         var pose = _geometry!.GetPoseAtDistance(distance);
         _lastPose = pose;
-        var position = ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 0.04f;
+        var routePosition = ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 0.04f;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
+        var riderPositionN = RiderLaneMath.OffsetPosition(
+            new System.Numerics.Vector3(routePosition.X, routePosition.Y, routePosition.Z),
+            new System.Numerics.Vector3(forward.X, forward.Y, forward.Z));
+        var position = new Vector3(riderPositionN.X, riderPositionN.Y, riderPositionN.Z);
         var rideState = _session.CurrentRideState;
         _rider.UpdateFromRideState(position, forward, rideState.VirtualSpeedKph,
             rideState.CurrentCadenceRpm, _loadedRoute!.GetGradientAt(distance),
@@ -90,6 +127,7 @@ public partial class RideWorldView : Node3D
         _vegetationLayer?.UpdateForRideDistance(distance);
         _streetFurnitureLayer?.UpdateForRideDistance(distance);
         _backgroundStreetLayer?.UpdateForRideDistance(distance);
+        _terrainLayer?.UpdateForRideDistance(distance);
         _debugElapsed += delta;
         if (DebugPoseLogging && _debugElapsed >= 1)
         {
@@ -99,7 +137,22 @@ public partial class RideWorldView : Node3D
                 $"position={position} segment={_loadedRoute!.GetSampleAt(distance).SegmentLabel} " +
                 $"elevation={_loadedRoute.GetSampleAt(distance).ElevationMeters:F1}m " +
                 $"raw={_loadedRoute.GetSampleAt(distance).RawElevationMeters:F1}m " +
-                $"visualY={pose.Position.Y:F2}m grade={_loadedRoute.GetGradientAt(distance):F2}%");
+                $"visualY={pose.Position.Y:F2}m grade={_loadedRoute.GetGradientAt(distance):F2}% " +
+                $"riderLaneOffset={RiderLaneMath.RiderLateralOffsetMeters:F2}m-left");
+            if (_terrainLayer is { } terrainLayer)
+                GD.Print($"Terrain chunks loaded: {terrainLayer.TerrainChunksLoaded}; " +
+                    $"visible terrain chunks: {terrainLayer.VisibleTerrainChunks}; " +
+                    $"terrain spacing: {terrainLayer.TerrainSpacingMeters:F0} m");
+            if(_streetFurnitureLayer is { } furnitureLayer)
+            {
+                GD.Print($"Street furniture intrusion: sourceInside={furnitureLayer.SourceItemsInsideRideRoad} " +
+                    $"suppressed={furnitureLayer.PhysicalProxiesSuppressed} relocated={furnitureLayer.ProxiesRelocatedRoadside} " +
+                    $"retainedInRoad={furnitureLayer.IntentionallyRetainedInRoad}");
+                if(furnitureLayer.GetNearestDebugState(distance) is { } nearestFurniture)
+                    GD.Print($"Nearest street furniture: OSM {nearestFurniture.OsmId} {nearestFurniture.Category} " +
+                        $"source={nearestFurniture.SourcePosition} visual={nearestFurniture.VisualPosition} " +
+                        $"relocated={(nearestFurniture.Relocated ? "yes" : "no")} suppressed={(nearestFurniture.ProxySuppressed ? "yes" : "no")}");
+            }
         }
     }
 
@@ -115,7 +168,19 @@ public partial class RideWorldView : Node3D
             _vegetationLayer?.VegetationAreaCount ?? 0, _vegetationLayer?.TreesLoaded ?? 0,
             _vegetationLayer?.VisibleVegetationChunks ?? 0,
             _streetFurnitureLayer?.LoadedCount ?? 0, _streetFurnitureLayer?.NearbyCount ?? 0,
-            _backgroundStreetLayer?.LoadedStreetCount ?? 0, _backgroundStreetLayer?.VisibleChunkCount ?? 0);
+            _backgroundStreetLayer?.LoadedStreetCount ?? 0, _backgroundStreetLayer?.VisibleChunkCount ?? 0,
+            _streetFurnitureLayer?.SourceItemsInsideRideRoad ?? 0,
+            _streetFurnitureLayer?.PhysicalProxiesSuppressed ?? 0,
+            _streetFurnitureLayer?.ProxiesRelocatedRoadside ?? 0,
+            _streetFurnitureLayer?.IntentionallyRetainedInRoad ?? 0,
+            RiderLaneMath.RiderLateralOffsetMeters,
+            _streetFurnitureLayer?.GetNearestDebugState(distance),
+            _terrainLayer?.TerrainChunksLoaded ?? 0,
+            _terrainLayer?.VisibleTerrainChunks ?? 0,
+            _terrainLayer?.TerrainSpacingMeters ?? 0,
+            _terrainLayer?.NearTerrainChunks ?? 0, _terrainLayer?.FarTerrainChunks ?? 0,
+            _terrainLayer?.VisibleNearTerrainChunks ?? 0, _terrainLayer?.VisibleFarTerrainChunks ?? 0,
+            _terrainLayer?.FarTerrainSpacingMeters ?? 0);
     }
 
     private void LoadRoute(RouteDefinition route)
@@ -145,9 +210,17 @@ public partial class RideWorldView : Node3D
         _vegetationLayer = null;
         _streetFurnitureLayer = null;
         _backgroundStreetLayer = null;
+        _terrainLayer = null;
         RouteVegetationData? vegetationData = null;
         if (route.Id == "dunedin-one-way-oval-gardens")
         {
+            var terrain = new TerrainLayer { Name = "LINZTerrain" };
+            if (terrain.Configure(_geometry, "GWift.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json", route.Id))
+            {
+                _terrainLayer = terrain;
+                _routeRoot.AddChild(terrain);
+                _terrainLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
             var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
                 "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
@@ -193,13 +266,14 @@ public partial class RideWorldView : Node3D
         var positions = _geometry.Samples.Select(v => v.Position).ToArray();
         float minX = positions.Min(p => p.X), maxX = positions.Max(p => p.X);
         float minZ = positions.Min(p => p.Z), maxZ = positions.Max(p => p.Z);
-        _routeRoot.AddChild(new MeshInstance3D
-        {
-            Name = "Ground",
-            Position = new Vector3((minX + maxX) / 2, groundPlaneY, (minZ + maxZ) / 2),
-            Mesh = new PlaneMesh { Size = new Vector2(maxX - minX + 400, maxZ - minZ + 400) },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.22f, 0.36f, 0.18f), Roughness = 1 }
-        });
+        if (_terrainLayer is null)
+            _routeRoot.AddChild(new MeshInstance3D
+            {
+                Name = "Ground",
+                Position = new Vector3((minX + maxX) / 2, groundPlaneY, (minZ + maxZ) / 2),
+                Mesh = new PlaneMesh { Size = new Vector2(maxX - minX + 400, maxZ - minZ + 400) },
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.22f, 0.36f, 0.18f), Roughness = 1 }
+            });
         GameLogger.Log("visual_route_loaded", new
         {
             route.Id, route.DistanceMeters, samples = _geometry.Samples.Count,
@@ -220,6 +294,10 @@ public partial class RideWorldView : Node3D
             vegetationSceneNodes = _vegetationLayer?.CreatedSceneNodeCount ?? 0,
              vegetationBuildMilliseconds = _vegetationLayer?.BuildMilliseconds ?? 0,
              streetFurnitureLoaded = _streetFurnitureLayer?.LoadedCount ?? 0,
+             streetFurnitureInsideRideRoad = _streetFurnitureLayer?.SourceItemsInsideRideRoad ?? 0,
+             streetFurnitureProxiesSuppressed = _streetFurnitureLayer?.PhysicalProxiesSuppressed ?? 0,
+             streetFurnitureProxiesRelocatedRoadside = _streetFurnitureLayer?.ProxiesRelocatedRoadside ?? 0,
+             streetFurnitureIntentionallyRetainedInRoad = _streetFurnitureLayer?.IntentionallyRetainedInRoad ?? 0,
              streetFurnitureMultiMeshes = _streetFurnitureLayer?.MultiMeshCount ?? 0,
              streetFurnitureSceneNodes = _streetFurnitureLayer?.SceneNodeCount ?? 0,
              streetFurnitureBuildMilliseconds = _streetFurnitureLayer?.BuildMilliseconds ?? 0,
@@ -228,6 +306,17 @@ public partial class RideWorldView : Node3D
              backgroundStreetMeshes = _backgroundStreetLayer?.MeshChunkCount ?? 0,
              backgroundStreetTriangles = _backgroundStreetLayer?.TriangleCount ?? 0,
              backgroundStreetBuildMilliseconds = _backgroundStreetLayer?.BuildMilliseconds ?? 0,
+             terrainChunksLoaded = _terrainLayer?.TerrainChunksLoaded ?? 0,
+             visibleTerrainChunks = _terrainLayer?.VisibleTerrainChunks ?? 0,
+             terrainSpacingMeters = _terrainLayer?.TerrainSpacingMeters ?? 0,
+             nearTerrainChunks = _terrainLayer?.NearTerrainChunks ?? 0,
+             farTerrainChunks = _terrainLayer?.FarTerrainChunks ?? 0,
+             visibleNearTerrainChunks = _terrainLayer?.VisibleNearTerrainChunks ?? 0,
+             visibleFarTerrainChunks = _terrainLayer?.VisibleFarTerrainChunks ?? 0,
+             farTerrainSpacingMeters = _terrainLayer?.FarTerrainSpacingMeters ?? 0,
+             terrainTriangles = _terrainLayer?.TerrainTriangleCount ?? 0,
+             terrainRoadClearanceAdjustedVertices = _terrainLayer?.RoadClearanceAdjustedVertices ?? 0,
+             terrainBuildMilliseconds = _terrainLayer?.BuildMilliseconds ?? 0,
             cyclistNodes = _rider.ApproximateNodeCount,
             cyclistApproximateTriangles = _rider.ApproximateTriangleCount
         });

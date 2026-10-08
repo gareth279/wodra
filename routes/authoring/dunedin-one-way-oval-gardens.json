@@ -33,6 +33,22 @@
     "maximumBridgeInterpolationMeters": 100,
     "gradientReviewThresholdPercent": 15
   },
+  "terrain": {
+    "enabled": true,
+    "nearRadiusMeters": 250,
+    "farRadiusMeters": 750,
+    "spacingMeters": 10,
+    "farSpacingMeters": 25,
+    "corridorRadiusMeters": 250,
+    "chunkSizeMeters": 250,
+    "farChunkSizeMeters": 500,
+    "transitionOverlapMeters": 10,
+    "farVerticalBiasMeters": 0.15,
+    "verticalBiasMeters": 0.08,
+    "roadClearanceMeters": 0.15,
+    "roadCorridorRadiusMeters": 5,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
   "buildings": {
     "enabled": true,
     "searchRadiusMeters": 150,

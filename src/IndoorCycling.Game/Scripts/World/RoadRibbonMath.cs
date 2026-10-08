@@ -5,6 +5,9 @@ using System.Numerics;
 public enum RoadJoinType { Normal, Bevel, Discontinuity }
 
 public readonly record struct RoadRibbonQuad(Vector3 StartLeft, Vector3 EndLeft, Vector3 StartRight, Vector3 EndRight);
+public readonly record struct RoadRibbonTriangle(Vector3 A, Vector3 B, Vector3 C);
+public readonly record struct RoadProfileRibbonQuad(int SourceSegmentIndex, double StartDistanceMeters,
+    double EndDistanceMeters, RoadRibbonQuad Quad);
 
 /// <summary>Join classification and bounded horizontal offsets for canonical route ribbons.</summary>
 public static class RoadRibbonMath
@@ -98,6 +101,137 @@ public static class RoadRibbonMath
             return new RoadRibbonQuad(left, right, left + shift, right + shift);
         }
         return new RoadRibbonQuad(left, right, left - Vector3.UnitY * depth, right - Vector3.UnitY * depth);
+    }
+
+    /// <summary>Only narrow vertical profile faces may be capped at a sharp route discontinuity.</summary>
+    public static bool ShouldBuildSharpProfileCap(float lateralStart, float lateralEnd) =>
+        float.IsFinite(lateralStart) && float.IsFinite(lateralEnd) && MathF.Abs(lateralStart - lateralEnd) < 1e-5f;
+
+    /// <summary>Builds the small horizontal asphalt fan used to cover a sharp route join.</summary>
+    public static IReadOnlyList<RoadRibbonTriangle> BuildSharpJoinFill(Vector3 center, float radius, int sides = 16)
+    {
+        if (!Finite(center) || !float.IsFinite(radius) || radius <= 0 || sides < 3)
+            throw new ArgumentOutOfRangeException(nameof(radius));
+        var triangles = new RoadRibbonTriangle[sides];
+        for (var side = 0; side < sides; side++)
+        {
+            var a = side * MathF.Tau / sides;
+            var b = (side + 1) * MathF.Tau / sides;
+            triangles[side] = new RoadRibbonTriangle(center,
+                center + new Vector3(MathF.Cos(a) * radius, 0, MathF.Sin(a) * radius),
+                center + new Vector3(MathF.Cos(b) * radius, 0, MathF.Sin(b) * radius));
+        }
+        return triangles;
+    }
+
+    /// <summary>
+    /// Builds a profile ribbon while excluding a route-distance zone around every sharp join.
+    /// Closed routes use their duplicate final sample to measure the wrap-side exclusion.
+    /// </summary>
+    public static IReadOnlyList<RoadProfileRibbonQuad> BuildProfileQuads(
+        IReadOnlyList<Vector3> positions, IReadOnlyList<double> distancesMeters,
+        float lateralStart, float lateralEnd, float startHeight, float endHeight,
+        double exclusionMeters = 0)
+    {
+        if (positions.Count < 3 || positions.Count != distancesMeters.Count
+            || !float.IsFinite(lateralStart) || !float.IsFinite(lateralEnd)
+            || !float.IsFinite(startHeight) || !float.IsFinite(endHeight)
+            || !double.IsFinite(exclusionMeters) || exclusionMeters < 0)
+            throw new ArgumentOutOfRangeException(nameof(exclusionMeters));
+        for (var i = 1; i < distancesMeters.Count; i++)
+            if (distancesMeters[i] <= distancesMeters[i - 1])
+                throw new ArgumentException("Profile route distances must be strictly increasing.", nameof(distancesMeters));
+
+        var routeLength = distancesMeters[^1];
+        var sharpDistances = new List<double>();
+        var last = positions.Count - 1;
+        for (var i = 0; i < last; i++)
+        {
+            var previous = positions[i == 0 ? last - 1 : i - 1];
+            var next = positions[i + 1];
+            if (ClassifyJoin(previous, positions[i], next) == RoadJoinType.Discontinuity)
+                sharpDistances.Add(distancesMeters[i]);
+        }
+
+        var exclusionZones = new List<(double Start, double End)>();
+        foreach (var sharpDistance in sharpDistances)
+        {
+            if (exclusionMeters == 0) continue;
+            if (sharpDistance <= 1e-6 || routeLength - sharpDistance <= 1e-6)
+            {
+                const double boundaryEpsilonMeters = 0.001;
+                exclusionZones.Add((0, Math.Min(routeLength, exclusionMeters + boundaryEpsilonMeters)));
+                exclusionZones.Add((Math.Max(0, routeLength - exclusionMeters - boundaryEpsilonMeters), routeLength));
+            }
+            else
+            {
+                const double boundaryEpsilonMeters = 0.001;
+                exclusionZones.Add((Math.Max(0, sharpDistance - exclusionMeters - boundaryEpsilonMeters),
+                    Math.Min(routeLength, sharpDistance + exclusionMeters + boundaryEpsilonMeters)));
+            }
+        }
+
+        var result = new List<RoadProfileRibbonQuad>(positions.Count - 1);
+        for (var segment = 0; segment < last; segment++)
+        {
+            var segmentStart = distancesMeters[segment];
+            var segmentEnd = distancesMeters[segment + 1];
+            var allowed = new List<(double Start, double End)> { (segmentStart, segmentEnd) };
+            foreach (var zone in exclusionZones)
+            {
+                var nextAllowed = new List<(double Start, double End)>();
+                foreach (var interval in allowed)
+                {
+                    if (zone.End <= interval.Start || zone.Start >= interval.End)
+                    {
+                        nextAllowed.Add(interval);
+                        continue;
+                    }
+                    if (zone.Start > interval.Start) nextAllowed.Add((interval.Start, zone.Start));
+                    if (zone.End < interval.End) nextAllowed.Add((zone.End, interval.End));
+                }
+                allowed = nextAllowed;
+                if (allowed.Count == 0) break;
+            }
+
+            foreach (var interval in allowed)
+            {
+                var startT = (interval.Start - segmentStart) / (segmentEnd - segmentStart);
+                var endT = (interval.End - segmentStart) / (segmentEnd - segmentStart);
+                var start = ProfileSection(segment, startT);
+                var end = ProfileSection(segment, endT);
+                result.Add(new RoadProfileRibbonQuad(segment, interval.Start, interval.End,
+                    new RoadRibbonQuad(start.Left, end.Left, start.Right, end.Right)));
+            }
+        }
+        return result;
+
+        (Vector3 Left, Vector3 Right) ProfileSection(int segment, double t)
+        {
+            var a = positions[segment];
+            var b = positions[segment + 1];
+            var center = Vector3.Lerp(a, b, (float)t);
+            Vector3 Offset(float lateral)
+            {
+                if (t <= 1e-9)
+                {
+                    var previous = positions[segment == 0 ? last - 1 : segment - 1];
+                    var next = positions[segment + 1];
+                    return OffsetAtJoin(previous, a, next, lateral, true);
+                }
+                if (t >= 1 - 1e-9)
+                {
+                    var previous = positions[segment];
+                    var next = positions[segment + 1 == last ? 1 : segment + 2];
+                    return OffsetAtJoin(previous, b, next, lateral, false);
+                }
+                var forward = Horizontal(b - a);
+                if (forward.LengthSquared() < 1e-8f) return new Vector3(lateral, 0, 0);
+                return Vector3.Normalize(Vector3.Cross(Vector3.Normalize(forward), Vector3.UnitY)) * lateral;
+            }
+            return (center + Offset(lateralStart) + Vector3.UnitY * startHeight,
+                center + Offset(lateralEnd) + Vector3.UnitY * endHeight);
+        }
     }
 
     private static Vector3 Horizontal(Vector3 value) => new(value.X, 0, value.Z);

@@ -7,5 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="OsmSharp" Version="6.2.0" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingVisualStyle.cs" Link="BuildingVisualStyle.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />
   </ItemGroup>
 </Project>

@@ -97,7 +97,7 @@ public static class BuildOutputs
             Warnings = result.Warnings,
             NearbyLandmarkCandidatesConsidered = landmarks?.NearbyCandidatesConsidered ?? 0,
             SelectedLandmarkCount = landmarks?.Landmarks.Count ?? 0,
-            Buildings = buildings is null ? null : ToBuildingReport(buildings, pbfPath, result.RawDistanceMeters),
+            Buildings = buildings is null ? null : ToBuildingReport(buildings, pbfPath, result.RawDistanceMeters, result.RoutePoints[0]),
             Vegetation = vegetation is null ? null : ToVegetationReport(vegetation, pbfPath, result.RawDistanceMeters),
             StreetFurniture = streetFurniture is null ? null : ToStreetFurnitureReport(streetFurniture, pbfPath, result.RawDistanceMeters),
             Timings = timings,
@@ -125,7 +125,7 @@ public static class BuildOutputs
                 sourcePbfFilename = Path.GetFileName(pbfPath), attribution = "© OpenStreetMap contributors, ODbL 1.0",
                 searchRadiusMeters = config.Buildings?.SearchRadiusMeters ?? BuildingExtractor.DefaultSearchRadiusMeters,
                 simplificationToleranceMeters = config.Buildings?.SimplificationToleranceMeters ?? BuildingExtractor.DefaultSimplificationToleranceMeters,
-                statistics = ToBuildingReport(buildings, pbfPath, result.RawDistanceMeters), buildings = buildings.Buildings
+                statistics = ToBuildingReport(buildings, pbfPath, result.RawDistanceMeters, result.RoutePoints[0]), buildings = buildings.Buildings
             };
             await File.WriteAllTextAsync(buildingsPath, JsonSerializer.Serialize(buildingData, JsonOptions));
         }
@@ -325,18 +325,75 @@ public static class BuildOutputs
         return PreviewHtmlTemplate.Replace("__ROUTE_REVIEW_DATA__", json, StringComparison.Ordinal);
     }
 
-    private static BuildingReport ToBuildingReport(BuildingExtractionResult buildings, string pbfPath, double routeLength)
+    private static BuildingReport ToBuildingReport(BuildingExtractionResult buildings, string pbfPath, double routeLength,
+        RoutePointOutput routeOrigin)
     {
         var instances = buildings.Buildings.Select(item => Math.Clamp((int)(item.NearestRouteDistanceMeters / 350),
             0, Math.Max(0, (int)Math.Ceiling(routeLength / 350) - 1))).Distinct().Count();
         var triangles = buildings.Buildings.Sum(item => Math.Max(0, (item.Footprint.Count - 1) * 3 - 2));
+        var categoryCounts = buildings.Buildings.GroupBy(item => item.VisualCategory)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var roofShapeCounts = buildings.Buildings.GroupBy(item => item.SourceTags.GetValueOrDefault("roof:shape")?.ToLowerInvariant() ?? "untagged")
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var style = AnalyzeBuildingStyle(buildings.Buildings, routeLength, routeOrigin);
         return new BuildingReport(buildings.NearbyCandidates, buildings.SelectedCount, buildings.OrdinaryWays,
             buildings.MultipolygonRelationsIncluded, buildings.MultipolygonRelationsSkipped, buildings.NamedBuildings,
             buildings.ExplicitHeightCount, buildings.LevelsHeightCount, buildings.FallbackHeightCount,
             buildings.MalformedHeights, buildings.MalformedOrExcludedRecords, buildings.OriginalVertices,
             buildings.SimplifiedVertices, buildings.LargestFootprintVertices, buildings.MinimumHeightMeters,
             buildings.MaximumHeightMeters, buildings.MedianHeightMeters, triangles, instances, instances,
-            buildings.ExtractionSeconds, Path.GetFileName(pbfPath));
+            buildings.ExtractionSeconds, Path.GetFileName(pbfPath))
+        {
+            VisualCategoryCounts = categoryCounts,
+            RoofShapeTagCounts = roofShapeCounts,
+            BuildingsWithRoofMetadata = buildings.Buildings.Count(item => item.SourceTags.Keys.Any(key => key.StartsWith("roof:", StringComparison.OrdinalIgnoreCase))),
+            ExplicitBuildingColourCount = buildings.Buildings.Count(item => item.SourceTags.ContainsKey("building:colour")),
+            ExplicitRoofColourCount = buildings.Buildings.Count(item => item.SourceTags.ContainsKey("roof:colour")),
+            ExplicitMaterialTagCount = buildings.Buildings.Count(item => item.SourceTags.ContainsKey("building:material") || item.SourceTags.ContainsKey("roof:material")),
+            EffectiveFlatRoofCount = style.FlatRoofs, RoofedBuildingCount = buildings.SelectedCount,
+            EffectiveGabledRoofCount = style.GabledRoofs,
+            EffectiveHippedRoofCount = style.HippedRoofs, FlatRoofFallbackCount = style.FlatFallbacks,
+            WindowDetailedBuildingCount = style.WindowedBuildings, VisualFacadeTriangleCount = style.FacadeTriangles,
+            VisualRoofTriangleCount = style.RoofTriangles, VisualWindowTriangleCount = style.WindowTriangles,
+            VisualTriangleCount = style.FacadeTriangles + style.RoofTriangles + style.WindowTriangles,
+            FacadePaletteVariantCount = BuildingVisualStyle.PaletteCount, RuntimeSharedMaterialCount = 3,
+            VisualRuntimeMeshChunkCount = instances, VisualRuntimeMeshInstanceCount = instances,
+            VisualRuntimeSurfaceCount = instances * 2 + style.WindowSurfaces
+        };
+    }
+
+    private static (int FlatRoofs, int GabledRoofs, int HippedRoofs, int FlatFallbacks,
+        int WindowedBuildings, int FacadeTriangles, int RoofTriangles, int WindowTriangles, int WindowSurfaces) AnalyzeBuildingStyle(
+        IReadOnlyList<RouteBuilding> buildings, double routeLength, RoutePointOutput routeOrigin)
+    {
+        var flat=0;var gabled=0;var hipped=0;var fallback=0;var windowed=0;var facade=0;var roof=0;var windows=0;
+        var windowChunks=new HashSet<int>();
+        foreach(var building in buildings)
+        {
+            const double radians=Math.PI/180;const double earth=6371000;
+            var scaleX=earth*Math.Cos(routeOrigin.Latitude*radians)*radians;var scaleZ=earth*radians;
+            var ring=building.Footprint.Select(point=>new System.Numerics.Vector3(
+                (float)((point.Longitude-routeOrigin.Longitude)*scaleX),0,(float)(-(point.Latitude-routeOrigin.Latitude)*scaleZ))).ToArray();
+            var tags=building.SourceTags;
+            var rawShape=tags.GetValueOrDefault("roof:shape");var shape=BuildingVisualStyle.NormalizeRoofShape(rawShape);
+            var width=Math.Min(ring.Max(p=>p.X)-ring.Min(p=>p.X),ring.Max(p=>p.Z)-ring.Min(p=>p.Z));
+            var roofHeight=BuildingVisualStyle.ResolveRoofHeight((float)building.HeightMeters,width,
+                tags.GetValueOrDefault("roof:height"),tags.GetValueOrDefault("roof:levels"));
+            var styled=BuildingMeshGeometry.BuildStyled(ring,(float)building.HeightMeters,shape,roofHeight,
+                BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"),(float)building.HeightMeters),
+                BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters));
+            facade+=styled.FacadeTriangleCount;roof+=styled.RoofTriangleCount;windows+=styled.WindowTriangleCount;
+            if(styled.WindowCount>0)
+            {
+                windowed++;
+                windowChunks.Add(Math.Clamp((int)(building.NearestRouteDistanceMeters/350),0,
+                    Math.Max(0,(int)Math.Ceiling(routeLength/350)-1)));
+            }
+            if(styled.EffectiveRoofShape=="gabled")gabled++;
+            else if(styled.EffectiveRoofShape=="hipped")hipped++;
+            else {flat++;if(!string.IsNullOrWhiteSpace(rawShape)&&!rawShape.Equals("flat",StringComparison.OrdinalIgnoreCase))fallback++;}
+        }
+        return(flat,gabled,hipped,fallback,windowed,facade,roof,windows,windowChunks.Count);
     }
 
     private static VegetationReport ToVegetationReport(VegetationExtractionResult vegetation, string pbfPath, double routeLength)

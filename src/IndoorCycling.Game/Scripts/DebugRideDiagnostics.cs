@@ -102,8 +102,23 @@ public sealed record RideDebugSnapshot
     public int visibleVegetationChunks { get; init; }
     public int streetFurnitureLoaded { get; init; }
     public int nearbyStreetFurniture { get; init; }
+    public int streetFurnitureInsideRideRoad { get; init; }
+    public int streetFurnitureProxiesSuppressed { get; init; }
+    public int streetFurnitureProxiesRelocatedRoadside { get; init; }
+    public int streetFurnitureIntentionallyRetainedInRoad { get; init; }
+    public double riderLateralOffsetMeters { get; init; }
+    public long? nearestStreetFurnitureOsmId { get; init; }
+    public string? nearestStreetFurnitureCategory { get; init; }
+    public DebugVector3? nearestStreetFurnitureSourcePosition { get; init; }
+    public DebugVector3? nearestStreetFurnitureVisualPosition { get; init; }
+    public bool? nearestStreetFurnitureRelocated { get; init; }
     public int backgroundStreetsLoaded { get; init; }
     public int visibleStreetChunks { get; init; }
+    public int terrainNearChunks { get; init; }
+    public int terrainFarChunks { get; init; }
+    public int terrainVisibleChunks { get; init; }
+    public double terrainNearSpacingMeters { get; init; }
+    public double terrainFarSpacingMeters { get; init; }
     public int visualSampleBefore { get; init; }
     public int visualSampleAfter { get; init; }
     public double visualInterpolation { get; init; }

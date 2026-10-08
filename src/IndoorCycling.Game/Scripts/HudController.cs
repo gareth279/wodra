@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
 
@@ -31,6 +33,9 @@ public partial class HudController : Control
 	private Label? _debugSnapshotLabel;
 	private bool _debugModeEnabled;
 	private bool _debugOverlayVisible = true;
+	private ScreenshotCaptureService? _screenshotCapture;
+	private Label? _screenshotToast;
+	private int _screenshotToastSequence;
 
 	public override void _Ready()
 	{
@@ -54,6 +59,15 @@ public partial class HudController : Control
 		_saveToStravaButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+		_screenshotCapture = new ScreenshotCaptureService(this);
+		_screenshotToast = new Label
+		{
+			Name = "ScreenshotToast", Text = "Screenshot saved", Visible = false,
+			AnchorLeft = 0.5f, AnchorRight = 0.5f, AnchorTop = 1, AnchorBottom = 1,
+			OffsetLeft = -100, OffsetRight = 100, OffsetTop = -74, OffsetBottom = -42,
+			HorizontalAlignment = HorizontalAlignment.Center
+		};
+		AddChild(_screenshotToast);
 
 		if (_menuButton is not null)
 		{
@@ -186,13 +200,52 @@ public partial class HudController : Control
 			$"Buildings: {snapshot.buildingsLoaded} loaded  Visible chunks: {snapshot.visibleBuildingChunks}\n" +
 			$"Vegetation areas: {snapshot.vegetationAreas}  Trees loaded: {snapshot.treesLoaded}  Visible chunks: {snapshot.visibleVegetationChunks}\n" +
 			$"Street furniture loaded: {snapshot.streetFurnitureLoaded}  Nearby: {snapshot.nearbyStreetFurniture}\n" +
+			$"Terrain near chunks: {snapshot.terrainNearChunks}  far chunks: {snapshot.terrainFarChunks}  visible terrain chunks: {snapshot.terrainVisibleChunks}\n" +
+			$"Near spacing: {snapshot.terrainNearSpacingMeters:F0} m  Far spacing: {snapshot.terrainFarSpacingMeters:F0} m\n" +
 			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
 			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
 	}
 
+	public bool DebugOverlayCaptureVisible => _debugOverlay?.Visible ?? false;
+	public IReadOnlyList<CapturedScreenshot> CapturedScreenshots => _screenshotCapture?.CapturedMedia ?? Array.Empty<CapturedScreenshot>();
+
+	public Task<CapturedScreenshot?> CaptureDebugScreenshotAsync(RideDebugSnapshot snapshot) =>
+		_screenshotCapture?.CaptureDebugMarkerAsync(snapshot) ?? Task.FromResult<CapturedScreenshot?>(null);
+
+	public void SetDebugOverlayForCapture(bool visible)
+	{
+		if (visible) EnsureDebugOverlay();
+		if (_debugOverlay is not null) _debugOverlay.Visible = visible;
+	}
+
+	public void ShowScreenshotToast(string message)
+	{
+		if (_screenshotToast is null) return;
+		var sequence = ++_screenshotToastSequence;
+		_screenshotToast.Text = message;
+		_screenshotToast.Visible = true;
+		_ = HideScreenshotToastLater(sequence);
+	}
+
+	private async Task HideScreenshotToastLater(int sequence)
+	{
+		await ToSignal(GetTree().CreateTimer(1.6), SceneTreeTimer.SignalName.Timeout);
+		if (sequence == _screenshotToastSequence && GodotObject.IsInstanceValid(this) && _screenshotToast is not null)
+			_screenshotToast.Visible = false;
+	}
+
 	public override void _UnhandledKeyInput(InputEvent @event)
 	{
-		if (!_debugModeEnabled || @event is not InputEventKey key || !key.Pressed || key.Echo) return;
+		if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
+		if (key.Keycode == Key.F12 && _rideSessionNode?.IsRideActive == true)
+		{
+			var mode = ScreenshotCapturePolicy.ForF12(key.ShiftPressed);
+			if (mode == ScreenshotCaptureMode.Hud) _ = _screenshotCapture?.CaptureHudAsync();
+			else _ = _screenshotCapture?.CaptureCleanAsync();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+		if (!_debugModeEnabled) return;
 		if (key.Keycode == Key.F8 && _rideSessionNode?.IsRideActive == true)
 		{
 			_rideSessionNode.WriteDebugMarker();

@@ -191,6 +191,26 @@ var tests = new (string Name, Action Run)[]
         var second = BuildingExtractor.SelectByRoute([b,a], LandmarkTestRoute()).Buildings;
         Equal(JsonSerializer.Serialize(first), JsonSerializer.Serialize(second));
     }),
+    ("building styling retains only selected OSM metadata and a stable visual category", () =>
+    {
+        var tags = new Dictionary<string,string>
+        {
+            ["building"]="university", ["building:levels"]="3", ["building:material"]="brick",
+            ["building:colour"]="#bca", ["roof:shape"]="gabled", ["roof:height"]="2.5 m",
+            ["roof:levels"]="1", ["roof:material"]="metal", ["roof:colour"]="grey",
+            ["amenity"]="university", ["office"]="", ["shop"]="", ["tourism"]="",
+            ["historic"]="", ["isced:level"]="6", ["education"]="", ["operator:type"]="public",
+            ["name"]="Example Campus", ["private:unused"]="discard me"
+        };
+        var selected=BuildingExtractor.SelectByRoute([new RawBuilding("way",991,tags,[1,2,3,4,1],
+            [new(0,.0004),new(.0001,.0004),new(.0001,.0005),new(0,.0005),new(0,.0004)])],LandmarkTestRoute()).Buildings.Single();
+        Equal("university/education",selected.VisualCategory);
+        Equal(BuildingVisualStyle.MaterialVariant(991,selected.VisualCategory),selected.MaterialVariant);
+        foreach(var key in new[]{"building:material","building:colour","roof:shape","roof:height","roof:levels",
+            "roof:material","roof:colour","amenity","isced:level","education","operator:type","name"})
+            if(!selected.SourceTags.ContainsKey(key))throw new Exception($"Selected building metadata omitted '{key}'.");
+        if(selected.SourceTags.ContainsKey("private:unused"))throw new Exception("Complete OSM tag dictionary leaked to the runtime bundle.");
+    }),
     ("point-to-route polyline distance uses metric projection", () =>
     {
         var route = LandmarkTestRoute();

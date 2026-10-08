@@ -4024,7 +4024,46 @@
     "runtimeMeshChunkCount": 16,
     "runtimeMeshInstanceCount": 16,
     "extractionSeconds": 62.7100775,
-    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "visualCategoryCounts": {
+      "generic": 680,
+      "commercial/retail": 94,
+      "civic/public": 14,
+      "residential": 39,
+      "office": 1,
+      "industrial/service": 13,
+      "university/education": 43,
+      "historic": 4
+    },
+    "roofShapeTagCounts": {
+      "untagged": 855,
+      "gabled": 7,
+      "flat": 17,
+      "hipped": 4,
+      "quadruple_saltbox": 2,
+      "half-hipped": 1,
+      "many": 1,
+      "mansard": 1
+    },
+    "buildingsWithRoofMetadata": 41,
+    "explicitBuildingColourCount": 19,
+    "explicitRoofColourCount": 8,
+    "explicitMaterialTagCount": 7,
+    "effectiveFlatRoofCount": 881,
+    "roofedBuildingCount": 888,
+    "effectiveGabledRoofCount": 5,
+    "effectiveHippedRoofCount": 2,
+    "flatRoofFallbackCount": 9,
+    "windowDetailedBuildingCount": 515,
+    "visualFacadeTriangleCount": 10772,
+    "visualRoofTriangleCount": 3623,
+    "visualWindowTriangleCount": 65308,
+    "visualTriangleCount": 79703,
+    "facadePaletteVariantCount": 10,
+    "runtimeSharedMaterialCount": 3,
+    "visualRuntimeMeshChunkCount": 16,
+    "visualRuntimeMeshInstanceCount": 16,
+    "visualRuntimeSurfaceCount": 48
   },
   "vegetation": {
     "polygonsConsidered": 4319,
@@ -4128,14 +4167,14 @@
         ]
       },
       {
-        "name": "Toit\u016B Te Whenua Land Information New Zealand",
+        "name": "Toitū Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -4213,5 +4252,62 @@
     "sceneNodeImpact": 32,
     "extractionSeconds": 39.8953624,
     "elevationSamplingSeconds": 14.6092428
+  },
+  "terrain": {
+    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceLicense": "CC-BY-4.0",
+    "sourceAssets": [
+      "CE17_10000_0303.tiff",
+      "CE17_10000_0403.tiff"
+    ],
+    "sourceCrs": "EPSG:2193",
+    "spacingMeters": 10.0,
+    "corridorRadiusMeters": 250.0,
+    "chunkSizeMeters": 250.0,
+    "near": {
+      "radiusMeters": 250.0,
+      "spacingMeters": 10.0,
+      "vertices": 18422,
+      "triangles": 35950,
+      "chunks": 44,
+      "areaSquareMeters": 1797500.0
+    },
+    "far": {
+      "radiusMeters": 750.0,
+      "spacingMeters": 25.0,
+      "vertices": 6292,
+      "triangles": 11738,
+      "chunks": 33,
+      "areaSquareMeters": 3668125.0,
+      "transitionOverlapMeters": 10.0,
+      "verticalBiasMeters": 0.15,
+      "transitionVerticesClampedBelowNear": 1123
+    },
+    "combinedTriangleCount": 47688,
+    "combinedChunkCount": 77,
+    "extentMeters": {
+      "minX": -450.0,
+      "maxX": 1725.0,
+      "minZ": -2975.0,
+      "maxZ": 875.0
+    },
+    "minimumSourceElevationMeters": -1.374412008677422,
+    "maximumSourceElevationMeters": 130.08347086824077,
+    "vertexCount": 24714,
+    "triangleCount": 47688,
+    "chunkCount": 77,
+    "runtimeMeshInstanceCount": 77,
+    "coveredAreaSquareMeters": 5465625.0,
+    "noDataCells": 8,
+    "interpolatedVertices": 4,
+    "roadClearanceRadiusMeters": 5.0,
+    "roadClearanceMeters": 0.15,
+    "roadClearanceAdjustedVertices": 388,
+    "visualDownwardBiasMeters": 0.08,
+    "bundleFile": "dunedin-one-way-oval-gardens.terrain.json",
+    "bundleBytes": 975987,
+    "generationSeconds": 1.918123000000378,
+    "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   }
 }

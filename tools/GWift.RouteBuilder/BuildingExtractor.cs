@@ -8,7 +8,11 @@ public sealed record BuildingFootprintPoint(double Longitude, double Latitude);
 public sealed record RouteBuilding(string OsmType, long OsmId, string? Name, string BuildingType,
     double HeightMeters, string HeightSource, double? BaseElevationMeters,
     IReadOnlyList<BuildingFootprintPoint> Footprint, double DistanceFromRouteMeters,
-    double NearestRouteDistanceMeters, IReadOnlyDictionary<string, string> SourceTags);
+    double NearestRouteDistanceMeters, IReadOnlyDictionary<string, string> SourceTags)
+{
+    public string VisualCategory { get; init; } = "generic";
+    public int MaterialVariant { get; init; }
+}
 public sealed record BuildingExtractionResult(int NearbyCandidates, int SelectedCount, int OrdinaryWays,
     int MultipolygonRelationsIncluded, int MultipolygonRelationsSkipped, int NamedBuildings,
     int ExplicitHeightCount, int LevelsHeightCount, int FallbackHeightCount, int MalformedHeights,
@@ -156,13 +160,21 @@ public static class BuildingExtractor
             if (!ValidPolygon(simplified)) { excluded++; continue; }
             var (height, kind, invalid) = ResolveHeight(item.Tags, metersPerLevel, ordinaryHeightMeters, smallBuildingHeightMeters);
             if (invalid) malformedHeights++;
-            var retainedTags = item.Tags.Where(pair => pair.Key is "building" or "height" or "building:levels" or "name" or "name:en" or "historic")
+            var retainedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "building", "height", "building:levels", "building:material", "building:colour", "name", "name:en",
+                "historic", "roof:shape", "roof:levels", "roof:height", "roof:material", "roof:colour",
+                "amenity", "office", "shop", "tourism", "isced:level", "education", "operator:type"
+            };
+            var retainedTags = item.Tags.Where(pair => retainedKeys.Contains(pair.Key))
                 .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+            var category = BuildingVisualStyle.Classify(item.Tags);
             selected.Add((new RouteBuilding(item.OsmType, item.OsmId,
                 item.Tags.GetValueOrDefault("name") ?? item.Tags.GetValueOrDefault("name:en"),
                 item.Tags.GetValueOrDefault("building") ?? "yes", height, kind.ToString(), null,
                 simplified.Select(point => new BuildingFootprintPoint(point.Longitude, point.Latitude)).ToArray(),
-                proximity.Distance, proximity.RouteDistance, retainedTags), kind));
+                proximity.Distance, proximity.RouteDistance, retainedTags)
+                { VisualCategory = category, MaterialVariant = BuildingVisualStyle.MaterialVariant(item.OsmId, category) }, kind));
         }
         var ordered = selected.OrderBy(item => item.Building.NearestRouteDistanceMeters).ThenBy(item => item.Building.OsmType)
             .ThenBy(item => item.Building.OsmId).ToArray();

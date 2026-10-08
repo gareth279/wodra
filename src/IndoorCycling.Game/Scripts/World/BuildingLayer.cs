@@ -18,6 +18,17 @@ public partial class BuildingLayer : Node3D
     public int MeshInstanceCount => _chunks.Count;
     public int VisibleChunkCount => _chunks.Count(item => item.Instance.Visible);
     public int TriangleCount { get; private set; }
+    public int FacadeTriangleCount { get; private set; }
+    public int RoofTriangleCount { get; private set; }
+    public int WindowTriangleCount { get; private set; }
+    public int SurfaceCount { get; private set; }
+    public int SharedMaterialCount { get; private set; }
+    public int DetailedBuildingCount { get; private set; }
+    public int RoofedBuildingCount { get; private set; }
+    public int FlatRoofCount { get; private set; }
+    public int GabledRoofCount { get; private set; }
+    public int HippedRoofCount { get; private set; }
+    public int FlatRoofFallbackCount { get; private set; }
     public int FootprintVertexCount { get; private set; }
     public double BuildMilliseconds { get; private set; }
 
@@ -26,6 +37,10 @@ public partial class BuildingLayer : Node3D
         if (_chunks.Count > 0 || BuildingsLoaded > 0) throw new InvalidOperationException("Building layer is already configured.");
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.DistanceMeters;
+        var facadeMaterial = SharedMaterial();
+        var roofMaterial = SharedMaterial();
+        var windowMaterial = SharedMaterial();
+        SharedMaterialCount = 3;
         var groups = buildings.GroupBy(item => Math.Clamp((int)(item.NearestRouteDistanceMeters / ChunkLengthMeters),
             0, Math.Max(0, (int)Math.Ceiling(_routeLengthMeters / ChunkLengthMeters) - 1))).OrderBy(group => group.Key);
         foreach (var group in groups)
@@ -33,7 +48,9 @@ public partial class BuildingLayer : Node3D
             var start = group.Key * ChunkLengthMeters;
             var centerDistance = Math.Min(_routeLengthMeters - .01, start + ChunkLengthMeters / 2);
             var origin = ProceduralRoad.ToGodot(visualRoute.GetPoseAtDistance(centerDistance).Position);
-            var surface = new SurfaceTool(); surface.Begin(Mesh.PrimitiveType.Triangles);
+            var facadeVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
+            var roofVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
+            var windowVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
             var buildingCount = 0;
             foreach (var building in group)
             {
@@ -44,31 +61,65 @@ public partial class BuildingLayer : Node3D
                     var world = ProceduralRoad.ToGodot(local);
                     return new System.Numerics.Vector3(world.X - origin.X, world.Y - origin.Y, world.Z - origin.Z);
                 }).ToArray();
-                System.Numerics.Vector3[] vertices;
-                try { vertices = BuildingMeshGeometry.Extrude(ring, (float)building.HeightMeters); }
+                var tags = building.SourceTags ?? new Dictionary<string, string>();
+                var category = building.VisualCategory == "generic" ? BuildingVisualStyle.Classify(tags) : building.VisualCategory;
+                var variant = building.MaterialVariant is >= 0 and < 10
+                    ? building.MaterialVariant : BuildingVisualStyle.MaterialVariant(building.OsmId, category);
+                var facadeColour = ToGodotColour(BuildingVisualStyle.FacadeColor(variant, tags.GetValueOrDefault("building:colour")));
+                var roofColour = ToGodotColour(BuildingVisualStyle.RoofColor(variant, tags.GetValueOrDefault("roof:colour")));
+                var rawRoofShape = tags.GetValueOrDefault("roof:shape");
+                var shape = BuildingVisualStyle.NormalizeRoofShape(rawRoofShape);
+                var footprintWidth = Math.Min(ring.Max(point => point.X) - ring.Min(point => point.X),
+                    ring.Max(point => point.Z) - ring.Min(point => point.Z));
+                var roofHeight = BuildingVisualStyle.ResolveRoofHeight((float)building.HeightMeters, footprintWidth,
+                    tags.GetValueOrDefault("roof:height"), tags.GetValueOrDefault("roof:levels"));
+                var storeys = BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"), (float)building.HeightMeters);
+                BuildingMeshGeometry.StyledMesh geometry;
+                try { geometry = BuildingMeshGeometry.BuildStyled(ring, (float)building.HeightMeters,
+                    shape, roofHeight, storeys, BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters)); }
                 catch (ArgumentException) { continue; }
-                foreach (var vertex in vertices)
+                Add(facadeVertices, geometry.Facade, facadeColour);
+                Add(roofVertices, geometry.Roof, roofColour);
+                // Keep glazing visually dark, but lift it above black so shaded
+                // facades retain a little readable blue-grey surface response.
+                Add(windowVertices, geometry.Windows, new Color(.18f,.23f,.27f));
+                FacadeTriangleCount += geometry.FacadeTriangleCount;
+                RoofTriangleCount += geometry.RoofTriangleCount;
+                WindowTriangleCount += geometry.WindowTriangleCount;
+                TriangleCount += geometry.FacadeTriangleCount + geometry.RoofTriangleCount + geometry.WindowTriangleCount;
+                if (geometry.WindowCount > 0) DetailedBuildingCount++;
+                if (geometry.RoofTriangleCount > 0) RoofedBuildingCount++;
+                if (geometry.EffectiveRoofShape == "gabled") GabledRoofCount++;
+                else if (geometry.EffectiveRoofShape == "hipped") HippedRoofCount++;
+                else
                 {
-                    surface.SetColor(Colour(building));
-                    surface.AddVertex(new Vector3(vertex.X, vertex.Y, vertex.Z));
+                    FlatRoofCount++;
+                    if (!string.IsNullOrWhiteSpace(rawRoofShape)
+                        && !rawRoofShape.Equals("flat", StringComparison.OrdinalIgnoreCase)) FlatRoofFallbackCount++;
                 }
-                TriangleCount += vertices.Length / 3;
                 FootprintVertexCount += building.Footprint.Count;
                 buildingCount++;
             }
             if (buildingCount == 0) continue;
-            surface.GenerateNormals();
-            var mesh = surface.Commit();
+            var mesh = new ArrayMesh();
+            AddSurface(mesh, facadeVertices, facadeMaterial);
+            AddSurface(mesh, roofVertices, roofMaterial);
+            AddSurface(mesh, windowVertices, windowMaterial);
+            SurfaceCount += mesh.GetSurfaceCount();
             var instance = new MeshInstance3D
             {
                 Name = $"BuildingsChunk{group.Key:D2}", Position = origin, Mesh = mesh,
-                MaterialOverride = new StandardMaterial3D { AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1 }
             };
             AddChild(instance);
             _chunks.Add(new Chunk(group.Key, centerDistance, instance));
             BuildingsLoaded += buildingCount;
         }
         timer.Stop(); BuildMilliseconds = timer.Elapsed.TotalMilliseconds;
+        GD.Print($"Buildings visual: loaded={BuildingsLoaded} detailed={DetailedBuildingCount} " +
+            $"pitchedRoofs={RoofedBuildingCount} triangles={TriangleCount} " +
+            $"facade={FacadeTriangleCount} roof={RoofTriangleCount} windows={WindowTriangleCount} " +
+            $"chunks={ChunkCount} meshInstances={MeshInstanceCount} surfaces={SurfaceCount} " +
+            $"sharedMaterials={SharedMaterialCount} buildMs={BuildMilliseconds:F1}");
     }
 
     public void UpdateForRideDistance(double distanceMeters)
@@ -83,14 +134,33 @@ public partial class BuildingLayer : Node3D
         }
     }
 
-    private static Color Colour(RouteBuildingData building)
+    private static StandardMaterial3D SharedMaterial() => new()
     {
-        if (building.SourceTags.ContainsKey("historic")) return new Color(.63f, .49f, .36f);
-        return building.BuildingType switch
+        AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 0.92f,
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled
+    };
+
+    private static Color ToGodotColour(BuildingRgb colour) => new(colour.R, colour.G, colour.B);
+
+    private static void Add(List<(System.Numerics.Vector3 Vertex, Color Colour)> target,
+        IReadOnlyList<System.Numerics.Vector3> vertices, Color colour)
+    {
+        foreach (var vertex in vertices) target.Add((vertex, colour));
+    }
+
+    private static void AddSurface(ArrayMesh mesh, IReadOnlyList<(System.Numerics.Vector3 Vertex, Color Colour)> vertices,
+        StandardMaterial3D material)
+    {
+        if (vertices.Count == 0) return;
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        surface.SetMaterial(material);
+        foreach (var (vertex, colour) in vertices)
         {
-            "industrial" or "warehouse" => new Color(.46f, .49f, .51f),
-            "university" or "civic" or "public" => new Color(.69f, .61f, .48f),
-            _ => new Color(.63f, .57f, .50f)
-        };
+            surface.SetColor(colour);
+            surface.AddVertex(new Vector3(vertex.X, vertex.Y, vertex.Z));
+        }
+        surface.GenerateNormals();
+        surface.Commit(mesh);
     }
 }

@@ -191,7 +191,7 @@ public partial class CyclistVisual : Node3D
     {
         var mesh=new MeshInstance3D{Name=name,Mesh=new SphereMesh{Radius=.5f,Height=1,RadialSegments=12,Rings=8},Position=position,Scale=scale,MaterialOverride=material}; AddChild(mesh); return mesh;
     }
-    private static StandardMaterial3D Material(Color color)=>new(){AlbedoColor=color,Roughness=.82f};
+    private static StandardMaterial3D Material(Color color)=>new(){AlbedoColor=color,Roughness=.88f};
     private static int CountNodes(Node node)
     {
         var count=1; foreach(Node child in node.GetChildren()) count+=CountNodes(child); return count;

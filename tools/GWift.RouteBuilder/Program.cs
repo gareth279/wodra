@@ -34,6 +34,7 @@ try
             MaximumConnectorDistanceMeters = config.MaximumConnectorDistanceMeters,
             MinimumPreferredRefPercent = config.MinimumPreferredRefPercent,
             Elevation = config.Elevation,
+            Terrain = config.Terrain,
             Buildings = config.Buildings,
             Vegetation = config.Vegetation,
             StreetFurniture = config.StreetFurniture,
@@ -93,6 +94,8 @@ try
         solveTimer.Elapsed.TotalSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets);
     if (result.IsValid && config.Elevation is { Enabled: true } elevation)
         await ElevationPipelineRunner.RunAsync(outputDirectory, config.Id, elevation);
+    if (result.IsValid && config.Terrain is { Enabled: true } terrain)
+        await TerrainPipelineRunner.RunAsync(outputDirectory, config.Id, terrain);
     return result.IsValid ? 0 : 2;
 }
 catch (Exception ex)

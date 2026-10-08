@@ -369,8 +369,23 @@ public partial class RideSessionNode : Node
 		visibleVegetationChunks = world?.VisibleVegetationChunks ?? 0,
 			streetFurnitureLoaded = world?.StreetFurnitureLoaded ?? 0,
 			nearbyStreetFurniture = world?.NearbyStreetFurniture ?? 0,
+			streetFurnitureInsideRideRoad = world?.StreetFurnitureInsideRideRoad ?? 0,
+			streetFurnitureProxiesSuppressed = world?.StreetFurnitureProxiesSuppressed ?? 0,
+			streetFurnitureProxiesRelocatedRoadside = world?.StreetFurnitureProxiesRelocated ?? 0,
+			streetFurnitureIntentionallyRetainedInRoad = world?.StreetFurnitureIntentionallyRetainedInRoad ?? 0,
+			riderLateralOffsetMeters = world?.RiderLateralOffsetMeters ?? 0,
+			nearestStreetFurnitureOsmId = world?.NearestStreetFurniture?.OsmId,
+			nearestStreetFurnitureCategory = world?.NearestStreetFurniture?.Category,
+			nearestStreetFurnitureSourcePosition = world?.NearestStreetFurniture is { } furnitureSource ? ToDebugVector(furnitureSource.SourcePosition) : null,
+			nearestStreetFurnitureVisualPosition = world?.NearestStreetFurniture is { } furnitureVisual ? ToDebugVector(furnitureVisual.VisualPosition) : null,
+			nearestStreetFurnitureRelocated = world?.NearestStreetFurniture?.Relocated,
 			backgroundStreetsLoaded = world?.BackgroundStreetsLoaded ?? 0,
 			visibleStreetChunks = world?.VisibleStreetChunks ?? 0,
+			terrainNearChunks = world?.NearTerrainChunks ?? 0,
+			terrainFarChunks = world?.FarTerrainChunks ?? 0,
+			terrainVisibleChunks = world?.VisibleTerrainChunks ?? 0,
+			terrainNearSpacingMeters = world?.TerrainSpacingMeters ?? 0,
+			terrainFarSpacingMeters = world?.FarTerrainSpacingMeters ?? 0,
 			visualSampleBefore = pose.SampleIndexBefore,
 			visualSampleAfter = pose.SampleIndexAfter,
 			visualInterpolation = pose.Interpolation,
@@ -406,6 +421,9 @@ public partial class RideSessionNode : Node
 		GameLogger.Log("debug_marker", snapshot);
 		GD.Print($"DEBUG MARKER {marker} @ ride distance {_rideState.DistanceMeters:F1} m");
 		_hudController?.UpdateDebugOverlay(snapshot);
+		ScreenshotCaptureFailurePolicy.TryCapture(
+			() => { if (_hudController is not null) _ = _hudController.CaptureDebugScreenshotAsync(snapshot); },
+			ex => GD.PushWarning($"Debug marker {marker} was saved, but screenshot capture could not start: {ex.Message}"));
 	}
 
 	public void JumpToRouteDistance(string distanceText)

@@ -9,7 +9,11 @@ public sealed record RouteBuildingPoint(double Longitude, double Latitude);
 public sealed record RouteBuildingData(string OsmType, long OsmId, string? Name, string BuildingType,
     double HeightMeters, string HeightSource, double? BaseElevationMeters,
     IReadOnlyList<RouteBuildingPoint> Footprint, double DistanceFromRouteMeters,
-    double NearestRouteDistanceMeters, IReadOnlyDictionary<string, string> SourceTags);
+    double NearestRouteDistanceMeters, IReadOnlyDictionary<string, string> SourceTags)
+{
+    public string VisualCategory { get; init; } = "generic";
+    public int MaterialVariant { get; init; }
+}
 
 /// <summary>Loads and validates the compact generated OSM building bundle.</summary>
 public static class RouteBuildingDataLoader

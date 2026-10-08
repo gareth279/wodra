@@ -69,7 +69,7 @@ public partial class VegetationLayer : Node3D
             var instance = new MeshInstance3D
             {
                 Name = $"VegetationAreaChunk{group.Key:D2}", Mesh = surface.Commit(),
-                MaterialOverride = new StandardMaterial3D { AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1 }
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 0.96f }
             };
             AddChild(instance); AddNode(chunkNodes, group.Key, instance); chunkCenters[group.Key] = centerDistance;
             AreaTriangleCount += triangles; AreaMeshInstanceCount++;
@@ -85,7 +85,7 @@ public partial class VegetationLayer : Node3D
                 new Vector3(1, (float)(item.Tree.HeightMeters * .3), 1))).ToArray();
             nodes.Add(CreateMultiMesh("TreeTrunks", new CylinderMesh
             { TopRadius = .12f, BottomRadius = .19f, Height = 1, RadialSegments = 5 },
-                new StandardMaterial3D { AlbedoColor = new Color(.31f, .2f, .12f), Roughness = 1 }, trunkTransforms));
+                new StandardMaterial3D { AlbedoColor = new Color(.31f, .2f, .12f), Roughness = 0.9f }, trunkTransforms));
 
             foreach (var type in new[] { "conifer", "broadleaf" })
             {
@@ -107,7 +107,7 @@ public partial class VegetationLayer : Node3D
                         new Vector3(radius, canopyHeight, radius));
                 }).ToArray();
                 nodes.Add(CreateMultiMesh(type == "conifer" ? "ConiferCanopies" : "BroadleafCanopies", canopy,
-                    new StandardMaterial3D { AlbedoColor = type == "conifer" ? new Color(.14f, .34f, .18f) : new Color(.2f, .43f, .19f), Roughness = 1 }, canopyTransforms));
+                    new StandardMaterial3D { AlbedoColor = type == "conifer" ? new Color(.14f, .34f, .18f) : new Color(.2f, .43f, .19f), Roughness = 0.96f }, canopyTransforms));
             }
             foreach (var node in nodes) AddChild(node);
             MultiMeshCount += nodes.Count;
@@ -146,8 +146,8 @@ public partial class VegetationLayer : Node3D
     private static Color AreaColor(string category) => category switch
     {
         "wood" or "forest" or "nature-reserve" => new Color(.16f, .3f, .17f),
-        "grass" or "grassland" or "meadow" => new Color(.35f, .48f, .23f),
-        _ => new Color(.2f, .4f, .24f)
+        "grass" or "grassland" or "meadow" => new Color(.32f, .43f, .23f),
+        _ => new Color(.2f, .37f, .24f)
     };
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
     private static Transform3D ScaledTransform(Vector3 position, Vector3 scale) =>

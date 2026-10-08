@@ -20,6 +20,7 @@ public sealed class RouteAuthoringConfig
     public double MaximumConnectorDistanceMeters { get; init; } = 350;
     public double MinimumPreferredRefPercent { get; init; } = 90;
     public ElevationBuildOptions? Elevation { get; init; }
+    public TerrainBuildOptions? Terrain { get; init; }
     public BuildingBuildOptions? Buildings { get; init; } = new();
     public VegetationBuildOptions? Vegetation { get; init; } = new();
     public StreetFurnitureBuildOptions? StreetFurniture { get; init; } = new();
@@ -57,6 +58,7 @@ public sealed class RouteAuthoringConfig
             throw new InvalidDataException("Road cost multipliers must be finite values greater than or equal to 1.");
         if (RoutingMode is not ("anchors" or "roadRef")) throw new InvalidDataException("routingMode must be 'anchors' or 'roadRef'.");
         Elevation?.Validate();
+        Terrain?.Validate(Elevation);
         Buildings?.Validate();
         Vegetation?.Validate();
         StreetFurniture?.Validate();
@@ -87,6 +89,45 @@ public sealed class RouteAuthoringConfig
         if (Loop && (Math.Abs(Anchors[0].Latitude - Anchors[^1].Latitude) > 0.00001
             || Math.Abs(Anchors[0].Longitude - Anchors[^1].Longitude) > 0.00001))
             throw new InvalidDataException("For loop routes, the final anchor must close onto the first anchor.");
+    }
+}
+
+public sealed class TerrainBuildOptions
+{
+    public bool Enabled { get; init; }
+    public double NearRadiusMeters { get; init; } = 250;
+    public double FarRadiusMeters { get; init; } = 750;
+    public double SpacingMeters { get; init; } = 10;
+    public double FarSpacingMeters { get; init; } = 25;
+    public double CorridorRadiusMeters { get; init; } = 250;
+    public double ChunkSizeMeters { get; init; } = 250;
+    public double FarChunkSizeMeters { get; init; } = 500;
+    public double TransitionOverlapMeters { get; init; } = 10;
+    public double FarVerticalBiasMeters { get; init; } = 0.15;
+    public double VerticalBiasMeters { get; init; } = 0.08;
+    public double RoadClearanceMeters { get; init; } = 0.15;
+    public double RoadCorridorRadiusMeters { get; init; } = 5;
+    public string ElevationCacheDirectory { get; init; } = "routes/cache/elevation";
+
+    public void Validate(ElevationBuildOptions? elevation)
+    {
+        if (!Enabled) return;
+        if (elevation is not { Enabled: true })
+            throw new InvalidDataException("Terrain requires enabled LINZ route elevation authoring.");
+        if (!double.IsFinite(NearRadiusMeters) || NearRadiusMeters <= 0
+            || !double.IsFinite(FarRadiusMeters) || FarRadiusMeters <= NearRadiusMeters
+            || !double.IsFinite(SpacingMeters) || SpacingMeters < 5 || SpacingMeters > 50
+            || !double.IsFinite(FarSpacingMeters) || FarSpacingMeters < SpacingMeters || FarSpacingMeters > 100
+            || !double.IsFinite(CorridorRadiusMeters) || CorridorRadiusMeters <= 0 || CorridorRadiusMeters > 1000
+            || !double.IsFinite(ChunkSizeMeters) || ChunkSizeMeters < SpacingMeters || ChunkSizeMeters > 1000
+            || !double.IsFinite(FarChunkSizeMeters) || FarChunkSizeMeters < FarSpacingMeters || FarChunkSizeMeters > 2000
+            || !double.IsFinite(TransitionOverlapMeters) || TransitionOverlapMeters < 0 || TransitionOverlapMeters > NearRadiusMeters / 2
+            || !double.IsFinite(FarVerticalBiasMeters) || FarVerticalBiasMeters < 0
+            || !double.IsFinite(VerticalBiasMeters) || VerticalBiasMeters < 0
+            || !double.IsFinite(RoadClearanceMeters) || RoadClearanceMeters < 0
+            || !double.IsFinite(RoadCorridorRadiusMeters) || RoadCorridorRadiusMeters <= 0
+            || string.IsNullOrWhiteSpace(ElevationCacheDirectory))
+            throw new InvalidDataException("Terrain spacing, corridor, chunk, bias, clearance, or cache settings are invalid.");
     }
 }
 
@@ -284,7 +325,30 @@ public sealed record BuildingReport(int NearbyCandidates, int SelectedCount, int
     int MalformedOrExcludedRecords, int OriginalVertices, int SimplifiedVertices, int LargestFootprintVertices,
     double MinimumHeightMeters, double MaximumHeightMeters, double MedianHeightMeters,
     int GeneratedTriangleCount, int RuntimeMeshChunkCount, int RuntimeMeshInstanceCount,
-    double ExtractionSeconds, string SourcePbfFilename);
+    double ExtractionSeconds, string SourcePbfFilename)
+{
+    public IReadOnlyDictionary<string, int> VisualCategoryCounts { get; init; } = new Dictionary<string, int>();
+    public IReadOnlyDictionary<string, int> RoofShapeTagCounts { get; init; } = new Dictionary<string, int>();
+    public int BuildingsWithRoofMetadata { get; init; }
+    public int ExplicitBuildingColourCount { get; init; }
+    public int ExplicitRoofColourCount { get; init; }
+    public int ExplicitMaterialTagCount { get; init; }
+    public int EffectiveFlatRoofCount { get; init; }
+    public int RoofedBuildingCount { get; init; }
+    public int EffectiveGabledRoofCount { get; init; }
+    public int EffectiveHippedRoofCount { get; init; }
+    public int FlatRoofFallbackCount { get; init; }
+    public int WindowDetailedBuildingCount { get; init; }
+    public int VisualFacadeTriangleCount { get; init; }
+    public int VisualRoofTriangleCount { get; init; }
+    public int VisualWindowTriangleCount { get; init; }
+    public int VisualTriangleCount { get; init; }
+    public int FacadePaletteVariantCount { get; init; }
+    public int RuntimeSharedMaterialCount { get; init; }
+    public int VisualRuntimeMeshChunkCount { get; init; }
+    public int VisualRuntimeMeshInstanceCount { get; init; }
+    public int VisualRuntimeSurfaceCount { get; init; }
+}
 
 public sealed record VegetationReport(int PolygonsConsidered, int PolygonsIncluded,
     IReadOnlyDictionary<string, int> CategoryCounts, int NamedAreas, int ExplicitTreeCount, int TreeRowCount,

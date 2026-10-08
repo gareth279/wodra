@@ -17,8 +17,12 @@ public partial class ChaseCamera : Camera3D
 
     public void Follow(Vector3 riderPosition, Vector3 forward, double delta)
     {
-        var targetPosition = riderPosition - forward * 8 + Vector3.Up * 4;
-        var lookTarget = riderPosition + forward * 6 + Vector3.Up;
+        var riderAnchor = new System.Numerics.Vector3(riderPosition.X,riderPosition.Y,riderPosition.Z);
+        var routeForward = new System.Numerics.Vector3(forward.X,forward.Y,forward.Z);
+        var follow = ChaseCameraMath.FollowPosition(riderAnchor,routeForward);
+        var look = ChaseCameraMath.LookTarget(riderAnchor,routeForward);
+        var targetPosition = new Vector3(follow.X,follow.Y,follow.Z);
+        var lookTarget = new Vector3(look.X,look.Y,look.Z);
         var weight = _snap ? 1 : (float)(1 - Math.Exp(-6 * delta));
         GlobalPosition = GlobalPosition.Lerp(targetPosition, weight);
         _lookTarget = _lookTarget.Lerp(lookTarget, weight);

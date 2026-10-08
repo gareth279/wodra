@@ -8,5 +8,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DebugRideDiagnostics.cs" Link="DebugRideDiagnostics.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/ScreenshotCaptureMetadata.cs" Link="ScreenshotCaptureMetadata.cs" />
   </ItemGroup>
 </Project>
