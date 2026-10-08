@@ -328,14 +328,14 @@ public partial class RideWorldView : Node3D
         if (route.Id == "dunedin-one-way-oval-gardens")
         {
             var terrain = new TerrainLayer { Name = "LINZTerrain" };
-            if (terrain.Configure(_geometry, "GWift.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json", route.Id))
+            if (terrain.Configure(_geometry, "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json", route.Id))
             {
                 _terrainLayer = terrain;
                 _routeRoot.AddChild(terrain);
                 _terrainLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
+                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
             if (buildings.Count > 0)
                 groundPlaneY = Math.Min(groundPlaneY,
@@ -345,13 +345,13 @@ public partial class RideWorldView : Node3D
             _buildingLayer.Configure(_geometry, route, buildings);
             _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             var landmarks = RouteLandmarkDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json", route.Id);
+                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json", route.Id);
             _landmarkLayer = new LandmarkLayer { Name = "RouteLandmarks" };
             _routeRoot.AddChild(_landmarkLayer);
             _landmarkLayer.Configure(_geometry, route, landmarks, buildings);
             _landmarkLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             vegetationData = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
+                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
             var vegOriginElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
             var renderableAreas = vegetationData.Areas.Where(item => item.RenderGround && item.BaseElevationMeters is not null).ToArray();
             if (renderableAreas.Length > 0)
@@ -362,7 +362,7 @@ public partial class RideWorldView : Node3D
             _vegetationLayer.Configure(_geometry, route, vegetationData);
             _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", route.Id);
+                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", route.Id);
             _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
             _routeRoot.AddChild(_streetFurnitureLayer);
             _streetFurnitureLayer.Configure(_geometry, route, furniture);
@@ -372,7 +372,7 @@ public partial class RideWorldView : Node3D
             _roadMarkingLayer.Configure(_geometry, furniture);
             _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             var streets=RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
-                "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json",route.Id);
+                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json",route.Id);
             if(streets is not null){
                 _backgroundStreetLayer=new BackgroundStreetLayer{Name="BackgroundStreets"};
                 _routeRoot.AddChild(_backgroundStreetLayer);

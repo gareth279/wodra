@@ -267,7 +267,12 @@ static void ScreenshotNames()
         || !stem.Contains("marker-003", StringComparison.Ordinal))
         throw new Exception("Marker PNG/JSON names did not remain associated.");
     if (ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.Clean, null, _ => false)
-        != "gwift-20261008-142315-clean") throw new Exception("Clean filename format changed unexpectedly.");
+        != "wodra-20261008-142315-clean") throw new Exception("Clean filename format changed unexpectedly.");
+    if (ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.Hud, null, _ => false)
+        != "wodra-20261008-142315-hud"
+        || ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.DebugMarker, 3, _ => false)
+        != "wodra-20261008-142315-marker-003")
+        throw new Exception("HUD or marker screenshot filename did not use Wodra naming.");
 }
 
 static void ScreenshotMetadataFields()
@@ -304,10 +309,14 @@ static void ScreenshotModeSelection()
 
 static void ScreenshotDirectoryFallback()
 {
-    var root = Path.Combine(Path.GetTempPath(), "gwift-screenshot-test-" + Guid.NewGuid().ToString("N"));
+    var root = Path.Combine(Path.GetTempPath(), "wodra-screenshot-test-" + Guid.NewGuid().ToString("N"));
     Directory.CreateDirectory(root);
     try
     {
+        var pictures = Path.Combine(root, "Pictures");
+        var preferred = ScreenshotCaptureFileStore.CreateScreenshotDirectory(pictures, Path.Combine(root, "unused"));
+        if (preferred != Path.Combine(pictures, "Wodra") || !Directory.Exists(preferred))
+            throw new Exception("Screenshot store did not create Pictures/Wodra.");
         var blocker = Path.Combine(root, "pictures-file");
         File.WriteAllText(blocker, "not a directory");
         var fallback = Path.Combine(root, "godot-user-data");

@@ -72,8 +72,8 @@ lowest route point; this is deliberately simple scenery, not a terrain engine.
 From the repository root:
 
 ```powershell
-dotnet build gwift.sln -c Debug -m:1
-dotnet build gwift.sln -c Release -m:1
+dotnet build wodra.sln -c Debug -m:1
+dotnet build wodra.sln -c Release -m:1
 dotnet run --project tests/IndoorCycling.VisualRoute.Tests -c Debug
 dotnet run --project tests/IndoorCycling.Recording.Tests -c Debug
 ```

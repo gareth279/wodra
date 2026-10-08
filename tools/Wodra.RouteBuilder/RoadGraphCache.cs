@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 internal sealed record RoadGraphCacheData(string CacheKey, List<RoadNode> Nodes, List<RoadEdge> Edges,
     int EligibleWayCount, int RetainedNodeCount, double CacheBuildSeconds);

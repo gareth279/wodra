@@ -2,7 +2,7 @@ using System.Collections;
 using System.Reflection;
 using OsmSharp;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 /// <summary>Shared, non-fabricating OSM tag and outer-ring helpers for PBF polygon extraction.</summary>
 public static class OsmPbfGeometry

@@ -1,10 +1,15 @@
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Persistence;
 using IndoorCycling.Persistence.Sqlite;
+using System.Text.Json;
 
-var temporaryRoot = Path.Combine(Path.GetTempPath(), "gwift-persistence-tests-" + Guid.NewGuid().ToString("N"));
+var temporaryRoot = Path.Combine(Path.GetTempPath(), "wodra-persistence-tests-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(temporaryRoot);
 try
 {
+    await TestBrandRenameMigration(temporaryRoot);
+    TestNewProductPaths(temporaryRoot);
+
     var repository = new SqliteRideHistoryRepository(Path.Combine(temporaryRoot, "history.sqlite3"));
     await repository.InitializeAsync();
     var rider = await repository.EnsureRiderProfileAsync("Test Rider");
@@ -65,4 +70,93 @@ finally { try { Directory.Delete(temporaryRoot, true); } catch { } }
 static void Assert(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAIL " + name);
+}
+
+static async Task TestBrandRenameMigration(string root)
+{
+    var legacy = Path.Combine(root, "legacy-GWift");
+    var legacyProject = Path.Combine(root, "legacy-IndoorCycling.Game");
+    var current = Path.Combine(root, "new-Wodra");
+    var legacyFit = Path.Combine(root, "old-media", "gwift-ride.fit");
+    var legacyScreenshot = Path.Combine(root, "old-media", "GWift", "ride.png");
+    Directory.CreateDirectory(Path.Combine(legacy, "settings"));
+    Directory.CreateDirectory(Path.Combine(legacy, "data"));
+    Directory.CreateDirectory(Path.Combine(legacy, "logs"));
+    Directory.CreateDirectory(Path.Combine(legacy, "screenshots"));
+    Directory.CreateDirectory(Path.GetDirectoryName(legacyFit)!);
+    Directory.CreateDirectory(Path.GetDirectoryName(legacyScreenshot)!);
+    File.WriteAllText(Path.Combine(legacy, "settings", "settings.json"),
+        "{\"DebugModeEnabled\":true,\"Rider\":{\"Name\":\"Existing Rider\",\"WeightKg\":77},\"Recording\":{\"OutputFolder\":\"%USERPROFILE%\\\\Documents\\\\gwift\"}}");
+    File.WriteAllText(Path.Combine(legacy, "logs", "old.jsonl"), "old log");
+    File.WriteAllText(Path.Combine(legacy, "screenshots", "old.png"), "old screenshot");
+    Directory.CreateDirectory(Path.Combine(legacyProject, "logs"));
+    File.WriteAllText(Path.Combine(legacyProject, "logs", "project-log.jsonl"), "project log");
+    File.WriteAllText(legacyFit, "existing FIT bytes");
+    File.WriteAllText(legacyScreenshot, "existing screenshot bytes");
+
+    var legacyRepository = new SqliteRideHistoryRepository(Path.Combine(legacy, "data", "gwift.db"));
+    await legacyRepository.InitializeAsync();
+    var profile = await legacyRepository.EnsureRiderProfileAsync("Existing Rider");
+    var rideId = Guid.NewGuid();
+    var now = DateTimeOffset.UtcNow;
+    var ride = new RideActivityDraft(rideId, profile.Id, "dunedin", "Dunedin", now,
+        RideActivityStatus.Completed, 1200, 1000, 1, 30, 42, 240, 300, 80, 120, 33, legacyFit);
+    await legacyRepository.SaveCompletedActivityAsync(ride,
+        [new RideActivityMedia(Guid.NewGuid(), rideId, legacyScreenshot, null, DateTimeOffset.UtcNow, "Clean", null)]);
+
+    var result = LegacyUserDataMigrator.Migrate(current, [legacy, legacyProject]);
+    Assert(result.DatabaseMigrated, "legacy gwift.db migrated to wodra.db");
+    Assert(File.Exists(Path.Combine(current, "data", "gwift.db")) == false, "legacy database uses the new filename");
+    Assert(File.Exists(Path.Combine(legacy, "data", "gwift.db")), "legacy database remains intact");
+    Assert(File.ReadAllText(Path.Combine(current, "settings", "settings.json")).Contains("Existing Rider"), "settings copied intact");
+    Assert(File.Exists(Path.Combine(current, "logs", "old.jsonl")) && File.Exists(Path.Combine(current, "screenshots", "old.png")),
+        "legacy logs and user-data screenshots copied");
+    Assert(File.Exists(Path.Combine(current, "logs", "project-log.jsonl")), "former project-name user-data directory is detected");
+    using (var migratedSettings = JsonDocument.Parse(File.ReadAllText(Path.Combine(current, "settings", "settings.json"))))
+    {
+        var settings = migratedSettings.RootElement;
+        Assert(settings.GetProperty("DebugModeEnabled").GetBoolean()
+            && settings.GetProperty("Rider").GetProperty("Name").GetString() == "Existing Rider"
+            && settings.GetProperty("Rider").GetProperty("WeightKg").GetDouble() == 77,
+            "user settings survive legacy migration");
+    }
+
+    var migrated = new SqliteRideHistoryRepository(Path.Combine(current, "data", "wodra.db"));
+    await migrated.InitializeAsync();
+    var migratedRide = await migrated.GetActivityAsync(rideId);
+    var migratedMedia = await migrated.GetActivityMediaAsync(rideId);
+    Assert(migratedRide?.FitFilePath == legacyFit && File.Exists(migratedRide.FitFilePath), "absolute legacy FIT path remains readable and unchanged");
+    Assert(migratedMedia.Single().ImagePath == legacyScreenshot && File.Exists(migratedMedia.Single().ImagePath),
+        "absolute legacy screenshot path remains readable and unchanged");
+    var secondRun = LegacyUserDataMigrator.Migrate(current, [legacy, legacyProject]);
+    Assert(secondRun.CopiedFiles.Count == 0 && !secondRun.DatabaseMigrated, "migration is idempotent");
+
+    var populatedWodra = Path.Combine(root, "existing-Wodra");
+    Directory.CreateDirectory(Path.Combine(populatedWodra, "settings"));
+    File.WriteAllText(Path.Combine(populatedWodra, "settings", "settings.json"), "Wodra settings win");
+    var existingRepository = new SqliteRideHistoryRepository(Path.Combine(populatedWodra, "data", "wodra.db"));
+    await existingRepository.InitializeAsync();
+    await existingRepository.EnsureRiderProfileAsync("Wodra Profile");
+    var blockedCopy = LegacyUserDataMigrator.Migrate(populatedWodra, [legacy, legacyProject]);
+    Assert(!blockedCopy.DatabaseMigrated && File.ReadAllText(Path.Combine(populatedWodra, "settings", "settings.json")) == "Wodra settings win",
+        "existing Wodra data is never overwritten");
+    var stillExisting = new SqliteRideHistoryRepository(Path.Combine(populatedWodra, "data", "wodra.db"));
+    await stillExisting.InitializeAsync();
+    Assert((await stillExisting.GetProfileAsync((await stillExisting.EnsureRiderProfileAsync("Ignore")).Id))?.Name == "Wodra Profile",
+        "existing Wodra database remains readable");
+}
+
+static void TestNewProductPaths(string root)
+{
+    var profile = Path.Combine(root, "profile");
+    var documents = Path.Combine(root, "Documents");
+    var migratedSetting = ProductFilePaths.UpgradeLegacyFitOutputFolder(
+        "%USERPROFILE%\\Documents\\gwift", profile, documents);
+    Assert(migratedSetting == ProductFilePaths.DefaultFitOutputFolderSetting, "legacy default FIT directory upgrades to Wodra");
+    Assert(ProductFilePaths.ResolveFitOutputFolder("", profile, documents) == Path.Combine(documents, "Wodra"),
+        "fresh install FIT folder is Wodra");
+    Assert(ProductFilePaths.ResolveFitOutputFolder(ProductFilePaths.DefaultFitOutputFolderSetting, profile, documents)
+        == Path.Combine(profile, "Documents", "Wodra"), "configured FIT folder resolves under Documents/Wodra");
+    Assert(ProductFilePaths.CreateFitFileName(new DateTime(2026, 10, 9, 14, 23, 15)) == "wodra-20261009-142315.fit",
+        "new FIT filename uses lowercase Wodra brand");
 }

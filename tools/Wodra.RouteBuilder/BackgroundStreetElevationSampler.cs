@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public static class BackgroundStreetElevationSampler
 {
@@ -12,12 +12,12 @@ public static class BackgroundStreetElevationSampler
         var rasterDirectory = Path.Combine(cacheDirectory, "rasters");
         if (!Directory.Exists(rasterDirectory) || !Directory.EnumerateFiles(rasterDirectory).Any())
             throw new InvalidDataException($"No cached LINZ DEM rasters found in '{rasterDirectory}'. Background street elevations will not be invented.");
-        var path = Path.Combine(Path.GetTempPath(), $"gwift-street-elevation-{Guid.NewGuid():N}.json");
+        var path = Path.Combine(Path.GetTempPath(), $"wodra-street-elevation-{Guid.NewGuid():N}.json");
         var timer=Stopwatch.StartNew();
         try
         {
             await File.WriteAllTextAsync(path,JsonSerializer.Serialize(new { streets=input.Streets.Select((s,i)=>new { index=i,points=s.Points.Select(p=>new { latitude=p.Latitude,longitude=p.Longitude }) }) },Options));
-            var script=Path.GetFullPath(Path.Combine("tools","GWift.RouteBuilder","elevation","sample_streets.py"));
+            var script=Path.GetFullPath(Path.Combine("tools","Wodra.RouteBuilder","elevation","sample_streets.py"));
             var start=new ProcessStartInfo("python"){UseShellExecute=false,RedirectStandardError=true,RedirectStandardOutput=true};start.ArgumentList.Add(script);start.ArgumentList.Add(path);start.ArgumentList.Add(rasterDirectory);
             using var process=Process.Start(start)??throw new InvalidOperationException("Could not start Python for LINZ street sampling.");
             var stderr=process.StandardError.ReadToEndAsync();await process.WaitForExitAsync();if(process.ExitCode!=0)throw new InvalidDataException((await stderr).Trim());

@@ -3,7 +3,7 @@ using System.Reflection;
 using OsmSharp;
 using OsmSharp.Streams;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record RouteLandmark(string Name, string Category, double Latitude, double Longitude,
     double DistanceFromRouteMeters, double NearestRouteDistanceMeters, string OsmType, long OsmId,

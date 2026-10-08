@@ -2,7 +2,7 @@ using System.Globalization;
 using OsmSharp;
 using OsmSharp.Streams;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record BackgroundStreetPoint(double Latitude, double Longitude, double ElevationMeters);
 public sealed record BackgroundStreet(long OsmId, string? Name, string? Ref, string Highway, bool Oneway,

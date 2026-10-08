@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record GeoPoint(double Latitude, double Longitude);
 public sealed record RouteAnchor(string Name, double SourceDistanceMeters, double Latitude, double Longitude);

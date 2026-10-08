@@ -105,7 +105,7 @@ public sealed class ScreenshotCaptureService
         }
         catch (Exception ex)
         {
-            GD.PushWarning($"Could not create the GWift screenshot directory: {ex.Message}");
+            GD.PushWarning($"Could not create the Wodra screenshot directory: {ex.Message}");
             _hud.ShowScreenshotToast("Screenshot could not be saved");
             return null;
         }

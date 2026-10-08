@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="IndoorCycling.Game"
+config/name="Wodra"
 run/main_scene="uid://bqhmueagpbut7"
 config/features=PackedStringArray("4.6", "C#")
 

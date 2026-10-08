@@ -19,11 +19,11 @@ public static class GameLogger
 		var logDir = ProjectSettings.GlobalizePath("user://logs");
 		Directory.CreateDirectory(logDir);
 
-		LogPath = Path.Combine(logDir, $"gwift-{System.DateTime.Now:yyyyMMdd-HHmmss}.jsonl");
+		LogPath = Path.Combine(logDir, $"wodra-{System.DateTime.Now:yyyyMMdd-HHmmss}.jsonl");
 		_initialised = true;
 
 		Log("logger_started", new { logPath = LogPath });
-		GD.Print($"GWift log: {LogPath}");
+		GD.Print($"Wodra log: {LogPath}");
 	}
 
 	public static void Log(string type, object? payload = null)

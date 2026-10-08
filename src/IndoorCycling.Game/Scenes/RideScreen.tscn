@@ -78,7 +78,7 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1236452577]
 layout_mode = 2
-text = "Gwift"
+text = "Wodra"
 
 [node name="StatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=342786995]
 layout_mode = 2

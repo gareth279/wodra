@@ -122,7 +122,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var bundle = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
         var roads = bundle.Streets.Select(street => new AmbientRoadInput(street.OsmId, street.Highway, street.Oneway,
             street.WidthMeters, BackgroundStreetGeometry.ConvertPoints(route, street.Points))).ToArray();
         var cars = AmbientActorMath.BuildCarPaths(roads);
@@ -140,7 +140,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var bundle = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json", "dunedin-one-way-oval-gardens");
         var roads = bundle.Streets.Select(street => new AmbientRoadInput(street.OsmId, street.Highway,
             street.Oneway, street.WidthMeters, BackgroundStreetGeometry.ConvertPoints(route, street.Points), street.Name)).ToArray();
         var paths = AmbientActorMath.BuildCarPaths(roads);
@@ -447,7 +447,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var data = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", "dunedin-one-way-oval-gardens");
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", "dunedin-one-way-oval-gardens");
         var result = RoadMarkingGeometry.Build(route, data.Items.Select(item =>
             new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters)));
         var meshChunks = result.Triangles.Select(item => (int)(item.RouteDistanceMeters / RoadMarkingGeometry.SpatialChunkLengthMeters)).Distinct().Count();
@@ -604,7 +604,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var landmarks = RouteLandmarkDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json", route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json", route.Id);
         if (landmarks.Count is < 10 or > 20) throw new Exception($"Unexpected landmark count {landmarks.Count}.");
         if (landmarks.Max(item => item.DistanceFromRouteMeters) > 150)
             throw new Exception("Landmark bundle contains a feature outside the search radius.");
@@ -619,7 +619,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
         if (buildings.Count < 100 || buildings.Any(item => item.BaseElevationMeters is null || item.Footprint.Count < 4))
             throw new Exception($"Building bundle is incomplete ({buildings.Count} buildings).");
         if (buildings.Any(item => !double.IsFinite(item.BaseElevationMeters!.Value)))
@@ -630,7 +630,7 @@ var tests = new (string Name, Action Run)[]
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var geometry = new VisualRoute(route);
         var building = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id)[0];
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id)[0];
         var point = building.Footprint[0];
         var converted = geometry.GetPositionForCoordinate(point.Latitude, point.Longitude, building.BaseElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
@@ -731,7 +731,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var buildings=RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json",route.Id)
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json",route.Id)
             .OrderBy(b=>b.OsmType,StringComparer.Ordinal).ThenBy(b=>b.OsmId);
         using var buffer=new MemoryStream();using(var writer=new BinaryWriter(buffer,System.Text.Encoding.UTF8,true))
         foreach(var b in buildings)
@@ -746,7 +746,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
         if (vegetation.Areas.Count != 25 || vegetation.Trees.Count != 323)
             throw new Exception($"Unexpected vegetation bundle sizes: {vegetation.Areas.Count} areas, {vegetation.Trees.Count} trees.");
         if (vegetation.Areas.Any(area => area.BaseElevationMeters is null || !double.IsFinite(area.BaseElevationMeters.Value)
@@ -763,7 +763,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var furniture=RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id);
         if(furniture.Items.Count < 100 || furniture.Items.Any(item=>item.ElevationMeters is null || !double.IsFinite(item.ElevationMeters.Value)))
             throw new Exception($"Street furniture bundle has incomplete LINZ elevations ({furniture.Items.Count} items).");
         if(furniture.Items.Any(item=>item.DistanceFromRouteMeters < 0 || item.NearestRouteDistanceMeters < 0))
@@ -776,7 +776,7 @@ var tests = new (string Name, Action Run)[]
         var route=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var geometry=new VisualRoute(route);
         var item=RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id).Items[0];
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id).Items[0];
         var converted=geometry.GetPositionForCoordinate(item.Latitude,item.Longitude,item.ElevationMeters!.Value);
         var origin=route.Points![0]; const double radians=Math.PI/180; const double earth=6371000;
         var expected=new Vector3((float)((item.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
@@ -789,7 +789,7 @@ var tests = new (string Name, Action Run)[]
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var geometry = new VisualRoute(route);
         var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
         var tree = vegetation.Trees[0];
         var localTree = geometry.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
@@ -813,7 +813,7 @@ var tests = new (string Name, Action Run)[]
         var route = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var geometry = new VisualRoute(route);
         var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
         foreach (var building in buildings)
         {
             var ring = building.Footprint.Select(point =>
@@ -955,7 +955,7 @@ var tests = new (string Name, Action Run)[]
         var route=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var geometry=new VisualRoute(route);
         var buildings=RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-            "GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json",route.Id);
+            "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json",route.Id);
         var triangles=0;var facade=0;var roof=0;var windows=0;var detailed=0;
         var flat=0;var gabled=0;var hipped=0;var fallback=0;var chunksWithWindows=new HashSet<int>();
         var buildTimer=System.Diagnostics.Stopwatch.StartNew();
@@ -1253,7 +1253,7 @@ var tests = new (string Name, Action Run)[]
     }),
     ("bundled Dunedin terrain loads deterministically and includes route elevation range", () =>
     {
-        const string resource = "GWift.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json";
+        const string resource = "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json";
         var a = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly, resource,
             "dunedin-one-way-oval-gardens")!;
         var b = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly, resource,

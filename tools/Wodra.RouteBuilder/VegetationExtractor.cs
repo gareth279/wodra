@@ -1,7 +1,7 @@
 using OsmSharp;
 using OsmSharp.Streams;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record VegetationPoint(double Longitude, double Latitude);
 public sealed record VegetationArea(string OsmType, long OsmId, string? Name, string Category,

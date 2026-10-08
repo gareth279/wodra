@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public static class BuildingElevationSampler
 {
@@ -17,7 +17,7 @@ public static class BuildingElevationSampler
         var rasterDirectory = Path.Combine(cacheDirectory, "rasters");
         if (!Directory.Exists(rasterDirectory) || !Directory.EnumerateFiles(rasterDirectory).Any())
             throw new InvalidDataException($"No cached LINZ DEM rasters found in '{rasterDirectory}'. Building elevations are required and will not be invented.");
-        var inputPath = Path.Combine(Path.GetTempPath(), $"gwift-building-elevation-{Guid.NewGuid():N}.json");
+        var inputPath = Path.Combine(Path.GetTempPath(), $"wodra-building-elevation-{Guid.NewGuid():N}.json");
         try
         {
             var samples = input.Buildings.Select(item =>
@@ -26,9 +26,9 @@ public static class BuildingElevationSampler
                 return new Sample(Key(item), ring.Average(point => point.Longitude), ring.Average(point => point.Latitude));
             }).ToArray();
             await File.WriteAllTextAsync(inputPath, JsonSerializer.Serialize(new { samples }, JsonOptions));
-            var script = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tools", "GWift.RouteBuilder", "elevation", "sample_buildings.py");
+            var script = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tools", "Wodra.RouteBuilder", "elevation", "sample_buildings.py");
             script = Path.GetFullPath(script);
-            if (!File.Exists(script)) script = Path.GetFullPath(Path.Combine("tools", "GWift.RouteBuilder", "elevation", "sample_buildings.py"));
+            if (!File.Exists(script)) script = Path.GetFullPath(Path.Combine("tools", "Wodra.RouteBuilder", "elevation", "sample_buildings.py"));
             var start = new ProcessStartInfo("python") { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true };
             start.ArgumentList.Add(script); start.ArgumentList.Add(inputPath); start.ArgumentList.Add(rasterDirectory);
             using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start Python for LINZ building sampling.");

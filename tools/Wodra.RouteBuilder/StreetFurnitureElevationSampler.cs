@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public static class StreetFurnitureElevationSampler
 {
@@ -17,12 +17,12 @@ public static class StreetFurnitureElevationSampler
         var rasterDirectory = Path.Combine(cacheDirectory, "rasters");
         if (!Directory.Exists(rasterDirectory) || !Directory.EnumerateFiles(rasterDirectory).Any())
             throw new InvalidDataException($"No cached LINZ DEM rasters found in '{rasterDirectory}'. Street-furniture elevations will not be invented.");
-        var path = Path.Combine(Path.GetTempPath(), $"gwift-furniture-elevation-{Guid.NewGuid():N}.json");
+        var path = Path.Combine(Path.GetTempPath(), $"wodra-furniture-elevation-{Guid.NewGuid():N}.json");
         try
         {
             var trees = input.Items.Select((item, index) => new { index, latitude = item.Latitude, longitude = item.Longitude }).ToArray();
             await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new { areas = Array.Empty<object>(), trees }, Options));
-            var script = Path.GetFullPath(Path.Combine("tools", "GWift.RouteBuilder", "elevation", "sample_vegetation.py"));
+            var script = Path.GetFullPath(Path.Combine("tools", "Wodra.RouteBuilder", "elevation", "sample_vegetation.py"));
             var start = new ProcessStartInfo("python") { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true };
             start.ArgumentList.Add(script); start.ArgumentList.Add(path); start.ArgumentList.Add(rasterDirectory);
             using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start Python for LINZ street-furniture sampling.");

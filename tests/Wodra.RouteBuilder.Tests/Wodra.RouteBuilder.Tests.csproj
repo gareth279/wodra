@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../tools/GWift.RouteBuilder/GWift.RouteBuilder.csproj" />
+    <ProjectReference Include="../../tools/Wodra.RouteBuilder/Wodra.RouteBuilder.csproj" />
     <EmbeddedResource Include="../../routes/generated/dunedin-one-way-oval-gardens.report.json"
-                      LogicalName="GWift.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json" />
+                      LogicalName="Wodra.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json" />
   </ItemGroup>
 </Project>

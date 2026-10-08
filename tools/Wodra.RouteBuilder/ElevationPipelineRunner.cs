@@ -1,12 +1,12 @@
 using System.Diagnostics;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 internal static class ElevationPipelineRunner
 {
     public static async Task RunAsync(string outputDirectory, string id, ElevationBuildOptions options)
     {
-        var script = Path.GetFullPath(Path.Combine("tools", "GWift.RouteBuilder", "elevation", "generate_elevation.py"));
+        var script = Path.GetFullPath(Path.Combine("tools", "Wodra.RouteBuilder", "elevation", "generate_elevation.py"));
         if (!File.Exists(script)) throw new FileNotFoundException("Elevation helper is missing.", script);
         var stem = Path.Combine(Path.GetFullPath(outputDirectory), id);
         var cache = Path.GetFullPath(Path.Combine("routes", "cache", "elevation"));
@@ -29,7 +29,7 @@ internal static class ElevationPipelineRunner
         var outText = await stdout; var errText = await stderr;
         if (!string.IsNullOrWhiteSpace(outText)) Console.Write(outText);
         if (process.ExitCode != 0)
-            throw new InvalidOperationException("Elevation generation failed. Ensure Python dependencies are installed with tools/GWift.RouteBuilder/elevation/requirements.txt. " + errText.Trim());
+            throw new InvalidOperationException("Elevation generation failed. Ensure Python dependencies are installed with tools/Wodra.RouteBuilder/elevation/requirements.txt. " + errText.Trim());
         if (!string.IsNullOrWhiteSpace(errText)) Console.Error.Write(errText);
     }
 }

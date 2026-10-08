@@ -3,6 +3,7 @@ using System.IO;
 using Dynastream.Fit;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Core.Persistence;
 
 using FitDateTime = Dynastream.Fit.DateTime;
 using FitFile = Dynastream.Fit.File;
@@ -194,7 +195,7 @@ public sealed class RideFitRecorder
 		var outputDir = ResolveOutputFolder(GameBootstrap.Settings.Recording.OutputFolder);
 		Directory.CreateDirectory(outputDir);
 
-		FilePath = Path.Combine(outputDir, $"gwift-{System.DateTime.Now:yyyyMMdd-HHmmss}.fit");
+		FilePath = Path.Combine(outputDir, ProductFilePaths.CreateFitFileName(System.DateTime.Now));
 
 		_fitStream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
         _encoder = new Encode(ProtocolVersion.V20);
@@ -288,20 +289,12 @@ public sealed class RideFitRecorder
 		_encoder!.Write(activity);
 	}
 
-    private static string ResolveOutputFolder(string configuredPath)
-    {
-        if (string.IsNullOrWhiteSpace(configuredPath))
-        {
-            var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            return Path.Combine(documents, "gwift");
-        }
-
-        var expanded = configuredPath
-            .Replace("%USERPROFILE%", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))
-            .Replace("%DOCUMENTS%", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-
-        return Environment.ExpandEnvironmentVariables(expanded);
-    }
+	internal static string ResolveOutputFolder(string configuredPath)
+	{
+		return ProductFilePaths.ResolveFitOutputFolder(configuredPath,
+			Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+			Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+	}
 
 	private static FitDateTime ToFitTime(DateTimeOffset timestamp)
 	{

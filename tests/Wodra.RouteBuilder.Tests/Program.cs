@@ -1,5 +1,5 @@
 using System.Text.Json;
-using GWift.RouteBuilder;
+using Wodra.RouteBuilder;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -662,7 +662,7 @@ var tests = new (string Name, Action Run)[]
     ("authoritative Dunedin report retains the approved closure and excludes the Vogel grass edge", () =>
     {
         using var reportStream = typeof(Program).Assembly.GetManifestResourceStream(
-            "GWift.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json")
+            "Wodra.RouteBuilder.Tests.dunedin-one-way-oval-gardens.report.json")
             ?? throw new Exception("Embedded authoritative Dunedin report is missing.");
         using var report = JsonDocument.Parse(reportStream);
         var root = report.RootElement;

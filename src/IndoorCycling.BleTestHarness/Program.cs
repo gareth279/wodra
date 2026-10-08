@@ -10,7 +10,7 @@ var trainer = new WindowsBleTrainerClient();
 
 
 var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
-var logPath = Path.Combine(logDir, $"gwift-{DateTime.Now:yyyyMMdd-HHmmss}.jsonl");
+var logPath = Path.Combine(logDir, $"wodra-{DateTime.Now:yyyyMMdd-HHmmss}.jsonl");
 var logger = new SessionLogger(logPath);
 
 trainer.DebugEvent += evt => logger.Log("trainer_event", evt);
@@ -41,7 +41,7 @@ rideReplayer.FrameApplied += frame =>
     });
 };
 
-Console.WriteLine("GWift BLE Test Harness");
+Console.WriteLine("Wodra BLE Test Harness");
 Console.WriteLine("----------------------");
 Console.WriteLine("Commands:");
 Console.WriteLine("  scan                 - scan for BLE devices for 10 seconds");

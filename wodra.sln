@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
@@ -23,9 +23,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IndoorCycling.VisualRoute.T
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GWift.RouteBuilder", "tools\GWift.RouteBuilder\GWift.RouteBuilder.csproj", "{AB9EBDB2-AE48-4418-B29D-80AB56787EC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.RouteBuilder", "tools\Wodra.RouteBuilder\Wodra.RouteBuilder.csproj", "{AB9EBDB2-AE48-4418-B29D-80AB56787EC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GWift.RouteBuilder.Tests", "tests\GWift.RouteBuilder.Tests\GWift.RouteBuilder.Tests.csproj", "{8B09A2C3-8648-4F20-9678-F3D66C6E1728}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.RouteBuilder.Tests", "tests\Wodra.RouteBuilder.Tests\Wodra.RouteBuilder.Tests.csproj", "{8B09A2C3-8648-4F20-9678-F3D66C6E1728}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IndoorCycling.Persistence.Sqlite", "src\IndoorCycling.Persistence.Sqlite\IndoorCycling.Persistence.Sqlite.csproj", "{F2B5B0AD-29B7-4FCD-8E8E-288785CD8DCE}"
 EndProject

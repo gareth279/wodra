@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public static class VegetationElevationSampler
 {
@@ -21,7 +21,7 @@ public static class VegetationElevationSampler
         var rasterDirectory = Path.Combine(cacheDirectory, "rasters");
         if (!Directory.Exists(rasterDirectory) || !Directory.EnumerateFiles(rasterDirectory).Any())
             throw new InvalidDataException($"No cached LINZ DEM rasters found in '{rasterDirectory}'. Vegetation elevations will not be invented.");
-        var path = Path.Combine(Path.GetTempPath(), $"gwift-vegetation-elevation-{Guid.NewGuid():N}.json");
+        var path = Path.Combine(Path.GetTempPath(), $"wodra-vegetation-elevation-{Guid.NewGuid():N}.json");
         try
         {
             var areas = input.Areas.Select((area, index) => new AreaInput(index,
@@ -29,7 +29,7 @@ public static class VegetationElevationSampler
                     .Select(point => new SamplePoint(point.Latitude, point.Longitude)).ToArray())).ToArray();
             var trees = input.Trees.Select((tree, index) => new TreeInput(index, tree.Latitude, tree.Longitude)).ToArray();
             await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new { areas, trees }, JsonOptions));
-            var script = Path.GetFullPath(Path.Combine("tools", "GWift.RouteBuilder", "elevation", "sample_vegetation.py"));
+            var script = Path.GetFullPath(Path.Combine("tools", "Wodra.RouteBuilder", "elevation", "sample_vegetation.py"));
             var start = new ProcessStartInfo("python") { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true };
             start.ArgumentList.Add(script); start.ArgumentList.Add(path); start.ArgumentList.Add(rasterDirectory);
             using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start Python for LINZ vegetation sampling.");

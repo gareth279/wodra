@@ -85,7 +85,7 @@ public static class RouteCatalog
 			new(5377.550175433017, 5495.292819082555, 0, "Wolseley Street closure")
 		];
 		return RouteDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-			"GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json",
+			"Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json",
 			"dunedin-one-way-oval-gardens", "Dunedin One-way: Oval to Gardens Loop",
 			"OSM SH1 one-way loop from the Oval to Gardens and back. Geometry © OpenStreetMap contributors, ODbL 1.0.",
 			segments);

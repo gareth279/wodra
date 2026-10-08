@@ -180,7 +180,7 @@ static void StopRecordingLeavesRideRunning() => InTemporaryFolder(() =>
 static void InTemporaryFolder(Action action)
 {
     var tempRoot = Path.GetFullPath(Path.GetTempPath());
-    var folder = Path.GetFullPath(Path.Combine(tempRoot, "gwift-recording-tests-" + Guid.NewGuid()));
+    var folder = Path.GetFullPath(Path.Combine(tempRoot, "wodra-recording-tests-" + Guid.NewGuid()));
     if (!folder.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
         throw new Exception("Test directory escaped temporary root.");
     Directory.CreateDirectory(folder);

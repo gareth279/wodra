@@ -1,7 +1,7 @@
 using OsmSharp;
 using OsmSharp.Streams;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record StreetFurnitureItem(string OsmType, long OsmId, string Category, double Latitude,
     double Longitude, double? ElevationMeters, double? DirectionDegrees, double RouteTangentDegrees,

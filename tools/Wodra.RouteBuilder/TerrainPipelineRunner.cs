@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 internal static class TerrainPipelineRunner
 {
     public static async Task RunAsync(string outputDirectory, string id, TerrainBuildOptions options)
     {
-        var script = Path.GetFullPath(Path.Combine("tools", "GWift.RouteBuilder", "elevation", "generate_terrain.py"));
+        var script = Path.GetFullPath(Path.Combine("tools", "Wodra.RouteBuilder", "elevation", "generate_terrain.py"));
         if (!File.Exists(script)) throw new FileNotFoundException("Terrain authoring helper is missing.", script);
         var stem = Path.Combine(Path.GetFullPath(outputDirectory), id);
         var start = new ProcessStartInfo("python")

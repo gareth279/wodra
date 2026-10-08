@@ -34,10 +34,30 @@ public partial class GameBootstrap : Node
 
 	public override void _Ready()
 	{
+		var userDataDirectory = OS.GetUserDataDir();
+		var userDataParent = Directory.GetParent(userDataDirectory)?.FullName;
+		if (userDataParent is not null)
+		{
+			try
+			{
+				var migration = LegacyUserDataMigrator.Migrate(userDataDirectory,
+				[
+					Path.Combine(userDataParent, "GWift"),
+					Path.Combine(userDataParent, "IndoorCycling.Game")
+				]);
+				if (migration.CopiedFiles.Count > 0)
+					GD.Print($"Migrated {migration.CopiedFiles.Count} legacy user-data file(s) into Wodra.");
+			}
+			catch (Exception ex)
+			{
+				GD.PushWarning($"Wodra could not finish importing legacy user data: {ex.Message}");
+			}
+		}
+
 		GameLogger.Init();
 
 		Settings = AppSettings.LoadOrCreate();
-		var historyPath = Path.Combine(ProjectSettings.GlobalizePath("user://data"), "gwift.db");
+		var historyPath = Path.Combine(ProjectSettings.GlobalizePath("user://data"), "wodra.db");
 		RideHistory = new SqliteRideHistoryRepository(historyPath);
 		_persistentRiderTask = InitializePersistentRiderAsync();
 		_ = ObservePersistenceStartupAsync(_persistentRiderTask);
@@ -87,7 +107,7 @@ public partial class GameBootstrap : Node
 		catch (Exception ex)
 		{
 			GameLogger.Log("ride_history_startup_failed", new { message = ex.Message });
-			GD.PushWarning($"Ride history could not initialize. GWift will remain usable, but rides may not be saved: {ex.Message}");
+			GD.PushWarning($"Ride history could not initialize. Wodra will remain usable, but rides may not be saved: {ex.Message}");
 		}
 	}
 

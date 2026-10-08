@@ -1,4 +1,4 @@
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record RoutedPath(IReadOnlyList<RoadNode> Nodes, IReadOnlyList<RoadEdge> Edges, double DistanceMeters);
 

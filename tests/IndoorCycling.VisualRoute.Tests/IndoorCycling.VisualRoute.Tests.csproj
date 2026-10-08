@@ -23,18 +23,18 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadsidePrimitiveMath.cs" Link="RoadsidePrimitiveMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadMarkingGeometry.cs" Link="RoadMarkingGeometry.cs" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.route-points.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.landmarks.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.buildings.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.vegetation.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.street-furniture.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.streets.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.terrain.json"
-                      LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json" />
+                      LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json" />
   </ItemGroup>
 </Project>

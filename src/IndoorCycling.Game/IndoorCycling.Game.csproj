@@ -7,13 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.vegetation.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.street-furniture.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.terrain.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json" />
-    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.streets.json" LogicalName="GWift.GameData.Routes.dunedin-one-way-oval-gardens.streets.json" Condition="Exists('Data\Routes\dunedin-one-way-oval-gardens.streets.json')" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.vegetation.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.street-furniture.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.terrain.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json" />
+    <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.streets.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json" Condition="Exists('Data\Routes\dunedin-one-way-oval-gardens.streets.json')" />
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />    
     <ProjectReference Include="..\IndoorCycling.Trainer.Windows\IndoorCycling.Trainer.Windows.csproj" />

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using OsmSharp;
 using OsmSharp.Streams;
 
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record GraphLoadResult(RoadGraph Graph, GraphBuildStats Stats);
 internal sealed record WayRecord(long Id, long[] NodeIds, Dictionary<string, string> Tags);

@@ -1,6 +1,6 @@
-# GWift Route Builder
+# Wodra Route Builder
 
-This offline .NET 8 command-line tool reads a local OpenStreetMap PBF and writes GeoJSON, GWift route-points JSON, a diagnostic report, and a self-contained route review HTML file. Generated route-point distances are cumulative OSM road metres. `sourceDistanceMeters` and `referenceDistanceMeters` describe legacy route progress and are metadata only; they never scale generated geometry or distances. PBF reading uses the streaming OsmSharp reader; nodes outside the configured bounding box plus margin are discarded. An optional regional graph cache defaults to `routes/cache` and is keyed by PBF identity, bounding box, margin, and road-filter version.
+This offline .NET 8 command-line tool reads a local OpenStreetMap PBF and writes GeoJSON, Wodra route-points JSON, a diagnostic report, and a self-contained route review HTML file. Generated route-point distances are cumulative OSM road metres. `sourceDistanceMeters` and `referenceDistanceMeters` describe legacy route progress and are metadata only; they never scale generated geometry or distances. PBF reading uses the streaming OsmSharp reader; nodes outside the configured bounding box plus margin are discarded. An optional regional graph cache defaults to `routes/cache` and is keyed by PBF identity, bounding box, margin, and road-filter version.
 
 The default `routingMode: "anchors"` projects ordered GPS anchors to directed roads and routes them in authored order. `routingMode: "roadRef"` supports a loop primarily defined by an OSM road reference: set `preferredRefs`, `startArea`, `turnaroundArea`, the two area radii, a maximum connector length, and a minimum preferred-ref coverage. It derives outward and return paths from directed ways tagged with the configured ref (`trunk` and `trunk_link`), allowing short graph connectors only at the turnaround and loop closure. Optional `legacyReferencePoints` are displayed as a faint historical reference and do not affect route selection. The report and preview identify connector ways and preferred-ref coverage; builds below the configured coverage are rejected as suspicious.
 
@@ -13,13 +13,13 @@ Obtain the New Zealand extract from [Geofabrik](https://download.geofabrik.de/au
 Build:
 
 ```powershell
-dotnet build tools/GWift.RouteBuilder/GWift.RouteBuilder.csproj
+dotnet build tools/Wodra.RouteBuilder/Wodra.RouteBuilder.csproj
 ```
 
 Dunedin example:
 
 ```powershell
-dotnet run --project tools/GWift.RouteBuilder -- build `
+dotnet run --project tools/Wodra.RouteBuilder -- build `
   --pbf 'D:\Geofabrik\new-zealand-latest.osm.pbf' `
   --config routes/authoring/dunedin-one-way-oval-gardens.json `
   --output routes/generated

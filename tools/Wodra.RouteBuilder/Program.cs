@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-using GWift.RouteBuilder;
+using Wodra.RouteBuilder;
 
 if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
 {
@@ -204,11 +204,11 @@ static async Task<(RouteBuildResult Result, GraphBuildStats GraphStats, double R
 }
 
 static void PrintHelp() => Console.WriteLine("""
-GWift.RouteBuilder builds offline route centreline files from a local OpenStreetMap PBF.
+Wodra.RouteBuilder builds offline route centreline files from a local OpenStreetMap PBF.
 
 Usage:
-  dotnet run --project tools/GWift.RouteBuilder -- build --pbf <file.osm.pbf> --config <route.json> --output <directory>
+  dotnet run --project tools/Wodra.RouteBuilder -- build --pbf <file.osm.pbf> --config <route.json> --output <directory>
        [--max-snap-meters <metres>] [--cache-dir <directory|none>] [--route-only true] [--streets-json <existing-file>]
        [--approved-route-points <file> --approved-report <file>] [--no-bundle-streets true]
-  dotnet run --project tools/GWift.RouteBuilder -- --help
+  dotnet run --project tools/Wodra.RouteBuilder -- --help
 """);

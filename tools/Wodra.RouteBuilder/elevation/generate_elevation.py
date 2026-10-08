@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LINZ STAC DEM sampler and distance-profile builder for GWift.RouteBuilder."""
+"""LINZ STAC DEM sampler and distance-profile builder for Wodra.RouteBuilder."""
 import argparse, csv, json, math, os, time, urllib.request
 from pathlib import Path
 from urllib.parse import urljoin

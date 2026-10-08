@@ -102,7 +102,7 @@ public static class ScreenshotCaptureFileStore
         {
             try
             {
-                var primary = Path.Combine(picturesDirectory, "GWift");
+                var primary = Path.Combine(picturesDirectory, "Wodra");
                 Directory.CreateDirectory(primary);
                 return primary;
             }
@@ -122,7 +122,7 @@ public static class ScreenshotCaptureFileStore
             ScreenshotCaptureMode.Hud => "-hud",
             _ => "-clean"
         };
-        var baseName = $"gwift-{timestamp.ToLocalTime():yyyyMMdd-HHmmss}{suffix}";
+        var baseName = $"wodra-{timestamp.ToLocalTime():yyyyMMdd-HHmmss}{suffix}";
         for (var collision = 0; ; collision++)
         {
             var candidate = collision == 0 ? baseName : $"{baseName}-{collision:000}";

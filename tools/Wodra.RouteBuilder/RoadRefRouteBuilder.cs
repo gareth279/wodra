@@ -1,4 +1,4 @@
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 /// <summary>Builds an ordered out-and-back loop on configured OSM road references.</summary>
 internal static class RoadRefRouteBuilder

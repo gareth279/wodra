@@ -1,4 +1,4 @@
-namespace GWift.RouteBuilder;
+namespace Wodra.RouteBuilder;
 
 public sealed record RoadNode(long Id, GeoPoint Coordinate);
 public sealed record RoadEdge(long FromNodeId, long ToNodeId, double LengthMeters, double CostMeters,

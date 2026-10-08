@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using Godot;
+using IndoorCycling.Core.Persistence;
 
 public sealed class AppSettings
 {
@@ -54,6 +55,11 @@ public sealed class AppSettings
 				defaults.Save();
 				return defaults;
 			}
+
+			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
+				settings.Recording.OutputFolder,
+				System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
+				System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
 
 			GameLogger.Log("settings_loaded", new
 			{
@@ -110,7 +116,7 @@ public sealed class RiderSettings
 
 public sealed class RecordingSettings
 {
-	public string OutputFolder { get; set; } = "%USERPROFILE%\\Documents\\gwift";
+	public string OutputFolder { get; set; } = ProductFilePaths.DefaultFitOutputFolderSetting;
 }
 
 public sealed class StravaSettings
