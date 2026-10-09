@@ -7,7 +7,9 @@ var temporaryRoot = Path.Combine(Path.GetTempPath(), "wodra-persistence-tests-" 
 Directory.CreateDirectory(temporaryRoot);
 try
 {
+    TestRiderProfileStartupSelection();
     await TestBrandRenameMigration(temporaryRoot);
+    await TestProfileSchemaUpgrade(temporaryRoot);
     TestNewProductPaths(temporaryRoot);
 
     var repository = new SqliteRideHistoryRepository(Path.Combine(temporaryRoot, "history.sqlite3"));
@@ -19,6 +21,10 @@ try
     var renamed = rider with { Name = "Updated Rider", UpdatedAtUtc = DateTimeOffset.UtcNow };
     await repository.SaveProfileAsync(renamed);
     Assert((await repository.GetProfileAsync(rider.Id))?.Name == "Updated Rider", "profile save");
+    var dev = new RiderProfileRecord(Guid.NewGuid(), "Dev Rider", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 75, 8, true);
+    await repository.SaveProfileAsync(dev);
+    Assert((await repository.GetAllProfilesAsync()).Count == 2 && (await repository.GetProfileAsync(dev.Id))?.IsTestProfile == true,
+        "multiple local profiles roundtrip with test metadata");
 
     var accumulator = new RideActivityAccumulator();
     accumulator.AddFrame(2, 20, 100, 80, 20);
@@ -47,8 +53,12 @@ try
     var secondId = Guid.NewGuid();
     var second = first with { Id = secondId, RouteId = "route-b", RouteName = "Route B", StartedAtUtc = started.AddMinutes(1) };
     await repository.SaveCompletedActivityAsync(second, []);
-    Assert((await repository.GetRecentActivitiesAsync()).Select(a => a.Id).SequenceEqual([secondId, id]), "recent activities newest first");
-    Assert((await repository.GetActivitiesForRouteAsync("route-a")).Select(a => a.Id).SequenceEqual([id]), "route-filtered rides");
+    var devActivity = second with { Id = Guid.NewGuid(), RiderProfileId = dev.Id, RouteId = "route-a", RouteName = "Route A" };
+    await repository.SaveCompletedActivityAsync(devActivity, []);
+    Assert((await repository.GetRecentActivitiesAsync()).Count == 3, "recent activities include rides from every profile");
+    Assert((await repository.GetActivitiesForRouteAsync("route-a")).Count == 2, "route-filtered rides");
+    Assert((await repository.GetRecentActivitiesForProfileAsync(rider.Id)).Select(a => a.Id).SequenceEqual([secondId, id]), "history is scoped by profile id");
+    Assert((await repository.GetRecentActivitiesForProfileAsync(dev.Id)).Single().Id == devActivity.Id, "test profile history stays separate");
     Assert(id != secondId, "activity ids are unique");
 
     var beforeFailedWrite = (await repository.GetRecentActivitiesAsync()).Count;
@@ -61,7 +71,13 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 1, "0 to 1 migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 2, "0 to 2 profile schema migration");
+    }
+    RiderProfileRecord.Validate("Valid", 75, 8);
+    foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })
+    {
+        try { RiderProfileRecord.Validate("Invalid", weights.Item1, weights.Item2); throw new Exception("invalid rider or bike mass accepted"); }
+        catch (ArgumentOutOfRangeException) { }
     }
     Console.WriteLine("PASS SQLite migration/profile/activity/media/recent ordering and accumulator tests");
 }
@@ -70,6 +86,65 @@ finally { try { Directory.Delete(temporaryRoot, true); } catch { } }
 static void Assert(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAIL " + name);
+}
+
+static void TestRiderProfileStartupSelection()
+{
+    var now = DateTimeOffset.UtcNow;
+    var first = new RiderProfileRecord(Guid.NewGuid(), "First", now, now, 75, 8, false);
+    var second = new RiderProfileRecord(Guid.NewGuid(), "Second", now, now, 80, 9, false);
+
+    var active = RiderProfileStartupSelection.Resolve([first], first.Id);
+    Assert(active.ActiveProfile?.Id == first.Id && !active.OpenCreateProfile,
+        "existing active profile selected and editor stays closed");
+
+    var selectedSecond = RiderProfileStartupSelection.Resolve([first, second], second.Id);
+    Assert(selectedSecond.ActiveProfile?.Id == second.Id && !selectedSecond.OpenCreateProfile,
+        "valid active profile selected from multiple profiles");
+
+    var invalidActive = RiderProfileStartupSelection.Resolve([first, second], Guid.NewGuid());
+    var missingActive = RiderProfileStartupSelection.Resolve([first, second], null);
+    Assert(invalidActive.ActiveProfile?.Id == first.Id && !invalidActive.OpenCreateProfile
+        && missingActive.ActiveProfile?.Id == first.Id && !missingActive.OpenCreateProfile,
+        "missing or invalid active profile falls back to first existing profile");
+
+    var empty = RiderProfileStartupSelection.Resolve([], null);
+    Assert(empty.ActiveProfile is null && empty.OpenCreateProfile,
+        "zero profiles requests initial new-profile editor");
+    Assert(RiderProfileStartupSelection.ShouldAutoOpenCreateEditor(0, isInitialProfileLoad: true)
+        && !RiderProfileStartupSelection.ShouldAutoOpenCreateEditor(0, isInitialProfileLoad: false)
+        && !RiderProfileStartupSelection.ShouldAutoOpenCreateEditor(2, isInitialProfileLoad: true),
+        "only initial empty profile load auto-opens editor");
+
+    Assert(RiderProfileStartupSelection.ShouldActivateProfileAfterSave(isNewProfile: true, currentActiveProfileId: null)
+        && RiderProfileStartupSelection.ShouldActivateProfileAfterSave(isNewProfile: true, currentActiveProfileId: first.Id),
+        "saving a new first profile activates it");
+    Assert(!RiderProfileStartupSelection.ShouldActivateProfileAfterSave(isNewProfile: false, currentActiveProfileId: first.Id),
+        "saving edits does not change active profile");
+    Console.WriteLine("PASS rider profile startup selection tests");
+}
+
+static async Task TestProfileSchemaUpgrade(string root)
+{
+    var databasePath = Path.Combine(root, "profile-v1.sqlite3");
+    var profileId = Guid.NewGuid(); var activityId = Guid.NewGuid(); var now = DateTimeOffset.UtcNow.ToString("O");
+    await using (var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={databasePath}"))
+    {
+        await db.OpenAsync(); await using var command = db.CreateCommand();
+        command.CommandText = @"CREATE TABLE schema_info(version INTEGER NOT NULL); INSERT INTO schema_info VALUES(1);
+CREATE TABLE rider_profiles(id TEXT PRIMARY KEY,name TEXT NOT NULL,created_utc TEXT NOT NULL,updated_utc TEXT NOT NULL);
+INSERT INTO rider_profiles VALUES($profile,'Legacy Rider',$now,$now);
+CREATE TABLE ride_activities(id TEXT PRIMARY KEY,rider_profile_id TEXT NOT NULL,route_id TEXT NOT NULL,route_name TEXT NOT NULL,started_utc TEXT NOT NULL,completed_utc TEXT,created_utc TEXT NOT NULL,status TEXT NOT NULL,duration_seconds REAL NOT NULL,moving_seconds REAL,distance_meters REAL NOT NULL,completed_laps INTEGER NOT NULL,average_speed_kph REAL,max_speed_kph REAL,average_power_watts REAL,max_power_watts REAL,average_cadence_rpm REAL,max_cadence_rpm REAL,elevation_gain_meters REAL NOT NULL,fit_file_path TEXT);
+INSERT INTO ride_activities VALUES($activity,$profile,'route','Route',$now,$now,$now,'Completed',60,NULL,100,0,10,12,150,180,80,90,3,NULL);";
+        command.Parameters.AddWithValue("$profile", profileId.ToString("D")); command.Parameters.AddWithValue("$activity", activityId.ToString("D")); command.Parameters.AddWithValue("$now", now);
+        await command.ExecuteNonQueryAsync();
+    }
+    var repository = new SqliteRideHistoryRepository(databasePath); await repository.InitializeAsync();
+    var profile = await repository.GetProfileAsync(profileId); var ride = await repository.GetActivityAsync(activityId);
+    Assert(profile is { Id: var id, Name: "Legacy Rider", BodyWeightKg: 75, BikeWeightKg: 8 } && id == profileId,
+        "v1 profile row is retained with conservative weight defaults");
+    Assert(ride is { Id: var savedId, RiderProfileId: var owner } && savedId == activityId && owner == profileId,
+        "existing ride and ProfileId survive profile schema upgrade");
 }
 
 static async Task TestBrandRenameMigration(string root)

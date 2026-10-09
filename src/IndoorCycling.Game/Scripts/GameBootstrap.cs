@@ -7,6 +7,7 @@ using IndoorCycling.Core.Persistence;
 using IndoorCycling.Persistence.Sqlite;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class GameBootstrap : Node
@@ -57,6 +58,8 @@ public partial class GameBootstrap : Node
 		GameLogger.Init();
 
 		Settings = AppSettings.LoadOrCreate();
+		Settings.DummyTrainer ??= new DummyTrainerSettings();
+		Settings.DummyTrainer.Validate();
 		var historyPath = Path.Combine(ProjectSettings.GlobalizePath("user://data"), "wodra.db");
 		RideHistory = new SqliteRideHistoryRepository(historyPath);
 		_persistentRiderTask = InitializePersistentRiderAsync();
@@ -97,8 +100,56 @@ public partial class GameBootstrap : Node
 	{
 		var repository = RideHistory ?? throw new InvalidOperationException("Ride history is unavailable.");
 		await repository.InitializeAsync();
-		_persistentRider = await repository.EnsureRiderProfileAsync(Settings?.Rider.Name ?? "Rider");
+		var profiles = await repository.GetAllProfilesAsync();
+		var selection = RiderProfileStartupSelection.Resolve(profiles, Settings.ActiveProfileId);
+		if (selection.OpenCreateProfile)
+		{
+			// Keep a temporary in-memory rider for startup UI/preview; the first persistent
+			// profile is created only after the user saves the profile form.
+			_persistentRider = new RiderProfileRecord(Guid.Empty,
+				string.IsNullOrWhiteSpace(Settings.Rider.Name) ? "Rider" : Settings.Rider.Name,
+				DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Settings.Rider.WeightKg, Settings.Rider.BikeWeightKg);
+			ApplyActiveProfile(_persistentRider);
+			return _persistentRider;
+		}
+		_persistentRider = selection.ActiveProfile!;
+		if (Settings.ActiveProfileId != _persistentRider.Id)
+		{
+			if (Settings.ActiveProfileId is null && profiles.Count == 1)
+			{
+				// Preserve legacy single-profile weights from settings on its first profile-aware launch.
+				_persistentRider = _persistentRider with { BodyWeightKg = Settings.Rider.WeightKg, BikeWeightKg = Settings.Rider.BikeWeightKg };
+				await repository.SaveProfileAsync(_persistentRider);
+			}
+			Settings.ActiveProfileId = _persistentRider.Id;
+			Settings.Save();
+		}
+		ApplyActiveProfile(_persistentRider);
 		return _persistentRider!;
+	}
+
+	public static async Task SetActiveProfileAsync(Guid id)
+	{
+		var repository = RideHistory ?? throw new InvalidOperationException("Ride history is unavailable.");
+		var profile = await repository.GetProfileAsync(id) ?? throw new InvalidOperationException("Rider profile does not exist.");
+		_persistentRider = profile;
+		Settings.ActiveProfileId = profile.Id;
+		Settings.Save();
+		ApplyActiveProfile(profile);
+	}
+
+	public static async Task SaveProfileAsync(RiderProfileRecord profile)
+	{
+		var repository = RideHistory ?? throw new InvalidOperationException("Ride history is unavailable.");
+		await repository.SaveProfileAsync(profile);
+		if (Settings.ActiveProfileId == profile.Id) { _persistentRider = profile; ApplyActiveProfile(profile); }
+	}
+
+	private static void ApplyActiveProfile(RiderProfileRecord profile)
+	{
+		RiderProfile = new RiderProfile(profile.Name, profile.BodyWeightKg, profile.Id, profile.BikeWeightKg,
+			profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc);
+		BikeProfile = new BikeProfile(Settings.Rider.BikeName, profile.BikeWeightKg);
 	}
 
 	private static async Task ObservePersistenceStartupAsync(Task<RiderProfileRecord> startup)
@@ -122,7 +173,11 @@ public partial class GameBootstrap : Node
 	{
 		Mode = SessionMode.Trainer;
 		FitReplayPath = null;
-		TrainerClient = new FakeTrainerClient();
+		Settings.DummyTrainer.Validate();
+		var dummy = new FakeTrainerClient();
+		var bodyWeight = RiderProfile?.WeightKg ?? Settings.Rider.WeightKg;
+		dummy.SetDummyOutput(Settings.DummyTrainer.CalculateWatts(bodyWeight), Settings.DummyTrainer.CadenceRpm);
+		TrainerClient = dummy;
 
 		GD.Print("Configured fake trainer mode.");
 	}

@@ -81,6 +81,7 @@ public partial class RouteSelectionPanelController : Control
 
 	private void OnBackPressed()
 	{
+		_rideSessionNode?.ClearPendingGhost();
 		Hide();
 
 		if (GameBootstrap.TrainerClient is not null)

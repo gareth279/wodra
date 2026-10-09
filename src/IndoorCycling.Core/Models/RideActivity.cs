@@ -2,7 +2,17 @@ namespace IndoorCycling.Core.Models;
 
 public enum RideActivityStatus { InProgress, Completed, Abandoned }
 
-public sealed record RiderProfileRecord(Guid Id, string Name, DateTimeOffset CreatedAtUtc, DateTimeOffset UpdatedAtUtc);
+public sealed record RiderProfileRecord(Guid Id, string Name, DateTimeOffset CreatedAtUtc, DateTimeOffset UpdatedAtUtc,
+    double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false)
+{
+    public Guid ProfileId => Id;
+    public static void Validate(string name, double bodyWeightKg, double bikeWeightKg)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Profile name is required.", nameof(name));
+        if (!double.IsFinite(bodyWeightKg) || bodyWeightKg is < 30 or > 200) throw new ArgumentOutOfRangeException(nameof(bodyWeightKg), "Body weight must be 30–200 kg.");
+        if (!double.IsFinite(bikeWeightKg) || bikeWeightKg is < 4 or > 30) throw new ArgumentOutOfRangeException(nameof(bikeWeightKg), "Bike weight must be 4–30 kg.");
+    }
+}
 
 public sealed record RideActivity(
     Guid Id, Guid RiderProfileId, string RouteId, string RouteName,

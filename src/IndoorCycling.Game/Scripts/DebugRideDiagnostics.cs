@@ -68,6 +68,24 @@ public sealed record RideDebugSnapshot
     public bool ridePaused { get; init; }
     public string fitRecordingState { get; init; } = "inactive";
     public double elapsedRidingSeconds { get; init; }
+    public Guid profileId { get; init; }
+    public string? profileName { get; init; }
+    public double bodyWeightKg { get; init; }
+    public double bikeWeightKg { get; init; }
+    public string? trainerKind { get; init; }
+    public string? dummyMode { get; init; }
+    public double? dummyWattsPerKg { get; init; }
+    public int? dummyTargetWatts { get; init; }
+    public Guid? ghostActivityId { get; init; }
+    public double? ghostElapsedSeconds { get; init; }
+    public double? ghostTotalDistanceMeters { get; init; }
+    public double? ghostWrappedDistanceMeters { get; init; }
+    public int? ghostLap { get; init; }
+    public double? ghostRelativeDistanceMeters { get; init; }
+    public double? ghostSpeedKph { get; init; }
+    public int? ghostPowerWatts { get; init; }
+    public int? ghostCadenceRpm { get; init; }
+    public bool? ghostFinished { get; init; }
     public bool? trainerConnected { get; init; }
     public int? rawTrainerPowerWatts { get; init; }
     public int? rawTrainerCadenceRpm { get; init; }

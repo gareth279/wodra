@@ -6,6 +6,32 @@ namespace IndoorCycling.Core.Simulation;
 
 public sealed class FitRideLoader
 {
+    public IReadOnlyList<(DateTimeOffset Timestamp, bool Running)> LoadTimerEvents(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        using var stream = File.OpenRead(path);
+        var decode = new Decode();
+        if (!decode.IsFIT(stream)) throw new InvalidOperationException("File is not a valid FIT file.");
+        stream.Position = 0;
+        if (!decode.CheckIntegrity(stream)) throw new InvalidOperationException("FIT file failed integrity check.");
+        stream.Position = 0;
+        var broadcaster = new MesgBroadcaster();
+        var events = new List<(DateTimeOffset Timestamp, bool Running)>();
+        decode.MesgEvent += broadcaster.OnMesg;
+        decode.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+        broadcaster.EventMesgEvent += (_, e) =>
+        {
+            if (e?.mesg is not EventMesg message || message.GetEvent() != Event.Timer) return;
+            var timestamp = ToDateTimeOffset(message.GetTimestamp());
+            if (timestamp is null) return;
+            var type = message.GetEventType();
+            if (type == EventType.Start) events.Add((timestamp.Value, true));
+            else if (type == EventType.Stop || type == EventType.StopAll) events.Add((timestamp.Value, false));
+        };
+        decode.Read(stream);
+        return events.OrderBy(e => e.Timestamp).ToArray();
+    }
+
     public IReadOnlyList<ReplayFrame> Load(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

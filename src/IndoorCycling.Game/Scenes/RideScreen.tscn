@@ -318,12 +318,20 @@ offset_right = 40.0
 offset_bottom = 40.0
 
 [node name="TopHudPanel" type="PanelContainer" parent="HudController" unique_id=809396590]
-custom_minimum_size = Vector2(260, 260)
+visible = false
+custom_minimum_size = Vector2(370, 260)
 layout_mode = 1
-offset_left = 750.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -382.0
 offset_top = 5.0
-offset_right = 1010.0
+offset_right = -12.0
 offset_bottom = 265.0
+grow_horizontal = 0
+grow_vertical = 0
 
 [node name="MarginContainer" type="MarginContainer" parent="HudController/TopHudPanel" unique_id=395579594]
 layout_mode = 2
@@ -415,6 +423,101 @@ text = "Save to Strava"
 [node name="MenuButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1255797073]
 layout_mode = 2
 text = "Menu"
+
+[node name="DummyControlPanel" type="Control" parent="HudController"]
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -352.0
+offset_top = -252.0
+offset_right = -12.0
+offset_bottom = -108.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="DummyPanel" type="PanelContainer" parent="HudController/DummyControlPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DummyPanelMargin" type="MarginContainer" parent="HudController/DummyControlPanel/DummyPanel"]
+layout_mode = 2
+
+[node name="DummyPanelLayout" type="VBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin"]
+layout_mode = 2
+
+[node name="DummySummaryLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+layout_mode = 2
+text = "Dummy"
+
+[node name="DummyWkgPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+layout_mode = 2
+
+[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+layout_mode = 2
+text = "Power:"
+
+[node name="MinusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+layout_mode = 2
+text = "−0.2"
+
+[node name="MinusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+layout_mode = 2
+text = "−0.1"
+
+[node name="PlusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+layout_mode = 2
+text = "+0.1"
+
+[node name="PlusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+layout_mode = 2
+text = "+0.2"
+
+[node name="DummyWattsPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+visible = false
+layout_mode = 2
+
+[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+layout_mode = 2
+text = "Power:"
+
+[node name="MinusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+layout_mode = 2
+text = "−25"
+
+[node name="MinusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+layout_mode = 2
+text = "−10"
+
+[node name="PlusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+layout_mode = 2
+text = "+10"
+
+[node name="PlusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+layout_mode = 2
+text = "+25"
+
+[node name="DummyCadenceRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+layout_mode = 2
+
+[node name="CadenceLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+layout_mode = 2
+text = "Cadence:"
+
+[node name="MinusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+layout_mode = 2
+text = "−5"
+
+[node name="PlusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+layout_mode = 2
+text = "+5"
 
 [node name="RideMenuPanel" type="Control" parent="." unique_id=512087807]
 layout_mode = 1

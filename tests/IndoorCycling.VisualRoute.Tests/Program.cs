@@ -1,9 +1,56 @@
 using System.Numerics;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("dummy W/kg uses body weight and simulation mass adds bike weight", () =>
+    {
+        Equal(150, DummyTrainerMath.WattsFromKilograms(2.0, 75));
+        Equal(180, DummyTrainerMath.WattsFromKilograms(2.0, 90));
+        Equal(528, DummyTrainerMath.WattsFromKilograms(6.0, 88));
+        Equal(880, DummyTrainerMath.WattsFromKilograms(10.0, 88));
+        Equal(1056, DummyTrainerMath.WattsFromKilograms(12.0, 88));
+        Equal(1500, DummyTrainerMath.CalculateWatts("Watts", 1800, 12, 88));
+        Equal(150, DummyTrainerMath.CalculateWatts("Watts", 150, 2.0, 75));
+        Equal(150, DummyTrainerMath.CalculateWatts("Watts", 150, 2.0, 90));
+        Equal(83.0, new RiderProfile("Test", 75, Guid.NewGuid(), 8).TotalMassKg);
+        Equal(150, DummyTrainerMath.ValidateWatts(150));
+        Equal(90, DummyTrainerMath.ValidateCadence(90));
+    }),
+    ("dummy trainer live controls update emitted power and cadence", () =>
+    {
+        var dummy = new FakeTrainerClient(); dummy.ConnectAsync().GetAwaiter().GetResult();
+        dummy.SetDummyOutput(150, 85);
+        var before = dummy.GetLatestTelemetry(); Equal(150, before.PowerWatts); Equal(85, before.CadenceRpm);
+        dummy.SetDummyOutput(165, 90);
+        var after = dummy.GetLatestTelemetry(); Equal(165, after.PowerWatts); Equal(90, after.CadenceRpm);
+        dummy.SetDummyOutput(1800, 170);
+        var capped = dummy.GetLatestTelemetry(); Equal(1500, capped.PowerWatts); Equal(160, capped.CadenceRpm);
+    }),
+    ("ghost trace interpolates recorded fields and rejects unsafe gaps", () =>
+    {
+        var trace = new GhostRideTrace([
+            new GhostRideSample(0, 0, 2, 100, 70),
+            new GhostRideSample(2, 20, 4, 200, 90)]);
+        var sample = trace.SampleAt(1);
+        NearD(10, sample.DistanceMeters); NearD(3, sample.SpeedMps!.Value);
+        Equal(150, sample.PowerWatts!.Value); Equal(80, sample.CadenceRpm!.Value);
+        var gap = new GhostRideTrace([new GhostRideSample(0, 0, null, null, null), new GhostRideSample(30, 300, null, null, null)]).SampleAt(15);
+        NearD(0, gap.DistanceMeters);
+    }),
+    ("ghost source wraps distance, counts laps, freezes on pause and finishes", () =>
+    {
+        var trace = new GhostRideTrace([new GhostRideSample(0, 0, 3, null, null), new GhostRideSample(10, 120, 3, null, null)]);
+        var source = new GhostRiderStateSource(trace, "test");
+        source.Update(5, 50, true);
+        var paused = source.GetRiders().Single(); NearD(60, paused.RouteDistanceMeters); NearD(10, paused.WrappedRouteDistanceMeters);
+        if (!paused.Paused || paused.CadenceRpm != 0) throw new Exception("Paused ghost was not frozen.");
+        source.Update(10, 50, false);
+        var finished = source.GetRiders().Single(); Equal(3, finished.LapNumber); NearD(120, finished.RouteDistanceMeters);
+        if (!source.Finished || !finished.Paused) throw new Exception("Finished ghost did not stop.");
+    }),
     ("cars use the left lane in each permitted direction", () =>
     {
         var road = new AmbientRoadInput(10, "residential", false, 6.4, [Vector3.Zero, new Vector3(30,0,0)]);
@@ -1556,6 +1603,11 @@ static float MaximumTriangleEdge(IReadOnlyList<RoadRibbonQuad> quads)
 
     static float TriangleEdge(Vector3 a, Vector3 b, Vector3 c) =>
         Math.Max(Vector3.Distance(a, b), Math.Max(Vector3.Distance(b, c), Vector3.Distance(c, a)));
+}
+
+static void NearD(double expected, double actual, double tolerance = 0.001)
+{
+    if (Math.Abs(expected - actual) > tolerance) throw new Exception($"Expected {expected}, got {actual}.");
 }
 
 static void Near(float expected, float actual, float tolerance = 0.001f)

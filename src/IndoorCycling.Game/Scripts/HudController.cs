@@ -17,6 +17,9 @@ public partial class HudController : Control
 	private Label? _gradientLabel;
 	private Label? _distanceLabel;
 	private Label? _elapsedLabel;
+	private Label? _ghostLabel;
+	private Control? _topHudPanel;
+	private Control? _dummyControlPanel;
 
 	private Button? _menuButton;
 	private Button? _gradientUpButton;
@@ -31,16 +34,30 @@ public partial class HudController : Control
 	private RideSessionNode? _rideSessionNode;
 	private PanelContainer? _debugOverlay;
 	private Label? _debugSummaryLabel;
-	private Label? _debugDiagnosticsLabel;
-	private bool _debugModeEnabled;
-	private bool _debugOverlayVisible = true;
+	private bool _debugEnabled;
+	private bool? _debugEnabledBeforeCapture;
 	private ScreenshotCaptureService? _screenshotCapture;
 	private Label? _screenshotToast;
 	private int _screenshotToastSequence;
+	private Label? _dummySummary;
+	private Control? _dummyWkgPowerRow;
+	private Control? _dummyWattsPowerRow;
+	private Button? _dummyWkgMinusPointTwo;
+	private Button? _dummyWkgMinusPointOne;
+	private Button? _dummyWkgPlusPointOne;
+	private Button? _dummyWkgPlusPointTwo;
+	private Button? _dummyWattsMinusTwentyFive;
+	private Button? _dummyWattsMinusTen;
+	private Button? _dummyWattsPlusTen;
+	private Button? _dummyWattsPlusTwentyFive;
+	private Button? _dummyCadenceMinusFive;
+	private Button? _dummyCadencePlusFive;
+	private bool _dummyActive;
 
 	public override void _Ready()
 	{
 		_modeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ModeLabel");
+		_topHudPanel = GetNodeOrNull<Control>("TopHudPanel");
 		_statusLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/StatusLabel");
 		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PowerLabel");
 		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/CadenceLabel");
@@ -48,8 +65,29 @@ public partial class HudController : Control
 		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/GradientLabel");
 		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/DistanceLabel");
 		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ElapsedLabel");
+		_ghostLabel = new Label { Name = "GhostIndicator", Visible = false };
+		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_ghostLabel);
 		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
+		_dummyControlPanel = GetNodeOrNull<Control>("DummyControlPanel");
+		_dummySummary = GetNodeOrNull<Label>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummySummaryLabel");
+		_dummyWkgPowerRow = GetNodeOrNull<Control>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow");
+		_dummyWattsPowerRow = GetNodeOrNull<Control>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow");
+		_dummyWkgMinusPointTwo = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow/MinusPointTwoButton");
+		_dummyWkgMinusPointOne = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow/MinusPointOneButton");
+		_dummyWkgPlusPointOne = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow/PlusPointOneButton");
+		_dummyWkgPlusPointTwo = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow/PlusPointTwoButton");
+		_dummyWattsMinusTwentyFive = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow/MinusTwentyFiveButton");
+		_dummyWattsMinusTen = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow/MinusTenButton");
+		_dummyWattsPlusTen = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow/PlusTenButton");
+		_dummyWattsPlusTwentyFive = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow/PlusTwentyFiveButton");
+		_dummyCadenceMinusFive = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow/MinusFiveButton");
+		_dummyCadencePlusFive = GetNodeOrNull<Button>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow/PlusFiveButton");
+		ConfigureClippedLabel(_routeLabel);
+		ConfigureClippedLabel(_segmentLabel);
+		ConfigureClippedLabel(_statusLabel);
+		ConfigureClippedLabel(_dummySummary);
+		ConnectDummyControls();
 
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
 		_gradientDownButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientDownButton");
@@ -103,6 +141,8 @@ public partial class HudController : Control
 		{
 			_saveToStravaButton.Pressed += OnSaveToStravaPressed;
 		}
+		EnsureDebugOverlay();
+		UpdateHudVisibility();
 	}
 
 	private void OnGradientDownPressed()
@@ -143,9 +183,9 @@ public partial class HudController : Control
 
 	public void SetDebugMode(bool enabled)
 	{
-		_debugModeEnabled = enabled;
+		_debugEnabled = enabled;
 		if (enabled) EnsureDebugOverlay();
-		if (_debugOverlay is not null) _debugOverlay.Visible = enabled && _debugOverlayVisible;
+		UpdateHudVisibility();
 		if (_modeLabel is not null && _modeLabel.Text.Length > 0)
 			_modeLabel.Text = _modeLabel.Text.Replace(" [DEBUG]", "") + (enabled ? " [DEBUG]" : "");
 	}
@@ -161,9 +201,9 @@ public partial class HudController : Control
 			AnchorTop = 0,
 			AnchorBottom = 0,
 			OffsetLeft = 12,
-			OffsetRight = 372,
+			OffsetRight = 332,
 			OffsetTop = 12,
-			OffsetBottom = 520,
+			OffsetBottom = 340,
 			ClipContents = true
 		};
 		var layout = new VBoxContainer();
@@ -174,20 +214,6 @@ public partial class HudController : Control
 			AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
 		};
 		layout.AddChild(_debugSummaryLabel);
-		var diagnosticsScroll = new ScrollContainer
-		{
-			Name = "DebugDiagnosticsScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-			HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-			VerticalScrollMode = ScrollContainer.ScrollMode.Auto
-		};
-		_debugDiagnosticsLabel = new Label
-		{
-			Name = "DebugDiagnostics", AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-		};
-		diagnosticsScroll.AddChild(_debugDiagnosticsLabel);
-		layout.AddChild(diagnosticsScroll);
 		var actions = new HBoxContainer();
 		actions.Name = "DebugControls";
 		actions.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -207,51 +233,42 @@ public partial class HudController : Control
 		layout.AddChild(actions);
 		_debugOverlay.AddChild(layout);
 		AddChild(_debugOverlay);
-		GetViewport().SizeChanged += UpdateDebugOverlayLayout;
-		UpdateDebugOverlayLayout();
-		_debugOverlay.Visible = _debugModeEnabled && _debugOverlayVisible;
+		UpdateHudVisibility();
 	}
 
 	private void UpdateDebugOverlayLayout()
 	{
 		if (_debugOverlay is null) return;
-		var height = Math.Clamp(GetViewportRect().Size.Y - 120, 320, 620);
-		_debugOverlay.OffsetBottom = 12 + height;
+		_debugOverlay.OffsetRight = 332;
+		_debugOverlay.OffsetBottom = 340;
 	}
 
 	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
 	{
-		if (!_debugModeEnabled || _debugSummaryLabel is null || _debugDiagnosticsLabel is null) return;
-		_debugSummaryLabel.Text =
-			$"DEBUG\nVirtual: {snapshot.virtualSpeedKph:F1} km/h\n" +
-			$"Trainer: {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "-"} km/h  Power: {snapshot.rawTrainerPowerWatts?.ToString() ?? "-"} W\n" +
-			$"Ride: {snapshot.totalRideDistanceMeters:F1} m\n" +
-			$"Wrapped: {snapshot.wrappedRouteDistanceMeters:F1} / {snapshot.routeLengthMeters:F0} m  Lap: {snapshot.lapNumber}\n" +
-			$"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}%\n" +
-			$"Elevation: {snapshot.routeElevationMeters?.ToString("F1") ?? "-"} m  Raw: {snapshot.rawRouteElevationMeters?.ToString("F1") ?? "-"} m  Visual Y: {snapshot.visualRelativeElevationMeters?.ToString("F1") ?? "-"} m\n" +
-			$"Sample: {snapshot.visualSampleBefore} -> {snapshot.visualSampleAfter} ({snapshot.visualInterpolation:F2})\n" +
-			$"Paused: {(snapshot.ridePaused ? "Yes" : "No")}  Recording: {snapshot.fitRecordingState}\n" +
-			$"FTMS cmd: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "-"}%";
-		var carRejects = snapshot.ambientCarTooCloseToRider + snapshot.ambientCarOutsideSpawnRadius
-			+ snapshot.ambientCarNoEligiblePath + snapshot.ambientCarInvalidTransform + snapshot.ambientCarInvalidOrShortPaths;
-		var pedestrianRejects = snapshot.ambientPedestrianTooCloseToRider + snapshot.ambientPedestrianOutsideSpawnRadius
-			+ snapshot.ambientPedestrianNoValidPath + snapshot.ambientPedestrianInvalidTransform
-			+ snapshot.ambientPedestrianInvalidOrShortPaths;
-		_debugDiagnosticsLabel.Text =
-			$"Landmarks nearby: {snapshot.nearbyLandmarkCount}  Nearest: {snapshot.nearestLandmarkName ?? "-"} " +
-			$"@ {snapshot.nearestLandmarkRouteDistanceMeters?.ToString("F0") ?? "-"} m / " +
-			$"{snapshot.nearestLandmarkDistanceMeters?.ToString("F0") ?? "-"} m away\n" +
-			$"Buildings: {snapshot.buildingsLoaded} loaded  Visible chunks: {snapshot.visibleBuildingChunks}\n" +
-			$"Vegetation areas: {snapshot.vegetationAreas}  Trees loaded: {snapshot.treesLoaded}  Visible chunks: {snapshot.visibleVegetationChunks}\n" +
-			$"Street furniture loaded: {snapshot.streetFurnitureLoaded}  Nearby: {snapshot.nearbyStreetFurniture}\n" +
-			$"Terrain near chunks: {snapshot.terrainNearChunks}  far chunks: {snapshot.terrainFarChunks}  visible terrain chunks: {snapshot.terrainVisibleChunks}\n" +
-			$"Terrain spacing: near {snapshot.terrainNearSpacingMeters:F0} m  far {snapshot.terrainFarSpacingMeters:F0} m\n" +
-			$"Cars: {snapshot.ambientCars}/{snapshot.ambientCarTarget}  Pedestrians: {snapshot.ambientPedestrians}/{snapshot.ambientPedestrianTarget}\n" +
-			$"AI riders: {snapshot.aiRiderCount}  Nearest AI: {(snapshot.nearestAiRiderName is null ? "-" : $"{snapshot.nearestAiRiderName} {snapshot.nearestAiRiderRelativeDistanceMeters:+0;-0;0} m / {snapshot.nearestAiRiderSpeedKph:F0} km/h")}\n" +
-			$"Paths: cars {snapshot.ambientEligibleCarPaths}  pedestrians {snapshot.ambientEligiblePedestrianPaths}\n" +
-			$"Spawns/rejects: cars {Math.Max(0, snapshot.ambientCarSpawnAttempts - carRejects)}/{carRejects}  pedestrians {Math.Max(0, snapshot.ambientPedestrianSpawnAttempts - pedestrianRejects)}/{pedestrianRejects}\n" +
-			$"First: car {snapshot.firstAmbientCarDistanceMeters?.ToString("F0") ?? "-"} m  pedestrian {snapshot.firstAmbientPedestrianDistanceMeters?.ToString("F0") ?? "-"} m";
+		if (!_debugEnabled || _debugSummaryLabel is null) return;
+		var lines = new List<string> { "DEBUG", $"Profile: {snapshot.profileName ?? "-"}" };
+		if (snapshot.trainerKind == "dummy" && snapshot.dummyTargetWatts is { } watts)
+			lines.Add(snapshot.dummyMode == "W/kg"
+				? $"Dummy: {snapshot.dummyWattsPerKg:F1} W/kg · {watts} W · {snapshot.rawTrainerCadenceRpm ?? 0} rpm"
+				: $"Dummy: {watts} W · {snapshot.rawTrainerCadenceRpm ?? 0} rpm");
+		else
+			lines.Add($"Trainer: {TrainerLabel(snapshot.trainerKind)} · {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm");
+		lines.Add($"Ride: {snapshot.totalRideDistanceMeters / 1000:0.00} km · Lap {snapshot.lapNumber} · {snapshot.virtualSpeedKph:0.0} km/h");
+		lines.Add($"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}% · Elevation: {snapshot.routeElevationMeters?.ToString("F0") ?? "—"} m");
+		var recording = snapshot.fitRecordingState is "recording" or "paused";
+		lines.Add($"State: {(snapshot.ridePaused ? "Paused" : "Running")} · Recording: {(recording ? "Yes" : "No")}");
+		if (snapshot.trainerKind == "real") lines.Add($"FTMS grade command: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "—"}%");
+		lines.Add($"Riders: AI {snapshot.aiRiderCount} · Nearest {NearestRider(snapshot)}");
+		if (snapshot.ghostActivityId is not null) lines.Add(snapshot.ghostFinished == true
+			? $"Ghost: Finished {snapshot.ghostRelativeDistanceMeters:+0;-0;0} m"
+			: $"Ghost: {snapshot.ghostRelativeDistanceMeters:+0;-0;0} m");
+		lines.Add($"Ambient: {snapshot.ambientCars} cars · {snapshot.ambientPedestrians} pedestrians");
+		_debugSummaryLabel.Text = string.Join("\n", lines);
 	}
+
+	private static string TrainerLabel(string? trainer) => trainer switch { "real" => "Real FTMS", "fit_replay" => "FIT replay", "dummy" => "Dummy", _ => "Unknown" };
+	private static string NearestRider(RideDebugSnapshot snapshot) => snapshot.nearestAiRiderName is null
+		? "—" : $"{snapshot.nearestAiRiderName} {snapshot.nearestAiRiderRelativeDistanceMeters:+0;-0;0} m";
 
 	public bool DebugOverlayCaptureVisible => _debugOverlay?.Visible ?? false;
 	public IReadOnlyList<CapturedScreenshot> CapturedScreenshots => _screenshotCapture?.CapturedMedia ?? Array.Empty<CapturedScreenshot>();
@@ -264,7 +281,17 @@ public partial class HudController : Control
 	public void SetDebugOverlayForCapture(bool visible)
 	{
 		if (visible) EnsureDebugOverlay();
-		if (_debugOverlay is not null) _debugOverlay.Visible = visible;
+		if (visible)
+		{
+			_debugEnabledBeforeCapture ??= _debugEnabled;
+			_debugEnabled = true;
+		}
+		else if (_debugEnabledBeforeCapture is { } previousDebugState)
+		{
+			_debugEnabled = previousDebugState;
+			_debugEnabledBeforeCapture = null;
+		}
+		UpdateHudVisibility();
 	}
 
 	public void ShowScreenshotToast(string message)
@@ -294,16 +321,17 @@ public partial class HudController : Control
 			GetViewport().SetInputAsHandled();
 			return;
 		}
-		if (!_debugModeEnabled) return;
+		if (key.Keycode == Key.F3 && _rideSessionNode?.IsRideActive == true)
+		{
+			_debugEnabled = !_debugEnabled;
+			UpdateHudVisibility();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+		if (!_debugEnabled) return;
 		if (key.Keycode == Key.F8 && _rideSessionNode?.IsRideActive == true)
 		{
 			_rideSessionNode.WriteDebugMarker();
-			GetViewport().SetInputAsHandled();
-		}
-		else if (key.Keycode == Key.F3 && _rideSessionNode?.IsRideActive == true)
-		{
-			_debugOverlayVisible = !_debugOverlayVisible;
-			if (_debugOverlay is not null) _debugOverlay.Visible = _debugOverlayVisible;
 			GetViewport().SetInputAsHandled();
 		}
 	}
@@ -327,7 +355,8 @@ public partial class HudController : Control
 	public void SetModeText(string mode)
 	{
 		if (_modeLabel is not null)
-			_modeLabel.Text = $"Mode: {mode}" + (_debugModeEnabled ? " [DEBUG]" : "");
+			_modeLabel.Text = $"Mode: {mode}" + (_debugEnabled ? " [DEBUG]" : "");
+		UpdateHudVisibility();
 	}
 
 	public void SetStatus(string status)
@@ -338,6 +367,7 @@ public partial class HudController : Control
 
 	public void ResetHud()
 	{
+		UpdateHudVisibility();
 		SetRidePaused(false);
 		SetModeText("-");
 		SetStatus("Choose a mode to begin.");
@@ -368,6 +398,7 @@ public partial class HudController : Control
 
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry telemetry, double elapsedSeconds)
 	{
+		UpdateHudVisibility();
 		if (_powerLabel is not null)
 			_powerLabel.Text = $"Power: {telemetry.PowerWatts} W";
 
@@ -385,5 +416,63 @@ public partial class HudController : Control
 
 		if (_elapsedLabel is not null)
 			_elapsedLabel.Text = $"Elapsed: {TimeSpan.FromSeconds(elapsedSeconds):hh\\:mm\\:ss}";
+	}
+
+	public void SetGhostIndicator(string? text)
+	{
+		if (_ghostLabel is null) return;
+		_ghostLabel.Visible = !string.IsNullOrWhiteSpace(text);
+		_ghostLabel.Text = text ?? string.Empty;
+	}
+
+	private void ConnectDummyControls()
+	{
+		if (_dummyWkgMinusPointTwo is not null) _dummyWkgMinusPointTwo.Pressed += () => _rideSessionNode?.AdjustDummyPower(-.2);
+		if (_dummyWkgMinusPointOne is not null) _dummyWkgMinusPointOne.Pressed += () => _rideSessionNode?.AdjustDummyPower(-.1);
+		if (_dummyWkgPlusPointOne is not null) _dummyWkgPlusPointOne.Pressed += () => _rideSessionNode?.AdjustDummyPower(.1);
+		if (_dummyWkgPlusPointTwo is not null) _dummyWkgPlusPointTwo.Pressed += () => _rideSessionNode?.AdjustDummyPower(.2);
+		if (_dummyWattsMinusTwentyFive is not null) _dummyWattsMinusTwentyFive.Pressed += () => _rideSessionNode?.AdjustDummyPower(-25);
+		if (_dummyWattsMinusTen is not null) _dummyWattsMinusTen.Pressed += () => _rideSessionNode?.AdjustDummyPower(-10);
+		if (_dummyWattsPlusTen is not null) _dummyWattsPlusTen.Pressed += () => _rideSessionNode?.AdjustDummyPower(10);
+		if (_dummyWattsPlusTwentyFive is not null) _dummyWattsPlusTwentyFive.Pressed += () => _rideSessionNode?.AdjustDummyPower(25);
+		if (_dummyCadenceMinusFive is not null) _dummyCadenceMinusFive.Pressed += () => _rideSessionNode?.AdjustDummyCadence(-5);
+		if (_dummyCadencePlusFive is not null) _dummyCadencePlusFive.Pressed += () => _rideSessionNode?.AdjustDummyCadence(5);
+	}
+
+	public void SetDummyTrainerControls(IndoorCycling.Trainer.Implementations.FakeTrainerClient? dummy)
+	{
+		if (_dummyControlPanel is null) return;
+		_dummyActive = dummy?.HasLiveDummyControls == true;
+		if (!_dummyActive || dummy is null)
+		{
+			UpdateHudVisibility();
+			return;
+		}
+		var settings = GameBootstrap.Settings.DummyTrainer;
+		var watts = settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg);
+		_dummySummary!.Text = settings.Mode == "W/kg"
+			? $"Dummy: {settings.WattsPerKg:0.0} W/kg = {watts} W · {settings.CadenceRpm} rpm"
+			: $"Dummy: {watts} W · {settings.CadenceRpm} rpm";
+		UpdateHudVisibility();
+	}
+
+	private void UpdateHudVisibility()
+	{
+		var rideIsActive = _rideSessionNode?.IsRideActive == true;
+		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && !_debugEnabled;
+		var dummyVisible = rideIsActive && _dummyActive;
+		if (_dummyControlPanel is not null) _dummyControlPanel.Visible = dummyVisible;
+		var wkgMode = GameBootstrap.Settings?.DummyTrainer?.Mode == "W/kg";
+		if (_dummyWkgPowerRow is not null) _dummyWkgPowerRow.Visible = wkgMode;
+		if (_dummyWattsPowerRow is not null) _dummyWattsPowerRow.Visible = !wkgMode;
+		if (_debugOverlay is not null) _debugOverlay.Visible = _debugEnabled;
+	}
+
+	private static void ConfigureClippedLabel(Label? label)
+	{
+		if (label is null) return;
+		label.AutowrapMode = TextServer.AutowrapMode.Off;
+		label.ClipText = true;
+		label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
 	}
 }

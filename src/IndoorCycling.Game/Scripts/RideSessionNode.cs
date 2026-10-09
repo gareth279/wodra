@@ -43,6 +43,18 @@ public partial class RideSessionNode : Node
 	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
 
 	private RideFitRecorder? _rideRecorder;
+	public GhostRiderStateSource? GhostRider { get; private set; }
+	public Guid? GhostActivityId { get; private set; }
+	public void SetPendingGhost(GhostRiderStateSource source, Guid activityId) { GhostRider = source; GhostActivityId = activityId; }
+	public void ClearPendingGhost() { GhostRider = null; GhostActivityId = null; _hudController?.SetGhostIndicator(null); }
+	public void UpdateGhostIndicator(double playerTotalDistanceMeters)
+	{
+		if (GhostRider is null || GhostRider.Sample is null) { _hudController?.SetGhostIndicator(null); return; }
+		var relative = GhostRider.Sample.DistanceMeters - playerTotalDistanceMeters;
+		_hudController?.SetGhostIndicator(GhostRider.Finished
+			? $"Ghost: Finished {relative:+0;-0;0} m"
+			: $"Ghost: {relative:+0;-0;0} m");
+	}
 
 	private string? _lastStoppedRecordingPath;
 	public string? LastStoppedRecordingPath => _lastStoppedRecordingPath;
@@ -90,6 +102,9 @@ public partial class RideSessionNode : Node
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
 		_currentRoute = route ?? RouteCatalog.GetById("test-route");
+		_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
+		if (GhostRider is not null && GhostRider.RouteId != _currentRoute?.Id)
+		{ GhostRider = null; GhostActivityId = null; }
 		_currentActivityId = Guid.NewGuid();
 		_currentRiderProfileId = null;
 		try
@@ -147,6 +162,7 @@ public partial class RideSessionNode : Node
 
 	public async Task StartFitReplaySessionAsync(string fitPath)
 	{
+		_hudController?.SetDummyTrainerControls(null);
 		_fitReplayClient = new FakeTrainerClient();
 		await _fitReplayClient.ConnectAsync();
 
@@ -244,6 +260,7 @@ public partial class RideSessionNode : Node
 				if (_fitReplayClient is not null)
 					await _fitReplayClient.DisconnectAsync();
 				_fitReplayClient = null;
+				_hudController?.SetDummyTrainerControls(null);
 				_rideState = RideState.Initial;
 				_pauseGate.Resume();
 				_hudController?.SetRidePaused(false);
@@ -342,6 +359,25 @@ public partial class RideSessionNode : Node
 		return GetRouteGradient() + _manualGradientOffsetPercent;
 	}
 
+	public void AdjustDummyPower(double increment)
+	{
+		if (GameBootstrap.TrainerClient is not FakeTrainerClient { HasLiveDummyControls: true } dummy) return;
+		var settings = GameBootstrap.Settings.DummyTrainer;
+		if (settings.Mode == "W/kg") settings.WattsPerKg = Math.Clamp(settings.WattsPerKg + increment, 0, 12);
+		else settings.TargetWatts = Math.Clamp(settings.TargetWatts + (int)increment, 0, 1500);
+		settings.Validate(); dummy.SetDummyOutput(settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg), settings.CadenceRpm);
+		GameBootstrap.Settings.Save();
+		_hudController?.SetDummyTrainerControls(dummy);
+	}
+
+	public void AdjustDummyCadence(int increment)
+	{
+		if (GameBootstrap.TrainerClient is not FakeTrainerClient { HasLiveDummyControls: true } dummy) return;
+		var settings = GameBootstrap.Settings.DummyTrainer; settings.CadenceRpm = Math.Clamp(settings.CadenceRpm + increment, 0, 160);
+		dummy.SetDummyOutput(settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg), settings.CadenceRpm);
+		GameBootstrap.Settings.Save(); _hudController?.SetDummyTrainerControls(dummy);
+	}
+
 	private string DebugTrainerMode => GameBootstrap.Mode switch
 	{
 		GameBootstrap.SessionMode.FitReplay => "fit_replay",
@@ -399,6 +435,24 @@ public partial class RideSessionNode : Node
 			ridePaused = _pauseGate.IsPaused,
 			fitRecordingState = recordingState,
 			elapsedRidingSeconds = _elapsedSeconds,
+			profileId = GameBootstrap.RiderProfile.ProfileId,
+			profileName = GameBootstrap.RiderProfile.DisplayName,
+			bodyWeightKg = GameBootstrap.RiderProfile.BodyWeightKg,
+			bikeWeightKg = GameBootstrap.BikeProfile.WeightKg,
+			trainerKind = DebugTrainerMode,
+			dummyMode = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } ? GameBootstrap.Settings.DummyTrainer.Mode : null,
+			dummyWattsPerKg = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } && GameBootstrap.Settings.DummyTrainer.Mode == "W/kg" ? GameBootstrap.Settings.DummyTrainer.WattsPerKg : null,
+			dummyTargetWatts = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } ? GameBootstrap.Settings.DummyTrainer.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg) : null,
+			ghostActivityId = GhostRider is null ? null : GhostActivityId,
+			ghostElapsedSeconds = GhostRider?.ElapsedSeconds,
+			ghostTotalDistanceMeters = GhostRider?.Sample?.DistanceMeters,
+			ghostWrappedDistanceMeters = GhostRider?.GetRiders().FirstOrDefault()?.WrappedRouteDistanceMeters,
+			ghostLap = GhostRider?.GetRiders().FirstOrDefault()?.LapNumber,
+			ghostRelativeDistanceMeters = GhostRider?.Sample is { } ghostSample ? ghostSample.DistanceMeters - _rideState.DistanceMeters : null,
+			ghostSpeedKph = GhostRider?.Sample?.SpeedMps * 3.6,
+			ghostPowerWatts = GhostRider?.Sample?.PowerWatts,
+			ghostCadenceRpm = GhostRider?.Sample?.CadenceRpm,
+			ghostFinished = GhostRider?.Finished,
 			trainerConnected = trainer?.IsConnected,
 			rawTrainerPowerWatts = telemetry?.PowerWatts,
 			rawTrainerCadenceRpm = telemetry?.CadenceRpm,

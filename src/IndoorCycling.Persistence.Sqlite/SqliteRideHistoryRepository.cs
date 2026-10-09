@@ -42,7 +42,7 @@ public sealed class SqliteRideHistoryRepository : IRideHistoryRepository
             query.CommandText = "SELECT version FROM schema_info LIMIT 1";
             version = Convert.ToInt32(await query.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
         }
-        if (version > 1) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
+        if (version > 2) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
         if (version == 0)
         {
             using var transaction = db.BeginTransaction();
@@ -66,6 +66,16 @@ CREATE INDEX ix_activity_media_activity ON activity_media(activity_id, captured_
 UPDATE schema_info SET version=1;";
             await create.ExecuteNonQueryAsync(cancellationToken);
             transaction.Commit();
+            version = 1;
+        }
+        if (version == 1)
+        {
+            await using var migrate = db.CreateCommand();
+            migrate.CommandText = @"ALTER TABLE rider_profiles ADD COLUMN body_weight_kg REAL NOT NULL DEFAULT 75;
+ALTER TABLE rider_profiles ADD COLUMN bike_weight_kg REAL NOT NULL DEFAULT 8;
+ALTER TABLE rider_profiles ADD COLUMN is_test_profile INTEGER NOT NULL DEFAULT 0;
+UPDATE schema_info SET version=2;";
+            await migrate.ExecuteNonQueryAsync(cancellationToken);
         }
     }
 
@@ -73,15 +83,15 @@ UPDATE schema_info SET version=1;";
     {
         await using var db = await OpenAsync(cancellationToken);
         await using var query = db.CreateCommand();
-        query.CommandText = "SELECT id,name,created_utc,updated_utc FROM rider_profiles ORDER BY created_utc LIMIT 1";
+        query.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile FROM rider_profiles ORDER BY created_utc LIMIT 1";
         await using var reader = await query.ExecuteReaderAsync(cancellationToken);
         if (await reader.ReadAsync(cancellationToken))
-            return new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)));
+            return new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0);
         await reader.DisposeAsync();
         var now = DateTimeOffset.UtcNow;
         var profile = new RiderProfileRecord(Guid.NewGuid(), string.IsNullOrWhiteSpace(defaultName) ? "Rider" : defaultName.Trim(), now, now);
         await using var insert = db.CreateCommand();
-        insert.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc) VALUES($id,$name,$created,$updated)";
+        insert.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile) VALUES($id,$name,$created,$updated,75,8,0)";
         insert.Parameters.AddWithValue("$id", profile.Id.ToString("D"));
         insert.Parameters.AddWithValue("$name", profile.Name);
         insert.Parameters.AddWithValue("$created", Time(profile.CreatedAtUtc));
@@ -93,17 +103,29 @@ UPDATE schema_info SET version=1;";
     public async Task<RiderProfileRecord?> GetProfileAsync(Guid profileId, CancellationToken cancellationToken = default)
     {
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
-        command.CommandText = "SELECT id,name,created_utc,updated_utc FROM rider_profiles WHERE id=$id"; command.Parameters.AddWithValue("$id", profileId.ToString("D"));
+        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile FROM rider_profiles WHERE id=$id"; command.Parameters.AddWithValue("$id", profileId.ToString("D"));
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await reader.ReadAsync(cancellationToken) ? new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3))) : null;
+        return await reader.ReadAsync(cancellationToken) ? new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0) : null;
     }
 
     public async Task SaveProfileAsync(RiderProfileRecord profile, CancellationToken cancellationToken = default)
     {
+        RiderProfileRecord.Validate(profile.Name, profile.BodyWeightKg, profile.BikeWeightKg);
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
-        command.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc) VALUES($id,$name,$created,$updated) ON CONFLICT(id) DO UPDATE SET name=excluded.name,updated_utc=excluded.updated_utc";
+        command.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile) VALUES($id,$name,$created,$updated,$body,$bike,$test) ON CONFLICT(id) DO UPDATE SET name=excluded.name,updated_utc=excluded.updated_utc,body_weight_kg=excluded.body_weight_kg,bike_weight_kg=excluded.bike_weight_kg,is_test_profile=excluded.is_test_profile";
         Add(command, "$id", profile.Id.ToString("D")); Add(command, "$name", profile.Name); Add(command, "$created", Time(profile.CreatedAtUtc)); Add(command, "$updated", Time(profile.UpdatedAtUtc));
+        Add(command, "$body", profile.BodyWeightKg); Add(command, "$bike", profile.BikeWeightKg); Add(command, "$test", profile.IsTestProfile ? 1 : 0);
         await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RiderProfileRecord>> GetAllProfilesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile FROM rider_profiles ORDER BY created_utc";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var result = new List<RiderProfileRecord>();
+        while (await reader.ReadAsync(cancellationToken)) result.Add(new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0));
+        return result;
     }
 
     public async Task SaveCompletedActivityAsync(RideActivityDraft a, IReadOnlyCollection<RideActivityMedia> media, CancellationToken cancellationToken = default)
@@ -142,6 +164,16 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
         await using var command = db.CreateCommand();
         command.CommandText = $"SELECT {Columns} FROM ride_activities ORDER BY started_utc DESC LIMIT $limit";
         command.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 500));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var result = new List<RideActivity>(); while (await reader.ReadAsync(cancellationToken)) result.Add(ReadActivity(reader));
+        return result;
+    }
+
+    public async Task<IReadOnlyList<RideActivity>> GetRecentActivitiesForProfileAsync(Guid profileId, int limit = 50, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = $"SELECT {Columns} FROM ride_activities WHERE rider_profile_id=$profile ORDER BY started_utc DESC LIMIT $limit";
+        command.Parameters.AddWithValue("$profile", profileId.ToString("D")); command.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 500));
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var result = new List<RideActivity>(); while (await reader.ReadAsync(cancellationToken)) result.Add(ReadActivity(reader));
         return result;

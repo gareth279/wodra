@@ -12,6 +12,19 @@ public sealed class FakeTrainerClient : ITrainerClient
     private int _power = 180;
     private int _cadence = 85;
     private double _speedKph = 30.0;
+    private int? _controlledPower;
+    private int? _controlledCadence;
+    public bool HasLiveDummyControls => _controlledPower.HasValue;
+    public int TargetPowerWatts => _controlledPower ?? _power;
+    public int TargetCadenceRpm => _controlledCadence ?? _cadence;
+
+    public void SetDummyOutput(int powerWatts, int cadenceRpm)
+    {
+        _controlledPower = Math.Clamp(powerWatts, 0, 1500);
+        _controlledCadence = Math.Clamp(cadenceRpm, 0, 160);
+        _power = _controlledPower.Value;
+        _cadence = _controlledCadence.Value;
+    }
 
     public bool IsConnected => _isConnected;
 
@@ -56,6 +69,13 @@ public sealed class FakeTrainerClient : ITrainerClient
         }
 
         // crude fake behaviour
+        if (_controlledPower is { } targetPower && _controlledCadence is { } targetCadence)
+        {
+            _power = targetPower;
+            _cadence = targetCadence;
+            _speedKph = Math.Max(8.0, 32.0 + (_power - 180) * 0.03 - (_gradePercent * 1.8));
+            return new TrainerTelemetry(DateTimeOffset.UtcNow, _power, _cadence, _speedKph);
+        }
         _power = Clamp(_power + _random.Next(-8, 9) - (int)Math.Round(_gradePercent), 120, 320);
         _cadence = Clamp(_cadence + _random.Next(-2, 3), 70, 100);
         _speedKph = Math.Max(8.0, 32.0 + (_power - 180) * 0.03 - (_gradePercent * 1.8));

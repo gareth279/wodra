@@ -155,9 +155,18 @@ public partial class RideWorldView : Node3D
             Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
             rideState.CurrentCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
         _riderStateSource!.Update(playerState, routeLength, _loadedRoute.GetGradientAt, delta);
-        foreach (var riderState in _riderStateSource.GetRiders())
+        _session.GhostRider?.Update(rideState.ElapsedSeconds, routeLength, _session.IsRidePaused);
+        _session.UpdateGhostIndicator(distance);
+        foreach (var riderState in _riderStateSource.GetRiders().Concat(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>()))
         {
-            if (!_riderVisuals.TryGetValue(riderState.RiderId, out var visual)) continue;
+            if (!_riderVisuals.TryGetValue(riderState.RiderId, out var visual))
+            {
+                if (riderState.RiderId != "ghost") continue;
+                visual = new CyclistVisual { Name = "GhostCyclist" };
+                visual.Build(5);
+                (_aiVisualRoot ?? this).AddChild(visual);
+                _riderVisuals["ghost"] = visual;
+            }
             var riderPose = _geometry.GetPoseAtDistance(riderState.WrappedRouteDistanceMeters);
             visual.UpdateFromRiderState(riderState, riderPose, _loadedRoute.GetGradientAt(riderState.WrappedRouteDistanceMeters), delta);
         }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 
 public partial class RideHistoryPanelController : Control
 {
@@ -16,6 +17,7 @@ public partial class RideHistoryPanelController : Control
     private Label _detail = null!;
     private ItemList _list = null!;
     private Button _viewButton = null!;
+    private Button _ghostButton = null!;
     private Button _doneButton = null!;
     private List<RideActivity> _activities = [];
     private RideActivity? _selected;
@@ -41,6 +43,7 @@ public partial class RideHistoryPanelController : Control
         body.AddChild(_detail); column.AddChild(body);
         var buttons = new HBoxContainer();
         _viewButton = new Button { Text = "View selected ride" }; _viewButton.Pressed += ShowSelectedSummary; buttons.AddChild(_viewButton);
+        _ghostButton = new Button { Text = "Ride against ghost", Visible = false }; _ghostButton.Pressed += StartAgainstGhost; buttons.AddChild(_ghostButton);
         _doneButton = new Button { Text = "Done / Return to start" }; _doneButton.Pressed += ClosePanel; buttons.AddChild(_doneButton);
         column.AddChild(buttons); margin.AddChild(column); _panel.AddChild(margin); AddChild(_panel);
         Hide();
@@ -49,12 +52,14 @@ public partial class RideHistoryPanelController : Control
     public async void ShowHistory()
     {
         _summaryMode = false; _returnToRouteSelection = false; _selected = null; _list.Visible = true; _list.Clear(); _title.Text = "Ride History";
-        _detail.Text = "Loading ride history…"; _viewButton.Visible = false;
+        _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false;
         _startPanel?.Hide(); Show(); MoveToFront();
         try
         {
             await GameBootstrap.GetPersistentRiderAsync();
-            _activities = (await GameBootstrap.RideHistory!.GetRecentActivitiesAsync(100)).ToList();
+            var profile = await GameBootstrap.GetPersistentRiderAsync();
+            _title.Text = $"Ride History — {profile.Name}";
+            _activities = (await GameBootstrap.RideHistory!.GetRecentActivitiesForProfileAsync(profile.Id, 100)).ToList();
             if (_activities.Count == 0) _detail.Text = "No completed rides yet.";
             foreach (var activity in _activities)
             {
@@ -68,7 +73,7 @@ public partial class RideHistoryPanelController : Control
 
     public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId)
     {
-        _summaryMode = true; _selected = null; _list.Visible = false; _list.Clear(); _viewButton.Visible = false;
+        _summaryMode = true; _selected = null; _list.Visible = false; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;
         _returnToRouteSelection = GameBootstrap.TrainerClient is not null;
         _startPanel?.Hide(); Show(); MoveToFront();
         _title.Text = "Ride Summary";
@@ -91,13 +96,54 @@ public partial class RideHistoryPanelController : Control
     {
         if (index < 0 || index >= _activities.Count) return;
         _selected = _activities[(int)index]; _viewButton.Visible = true;
+        _ghostButton.Visible = CanOfferGhost(_selected);
         _detail.Text = FormatHistoryDetail(_selected);
+    }
+
+    private static bool CanOfferGhost(RideActivity activity)
+    {
+        if (activity.Status != RideActivityStatus.Completed || RouteCatalog.GetById(activity.RouteId) is null ||
+            string.IsNullOrWhiteSpace(activity.FitFilePath) || !File.Exists(activity.FitFilePath)) return false;
+        try
+        {
+            var trace = new GhostRideTraceLoader().Load(activity.FitFilePath);
+            var route = RouteCatalog.GetById(activity.RouteId)!;
+            if (activity.RouteId == "dunedin-one-way-oval-gardens")
+            {
+                var inferredLaps = Math.Round(trace.TotalDistanceMeters / route.DistanceMeters);
+                if (inferredLaps < 1 || Math.Abs(trace.TotalDistanceMeters - inferredLaps * route.DistanceMeters) > 20) return false;
+            }
+            return trace.TotalDistanceMeters > 0;
+        }
+        catch (Exception ex) { GD.PushWarning($"Ghost trace unavailable for activity {activity.Id}: {ex.Message}"); return false; }
+    }
+
+    private void StartAgainstGhost()
+    {
+        if (_selected is not { } activity || string.IsNullOrWhiteSpace(activity.FitFilePath)) return;
+        var route = RouteCatalog.GetById(activity.RouteId);
+        if (route is null) return;
+        try
+        {
+            var trace = new GhostRideTraceLoader().Load(activity.FitFilePath);
+            var session = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+            if (session is null) return;
+            session.SetPendingGhost(new GhostRiderStateSource(trace, route.Id), activity.Id);
+            Hide();
+            _routeSelection?.ShowRouteSelection();
+        }
+        catch (Exception ex)
+        {
+            GD.PushWarning($"Could not start saved-ride ghost: {ex.Message}");
+            _detail.Text += "\n\nThis ride cannot be loaded as a ghost.";
+            _ghostButton.Visible = false;
+        }
     }
 
     private async void ShowSelectedSummary()
     {
         if (_selected is null) return;
-        _summaryMode = true; _list.Visible = false; _title.Text = "Ride Summary"; _viewButton.Visible = false;
+        _summaryMode = true; _list.Visible = false; _title.Text = "Ride Summary"; _viewButton.Visible = false; _ghostButton.Visible = false;
         var a = _selected;
         var draft = new RideActivityDraft(a.Id, a.RiderProfileId, a.RouteId, a.RouteName, a.StartedAtUtc, a.Status,
             a.DurationSeconds, a.DistanceMeters, a.CompletedLaps, a.AverageSpeedKph, a.MaxSpeedKph,

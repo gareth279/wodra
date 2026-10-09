@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using Godot;
 using IndoorCycling.Core.Persistence;
+using IndoorCycling.Core.Simulation;
 
 public sealed class AppSettings
 {
@@ -10,6 +11,8 @@ public sealed class AppSettings
 	public RecordingSettings Recording { get; set; } = new();
 	public StravaSettings Strava { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
+	public Guid? ActiveProfileId { get; set; }
+	public DummyTrainerSettings DummyTrainer { get; set; } = new();
 
 	public static string SettingsPath
 	{
@@ -117,6 +120,22 @@ public sealed class RiderSettings
 public sealed class RecordingSettings
 {
 	public string OutputFolder { get; set; } = ProductFilePaths.DefaultFitOutputFolderSetting;
+}
+
+public sealed class DummyTrainerSettings
+{
+	public string Mode { get; set; } = "W/kg";
+	public double WattsPerKg { get; set; } = 2.0;
+	public int TargetWatts { get; set; } = 150;
+	public int CadenceRpm { get; set; } = 85;
+	public int CalculateWatts(double bodyWeightKg) => DummyTrainerMath.CalculateWatts(Mode, TargetWatts, WattsPerKg, bodyWeightKg);
+	public void Validate()
+	{
+		if (Mode is not ("W/kg" or "Watts")) Mode = "W/kg";
+		WattsPerKg = Math.Clamp(double.IsFinite(WattsPerKg) ? WattsPerKg : 2, 0, 12);
+		TargetWatts = Math.Clamp(TargetWatts, 0, 1500);
+		CadenceRpm = Math.Clamp(CadenceRpm, 0, 160);
+	}
 }
 
 public sealed class StravaSettings
