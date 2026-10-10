@@ -22,14 +22,16 @@ public partial class HudController : Control
 	private Control? _dummyControlPanel;
 
 	private Button? _menuButton;
-	private Button? _gradientUpButton;
-	private Button? _gradientDownButton;
-
-	private Button? _recordStartButton;
-	private Button? _recordPauseButton;
-	private Button? _recordStopButton;
-	
-	private Button? _saveToStravaButton;
+	private Button? _pauseRideButton;
+	private Button? _endRideButton;
+	private Label? _recordingIndicator;
+	private bool _recordingActive;
+	private double _shownSpeed = double.NaN;
+	private double _shownGradient = double.NaN;
+	private double _shownDistance = double.NaN;
+	private int? _shownPower;
+	private int? _shownCadence;
+	private int _shownElapsedSecond = -1;
 	private RideMenuPanelController? _rideMenuPanel;
 	private RideSessionNode? _rideSessionNode;
 	private PanelContainer? _debugOverlay;
@@ -59,12 +61,12 @@ public partial class HudController : Control
 		_modeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ModeLabel");
 		_topHudPanel = GetNodeOrNull<Control>("TopHudPanel");
 		_statusLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/StatusLabel");
-		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PowerLabel");
-		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/CadenceLabel");
-		_speedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SpeedLabel");
-		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/GradientLabel");
-		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/DistanceLabel");
-		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ElapsedLabel");
+		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric/Value");
+		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric/Value");
+		_speedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/SpeedMetric/Value");
+		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/GradientMetric/Value");
+		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/DistanceMetric/Value");
+		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/ElapsedMetric/Value");
 		_ghostLabel = new Label { Name = "GhostIndicator", Visible = false };
 		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_ghostLabel);
 		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
@@ -90,12 +92,9 @@ public partial class HudController : Control
 		ConnectDummyControls();
 
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
-		_gradientDownButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientDownButton");
-		_gradientUpButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/GradientUpButton");
-		_recordStartButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordStartButton");
-		_recordPauseButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordPauseButton");
-		_recordStopButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/RecordStopButton");
-		_saveToStravaButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/SaveToStravaButton");
+		_pauseRideButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
+		_endRideButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/EndRideButton");
+		_recordingIndicator = GetNodeOrNull<Label>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId);
@@ -113,72 +112,40 @@ public partial class HudController : Control
 			_menuButton.Pressed += OnMenuPressed;
 		}
 
-		if (_gradientDownButton is not null)
-		{
-			_gradientDownButton.Pressed += OnGradientDownPressed;
-		}
-
-		if (_gradientUpButton is not null)
-		{
-			_gradientUpButton.Pressed += OnGradientUpPressed;
-		}
-
-		if (_recordStartButton is not null)
-		{
-			_recordStartButton.Pressed += OnRecordStartPressed;
-		}
-
-		if (_recordPauseButton is not null)
-		{
-			_recordPauseButton.Pressed += OnRecordPausePressed;
-		}
-
-		if (_recordStopButton is not null)
-		{
-			_recordStopButton.Pressed += OnRecordStopPressed;
-		}
-		if (_saveToStravaButton is not null)
-		{
-			_saveToStravaButton.Pressed += OnSaveToStravaPressed;
-		}
+		if (_pauseRideButton is not null) _pauseRideButton.Pressed += OnPauseRidePressed;
+		if (_endRideButton is not null) _endRideButton.Pressed += OnEndRidePressed;
+		SetRecordingState(false, false);
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
 	}
 
-	private void OnGradientDownPressed()
-	{
-		_rideSessionNode?.DecreaseManualGradient();
-	}
-
-	private void OnGradientUpPressed()
-	{
-		_rideSessionNode?.IncreaseManualGradient();
-	}
-
-	private void OnRecordStartPressed()
-	{
-		_rideSessionNode?.StartRideRecording();
-	}
-
-	private void OnRecordPausePressed()
+	private void OnPauseRidePressed()
 	{
 		_rideSessionNode?.ToggleRidePause();
 	}
 
+	private void OnEndRidePressed()
+	{
+		_rideMenuPanel?.ShowEndRideConfirmation();
+	}
+
 	public void SetRidePaused(bool paused)
 	{
-		if (_recordPauseButton is not null)
-			_recordPauseButton.Text = paused ? "Resume" : "Pause";
+		if (_pauseRideButton is not null) _pauseRideButton.Text = paused ? "Resume" : "Pause";
+		UpdateRecordingIndicator(paused);
 	}
 
-	private void OnRecordStopPressed()
+	public void SetRecordingState(bool active, bool paused)
 	{
-		_rideSessionNode?.StopRideRecording();
+		_recordingActive = active;
+		UpdateRecordingIndicator(paused);
 	}
 
-	private void OnSaveToStravaPressed()
+	private void UpdateRecordingIndicator(bool paused)
 	{
-		_rideSessionNode?.SaveLastRecordingToStrava();
+		if (_recordingIndicator is null) return;
+		_recordingIndicator.Visible = _recordingActive;
+		_recordingIndicator.Text = paused ? "REC PAUSED" : "● REC";
 	}
 
 	public void SetDebugMode(bool enabled)
@@ -203,7 +170,7 @@ public partial class HudController : Control
 			OffsetLeft = 12,
 			OffsetRight = 332,
 			OffsetTop = 12,
-			OffsetBottom = 340,
+			OffsetBottom = 430,
 			ClipContents = true
 		};
 		var layout = new VBoxContainer();
@@ -240,23 +207,29 @@ public partial class HudController : Control
 	{
 		if (_debugOverlay is null) return;
 		_debugOverlay.OffsetRight = 332;
-		_debugOverlay.OffsetBottom = 340;
+		_debugOverlay.OffsetBottom = 430;
 	}
 
 	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
 	{
 		if (!_debugEnabled || _debugSummaryLabel is null) return;
-		var lines = new List<string> { "DEBUG", $"Profile: {snapshot.profileName ?? "-"}" };
+		var lines = new List<string>
+		{
+			"DEBUG",
+			$"Profile: {snapshot.profileName ?? "-"}",
+			$"Mode: {TrainerLabel(snapshot.trainerMode)} · Ride: {snapshot.rideState} · FIT: {snapshot.fitRecordingState}",
+			$"Trainer link: {(snapshot.trainerConnected is null ? "—" : snapshot.trainerConnected.Value ? "Connected" : "Disconnected")}",
+			$"Route: {snapshot.routeName ?? "—"} ({snapshot.routeId ?? "—"}) · Segment: {snapshot.routeSegment ?? "—"}"
+		};
 		if (snapshot.trainerKind == "dummy" && snapshot.dummyTargetWatts is { } watts)
 			lines.Add(snapshot.dummyMode == "W/kg"
 				? $"Dummy: {snapshot.dummyWattsPerKg:F1} W/kg · {watts} W · {snapshot.rawTrainerCadenceRpm ?? 0} rpm"
 				: $"Dummy: {watts} W · {snapshot.rawTrainerCadenceRpm ?? 0} rpm");
 		else
 			lines.Add($"Trainer: {TrainerLabel(snapshot.trainerKind)} · {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm");
-		lines.Add($"Ride: {snapshot.totalRideDistanceMeters / 1000:0.00} km · Lap {snapshot.lapNumber} · {snapshot.virtualSpeedKph:0.0} km/h");
+		lines.Add($"Ride: {snapshot.totalRideDistanceMeters / 1000:0.00} km · Lap {snapshot.lapNumber} · {snapshot.virtualSpeedKph:0.0} km/h · {snapshot.elapsedRidingSeconds:0}s");
 		lines.Add($"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}% · Elevation: {snapshot.routeElevationMeters?.ToString("F0") ?? "—"} m");
-		var recording = snapshot.fitRecordingState is "recording" or "paused";
-		lines.Add($"State: {(snapshot.ridePaused ? "Paused" : "Running")} · Recording: {(recording ? "Yes" : "No")}");
+		lines.Add($"Raw trainer: {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm · {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "—"} km/h · age {snapshot.telemetryAgeSeconds?.ToString("F1") ?? "—"} s");
 		if (snapshot.trainerKind == "real") lines.Add($"FTMS grade command: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "—"}%");
 		lines.Add($"Riders: AI {snapshot.aiRiderCount} · Nearest {NearestRider(snapshot)}");
 		if (snapshot.ghostActivityId is not null) lines.Add(snapshot.ghostFinished == true
@@ -349,7 +322,7 @@ public partial class HudController : Control
 			return;
 		}
 
-		_rideMenuPanel.ShowMenu();
+		_rideMenuPanel.ShowEndRideConfirmation();
 	}
 
 	public void SetModeText(string mode)
@@ -361,8 +334,18 @@ public partial class HudController : Control
 
 	public void SetStatus(string status)
 	{
-		if (_statusLabel is not null)
-			_statusLabel.Text = $"Status: {status}";
+		if (_statusLabel is null) return;
+		if (status is "Ride paused.")
+		{
+			_statusLabel.Text = "PAUSED";
+			return;
+		}
+		if (status is "Ride resumed." || status.StartsWith("Trainer session started", StringComparison.Ordinal))
+		{
+			_statusLabel.Text = string.Empty;
+			return;
+		}
+		_statusLabel.Text = status;
 	}
 
 	public void ResetHud()
@@ -372,50 +355,71 @@ public partial class HudController : Control
 		SetModeText("-");
 		SetStatus("Choose a mode to begin.");
 
-		if (_routeLabel is not null) _routeLabel.Text = "Route: -";
-		if (_segmentLabel is not null) _segmentLabel.Text = "Segment: -";
+		if (_routeLabel is not null) _routeLabel.Text = "Route";
+		if (_segmentLabel is not null) _segmentLabel.Text = string.Empty;
 
-		if (_powerLabel is not null) _powerLabel.Text = "Power: -";
-		if (_cadenceLabel is not null) _cadenceLabel.Text = "Cadence: -";
-		if (_speedLabel is not null) _speedLabel.Text = "Speed: -";
-		if (_gradientLabel is not null) _gradientLabel.Text = "Gradient: -";
-		if (_distanceLabel is not null) _distanceLabel.Text = "Distance: -";
-		if (_elapsedLabel is not null) _elapsedLabel.Text = "Elapsed: 00:00:00";
+		if (_powerLabel is not null) _powerLabel.Text = "0";
+		if (_cadenceLabel is not null) _cadenceLabel.Text = "0";
+		if (_speedLabel is not null) _speedLabel.Text = "0.0";
+		if (_gradientLabel is not null) _gradientLabel.Text = "0.0%";
+		if (_distanceLabel is not null) _distanceLabel.Text = "0.00";
+		if (_elapsedLabel is not null) _elapsedLabel.Text = "00:00";
+		_shownSpeed = _shownGradient = _shownDistance = double.NaN;
+		_shownPower = _shownCadence = null;
+		_shownElapsedSecond = -1;
 	}
 
 	public void SetRouteInfo(string routeName, string segmentName, double loopDistanceMeters, double routeDistanceMeters)
 	{
 		if (_routeLabel is not null)
 		{
-			_routeLabel.Text = $"Route: {routeName} ({loopDistanceMeters / 1000.0:0.00}/{routeDistanceMeters / 1000.0:0.00} km)";
+			_routeLabel.Text = routeName;
+			_routeLabel.TooltipText = $"{routeName} · {loopDistanceMeters / 1000.0:0.00}/{routeDistanceMeters / 1000.0:0.00} km";
 		}
 
 		if (_segmentLabel is not null)
 		{
-			_segmentLabel.Text = $"Segment: {segmentName}";
+			_segmentLabel.Text = segmentName;
 		}
 	}
 
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry telemetry, double elapsedSeconds)
 	{
 		UpdateHudVisibility();
-		if (_powerLabel is not null)
-			_powerLabel.Text = $"Power: {telemetry.PowerWatts} W";
-
-		if (_cadenceLabel is not null)
-			_cadenceLabel.Text = $"Cadence: {telemetry.CadenceRpm} rpm";
-
-		if (_speedLabel is not null)
-			_speedLabel.Text = $"Speed: {rideState.VirtualSpeedKph:0.0} km/h";
-
-		if (_gradientLabel is not null)
-			_gradientLabel.Text = $"Gradient: {rideState.CurrentGradientPercent:0.0} %";
-
-		if (_distanceLabel is not null)
-			_distanceLabel.Text = $"Distance: {(rideState.DistanceMeters / 1000.0):0.00} km";
-
-		if (_elapsedLabel is not null)
-			_elapsedLabel.Text = $"Elapsed: {TimeSpan.FromSeconds(elapsedSeconds):hh\\:mm\\:ss}";
+		if (_powerLabel is not null && _shownPower != telemetry.PowerWatts)
+		{
+			_shownPower = telemetry.PowerWatts;
+			_powerLabel.Text = telemetry.PowerWatts.ToString();
+		}
+		if (_cadenceLabel is not null && _shownCadence != telemetry.CadenceRpm)
+		{
+			_shownCadence = telemetry.CadenceRpm;
+			_cadenceLabel.Text = telemetry.CadenceRpm.ToString();
+		}
+		var speed = Math.Round(rideState.VirtualSpeedKph, 1);
+		if (_speedLabel is not null && _shownSpeed != speed)
+		{
+			_shownSpeed = speed;
+			_speedLabel.Text = speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+		}
+		var gradient = Math.Round(rideState.CurrentGradientPercent, 1);
+		if (_gradientLabel is not null && _shownGradient != gradient)
+		{
+			_shownGradient = gradient;
+			_gradientLabel.Text = $"{gradient:+0.0;-0.0;0.0}%";
+		}
+		var distance = Math.Round(rideState.DistanceMeters / 1000.0, 2);
+		if (_distanceLabel is not null && _shownDistance != distance)
+		{
+			_shownDistance = distance;
+			_distanceLabel.Text = distance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+		}
+		var elapsedSecond = Math.Max(0, (int)elapsedSeconds);
+		if (_elapsedLabel is not null && _shownElapsedSecond != elapsedSecond)
+		{
+			_shownElapsedSecond = elapsedSecond;
+			_elapsedLabel.Text = TimeSpan.FromSeconds(elapsedSecond).ToString(elapsedSecond >= 3600 ? @"h\:mm\:ss" : @"m\:ss");
+		}
 	}
 
 	public void SetGhostIndicator(string? text)
@@ -460,7 +464,7 @@ public partial class HudController : Control
 	{
 		var rideIsActive = _rideSessionNode?.IsRideActive == true;
 		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && !_debugEnabled;
-		var dummyVisible = rideIsActive && _dummyActive;
+		var dummyVisible = rideIsActive && _dummyActive && _debugEnabled;
 		if (_dummyControlPanel is not null) _dummyControlPanel.Visible = dummyVisible;
 		var wkgMode = GameBootstrap.Settings?.DummyTrainer?.Mode == "W/kg";
 		if (_dummyWkgPowerRow is not null) _dummyWkgPowerRow.Visible = wkgMode;

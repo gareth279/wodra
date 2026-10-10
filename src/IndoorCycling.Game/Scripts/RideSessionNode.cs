@@ -41,8 +41,10 @@ public partial class RideSessionNode : Node
 	public Guid? CurrentActivityId => _currentActivityId;
 	public Guid? LastCompletedActivityId { get; private set; }
 	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
+	public string? LastRecordingError { get; private set; }
 
 	private RideFitRecorder? _rideRecorder;
+	private Task? _endRideTask;
 	public GhostRiderStateSource? GhostRider { get; private set; }
 	public Guid? GhostActivityId { get; private set; }
 	public void SetPendingGhost(GhostRiderStateSource source, Guid activityId) { GhostRider = source; GhostActivityId = activityId; }
@@ -119,6 +121,8 @@ public partial class RideSessionNode : Node
 		}
 		_activityStartedAtUtc = DateTimeOffset.UtcNow;
 		_currentActivityFitPath = null;
+		_lastStoppedRecordingPath = null;
+		LastRecordingError = null;
 		_activityAccumulator.Reset();
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
@@ -135,6 +139,7 @@ public partial class RideSessionNode : Node
 		_lastSentTrainerGradientPercent = null;
 		_trainerCommandDirty = true;
 		BeginDebugRide("trainer");
+		StartAutomaticRideRecording();
 
 		_hudController?.SetModeText("Trainer");
 		//_hudController?.SetStatus("Trainer session started.");
@@ -205,6 +210,23 @@ public partial class RideSessionNode : Node
 
 	private async Task EndRideAsync(bool disconnectTrainer)
 	{
+		if (_endRideTask is { } pending)
+		{
+			await pending;
+			return;
+		}
+		if (!_sessionStarted && _rideRecorder is null) return;
+		var work = EndRideCoreAsync(disconnectTrainer);
+		_endRideTask = work;
+		try { await work; }
+		finally
+		{
+			if (ReferenceEquals(_endRideTask, work)) _endRideTask = null;
+		}
+	}
+
+	private async Task EndRideCoreAsync(bool disconnectTrainer)
+	{
 		var wasActiveTrainerRide = _sessionStarted && _trainerSessionActive;
 		_sessionStarted = false;
 		string? fitPath = null;
@@ -213,8 +235,9 @@ public partial class RideSessionNode : Node
 			try { fitPath = FinaliseRecording(); }
 			catch (Exception ex)
 			{
+				LastRecordingError = ex.Message;
 				GameLogger.Log("ride_finalise_failed", new { message = ex.Message });
-				GD.PushWarning($"FIT file could not be finalized; the ride will still be saved: {ex.Message}");
+				GD.PushWarning($"FIT file could not be finalized; the ride will still be saved to ride history: {ex.Message}");
 			}
 			if (wasActiveTrainerRide && _currentActivityId is { } activityId && _currentRoute is { } route)
 			{
@@ -295,6 +318,17 @@ public partial class RideSessionNode : Node
 			_ = QuitAsync();
 	}
 
+	public override void _ExitTree()
+	{
+		if (_rideRecorder is null) return;
+		try { FinaliseRecording(); }
+		catch (Exception ex)
+		{
+			GameLogger.Log("ride_exit_recording_finalize_failed", new { message = ex.Message });
+			GD.PushWarning($"Wodra could not finalize the active FIT recording during exit: {ex.Message}");
+		}
+	}
+
 	private void RecordCurrentSample()
 	{
 		if (_rideRecorder?.IsRecording != true) return;
@@ -307,19 +341,51 @@ public partial class RideSessionNode : Node
 	private string? FinaliseRecording()
 	{
 		if (_rideRecorder is null) return null;
+		var recorder = _rideRecorder;
+		Exception? finalSampleError = null;
 		try
 		{
 			RecordCurrentSample();
 		}
-		finally
+		catch (Exception ex) { finalSampleError = ex; }
+		_rideRecorder = null;
+		try
 		{
-			_lastStoppedRecordingPath = _rideRecorder.Stop();
+			_lastStoppedRecordingPath = recorder.Stop();
 			if (_currentActivityId is not null && _lastStoppedRecordingPath is not null && File.Exists(_lastStoppedRecordingPath))
 				_currentActivityFitPath = _lastStoppedRecordingPath;
-			_rideRecorder = null;
+			if (finalSampleError is not null)
+				LastRecordingError = $"The final FIT sample could not be recorded: {finalSampleError.Message}";
+		}
+		finally
+		{
 			_recordingSampleElapsedSeconds = 0;
+			_hudController?.SetRecordingState(false, false);
 		}
 		return _lastStoppedRecordingPath;
+	}
+
+	private void StartAutomaticRideRecording()
+	{
+		try
+		{
+			_rideRecorder = new RideFitRecorder();
+			_rideRecorder.StartOrResume(_rideState.DistanceMeters,
+				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
+			RecordCurrentSample();
+			_recordingSampleElapsedSeconds = 0;
+			_hudController?.SetRecordingState(true, false);
+		}
+		catch (Exception ex)
+		{
+			try { _rideRecorder?.Stop(); }
+			catch (Exception cleanupException) { GameLogger.Log("ride_recording_start_cleanup_failed", new { message = cleanupException.Message }); }
+			_rideRecorder = null;
+			_hudController?.SetRecordingState(false, false);
+			LastRecordingError = ex.Message;
+			GameLogger.Log("ride_recording_auto_start_failed", new { message = ex.Message });
+			GD.PushWarning($"Ride started, but FIT recording could not start: {ex.Message}");
+		}
 	}
 
 	public void IncreaseManualGradient()
@@ -635,34 +701,6 @@ public partial class RideSessionNode : Node
 		return gradientChange >= TrainerGradientChangeThresholdPercent;
 	}
 
-	public void StartRideRecording()
-	{
-		if (!_sessionStarted)
-		{
-			_hudController?.SetStatus("Start a ride before recording.");
-			return;
-		}
-
-		var created = _rideRecorder is null;
-		_rideRecorder ??= new RideFitRecorder();
-		var path = _rideRecorder.FilePath;
-		if (created)
-		{
-			path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
-				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
-			if (_pauseGate.IsPaused) _rideRecorder.Pause();
-		}
-		else if (!_pauseGate.IsPaused)
-		{
-			path = _rideRecorder.StartOrResume(_rideState.DistanceMeters,
-				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
-		}
-		RecordCurrentSample();
-		_recordingSampleElapsedSeconds = 0;
-
-		_hudController?.SetStatus($"Recording: {path}");
-	}
-
 	public void ToggleRidePause()
 	{
 		if (!_sessionStarted) return;
@@ -696,19 +734,6 @@ public partial class RideSessionNode : Node
 		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_resumed", new { distanceMeters = _rideState.DistanceMeters, elapsedSeconds = _elapsedSeconds });
 		_recordingSampleElapsedSeconds = 0;
 		_hudController?.SetStatus("Ride resumed.");
-	}
-
-	public void StopRideRecording()
-	{
-		if (_rideRecorder is null)
-		{
-			_hudController?.SetStatus("No active recording to stop.");
-			return;
-		}
-
-		var path = FinaliseRecording();
-
-		_hudController?.SetStatus($"Recording saved: {path}");
 	}
 
 	public void SaveLastRecordingToStrava()

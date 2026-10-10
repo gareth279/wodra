@@ -60,6 +60,7 @@ var tests = new (string Name, Action Run)[]
     ("Ride pause pauses and resumes the same active FIT recording", RidePauseResumesSameRecording),
     ("Starting recording while paused does not resume ride or FIT timer", StartRecordingWhileRidePaused),
     ("Stopping FIT recording leaves the ride running", StopRecordingLeavesRideRunning),
+    ("Consecutive rides create separate FIT files", ConsecutiveRidesCreateSeparateFiles),
     ("Empty recording finalizes as a valid FIT file", EmptyRecording)
 };
 
@@ -175,6 +176,22 @@ static void StopRecordingLeavesRideRunning() => InTemporaryFolder(() =>
     state = gate.Toggle(state); // Running again.
     recorder.Stop();
     if (gate.IsPaused) throw new Exception("Stopping recording paused the ride.");
+});
+
+static void ConsecutiveRidesCreateSeparateFiles() => InTemporaryFolder(() =>
+{
+    var first = new RideFitRecorder();
+    first.StartOrResume(0);
+    var firstPath = first.Stop()!;
+
+    var second = new RideFitRecorder();
+    second.StartOrResume(0);
+    var secondPath = second.Stop()!;
+
+    if (firstPath == secondPath || !System.IO.File.Exists(firstPath) || !System.IO.File.Exists(secondPath))
+        throw new Exception("Consecutive rides did not retain separate FIT files.");
+    _ = new FitRideLoader().Load(firstPath);
+    _ = new FitRideLoader().Load(secondPath);
 });
 
 static void InTemporaryFolder(Action action)

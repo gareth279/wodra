@@ -10,6 +10,38 @@
 [ext_resource type="Script" path="res://Scripts/World/RideWorldView.cs" id="8_world"]
 [ext_resource type="Script" path="res://Scripts/RideHistoryPanelController.cs" id="9_history"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
+bg_color = Color(0.055, 0.07, 0.078, 0.84)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.43, 0.28, 0.5)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+content_margin_left = 11.0
+content_margin_top = 9.0
+content_margin_right = 11.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.055, 0.068, 0.075, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.68, 0.51, 0.31, 0.72)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+
 [node name="Control" type="Control" unique_id=141499871]
 custom_minimum_size = Vector2(1024, 768)
 layout_mode = 3
@@ -319,38 +351,146 @@ offset_bottom = 40.0
 
 [node name="TopHudPanel" type="PanelContainer" parent="HudController" unique_id=809396590]
 visible = false
-custom_minimum_size = Vector2(370, 260)
+custom_minimum_size = Vector2(318, 205)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_top = 0.0
 anchor_bottom = 0.0
-offset_left = -382.0
-offset_top = 5.0
+offset_left = -330.0
+offset_top = 12.0
 offset_right = -12.0
-offset_bottom = 265.0
+offset_bottom = 217.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 
 [node name="MarginContainer" type="MarginContainer" parent="HudController/TopHudPanel" unique_id=395579594]
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer" unique_id=485584424]
 layout_mode = 2
-
-[node name="ModeLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=641568863]
-layout_mode = 2
+theme_override_constants/separation = 4
 
 [node name="RouteLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1976225411]
 layout_mode = 2
-text = "Route: -"
+text = "Route name"
+theme_override_colors/font_color = Color(0.9, 0.82, 0.66, 1)
+theme_override_font_sizes/font_size = 15
 
 [node name="SegmentLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=856968290]
 layout_mode = 2
-text = "Segment: -"
+text = "Current segment"
+theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 11
 
 [node name="StatusLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1115674977]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.69, 0.36, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="PrimaryMetrics" type="GridContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 2
+
+[node name="SpeedMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/SpeedMetric"]
+layout_mode = 2
+text = "SPEED · KM/H"
+theme_override_colors/font_color = Color(0.76, 0.76, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/SpeedMetric"]
+layout_mode = 2
+text = "0.0"
+theme_override_colors/font_color = Color(0.96, 0.89, 0.73, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="PowerMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric"]
+layout_mode = 2
+text = "POWER · W"
+theme_override_colors/font_color = Color(0.76, 0.76, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(0.94, 0.75, 0.43, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="CadenceMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric"]
+layout_mode = 2
+text = "CADENCE · RPM"
+theme_override_colors/font_color = Color(0.76, 0.76, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(0.78, 0.83, 0.71, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="SecondaryMetrics" type="GridContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 2
+
+[node name="GradientMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/GradientMetric"]
+layout_mode = 2
+text = "GRADE"
+theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/GradientMetric"]
+layout_mode = 2
+text = "0.0%"
+theme_override_colors/font_color = Color(0.9, 0.88, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="DistanceMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/DistanceMetric"]
+layout_mode = 2
+text = "DISTANCE · KM"
+theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/DistanceMetric"]
+layout_mode = 2
+text = "0.00"
+theme_override_colors/font_color = Color(0.9, 0.88, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="ElapsedMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/ElapsedMetric"]
+layout_mode = 2
+text = "ELAPSED"
+theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/ElapsedMetric"]
+layout_mode = 2
+text = "00:00"
+theme_override_colors/font_color = Color(0.9, 0.88, 0.8, 1)
+theme_override_font_sizes/font_size = 14
 layout_mode = 2
 
 [node name="PowerLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=668261802]
@@ -396,29 +536,19 @@ layout_mode = 2
 [node name="HBoxContainer" type="HBoxContainer" parent="HudController/BottomBar/MarginContainer" unique_id=1547907366]
 layout_mode = 2
 
-[node name="GradientDownButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1131814656]
-layout_mode = 2
-text = "- Grade"
-
-[node name="GradientUpButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1466323880]
-layout_mode = 2
-text = "+ Grade"
-
-[node name="RecordStartButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=782817168]
-layout_mode = 2
-text = "Start"
-
-[node name="RecordPauseButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=165903913]
+[node name="PauseRideButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=165903913]
 layout_mode = 2
 text = "Pause"
 
-[node name="RecordStopButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=945416178]
+[node name="EndRideButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=945416178]
 layout_mode = 2
-text = "Stop"
+text = "End Ride"
 
-[node name="SaveToStravaButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=265709212]
+[node name="RecordingIndicator" type="Label" parent="HudController/BottomBar/MarginContainer/HBoxContainer"]
+visible = false
 layout_mode = 2
-text = "Save to Strava"
+text = "● REC"
+theme_override_colors/font_color = Color(0.83, 0.63, 0.31, 1)
 
 [node name="MenuButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1255797073]
 layout_mode = 2
@@ -529,25 +659,30 @@ grow_vertical = 2
 script = ExtResource("6_e67xs")
 
 [node name="ColorRect" type="ColorRect" parent="RideMenuPanel" unique_id=1769909631]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0, 0, 0, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.015, 0.022, 0.028, 0.62)
 
 [node name="PanelContainer" type="PanelContainer" parent="RideMenuPanel" unique_id=1049868500]
-custom_minimum_size = Vector2(360, 220)
+custom_minimum_size = Vector2(390, 260)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -179.0
-offset_top = -111.0
-offset_right = 181.0
-offset_bottom = 109.0
+offset_left = -194.0
+offset_top = -131.0
+offset_right = 196.0
+offset_bottom = 129.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
 
 [node name="MarginContainer" type="MarginContainer" parent="RideMenuPanel/PanelContainer" unique_id=228671966]
 layout_mode = 2
@@ -557,19 +692,24 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=1736102257]
 layout_mode = 2
-text = "Menu"
+text = "End this ride?"
+theme_override_colors/font_color = Color(0.93, 0.83, 0.67, 1)
+theme_override_font_sizes/font_size = 20
 
-[node name="ResumeButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=1390345354]
+[node name="ConfirmationLabel" type="Label" parent="RideMenuPanel/PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "Resume"
+text = "Your ride will be saved automatically as a FIT file."
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.81, 0.78, 1)
 
-[node name="BackToMenuButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=2062167002]
+[node name="KeepRidingButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "Back To Menu"
+text = "Keep Riding"
 
-[node name="QuitButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=18915124]
+[node name="EndRideButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=2062167002]
 layout_mode = 2
-text = "Quit"
+text = "End Ride"
+focus_mode = 0
 
 [node name="RouteSelectionPanel" type="Control" parent="." unique_id=261971885]
 layout_mode = 1

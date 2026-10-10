@@ -194,10 +194,23 @@ public sealed class RideFitRecorder
 	{
 		var outputDir = ResolveOutputFolder(GameBootstrap.Settings.Recording.OutputFolder);
 		Directory.CreateDirectory(outputDir);
+		var baseName = ProductFilePaths.CreateFitFileName(System.DateTime.Now);
+		var stem = Path.GetFileNameWithoutExtension(baseName);
+		for (var suffix = 0; suffix < 1000; suffix++)
+		{
+			var name = suffix == 0 ? baseName : $"{stem}-{suffix:00}.fit";
+			var candidate = Path.Combine(outputDir, name);
+			try
+			{
+				_fitStream = new FileStream(candidate, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+				FilePath = candidate;
+				break;
+			}
+			catch (IOException) when (System.IO.File.Exists(candidate)) { }
+		}
+		if (_fitStream is null || FilePath is null)
+			throw new IOException("Could not allocate a unique FIT recording filename.");
 
-		FilePath = Path.Combine(outputDir, ProductFilePaths.CreateFitFileName(System.DateTime.Now));
-
-		_fitStream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
         _encoder = new Encode(ProtocolVersion.V20);
         _encoder.Open(_fitStream);
 

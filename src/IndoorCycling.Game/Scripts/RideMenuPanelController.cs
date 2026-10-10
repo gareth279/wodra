@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Godot;
 
@@ -9,6 +10,10 @@ public partial class RideMenuPanelController : Control
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private RideHistoryPanelController? _rideHistoryPanel;
+	private Button? _keepRidingButton;
+	private Button? _endRideButton;
+	private bool _wasPausedBeforeConfirmation;
+	private bool _endingRide;
 
 	public override void _Ready()
 	{
@@ -18,37 +23,61 @@ public partial class RideMenuPanelController : Control
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
 
-		GetNode<Button>("PanelContainer/VBoxContainer/ResumeButton").Pressed += OnResumeButtonPressed;
-		GetNode<Button>("PanelContainer/VBoxContainer/BackToMenuButton").Pressed += OnBackToMenuButtonPressed;
-		GetNode<Button>("PanelContainer/VBoxContainer/QuitButton").Pressed += OnQuitButtonPressed;
+		_keepRidingButton = GetNode<Button>("PanelContainer/VBoxContainer/KeepRidingButton");
+		_endRideButton = GetNode<Button>("PanelContainer/VBoxContainer/EndRideButton");
+		_keepRidingButton.Pressed += OnKeepRidingButtonPressed;
+		_endRideButton.Pressed += OnEndRideButtonPressed;
 
 		Hide();
 	}
 
-	public void ShowMenu()
+	public void ShowEndRideConfirmation()
 	{
+		if (_rideSessionNode?.IsRideActive != true || _endingRide) return;
+		_wasPausedBeforeConfirmation = _rideSessionNode.IsRidePaused;
+		if (!_wasPausedBeforeConfirmation)
+			_rideSessionNode.ToggleRidePause();
+		_keepRidingButton!.Disabled = false;
+		_endRideButton!.Disabled = false;
 		Show();
 		MoveToFront();
-		GameLogger.Log("ride_menu_shown", new { });
+		GameLogger.Log("end_ride_confirmation_shown", new { wasPaused = _wasPausedBeforeConfirmation });
 	}
-	private void OnResumeButtonPressed()
+
+	private void OnKeepRidingButtonPressed()
 	{
-		_rideSessionNode?.ResumeRide();
 		Hide();
+		if (!_wasPausedBeforeConfirmation && _rideSessionNode?.IsRideActive == true && _rideSessionNode.IsRidePaused)
+			_rideSessionNode.ResumeRide();
 	}
 
-	private async void OnBackToMenuButtonPressed()
+	private void OnEndRideButtonPressed()
 	{
-		if (_rideSessionNode is not null)
-		{
-			await _rideSessionNode.ExitToRouteSelectionAsync();
-		}
+		_ = EndRideAndShowSummaryAsync();
+	}
 
+	public async Task EndRideAndShowSummaryAsync()
+	{
+		if (_endingRide || _rideSessionNode?.IsRideActive != true) return;
+		_endingRide = true;
+		_keepRidingButton!.Disabled = true;
+		_endRideButton!.Disabled = true;
+		try { await _rideSessionNode.ExitToRouteSelectionAsync(); }
+		catch (Exception ex)
+		{
+			_endingRide = false;
+			_keepRidingButton.Disabled = false;
+			_endRideButton.Disabled = false;
+			GD.PushWarning($"Could not end ride: {ex.Message}");
+			return;
+		}
+		_endingRide = false;
 		Hide();
 		_hudController?.Hide();
 		if (_rideSessionNode?.LastCompletedActivityDraft is { } draft)
 		{
-			_rideHistoryPanel?.ShowCompletedSummary(draft, _rideSessionNode.LastCompletedActivityId);
+			_rideHistoryPanel?.ShowCompletedSummary(draft, _rideSessionNode.LastCompletedActivityId,
+				_rideSessionNode.LastRecordingError);
 			return;
 		}
 		_startPanel?.Show();
@@ -62,9 +91,4 @@ public partial class RideMenuPanelController : Control
 		}
 	}
 
-	private async void OnQuitButtonPressed()
-	{
-		if (_rideSessionNode is not null)
-			await _rideSessionNode.QuitAsync();
-	}
 }
