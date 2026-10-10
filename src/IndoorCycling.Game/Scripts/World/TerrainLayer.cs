@@ -36,7 +36,7 @@ public partial class TerrainLayer : Node3D
         TerrainTriangleCount = built.TriangleCount;
         var material = new StandardMaterial3D
         {
-            AlbedoColor = new Color(0.29f, 0.36f, 0.25f), Roughness = 0.96f,
+            AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1,
             CullMode = BaseMaterial3D.CullModeEnum.Disabled
         };
         foreach (var chunk in built.Chunks)
@@ -46,8 +46,17 @@ public partial class TerrainLayer : Node3D
             surface.Begin(Mesh.PrimitiveType.Triangles);
             foreach (var index in chunk.Indices)
             {
-                surface.SetNormal(ToGodot(chunk.Normals[index]));
-                surface.AddVertex(ToGodot(chunk.Vertices[index]));
+                var faceStart = index - index % 3;
+                var a = ToGodot(chunk.Vertices[faceStart]);
+                var b = ToGodot(chunk.Vertices[faceStart + 1]);
+                var c = ToGodot(chunk.Vertices[faceStart + 2]);
+                var normal = (b - a).Cross(c - a).Normalized();
+                if (normal.Y < 0) normal = -normal;
+                var vertex = ToGodot(chunk.Vertices[index]);
+                var variation = StableVariation((a + b + c) / 3);
+                surface.SetNormal(normal);
+                surface.SetColor(WodraWorldStyle.TerrainFaceColor(vertex.Y, normal.Y, variation));
+                surface.AddVertex(vertex);
             }
             surface.Index();
             var instance = new MeshInstance3D
@@ -81,4 +90,9 @@ public partial class TerrainLayer : Node3D
     }
 
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
+    private static float StableVariation(Vector3 position)
+    {
+        var hash = Math.Sin(position.X * 0.071 + position.Z * 0.113) * 43758.5453;
+        return (float)(hash - Math.Floor(hash));
+    }
 }

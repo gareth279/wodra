@@ -87,26 +87,25 @@ public partial class RideWorldView : Node3D
         AddChild(new DirectionalLight3D
         {
             Name = "Sun",
-            // A fixed late-morning angle gives the route visible lateral shading
-            // without introducing an animated time-of-day system.
-            RotationDegrees = new Vector3(-38, -32, 0),
-            LightColor = new Color(1.0f, 0.97f, 0.92f),
-            LightEnergy = 0.82f,
+            // Fixed golden-hour light keeps route geometry legible and repeatable.
+            RotationDegrees = new Vector3(-24, -34, 0),
+            LightColor = WodraWorldStyle.Sunlight,
+            LightEnergy = WodraWorldStyle.SunEnergy,
             ShadowEnabled = true,
             DirectionalShadowMode = DirectionalLight3D.ShadowMode.Orthogonal,
-            DirectionalShadowMaxDistance = 180,
-            ShadowOpacity = 0.52f
+            DirectionalShadowMaxDistance = WodraWorldStyle.ShadowDistanceMeters,
+            ShadowOpacity = 0.42f
         });
         var sky = new Sky
         {
             SkyMaterial = new ProceduralSkyMaterial
             {
-                SkyTopColor = new Color(0.22f, 0.43f, 0.69f),
-                SkyHorizonColor = new Color(0.68f, 0.79f, 0.86f),
-                GroundBottomColor = new Color(0.34f, 0.39f, 0.34f),
-                GroundHorizonColor = new Color(0.67f, 0.75f, 0.76f),
-                SkyCurve = 0.18f,
-                GroundCurve = 0.12f,
+                SkyTopColor = WodraWorldStyle.SkyTop,
+                SkyHorizonColor = WodraWorldStyle.SkyHorizon,
+                GroundBottomColor = WodraWorldStyle.GroundHorizon.Darkened(0.22f),
+                GroundHorizonColor = WodraWorldStyle.GroundHorizon,
+                SkyCurve = 0.24f,
+                GroundCurve = 0.18f,
                 SunAngleMax = 12,
                 SunCurve = 0.12f
             }
@@ -118,8 +117,16 @@ public partial class RideWorldView : Node3D
                 BackgroundMode = Godot.Environment.BGMode.Sky,
                 Sky = sky,
                 AmbientLightSource = Godot.Environment.AmbientSource.Sky,
-                AmbientLightSkyContribution = 0.72f,
-                AmbientLightEnergy = 0.53f,
+                AmbientLightSkyContribution = 0.58f,
+                AmbientLightEnergy = WodraWorldStyle.AmbientEnergy,
+                ReflectedLightSource = Godot.Environment.ReflectionSource.Sky,
+                FogEnabled = true,
+                FogLightColor = WodraWorldStyle.GroundHorizon,
+                FogLightEnergy = 0.72f,
+                FogSunScatter = 0.16f,
+                FogDensity = WodraWorldStyle.FogDensity,
+                FogAerialPerspective = WodraWorldStyle.FogAerialPerspective,
+                FogSkyAffect = WodraWorldStyle.FogSkyAffect,
                 TonemapMode = Godot.Environment.ToneMapper.Filmic,
                 TonemapExposure = 0.92f
             }
@@ -315,8 +322,8 @@ public partial class RideWorldView : Node3D
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
-        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, new Color(0.28f, 0.45f, 0.22f)));
-        var asphalt = new Color(0.17f, 0.18f, 0.2f);
+        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, WodraWorldStyle.Grass.Darkened(0.08f)));
+        var asphalt = WodraWorldStyle.Asphalt;
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
         var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
         if (junctionFill is not null) _routeRoot.AddChild(junctionFill);

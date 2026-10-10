@@ -7,8 +7,8 @@ using Godot;
 /// <summary>Static OSM green-area meshes and compact MultiMesh tree batches.</summary>
 public partial class VegetationLayer : Node3D
 {
-    private const double ChunkLengthMeters = 400;
-    private const double VisibleDistanceMeters = 1000;
+    private const double ChunkLengthMeters = WodraWorldStyle.VegetationChunkLengthMeters;
+    private const double VisibleDistanceMeters = WodraWorldStyle.VegetationVisibleDistanceMeters;
     private sealed record VisibleChunk(int Index, double CenterDistanceMeters, List<Node3D> Nodes);
     private readonly List<VisibleChunk> _chunks = [];
     private double _routeLengthMeters;
@@ -85,7 +85,7 @@ public partial class VegetationLayer : Node3D
                 new Vector3(1, (float)(item.Tree.HeightMeters * .3), 1))).ToArray();
             nodes.Add(CreateMultiMesh("TreeTrunks", new CylinderMesh
             { TopRadius = .12f, BottomRadius = .19f, Height = 1, RadialSegments = 5 },
-                new StandardMaterial3D { AlbedoColor = new Color(.31f, .2f, .12f), Roughness = 0.9f }, trunkTransforms));
+                new StandardMaterial3D { AlbedoColor = new Color(.36f, .23f, .13f), Roughness = 1 }, trunkTransforms));
 
             foreach (var type in new[] { "conifer", "broadleaf" })
             {
@@ -96,8 +96,8 @@ public partial class VegetationLayer : Node3D
                     : item.Tree.TreeType == type).ToArray();
                 if (selected.Length == 0) continue;
                 var canopy = type == "conifer"
-                    ? (Mesh)new CylinderMesh { TopRadius = 0, BottomRadius = 1, Height = 1.6f, RadialSegments = 6 }
-                    : new SphereMesh { Radius = 1, Height = 1.5f, RadialSegments = 6, Rings = 3 };
+                    ? (Mesh)new CylinderMesh { TopRadius = 0, BottomRadius = 1, Height = 1.6f, RadialSegments = 5 }
+                    : new SphereMesh { Radius = 1, Height = 1.5f, RadialSegments = 5, Rings = 2 };
                 var canopyTransforms = selected.Select(item =>
                 {
                     var tree = item.Tree; var radius = (float)tree.CanopyRadiusMeters;
@@ -106,8 +106,9 @@ public partial class VegetationLayer : Node3D
                     return ScaledTransform(item.Position + Vector3.Up * centerY,
                         new Vector3(radius, canopyHeight, radius));
                 }).ToArray();
+                var canopyColor = type == "conifer" ? new Color(.18f, .32f, .20f) : new Color(.31f, .43f, .22f);
                 nodes.Add(CreateMultiMesh(type == "conifer" ? "ConiferCanopies" : "BroadleafCanopies", canopy,
-                    new StandardMaterial3D { AlbedoColor = type == "conifer" ? new Color(.14f, .34f, .18f) : new Color(.2f, .43f, .19f), Roughness = 0.96f }, canopyTransforms));
+                    new StandardMaterial3D { AlbedoColor = canopyColor, Roughness = 1 }, canopyTransforms));
             }
             foreach (var node in nodes) AddChild(node);
             MultiMeshCount += nodes.Count;
@@ -145,9 +146,9 @@ public partial class VegetationLayer : Node3D
     }
     private static Color AreaColor(string category) => category switch
     {
-        "wood" or "forest" or "nature-reserve" => new Color(.16f, .3f, .17f),
-        "grass" or "grassland" or "meadow" => new Color(.32f, .43f, .23f),
-        _ => new Color(.2f, .37f, .24f)
+        "wood" or "forest" or "nature-reserve" => WodraWorldStyle.Forest,
+        "grass" or "grassland" or "meadow" => WodraWorldStyle.Meadow,
+        _ => WodraWorldStyle.Grass
     };
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
     private static Transform3D ScaledTransform(Vector3 position, Vector3 scale) =>
