@@ -5462,7 +5462,10 @@
     "runtimeSharedMaterialCount": 3,
     "visualRuntimeMeshChunkCount": 50,
     "visualRuntimeMeshInstanceCount": 50,
-    "visualRuntimeSurfaceCount": 150
+    "visualRuntimeSurfaceCount": 150,
+    "footprintElevationSamples": 25038,
+    "slopedFootprintCount": 1034,
+    "elevationRasterCount": 4
   },
   "vegetation": {
     "polygonsConsidered": 5122,
@@ -5487,10 +5490,10 @@
     "originalPolygonVertices": 3452,
     "simplifiedPolygonVertices": 1846,
     "largestPolygonVertices": 312,
-    "demSamples": 959,
-    "demCacheHits": 1,
+    "demSamples": 958,
+    "demCacheHits": 4,
     "malformedOrSkippedGeometries": 11,
-    "areaGroundOverlays": 75,
+    "areaGroundOverlays": 65,
     "areaTriangleCount": 1361,
     "multiMeshCount": 26,
     "areaMeshInstanceCount": 28,
@@ -5551,7 +5554,7 @@
     "cacheHit": true,
     "cacheBuildSeconds": 68.7749962
   },
-  "generatedAtUtc": "2026-10-11T08:34:07.7691503\u002B00:00",
+  "generatedAtUtc": "2026-10-11T08:34:07.7691503+00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -5570,14 +5573,14 @@
         ]
       },
       {
-        "name": "Toit\u016B Te Whenua Land Information New Zealand",
+        "name": "Toitū Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -5596,7 +5599,7 @@
           ]
         },
         {
-          "name": "Toit\u016B Te Whenua Land Information New Zealand",
+          "name": "Toitū Te Whenua Land Information New Zealand",
           "roles": [
             "host",
             "licensor",
@@ -5748,7 +5751,7 @@
         "maximumResidualMeters": 6.147729858708136,
         "maximumCorrectionMeters": 6.152429293858511,
         "resolutionMeters": 1,
-        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
         "startDistanceMeters": 3089.767615849301,
         "endDistanceMeters": 3089.767615849301,
         "latitude": -45.85487029789954,
@@ -5770,7 +5773,7 @@
         "maximumResidualMeters": 4.106866197760155,
         "maximumCorrectionMeters": 3.906161808721423,
         "resolutionMeters": 1,
-        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
         "startDistanceMeters": 5039.620965657113,
         "endDistanceMeters": 5049.620213604845,
         "latitude": -45.86218854367047,
@@ -5784,8 +5787,8 @@
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
-    "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0303.tiff",
@@ -5843,5 +5846,5 @@
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
   "totalAscentMeters": 218.8749151286524,
-  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
+  "sourceAttribution": "© OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

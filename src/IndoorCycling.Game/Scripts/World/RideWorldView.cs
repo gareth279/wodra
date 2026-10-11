@@ -79,6 +79,11 @@ public partial class RideWorldView : Node3D
     private bool _wasActive;
     private VisualRoutePose _lastPose;
     private readonly RouteWorldLoadAttempt<RouteDefinition> _routeLoadAttempt = new();
+#if DEBUG
+    private IReadOnlyList<RouteBuildingData> _debugBuildings = [];
+    private RouteVegetationData? _debugVegetation;
+    private int _debugSceneryIsolation;
+#endif
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
 
@@ -201,7 +206,17 @@ public partial class RideWorldView : Node3D
     // routing and is available in both Debug and Release builds.
     public override void _Input(InputEvent @event)
     {
-        if (@event is not InputEventKey key || (key.Keycode != Key.F6 && key.PhysicalKeycode != Key.F6)) return;
+        if (@event is not InputEventKey key) return;
+#if DEBUG
+        if ((key.Keycode == Key.F7 || key.PhysicalKeycode == Key.F7) && key.Pressed && !key.Echo
+            && _session?.IsRideActive == true && _rideMenuPanel?.IsMenuVisible != true)
+        {
+            CycleDebugSceneryIsolation();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+#endif
+        if (key.Keycode != Key.F6 && key.PhysicalKeycode != Key.F6) return;
 
         var rideActive = _session?.IsRideActive == true;
         var menuVisible = _rideMenuPanel?.IsMenuVisible == true;
@@ -225,6 +240,100 @@ public partial class RideWorldView : Node3D
         _hudController?.ShowCameraInspectionView(view);
         GetViewport().SetInputAsHandled();
     }
+
+#if DEBUG
+    private void CycleDebugSceneryIsolation()
+    {
+        // F7 steps through whole-scene and per-layer views without changing the
+        // visibility or processing of the active ride and trainer simulation.
+        _debugSceneryIsolation = (_debugSceneryIsolation + 1) % 6;
+        var buildings = _debugSceneryIsolation is not (1 or 5);
+        var vegetation = _debugSceneryIsolation is not (2 or 5);
+        var terrain = _debugSceneryIsolation is not (3 or 5);
+        var streets = _debugSceneryIsolation is not (4 or 5);
+        if (_buildingLayer is not null) _buildingLayer.Visible = buildings;
+        if (_vegetationLayer is not null) _vegetationLayer.Visible = vegetation;
+        if (_terrainLayer is not null) _terrainLayer.Visible = terrain;
+        if (_backgroundStreetLayer is not null) _backgroundStreetLayer.Visible = streets;
+        var label = _debugSceneryIsolation switch
+        {
+            0 => "all layers",
+            1 => "buildings hidden",
+            2 => "vegetation hidden",
+            3 => "terrain hidden",
+            4 => "background streets hidden",
+            _ => "road and rider only"
+        };
+        GD.Print($"[SceneryInspect] F7 view: {label}; press F7 to cycle. " +
+            $"rider={_rider.GlobalPosition} camera={_camera.GlobalPosition}");
+        LogNearbyScenery();
+    }
+
+    private void LogNearbyScenery()
+    {
+        if (_geometry is null) return;
+        var rider = _rider.GlobalPosition;
+        var camera = _camera.GlobalPosition;
+        const double chunkLength = 350;
+        foreach (var building in _debugBuildings.Select(item =>
+        {
+            var sampledElevations = item.FootprintElevationMeters.Where(value => value.HasValue)
+                .Select(value => value!.Value).ToArray();
+            var points = item.Footprint.Select((point, index) => _geometry.GetPositionForCoordinate(
+                point.Latitude, point.Longitude, item.FootprintElevationMeters.Count == item.Footprint.Count
+                    ? item.FootprintElevationMeters[index] ?? item.BaseElevationMeters ?? 0
+                    : item.BaseElevationMeters ?? 0)).ToArray();
+            var center = points.Aggregate(Vector3.Zero, (sum, point) => sum + new Vector3(point.X, point.Y, point.Z)) / points.Length;
+            var min = new Vector3(points.Min(point => point.X), points.Min(point => point.Y), points.Min(point => point.Z));
+            var max = new Vector3(points.Max(point => point.X), points.Max(point => point.Y), points.Max(point => point.Z));
+            var bounds = new Aabb(min, max - min);
+            var distance = Math.Min(center.DistanceTo(rider), center.DistanceTo(camera));
+            return (Item: item, Center: center, Bounds: bounds, Distance: distance,
+                MinGround: sampledElevations.Length > 0 ? sampledElevations.Min() : item.BaseElevationMeters ?? 0,
+                MaxGround: sampledElevations.Length > 0 ? sampledElevations.Max() : item.BaseElevationMeters ?? 0);
+        }).Where(item => item.Distance <= 45).OrderBy(item => item.Distance).Take(12))
+        {
+            GD.Print($"[SceneryInspect] building OSM {building.Item.OsmType}/{building.Item.OsmId} " +
+                $"route={building.Item.NearestRouteDistanceMeters:F1}m source=LINZ-footprint:{building.MinGround:F2}..{building.MaxGround:F2}m " +
+                $"height={building.Item.HeightMeters:F1}m chunk={Math.Floor(building.Item.NearestRouteDistanceMeters / chunkLength):F0} " +
+                $"center={building.Center} bounds={building.Bounds} " +
+                $"{_buildingLayer?.DebugChunkBounds((int)Math.Floor(building.Item.NearestRouteDistanceMeters / chunkLength))} " +
+                $"riderCameraDistance={building.Distance:F1}m");
+        }
+        if (_debugVegetation is { } vegetation)
+        {
+            foreach (var area in vegetation.Areas.Select(item =>
+            {
+                var points = item.Polygon.Select(point => _geometry.GetPositionForCoordinate(
+                    point[1], point[0], item.BaseElevationMeters ?? 0)).ToArray();
+                var center = points.Aggregate(Vector3.Zero, (sum, point) => sum + new Vector3(point.X, point.Y, point.Z)) / points.Length;
+                var distance = Math.Min(center.DistanceTo(rider), center.DistanceTo(camera));
+                var size = new Vector3(points.Max(point => point.X) - points.Min(point => point.X),
+                    points.Max(point => point.Y) - points.Min(point => point.Y),
+                    points.Max(point => point.Z) - points.Min(point => point.Z));
+                return (Item: item, Center: center, Size: size, Distance: distance);
+            }).Where(item => item.Distance <= 60).OrderBy(item => item.Distance).Take(12))
+                GD.Print($"[SceneryInspect] vegetation area OSM {area.Item.OsmType}/{area.Item.OsmId} " +
+                    $"route={area.Item.NearestRouteDistanceMeters:F1}m category={area.Item.Category} " +
+                    $"source=LINZ-area-samples:{area.Item.ElevationSampleCount} elevation={area.Item.BaseElevationMeters:F2}m " +
+                    $"variation={area.Item.ElevationVariationMeters:F1}m renderGround={area.Item.RenderGround} " +
+                    $"center={area.Center} boundsSize={area.Size} riderCameraDistance={area.Distance:F1}m");
+
+        foreach (var tree in vegetation.Trees.Select(item =>
+        {
+            var point = _geometry.GetPositionForCoordinate(item.Latitude, item.Longitude, item.ElevationMeters ?? 0);
+            var distance = Math.Min(new Vector3(point.X, point.Y, point.Z).DistanceTo(rider),
+                new Vector3(point.X, point.Y, point.Z).DistanceTo(camera));
+            return (Item: item, Position: point, Distance: distance);
+        }).Where(item => item.Distance <= 60).OrderBy(item => item.Distance).Take(16))
+            GD.Print($"[SceneryInspect] tree OSM {tree.Item.OsmId} route={tree.Item.NearestRouteDistanceMeters:F1}m " +
+                $"source=LINZ:{tree.Item.ElevationMeters:F2}m world={tree.Position} " +
+                $"bounds=({tree.Item.CanopyRadiusMeters * 2:F1},{tree.Item.HeightMeters:F1},{tree.Item.CanopyRadiusMeters * 2:F1}) " +
+                $"riderCameraDistance={tree.Distance:F1}m");
+        }
+        _terrainLayer?.LogNearbyChunkBounds(rider, camera);
+    }
+#endif
 
     public static string FormatCameraView(RiderCameraView view) => view switch
     {
@@ -548,6 +657,9 @@ public partial class RideWorldView : Node3D
             if (RoutePackageFiles.Exists(assembly, buildingResource, route.Id))
             {
                 buildings = RouteBuildingDataLoader.LoadEmbedded(assembly, buildingResource, route.Id);
+#if DEBUG
+                _debugBuildings = buildings;
+#endif
                 if (buildings.Count > 0)
                     groundPlaneY = Math.Min(groundPlaneY,
                         (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
@@ -569,13 +681,16 @@ public partial class RideWorldView : Node3D
             if (RoutePackageFiles.Exists(assembly, vegetationResource, route.Id))
             {
                 vegetationData = RouteVegetationDataLoader.LoadEmbedded(assembly, vegetationResource, route.Id);
+#if DEBUG
+                _debugVegetation = vegetationData;
+#endif
                 var renderableAreas = vegetationData.Areas.Where(item => item.RenderGround && item.BaseElevationMeters is not null).ToArray();
                 if (renderableAreas.Length > 0)
                     groundPlaneY = Math.Min(groundPlaneY,
                         (float)(renderableAreas.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
                 _vegetationLayer = new VegetationLayer { Name = "RouteVegetation" };
                 _routeRoot.AddChild(_vegetationLayer);
-                _vegetationLayer.Configure(_geometry, route, vegetationData);
+                _vegetationLayer.Configure(_geometry, route, vegetationData, terrainRoads);
                 _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var furnitureResource = resourcePrefix + "street-furniture.json";

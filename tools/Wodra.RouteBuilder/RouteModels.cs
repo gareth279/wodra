@@ -402,6 +402,8 @@ public sealed record BuildingReport(int NearbyCandidates, int SelectedCount, int
     public int VisualRuntimeMeshChunkCount { get; init; }
     public int VisualRuntimeMeshInstanceCount { get; init; }
     public int VisualRuntimeSurfaceCount { get; init; }
+    public int FootprintElevationSamples { get; init; }
+    public int SlopedFootprintCount { get; init; }
 }
 
 public sealed record VegetationReport(int PolygonsConsidered, int PolygonsIncluded,

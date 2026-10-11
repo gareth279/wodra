@@ -20,6 +20,7 @@ public partial class TerrainLayer : Node3D
     public int VisibleNearTerrainChunks { get; private set; }
     public int VisibleFarTerrainChunks { get; private set; }
     public int TerrainTriangleCount { get; private set; }
+    public int RoadCutoutCellCount { get; private set; }
     public int RoadClearanceAdjustedVertices { get; private set; }
     public double BuildMilliseconds { get; private set; }
 
@@ -38,6 +39,7 @@ public partial class TerrainLayer : Node3D
             : TerrainMeshGeometry.Build(data, route.Samples);
         RoadClearanceAdjustedVertices = built.AdjustedForRoadClearanceVertices;
         TerrainTriangleCount = built.TriangleCount;
+        RoadCutoutCellCount = built.RoadCutoutCellCount;
         var material = new StandardMaterial3D
         {
             AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1,
@@ -76,6 +78,23 @@ public partial class TerrainLayer : Node3D
         BuildMilliseconds = timer.Elapsed.TotalMilliseconds;
         return _chunks.Count > 0;
     }
+
+#if DEBUG
+    public void LogNearbyChunkBounds(Godot.Vector3 rider, Godot.Vector3 camera)
+    {
+        foreach (var chunk in _chunks.Select(item => (Chunk: item, Distance: Math.Min(
+                     new Godot.Vector3(item.Center.X, 0, item.Center.Y).DistanceTo(rider),
+                     new Godot.Vector3(item.Center.X, 0, item.Center.Y).DistanceTo(camera))))
+                 .Where(item => item.Distance <= 100).OrderBy(item => item.Distance).Take(12))
+        {
+            var mesh = chunk.Chunk.Mesh;
+            var local = mesh.GetAabb();
+            GD.Print($"[SceneryInspect] terrain mesh={mesh.Name} localBounds={local} " +
+                $"transform={mesh.GlobalTransform} " +
+                $"riderCameraDistance={chunk.Distance:F1}m");
+        }
+    }
+#endif
 
     public void UpdateForRideDistance(double distance)
     {

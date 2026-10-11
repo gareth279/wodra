@@ -12,6 +12,7 @@ public sealed record RouteBuilding(string OsmType, long OsmId, string? Name, str
 {
     public string VisualCategory { get; init; } = "generic";
     public int MaterialVariant { get; init; }
+    public IReadOnlyList<double?> FootprintElevationMeters { get; init; } = [];
 }
 public sealed record BuildingExtractionResult(int NearbyCandidates, int SelectedCount, int OrdinaryWays,
     int MultipolygonRelationsIncluded, int MultipolygonRelationsSkipped, int NamedBuildings,

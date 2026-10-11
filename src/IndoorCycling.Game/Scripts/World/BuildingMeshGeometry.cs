@@ -33,11 +33,16 @@ public static class BuildingMeshGeometry
         var safeRoofHeight = float.IsFinite(requestedRoofHeight) ? requestedRoofHeight : 0;
         var roofHeight = shape == "flat" ? 0 : Math.Clamp(safeRoofHeight, 0, totalHeight * .4f);
         var wallTop = totalHeight - roofHeight;
+        var baseY = floor.Average(point => point.Y);
+        var roofBaseY = baseY;
         var signedArea = SignedArea(floor);
         for (var i = 0; i < floor.Length; i++)
         {
             var a = floor[i]; var b = floor[(i + 1) % floor.Length];
-            var at = a + Vector3.UnitY * wallTop; var bt = b + Vector3.UnitY * wallTop;
+            // Keep the roofline level while each lower wall edge follows sampled
+            // terrain at that footprint vertex.
+            var at = new Vector3(a.X, baseY + wallTop, a.Z);
+            var bt = new Vector3(b.X, baseY + wallTop, b.Z);
             if (signedArea > 0) facade.AddRange([a, bt, b, a, at, bt]);
             else facade.AddRange([a, b, bt, a, bt, at]);
         }
@@ -46,9 +51,9 @@ public static class BuildingMeshGeometry
         {
             foreach (var triangle in Triangulate(floor))
             {
-                var a = floor[triangle.A] + Vector3.UnitY * totalHeight;
-                var b = floor[triangle.B] + Vector3.UnitY * totalHeight;
-                var c = floor[triangle.C] + Vector3.UnitY * totalHeight;
+                var a = new Vector3(floor[triangle.A].X, roofBaseY + totalHeight, floor[triangle.A].Z);
+                var b = new Vector3(floor[triangle.B].X, roofBaseY + totalHeight, floor[triangle.B].Z);
+                var c = new Vector3(floor[triangle.C].X, roofBaseY + totalHeight, floor[triangle.C].Z);
                 roof.AddRange([a, c, b]);
             }
         }
@@ -81,7 +86,7 @@ public static class BuildingMeshGeometry
         }
 
         var windowCount = addWindows
-            ? AddWindows(windows, floor, wallTop, Math.Clamp(storeys, 1, maximumStoreys),
+            ? AddWindows(windows, floor, baseY + wallTop, Math.Clamp(storeys, 1, maximumStoreys),
                 Math.Clamp(maximumWindowColumnsPerWall, 0, 8), Math.Clamp(maximumWindowsPerBuilding, 0, 160), facadePattern) : 0;
         _ = footprintWidth;
         return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), shape, wallTop, windowCount);
@@ -189,16 +194,19 @@ public static class BuildingMeshGeometry
         output.AddRange([a,b,c]);
     }
 
-    private static int AddWindows(List<Vector3> output, IReadOnlyList<Vector3> floor, float wallHeight,
+    private static int AddWindows(List<Vector3> output, IReadOnlyList<Vector3> floor, float wallTopY,
         int storeys, int maxColumnsPerWall, int maxWindows, uint facadePattern)
     {
-        if (wallHeight <= 1.2f || maxColumnsPerWall == 0 || maxWindows == 0) return 0;
-        var area=SignedArea(floor);var emitted=0;var levelHeight=wallHeight/storeys;
+        if (maxColumnsPerWall == 0 || maxWindows == 0) return 0;
+        var area=SignedArea(floor);var emitted=0;
         for(var i=0;i<floor.Count && emitted<maxWindows;i++)
         {
             var a=floor[i];var b=floor[(i+1)%floor.Count];
             var dx=b.X-a.X;var dz=b.Z-a.Z;var length=MathF.Sqrt(dx*dx+dz*dz);
             if(length<4.4f)continue;
+            var edgeWallHeight = wallTopY - Math.Max(a.Y, b.Y);
+            if (edgeWallHeight <= 1.2f) continue;
+            var levelHeight = edgeWallHeight / storeys;
             var columns=Math.Min(maxColumnsPerWall,(int)MathF.Floor((length-2f)/2.1f));
             if(columns<1)continue;
             var outward=area>0?new Vector3(dz,0,-dx):new Vector3(-dz,0,dx);
@@ -218,9 +226,9 @@ public static class BuildingMeshGeometry
                 var heightScale = .84f + ((hash >> 16) & 0xff) / 255f * .16f;
                 var actualWidth = width * widthScale;
                 var actualHeight = height * heightScale;
-                var y=level*levelHeight+(levelHeight-actualHeight)/2;
                 var u=new Vector3(dx/length,0,dz/length)*(actualWidth/2);
-                var low=center+Vector3.UnitY*y;var high=low+Vector3.UnitY*actualHeight;
+                var low=center+Vector3.UnitY*(level*levelHeight+(levelHeight-actualHeight)/2);
+                var high=low+Vector3.UnitY*actualHeight;
                 if(area>0) AddQuad(output,low-u,high-u,high+u,low+u);
                 else AddQuad(output,low+u,high+u,high-u,low-u);
                 emitted++;

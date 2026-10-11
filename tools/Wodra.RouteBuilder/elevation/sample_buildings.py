@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from pyproj import Transformer
+from raster_priority import prefer_highest_resolution
 
 
 def sample(dataset, transformer, lon, lat):
@@ -24,20 +25,6 @@ def sample(dataset, transformer, lon, lat):
     if not valid.any():
         return None
     return float((values[valid] * weights[valid]).sum() / weights[valid].sum())
-
-
-def prefer_highest_resolution(datasets):
-    """Use the best available raster first when cached coverage overlaps.
-
-    The older implementation opened files alphabetically, so CE17.tiff (the 8 m
-    fallback) won over CE17_10000_0303.tiff (the 1 m primary) at every overlapping
-    building coordinate. In Dunedin those datasets can differ by over ten metres.
-    """
-    return sorted(datasets, key=lambda item: (
-        abs(item[0].res[0]) * abs(item[0].res[1]),
-        max(abs(item[0].res[0]), abs(item[0].res[1])),
-        str(item[0].name),
-    ))
 
 
 def main():
@@ -59,7 +46,16 @@ def main():
                 value = sample(ds, transformer, item['longitude'], item['latitude'])
                 if value is not None:
                     break
-            elevations.append({'key': item['key'], 'elevationMeters': value})
+            footprint_elevations = []
+            for point in item.get('footprint', []):
+                point_value = None
+                for ds, transformer in datasets:
+                    point_value = sample(ds, transformer, point['longitude'], point['latitude'])
+                    if point_value is not None:
+                        break
+                footprint_elevations.append(point_value)
+            elevations.append({'key': item['key'], 'elevationMeters': value,
+                               'footprintElevationMeters': footprint_elevations})
         building_path.write_text(json.dumps({'elevations': elevations}, separators=(',', ':')) + '\n', encoding='utf-8')
     finally:
         for ds, _ in datasets:

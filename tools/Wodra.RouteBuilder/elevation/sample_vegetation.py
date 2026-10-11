@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from pyproj import Transformer
+from raster_priority import prefer_highest_resolution
 
 
 def sample(dataset, transformer, lon, lat):
@@ -37,6 +38,7 @@ def main():
         for raster_path in raster_paths:
             dataset = rasterio.open(raster_path)
             datasets.append((dataset, Transformer.from_crs('EPSG:4326', dataset.crs, always_xy=True)))
+        datasets = prefer_highest_resolution(datasets)
 
         def exact_elevation(lon, lat, label):
             for index, (dataset, transformer) in enumerate(datasets):

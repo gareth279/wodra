@@ -22,10 +22,14 @@ public partial class VegetationLayer : Node3D
     public int AreaTriangleCount { get; private set; }
     public int MultiMeshCount { get; private set; }
     public int AreaMeshInstanceCount { get; private set; }
+    public int RoadOverlapSuppressedAreaCount { get; private set; }
+    public IReadOnlyList<long> RoadOverlapSuppressedAreaIds => _roadOverlapSuppressedAreaIds;
     public int CreatedSceneNodeCount => _chunks.Sum(item => item.Nodes.Count) + 1;
     public double BuildMilliseconds { get; private set; }
+    private readonly List<long> _roadOverlapSuppressedAreaIds = [];
 
-    public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteVegetationData data)
+    public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteVegetationData data,
+        IReadOnlyList<TerrainRoadCorridor>? backgroundRoads = null)
     {
         if (_chunks.Count > 0 || VegetationAreaCount > 0 || TreesLoaded > 0)
             throw new InvalidOperationException("Vegetation layer is already configured.");
@@ -53,6 +57,17 @@ public partial class VegetationLayer : Node3D
                     var local = visualRoute.GetPositionForCoordinate(coordinate[1], coordinate[0], area.BaseElevationMeters!.Value);
                     return new System.Numerics.Vector3(local.X, (float)(local.Y + .035), local.Z);
                 }).ToArray();
+                if (VegetationGroundGeometry.FindOverlappingRoadId(ring, backgroundRoads ?? []) is { } roadId)
+                {
+                    RoadOverlapSuppressedAreaCount++;
+                    _roadOverlapSuppressedAreaIds.Add(area.OsmId);
+#if DEBUG
+                    GD.Print($"[SceneryInspect] vegetation ground overlay suppressed: area OSM {area.OsmType}/{area.OsmId} " +
+                        $"route={area.NearestRouteDistanceMeters:F1}m elevation={area.BaseElevationMeters:F2}m " +
+                        $"samples={area.ElevationSampleCount} overlaps background road OSM {roadId}");
+#endif
+                    continue;
+                }
                 System.Numerics.Vector3[] polygonTriangles;
                 try { polygonTriangles = BuildingMeshGeometry.TriangulateSurface(ring); }
                 catch (ArgumentException) { continue; }

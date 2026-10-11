@@ -5,7 +5,7 @@ using System.Numerics;
 
 public sealed record TerrainChunkMeshData(string Id, Vector3[] Vertices, Vector3[] Normals, int[] Indices);
 public sealed record TerrainZoneChunk(RouteTerrainChunkData Chunk, double SpacingMeters, double VerticalBiasMeters, bool ApplyRoadClearance);
-public sealed record TerrainRoadCorridor(IReadOnlyList<Vector3> Points, float WidthMeters);
+public sealed record TerrainRoadCorridor(IReadOnlyList<Vector3> Points, float WidthMeters, long SourceOsmId = 0);
 public sealed record TerrainMeshBuildResult(TerrainChunkMeshData[] Chunks, int AdjustedForRoadClearanceVertices,
     int TriangleCount, int UniqueVertexCount, int RoadCutoutCellCount = 0);
 

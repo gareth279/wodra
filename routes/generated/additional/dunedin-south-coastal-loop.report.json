@@ -2143,7 +2143,10 @@
     "runtimeSharedMaterialCount": 3,
     "visualRuntimeMeshChunkCount": 21,
     "visualRuntimeMeshInstanceCount": 21,
-    "visualRuntimeSurfaceCount": 63
+    "visualRuntimeSurfaceCount": 63,
+    "footprintElevationSamples": 13039,
+    "slopedFootprintCount": 412,
+    "elevationRasterCount": 1
   },
   "vegetation": {
     "polygonsConsidered": 1305,
@@ -2171,7 +2174,7 @@
     "demSamples": 645,
     "demCacheHits": 1,
     "malformedOrSkippedGeometries": 1,
-    "areaGroundOverlays": 31,
+    "areaGroundOverlays": 21,
     "areaTriangleCount": 595,
     "multiMeshCount": 35,
     "areaMeshInstanceCount": 6,
@@ -2218,7 +2221,7 @@
   "isValid": true,
   "errors": [],
   "warnings": [
-    "Spottiswoode Street -\u003E John Wilson Ocean Drive road/direct ratio 2.17 exceeds warning threshold 1.80."
+    "Spottiswoode Street -> John Wilson Ocean Drive road/direct ratio 2.17 exceeds warning threshold 1.80."
   ],
   "timings": {
     "nodeScanSeconds": 0,
@@ -2231,7 +2234,7 @@
     "cacheHit": true,
     "cacheBuildSeconds": 68.7749962
   },
-  "generatedAtUtc": "2026-10-11T08:50:43.8520131\u002B00:00",
+  "generatedAtUtc": "2026-10-11T08:50:43.8520131+00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -2250,14 +2253,14 @@
         ]
       },
       {
-        "name": "Toit\u016B Te Whenua Land Information New Zealand",
+        "name": "Toitū Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -2302,8 +2305,8 @@
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
-    "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0403.tiff"
@@ -2358,5 +2361,5 @@
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
   "totalAscentMeters": 74.10833335462289,
-  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
+  "sourceAttribution": "© OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

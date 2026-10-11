@@ -5,8 +5,9 @@ namespace Wodra.RouteBuilder;
 
 public static class BuildingElevationSampler
 {
-    private sealed record Sample(string Key, double Longitude, double Latitude);
-    private sealed record Elevation(string Key, double? ElevationMeters);
+    private sealed record SamplePoint(double Longitude, double Latitude);
+    private sealed record Sample(string Key, double Longitude, double Latitude, IReadOnlyList<SamplePoint> Footprint);
+    private sealed record Elevation(string Key, double? ElevationMeters, IReadOnlyList<double?> FootprintElevationMeters);
     private sealed record ElevationOutput(IReadOnlyList<Elevation> Elevations);
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
@@ -23,7 +24,8 @@ public static class BuildingElevationSampler
             var samples = input.Buildings.Select(item =>
             {
                 var ring = item.Footprint.Take(item.Footprint.Count - 1).ToArray();
-                return new Sample(Key(item), ring.Average(point => point.Longitude), ring.Average(point => point.Latitude));
+                return new Sample(Key(item), ring.Average(point => point.Longitude), ring.Average(point => point.Latitude),
+                    item.Footprint.Select(point => new SamplePoint(point.Longitude, point.Latitude)).ToArray());
             }).ToArray();
             await File.WriteAllTextAsync(inputPath, JsonSerializer.Serialize(new { samples }, JsonOptions));
             var script = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tools", "Wodra.RouteBuilder", "elevation", "sample_buildings.py");
@@ -37,9 +39,17 @@ public static class BuildingElevationSampler
             if (process.ExitCode != 0) throw new InvalidDataException((await stderr).Trim());
             var sampled = JsonSerializer.Deserialize<ElevationOutput>(await File.ReadAllTextAsync(inputPath), JsonOptions)
                 ?? throw new InvalidDataException("LINZ building sampler produced invalid output.");
-            var values = sampled.Elevations.ToDictionary(item => item.Key, item => item.ElevationMeters, StringComparer.Ordinal);
-            var buildings = input.Buildings.Where(item => values[Key(item)].HasValue)
-                .Select(item => item with { BaseElevationMeters = values[Key(item)] }).ToArray();
+            var values = sampled.Elevations.ToDictionary(item => item.Key, item => item, StringComparer.Ordinal);
+            var buildings = input.Buildings.Where(item => values[Key(item)].ElevationMeters.HasValue)
+                .Select(item =>
+                {
+                    var elevation = values[Key(item)];
+                    var footprintValues = elevation.FootprintElevationMeters;
+                    var validFootprintValues = footprintValues.Take(Math.Max(0, item.Footprint.Count - 1))
+                        .Where(value => value.HasValue).Select(value => value!.Value).ToArray();
+                    var baseElevation = validFootprintValues.Length > 0 ? validFootprintValues.Average() : elevation.ElevationMeters;
+                    return item with { BaseElevationMeters = baseElevation, FootprintElevationMeters = footprintValues };
+                }).ToArray();
             var skipped = input.Buildings.Count - buildings.Length;
             Console.WriteLine($"LINZ building elevations sampled: {buildings.Length}, omitted {skipped} without DEM coverage ({string.Join("; ", (await stdout).Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries))})");
             timer.Stop();

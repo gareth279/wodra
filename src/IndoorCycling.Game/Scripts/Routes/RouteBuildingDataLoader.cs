@@ -13,6 +13,7 @@ public sealed record RouteBuildingData(string OsmType, long OsmId, string? Name,
 {
     public string VisualCategory { get; init; } = "generic";
     public int MaterialVariant { get; init; }
+    public IReadOnlyList<double?> FootprintElevationMeters { get; init; } = [];
 }
 
 /// <summary>Loads and validates the compact generated OSM building bundle.</summary>
@@ -33,6 +34,8 @@ public static class RouteBuildingDataLoader
         {
             if (item.OsmId <= 0 || item.Footprint.Count < 4 || item.BaseElevationMeters is not { } elevation
                 || !double.IsFinite(elevation) || !double.IsFinite(item.HeightMeters) || item.HeightMeters <= 0
+                || (item.FootprintElevationMeters.Count != 0 && item.FootprintElevationMeters.Count != item.Footprint.Count)
+                || item.FootprintElevationMeters.Any(value => value.HasValue && !double.IsFinite(value.Value))
                 || item.Footprint.Any(point => !double.IsFinite(point.Latitude) || !double.IsFinite(point.Longitude)
                     || point.Latitude is < -90 or > 90 || point.Longitude is < -180 or > 180))
                 throw new InvalidDataException($"Embedded building resource '{resourceName}' contains invalid building data.");

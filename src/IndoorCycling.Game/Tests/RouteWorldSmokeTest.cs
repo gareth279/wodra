@@ -50,15 +50,30 @@ public partial class RouteWorldSmokeTest : Node
             var buildingLayer = new BuildingLayer { Name = "SmokeBuildings" };
             world.AddChild(buildingLayer);
             buildingLayer.Configure(visual, route, buildings);
+            if (buildingLayer.BuildingsLoaded != buildings.Count)
+                throw new InvalidOperationException($"Route {id} skipped {buildings.Count - buildingLayer.BuildingsLoaded} building meshes.");
 
             var streetLayer = new BackgroundStreetLayer { Name = "SmokeStreets" };
             world.AddChild(streetLayer);
             streetLayer.Configure(visual, streets, routeIndex);
-            foreach (var distance in id == "dunedin-rolling-loop" ? new[] { 0d, 350d }
+            var roadCorridors = BackgroundStreetGeometry.BuildTerrainCorridors(visual, streets, routeIndex);
+            var terrainLayer = new TerrainLayer { Name = "SmokeTerrain" };
+            world.AddChild(terrainLayer);
+            if (!terrainLayer.Configure(visual, resource + "terrain.json", id, roadCorridors))
+                throw new InvalidOperationException($"Route {id} has no terrain mesh.");
+            var vegetationData = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "vegetation.json", id);
+            var vegetationLayer = new VegetationLayer { Name = "SmokeVegetation" };
+            world.AddChild(vegetationLayer);
+            vegetationLayer.Configure(visual, route, vegetationData, roadCorridors);
+            foreach (var distance in id == "dunedin-rolling-loop" ? new[] { 0d, 50d, 60d, 85d, 200d, 220d, 350d }
                 : id == "dunedin-signal-hill-climbing-loop" ? new[] { 0d, 3500d, 8000d, 12700d }
-                : new[] { 0d })
+                : id == "dunedin-south-coastal-loop" ? new[] { 0d, 5000d }
+                : new[] { 0d, 5000d })
             {
                 streetLayer.UpdateForRideDistance(distance);
+                terrainLayer.UpdateForRideDistance(distance);
+                vegetationLayer.UpdateForRideDistance(distance);
                 if (streetLayer.VisibleChunkCount == 0)
                     throw new InvalidOperationException($"Route {id} has no visible street chunks at {distance:F0} m.");
                 var pose = visual.GetPoseAtDistance(distance);
@@ -73,7 +88,11 @@ public partial class RouteWorldSmokeTest : Node
                 $"buildingTriangles={buildingLayer.TriangleCount} buildingMs={buildingLayer.BuildMilliseconds:F1} " +
                 $"streets={streetLayer.LoadedStreetCount} streetMeshes={streetLayer.MeshChunkCount} " +
                 $"streetTriangles={streetLayer.TriangleCount} streetMs={streetLayer.BuildMilliseconds} " +
-                $"worldBuildMs={timer.Elapsed.TotalMilliseconds:F1} views=road,rider,buildings,streets,camera");
+                $"terrainChunks={terrainLayer.TerrainChunksLoaded} terrainTriangles={terrainLayer.TerrainTriangleCount} " +
+                $"terrainCutoutCells={terrainLayer.RoadCutoutCellCount} vegetationAreas={vegetationLayer.VegetationAreaCount} " +
+                $"trees={vegetationLayer.TreesLoaded} suppressedRoadOverlays={vegetationLayer.RoadOverlapSuppressedAreaCount} " +
+                $"vegetationMeshes={vegetationLayer.AreaMeshInstanceCount} vegetationMs={vegetationLayer.BuildMilliseconds:F1} " +
+                $"worldBuildMs={timer.Elapsed.TotalMilliseconds:F1} views=road,rider,buildings,streets,terrain,vegetation,camera");
         }
         finally
         {

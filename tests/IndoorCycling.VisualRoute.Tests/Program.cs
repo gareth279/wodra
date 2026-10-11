@@ -5,6 +5,19 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("vegetation ground polygons do not cover mapped road asphalt", () =>
+    {
+        var area = new[]
+        {
+            new Vector3(-5, 0, -2), new Vector3(5, 0, -2), new Vector3(5, 0, 2),
+            new Vector3(-5, 0, 2), new Vector3(-5, 0, -2)
+        };
+        var crossing = new TerrainRoadCorridor([new Vector3(0, 0, -10), new Vector3(0, 0, 10)], 6, 1234);
+        Equal(1234L, VegetationGroundGeometry.FindOverlappingRoadId(area, [crossing])!.Value);
+        var separated = new TerrainRoadCorridor([new Vector3(-10, 0, 4.4f), new Vector3(10, 0, 4.4f)], 4, 5678);
+        if (VegetationGroundGeometry.FindOverlappingRoadId(area, [separated]).HasValue)
+            throw new Exception("A land-use polygon was suppressed despite remaining outside the road edge.");
+    }),
     ("camera inspection cycles all six views and only accepts unconsumed active-ride F6", () =>
     {
         var expected = new[]
@@ -56,11 +69,24 @@ var tests = new (string Name, Action Run)[]
         };
         foreach (var id in routeIds)
         {
+            Console.WriteLine($"CHECK scenery package {id}");
             var route = RouteCatalog.GetById(id) ?? throw new Exception($"Installed route {id} was not loaded.");
             var resource = $"Wodra.GameData.Routes.{id}.";
             var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "buildings.json", id);
             if (buildings.Count == 0) throw new Exception($"{id} has no installed building sidecar data.");
+            foreach (var building in buildings)
+            {
+                if (building.FootprintElevationMeters.Count != building.Footprint.Count)
+                    throw new Exception($"{id} building OSM {building.OsmId} is missing per-footprint DEM samples.");
+                var samples = building.FootprintElevationMeters.Take(building.Footprint.Count - 1)
+                    .Where(value => value.HasValue).Select(value => value!.Value).ToArray();
+                if (samples.Length == 0 || samples.Any(value => !double.IsFinite(value)))
+                    throw new Exception($"{id} building OSM {building.OsmId} has invalid footprint DEM samples.");
+                if (Math.Abs(samples.Average() - building.BaseElevationMeters!.Value) > .05)
+                    throw new Exception($"{id} building OSM {building.OsmId} has a base elevation inconsistent with its footprint DEM samples.");
+            }
+            Console.WriteLine($"CHECK {id} footprint samples={buildings.Sum(item => item.FootprintElevationMeters.Count)}");
             var nearRoadOffsets = buildings.Where(item => item.DistanceFromRouteMeters <= 5)
                 .Select(item => Math.Abs(item.BaseElevationMeters!.Value
                     - route.GetSampleAt(item.NearestRouteDistanceMeters).ElevationMeters!.Value))
@@ -70,11 +96,70 @@ var tests = new (string Name, Action Run)[]
             if (nearRoadOffsets.Length > 0 && percentile95 > 1.5)
                 throw new Exception($"{id} building bases disagree with route terrain (95th percentile {percentile95:F2} m).");
 
+            var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "vegetation.json", id);
+            if (vegetation.Trees.Count == 0) throw new Exception($"{id} has no installed vegetation tree data.");
+            var routeVisual = new VisualRoute(route);
+            var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
+            foreach (var tree in vegetation.Trees)
+            {
+                var position = routeVisual.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
+                var nearest = routeIndex.Nearest(position);
+                var horizontalDistance = Math.Sqrt(nearest.DistanceSquared);
+                var verticalDifference = Math.Abs(position.Y - nearest.Position.Y);
+                if (horizontalDistance <= 20 && verticalDifference > 25)
+                    throw new Exception($"{id} tree OSM {tree.OsmId} at route {tree.NearestRouteDistanceMeters:F1} m " +
+                        $"is {verticalDifference:F1} m above/below nearby route terrain ({horizontalDistance:F1} m away).");
+            }
+            Console.WriteLine($"CHECK {id} trees={vegetation.Trees.Count}");
+            foreach (var area in vegetation.Areas.Where(item => item.RenderGround))
+            {
+                if (area.ElevationVariationMeters > 3.01)
+                    throw new Exception($"{id} vegetation area OSM {area.OsmId} at route {area.NearestRouteDistanceMeters:F1} m " +
+                        $"renders flat across {area.ElevationVariationMeters:F1} m of sampled elevation variation.");
+                var ring = area.Polygon.Select(point => routeVisual.GetPositionForCoordinate(
+                    point[1], point[0], area.BaseElevationMeters!.Value)).ToArray();
+                try { _ = BuildingMeshGeometry.TriangulateSurface(ring); }
+                catch (ArgumentException ex)
+                {
+                    throw new Exception($"{id} vegetation area OSM {area.OsmId} at route {area.NearestRouteDistanceMeters:F1} m " +
+                        $"has invalid render geometry: {ex.Message}");
+                }
+            }
+            Console.WriteLine($"CHECK {id} render areas={vegetation.Areas.Count(item => item.RenderGround)}");
+
             var streets = RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "streets.json", id);
             if (streets is null || streets.Streets.Count == 0)
                 throw new Exception($"{id} has no installed background-street sidecar data.");
-            var routeVisual = new VisualRoute(route);
+            if (id == "dunedin-south-coastal-loop")
+            {
+                var mappedRoadsAtFiveKm = streets.Streets.Where(item => item.Highway is not ("footway" or "path")
+                    && Math.Abs(item.NearestRouteDistanceMeters - 5000) <= 60 && item.DistanceFromRouteMeters <= 12).ToArray();
+                if (mappedRoadsAtFiveKm.Length == 0)
+                    throw new Exception("South Dunedin has no mapped asphalt road geometry within 60 m of its 5,000 m junction.");
+            }
+            var terrainData = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "terrain.json", id) ?? throw new Exception($"{id} has no installed terrain sidecar data.");
+            var terrainRoads = BackgroundStreetGeometry.BuildTerrainCorridors(routeVisual, streets, routeIndex);
+            var terrainMesh = TerrainMeshGeometry.Build(terrainData, routeVisual.Samples, terrainRoads);
+            Console.WriteLine($"CHECK {id} terrain triangles={terrainMesh.TriangleCount}");
+            var roadHalfWidth = RoadRibbonMath.RoadWidthMeters * .5f;
+            var terrainIntrusions = 0;
+            (double Distance, double Gap) worstTerrainIntrusion = (0, 0);
+            foreach (var chunk in terrainMesh.Chunks)
+            for (var vertex = 0; vertex + 2 < chunk.Vertices.Length; vertex += 3)
+            {
+                var center = (chunk.Vertices[vertex] + chunk.Vertices[vertex + 1] + chunk.Vertices[vertex + 2]) / 3;
+                var nearest = routeIndex.Nearest(center);
+                var lateral = Math.Sqrt(nearest.DistanceSquared);
+                if (lateral >= roadHalfWidth - .2) continue;
+                terrainIntrusions++;
+                worstTerrainIntrusion = (nearest.DistanceMeters, roadHalfWidth - lateral);
+            }
+            if (terrainIntrusions > 0)
+                throw new Exception($"{id} terrain mesh has {terrainIntrusions} triangle centroids inside route asphalt; " +
+                    $"worst intrusion is {worstTerrainIntrusion.Gap:F2} m near route {worstTerrainIntrusion.Distance:F1} m.");
             var spatialIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
             if (id == "dunedin-signal-hill-climbing-loop")
             {
@@ -963,6 +1048,18 @@ var tests = new (string Name, Action Run)[]
         Near(6,roof.WallTopHeightMeters);Near(8,roof.Facade.Concat(roof.Roof).Max(p=>p.Y));
         Near(8,roof.Facade.Concat(roof.Roof).Max(p=>p.Y)-roof.Facade.Concat(roof.Roof).Min(p=>p.Y));
     }),
+    ("sloped building footprints conform to terrain while retaining a level roofline", () =>
+    {
+        var slope = new[]
+        {
+            new Vector3(0, 0, 0), new Vector3(10, 1, 0), new Vector3(10, 3, 6),
+            new Vector3(0, 2, 6), new Vector3(0, 0, 0)
+        };
+        var mesh = BuildingMeshGeometry.BuildStyled(slope, 8, "flat", 0, 2, false);
+        if (mesh.Roof.Length == 0 || mesh.Roof.Max(point => point.Y) - mesh.Roof.Min(point => point.Y) > .001f)
+            throw new Exception("A building on sloped terrain did not receive a level roof surface.");
+        Near(9.5f, mesh.Roof[0].Y);
+    }),
     ("rectangular building receives a valid hipped roof", () =>
     {
         var roof=BuildingMeshGeometry.BuildStyled(StyledRectangle(16,8),10,"hipped",2.5f,3,false);
@@ -1038,7 +1135,7 @@ var tests = new (string Name, Action Run)[]
             foreach(var point in b.Footprint){writer.Write(point.Longitude);writer.Write(point.Latitude);}
         }
         var hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(buffer.ToArray())).ToLowerInvariant();
-        Equal("afd1e539698a827fc12e1d9b604d1ccb1ab964425ccefe3c4dcb2f4ad4cfd166",hash);
+        Equal("dbc60151dfc2a46d871544c15ef38984eee6fe22a427fe27c7379b2df88e248d",hash);
     }),
     ("bundled vegetation elevations and feature metadata load correctly", () =>
     {

@@ -396,7 +396,13 @@ public static class BuildOutputs
             VisualTriangleCount = style.FacadeTriangles + style.RoofTriangles + style.WindowTriangles,
             FacadePaletteVariantCount = BuildingVisualStyle.PaletteCount, RuntimeSharedMaterialCount = 3,
             VisualRuntimeMeshChunkCount = instances, VisualRuntimeMeshInstanceCount = instances,
-            VisualRuntimeSurfaceCount = instances * 2 + style.WindowSurfaces
+            VisualRuntimeSurfaceCount = instances * 2 + style.WindowSurfaces,
+            FootprintElevationSamples = buildings.Buildings.Sum(item => item.FootprintElevationMeters.Count),
+            SlopedFootprintCount = buildings.Buildings.Count(item =>
+                item.FootprintElevationMeters.Where(value => value.HasValue).Select(value => value!.Value)
+                    .DefaultIfEmpty(item.BaseElevationMeters ?? 0).Max() -
+                item.FootprintElevationMeters.Where(value => value.HasValue).Select(value => value!.Value)
+                    .DefaultIfEmpty(item.BaseElevationMeters ?? 0).Min() > 1)
         };
     }
 

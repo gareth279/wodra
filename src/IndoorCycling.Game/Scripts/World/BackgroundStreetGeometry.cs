@@ -134,7 +134,7 @@ public static class BackgroundStreetGeometry
         spatialIndex ??= new RouteSegmentSpatialIndex(route.Samples);
         return data.Streets.Select(street=>new TerrainRoadCorridor(
             ConnectRouteEnds(ConvertPoints(route,street.Points),route.Samples,spatialIndex:spatialIndex).Points,
-            (float)street.WidthMeters)).ToArray();
+            (float)street.WidthMeters, street.OsmId)).ToArray();
     }
 
     /// <summary>

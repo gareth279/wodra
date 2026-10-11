@@ -55,9 +55,11 @@ public partial class BuildingLayer : Node3D
             foreach (var building in group)
             {
                 if (building.BaseElevationMeters is not { } elevation || building.Footprint.Count < 4) continue;
-                var ring = building.Footprint.Select(point =>
+                var ring = building.Footprint.Select((point, index) =>
                 {
-                    var local = visualRoute.GetPositionForCoordinate(point.Latitude, point.Longitude, elevation);
+                    var groundElevation = building.FootprintElevationMeters.Count == building.Footprint.Count
+                        ? building.FootprintElevationMeters[index] ?? elevation : elevation;
+                    var local = visualRoute.GetPositionForCoordinate(point.Latitude, point.Longitude, groundElevation);
                     var world = ProceduralRoad.ToGodot(local);
                     return new System.Numerics.Vector3(world.X - origin.X, world.Y - origin.Y, world.Z - origin.Z);
                 }).ToArray();
@@ -142,6 +144,17 @@ public partial class BuildingLayer : Node3D
             chunk.Instance.Visible = along <= VisibleDistanceMeters;
         }
     }
+
+#if DEBUG
+    public string DebugChunkBounds(int index)
+    {
+        var chunk = _chunks.FirstOrDefault(item => item.Index == index);
+        if (chunk is null) return "meshBounds=unavailable";
+        var local = chunk.Instance.GetAabb();
+        return $"mesh={chunk.Instance.Name} localBounds={local} " +
+            $"transform={chunk.Instance.GlobalTransform}";
+    }
+#endif
 
     private static StandardMaterial3D SharedMaterial() => new()
     {
