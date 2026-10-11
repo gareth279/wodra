@@ -214,6 +214,18 @@ public partial class RideSessionNode : Node
 		GameLogger.Log("returned_to_route_selection", new { });
 	}
 
+	/// <summary>Stops a ride cleanly when the required route road cannot be constructed.</summary>
+	public async Task StopRideAfterWorldLoadFailureAsync(string error)
+	{
+		_pauseGate.Pause(_rideState);
+		_hudController?.SetRidePaused(true);
+		await EndRideAsync(disconnectTrainer: false);
+		var recordingStatus = LastRecordingError is null
+			? " The active FIT recording was finalized when available."
+			: $" FIT finalization also failed: {LastRecordingError}";
+		_hudController?.SetStatus($"{error} The ride has been stopped.{recordingStatus} Choose another route or restart to retry.");
+	}
+
 	private async Task EndRideAsync(bool disconnectTrainer)
 	{
 		if (_endRideTask is { } pending)

@@ -1,6 +1,8 @@
 using Dynastream.Fit;
+using System.Buffers.Binary;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Trainer.Models;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -54,6 +56,27 @@ var tests = new (string Name, Action Run)[]
         progress.Advance(200, 0, 1000);
         Near(5, progress.AscentMeters);
         Near(1000, progress.AltitudeMeters);
+    }),
+    ("FTMS simulation grade encoding honors advertised range and protocol bounds", () =>
+    {
+        if (FtmsSimulationGrade.Encode(30, (-10, 20)) != 2000
+            || FtmsSimulationGrade.Encode(-12, (-10, 20)) != -1000
+            || FtmsSimulationGrade.Encode(400) != short.MaxValue
+            || FtmsSimulationGrade.Encode(-400) != short.MinValue
+            || FtmsSimulationGrade.Encode(double.NaN) != 0)
+            throw new Exception("FTMS grade was not safely encoded or clamped.");
+    }),
+    ("FTMS Supported Inclination Range decodes signed tenths of a percent", () =>
+    {
+        var value = new byte[6];
+        BinaryPrimitives.WriteInt16LittleEndian(value.AsSpan(0, 2), -100);
+        BinaryPrimitives.WriteInt16LittleEndian(value.AsSpan(2, 2), 250);
+        BinaryPrimitives.WriteUInt16LittleEndian(value.AsSpan(4, 2), 5);
+        if (!FtmsSimulationGrade.TryDecodeSupportedInclinationRange(value, out var range)
+            || Math.Abs(range.Minimum - -10) > 0.001 || Math.Abs(range.Maximum - 25) > 0.001
+            || FtmsSimulationGrade.Encode(30, range) != 2500
+            || FtmsSimulationGrade.TryDecodeSupportedInclinationRange(value.AsSpan(0, 4), out _))
+            throw new Exception("FTMS inclination limits were not decoded or applied correctly.");
     }),
     ("FIT round trip retains active distance and elevation totals", () => FitRoundTrip(false)),
     ("Stopping a paused FIT finalizes it without paused travel", () => FitRoundTrip(true)),

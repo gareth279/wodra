@@ -30,6 +30,117 @@ var tests = new (string Name, Action Run)[]
             CameraInspectionInputPolicy.CanCycle(true, false, true, true))
             throw new Exception("Inactive, modal, released or repeated F6 input should be ignored.");
     }),
+    ("failed world loads are attempted once until route or ride recovery", () =>
+    {
+        var firstRoute = new object();
+        var secondRoute = new object();
+        var attempt = new RouteWorldLoadAttempt<object>();
+        if (!attempt.TryBegin(firstRoute)) throw new Exception("Initial route load was not started.");
+        Equal(RouteWorldLoadState.Loading, attempt.State);
+        if (attempt.TryBegin(firstRoute)) throw new Exception("A loading route was retried.");
+        attempt.MarkFailed(firstRoute, "test failure");
+        if (attempt.TryBegin(firstRoute)) throw new Exception("A failed route was retried every frame.");
+        Equal("test failure", attempt.Error);
+        if (!attempt.TryBegin(secondRoute)) throw new Exception("Switching routes did not allow a new load.");
+        attempt.MarkLoaded(secondRoute);
+        if (attempt.TryBegin(secondRoute)) throw new Exception("A loaded route was rebuilt every frame.");
+        attempt.Reset();
+        if (!attempt.TryBegin(secondRoute)) throw new Exception("Starting a new ride did not permit an intentional retry.");
+    }),
+    ("installed Dunedin route packages register Signal Hill street materials and align buildings", () =>
+    {
+        var routeIds = new[]
+        {
+            "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop",
+            "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop"
+        };
+        foreach (var id in routeIds)
+        {
+            var route = RouteCatalog.GetById(id) ?? throw new Exception($"Installed route {id} was not loaded.");
+            var resource = $"Wodra.GameData.Routes.{id}.";
+            var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "buildings.json", id);
+            if (buildings.Count == 0) throw new Exception($"{id} has no installed building sidecar data.");
+            var nearRoadOffsets = buildings.Where(item => item.DistanceFromRouteMeters <= 5)
+                .Select(item => Math.Abs(item.BaseElevationMeters!.Value
+                    - route.GetSampleAt(item.NearestRouteDistanceMeters).ElevationMeters!.Value))
+                .OrderBy(value => value).ToArray();
+            var percentile95 = nearRoadOffsets.Length == 0 ? 0
+                : nearRoadOffsets[(int)Math.Floor((nearRoadOffsets.Length - 1) * .95)];
+            if (nearRoadOffsets.Length > 0 && percentile95 > 1.5)
+                throw new Exception($"{id} building bases disagree with route terrain (95th percentile {percentile95:F2} m).");
+
+            var streets = RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "streets.json", id);
+            if (streets is null || streets.Streets.Count == 0)
+                throw new Exception($"{id} has no installed background-street sidecar data.");
+            var routeVisual = new VisualRoute(route);
+            var spatialIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
+            if (id == "dunedin-signal-hill-climbing-loop")
+            {
+                var registry = new BackgroundStreetGeometry.MaterialChunkBucketRegistry<string, int[]>();
+                var connectionCount = 0;
+                foreach (var street in streets.Streets)
+                {
+                    var points = BackgroundStreetGeometry.ConvertPoints(routeVisual, street.Points);
+                    var connected = BackgroundStreetGeometry.ConnectRouteEnds(points, routeVisual.Samples,
+                        spatialIndex: spatialIndex);
+                    foreach (var quad in BackgroundStreetGeometry.BuildRibbon(connected.Points, (float)street.WidthMeters))
+                    {
+                        if (BackgroundStreetGeometry.OverlapsRoute(quad, routeVisual.Samples,
+                            (float)street.WidthMeters, spatialIndex: spatialIndex)) continue;
+                        var center = (quad.StartLeft + quad.EndLeft + quad.StartRight + quad.EndRight) * .25f;
+                        var chunk = BackgroundStreetGeometry.RouteChunkIndex(
+                            BackgroundStreetGeometry.NearestRouteDistanceMeters(center, routeVisual.Samples, spatialIndex),
+                            routeVisual.LengthMeters);
+                        registry.GetOrAdd(chunk, BackgroundStreetGeometry.MaterialGroupForHighway(street.Highway), static () => new int[1])[0] += 2;
+                    }
+                    foreach (var connection in connected.Connections)
+                    {
+                        connectionCount++;
+                        var chunk = BackgroundStreetGeometry.RouteChunkIndex(connection.RouteDistanceMeters, routeVisual.LengthMeters);
+                        registry.GetOrAdd(chunk, "junction-asphalt", static () => new int[1])[0] += 16;
+                    }
+                }
+                if (connectionCount == 0 || !registry.Items.Any(item => item.Key.Material == "junction-asphalt" && item.Value[0] > 0))
+                    throw new Exception("Signal Hill route did not register junction asphalt triangle accounting.");
+                foreach (var street in streets.Streets)
+                    if (!registry.Items.Keys.Any(key => key.Material == BackgroundStreetGeometry.MaterialGroupForHighway(street.Highway)))
+                        throw new Exception($"Signal Hill highway class {street.Highway} has no registered surface bucket.");
+            }
+
+            foreach (var street in streets.Streets.Take(12))
+            foreach (var source in new[] { street.Points[0], street.Points[^1] })
+            {
+                var point = routeVisual.GetPositionForCoordinate(source.Latitude, source.Longitude, source.ElevationMeters);
+                var indexed = spatialIndex.Nearest(point);
+                var bestSquared = float.PositiveInfinity;
+                for (var i = 0; i < routeVisual.Samples.Count - 1; i++)
+                {
+                    var a = routeVisual.Samples[i].Position;
+                    var b = routeVisual.Samples[i + 1].Position;
+                    var edge = new Vector2(b.X - a.X, b.Z - a.Z);
+                    var lengthSquared = edge.LengthSquared();
+                    var t = lengthSquared > 1e-8f
+                        ? Math.Clamp(Vector2.Dot(new Vector2(point.X - a.X, point.Z - a.Z), edge) / lengthSquared, 0, 1)
+                        : 0;
+                    var projected = Vector3.Lerp(a, b, t);
+                    bestSquared = Math.Min(bestSquared,
+                        Vector2.DistanceSquared(new Vector2(point.X, point.Z), new Vector2(projected.X, projected.Z)));
+                }
+                if (Math.Abs(indexed.DistanceSquared - bestSquared) > .01f)
+                    throw new Exception($"{id} spatial index differs from full route scan by {Math.Sqrt(Math.Abs(indexed.DistanceSquared - bestSquared)):F3} m.");
+            }
+        }
+
+        var rolling = RouteCatalog.GetById("dunedin-rolling-loop")!;
+        var rollingData = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "Wodra.GameData.Routes.dunedin-rolling-loop.buildings.json", rolling.Id);
+        var near350 = rollingData.Single(item => item.OsmId == 381857663);
+        var road350 = rolling.GetSampleAt(near350.NearestRouteDistanceMeters).ElevationMeters!.Value;
+        if (Math.Abs(near350.BaseElevationMeters!.Value - road350) > 1.0)
+            throw new Exception($"Rolling near-road building {near350.OsmId} is vertically displaced by {near350.BaseElevationMeters - road350:F2} m.");
+    }),
     ("dummy W/kg uses body weight and simulation mass adds bike weight", () =>
     {
         Equal(150, DummyTrainerMath.WattsFromKilograms(2.0, 75));
@@ -927,7 +1038,7 @@ var tests = new (string Name, Action Run)[]
             foreach(var point in b.Footprint){writer.Write(point.Longitude);writer.Write(point.Latitude);}
         }
         var hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(buffer.ToArray())).ToLowerInvariant();
-        Equal("7ecdb45d8ca83b0c2a24afe1f1295f9fce401ac8360a319cdc30d1a7dba5f7dc",hash);
+        Equal("afd1e539698a827fc12e1d9b604d1ccb1ab964425ccefe3c4dcb2f4ad4cfd166",hash);
     }),
     ("bundled vegetation elevations and feature metadata load correctly", () =>
     {

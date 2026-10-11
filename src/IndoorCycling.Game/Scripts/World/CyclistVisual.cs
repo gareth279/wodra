@@ -407,23 +407,32 @@ public partial class CyclistVisual : Node3D
         var modelMin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
         var modelMax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
         var meshCount = 0;
+        var nonUnitScaleCount = 0;
+        var largestMesh = string.Empty;
+        var largestMeshDimension = 0f;
         foreach (Node child in GetChildren())
             if (child is Node3D node)
-                ReportBounds(node, Transform3D.Identity, ref modelMin, ref modelMax, ref meshCount);
+                ReportBounds(node, Transform3D.Identity, node.Name.ToString(), ref modelMin, ref modelMax,
+                    ref meshCount, ref nonUnitScaleCount, ref largestMesh, ref largestMeshDimension);
 
         var size = modelMax - modelMin;
-        GD.Print($"[Cyclist GLB] Runtime model bounds: {size}; meshes inspected: {meshCount}");
+        GD.Print($"[Cyclist GLB] Runtime model bounds: {size}; meshes inspected: {meshCount}; " +
+            $"non-unit scales: {nonUnitScaleCount}; largest mesh: {largestMesh} ({largestMeshDimension:F2} m)");
         if (size.X > 1.3f || size.Y > 2.1f || size.Z > 2.2f)
             GD.PushWarning($"[Cyclist GLB] Overall bounds exceed adult rider/bicycle sanity limits: {size}.");
     }
 
-    private static void ReportBounds(Node3D node, Transform3D parentTransform,
-        ref Vector3 modelMin, ref Vector3 modelMax, ref int meshCount)
+    private static void ReportBounds(Node3D node, Transform3D parentTransform, string safePath,
+        ref Vector3 modelMin, ref Vector3 modelMax, ref int meshCount, ref int nonUnitScaleCount,
+        ref string largestMesh, ref float largestMeshDimension)
     {
         var transform = parentTransform * node.Transform;
         var nodeScale = node.Scale;
         if (Math.Abs(nodeScale.X - 1) > .0001f || Math.Abs(nodeScale.Y - 1) > .0001f || Math.Abs(nodeScale.Z - 1) > .0001f)
-            GD.Print($"[Cyclist GLB] Non-unit node scale: {node.GetPath()} = {nodeScale}");
+        {
+            nonUnitScaleCount++;
+            if (nonUnitScaleCount <= 5) GD.Print($"[Cyclist GLB] Non-unit node scale: {safePath} = {nodeScale}");
+        }
         if (node is MeshInstance3D instance && instance.Mesh is { } mesh)
         {
             var local = mesh.GetAabb();
@@ -442,17 +451,23 @@ public partial class CyclistVisual : Node3D
                 modelMax = modelMax.Max(point);
             }
             var transformedSize = transformedMax - transformedMin;
+            var largestDimension = Math.Max(transformedSize.X, Math.Max(transformedSize.Y, transformedSize.Z));
+            if (largestDimension > largestMeshDimension)
+            {
+                largestMeshDimension = largestDimension;
+                largestMesh = safePath;
+            }
             var scale = instance.Scale;
-            GD.Print($"[Cyclist GLB] {instance.Name}: local={local.Size}, transformed={transformedSize}, scale={scale}");
             if (transformedSize.X > 1.25f || transformedSize.Y > 1.25f || transformedSize.Z > 1.25f)
-                GD.PushWarning($"[Cyclist GLB] Unexpectedly large mesh {instance.Name}: {transformedSize}.");
+                GD.PushWarning($"[Cyclist GLB] Unexpectedly large mesh {safePath}: {transformedSize}.");
             if (!float.IsFinite(scale.X) || !float.IsFinite(scale.Y) || !float.IsFinite(scale.Z))
-                GD.PushWarning($"[Cyclist GLB] Invalid mesh scale on {instance.Name}: {scale}.");
+                GD.PushWarning($"[Cyclist GLB] Invalid mesh scale on {safePath}: {scale}.");
             meshCount++;
         }
         foreach (Node child in node.GetChildren())
             if (child is Node3D child3D)
-                ReportBounds(child3D, transform, ref modelMin, ref modelMax, ref meshCount);
+                ReportBounds(child3D, transform, $"{safePath}/{child3D.Name}", ref modelMin, ref modelMax,
+                    ref meshCount, ref nonUnitScaleCount, ref largestMesh, ref largestMeshDimension);
     }
 #endif
 

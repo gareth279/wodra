@@ -7,7 +7,7 @@
   "routeType": "loop",
   "difficulty": "Challenging",
   "routeDataVersion": 1,
-  "geometryFingerprint": "1f4d4846558023b73eff0290eb521ffa33b69f31edd9626d3e39d4d7127f5721",
+  "geometryFingerprint": "c40dc0e974b6ac57c70c0e3879c2620deabefbe4537ee5f63958bf222eed915b",
   "preferredRefs": [],
   "boundingBox": {
     "minLatitude": -45.94,
@@ -6139,13 +6139,13 @@
     "oneMeterCoveragePercent": 59.42357512953368,
     "fallbackCoveragePercent": 40.57642487046632,
     "minimumElevationMeters": 0.8304177784189696,
-    "maximumElevationMeters": 307.02277312535335,
+    "maximumElevationMeters": 307.08298142067275,
     "startElevationMeters": 16.125389457860305,
-    "totalAscentMeters": 481.0472301634115,
-    "totalDescentMeters": 481.0472301634115,
-    "minimumGradientPercent": -33.87571319084427,
-    "maximumGradientPercent": 34.46201279949717,
-    "averageGradientPercent": 0.0990898895973575,
+    "totalAscentMeters": 467.2569993729983,
+    "totalDescentMeters": 467.2569993729983,
+    "minimumGradientPercent": -21.926008359868586,
+    "maximumGradientPercent": 21.67994163282218,
+    "averageGradientPercent": 0.12227147508240149,
     "gradientReviewThresholdPercent": 15.0,
     "suspiciousGradientDistancesMeters": [
       2553.3136887780784,
@@ -6188,6 +6188,7 @@
       7953.956806412406,
       7973.8496485711685,
       7979.5921213107285,
+      8042.052751520242,
       8058.353638403243,
       8074.654520022914,
       8081.754089053231,
@@ -6209,13 +6210,8 @@
       8834.15589617558,
       8848.955507778473,
       8867.62382788562,
+      8886.292127991923,
       9492.773590247012,
-      9854.420995169545,
-      9868.516666204134,
-      9878.712127041612,
-      9881.341833894687,
-      10870.615614537119,
-      10889.299660271588,
       10907.98372288772,
       10911.690847462854,
       10915.651606722004,
@@ -6224,8 +6220,6 @@
       11061.989141255151,
       11065.9499005143,
       11069.657025089435,
-      11088.341087705567,
-      11107.025133440036,
       12681.047962715904,
       12695.986478665769,
       12710.722394452885,
@@ -6234,9 +6228,186 @@
       12756.069298763447,
       12762.969681105526
     ],
+    "sourceTransitions": [
+      {
+        "distanceMeters": 3869.9451911726496,
+        "latitude": -45.85764091943571,
+        "longitude": 170.52675699281096,
+        "from": "1m",
+        "to": "8m",
+        "rawElevationBeforeMeters": 83.67680659532915,
+        "rawElevationAfterMeters": 79.87571866903521,
+        "rawStepMeters": -3.8010879262939454,
+        "calibratedElevationBeforeMeters": 83.67680659532915,
+        "calibratedElevationAfterMeters": 83.52930015740787,
+        "calibratedStepMeters": -0.1475064379212796,
+        "smoothedElevationBeforeMeters": 83.77822835901154,
+        "smoothedElevationAfterMeters": 83.67610543572563,
+        "smoothedStepMeters": -0.10212292328590422
+      },
+      {
+        "distanceMeters": 9874.860145434086,
+        "latitude": -45.85609180240373,
+        "longitude": 170.52676026317295,
+        "from": "8m",
+        "to": "1m",
+        "rawElevationBeforeMeters": 72.89924037266843,
+        "rawElevationAfterMeters": 69.00218817227824,
+        "rawStepMeters": -3.897052200390192,
+        "calibratedElevationBeforeMeters": 69.3903650070003,
+        "calibratedElevationAfterMeters": 69.00218817227824,
+        "calibratedStepMeters": -0.38817683472206,
+        "smoothedElevationBeforeMeters": 69.54725974345654,
+        "smoothedElevationAfterMeters": 69.12550319758299,
+        "smoothedStepMeters": -0.42175654587354927
+      },
+      {
+        "distanceMeters": 10889.845770509084,
+        "latitude": -45.85302906540645,
+        "longitude": 170.51700632133822,
+        "from": "1m",
+        "to": "8m",
+        "rawElevationBeforeMeters": 36.042783012086325,
+        "rawElevationAfterMeters": 43.43035630696787,
+        "rawStepMeters": 7.387573294881548,
+        "calibratedElevationBeforeMeters": 36.042783012086325,
+        "calibratedElevationAfterMeters": 36.42273464836121,
+        "calibratedStepMeters": 0.3799516362748818,
+        "smoothedElevationBeforeMeters": 36.27681863489741,
+        "smoothedElevationAfterMeters": 36.95496384156636,
+        "smoothedStepMeters": 0.6781452066689511
+      },
+      {
+        "distanceMeters": 11094.842867199108,
+        "latitude": -45.85307898343219,
+        "longitude": 170.51706240053088,
+        "from": "8m",
+        "to": "1m",
+        "rawElevationBeforeMeters": 43.067949463278616,
+        "rawElevationAfterMeters": 35.86907696960686,
+        "rawStepMeters": -7.198872493671757,
+        "calibratedElevationBeforeMeters": 36.21919106592304,
+        "calibratedElevationAfterMeters": 35.86907696960686,
+        "calibratedStepMeters": -0.35011409631618307,
+        "smoothedElevationBeforeMeters": 36.73439306826627,
+        "smoothedElevationAfterMeters": 36.0730509125833,
+        "smoothedStepMeters": -0.6613421556829735
+      },
+      {
+        "distanceMeters": 12254.82643871339,
+        "latitude": -45.857434046903975,
+        "longitude": 170.52674903000536,
+        "from": "1m",
+        "to": "8m",
+        "rawElevationBeforeMeters": 81.65642772911225,
+        "rawElevationAfterMeters": 78.46435130053749,
+        "rawStepMeters": -3.192076428574765,
+        "calibratedElevationBeforeMeters": 81.65642772911225,
+        "calibratedElevationAfterMeters": 81.823551731835,
+        "calibratedStepMeters": 0.16712400272274408,
+        "smoothedElevationBeforeMeters": 81.70347084837833,
+        "smoothedElevationAfterMeters": 81.88847126969644,
+        "smoothedStepMeters": 0.185000421318108
+      },
+      {
+        "distanceMeters": 12309.825659776567,
+        "latitude": -45.85767203692323,
+        "longitude": 170.52671911711016,
+        "from": "8m",
+        "to": "1m",
+        "rawElevationBeforeMeters": 79.87416581244,
+        "rawElevationAfterMeters": 83.65497138044118,
+        "rawStepMeters": 3.7808055680011847,
+        "calibratedElevationBeforeMeters": 83.50409578977569,
+        "calibratedElevationAfterMeters": 83.65497138044118,
+        "calibratedStepMeters": 0.1508755906654926,
+        "smoothedElevationBeforeMeters": 83.63587909661005,
+        "smoothedElevationAfterMeters": 83.7488438828298,
+        "smoothedStepMeters": 0.1129647862197487
+      }
+    ],
+    "sourceCalibrations": [
+      {
+        "startDistanceMeters": 3869.9451911726496,
+        "endDistanceMeters": 9874.860145434086,
+        "lengthMeters": 6004.914954261437,
+        "correctionAtStartMeters": 3.653581488372666,
+        "correctionAtEndMeters": -3.508875365668139,
+        "rawEntryStepMeters": -3.8010879262939454,
+        "expectedEntryStepMeters": -0.1475064379212796,
+        "rawExitStepMeters": -3.897052200390192,
+        "expectedExitStepMeters": -0.3881768347220529,
+        "method": "linear source-bias correction anchored to median adjacent 1m DEM slopes over 40m on both sides"
+      },
+      {
+        "startDistanceMeters": 10889.845770509084,
+        "endDistanceMeters": 11094.842867199108,
+        "lengthMeters": 204.99709669002408,
+        "correctionAtStartMeters": -7.007621658606666,
+        "correctionAtEndMeters": -6.848758397355574,
+        "rawEntryStepMeters": 7.387573294881548,
+        "expectedEntryStepMeters": 0.3799516362748818,
+        "rawExitStepMeters": -7.198872493671757,
+        "expectedExitStepMeters": -0.35011409631618307,
+        "method": "linear source-bias correction anchored to median adjacent 1m DEM slopes over 40m on both sides"
+      },
+      {
+        "startDistanceMeters": 12254.82643871339,
+        "endDistanceMeters": 12309.825659776567,
+        "lengthMeters": 54.99922106317719,
+        "correctionAtStartMeters": 3.3592004312975092,
+        "correctionAtEndMeters": 3.629929977335692,
+        "rawEntryStepMeters": -3.192076428574765,
+        "expectedEntryStepMeters": 0.16712400272274408,
+        "rawExitStepMeters": 3.7808055680011847,
+        "expectedExitStepMeters": 0.1508755906654926,
+        "method": "linear source-bias correction anchored to median adjacent 1m DEM slopes over 40m on both sides"
+      }
+    ],
+    "isolatedRawDemOutliers": [
+      {
+        "startSampleIndex": 2314,
+        "endSampleIndex": 2314,
+        "rawElevationsMeters": [
+          21.2393813871532
+        ],
+        "filteredElevationsMeters": [
+          23.349753465776683
+        ],
+        "maximumResidualMeters": 2.1715190503474453,
+        "maximumCorrectionMeters": 2.1103720786234845,
+        "resolutionMeters": 1,
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "startDistanceMeters": 11569.836140017456,
+        "endDistanceMeters": 11569.836140017456,
+        "latitude": -45.855587728520845,
+        "longitude": 170.52068271408336
+      },
+      {
+        "startSampleIndex": 2757,
+        "endSampleIndex": 2758,
+        "rawElevationsMeters": [
+          2.009999990463257,
+          2.009999990463257
+        ],
+        "filteredElevationsMeters": [
+          6.768190165375953,
+          6.771640071850988
+        ],
+        "maximumResidualMeters": 4.691282999927723,
+        "maximumCorrectionMeters": 4.761640081387731,
+        "resolutionMeters": 1,
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "startDistanceMeters": 13784.804770107228,
+        "endDistanceMeters": 13789.80469929479,
+        "latitude": -45.86707740672357,
+        "longitude": 170.51593818792847
+      }
+    ],
+    "sampleCsv": "dunedin-signal-hill-climbing-loop.elevation-samples.csv",
     "bridgeTunnelSections": [],
     "profileCsv": "dunedin-signal-hill-climbing-loop.elevation.csv",
-    "elapsedSeconds": 16.530005200009327,
+    "elapsedSeconds": 15.830899299995508,
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
@@ -6296,6 +6467,6 @@
     "generationSeconds": 18.559269300021697,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
-  "totalAscentMeters": 481.0472301634115,
+  "totalAscentMeters": 467.2569993729983,
   "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

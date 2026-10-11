@@ -26,6 +26,25 @@ try
         Console.WriteLine($"Refreshed route package metadata for {refreshConfig.Id}.");
         return 0;
     }
+    if (args[0].Equals("refresh-elevation", StringComparison.OrdinalIgnoreCase))
+    {
+        var elevationOptions = ParseOptions(args.Skip(1).ToArray());
+        if (!elevationOptions.TryGetValue("--config", out var elevationConfigPath))
+            throw new ArgumentException("--config is required.");
+        if (!elevationOptions.TryGetValue("--output", out var elevationOutputDirectory))
+            throw new ArgumentException("--output is required.");
+        var elevationConfig = JsonSerializer.Deserialize<RouteAuthoringConfig>(
+            await File.ReadAllTextAsync(elevationConfigPath),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            ?? throw new InvalidDataException("Could not read route config JSON.");
+        elevationConfig.Validate();
+        if (elevationConfig.Elevation is not { Enabled: true } elevationBuildOptions)
+            throw new InvalidDataException("The route config does not enable elevation generation.");
+        await ElevationPipelineRunner.RunAsync(elevationOutputDirectory, elevationConfig.Id, elevationBuildOptions);
+        await RoutePackageMetadata.RefreshAsync(elevationOutputDirectory, elevationConfig);
+        Console.WriteLine($"Refreshed elevation profile for {elevationConfig.Id} without rebuilding route geometry.");
+        return 0;
+    }
     if (!args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
         throw new ArgumentException($"Unknown command '{args[0]}'.");
     var options = ParseOptions(args.Skip(1).ToArray());
@@ -234,5 +253,6 @@ Usage:
        [--max-snap-meters <metres>] [--cache-dir <directory|none>] [--route-only true] [--streets-json <existing-file>]
        [--approved-route-points <file> --approved-report <file>] [--no-bundle-streets true]
   dotnet run --project tools/Wodra.RouteBuilder -- refresh-package --config <route.json> --output <directory>
+  dotnet run --project tools/Wodra.RouteBuilder -- refresh-elevation --config <route.json> --output <directory>
   dotnet run --project tools/Wodra.RouteBuilder -- --help
 """);

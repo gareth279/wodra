@@ -26,6 +26,20 @@ def sample(dataset, transformer, lon, lat):
     return float((values[valid] * weights[valid]).sum() / weights[valid].sum())
 
 
+def prefer_highest_resolution(datasets):
+    """Use the best available raster first when cached coverage overlaps.
+
+    The older implementation opened files alphabetically, so CE17.tiff (the 8 m
+    fallback) won over CE17_10000_0303.tiff (the 1 m primary) at every overlapping
+    building coordinate. In Dunedin those datasets can differ by over ten metres.
+    """
+    return sorted(datasets, key=lambda item: (
+        abs(item[0].res[0]) * abs(item[0].res[1]),
+        max(abs(item[0].res[0]), abs(item[0].res[1])),
+        str(item[0].name),
+    ))
+
+
 def main():
     building_path, raster_dir = Path(sys.argv[1]), Path(sys.argv[2])
     data = json.loads(building_path.read_text(encoding='utf-8'))
@@ -37,6 +51,7 @@ def main():
         for path in rasters:
             ds = rasterio.open(path)
             datasets.append((ds, Transformer.from_crs('EPSG:4326', ds.crs, always_xy=True)))
+        datasets = prefer_highest_resolution(datasets)
         elevations = []
         for item in data['samples']:
             value = None

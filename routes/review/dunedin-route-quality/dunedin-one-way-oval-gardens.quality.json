@@ -1,0 +1,201 @@
+{
+  "id": "dunedin-one-way-oval-gardens",
+  "name": "Dunedin Oval to Gardens",
+  "distanceMeters": 5495.2928190676985,
+  "distanceKm": 5.495292819067698,
+  "ascentMeters": 18.164954589432845,
+  "difficulty": "Easy",
+  "pointCount": 334,
+  "maximumAdjacentPointDistanceMeters": 29.83234930716068,
+  "loopClosed": true,
+  "loopSeamElevationDifferenceMeters": 0.0,
+  "loopSeamHeadingDifferenceDegrees": 93.34798442337211,
+  "legsConnectedAndPassed": true,
+  "routeWarnings": [],
+  "routeStatus": "pass_requires_seam_turn_review",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "sourceAttribution": null,
+  "elevationSource": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+  "elevationFallbackSource": null,
+  "oneMeterCoveragePercent": 100.0,
+  "fallbackCoveragePercent": 0.0,
+  "sourceTransitions": [],
+  "sourceTransitionCount": 0,
+  "maxSustained100mClimbPercent": 1.955497084736189,
+  "maxSustained100mClimbAtMeters": 2123.655989040578,
+  "maxSustained100mDescentPercent": -2.6534894498670347,
+  "maxSustained100mDescentAtMeters": 2695.8775588876065,
+  "maxSustainedGradientLocations": [
+    {
+      "kind": "maximum100mClimb",
+      "distanceMeters": 2123.655989040578,
+      "gradientPercent": 1.955497084736189,
+      "latitude": -45.8670461,
+      "longitude": 170.50964860000002,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.0,
+        "wayId": 17951039,
+        "name": "Malcolm Street",
+        "highway": "trunk",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Oval start / finish -> Northbound SH1",
+      "mappedRoadNamesInLeg": [
+        "Crawford Street",
+        "Cumberland Street",
+        "Great King Street",
+        "Malcolm Street",
+        "Queens Gardens"
+      ]
+    },
+    {
+      "kind": "maximum100mDescent",
+      "distanceMeters": 2695.8775588876065,
+      "gradientPercent": -2.6534894498670347,
+      "latitude": -45.86296696666667,
+      "longitude": 170.51244236666668,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.00012711568616906532,
+        "wayId": 60194027,
+        "name": "Saint David Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Gardens turnaround in -> Gardens turnaround connector",
+      "mappedRoadNamesInLeg": [
+        "Saint David Street"
+      ]
+    }
+  ],
+  "sharpTurnCandidates": [
+    {
+      "distanceMeters": 5377.550175447773,
+      "turnAngleDegrees": 90.20287601907683,
+      "latitude": -45.884516500000004,
+      "longitude": 170.5011398,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.0,
+        "wayId": 508089766,
+        "name": "Wolseley Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Oval closure -> Oval closure connector",
+      "mappedRoadNamesInLeg": [
+        "Cumberland Street",
+        "Wolseley Street"
+      ]
+    },
+    {
+      "distanceMeters": 2632.0259160855876,
+      "turnAngleDegrees": 90.08923670878596,
+      "latitude": -45.862752400000005,
+      "longitude": 170.51167750000002,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.0,
+        "wayId": 1354360469,
+        "name": "Great King Street",
+        "highway": "trunk",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Gardens turnaround in -> Gardens turnaround connector",
+      "mappedRoadNamesInLeg": [
+        "Saint David Street"
+      ]
+    },
+    {
+      "distanceMeters": 2752.2372918091746,
+      "turnAngleDegrees": 89.35362128073984,
+      "latitude": -45.863156000000004,
+      "longitude": 170.5131177,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.0,
+        "wayId": 1272470612,
+        "name": "Cumberland Street",
+        "highway": "trunk",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Gardens turnaround out -> Southbound SH1",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Cumberland Street",
+        "Gowland Street",
+        "Queens Gardens"
+      ]
+    }
+  ],
+  "maxSustained250mClimbPercent": 1.7028549128603323,
+  "maxSustained250mDescentPercent": -1.734744270030469,
+  "reportedPointsOver15Percent": 0,
+  "fiveMeterSamplesOver15Percent": 0,
+  "steepSectionsOver15Percent": [],
+  "suspiciousRawElevationSpikes": [],
+  "suspiciousGradientSpikeCount": 0,
+  "correctedRawDemOutliers": [],
+  "correctedRawDemOutlierCount": 0,
+  "elevationSamplesCsv": "dunedin-one-way-oval-gardens.elevation.csv",
+  "manualVisualChecks": [
+    {
+      "distanceMeters": 0.0,
+      "reasons": [
+        "route start and lap seam"
+      ]
+    },
+    {
+      "distanceMeters": 2124.0,
+      "reasons": [
+        "maximum100mClimb at Malcolm Street"
+      ]
+    },
+    {
+      "distanceMeters": 2632.0,
+      "reasons": [
+        "Northbound SH1 route leg boundary",
+        "sharp turn 90 degrees on Great King Street"
+      ]
+    },
+    {
+      "distanceMeters": 2696.0,
+      "reasons": [
+        "maximum100mDescent at Saint David Street"
+      ]
+    },
+    {
+      "distanceMeters": 2752.0,
+      "reasons": [
+        "Gardens turnaround connector route leg boundary",
+        "sharp turn 89 degrees on Cumberland Street"
+      ]
+    },
+    {
+      "distanceMeters": 5356.0,
+      "reasons": [
+        "Southbound SH1 route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 5378.0,
+      "reasons": [
+        "sharp turn 90 degrees on Wolseley Street"
+      ]
+    },
+    {
+      "distanceMeters": 5495.0,
+      "reasons": [
+        "Oval closure connector route leg boundary",
+        "route lap seam"
+      ]
+    }
+  ]
+}

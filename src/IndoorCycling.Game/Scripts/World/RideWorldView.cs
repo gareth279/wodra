@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Godot;
 using IndoorCycling.Core.Models;
@@ -77,6 +78,7 @@ public partial class RideWorldView : Node3D
     private double _debugElapsed;
     private bool _wasActive;
     private VisualRoutePose _lastPose;
+    private readonly RouteWorldLoadAttempt<RouteDefinition> _routeLoadAttempt = new();
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
 
@@ -240,15 +242,59 @@ public partial class RideWorldView : Node3D
         {
             Hide();
             _camera.Current = false;
+            if (_wasActive) _routeLoadAttempt.Reset();
             _wasActive = false;
             return;
         }
         var rideJustActivated = !_wasActive;
-        if (rideJustActivated || !ReferenceEquals(_loadedRoute, _session.CurrentRoute))
+        if (_routeLoadAttempt.TryBegin(_session.CurrentRoute))
         {
-            LoadRoute(_session.CurrentRoute);
-            _camera.ResetFollow();
+            _wasActive = true;
+            var timer = Stopwatch.StartNew();
+            try
+            {
+                LoadRoute(_session.CurrentRoute);
+                _routeLoadAttempt.MarkLoaded(_session.CurrentRoute);
+                _camera.ResetFollow();
+                timer.Stop();
+                GameLogger.Log("visual_route_load_timing", new
+                {
+                    routeId = _session.CurrentRoute.Id,
+                    state = _routeLoadAttempt.State.ToString(),
+                    totalMilliseconds = timer.Elapsed.TotalMilliseconds,
+                    buildings = _buildingLayer?.BuildingsLoaded ?? 0,
+                    buildingTriangles = _buildingLayer?.TriangleCount ?? 0,
+                    backgroundStreets = _backgroundStreetLayer?.LoadedStreetCount ?? 0,
+                    backgroundStreetTriangles = _backgroundStreetLayer?.TriangleCount ?? 0,
+                    terrainTriangles = _terrainLayer?.TerrainTriangleCount ?? 0
+                });
+            }
+            catch (Exception ex)
+            {
+                timer.Stop();
+                _routeLoadAttempt.MarkFailed(_session.CurrentRoute, ex.Message);
+                CleanupFailedRouteLoad();
+                var message = $"Could not load the world for { _session.CurrentRoute.Name } ({_session.CurrentRoute.Id}): {ex.Message}";
+                GD.PushError($"[WorldLoad] {message}");
+                GameLogger.Log("visual_route_load_failed", new
+                {
+                    routeId = _session.CurrentRoute.Id,
+                    exception = ex.ToString(),
+                    totalMilliseconds = timer.Elapsed.TotalMilliseconds
+                });
+                Hide();
+                _camera.Current = false;
+                _ = _session.StopRideAfterWorldLoadFailureAsync(message);
+                return;
+            }
         }
+        if (_routeLoadAttempt.State == RouteWorldLoadState.Failed)
+        {
+            Hide();
+            _camera.Current = false;
+            return;
+        }
+        if (_routeLoadAttempt.State != RouteWorldLoadState.Loaded) return;
         _wasActive = true;
         Show();
         _camera.Current = true;
@@ -423,7 +469,6 @@ public partial class RideWorldView : Node3D
             RemoveChild(_routeRoot);
             _routeRoot.QueueFree();
         }
-        _loadedRoute = route;
         _geometry = new VisualRoute(route);
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
@@ -442,9 +487,30 @@ public partial class RideWorldView : Node3D
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
         var assembly = typeof(RouteCatalog).Assembly;
         var resourcePrefix = $"Wodra.GameData.Routes.{route.Id}.";
-        var backgroundStreetData = RouteBackgroundStreetDataLoader.TryLoadEmbedded(assembly,
-            resourcePrefix + "streets.json", route.Id);
-        var junctionOpenings=BackgroundStreetGeometry.BuildJunctionOpenings(_geometry,backgroundStreetData);
+        RouteBackgroundStreetData? backgroundStreetData = null;
+        try
+        {
+            backgroundStreetData = RouteBackgroundStreetDataLoader.TryLoadEmbedded(assembly,
+                resourcePrefix + "streets.json", route.Id);
+        }
+        catch (Exception ex)
+        {
+            ReportOptionalLayerFailure(route, "background street sidecar", ex);
+        }
+        var routeSpatialIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(_geometry.Samples);
+        IReadOnlyList<RoadJunctionOpening> junctionOpenings = [];
+        if (backgroundStreetData is not null)
+        {
+            try
+            {
+                junctionOpenings = BackgroundStreetGeometry.BuildJunctionOpenings(_geometry, backgroundStreetData, routeSpatialIndex);
+            }
+            catch (Exception ex)
+            {
+                backgroundStreetData = null;
+                ReportOptionalLayerFailure(route, "background street junction connections", ex);
+            }
+        }
         _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry,true,true,junctionOpenings));
         // Route data has no road-class evidence for continuous delineators.
         // Render only explicit OSM furniture from StreetFurnitureLayer below.
@@ -459,7 +525,16 @@ public partial class RideWorldView : Node3D
         RouteVegetationData? vegetationData = null;
         {
             var streets=backgroundStreetData;
-            var terrainRoads=BackgroundStreetGeometry.BuildTerrainCorridors(_geometry,streets);
+            TerrainRoadCorridor[] terrainRoads = [];
+            if (streets is not null)
+            {
+                try { terrainRoads = BackgroundStreetGeometry.BuildTerrainCorridors(_geometry, streets, routeSpatialIndex); }
+                catch (Exception ex)
+                {
+                    streets = null;
+                    ReportOptionalLayerFailure(route, "background street terrain cutouts", ex);
+                }
+            }
             var terrain = new TerrainLayer { Name = "LINZTerrain" };
             if (terrain.Configure(_geometry, resourcePrefix + "terrain.json", route.Id,terrainRoads))
             {
@@ -516,14 +591,34 @@ public partial class RideWorldView : Node3D
                 _roadMarkingLayer.Configure(_geometry, furniture);
                 _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
-            if(streets is not null){
-                _backgroundStreetLayer=new BackgroundStreetLayer{Name="BackgroundStreets"};
-                _routeRoot.AddChild(_backgroundStreetLayer);
-                _backgroundStreetLayer.Configure(_geometry,streets);
-                _backgroundStreetLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-                _ambientActorManager = new AmbientActorManager { Name = "AmbientActors", RandomSeed = AmbientActorTuning.DefaultSeed };
-                _routeRoot.AddChild(_ambientActorManager);
-                _ambientActorManager.Configure(_geometry, streets);
+            if(streets is not null)
+            {
+                try
+                {
+                    _backgroundStreetLayer=new BackgroundStreetLayer{Name="BackgroundStreets"};
+                    _routeRoot.AddChild(_backgroundStreetLayer);
+                    _backgroundStreetLayer.Configure(_geometry,streets,routeSpatialIndex);
+                    _backgroundStreetLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+                    _ambientActorManager = new AmbientActorManager { Name = "AmbientActors", RandomSeed = AmbientActorTuning.DefaultSeed };
+                    _routeRoot.AddChild(_ambientActorManager);
+                    _ambientActorManager.Configure(_geometry, streets);
+                }
+                catch (Exception ex)
+                {
+                    if (_backgroundStreetLayer is not null)
+                    {
+                        _routeRoot.RemoveChild(_backgroundStreetLayer);
+                        _backgroundStreetLayer.QueueFree();
+                        _backgroundStreetLayer = null;
+                    }
+                    if (_ambientActorManager is not null)
+                    {
+                        _routeRoot.RemoveChild(_ambientActorManager);
+                        _ambientActorManager.QueueFree();
+                        _ambientActorManager = null;
+                    }
+                    ReportOptionalLayerFailure(route, "background streets and ambient actors", ex);
+                }
             }
         }
         var positions = _geometry.Samples.Select(v => v.Position).ToArray();
@@ -592,5 +687,48 @@ public partial class RideWorldView : Node3D
             aiCyclistTotalNodes = _riderVisuals.Where(pair => pair.Key != "player").Sum(pair => pair.Value.ApproximateNodeCount),
             aiCyclistApproximateTriangles = _riderVisuals.Where(pair => pair.Key != "player").Sum(pair => pair.Value.ApproximateTriangleCount)
         });
+        _loadedRoute = route;
+    }
+
+    private void CleanupFailedRouteLoad()
+    {
+        if (_routeRoot is not null)
+        {
+            RemoveChild(_routeRoot);
+            _routeRoot.QueueFree();
+            _routeRoot = null;
+        }
+        if (_aiVisualRoot is not null)
+        {
+            RemoveChild(_aiVisualRoot);
+            _aiVisualRoot.QueueFree();
+            _aiVisualRoot = null;
+        }
+        _geometry = null;
+        _loadedRoute = null;
+        _riderStateSource = null;
+        _aiPopulation = null;
+        _riderVisuals.Clear();
+        _landmarkLayer = null;
+        _buildingLayer = null;
+        _vegetationLayer = null;
+        _streetFurnitureLayer = null;
+        _roadMarkingLayer = null;
+        _backgroundStreetLayer = null;
+        _ambientActorManager = null;
+        _terrainLayer = null;
+    }
+
+    private void ReportOptionalLayerFailure(RouteDefinition route, string layer, Exception exception)
+    {
+        var message = $"Optional {layer} could not be built for {route.Name} ({route.Id}); the route road and rider remain available. Details: {exception.Message}";
+        GD.PushWarning($"[WorldLoad] {message}");
+        GameLogger.Log("visual_route_optional_layer_failed", new
+        {
+            routeId = route.Id,
+            layer,
+            exception = exception.ToString()
+        });
+        _hudController?.SetStatus(message);
     }
 }

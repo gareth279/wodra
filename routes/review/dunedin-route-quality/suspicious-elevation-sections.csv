@@ -1,0 +1,1 @@
+routeId,distanceMeters,latitude,longitude,roadName,wayId,rawElevationMeters,calibratedSourceElevationMeters,processedElevationMeters,rawResidualMeters,largestAdjacentRawStepMeters,sourceDataset,sourceResolutionMeters,nearSourceTransition

@@ -7,7 +7,7 @@
   "routeType": "loop",
   "difficulty": "Moderate",
   "routeDataVersion": 1,
-  "geometryFingerprint": "57c8e5609832911ed2176a7a0ec3c05ca70f992a26536f6c3c583bd37809957d",
+  "geometryFingerprint": "b2c68af8ba3fced78fe3544120c2105e4252793d601b84dc02d893c6810ed8f1",
   "preferredRefs": [],
   "boundingBox": {
     "minLatitude": -45.94,
@@ -5658,11 +5658,11 @@
     "minimumElevationMeters": 0.6278146576831533,
     "maximumElevationMeters": 105.30476812615318,
     "startElevationMeters": 15.857753274053422,
-    "totalAscentMeters": 228.3374155971639,
-    "totalDescentMeters": 228.3374155971639,
-    "minimumGradientPercent": -33.54043299797248,
-    "maximumGradientPercent": 34.45680561283288,
-    "averageGradientPercent": -0.1958996662902388,
+    "totalAscentMeters": 218.8749151286524,
+    "totalDescentMeters": 218.87491512865245,
+    "minimumGradientPercent": -20.963721426892068,
+    "maximumGradientPercent": 21.99148335844507,
+    "averageGradientPercent": -0.20045700603269645,
     "gradientReviewThresholdPercent": 15.0,
     "suspiciousGradientDistancesMeters": [
       1732.1306784935575,
@@ -5674,8 +5674,6 @@
       2299.279189286751,
       2318.3622591077956,
       2337.445337139818,
-      3485.093315012413,
-      3503.7773607468835,
       3522.461423363016,
       3526.168547938151,
       3530.1293071973005,
@@ -5685,14 +5683,104 @@
       3664.9542931765777,
       3668.6614177517126,
       3687.345480367845,
-      3706.0295261023157,
       5494.754739901916,
       5504.810571304592,
       5520.781672974152
     ],
+    "sourceTransitions": [
+      {
+        "distanceMeters": 3504.7364056801944,
+        "latitude": -45.853026140720004,
+        "longitude": 170.5170030356703,
+        "from": "1m",
+        "to": "8m",
+        "rawElevationBeforeMeters": 36.05764663653923,
+        "rawElevationAfterMeters": 43.50357001394342,
+        "rawStepMeters": 7.445923377404185,
+        "calibratedElevationBeforeMeters": 36.05764663653923,
+        "calibratedElevationAfterMeters": 36.434173295523664,
+        "calibratedStepMeters": 0.3765266589844316,
+        "smoothedElevationBeforeMeters": 36.30311172986927,
+        "smoothedElevationAfterMeters": 36.98169086523689,
+        "smoothedStepMeters": 0.6785791353676203
+      },
+      {
+        "distanceMeters": 3694.722116687109,
+        "latitude": -45.85308517977326,
+        "longitude": 170.51706936165962,
+        "from": "8m",
+        "to": "1m",
+        "rawElevationBeforeMeters": 42.91343552546456,
+        "rawElevationAfterMeters": 35.77967976837654,
+        "rawStepMeters": -7.133755757088018,
+        "calibratedElevationBeforeMeters": 36.13686378334579,
+        "calibratedElevationAfterMeters": 35.77967976837654,
+        "calibratedStepMeters": -0.3571840149692491,
+        "smoothedElevationBeforeMeters": 36.639412575547055,
+        "smoothedElevationAfterMeters": 35.99078557327942,
+        "smoothedStepMeters": -0.6486270022676379
+      }
+    ],
+    "sourceCalibrations": [
+      {
+        "startDistanceMeters": 3504.7364056801944,
+        "endDistanceMeters": 3694.722116687109,
+        "lengthMeters": 189.98571100691495,
+        "correctionAtStartMeters": -7.069396718419757,
+        "correctionAtEndMeters": -6.776571742118772,
+        "rawEntryStepMeters": 7.445923377404185,
+        "expectedEntryStepMeters": 0.37652665898442805,
+        "rawExitStepMeters": -7.133755757088018,
+        "expectedExitStepMeters": -0.35718401496924557,
+        "method": "linear source-bias correction anchored to median adjacent 1m DEM slopes over 40m on both sides"
+      }
+    ],
+    "isolatedRawDemOutliers": [
+      {
+        "startSampleIndex": 618,
+        "endSampleIndex": 618,
+        "rawElevationsMeters": [
+          22.85000038146973
+        ],
+        "filteredElevationsMeters": [
+          29.00242967532824
+        ],
+        "maximumResidualMeters": 6.147729858708136,
+        "maximumCorrectionMeters": 6.152429293858511,
+        "resolutionMeters": 1,
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "startDistanceMeters": 3089.767615849301,
+        "endDistanceMeters": 3089.767615849301,
+        "latitude": -45.85487029789954,
+        "longitude": 170.51445369086014
+      },
+      {
+        "startSampleIndex": 1008,
+        "endSampleIndex": 1010,
+        "rawElevationsMeters": [
+          11.003000259399414,
+          11.003000259399414,
+          11.003000259399414
+        ],
+        "filteredElevationsMeters": [
+          14.902714961196445,
+          14.90593851465864,
+          14.909162068120837
+        ],
+        "maximumResidualMeters": 4.106866197760155,
+        "maximumCorrectionMeters": 3.906161808721423,
+        "resolutionMeters": 1,
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "startDistanceMeters": 5039.620965657113,
+        "endDistanceMeters": 5049.620213604845,
+        "latitude": -45.86218854367047,
+        "longitude": 170.5173980109078
+      }
+    ],
+    "sampleCsv": "dunedin-rolling-loop.elevation-samples.csv",
     "bridgeTunnelSections": [],
     "profileCsv": "dunedin-rolling-loop.elevation.csv",
-    "elapsedSeconds": 16.867400599992834,
+    "elapsedSeconds": 16.734190999995917,
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
@@ -5754,6 +5842,6 @@
     "generationSeconds": 23.811053099983837,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
-  "totalAscentMeters": 228.3374155971639,
+  "totalAscentMeters": 218.8749151286524,
   "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

@@ -6,20 +6,115 @@ using System.Numerics;
 /// <summary>Pure geometry helpers for static background street ribbons.</summary>
 public static class BackgroundStreetGeometry
 {
+    public static string MaterialGroupForHighway(string highway) => highway switch
+    {
+        "motorway" => "motorway", "trunk" => "trunk", "primary" => "primary", "secondary" => "secondary",
+        "footway" or "path" => "path", "pedestrian" => "pedestrian", "cycleway" => "cycleway", _ => "local"
+    };
+
+    /// <summary>Keeps surface data and its accounting value under the same chunk/material key.</summary>
+    public sealed class MaterialChunkBucketRegistry<TMaterial, TBucket> where TMaterial : notnull
+    {
+        private readonly Dictionary<(int Chunk, TMaterial Material), TBucket> _items = [];
+        public IReadOnlyDictionary<(int Chunk, TMaterial Material), TBucket> Items => _items;
+        public TBucket GetOrAdd(int chunk, TMaterial material, Func<TBucket> create)
+        {
+            var key = (chunk, material);
+            if (_items.TryGetValue(key, out var existing)) return existing;
+            var bucket = create();
+            _items.Add(key, bucket);
+            return bucket;
+        }
+    }
+
     // The extractor clips route-parallel overlap within 8 m. Only repair the small
     // endpoint gap left by that clipping; long proximity snaps create false streets.
     public const float MaximumRouteConnectorExtensionMeters = 8.5f;
     public readonly record struct RouteConnection(Vector3 Position, int EndIndex, float DistanceMeters, double RouteDistanceMeters);
     public sealed record ConnectedStreet(Vector3[] Points, IReadOnlyList<RouteConnection> Connections);
 
-    public static IReadOnlyList<RoadJunctionOpening> BuildJunctionOpenings(VisualRoute route,RouteBackgroundStreetData? data)
+    /// <summary>Exact nearest-segment queries over route samples using a small spatial hash.</summary>
+    public sealed class RouteSegmentSpatialIndex
+    {
+        private const float CellMeters = 64;
+        private readonly record struct Segment(int Index, Vector3 A, Vector3 B, double DistanceA, double DistanceB);
+        private readonly Dictionary<(int X, int Z), List<Segment>> _cells = [];
+        private readonly Segment[] _segments;
+
+        public RouteSegmentSpatialIndex(IReadOnlyList<VisualRouteSample> samples)
+        {
+            if (samples.Count < 2) throw new ArgumentException("At least two route samples are required.", nameof(samples));
+            _segments = new Segment[samples.Count - 1];
+            for (var i = 0; i < _segments.Length; i++)
+            {
+                var segment = new Segment(i, samples[i].Position, samples[i + 1].Position,
+                    samples[i].DistanceMeters, samples[i + 1].DistanceMeters);
+                _segments[i] = segment;
+                var minX = Cell(segment.A.X); var maxX = Cell(segment.B.X);
+                var minZ = Cell(segment.A.Z); var maxZ = Cell(segment.B.Z);
+                for (var x = Math.Min(minX, maxX); x <= Math.Max(minX, maxX); x++)
+                for (var z = Math.Min(minZ, maxZ); z <= Math.Max(minZ, maxZ); z++)
+                {
+                    if (!_cells.TryGetValue((x, z), out var entries)) _cells[(x, z)] = entries = [];
+                    entries.Add(segment);
+                }
+            }
+        }
+
+        public (Vector3 Position, double DistanceMeters, Vector2 Direction, float DistanceSquared) Nearest(Vector3 point)
+        {
+            var centerX = Cell(point.X); var centerZ = Cell(point.Z);
+            var considered = new HashSet<int>();
+            var bestDistance = float.PositiveInfinity;
+            var best = (_segments[0].A, _segments[0].DistanceA, Vector2.Zero, float.PositiveInfinity);
+            for (var radius = 0; ; radius++)
+            {
+                for (var x = centerX - radius; x <= centerX + radius; x++)
+                for (var z = centerZ - radius; z <= centerZ + radius; z++)
+                {
+                    if (radius > 0 && x != centerX - radius && x != centerX + radius
+                        && z != centerZ - radius && z != centerZ + radius) continue;
+                    if (!_cells.TryGetValue((x, z), out var entries)) continue;
+                    foreach (var segment in entries)
+                    {
+                        if (!considered.Add(segment.Index)) continue;
+                        var edge = new Vector2(segment.B.X - segment.A.X, segment.B.Z - segment.A.Z);
+                        var lengthSquared = edge.LengthSquared();
+                        var t = lengthSquared > 1e-8f
+                            ? Math.Clamp(Vector2.Dot(new Vector2(point.X - segment.A.X, point.Z - segment.A.Z), edge) / lengthSquared, 0, 1)
+                            : 0;
+                        var candidate = Vector3.Lerp(segment.A, segment.B, t);
+                        var delta = new Vector2(point.X - candidate.X, point.Z - candidate.Z);
+                        var distanceSquared = delta.LengthSquared();
+                        if (distanceSquared >= bestDistance) continue;
+                        bestDistance = distanceSquared;
+                        best = (candidate, segment.DistanceA + (segment.DistanceB - segment.DistanceA) * t, edge, distanceSquared);
+                    }
+                }
+
+                var left = (centerX - radius) * CellMeters;
+                var right = (centerX + radius + 1) * CellMeters;
+                var top = (centerZ - radius) * CellMeters;
+                var bottom = (centerZ + radius + 1) * CellMeters;
+                var outsideDistance = Math.Min(Math.Min(point.X - left, right - point.X),
+                    Math.Min(point.Z - top, bottom - point.Z));
+                if (bestDistance <= outsideDistance * outsideDistance) return best;
+            }
+        }
+
+        private static int Cell(float coordinate) => (int)MathF.Floor(coordinate / CellMeters);
+    }
+
+    public static IReadOnlyList<RoadJunctionOpening> BuildJunctionOpenings(VisualRoute route,RouteBackgroundStreetData? data,
+        RouteSegmentSpatialIndex? spatialIndex = null)
     {
         if(data is null)return [];
+        spatialIndex ??= new RouteSegmentSpatialIndex(route.Samples);
         var openings=new List<RoadJunctionOpening>();
         foreach(var street in data.Streets)
         {
             var points=ConvertPoints(route,street.Points);
-            var connected=ConnectRouteEnds(points,route.Samples);
+            var connected=ConnectRouteEnds(points,route.Samples,spatialIndex:spatialIndex);
             openings.AddRange(connected.Connections.Select(connection=>new RoadJunctionOpening(
                 connection.RouteDistanceMeters,(float)street.WidthMeters*.5f+.75f)));
         }
@@ -32,9 +127,15 @@ public static class BackgroundStreetGeometry
         points.Select(p=>route.GetPositionForCoordinate(p.Latitude,p.Longitude,p.ElevationMeters)).ToArray();
 
     /// <summary>Uses the exact same restored centerlines for rendering and terrain road cutouts.</summary>
-    public static TerrainRoadCorridor[] BuildTerrainCorridors(VisualRoute route,RouteBackgroundStreetData? data) =>
-        data?.Streets.Select(street=>new TerrainRoadCorridor(
-            ConnectRouteEnds(ConvertPoints(route,street.Points),route.Samples).Points,(float)street.WidthMeters)).ToArray() ?? [];
+    public static TerrainRoadCorridor[] BuildTerrainCorridors(VisualRoute route,RouteBackgroundStreetData? data,
+        RouteSegmentSpatialIndex? spatialIndex = null)
+    {
+        if (data is null) return [];
+        spatialIndex ??= new RouteSegmentSpatialIndex(route.Samples);
+        return data.Streets.Select(street=>new TerrainRoadCorridor(
+            ConnectRouteEnds(ConvertPoints(route,street.Points),route.Samples,spatialIndex:spatialIndex).Points,
+            (float)street.WidthMeters)).ToArray();
+    }
 
     /// <summary>
     /// Rejoins route-builder pieces whose sampled overlap was removed. Only endpoints whose
@@ -42,9 +143,11 @@ public static class BackgroundStreetGeometry
     /// from being pulled sideways into it.
     /// </summary>
     public static ConnectedStreet ConnectRouteEnds(IReadOnlyList<Vector3> street,
-        IReadOnlyList<VisualRouteSample> routeSamples, float maximumExtensionMeters = MaximumRouteConnectorExtensionMeters)
+        IReadOnlyList<VisualRouteSample> routeSamples, float maximumExtensionMeters = MaximumRouteConnectorExtensionMeters,
+        RouteSegmentSpatialIndex? spatialIndex = null)
     {
         if (street.Count < 2 || routeSamples.Count < 2 || !float.IsFinite(maximumExtensionMeters) || maximumExtensionMeters <= 0) return new(street.ToArray(), []);
+        spatialIndex ??= new RouteSegmentSpatialIndex(routeSamples);
         var points = street.ToArray();
         var result = new List<RouteConnection>(2);
         AddEnd(0, street[0] - street[1]);
@@ -54,7 +157,7 @@ public static class BackgroundStreetGeometry
         void AddEnd(int endIndex, Vector3 outward)
         {
             var origin = points[endIndex];
-            var nearest = NearestRoutePoint(origin, routeSamples);
+            var nearest = spatialIndex.Nearest(origin);
             var delta = nearest.Position - origin;
             var distance = new Vector2(delta.X, delta.Z).Length();
             if (distance < 1 || distance > maximumExtensionMeters || outward.LengthSquared() < 1e-6f) return;
@@ -66,42 +169,21 @@ public static class BackgroundStreetGeometry
         }
     }
 
-    private static (Vector3 Position,double DistanceMeters) NearestRoutePoint(Vector3 point, IReadOnlyList<VisualRouteSample> samples)
-    {
-        var bestDistance = float.PositiveInfinity; var best = (samples[0].Position,samples[0].DistanceMeters);
-        for (var i = 0; i < samples.Count - 1; i++)
-        {
-            var a = samples[i].Position; var b = samples[i + 1].Position;
-            var segment = new Vector2(b.X - a.X, b.Z - a.Z);
-            var lengthSquared = segment.LengthSquared();
-            var t = lengthSquared > 1e-8f ? Math.Clamp(Vector2.Dot(new Vector2(point.X-a.X,point.Z-a.Z),segment)/lengthSquared,0,1) : 0;
-            var candidate = Vector3.Lerp(a,b,t); var dx=point.X-candidate.X;var dz=point.Z-candidate.Z;var distance=dx*dx+dz*dz;
-            if(distance<bestDistance){bestDistance=distance;best=(candidate,samples[i].DistanceMeters+(samples[i+1].DistanceMeters-samples[i].DistanceMeters)*t);}
-        }
-        return best;
-    }
-    public static double NearestRouteDistanceMeters(Vector3 point,IReadOnlyList<VisualRouteSample> samples)=>
-        NearestRoutePoint(point,samples).DistanceMeters;
+    public static double NearestRouteDistanceMeters(Vector3 point,IReadOnlyList<VisualRouteSample> samples,
+        RouteSegmentSpatialIndex? spatialIndex = null) =>
+        (spatialIndex ?? new RouteSegmentSpatialIndex(samples)).Nearest(point).DistanceMeters;
 
     /// <summary>True when a mapped street quad duplicates the selected route rather than crossing it.</summary>
     public static bool OverlapsRoute(RoadRibbonQuad quad,IReadOnlyList<VisualRouteSample> routeSamples,
-        float streetWidth,float routeWidth=RoadRibbonMath.RoadWidthMeters)
+        float streetWidth,float routeWidth=RoadRibbonMath.RoadWidthMeters,
+        RouteSegmentSpatialIndex? spatialIndex = null)
     {
         var center=(quad.StartLeft+quad.EndLeft+quad.StartRight+quad.EndRight)*.25f;
-        var nearest=NearestRoutePoint(center,routeSamples);
-        var nearestDistance=Vector2.Distance(new(center.X,center.Z),new(nearest.Position.X,nearest.Position.Z));
+        var nearest=(spatialIndex ?? new RouteSegmentSpatialIndex(routeSamples)).Nearest(center);
+        var nearestDistance=MathF.Sqrt(nearest.DistanceSquared);
         if(nearestDistance>(routeWidth+streetWidth)*.5f+.35f)return false;
         var streetDirection=new Vector2(quad.EndLeft.X-quad.StartLeft.X,quad.EndLeft.Z-quad.StartLeft.Z);
-        var routeDirection=new Vector2(0,0);
-        var best=float.PositiveInfinity;
-        for(var i=0;i<routeSamples.Count-1;i++)
-        {
-            var a=routeSamples[i].Position;var b=routeSamples[i+1].Position;
-            var segment=new Vector2(b.X-a.X,b.Z-a.Z);var length2=segment.LengthSquared();
-            var t=length2>1e-8f?Math.Clamp(Vector2.Dot(new(center.X-a.X,center.Z-a.Z),segment)/length2,0,1):0;
-            var p=Vector2.Lerp(new(a.X,a.Z),new(b.X,b.Z),t);var d=Vector2.DistanceSquared(new(center.X,center.Z),p);
-            if(d<best){best=d;routeDirection=segment;}
-        }
+        var routeDirection=nearest.Direction;
         return streetDirection.LengthSquared()>1e-8f&&routeDirection.LengthSquared()>1e-8f
             &&Math.Abs(Vector2.Dot(Vector2.Normalize(streetDirection),Vector2.Normalize(routeDirection)))>=.82f;
     }

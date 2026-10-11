@@ -1,0 +1,486 @@
+{
+  "id": "dunedin-south-coastal-loop",
+  "name": "Dunedin South Dunedin Coastal Loop",
+  "distanceMeters": 8265.940001188557,
+  "distanceKm": 8.265940001188557,
+  "ascentMeters": 74.10833335462289,
+  "difficulty": "Easy",
+  "pointCount": 631,
+  "maximumAdjacentPointDistanceMeters": 19.919761178029557,
+  "loopClosed": true,
+  "loopSeamElevationDifferenceMeters": 0.0,
+  "loopSeamHeadingDifferenceDegrees": 6.851006560282258e-06,
+  "legsConnectedAndPassed": true,
+  "routeWarnings": [
+    "Spottiswoode Street -> John Wilson Ocean Drive road/direct ratio 2.17 exceeds warning threshold 1.80."
+  ],
+  "routeStatus": "pass_with_routing_warning",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
+  "elevationSource": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+  "elevationFallbackSource": null,
+  "oneMeterCoveragePercent": 100.0,
+  "fallbackCoveragePercent": 0.0,
+  "sourceTransitions": [],
+  "sourceTransitionCount": 0,
+  "maxSustained100mClimbPercent": 10.545942324409513,
+  "maxSustained100mClimbAtMeters": 2883.583664286291,
+  "maxSustained100mDescentPercent": -9.661214632286915,
+  "maxSustained100mDescentAtMeters": 6196.956228275564,
+  "maxSustainedGradientLocations": [
+    {
+      "kind": "maximum100mClimb",
+      "distanceMeters": 2883.583664286291,
+      "gradientPercent": 10.545942324409513,
+      "latitude": -45.89891785005959,
+      "longitude": 170.52843382014026,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.0002993792560594156,
+        "wayId": 48568431,
+        "name": "Bayfield Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Musselburgh Rise -> Spottiswoode Street",
+      "mappedRoadNamesInLeg": [
+        "Bayfield Road",
+        "Musselburgh Rise",
+        "Rawhiti Street",
+        "Spottiswoode Street"
+      ]
+    },
+    {
+      "kind": "maximum100mDescent",
+      "distanceMeters": 6196.956228275564,
+      "gradientPercent": -9.661214632286915,
+      "latitude": -45.90784339749034,
+      "longitude": 170.5116882047848,
+      "nearestOsmRoad": {
+        "distanceMeters": 5.866430393992268e-07,
+        "wayId": 1462169549,
+        "name": "John Wilson Ocean Drive",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "John Wilson Ocean Drive -> St Clair",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Victoria Road"
+      ]
+    }
+  ],
+  "sharpTurnCandidates": [
+    {
+      "distanceMeters": 5727.186965809514,
+      "turnAngleDegrees": 179.99999990766554,
+      "latitude": -45.90762416949975,
+      "longitude": 170.51773504642387,
+      "nearestOsmRoad": {
+        "distanceMeters": 5.850769519507015e-06,
+        "wayId": 1462169549,
+        "name": "John Wilson Ocean Drive",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "John Wilson Ocean Drive -> St Clair",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 7476.327836693746,
+      "turnAngleDegrees": 179.9999988559336,
+      "latitude": -45.908935130970214,
+      "longitude": 170.49724182967523,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.8897034344494478e-06,
+        "wayId": 511224234,
+        "name": "Victoria Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "John Wilson Ocean Drive -> St Clair",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 1204.4084282374283,
+      "turnAngleDegrees": 100.39347917453335,
+      "latitude": -45.89848307538251,
+      "longitude": 170.5116414086656,
+      "nearestOsmRoad": {
+        "distanceMeters": 7.721304822535681e-07,
+        "wayId": 1050665407,
+        "name": "Royal Crescent",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Forbury Road start -> Musselburgh Rise",
+      "mappedRoadNamesInLeg": [
+        "Moana Crescent",
+        "Musselburgh Rise",
+        "Queens Drive",
+        "Rawhiti Street",
+        "Royal Crescent",
+        "Rugby Street",
+        "Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 3428.3161069330945,
+      "turnAngleDegrees": 97.10790066081506,
+      "latitude": -45.902702436549795,
+      "longitude": 170.52941036365664,
+      "nearestOsmRoad": {
+        "distanceMeters": 7.02454334986697e-08,
+        "wayId": 48568444,
+        "name": "Norman Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Spottiswoode Street -> John Wilson Ocean Drive",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Norman Street",
+        "Spottiswoode Street",
+        "St Kilda Beach - Andersons Bay Cycleway",
+        "Tahuna Road"
+      ]
+    },
+    {
+      "distanceMeters": 3228.414293117754,
+      "turnAngleDegrees": 88.09468810596556,
+      "latitude": -45.90149883102533,
+      "longitude": 170.52754207327433,
+      "nearestOsmRoad": {
+        "distanceMeters": 7.760895285117882e-06,
+        "wayId": 48568444,
+        "name": "Norman Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Spottiswoode Street -> John Wilson Ocean Drive",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Norman Street",
+        "Spottiswoode Street",
+        "St Kilda Beach - Andersons Bay Cycleway",
+        "Tahuna Road"
+      ]
+    },
+    {
+      "distanceMeters": 1024.4967958036216,
+      "turnAngleDegrees": 86.33621784503623,
+      "latitude": -45.898905674337165,
+      "longitude": 170.50994928833032,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.9733056632930906e-07,
+        "wayId": 116545458,
+        "name": "Queens Drive",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Forbury Road start -> Musselburgh Rise",
+      "mappedRoadNamesInLeg": [
+        "Moana Crescent",
+        "Musselburgh Rise",
+        "Queens Drive",
+        "Rawhiti Street",
+        "Royal Crescent",
+        "Rugby Street",
+        "Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 2193.922406623365,
+      "turnAngleDegrees": 84.24062289527609,
+      "latitude": -45.89705339186579,
+      "longitude": 170.52227915680373,
+      "nearestOsmRoad": {
+        "distanceMeters": 8.166946293755843e-07,
+        "wayId": 48567471,
+        "name": "Rawhiti Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Musselburgh Rise -> Spottiswoode Street",
+      "mappedRoadNamesInLeg": [
+        "Bayfield Road",
+        "Musselburgh Rise",
+        "Rawhiti Street",
+        "Spottiswoode Street"
+      ]
+    },
+    {
+      "distanceMeters": 1504.2611489604394,
+      "turnAngleDegrees": 79.89157095869217,
+      "latitude": -45.897768644591004,
+      "longitude": 170.51491347134885,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.805410137791016e-08,
+        "wayId": 48567451,
+        "name": "Moana Crescent",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Forbury Road start -> Musselburgh Rise",
+      "mappedRoadNamesInLeg": [
+        "Moana Crescent",
+        "Musselburgh Rise",
+        "Queens Drive",
+        "Rawhiti Street",
+        "Royal Crescent",
+        "Rugby Street",
+        "Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 2298.870858876419,
+      "turnAngleDegrees": 67.46309113490935,
+      "latitude": -45.896353031905306,
+      "longitude": 170.52310094035528,
+      "nearestOsmRoad": {
+        "distanceMeters": 4.516914486885071e-08,
+        "wayId": 813876117,
+        "name": null,
+        "highway": "secondary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Musselburgh Rise -> Spottiswoode Street",
+      "mappedRoadNamesInLeg": [
+        "Bayfield Road",
+        "Musselburgh Rise",
+        "Rawhiti Street",
+        "Spottiswoode Street"
+      ]
+    },
+    {
+      "distanceMeters": 2443.7996738925413,
+      "turnAngleDegrees": 66.7946142391425,
+      "latitude": -45.89619200944505,
+      "longitude": 170.5249258272561,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.6291791598032872,
+        "wayId": 48568431,
+        "name": "Bayfield Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Musselburgh Rise -> Spottiswoode Street",
+      "mappedRoadNamesInLeg": [
+        "Bayfield Road",
+        "Musselburgh Rise",
+        "Rawhiti Street",
+        "Spottiswoode Street"
+      ]
+    },
+    {
+      "distanceMeters": 5022.533072110437,
+      "turnAngleDegrees": 65.78292326076087,
+      "latitude": -45.90624524053083,
+      "longitude": 170.50988196946528,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.2438821336715173,
+        "wayId": 1272971708,
+        "name": "St Kilda Beach - Andersons Bay Cycleway",
+        "highway": "cycleway",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Spottiswoode Street -> John Wilson Ocean Drive",
+      "mappedRoadNamesInLeg": [
+        "John Wilson Ocean Drive",
+        "Norman Street",
+        "Spottiswoode Street",
+        "St Kilda Beach - Andersons Bay Cycleway",
+        "Tahuna Road"
+      ]
+    },
+    {
+      "distanceMeters": 224.88954054225837,
+      "turnAngleDegrees": 57.00640443703803,
+      "latitude": -45.90602717306003,
+      "longitude": 170.50959793025072,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.7968731839182695e-07,
+        "wayId": 116545460,
+        "name": "Victoria Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Forbury Road start -> Musselburgh Rise",
+      "mappedRoadNamesInLeg": [
+        "Moana Crescent",
+        "Musselburgh Rise",
+        "Queens Drive",
+        "Rawhiti Street",
+        "Royal Crescent",
+        "Rugby Street",
+        "Victoria Road"
+      ]
+    }
+  ],
+  "maxSustained250mClimbPercent": 6.910874585712865,
+  "maxSustained250mDescentPercent": -5.7924528624177105,
+  "reportedPointsOver15Percent": 0,
+  "fiveMeterSamplesOver15Percent": 0,
+  "steepSectionsOver15Percent": [],
+  "suspiciousRawElevationSpikes": [],
+  "suspiciousGradientSpikeCount": 0,
+  "correctedRawDemOutliers": [],
+  "correctedRawDemOutlierCount": 0,
+  "elevationSamplesCsv": "dunedin-south-coastal-loop.elevation-samples.csv",
+  "manualVisualChecks": [
+    {
+      "distanceMeters": 0.0,
+      "reasons": [
+        "route start and lap seam"
+      ]
+    },
+    {
+      "distanceMeters": 225.0,
+      "reasons": [
+        "sharp turn 57 degrees on Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 1024.0,
+      "reasons": [
+        "sharp turn 86 degrees on Queens Drive"
+      ]
+    },
+    {
+      "distanceMeters": 1204.0,
+      "reasons": [
+        "sharp turn 100 degrees on Royal Crescent"
+      ]
+    },
+    {
+      "distanceMeters": 1504.0,
+      "reasons": [
+        "sharp turn 80 degrees on Moana Crescent"
+      ]
+    },
+    {
+      "distanceMeters": 1690.0,
+      "reasons": [
+        "Musselburgh Rise route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 2194.0,
+      "reasons": [
+        "sharp turn 84 degrees on Rawhiti Street"
+      ]
+    },
+    {
+      "distanceMeters": 2299.0,
+      "reasons": [
+        "sharp turn 67 degrees on mapped road"
+      ]
+    },
+    {
+      "distanceMeters": 2444.0,
+      "reasons": [
+        "sharp turn 67 degrees on Bayfield Road"
+      ]
+    },
+    {
+      "distanceMeters": 2884.0,
+      "reasons": [
+        "maximum100mClimb at Bayfield Road"
+      ]
+    },
+    {
+      "distanceMeters": 2977.0,
+      "reasons": [
+        "Spottiswoode Street route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 3228.0,
+      "reasons": [
+        "sharp turn 88 degrees on Norman Street"
+      ]
+    },
+    {
+      "distanceMeters": 3428.0,
+      "reasons": [
+        "sharp turn 97 degrees on Norman Street"
+      ]
+    },
+    {
+      "distanceMeters": 5023.0,
+      "reasons": [
+        "sharp turn 66 degrees on St Kilda Beach - Andersons Bay Cycleway"
+      ]
+    },
+    {
+      "distanceMeters": 5725.0,
+      "reasons": [
+        "John Wilson Ocean Drive route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 5727.0,
+      "reasons": [
+        "sharp turn 180 degrees on John Wilson Ocean Drive"
+      ]
+    },
+    {
+      "distanceMeters": 6197.0,
+      "reasons": [
+        "maximum100mDescent at John Wilson Ocean Drive"
+      ]
+    },
+    {
+      "distanceMeters": 7476.0,
+      "reasons": [
+        "sharp turn 180 degrees on Victoria Road"
+      ]
+    },
+    {
+      "distanceMeters": 7477.0,
+      "reasons": [
+        "St Clair route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 8266.0,
+      "reasons": [
+        "Forbury Road start route leg boundary",
+        "route lap seam"
+      ]
+    }
+  ]
+}

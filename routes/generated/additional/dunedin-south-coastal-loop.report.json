@@ -2292,9 +2292,13 @@
     "averageGradientPercent": 0.17931176360876047,
     "gradientReviewThresholdPercent": 15.0,
     "suspiciousGradientDistancesMeters": [],
+    "sourceTransitions": [],
+    "sourceCalibrations": [],
+    "isolatedRawDemOutliers": [],
+    "sampleCsv": "dunedin-south-coastal-loop.elevation-samples.csv",
     "bridgeTunnelSections": [],
     "profileCsv": "dunedin-south-coastal-loop.elevation.csv",
-    "elapsedSeconds": 6.792932000011206,
+    "elapsedSeconds": 6.335340199992061,
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {

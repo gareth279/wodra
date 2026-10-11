@@ -3,7 +3,7 @@
   "routeName": "Dunedin One-way: Oval to Gardens Loop",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "© OpenStreetMap contributors, ODbL 1.0",
   "searchRadiusMeters": 150,
   "simplificationToleranceMeters": 0.75,
   "statistics": {
@@ -76,7 +76,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.289481472029921,
+      "baseElevationMeters": 2.289481472036407,
       "footprint": [
         {
           "longitude": 170.498398,
@@ -162,7 +162,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.388921286172019,
+      "baseElevationMeters": 2.3889212861571174,
       "footprint": [
         {
           "longitude": 170.49932130000002,
@@ -351,7 +351,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.465871019951951,
+      "baseElevationMeters": 2.465871019926728,
       "footprint": [
         {
           "longitude": 170.49920110000002,
@@ -392,7 +392,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.382686591011006,
+      "baseElevationMeters": 2.3826865909748496,
       "footprint": [
         {
           "longitude": 170.49896660000002,
@@ -445,7 +445,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.273226294611196,
+      "baseElevationMeters": 2.273226294636807,
       "footprint": [
         {
           "longitude": 170.49853810000002,
@@ -519,7 +519,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3288525904728696,
+      "baseElevationMeters": 2.328852590467954,
       "footprint": [
         {
           "longitude": 170.4995005,
@@ -720,7 +720,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.407467867837601,
+      "baseElevationMeters": 2.4074678678487764,
       "footprint": [
         {
           "longitude": 170.49880760000002,
@@ -921,7 +921,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1643460391340286,
+      "baseElevationMeters": 2.1643460391278753,
       "footprint": [
         {
           "longitude": 170.49983120000002,
@@ -1262,7 +1262,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.863800667042459,
+      "baseElevationMeters": 2.8638006671583507,
       "footprint": [
         {
           "longitude": 170.49975930000002,
@@ -1308,7 +1308,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2737167807171113,
+      "baseElevationMeters": 2.273716780668766,
       "footprint": [
         {
           "longitude": 170.5005077,
@@ -1347,7 +1347,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3436867772561776,
+      "baseElevationMeters": 2.3436867773192542,
       "footprint": [
         {
           "longitude": 170.4999544,
@@ -1428,7 +1428,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.234037560332946,
+      "baseElevationMeters": 2.234037560330453,
       "footprint": [
         {
           "longitude": 170.50046220000002,
@@ -1465,7 +1465,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.438170991370707,
+      "baseElevationMeters": 2.4381709913994376,
       "footprint": [
         {
           "longitude": 170.5003677,
@@ -1502,7 +1502,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.159374028229545,
+      "baseElevationMeters": 6.159374028191804,
       "footprint": [
         {
           "longitude": 170.4988634,
@@ -1588,7 +1588,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.5221454836623067,
+      "baseElevationMeters": 2.52214548365439,
       "footprint": [
         {
           "longitude": 170.5014471,
@@ -1682,7 +1682,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3255248157447403,
+      "baseElevationMeters": 2.3255248156055712,
       "footprint": [
         {
           "longitude": 170.50002750000002,
@@ -1796,7 +1796,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3057272359255445,
+      "baseElevationMeters": 2.305727235897656,
       "footprint": [
         {
           "longitude": 170.50080780000002,
@@ -1830,7 +1830,7 @@
     {
       "osmType": "way",
       "osmId": 381674006,
-      "name": "McIver \u0026 Veitch",
+      "name": "McIver & Veitch",
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
@@ -1861,7 +1861,7 @@
       "nearestRouteDistanceMeters": 273.433560306256,
       "sourceTags": {
         "building": "yes",
-        "name": "McIver \u0026 Veitch",
+        "name": "McIver & Veitch",
         "shop": "motorcycle"
       },
       "visualCategory": "commercial/retail",
@@ -2176,7 +2176,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.421556662227329,
+      "baseElevationMeters": 4.421556662819695,
       "footprint": [
         {
           "longitude": 170.50052780000001,
@@ -2324,7 +2324,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.184815001136082,
+      "baseElevationMeters": 2.18481500110799,
       "footprint": [
         {
           "longitude": 170.50074560000002,
@@ -2619,7 +2619,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.075454554443354,
+      "baseElevationMeters": 9.075454554409443,
       "footprint": [
         {
           "longitude": 170.4998281,
@@ -2697,7 +2697,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3145411905052256,
+      "baseElevationMeters": 2.3145411905198374,
       "footprint": [
         {
           "longitude": 170.50106720000002,
@@ -2824,7 +2824,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.799886025663252,
+      "baseElevationMeters": 11.799886025594333,
       "footprint": [
         {
           "longitude": 170.49990580000002,
@@ -2865,7 +2865,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.401620214446176,
+      "baseElevationMeters": 15.40162021468087,
       "footprint": [
         {
           "longitude": 170.4999559,
@@ -2910,7 +2910,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3478454937285957,
+      "baseElevationMeters": 2.347845493743031,
       "footprint": [
         {
           "longitude": 170.50149280000002,
@@ -2984,7 +2984,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.668452787419538,
+      "baseElevationMeters": 6.668452786625177,
       "footprint": [
         {
           "longitude": 170.5003359,
@@ -3021,7 +3021,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.3596419876422408,
+      "baseElevationMeters": 3.359641987631065,
       "footprint": [
         {
           "longitude": 170.5017498,
@@ -3281,7 +3281,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.400921434973906,
+      "baseElevationMeters": 11.40092143490766,
       "footprint": [
         {
           "longitude": 170.4997425,
@@ -3393,7 +3393,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.282241909674319,
+      "baseElevationMeters": 12.28224191003195,
       "footprint": [
         {
           "longitude": 170.49988480000002,
@@ -3578,7 +3578,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.990769533478984,
+      "baseElevationMeters": 3.9907695336497406,
       "footprint": [
         {
           "longitude": 170.50196960000002,
@@ -3689,7 +3689,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.28267477349668,
+      "baseElevationMeters": 7.282674773372896,
       "footprint": [
         {
           "longitude": 170.50086380000002,
@@ -3800,7 +3800,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.338853044046203,
+      "baseElevationMeters": 12.338853043754,
       "footprint": [
         {
           "longitude": 170.50013030000002,
@@ -3874,7 +3874,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.650820527049785,
+      "baseElevationMeters": 3.6508205270099023,
       "footprint": [
         {
           "longitude": 170.50222010000002,
@@ -3948,7 +3948,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.406826435817628,
+      "baseElevationMeters": 12.406826436047748,
       "footprint": [
         {
           "longitude": 170.5000621,
@@ -3990,7 +3990,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.115072015131453,
+      "baseElevationMeters": 5.115072015045108,
       "footprint": [
         {
           "longitude": 170.50124670000002,
@@ -4155,7 +4155,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.60937292789705,
+      "baseElevationMeters": 4.60937292807726,
       "footprint": [
         {
           "longitude": 170.50130190000002,
@@ -4348,7 +4348,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3335351868402245,
+      "baseElevationMeters": 2.3335351868835827,
       "footprint": [
         {
           "longitude": 170.50259160000002,
@@ -4385,7 +4385,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4409305674548385,
+      "baseElevationMeters": 2.440930567451113,
       "footprint": [
         {
           "longitude": 170.5030088,
@@ -4422,7 +4422,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.478627022749133,
+      "baseElevationMeters": 2.4786270227371907,
       "footprint": [
         {
           "longitude": 170.50188440000002,
@@ -4541,7 +4541,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.606150032674923,
+      "baseElevationMeters": 3.6061500328147904,
       "footprint": [
         {
           "longitude": 170.50147370000002,
@@ -4594,7 +4594,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.53928169347586,
+      "baseElevationMeters": 2.5392816935189497,
       "footprint": [
         {
           "longitude": 170.5026277,
@@ -4746,7 +4746,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.485469196711036,
+      "baseElevationMeters": 2.485469196688684,
       "footprint": [
         {
           "longitude": 170.502869,
@@ -4878,7 +4878,7 @@
       "buildingType": "yes",
       "heightMeters": 24.68,
       "heightSource": "Explicit",
-      "baseElevationMeters": 6.3705087776398415,
+      "baseElevationMeters": 6.370508777701948,
       "footprint": [
         {
           "longitude": 170.50103000000001,
@@ -5044,7 +5044,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.403535203405261,
+      "baseElevationMeters": 2.403535203438273,
       "footprint": [
         {
           "longitude": 170.50293050000002,
@@ -5198,7 +5198,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3491371144738062,
+      "baseElevationMeters": 2.3491371144775317,
       "footprint": [
         {
           "longitude": 170.50305600000002,
@@ -5393,7 +5393,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3467215538595014,
+      "baseElevationMeters": 2.346721553825974,
       "footprint": [
         {
           "longitude": 170.5031993,
@@ -5430,7 +5430,7 @@
       "buildingType": "office",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 4.603509042595371,
+      "baseElevationMeters": 4.603509042681051,
       "footprint": [
         {
           "longitude": 170.50205160000002,
@@ -5517,7 +5517,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4326845260883005,
+      "baseElevationMeters": 2.4326845260794343,
       "footprint": [
         {
           "longitude": 170.5026182,
@@ -5679,7 +5679,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3327288492106195,
+      "baseElevationMeters": 2.332728849212784,
       "footprint": [
         {
           "longitude": 170.5035114,
@@ -5716,7 +5716,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.5222409650787765,
+      "baseElevationMeters": 2.5222409650710262,
       "footprint": [
         {
           "longitude": 170.5034122,
@@ -5754,7 +5754,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4504684845899303,
+      "baseElevationMeters": 2.450468484644413,
       "footprint": [
         {
           "longitude": 170.50359020000002,
@@ -5793,7 +5793,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2465972426159126,
+      "baseElevationMeters": 2.246597242614137,
       "footprint": [
         {
           "longitude": 170.5035114,
@@ -5847,7 +5847,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.554654208735736,
+      "baseElevationMeters": 4.554654208720864,
       "footprint": [
         {
           "longitude": 170.5024866,
@@ -5885,7 +5885,7 @@
       "buildingType": "office",
       "heightMeters": 29.5,
       "heightSource": "Explicit",
-      "baseElevationMeters": 5.412361789838562,
+      "baseElevationMeters": 5.412361789945816,
       "footprint": [
         {
           "longitude": 170.5011441,
@@ -5927,7 +5927,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.925661244210856,
+      "baseElevationMeters": 4.925661244236933,
       "footprint": [
         {
           "longitude": 170.50218230000002,
@@ -6127,7 +6127,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.3485971373883245,
+      "baseElevationMeters": 7.348597137617298,
       "footprint": [
         {
           "longitude": 170.5012318,
@@ -6203,7 +6203,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.040792620624433,
+      "baseElevationMeters": 6.040792620433851,
       "footprint": [
         {
           "longitude": 170.50222970000002,
@@ -6392,7 +6392,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.701500107658653,
+      "baseElevationMeters": 9.701500107442588,
       "footprint": [
         {
           "longitude": 170.5018963,
@@ -6466,7 +6466,7 @@
       "buildingType": "yes",
       "heightMeters": 16,
       "heightSource": "Explicit",
-      "baseElevationMeters": 10.695796210744364,
+      "baseElevationMeters": 10.695796210660545,
       "footprint": [
         {
           "longitude": 170.5023467,
@@ -6505,7 +6505,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.134593400242656,
+      "baseElevationMeters": 9.134593400201338,
       "footprint": [
         {
           "longitude": 170.5026932,
@@ -6543,7 +6543,7 @@
       "buildingType": "apartments",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 16.178395579690182,
+      "baseElevationMeters": 16.178395579998877,
       "footprint": [
         {
           "longitude": 170.5020287,
@@ -6605,7 +6605,7 @@
       "buildingType": "government",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.26159098365003,
+      "baseElevationMeters": 4.261590983578613,
       "footprint": [
         {
           "longitude": 170.5033405,
@@ -6691,7 +6691,7 @@
       "buildingType": "office",
       "heightMeters": 19,
       "heightSource": "Explicit",
-      "baseElevationMeters": 12.386110510662297,
+      "baseElevationMeters": 12.386110510775453,
       "footprint": [
         {
           "longitude": 170.50258630000002,
@@ -6738,7 +6738,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.751689691754894,
+      "baseElevationMeters": 10.751689691732542,
       "footprint": [
         {
           "longitude": 170.50289170000002,
@@ -7061,7 +7061,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 8.191798357095763,
+      "baseElevationMeters": 8.191798357289654,
       "footprint": [
         {
           "longitude": 170.50363320000002,
@@ -7136,7 +7136,7 @@
       "buildingType": "apartments",
       "heightMeters": 15,
       "heightSource": "Levels",
-      "baseElevationMeters": 2.8535223440032103,
+      "baseElevationMeters": 2.853522343904007,
       "footprint": [
         {
           "longitude": 170.5037129,
@@ -7269,7 +7269,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.845955356333969,
+      "baseElevationMeters": 9.845955356282385,
       "footprint": [
         {
           "longitude": 170.50365330000002,
@@ -7512,7 +7512,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.881299414977143,
+      "baseElevationMeters": 14.881299414993268,
       "footprint": [
         {
           "longitude": 170.50449640000002,
@@ -7692,7 +7692,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.056143366804303,
+      "baseElevationMeters": 15.05614336680835,
       "footprint": [
         {
           "longitude": 170.5054126,
@@ -7746,7 +7746,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.972308131379972,
+      "baseElevationMeters": 10.972308131395819,
       "footprint": [
         {
           "longitude": 170.5039561,
@@ -7794,7 +7794,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.452043788247437,
+      "baseElevationMeters": 9.452043787935313,
       "footprint": [
         {
           "longitude": 170.5044468,
@@ -7865,7 +7865,7 @@
       "buildingType": "commercial",
       "heightMeters": 31.7,
       "heightSource": "Explicit",
-      "baseElevationMeters": 2.8756698668234204,
+      "baseElevationMeters": 2.8756698667940666,
       "footprint": [
         {
           "longitude": 170.50628300000002,
@@ -8187,7 +8187,7 @@
       "buildingType": "retail",
       "heightMeters": 9,
       "heightSource": "Levels",
-      "baseElevationMeters": 8.435694107865821,
+      "baseElevationMeters": 8.435694107839733,
       "footprint": [
         {
           "longitude": 170.505368,
@@ -8246,7 +8246,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.57682415053002,
+      "baseElevationMeters": 4.576824150496892,
       "footprint": [
         {
           "longitude": 170.50465870000002,
@@ -8385,7 +8385,7 @@
       "buildingType": "yes",
       "heightMeters": 12,
       "heightSource": "Levels",
-      "baseElevationMeters": 4.579647922419926,
+      "baseElevationMeters": 4.5796479225330815,
       "footprint": [
         {
           "longitude": 170.5060693,
@@ -8468,7 +8468,7 @@
       "buildingType": "yes",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 5.168319959308357,
+      "baseElevationMeters": 5.16831995929229,
       "footprint": [
         {
           "longitude": 170.5047528,
@@ -9337,7 +9337,7 @@
     {
       "osmType": "way",
       "osmId": 381871649,
-      "name": "Otago Pioneer Women\u0027s Memorial Hall",
+      "name": "Otago Pioneer Women's Memorial Hall",
       "buildingType": "retail",
       "heightMeters": 6,
       "heightSource": "Levels",
@@ -9369,7 +9369,7 @@
       "sourceTags": {
         "building": "retail",
         "building:levels": "2",
-        "name": "Otago Pioneer Women\u0027s Memorial Hall",
+        "name": "Otago Pioneer Women's Memorial Hall",
         "roof:levels": "0"
       },
       "visualCategory": "commercial/retail",
@@ -9381,7 +9381,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.803757116949831,
+      "baseElevationMeters": 3.8037571169041704,
       "footprint": [
         {
           "longitude": 170.505662,
@@ -9418,7 +9418,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.6583607163199696,
+      "baseElevationMeters": 3.6583607163380227,
       "footprint": [
         {
           "longitude": 170.5054038,
@@ -9463,7 +9463,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.705186528129415,
+      "baseElevationMeters": 3.705186528147886,
       "footprint": [
         {
           "longitude": 170.50529,
@@ -9539,7 +9539,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.5789973211346244,
+      "baseElevationMeters": 3.5789973211178574,
       "footprint": [
         {
           "longitude": 170.5069219,
@@ -9897,7 +9897,7 @@
       "buildingType": "commercial",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.9990680524998816,
+      "baseElevationMeters": 3.999068052529684,
       "footprint": [
         {
           "longitude": 170.5053541,
@@ -10104,7 +10104,7 @@
       "buildingType": "retail",
       "heightMeters": 3,
       "heightSource": "Levels",
-      "baseElevationMeters": 2.5191468069691596,
+      "baseElevationMeters": 2.5191468069653333,
       "footprint": [
         {
           "longitude": 170.5063531,
@@ -10284,7 +10284,7 @@
       "buildingType": "industrial",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3395843540303547,
+      "baseElevationMeters": 2.3395843540143506,
       "footprint": [
         {
           "longitude": 170.50659530000001,
@@ -10363,7 +10363,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.4090399732988326,
+      "baseElevationMeters": 3.409039973238111,
       "footprint": [
         {
           "longitude": 170.50600110000002,
@@ -10564,7 +10564,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.9358945593225,
+      "baseElevationMeters": 2.9358945592712162,
       "footprint": [
         {
           "longitude": 170.5062383,
@@ -10830,7 +10830,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.520355850028173,
+      "baseElevationMeters": 2.5203558500477308,
       "footprint": [
         {
           "longitude": 170.506809,
@@ -11073,7 +11073,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.134093500882419,
+      "baseElevationMeters": 2.1340935008861446,
       "footprint": [
         {
           "longitude": 170.5073025,
@@ -11118,7 +11118,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.92597138561215,
+      "baseElevationMeters": 2.9259713856606977,
       "footprint": [
         {
           "longitude": 170.50708490000002,
@@ -11156,7 +11156,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.676043834392178,
+      "baseElevationMeters": 2.6760438343735515,
       "footprint": [
         {
           "longitude": 170.5071,
@@ -11203,7 +11203,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.6133298120514095,
+      "baseElevationMeters": 2.6133298120216075,
       "footprint": [
         {
           "longitude": 170.5091372,
@@ -11240,7 +11240,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.961783587628233,
+      "baseElevationMeters": 5.961783587669826,
       "footprint": [
         {
           "longitude": 170.50713180000002,
@@ -11432,7 +11432,7 @@
       "buildingType": "hospital",
       "heightMeters": 12,
       "heightSource": "Levels",
-      "baseElevationMeters": 3.0201259537926224,
+      "baseElevationMeters": 3.020125953825003,
       "footprint": [
         {
           "longitude": 170.509116,
@@ -11957,7 +11957,7 @@
       "buildingType": "hospital",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.3920696457306265,
+      "baseElevationMeters": 5.392069645664547,
       "footprint": [
         {
           "longitude": 170.50833690000002,
@@ -12012,7 +12012,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.628600186244608,
+      "baseElevationMeters": 5.628600186287159,
       "footprint": [
         {
           "longitude": 170.50765470000002,
@@ -12082,7 +12082,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.764142407175091,
+      "baseElevationMeters": 4.764142407010482,
       "footprint": [
         {
           "longitude": 170.5097591,
@@ -12119,7 +12119,7 @@
       "buildingType": "hospital",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 6.080428986012947,
+      "baseElevationMeters": 6.080428985940305,
       "footprint": [
         {
           "longitude": 170.5094177,
@@ -12296,7 +12296,7 @@
       "buildingType": "dormitory",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.031844436047786,
+      "baseElevationMeters": 5.0318444361421495,
       "footprint": [
         {
           "longitude": 170.51089040000002,
@@ -12489,7 +12489,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.110716528467766,
+      "baseElevationMeters": 6.110716528406809,
       "footprint": [
         {
           "longitude": 170.509242,
@@ -12637,7 +12637,7 @@
       "buildingType": "house",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.465144425285285,
+      "baseElevationMeters": 6.465144425327814,
       "footprint": [
         {
           "longitude": 170.50936570000002,
@@ -12674,7 +12674,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.7804652314610765,
+      "baseElevationMeters": 5.780465231469192,
       "footprint": [
         {
           "longitude": 170.5100447,
@@ -13032,7 +13032,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.314691033567899,
+      "baseElevationMeters": 7.314691033548192,
       "footprint": [
         {
           "longitude": 170.51031350000002,
@@ -13078,7 +13078,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.929479359096935,
+      "baseElevationMeters": 7.929479359069789,
       "footprint": [
         {
           "longitude": 170.50923020000002,
@@ -13124,7 +13124,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 8.140825996227644,
+      "baseElevationMeters": 8.140825996066564,
       "footprint": [
         {
           "longitude": 170.5100836,
@@ -13161,7 +13161,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.215108834252167,
+      "baseElevationMeters": 9.215108834314647,
       "footprint": [
         {
           "longitude": 170.5080236,
@@ -13412,7 +13412,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.368011441188463,
+      "baseElevationMeters": 9.36801144111723,
       "footprint": [
         {
           "longitude": 170.50836420000002,
@@ -13598,7 +13598,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.720981982674948,
+      "baseElevationMeters": 10.720981982494738,
       "footprint": [
         {
           "longitude": 170.50773890000002,
@@ -13635,7 +13635,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.920734518447157,
+      "baseElevationMeters": 10.920734518655852,
       "footprint": [
         {
           "longitude": 170.50775990000002,
@@ -13672,7 +13672,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.880615344042873,
+      "baseElevationMeters": 10.880615343826882,
       "footprint": [
         {
           "longitude": 170.50778210000001,
@@ -13746,7 +13746,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.788508853649168,
+      "baseElevationMeters": 10.788508853431246,
       "footprint": [
         {
           "longitude": 170.50778210000001,
@@ -13783,7 +13783,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.129121854225904,
+      "baseElevationMeters": 11.12912185406869,
       "footprint": [
         {
           "longitude": 170.5078075,
@@ -13931,7 +13931,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.75729182954624,
+      "baseElevationMeters": 9.757291829495948,
       "footprint": [
         {
           "longitude": 170.5087685,
@@ -13968,7 +13968,7 @@
       "buildingType": "hotel",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 19.170587225631802,
+      "baseElevationMeters": 19.170587225962425,
       "footprint": [
         {
           "longitude": 170.507279,
@@ -14045,7 +14045,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.466777563247298,
+      "baseElevationMeters": 12.466777563207717,
       "footprint": [
         {
           "longitude": 170.5083997,
@@ -14082,7 +14082,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.688933528687667,
+      "baseElevationMeters": 12.688933528685252,
       "footprint": [
         {
           "longitude": 170.5081661,
@@ -14128,7 +14128,7 @@
       "buildingType": "retail",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 10.915731507709998,
+      "baseElevationMeters": 10.915731507827783,
       "footprint": [
         {
           "longitude": 170.5089346,
@@ -14243,7 +14243,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.238216122578919,
+      "baseElevationMeters": 13.238216122623665,
       "footprint": [
         {
           "longitude": 170.5081972,
@@ -14353,7 +14353,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 19.893366235209903,
+      "baseElevationMeters": 19.89336623437171,
       "footprint": [
         {
           "longitude": 170.50775850000002,
@@ -14562,7 +14562,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.003872453129848,
+      "baseElevationMeters": 14.003872453278184,
       "footprint": [
         {
           "longitude": 170.5084138,
@@ -14632,7 +14632,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 10.961031404308672,
+      "baseElevationMeters": 10.96103140433752,
       "footprint": [
         {
           "longitude": 170.50926710000002,
@@ -14725,7 +14725,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 17.971713914151294,
+      "baseElevationMeters": 17.971713914270506,
       "footprint": [
         {
           "longitude": 170.5079809,
@@ -14868,7 +14868,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.073479002678333,
+      "baseElevationMeters": 11.073479002671956,
       "footprint": [
         {
           "longitude": 170.5095459,
@@ -14905,7 +14905,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.969276649674965,
+      "baseElevationMeters": 11.969276650445444,
       "footprint": [
         {
           "longitude": 170.509316,
@@ -15215,7 +15215,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 20.196369935652,
+      "baseElevationMeters": 20.19636993527191,
       "footprint": [
         {
           "longitude": 170.5079852,
@@ -15478,7 +15478,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 19.182838136063577,
+      "baseElevationMeters": 19.182838135895214,
       "footprint": [
         {
           "longitude": 170.5082731,
@@ -15669,7 +15669,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 16.102568957838866,
+      "baseElevationMeters": 16.10256895832306,
       "footprint": [
         {
           "longitude": 170.5085548,
@@ -15849,7 +15849,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.569487971300443,
+      "baseElevationMeters": 9.569487971222294,
       "footprint": [
         {
           "longitude": 170.51097320000002,
@@ -15886,7 +15886,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.06050800672472,
+      "baseElevationMeters": 12.06050800666867,
       "footprint": [
         {
           "longitude": 170.5099496,
@@ -16038,7 +16038,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.867785233733382,
+      "baseElevationMeters": 12.86778523358388,
       "footprint": [
         {
           "longitude": 170.50931870000002,
@@ -16460,7 +16460,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.946268464746433,
+      "baseElevationMeters": 13.946268464748323,
       "footprint": [
         {
           "longitude": 170.5092942,
@@ -16597,7 +16597,7 @@
       "buildingType": "apartments",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.771253709439357,
+      "baseElevationMeters": 15.771253709568365,
       "footprint": [
         {
           "longitude": 170.5089561,
@@ -16666,7 +16666,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.48302973654376,
+      "baseElevationMeters": 12.48302973655817,
       "footprint": [
         {
           "longitude": 170.5110988,
@@ -16802,7 +16802,7 @@
       "buildingType": "apartments",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.11556338884898,
+      "baseElevationMeters": 15.115563388830003,
       "footprint": [
         {
           "longitude": 170.5089614,
@@ -16893,7 +16893,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.47441389176744,
+      "baseElevationMeters": 12.47441389177427,
       "footprint": [
         {
           "longitude": 170.5111041,
@@ -17450,7 +17450,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.218581797869234,
+      "baseElevationMeters": 15.218581797897171,
       "footprint": [
         {
           "longitude": 170.5092275,
@@ -17561,7 +17561,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.634112991339393,
+      "baseElevationMeters": 13.634112991436506,
       "footprint": [
         {
           "longitude": 170.5111522,
@@ -17651,7 +17651,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.266475648811276,
+      "baseElevationMeters": 11.266475648792795,
       "footprint": [
         {
           "longitude": 170.5117236,
@@ -17741,7 +17741,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.40408655786013,
+      "baseElevationMeters": 15.40408655790856,
       "footprint": [
         {
           "longitude": 170.5094115,
@@ -17778,7 +17778,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.613963374686978,
+      "baseElevationMeters": 13.613963374543902,
       "footprint": [
         {
           "longitude": 170.51124760000002,
@@ -17823,7 +17823,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.903249353649368,
+      "baseElevationMeters": 13.903249353657987,
       "footprint": [
         {
           "longitude": 170.5104651,
@@ -17876,7 +17876,7 @@
       "buildingType": "detached",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.927465731452983,
+      "baseElevationMeters": 13.927465731490237,
       "footprint": [
         {
           "longitude": 170.5113111,
@@ -17921,7 +17921,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.571795702398564,
+      "baseElevationMeters": 15.571795702405504,
       "footprint": [
         {
           "longitude": 170.5093156,
@@ -18059,7 +18059,7 @@
       "buildingType": "apartments",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.256203711583911,
+      "baseElevationMeters": 14.25620371157837,
       "footprint": [
         {
           "longitude": 170.51064970000002,
@@ -18165,7 +18165,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.401632074430712,
+      "baseElevationMeters": 15.40163207455317,
       "footprint": [
         {
           "longitude": 170.5094075,
@@ -18340,7 +18340,7 @@
       "buildingType": "detached",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.546369360024858,
+      "baseElevationMeters": 14.546369360033111,
       "footprint": [
         {
           "longitude": 170.5103386,
@@ -18692,7 +18692,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.11465978169464,
+      "baseElevationMeters": 15.114659781752382,
       "footprint": [
         {
           "longitude": 170.5096104,
@@ -18782,7 +18782,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.385614043159629,
+      "baseElevationMeters": 15.385614043148454,
       "footprint": [
         {
           "longitude": 170.50967070000002,
@@ -18856,7 +18856,7 @@
       "buildingType": "hotel",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.136130012017695,
+      "baseElevationMeters": 15.136130011984251,
       "footprint": [
         {
           "longitude": 170.51109480000002,
@@ -19024,7 +19024,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.624214497495759,
+      "baseElevationMeters": 15.624214497485157,
       "footprint": [
         {
           "longitude": 170.5112153,
@@ -19098,7 +19098,7 @@
       "buildingType": "apartments",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.876847107602838,
+      "baseElevationMeters": 15.8768471075749,
       "footprint": [
         {
           "longitude": 170.51042280000001,
@@ -19315,7 +19315,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.824268401268597,
+      "baseElevationMeters": 15.824268401233754,
       "footprint": [
         {
           "longitude": 170.51100290000002,
@@ -19352,7 +19352,7 @@
       "buildingType": "detached",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.722375958996064,
+      "baseElevationMeters": 15.722375959074927,
       "footprint": [
         {
           "longitude": 170.5107097,
@@ -19458,7 +19458,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.509466034044614,
+      "baseElevationMeters": 15.509466034083998,
       "footprint": [
         {
           "longitude": 170.51175070000002,
@@ -19500,11 +19500,11 @@
     {
       "osmType": "way",
       "osmId": 386611482,
-      "name": "Regent Night\u0027n\u0027Day",
+      "name": "Regent Night'n'Day",
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 17.222282547625998,
+      "baseElevationMeters": 17.222282547615478,
       "footprint": [
         {
           "longitude": 170.50999570000002,
@@ -19547,7 +19547,7 @@
       "nearestRouteDistanceMeters": 2630.196479854167,
       "sourceTags": {
         "building": "retail",
-        "name": "Regent Night\u0027n\u0027Day",
+        "name": "Regent Night'n'Day",
         "shop": "convenience"
       },
       "visualCategory": "commercial/retail",
@@ -19705,7 +19705,7 @@
       "buildingType": "hotel",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 17.431754731442965,
+      "baseElevationMeters": 17.43175473144811,
       "footprint": [
         {
           "longitude": 170.51145340000002,
@@ -19812,7 +19812,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 16.61740540833454,
+      "baseElevationMeters": 16.617405408331077,
       "footprint": [
         {
           "longitude": 170.5113105,
@@ -19867,7 +19867,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 17.727327519175194,
+      "baseElevationMeters": 17.7273275191597,
       "footprint": [
         {
           "longitude": 170.5103075,
@@ -19904,7 +19904,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 16.804125732732206,
+      "baseElevationMeters": 16.804125732730345,
       "footprint": [
         {
           "longitude": 170.51161810000002,
@@ -20132,7 +20132,7 @@
       "buildingType": "terrace",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 18.037553906640852,
+      "baseElevationMeters": 18.037553906693507,
       "footprint": [
         {
           "longitude": 170.5120718,
@@ -20284,7 +20284,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 19.304586977840888,
+      "baseElevationMeters": 19.304586977850207,
       "footprint": [
         {
           "longitude": 170.51155070000002,
@@ -20374,7 +20374,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 18.99616919866973,
+      "baseElevationMeters": 18.99616919867289,
       "footprint": [
         {
           "longitude": 170.5110851,
@@ -20459,7 +20459,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 18.047178984559046,
+      "baseElevationMeters": 18.047178984564397,
       "footprint": [
         {
           "longitude": 170.51198290000002,
@@ -20504,7 +20504,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 17.17833470966592,
+      "baseElevationMeters": 17.178334709664725,
       "footprint": [
         {
           "longitude": 170.5114882,
@@ -20602,7 +20602,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 18.04600760295958,
+      "baseElevationMeters": 18.04600760297393,
       "footprint": [
         {
           "longitude": 170.5112745,
@@ -20770,7 +20770,7 @@
       "buildingType": "shed",
       "heightMeters": 3.5,
       "heightSource": "Fallback",
-      "baseElevationMeters": 16.87136185694259,
+      "baseElevationMeters": 16.871361857076387,
       "footprint": [
         {
           "longitude": 170.51239030000002,
@@ -20808,7 +20808,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.36587694967168,
+      "baseElevationMeters": 15.365876949813085,
       "footprint": [
         {
           "longitude": 170.5118956,
@@ -20882,7 +20882,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.831726634351847,
+      "baseElevationMeters": 14.831726634403557,
       "footprint": [
         {
           "longitude": 170.51206950000002,
@@ -20919,7 +20919,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.508486991465535,
+      "baseElevationMeters": 14.5084869914694,
       "footprint": [
         {
           "longitude": 170.5122063,
@@ -20993,7 +20993,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.07317610253196,
+      "baseElevationMeters": 14.07317610246863,
       "footprint": [
         {
           "longitude": 170.5123677,
@@ -21075,7 +21075,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.636133535681118,
+      "baseElevationMeters": 13.636133535650295,
       "footprint": [
         {
           "longitude": 170.51248990000002,
@@ -21165,7 +21165,7 @@
       "buildingType": "retail",
       "heightMeters": 3,
       "heightSource": "Levels",
-      "baseElevationMeters": 12.945729974959438,
+      "baseElevationMeters": 12.945729974838912,
       "footprint": [
         {
           "longitude": 170.51285910000001,
@@ -21206,7 +21206,7 @@
       "buildingType": "church",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.600809779599295,
+      "baseElevationMeters": 14.60080977964279,
       "footprint": [
         {
           "longitude": 170.5139264,
@@ -21488,7 +21488,7 @@
       "buildingType": "university",
       "heightMeters": 9,
       "heightSource": "Levels",
-      "baseElevationMeters": 12.776366491288506,
+      "baseElevationMeters": 12.776366491230446,
       "footprint": [
         {
           "longitude": 170.51456420000002,
@@ -21589,7 +21589,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.604062753567508,
+      "baseElevationMeters": 11.604062753570835,
       "footprint": [
         {
           "longitude": 170.51403200000001,
@@ -21675,7 +21675,7 @@
       "buildingType": "religious",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 15.381651545058105,
+      "baseElevationMeters": 15.381651545090792,
       "footprint": [
         {
           "longitude": 170.5140528,
@@ -21722,7 +21722,7 @@
       "buildingType": "dormitory",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.630988280512842,
+      "baseElevationMeters": 14.630988280492183,
       "footprint": [
         {
           "longitude": 170.51377430000002,
@@ -21817,7 +21817,7 @@
       "buildingType": "dormitory",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 13.866385280634386,
+      "baseElevationMeters": 13.866385280769638,
       "footprint": [
         {
           "longitude": 170.5146621,
@@ -21857,7 +21857,7 @@
       "buildingType": "dormitory",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.762394301837746,
+      "baseElevationMeters": 13.76239430177632,
       "footprint": [
         {
           "longitude": 170.5144816,
@@ -22020,7 +22020,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.541705988220796,
+      "baseElevationMeters": 13.541705988190218,
       "footprint": [
         {
           "longitude": 170.5149853,
@@ -22141,7 +22141,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 12.982924759859007,
+      "baseElevationMeters": 12.98292475989673,
       "footprint": [
         {
           "longitude": 170.5144014,
@@ -22200,7 +22200,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.34795026799376,
+      "baseElevationMeters": 13.347950268048244,
       "footprint": [
         {
           "longitude": 170.51420230000002,
@@ -22262,7 +22262,7 @@
       "buildingType": "greenhouse",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 14.12007325238506,
+      "baseElevationMeters": 14.12007325237171,
       "footprint": [
         {
           "longitude": 170.51372640000002,
@@ -22469,7 +22469,7 @@
       "buildingType": "university",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 12.6314342717501,
+      "baseElevationMeters": 12.63143427198209,
       "footprint": [
         {
           "longitude": 170.5141264,
@@ -22718,7 +22718,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.208455631475314,
+      "baseElevationMeters": 13.208455631397703,
       "footprint": [
         {
           "longitude": 170.5125878,
@@ -22800,7 +22800,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.081581855169599,
+      "baseElevationMeters": 13.08158185520918,
       "footprint": [
         {
           "longitude": 170.51271350000002,
@@ -22991,7 +22991,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 13.145493615347034,
+      "baseElevationMeters": 13.145493615341444,
       "footprint": [
         {
           "longitude": 170.51217530000002,
@@ -23093,7 +23093,7 @@
       "buildingType": "university",
       "heightMeters": 18,
       "heightSource": "Levels",
-      "baseElevationMeters": 11.530161323017388,
+      "baseElevationMeters": 11.530161323189532,
       "footprint": [
         {
           "longitude": 170.5140532,
@@ -23355,7 +23355,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.429612687417556,
+      "baseElevationMeters": 11.429612687442326,
       "footprint": [
         {
           "longitude": 170.5121612,
@@ -23669,7 +23669,7 @@
       "buildingType": "university",
       "heightMeters": 24,
       "heightSource": "Levels",
-      "baseElevationMeters": 11.164175131264503,
+      "baseElevationMeters": 11.164175131238427,
       "footprint": [
         {
           "longitude": 170.5132151,
@@ -23902,7 +23902,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.039420688670257,
+      "baseElevationMeters": 11.039420688650988,
       "footprint": [
         {
           "longitude": 170.5120084,
@@ -23984,7 +23984,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 11.054028065149344,
+      "baseElevationMeters": 11.054028065126994,
       "footprint": [
         {
           "longitude": 170.51195710000002,
@@ -24038,7 +24038,7 @@
       "buildingType": "university",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 10.722629469264504,
+      "baseElevationMeters": 10.722629469326087,
       "footprint": [
         {
           "longitude": 170.5137003,
@@ -24482,7 +24482,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.820334637854431,
+      "baseElevationMeters": 9.820334637812774,
       "footprint": [
         {
           "longitude": 170.51259850000002,
@@ -24593,7 +24593,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.886293721829752,
+      "baseElevationMeters": 9.886293721838133,
       "footprint": [
         {
           "longitude": 170.5122152,
@@ -24723,7 +24723,7 @@
       "buildingType": "university",
       "heightMeters": 33,
       "heightSource": "Levels",
-      "baseElevationMeters": 8.741806866054493,
+      "baseElevationMeters": 8.741806865962728,
       "footprint": [
         {
           "longitude": 170.5135069,
@@ -24845,7 +24845,7 @@
     {
       "osmType": "way",
       "osmId": 381845199,
-      "name": "University of Otago Physical Education Department (Formerly Dunedin Teachers\u0027 Training College)",
+      "name": "University of Otago Physical Education Department (Formerly Dunedin Teachers' Training College)",
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
@@ -24876,7 +24876,7 @@
       "nearestRouteDistanceMeters": 3015.194751815154,
       "sourceTags": {
         "building": "yes",
-        "name": "University of Otago Physical Education Department (Formerly Dunedin Teachers\u0027 Training College)"
+        "name": "University of Otago Physical Education Department (Formerly Dunedin Teachers' Training College)"
       },
       "visualCategory": "generic",
       "materialVariant": 0
@@ -24887,7 +24887,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.88247509002676,
+      "baseElevationMeters": 9.882475090023076,
       "footprint": [
         {
           "longitude": 170.5111014,
@@ -24921,11 +24921,11 @@
     {
       "osmType": "way",
       "osmId": 102671420,
-      "name": "Smithell\u0027s Gymnasium",
+      "name": "Smithell's Gymnasium",
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.655270087924947,
+      "baseElevationMeters": 9.655270087931267,
       "footprint": [
         {
           "longitude": 170.5123179,
@@ -24968,7 +24968,7 @@
       "nearestRouteDistanceMeters": 3025.6096305757324,
       "sourceTags": {
         "building": "university",
-        "name": "Smithell\u0027s Gymnasium"
+        "name": "Smithell's Gymnasium"
       },
       "visualCategory": "university/education",
       "materialVariant": 7
@@ -25097,7 +25097,7 @@
       "buildingType": "university",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 9.211796789557491,
+      "baseElevationMeters": 9.211796789532109,
       "footprint": [
         {
           "longitude": 170.51213810000002,
@@ -25361,11 +25361,11 @@
     {
       "osmType": "way",
       "osmId": 159929111,
-      "name": "T\u016Bhura Otago Museum",
+      "name": "Tūhura Otago Museum",
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 9.009392670844244,
+      "baseElevationMeters": 9.009392670799652,
       "footprint": [
         {
           "longitude": 170.5101989,
@@ -25480,7 +25480,7 @@
       "nearestRouteDistanceMeters": 3098.4147447688324,
       "sourceTags": {
         "building": "yes",
-        "name": "T\u016Bhura Otago Museum",
+        "name": "Tūhura Otago Museum",
         "name:en": "Otago Museum",
         "tourism": "museum"
       },
@@ -25494,7 +25494,7 @@
       "buildingType": "university",
       "heightMeters": 12,
       "heightSource": "Levels",
-      "baseElevationMeters": 8.412762559809774,
+      "baseElevationMeters": 8.4127625597986,
       "footprint": [
         {
           "longitude": 170.5128827,
@@ -25723,11 +25723,11 @@
     {
       "osmType": "way",
       "osmId": 738685470,
-      "name": "A\u002B Burgers",
+      "name": "A+ Burgers",
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.499531767234636,
+      "baseElevationMeters": 7.4995317672429005,
       "footprint": [
         {
           "longitude": 170.51165120000002,
@@ -25755,7 +25755,7 @@
       "sourceTags": {
         "amenity": "fast_food",
         "building": "yes",
-        "name": "A\u002B Burgers"
+        "name": "A+ Burgers"
       },
       "visualCategory": "generic",
       "materialVariant": 4
@@ -25763,7 +25763,7 @@
     {
       "osmType": "way",
       "osmId": 567191333,
-      "name": "Always A\u002B Food Store",
+      "name": "Always A+ Food Store",
       "buildingType": "apartments",
       "heightMeters": 6,
       "heightSource": "Levels",
@@ -25797,7 +25797,7 @@
         "building:colour": "grey",
         "building:levels": "2",
         "building:material": "plaster",
-        "name": "Always A\u002B Food Store",
+        "name": "Always A+ Food Store",
         "roof:colour": "green",
         "roof:levels": "0",
         "roof:shape": "hipped"
@@ -25811,7 +25811,7 @@
       "buildingType": "retail",
       "heightMeters": 3,
       "heightSource": "Levels",
-      "baseElevationMeters": 7.896689715970501,
+      "baseElevationMeters": 7.8966897160247305,
       "footprint": [
         {
           "longitude": 170.5117735,
@@ -26005,7 +26005,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.238323087396175,
+      "baseElevationMeters": 7.238323087394108,
       "footprint": [
         {
           "longitude": 170.5112305,
@@ -26605,7 +26605,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.044172156913139,
+      "baseElevationMeters": 7.044172156858651,
       "footprint": [
         {
           "longitude": 170.5117549,
@@ -26658,7 +26658,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.854864874810165,
+      "baseElevationMeters": 6.854864874807711,
       "footprint": [
         {
           "longitude": 170.5114528,
@@ -26950,7 +26950,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.22985276764643,
+      "baseElevationMeters": 6.229852767623187,
       "footprint": [
         {
           "longitude": 170.5108098,
@@ -27251,7 +27251,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.368885714563688,
+      "baseElevationMeters": 6.368885714538842,
       "footprint": [
         {
           "longitude": 170.51309930000002,
@@ -27288,7 +27288,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.555663373749995,
+      "baseElevationMeters": 7.555663373886076,
       "footprint": [
         {
           "longitude": 170.51261250000002,
@@ -27333,7 +27333,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.887391627805162,
+      "baseElevationMeters": 6.887391627803298,
       "footprint": [
         {
           "longitude": 170.5122743,
@@ -27574,7 +27574,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.384253643675878,
+      "baseElevationMeters": 6.384253643673011,
       "footprint": [
         {
           "longitude": 170.51220600000002,
@@ -27611,7 +27611,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 6.263583467663749,
+      "baseElevationMeters": 6.263583467626032,
       "footprint": [
         {
           "longitude": 170.5130804,
@@ -27648,7 +27648,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 7.04989339190977,
+      "baseElevationMeters": 7.049893392065197,
       "footprint": [
         {
           "longitude": 170.512682,
@@ -27828,7 +27828,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.997810144703395,
+      "baseElevationMeters": 5.997810144742438,
       "footprint": [
         {
           "longitude": 170.5129259,
@@ -27939,7 +27939,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.896992801906254,
+      "baseElevationMeters": 5.896992801897719,
       "footprint": [
         {
           "longitude": 170.513201,
@@ -28087,7 +28087,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.370522505751748,
+      "baseElevationMeters": 5.370522505944636,
       "footprint": [
         {
           "longitude": 170.5120759,
@@ -28140,7 +28140,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.95662500890156,
+      "baseElevationMeters": 5.956625009134245,
       "footprint": [
         {
           "longitude": 170.513201,
@@ -28177,7 +28177,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.492706111890755,
+      "baseElevationMeters": 5.492706111888829,
       "footprint": [
         {
           "longitude": 170.5131924,
@@ -28267,7 +28267,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.5224713082497505,
+      "baseElevationMeters": 5.5224713082483365,
       "footprint": [
         {
           "longitude": 170.5133747,
@@ -28341,7 +28341,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.6466673242274465,
+      "baseElevationMeters": 5.646667324328768,
       "footprint": [
         {
           "longitude": 170.5109777,
@@ -28500,7 +28500,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.311842949958779,
+      "baseElevationMeters": 5.311842949983611,
       "footprint": [
         {
           "longitude": 170.5119664,
@@ -28574,7 +28574,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.216572619893535,
+      "baseElevationMeters": 5.21657261984138,
       "footprint": [
         {
           "longitude": 170.5131193,
@@ -28783,7 +28783,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.142750928752378,
+      "baseElevationMeters": 5.142750928750649,
       "footprint": [
         {
           "longitude": 170.5119177,
@@ -28881,7 +28881,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.051288490416145,
+      "baseElevationMeters": 5.051288490398316,
       "footprint": [
         {
           "longitude": 170.5121992,
@@ -28971,7 +28971,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.924791222908753,
+      "baseElevationMeters": 4.924791222928189,
       "footprint": [
         {
           "longitude": 170.5123667,
@@ -29053,7 +29053,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.026235437242535,
+      "baseElevationMeters": 5.026235437278782,
       "footprint": [
         {
           "longitude": 170.513001,
@@ -29241,7 +29241,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.94876860521361,
+      "baseElevationMeters": 4.9487686051848785,
       "footprint": [
         {
           "longitude": 170.51188000000002,
@@ -29278,7 +29278,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.539589869843542,
+      "baseElevationMeters": 5.539589869756561,
       "footprint": [
         {
           "longitude": 170.5135104,
@@ -29315,7 +29315,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.889144431293793,
+      "baseElevationMeters": 4.889144431238968,
       "footprint": [
         {
           "longitude": 170.5129469,
@@ -29413,7 +29413,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.425551913919017,
+      "baseElevationMeters": 5.425551913905979,
       "footprint": [
         {
           "longitude": 170.5134917,
@@ -29503,7 +29503,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.969833029880098,
+      "baseElevationMeters": 4.969833029912129,
       "footprint": [
         {
           "longitude": 170.512167,
@@ -29572,7 +29572,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.157494552882179,
+      "baseElevationMeters": 5.157494552921991,
       "footprint": [
         {
           "longitude": 170.5108945,
@@ -29867,7 +29867,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.917918860630022,
+      "baseElevationMeters": 4.917918860737439,
       "footprint": [
         {
           "longitude": 170.51198820000002,
@@ -30020,7 +30020,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.465259372296335,
+      "baseElevationMeters": 4.465259372330115,
       "footprint": [
         {
           "longitude": 170.51249900000002,
@@ -30099,11 +30099,11 @@
     {
       "osmType": "way",
       "osmId": 983391348,
-      "name": "Poppy\u0027s Pad",
+      "name": "Poppy's Pad",
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 5.030572428008189,
+      "baseElevationMeters": 5.030572428035752,
       "footprint": [
         {
           "longitude": 170.51331670000002,
@@ -30138,7 +30138,7 @@
       "nearestRouteDistanceMeters": 3430.1302053532254,
       "sourceTags": {
         "building": "yes",
-        "name": "Poppy\u0027s Pad"
+        "name": "Poppy's Pad"
       },
       "visualCategory": "generic",
       "materialVariant": 7
@@ -30270,7 +30270,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.338601672177452,
+      "baseElevationMeters": 4.338601672146316,
       "footprint": [
         {
           "longitude": 170.5124491,
@@ -30344,7 +30344,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.677065162431243,
+      "baseElevationMeters": 4.6770651624162305,
       "footprint": [
         {
           "longitude": 170.51189430000002,
@@ -30442,7 +30442,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.1678294237404785,
+      "baseElevationMeters": 4.16782942379422,
       "footprint": [
         {
           "longitude": 170.5126045,
@@ -30479,7 +30479,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.2220806539571365,
+      "baseElevationMeters": 4.222080653887822,
       "footprint": [
         {
           "longitude": 170.5127065,
@@ -30569,7 +30569,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.060031688035089,
+      "baseElevationMeters": 4.060031688012737,
       "footprint": [
         {
           "longitude": 170.51274130000002,
@@ -30606,7 +30606,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.229408727911547,
+      "baseElevationMeters": 4.2294087279345876,
       "footprint": [
         {
           "longitude": 170.512189,
@@ -30651,7 +30651,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.211518423381875,
+      "baseElevationMeters": 4.211518423335292,
       "footprint": [
         {
           "longitude": 170.51281360000002,
@@ -31032,7 +31032,7 @@
       "buildingType": "detached",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.5061519826428795,
+      "baseElevationMeters": 3.5061519826641985,
       "footprint": [
         {
           "longitude": 170.51309160000002,
@@ -31069,7 +31069,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.492770621178594,
+      "baseElevationMeters": 3.4927706212005734,
       "footprint": [
         {
           "longitude": 170.51295570000002,
@@ -31270,7 +31270,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.795069129719124,
+      "baseElevationMeters": 3.7950691296841654,
       "footprint": [
         {
           "longitude": 170.512434,
@@ -31413,7 +31413,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.412311124244175,
+      "baseElevationMeters": 4.412311124300099,
       "footprint": [
         {
           "longitude": 170.5116514,
@@ -31532,7 +31532,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.396811558808473,
+      "baseElevationMeters": 3.3968115588090892,
       "footprint": [
         {
           "longitude": 170.5123642,
@@ -31569,7 +31569,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.341395450063734,
+      "baseElevationMeters": 4.341395450069323,
       "footprint": [
         {
           "longitude": 170.51182690000002,
@@ -31659,7 +31659,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.299470140282383,
+      "baseElevationMeters": 4.299470140299148,
       "footprint": [
         {
           "longitude": 170.5115455,
@@ -31885,7 +31885,7 @@
       "buildingType": "university",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.629948423975081,
+      "baseElevationMeters": 4.629948423968035,
       "footprint": [
         {
           "longitude": 170.510588,
@@ -31987,7 +31987,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.329037700873225,
+      "baseElevationMeters": 4.329037700904335,
       "footprint": [
         {
           "longitude": 170.5116653,
@@ -32040,7 +32040,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.13529036476311,
+      "baseElevationMeters": 4.135290364705499,
       "footprint": [
         {
           "longitude": 170.5113009,
@@ -32085,7 +32085,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.347015185279197,
+      "baseElevationMeters": 3.347015185273415,
       "footprint": [
         {
           "longitude": 170.5122613,
@@ -32159,7 +32159,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.426492242549735,
+      "baseElevationMeters": 4.426492242793741,
       "footprint": [
         {
           "longitude": 170.51167790000002,
@@ -32241,7 +32241,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.261959282786515,
+      "baseElevationMeters": 4.261959282780753,
       "footprint": [
         {
           "longitude": 170.5114378,
@@ -32458,7 +32458,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.7648356169641106,
+      "baseElevationMeters": 3.7648356169653354,
       "footprint": [
         {
           "longitude": 170.51219550000002,
@@ -32696,7 +32696,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.144893723981181,
+      "baseElevationMeters": 4.144893724001134,
       "footprint": [
         {
           "longitude": 170.51188280000002,
@@ -32741,7 +32741,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.2699898139023476,
+      "baseElevationMeters": 3.2699898139115637,
       "footprint": [
         {
           "longitude": 170.51260630000002,
@@ -32794,7 +32794,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.028767712161056,
+      "baseElevationMeters": 4.028767712155379,
       "footprint": [
         {
           "longitude": 170.51146880000002,
@@ -32961,7 +32961,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.128902911009972,
+      "baseElevationMeters": 3.128902910992072,
       "footprint": [
         {
           "longitude": 170.5125959,
@@ -33011,7 +33011,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.9471269142539933,
+      "baseElevationMeters": 3.9471269142873737,
       "footprint": [
         {
           "longitude": 170.5114795,
@@ -33154,7 +33154,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.177749465045119,
+      "baseElevationMeters": 4.17774946512355,
       "footprint": [
         {
           "longitude": 170.5113162,
@@ -33191,7 +33191,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.003903299301779,
+      "baseElevationMeters": 4.00390329925335,
       "footprint": [
         {
           "longitude": 170.5113934,
@@ -33244,7 +33244,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.086722000688305,
+      "baseElevationMeters": 3.086722000670901,
       "footprint": [
         {
           "longitude": 170.51249190000001,
@@ -33301,7 +33301,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.409969105105246,
+      "baseElevationMeters": 3.4099691050933667,
       "footprint": [
         {
           "longitude": 170.5121609,
@@ -33354,7 +33354,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.9155495163293743,
+      "baseElevationMeters": 3.9155495163140257,
       "footprint": [
         {
           "longitude": 170.51101780000002,
@@ -33436,7 +33436,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.623694152178751,
+      "baseElevationMeters": 3.6236941521394574,
       "footprint": [
         {
           "longitude": 170.51115230000002,
@@ -33616,7 +33616,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.0920231179972366,
+      "baseElevationMeters": 3.0920231180094,
       "footprint": [
         {
           "longitude": 170.5119157,
@@ -33661,7 +33661,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 4.070770200301802,
+      "baseElevationMeters": 4.070770200333625,
       "footprint": [
         {
           "longitude": 170.51165360000002,
@@ -33743,7 +33743,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.4885874346311687,
+      "baseElevationMeters": 3.488587434708163,
       "footprint": [
         {
           "longitude": 170.5111139,
@@ -33812,7 +33812,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.4924479258019105,
+      "baseElevationMeters": 3.4924479262022516,
       "footprint": [
         {
           "longitude": 170.5110239,
@@ -33857,7 +33857,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.9799221286204243,
+      "baseElevationMeters": 2.9799221285667152,
       "footprint": [
         {
           "longitude": 170.51239520000001,
@@ -34315,7 +34315,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.341906891787417,
+      "baseElevationMeters": 3.3419068917799657,
       "footprint": [
         {
           "longitude": 170.5116051,
@@ -34750,7 +34750,7 @@
       "buildingType": "hospital",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.080227543679997,
+      "baseElevationMeters": 3.0802275436622626,
       "footprint": [
         {
           "longitude": 170.51014370000001,
@@ -34804,7 +34804,7 @@
       "buildingType": "hospital",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.8510116807236954,
+      "baseElevationMeters": 2.851011680805194,
       "footprint": [
         {
           "longitude": 170.51022650000002,
@@ -34935,7 +34935,7 @@
       "buildingType": "industrial",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.295246029407645,
+      "baseElevationMeters": 2.2952460293573536,
       "footprint": [
         {
           "longitude": 170.50976110000002,
@@ -35009,7 +35009,7 @@
       "buildingType": "industrial",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4742228219013818,
+      "baseElevationMeters": 2.474222821904009,
       "footprint": [
         {
           "longitude": 170.5111884,
@@ -35128,7 +35128,7 @@
       "buildingType": "dormitory",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.0671022805877497,
+      "baseElevationMeters": 2.0671022805891752,
       "footprint": [
         {
           "longitude": 170.5097081,
@@ -35249,7 +35249,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4504471728377553,
+      "baseElevationMeters": 2.4504471728055153,
       "footprint": [
         {
           "longitude": 170.51069840000002,
@@ -35323,7 +35323,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.8323703719969109,
+      "baseElevationMeters": 1.8323703720132605,
       "footprint": [
         {
           "longitude": 170.51189250000002,
@@ -35479,7 +35479,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1838315997801776,
+      "baseElevationMeters": 2.183831599836057,
       "footprint": [
         {
           "longitude": 170.51132700000002,
@@ -35595,7 +35595,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.8800090462161025,
+      "baseElevationMeters": 1.8800090462810974,
       "footprint": [
         {
           "longitude": 170.5120741,
@@ -35669,7 +35669,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.332775076875975,
+      "baseElevationMeters": 2.332775076860149,
       "footprint": [
         {
           "longitude": 170.51132700000002,
@@ -35907,7 +35907,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.9983620140101672,
+      "baseElevationMeters": 1.9983620140060148,
       "footprint": [
         {
           "longitude": 170.51104840000002,
@@ -35944,7 +35944,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.837266007446262,
+      "baseElevationMeters": 1.8372660074099905,
       "footprint": [
         {
           "longitude": 170.5114863,
@@ -36074,7 +36074,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.9602638797523222,
+      "baseElevationMeters": 1.9602638797285734,
       "footprint": [
         {
           "longitude": 170.5100504,
@@ -36156,7 +36156,7 @@
       "buildingType": "yes",
       "heightMeters": 18,
       "heightSource": "Levels",
-      "baseElevationMeters": 1.6113120997510655,
+      "baseElevationMeters": 1.6113120997615635,
       "footprint": [
         {
           "longitude": 170.5104588,
@@ -36194,7 +36194,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.5831544557129018,
+      "baseElevationMeters": 1.583154455665404,
       "footprint": [
         {
           "longitude": 170.51112320000001,
@@ -36344,7 +36344,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.7487695528014033,
+      "baseElevationMeters": 1.7487695528250238,
       "footprint": [
         {
           "longitude": 170.5101923,
@@ -36591,7 +36591,7 @@
       "buildingType": "industrial",
       "heightMeters": 3,
       "heightSource": "Levels",
-      "baseElevationMeters": 1.5448945046356533,
+      "baseElevationMeters": 1.544894504639604,
       "footprint": [
         {
           "longitude": 170.51011780000002,
@@ -36632,7 +36632,7 @@
       "buildingType": "yes",
       "heightMeters": 6,
       "heightSource": "Levels",
-      "baseElevationMeters": 1.61378617536538,
+      "baseElevationMeters": 1.6137861754156952,
       "footprint": [
         {
           "longitude": 170.5105181,
@@ -36723,7 +36723,7 @@
       "buildingType": "office",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 1.6586494881724045,
+      "baseElevationMeters": 1.6586494881730545,
       "footprint": [
         {
           "longitude": 170.5092275,
@@ -36801,7 +36801,7 @@
       "buildingType": "yes",
       "heightMeters": 3,
       "heightSource": "Levels",
-      "baseElevationMeters": 1.745859792001319,
+      "baseElevationMeters": 1.7458597920336125,
       "footprint": [
         {
           "longitude": 170.510323,
@@ -36933,7 +36933,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4242114013395337,
+      "baseElevationMeters": 2.4242114013079274,
       "footprint": [
         {
           "longitude": 170.5097318,
@@ -37159,7 +37159,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1589113376043256,
+      "baseElevationMeters": 2.158911337611498,
       "footprint": [
         {
           "longitude": 170.5091969,
@@ -37270,7 +37270,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1958542679494433,
+      "baseElevationMeters": 2.195854267968797,
       "footprint": [
         {
           "longitude": 170.5086678,
@@ -37316,7 +37316,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.0847731109235985,
+      "baseElevationMeters": 2.0847731108838827,
       "footprint": [
         {
           "longitude": 170.50751110000002,
@@ -37371,7 +37371,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.256045541714969,
+      "baseElevationMeters": 2.2560455417055136,
       "footprint": [
         {
           "longitude": 170.5087885,
@@ -37490,7 +37490,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.305091499892354,
+      "baseElevationMeters": 2.305091499899338,
       "footprint": [
         {
           "longitude": 170.50799310000002,
@@ -38226,7 +38226,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.222980367663334,
+      "baseElevationMeters": 2.2229803676906528,
       "footprint": [
         {
           "longitude": 170.5083358,
@@ -38263,7 +38263,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.507639201892242,
+      "baseElevationMeters": 2.5076392019052136,
       "footprint": [
         {
           "longitude": 170.5080982,
@@ -38308,7 +38308,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 3.046427903610249,
+      "baseElevationMeters": 3.0464279037018636,
       "footprint": [
         {
           "longitude": 170.50686610000002,
@@ -38436,7 +38436,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.6057844028461754,
+      "baseElevationMeters": 2.605784402859265,
       "footprint": [
         {
           "longitude": 170.5074337,
@@ -38544,11 +38544,11 @@
     {
       "osmType": "way",
       "osmId": 88748713,
-      "name": "Toit\u016B Otago Settlers Museum",
+      "name": "Toitū Otago Settlers Museum",
       "buildingType": "yes",
       "heightMeters": 4,
       "heightSource": "Explicit",
-      "baseElevationMeters": 3.1222547640903575,
+      "baseElevationMeters": 3.122254764050937,
       "footprint": [
         {
           "longitude": 170.50605140000002,
@@ -38712,7 +38712,7 @@
       "sourceTags": {
         "building": "yes",
         "height": "4",
-        "name": "Toit\u016B Otago Settlers Museum",
+        "name": "Toitū Otago Settlers Museum",
         "operator:type": "government",
         "tourism": "museum"
       },
@@ -38762,7 +38762,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3492673478307426,
+      "baseElevationMeters": 2.349267347906287,
       "footprint": [
         {
           "longitude": 170.5071935,
@@ -38926,7 +38926,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.7614040737685306,
+      "baseElevationMeters": 2.7614040737827095,
       "footprint": [
         {
           "longitude": 170.5058777,
@@ -38963,7 +38963,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.9265683255067967,
+      "baseElevationMeters": 2.926568325469871,
       "footprint": [
         {
           "longitude": 170.5056417,
@@ -39000,7 +39000,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.613992140795219,
+      "baseElevationMeters": 2.61399214085948,
       "footprint": [
         {
           "longitude": 170.50584170000002,
@@ -39119,7 +39119,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4904160468298806,
+      "baseElevationMeters": 2.490416046877664,
       "footprint": [
         {
           "longitude": 170.50548450000002,
@@ -39165,7 +39165,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.5546596997206295,
+      "baseElevationMeters": 2.554659699616611,
       "footprint": [
         {
           "longitude": 170.50529780000002,
@@ -39349,7 +39349,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2260928688653943,
+      "baseElevationMeters": 2.226092869022107,
       "footprint": [
         {
           "longitude": 170.5065461,
@@ -39506,7 +39506,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1534592807651336,
+      "baseElevationMeters": 2.153459280734974,
       "footprint": [
         {
           "longitude": 170.504261,
@@ -39543,7 +39543,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.479031974448066,
+      "baseElevationMeters": 2.4790319744618468,
       "footprint": [
         {
           "longitude": 170.5045632,
@@ -39580,7 +39580,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.1911937317486965,
+      "baseElevationMeters": 2.1911937317146037,
       "footprint": [
         {
           "longitude": 170.5042199,
@@ -39804,7 +39804,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2413935106512954,
+      "baseElevationMeters": 2.2413935106345315,
       "footprint": [
         {
           "longitude": 170.5035483,
@@ -39841,7 +39841,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.8984905332591433,
+      "baseElevationMeters": 2.8984905332503295,
       "footprint": [
         {
           "longitude": 170.5033419,
@@ -39878,7 +39878,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2410302676983394,
+      "baseElevationMeters": 2.2410302676770124,
       "footprint": [
         {
           "longitude": 170.50412350000002,
@@ -40017,7 +40017,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3654292698125685,
+      "baseElevationMeters": 2.365429269796695,
       "footprint": [
         {
           "longitude": 170.5026071,
@@ -40197,7 +40197,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.177433156124978,
+      "baseElevationMeters": 2.1774331561287035,
       "footprint": [
         {
           "longitude": 170.50254650000002,
@@ -40352,7 +40352,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.509192932320416,
+      "baseElevationMeters": 2.5091929323092406,
       "footprint": [
         {
           "longitude": 170.5025057,
@@ -40625,7 +40625,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3785479947848787,
+      "baseElevationMeters": 2.3785479948078243,
       "footprint": [
         {
           "longitude": 170.50159490000001,
@@ -40699,7 +40699,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.4089730677094296,
+      "baseElevationMeters": 2.40897306771093,
       "footprint": [
         {
           "longitude": 170.501158,
@@ -40736,7 +40736,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.352612903460126,
+      "baseElevationMeters": 2.3526129034826875,
       "footprint": [
         {
           "longitude": 170.5009364,
@@ -40773,7 +40773,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.3693476189462563,
+      "baseElevationMeters": 2.3693476188956706,
       "footprint": [
         {
           "longitude": 170.5008793,
@@ -40818,7 +40818,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.36716831886064,
+      "baseElevationMeters": 2.3671683188379458,
       "footprint": [
         {
           "longitude": 170.50085860000002,
@@ -40966,7 +40966,7 @@
       "buildingType": "yes",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.2632308117134494,
+      "baseElevationMeters": 2.2632308117097244,
       "footprint": [
         {
           "longitude": 170.5005506,
@@ -41040,7 +41040,7 @@
       "buildingType": "retail",
       "heightMeters": 8,
       "heightSource": "Fallback",
-      "baseElevationMeters": 2.222507207226267,
+      "baseElevationMeters": 2.2225072072299925,
       "footprint": [
         {
           "longitude": 170.50109,

@@ -31,6 +31,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     private GattCharacteristic? _ftmsIndoorBikeDataCharacteristic;   // 2AD2 notify
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
+    private (double Minimum, double Maximum)? _supportedInclinationRangePercent;
     private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
@@ -58,6 +59,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _ftmsIndoorBikeDataCharacteristic = null;
         _ftmsFitnessMachineStatusCharacteristic = null;
         _ftmsControlPointCharacteristic = null;
+        _supportedInclinationRangePercent = null;
 
         _device?.Dispose();
         _device = null;
@@ -90,11 +92,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         // Crr: uint8
         // Wind resistance coefficient: uint8
         short windSpeedRaw = 0;
-        short gradeRaw = (short)Math.Clamp(
-            Math.Round(command.GradePercent * 100.0),
-            short.MinValue,
-            short.MaxValue
-        );
+        short gradeRaw = FtmsSimulationGrade.Encode(command.GradePercent, _supportedInclinationRangePercent);
+        var appliedGradePercent = gradeRaw / 100.0;
 
         // Reasonable default road-ish values.
         // These may need tuning by trainer model.
@@ -116,12 +115,14 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         };
 
         Console.WriteLine(
-            $"[SIM WRITE] Grade={command.GradePercent:0.0}% RawGrade={gradeRaw} Payload={BitConverter.ToString(payload)}");
+            $"[SIM WRITE] Requested={command.GradePercent:0.00}% Applied={appliedGradePercent:0.00}% RawGrade={gradeRaw} Payload={BitConverter.ToString(payload)}");
 
         EmitDebug("set_simulation", new
         {
-            gradePercent = command.GradePercent,
+            requestedGradePercent = command.GradePercent,
+            appliedGradePercent,
             gradeRaw,
+            supportedInclinationRangePercent = _supportedInclinationRangePercent,
             windSpeedRaw,
             rollingResistanceRaw,
             windResistanceRaw,
@@ -306,6 +307,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         var indoorBikeDataUuid = Guid.Parse("00002ad2-0000-1000-8000-00805f9b34fb");
         var fitnessMachineStatusUuid = Guid.Parse("00002ada-0000-1000-8000-00805f9b34fb");
         var fitnessMachineControlPointUuid = Guid.Parse("00002ad9-0000-1000-8000-00805f9b34fb");
+        var supportedInclinationRangeUuid = Guid.Parse("00002ad5-0000-1000-8000-00805f9b34fb");
 
         var servicesResult = await _device.GetGattServicesForUuidAsync(ftmsUuid, BluetoothCacheMode.Cached);
 
@@ -330,6 +332,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _ftmsIndoorBikeDataCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == indoorBikeDataUuid);
         _ftmsFitnessMachineStatusCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineStatusUuid);
         _ftmsControlPointCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineControlPointUuid);
+        var supportedInclinationRange = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == supportedInclinationRangeUuid);
+        _supportedInclinationRangePercent = await ReadSupportedInclinationRangeAsync(supportedInclinationRange, cancellationToken);
 
         Console.WriteLine($"Indoor Bike Data char found: {_ftmsIndoorBikeDataCharacteristic is not null}");
         Console.WriteLine($"Fitness Machine Status char found: {_ftmsFitnessMachineStatusCharacteristic is not null}");
@@ -339,8 +343,30 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         {
             indoorBikeData = _ftmsIndoorBikeDataCharacteristic is not null,
             fitnessMachineStatus = _ftmsFitnessMachineStatusCharacteristic is not null,
-            controlPoint = _ftmsControlPointCharacteristic is not null
+            controlPoint = _ftmsControlPointCharacteristic is not null,
+            supportedInclinationRangePercent = _supportedInclinationRangePercent
         });
+    }
+
+    private static async Task<(double Minimum, double Maximum)?> ReadSupportedInclinationRangeAsync(
+        GattCharacteristic? characteristic, CancellationToken cancellationToken)
+    {
+        if (characteristic is null) return null;
+        try
+        {
+            var result = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached).AsTask(cancellationToken);
+            if (result.Status != GattCommunicationStatus.Success || result.Value.Length < 6) return null;
+            var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(result.Value);
+            var bytes = new byte[checked((int)reader.UnconsumedBufferLength)];
+            reader.ReadBytes(bytes);
+            reader.Dispose();
+            return FtmsSimulationGrade.TryDecodeSupportedInclinationRange(bytes, out var range) ? range : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Console.WriteLine($"Could not read FTMS Supported Inclination Range: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)

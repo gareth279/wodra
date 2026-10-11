@@ -1,0 +1,4542 @@
+{
+  "id": "dunedin-signal-hill-climbing-loop",
+  "name": "Dunedin Signal Hill Climbing Loop",
+  "distanceMeters": 15439.781331124423,
+  "distanceKm": 15.439781331124422,
+  "ascentMeters": 467.2569993729983,
+  "difficulty": "Challenging",
+  "pointCount": 1488,
+  "maximumAdjacentPointDistanceMeters": 19.991766072823825,
+  "loopClosed": true,
+  "loopSeamElevationDifferenceMeters": 5.684341886080802e-14,
+  "loopSeamHeadingDifferenceDegrees": 3.68579623000187e-06,
+  "legsConnectedAndPassed": true,
+  "routeWarnings": [
+    "Logan Park -> Signal Hill Road lower road/direct ratio 2.25 exceeds warning threshold 1.80."
+  ],
+  "routeStatus": "pass_with_routing_warning",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
+  "elevationSource": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+  "elevationFallbackSource": {
+    "title": "New Zealand Contour-Interpolated 8m DEM",
+    "id": "01JE7NNKVY3QP5FPX2Q08DJQX5",
+    "license": "CC-BY-4.0",
+    "providers": [
+      {
+        "name": "Geographx",
+        "roles": [
+          "producer"
+        ]
+      },
+      {
+        "name": "Toit\u016b Te Whenua Land Information New Zealand",
+        "roles": [
+          "host",
+          "licensor",
+          "processor"
+        ]
+      }
+    ]
+  },
+  "oneMeterCoveragePercent": 59.42357512953368,
+  "fallbackCoveragePercent": 40.57642487046632,
+  "sourceTransitions": [
+    {
+      "distanceMeters": 3869.9451911726496,
+      "latitude": -45.85764091943571,
+      "longitude": 170.52675699281096,
+      "from": "1m",
+      "to": "8m",
+      "rawElevationBeforeMeters": 83.67680659532915,
+      "rawElevationAfterMeters": 79.87571866903521,
+      "rawStepMeters": -3.8010879262939454,
+      "calibratedElevationBeforeMeters": 83.67680659532915,
+      "calibratedElevationAfterMeters": 83.52930015740787,
+      "calibratedStepMeters": -0.1475064379212796,
+      "smoothedElevationBeforeMeters": 83.77822835901154,
+      "smoothedElevationAfterMeters": 83.67610543572563,
+      "smoothedStepMeters": -0.10212292328590422,
+      "fromResolutionMeters": 1,
+      "toResolutionMeters": 8,
+      "nearestOsmRoad": {
+        "distanceMeters": 4.248982436197917e-05,
+        "wayId": 17940452,
+        "name": "Lovelock Avenue",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 9874.860145434086,
+      "latitude": -45.85609180240373,
+      "longitude": 170.52676026317295,
+      "from": "8m",
+      "to": "1m",
+      "rawElevationBeforeMeters": 72.89924037266843,
+      "rawElevationAfterMeters": 69.00218817227824,
+      "rawStepMeters": -3.897052200390192,
+      "calibratedElevationBeforeMeters": 69.3903650070003,
+      "calibratedElevationAfterMeters": 69.00218817227824,
+      "calibratedStepMeters": -0.38817683472206,
+      "smoothedElevationBeforeMeters": 69.54725974345654,
+      "smoothedElevationAfterMeters": 69.12550319758299,
+      "smoothedStepMeters": -0.42175654587354927,
+      "fromResolutionMeters": 8,
+      "toResolutionMeters": 1,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.0279146616773128e-06,
+        "wayId": 89369874,
+        "name": "Balmoral Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 10889.845770509084,
+      "latitude": -45.85302906540645,
+      "longitude": 170.51700632133822,
+      "from": "1m",
+      "to": "8m",
+      "rawElevationBeforeMeters": 36.042783012086325,
+      "rawElevationAfterMeters": 43.43035630696787,
+      "rawStepMeters": 7.387573294881548,
+      "calibratedElevationBeforeMeters": 36.042783012086325,
+      "calibratedElevationAfterMeters": 36.42273464836121,
+      "calibratedStepMeters": 0.3799516362748818,
+      "smoothedElevationBeforeMeters": 36.27681863489741,
+      "smoothedElevationAfterMeters": 36.95496384156636,
+      "smoothedStepMeters": 0.6781452066689511,
+      "fromResolutionMeters": 1,
+      "toResolutionMeters": 8,
+      "nearestOsmRoad": {
+        "distanceMeters": 5.44670748502438e-05,
+        "wayId": 511253876,
+        "name": "Gladstone Road",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 11094.842867199108,
+      "latitude": -45.85307898343219,
+      "longitude": 170.51706240053088,
+      "from": "8m",
+      "to": "1m",
+      "rawElevationBeforeMeters": 43.067949463278616,
+      "rawElevationAfterMeters": 35.86907696960686,
+      "rawStepMeters": -7.198872493671757,
+      "calibratedElevationBeforeMeters": 36.21919106592304,
+      "calibratedElevationAfterMeters": 35.86907696960686,
+      "calibratedStepMeters": -0.35011409631618307,
+      "smoothedElevationBeforeMeters": 36.73439306826627,
+      "smoothedElevationAfterMeters": 36.0730509125833,
+      "smoothedStepMeters": -0.6613421556829735,
+      "fromResolutionMeters": 8,
+      "toResolutionMeters": 1,
+      "nearestOsmRoad": {
+        "distanceMeters": 6.157376942712825e-05,
+        "wayId": 511253876,
+        "name": "Gladstone Road",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 12254.82643871339,
+      "latitude": -45.857434046903975,
+      "longitude": 170.52674903000536,
+      "from": "1m",
+      "to": "8m",
+      "rawElevationBeforeMeters": 81.65642772911225,
+      "rawElevationAfterMeters": 78.46435130053749,
+      "rawStepMeters": -3.192076428574765,
+      "calibratedElevationBeforeMeters": 81.65642772911225,
+      "calibratedElevationAfterMeters": 81.823551731835,
+      "calibratedStepMeters": 0.16712400272274408,
+      "smoothedElevationBeforeMeters": 81.70347084837833,
+      "smoothedElevationAfterMeters": 81.88847126969644,
+      "smoothedStepMeters": 0.185000421318108,
+      "fromResolutionMeters": 1,
+      "toResolutionMeters": 8,
+      "nearestOsmRoad": {
+        "distanceMeters": 6.198063687684456e-08,
+        "wayId": 114917060,
+        "name": "\u014cpoho Loop Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 12309.825659776567,
+      "latitude": -45.85767203692323,
+      "longitude": 170.52671911711016,
+      "from": "8m",
+      "to": "1m",
+      "rawElevationBeforeMeters": 79.87416581244,
+      "rawElevationAfterMeters": 83.65497138044118,
+      "rawStepMeters": 3.7808055680011847,
+      "calibratedElevationBeforeMeters": 83.50409578977569,
+      "calibratedElevationAfterMeters": 83.65497138044118,
+      "calibratedStepMeters": 0.1508755906654926,
+      "smoothedElevationBeforeMeters": 83.63587909661005,
+      "smoothedElevationAfterMeters": 83.7488438828298,
+      "smoothedStepMeters": 0.1129647862197487,
+      "fromResolutionMeters": 8,
+      "toResolutionMeters": 1,
+      "nearestOsmRoad": {
+        "distanceMeters": 4.829426239683666e-05,
+        "wayId": 17940452,
+        "name": "Lovelock Avenue",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    }
+  ],
+  "sourceTransitionCount": 6,
+  "maxSustained100mClimbPercent": 18.216049087068164,
+  "maxSustained100mClimbAtMeters": 3459.9509977926014,
+  "maxSustained100mDescentPercent": -18.211660840779608,
+  "maxSustained100mDescentAtMeters": 12714.819923969053,
+  "maxSustainedGradientLocations": [
+    {
+      "kind": "maximum100mClimb",
+      "distanceMeters": 3459.9509977926014,
+      "gradientPercent": 18.216049087068164,
+      "latitude": -45.86045585020461,
+      "longitude": 170.52396158538104,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.1671397905369516e-05,
+        "wayId": 17940119,
+        "name": "Lovelock Shared Path",
+        "highway": "cycleway",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "kind": "maximum100mDescent",
+      "distanceMeters": 12714.819923969053,
+      "gradientPercent": -18.211660840779608,
+      "latitude": -45.86045199067245,
+      "longitude": 170.52396385986066,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.190847918408904e-05,
+        "wayId": 17940119,
+        "name": "Lovelock Shared Path",
+        "highway": "cycleway",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Opoho -> Octagon start",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Clyde Street",
+        "Harrow Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Stuart Street",
+        "The Octagon"
+      ]
+    }
+  ],
+  "sharpTurnCandidates": [
+    {
+      "distanceMeters": 6879.90256208471,
+      "turnAngleDegrees": 179.95193024143578,
+      "latitude": -45.85826570677803,
+      "longitude": 170.54696246790039,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.474744414434182e-07,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 10989.844354260315,
+      "turnAngleDegrees": 177.22184046436794,
+      "latitude": -45.85234832054676,
+      "longitude": 170.51632679899376,
+      "nearestOsmRoad": {
+        "distanceMeters": 7.49935178480476e-08,
+        "wayId": 115698350,
+        "name": "Ramsay Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 9889.859932996771,
+      "turnAngleDegrees": 131.6421042725438,
+      "latitude": -45.85601905260224,
+      "longitude": 170.52661762704628,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.5294403784328848e-07,
+        "wayId": 22376331,
+        "name": "Hatfield Street",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 12269.826226276075,
+      "turnAngleDegrees": 126.10936618414462,
+      "latitude": -45.857364342736616,
+      "longitude": 170.5268977173147,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.8040089342810846e-07,
+        "wayId": 17940452,
+        "name": "Lovelock Avenue",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 2934.958433098637,
+      "turnAngleDegrees": 116.54068001856831,
+      "latitude": -45.862499407716264,
+      "longitude": 170.51853400798612,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.27594964857710114,
+        "wayId": 1552902570,
+        "name": "Lovelock Avenue",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 10589.85001925539,
+      "turnAngleDegrees": 106.14933996726438,
+      "latitude": -45.855100848489656,
+      "longitude": 170.51886639966725,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.087652683777397e-06,
+        "wayId": 1548734750,
+        "name": "\u014cpoho Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 12474.823322966098,
+      "turnAngleDegrees": 100.60918172478071,
+      "latitude": -45.85860964067821,
+      "longitude": 170.52510334670941,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.9664639636965508e-07,
+        "wayId": 1272974905,
+        "name": null,
+        "highway": "service",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Opoho -> Octagon start",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Clyde Street",
+        "Harrow Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Stuart Street",
+        "The Octagon"
+      ]
+    },
+    {
+      "distanceMeters": 3699.947598795556,
+      "turnAngleDegrees": 99.64285593939587,
+      "latitude": -45.8586133893815,
+      "longitude": 170.52510597567016,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.7496106250114615e-07,
+        "wayId": 1272974905,
+        "name": null,
+        "highway": "service",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 1944.9724539614479,
+      "turnAngleDegrees": 89.1070745551333,
+      "latitude": -45.8681199334393,
+      "longitude": 170.52287278604038,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.786920560060642e-07,
+        "wayId": 262933248,
+        "name": "Union Street East",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 2374.9663640917424,
+      "turnAngleDegrees": 89.08913718874913,
+      "latitude": -45.86660587015171,
+      "longitude": 170.51785505735293,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.337901281745978e-07,
+        "wayId": 106733483,
+        "name": "Forth Street",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 14964.788058371756,
+      "turnAngleDegrees": 88.07693752682451,
+      "latitude": -45.87531645901724,
+      "longitude": 170.50796437591043,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.721279303305229e-07,
+        "wayId": 88774369,
+        "name": "Castle Street",
+        "highway": "trunk",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Opoho -> Octagon start",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Clyde Street",
+        "Harrow Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Stuart Street",
+        "The Octagon"
+      ]
+    },
+    {
+      "distanceMeters": 9764.861703307732,
+      "turnAngleDegrees": 87.98472288729215,
+      "latitude": -45.856798628673,
+      "longitude": 170.52771696071275,
+      "nearestOsmRoad": {
+        "distanceMeters": 4.377622098875839e-06,
+        "wayId": 689022456,
+        "name": "Signal Hill Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    }
+  ],
+  "maxSustained250mClimbPercent": 14.159450969354964,
+  "maxSustained250mDescentPercent": -14.398227665762523,
+  "reportedPointsOver15Percent": 79,
+  "fiveMeterSamplesOver15Percent": 212,
+  "steepSectionsOver15Percent": [
+    {
+      "startMeters": 2544.9639564688355,
+      "endMeters": 2584.9633899693276,
+      "lengthMeters": 39.99943350049216,
+      "peakPositive25mGradientPercent": 15.818011445268354,
+      "peakNegative25mGradientPercent": 15.177162542311805,
+      "mean100mGradientPercent": 14.12481491926376,
+      "rawSamples": [
+        {
+          "distanceMeters": 2534.9640980937124,
+          "rawElevationMeters": 10.131338414223828,
+          "calibratedSourceElevationMeters": 10.131338414223828,
+          "filteredSourceElevationMeters": 10.131338414223828,
+          "processedElevationMeters": 10.166638971177951,
+          "gradientPercent": 14.261344689763652,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2539.964027281274,
+          "rawElevationMeters": 10.902277258586986,
+          "calibratedSourceElevationMeters": 10.902277258586986,
+          "filteredSourceElevationMeters": 10.902277258586986,
+          "processedElevationMeters": 10.904328254205472,
+          "gradientPercent": 14.806206350902535,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2544.9639564688355,
+          "rawElevationMeters": 11.639205484412704,
+          "calibratedSourceElevationMeters": 11.639205484412704,
+          "filteredSourceElevationMeters": 11.639205484412704,
+          "processedElevationMeters": 11.660053694038396,
+          "gradientPercent": 15.177162542311805,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2549.963885656397,
+          "rawElevationMeters": 12.420567807901058,
+          "calibratedSourceElevationMeters": 12.420567807901058,
+          "filteredSourceElevationMeters": 12.420567807901058,
+          "processedElevationMeters": 12.432433207636821,
+          "gradientPercent": 15.428663176069202,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2554.9638148439585,
+          "rawElevationMeters": 13.18733210252207,
+          "calibratedSourceElevationMeters": 13.18733210252207,
+          "filteredSourceElevationMeters": 13.18733210252207,
+          "processedElevationMeters": 13.213451172454999,
+          "gradientPercent": 15.608769119251306,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2559.96374403152,
+          "rawElevationMeters": 13.95884050505821,
+          "calibratedSourceElevationMeters": 13.95884050505821,
+          "filteredSourceElevationMeters": 13.95884050505821,
+          "processedElevationMeters": 13.997614544629354,
+          "gradientPercent": 15.735389607618517,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2564.9636732190816,
+          "rawElevationMeters": 14.787470880752895,
+          "calibratedSourceElevationMeters": 14.787470880752895,
+          "filteredSourceElevationMeters": 14.787470880752895,
+          "processedElevationMeters": 14.787576090576257,
+          "gradientPercent": 15.811935805505748,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2569.963602406643,
+          "rawElevationMeters": 15.598464167951066,
+          "calibratedSourceElevationMeters": 15.598464167951066,
+          "filteredSourceElevationMeters": 15.598464167951066,
+          "processedElevationMeters": 15.581080710981224,
+          "gradientPercent": 15.818011445268354,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2574.9635315942046,
+          "rawElevationMeters": 16.391420863807472,
+          "calibratedSourceElevationMeters": 16.391420863807472,
+          "filteredSourceElevationMeters": 16.391420863807472,
+          "processedElevationMeters": 16.378989796963573,
+          "gradientPercent": 15.73407782766921,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2579.963460781766,
+          "rawElevationMeters": 17.16893630604104,
+          "calibratedSourceElevationMeters": 17.16893630604104,
+          "filteredSourceElevationMeters": 17.16893630604104,
+          "processedElevationMeters": 17.17275097035095,
+          "gradientPercent": 15.55732807714493,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2584.9633899693276,
+          "rawElevationMeters": 17.97510015073582,
+          "calibratedSourceElevationMeters": 17.97510015073582,
+          "filteredSourceElevationMeters": 17.97510015073582,
+          "processedElevationMeters": 17.94721009794475,
+          "gradientPercent": 15.298713220774529,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2589.9633191568896,
+          "rawElevationMeters": 18.77269570439853,
+          "calibratedSourceElevationMeters": 18.77269570439853,
+          "filteredSourceElevationMeters": 18.77269570439853,
+          "processedElevationMeters": 18.70490985587255,
+          "gradientPercent": 14.957284025359854,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 2594.963248344451,
+          "rawElevationMeters": 19.515168718769825,
+          "calibratedSourceElevationMeters": 19.515168718769825,
+          "filteredSourceElevationMeters": 19.515168718769825,
+          "processedElevationMeters": 19.442302576148403,
+          "gradientPercent": 14.548274121142086,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.889086028941558e-06,
+        "wayId": 1528160882,
+        "name": "Forth Street",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 3414.951635104547,
+      "endMeters": 3504.9503604806555,
+      "lengthMeters": 89.99872537610827,
+      "peakPositive25mGradientPercent": 19.610675252632547,
+      "peakNegative25mGradientPercent": 15.139318520929237,
+      "mean100mGradientPercent": 16.47679191327507,
+      "rawSamples": [
+        {
+          "distanceMeters": 3404.951776729424,
+          "rawElevationMeters": 55.49840677830819,
+          "calibratedSourceElevationMeters": 55.49840677830819,
+          "filteredSourceElevationMeters": 55.49840677830819,
+          "processedElevationMeters": 55.76843658624061,
+          "gradientPercent": 13.011792751526485,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3409.9517059169857,
+          "rawElevationMeters": 56.10282218040021,
+          "calibratedSourceElevationMeters": 56.10282218040021,
+          "filteredSourceElevationMeters": 56.10282218040021,
+          "processedElevationMeters": 56.435682395183925,
+          "gradientPercent": 14.52546792214747,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3414.951635104547,
+          "rawElevationMeters": 56.99039518348323,
+          "calibratedSourceElevationMeters": 56.99039518348323,
+          "filteredSourceElevationMeters": 56.99039518348323,
+          "processedElevationMeters": 57.19467044682879,
+          "gradientPercent": 16.028959928079587,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3419.9515642921087,
+          "rawElevationMeters": 57.9468675687521,
+          "calibratedSourceElevationMeters": 57.9468675687521,
+          "filteredSourceElevationMeters": 57.9468675687521,
+          "processedElevationMeters": 58.05313438217377,
+          "gradientPercent": 17.41351423559064,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3424.9514934796703,
+          "rawElevationMeters": 58.878057770141325,
+          "calibratedSourceElevationMeters": 58.878057770141325,
+          "filteredSourceElevationMeters": 58.878057770141325,
+          "processedElevationMeters": 58.97625900219558,
+          "gradientPercent": 18.51065042304947,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3429.951422667232,
+          "rawElevationMeters": 59.93806460295667,
+          "calibratedSourceElevationMeters": 59.93806460295667,
+          "filteredSourceElevationMeters": 59.93806460295667,
+          "processedElevationMeters": 59.96146379478755,
+          "gradientPercent": 19.22918326400304,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3434.9513518547933,
+          "rawElevationMeters": 61.01732659117471,
+          "calibratedSourceElevationMeters": 61.01732659117471,
+          "filteredSourceElevationMeters": 61.01732659117471,
+          "processedElevationMeters": 60.94929510272607,
+          "gradientPercent": 19.588797612838277,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3439.951281042355,
+          "rawElevationMeters": 61.96027911846086,
+          "calibratedSourceElevationMeters": 61.96027911846086,
+          "filteredSourceElevationMeters": 61.96027911846086,
+          "processedElevationMeters": 61.936259313923316,
+          "gradientPercent": 19.610675252632547,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3444.951210229917,
+          "rawElevationMeters": 62.99925572854399,
+          "calibratedSourceElevationMeters": 62.99925572854399,
+          "filteredSourceElevationMeters": 62.99925572854399,
+          "processedElevationMeters": 62.92600626890737,
+          "gradientPercent": 19.461522023442114,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3449.9511394174783,
+          "rawElevationMeters": 63.90521433905289,
+          "calibratedSourceElevationMeters": 63.90521433905289,
+          "filteredSourceElevationMeters": 63.90521433905289,
+          "processedElevationMeters": 63.897651746690016,
+          "gradientPercent": 19.27126266185897,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3454.95106860504,
+          "rawElevationMeters": 64.85561704713282,
+          "calibratedSourceElevationMeters": 64.85561704713282,
+          "filteredSourceElevationMeters": 64.85561704713282,
+          "processedElevationMeters": 64.84527180663012,
+          "gradientPercent": 19.040913868697857,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3459.9509977926014,
+          "rawElevationMeters": 65.80628645502964,
+          "calibratedSourceElevationMeters": 65.80628645502964,
+          "filteredSourceElevationMeters": 65.80628645502964,
+          "processedElevationMeters": 65.79611081868764,
+          "gradientPercent": 18.866424466531214,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3464.950926980163,
+          "rawElevationMeters": 66.7395829474352,
+          "calibratedSourceElevationMeters": 66.7395829474352,
+          "filteredSourceElevationMeters": 66.7395829474352,
+          "processedElevationMeters": 66.72493926502034,
+          "gradientPercent": 18.78650392347322,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3469.9508561677244,
+          "rawElevationMeters": 67.65066701075546,
+          "calibratedSourceElevationMeters": 67.65066701075546,
+          "filteredSourceElevationMeters": 67.65066701075546,
+          "processedElevationMeters": 67.65764711651866,
+          "gradientPercent": 18.72385950832836,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3474.950785355286,
+          "rawElevationMeters": 68.61615220286339,
+          "calibratedSourceElevationMeters": 68.61615220286339,
+          "filteredSourceElevationMeters": 68.61615220286339,
+          "processedElevationMeters": 68.59908766013965,
+          "gradientPercent": 18.658517486650112,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3479.9507145428474,
+          "rawElevationMeters": 69.50105485287294,
+          "calibratedSourceElevationMeters": 69.50105485287294,
+          "filteredSourceElevationMeters": 69.50105485287294,
+          "processedElevationMeters": 69.5369543371125,
+          "gradientPercent": 18.53352576987305,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3484.950643730409,
+          "rawElevationMeters": 70.43416929954114,
+          "calibratedSourceElevationMeters": 70.43416929954114,
+          "filteredSourceElevationMeters": 70.43416929954114,
+          "processedElevationMeters": 70.4662249053398,
+          "gradientPercent": 18.242370751290082,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3489.9505729179705,
+          "rawElevationMeters": 71.44570085247982,
+          "calibratedSourceElevationMeters": 71.44570085247982,
+          "filteredSourceElevationMeters": 71.44570085247982,
+          "processedElevationMeters": 71.38395316065863,
+          "gradientPercent": 17.78114212109932,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3494.9505021055325,
+          "rawElevationMeters": 72.37135319383961,
+          "calibratedSourceElevationMeters": 72.37135319383961,
+          "filteredSourceElevationMeters": 72.37135319383961,
+          "processedElevationMeters": 72.2652676486524,
+          "gradientPercent": 17.12489210019322,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3499.950431293094,
+          "rawElevationMeters": 73.24447692502622,
+          "calibratedSourceElevationMeters": 73.24447692502622,
+          "filteredSourceElevationMeters": 73.24447692502622,
+          "processedElevationMeters": 73.11252583973808,
+          "gradientPercent": 16.230323253070992,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3504.9503604806555,
+          "rawElevationMeters": 74.07476479798729,
+          "calibratedSourceElevationMeters": 74.07476479798729,
+          "filteredSourceElevationMeters": 74.07476479798729,
+          "processedElevationMeters": 73.91396405189903,
+          "gradientPercent": 15.139318520929237,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3509.950289668217,
+          "rawElevationMeters": 74.78535361881976,
+          "calibratedSourceElevationMeters": 74.78535361881976,
+          "filteredSourceElevationMeters": 74.78535361881976,
+          "processedElevationMeters": 74.651543205285,
+          "gradientPercent": 13.903517136013532,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 3514.9502188557785,
+          "rawElevationMeters": 75.43186219047273,
+          "calibratedSourceElevationMeters": 75.43186219047273,
+          "filteredSourceElevationMeters": 75.43186219047273,
+          "processedElevationMeters": 75.31368461124144,
+          "gradientPercent": 12.534769310090555,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.1671397905369516e-05,
+        "wayId": 17940119,
+        "name": "Lovelock Shared Path",
+        "highway": "cycleway",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 4264.939596990012,
+      "endMeters": 4274.939455365136,
+      "lengthMeters": 9.99985837512395,
+      "peakPositive25mGradientPercent": 15.302319453437121,
+      "peakNegative25mGradientPercent": 15.01218334199001,
+      "mean100mGradientPercent": 11.618114085582695,
+      "rawSamples": [
+        {
+          "distanceMeters": 4254.939738614889,
+          "rawElevationMeters": 92.65565377685225,
+          "calibratedSourceElevationMeters": 95.8496442837573,
+          "filteredSourceElevationMeters": 95.8496442837573,
+          "processedElevationMeters": 95.91278976031607,
+          "gradientPercent": 14.197576968806857,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4259.939667802451,
+          "rawElevationMeters": 93.4460511057126,
+          "calibratedSourceElevationMeters": 96.63407289857261,
+          "filteredSourceElevationMeters": 96.63407289857261,
+          "processedElevationMeters": 96.67653321705464,
+          "gradientPercent": 14.946033084917588,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4264.939596990012,
+          "rawElevationMeters": 94.27210591226827,
+          "calibratedSourceElevationMeters": 97.45415899108325,
+          "filteredSourceElevationMeters": 97.45415899108325,
+          "processedElevationMeters": 97.45424546207254,
+          "gradientPercent": 15.302319453437121,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4269.939526177574,
+          "rawElevationMeters": 95.07598069697511,
+          "calibratedSourceElevationMeters": 98.25206506174506,
+          "filteredSourceElevationMeters": 98.25206506174506,
+          "processedElevationMeters": 98.23717806225612,
+          "gradientPercent": 15.29829692190111,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4274.939455365136,
+          "rawElevationMeters": 95.9027336722938,
+          "calibratedSourceElevationMeters": 99.07284932301872,
+          "filteredSourceElevationMeters": 99.07284932301872,
+          "processedElevationMeters": 99.00923238793878,
+          "gradientPercent": 15.01218334199001,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4279.939384552697,
+          "rawElevationMeters": 96.66523430649897,
+          "calibratedSourceElevationMeters": 99.82938124317886,
+          "filteredSourceElevationMeters": 99.82938124317886,
+          "processedElevationMeters": 99.75985625488848,
+          "gradientPercent": 14.52085482535392,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4284.939313740259,
+          "rawElevationMeters": 97.40989641180224,
+          "calibratedSourceElevationMeters": 100.56807463443708,
+          "filteredSourceElevationMeters": 100.56807463443708,
+          "processedElevationMeters": 100.47851020977052,
+          "gradientPercent": 13.873395071987318,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.0628800610674558e-05,
+        "wayId": 689022456,
+        "name": "Signal Hill Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 4894.930674622769,
+      "endMeters": 4984.929399998878,
+      "lengthMeters": 89.99872537610827,
+      "peakPositive25mGradientPercent": 17.72004166537579,
+      "peakNegative25mGradientPercent": 15.099428581051255,
+      "mean100mGradientPercent": 15.88680286976792,
+      "rawSamples": [
+        {
+          "distanceMeters": 4884.930816247646,
+          "rawElevationMeters": 147.53956390033076,
+          "calibratedSourceElevationMeters": 149.98149643756153,
+          "filteredSourceElevationMeters": 149.98149643756153,
+          "processedElevationMeters": 149.9880241366795,
+          "gradientPercent": 14.920398965668937,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4889.930745435208,
+          "rawElevationMeters": 148.29166527413705,
+          "calibratedSourceElevationMeters": 150.72762909732276,
+          "filteredSourceElevationMeters": 150.72762909732276,
+          "processedElevationMeters": 150.7348582238847,
+          "gradientPercent": 14.99744454923973,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4894.930674622769,
+          "rawElevationMeters": 149.0446494332496,
+          "calibratedSourceElevationMeters": 151.47464454239028,
+          "filteredSourceElevationMeters": 151.47464454239028,
+          "processedElevationMeters": 151.48680524740513,
+          "gradientPercent": 15.099428581051255,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4899.930603810331,
+          "rawElevationMeters": 149.80094857162385,
+          "calibratedSourceElevationMeters": 152.22497496671951,
+          "filteredSourceElevationMeters": 152.22497496671951,
+          "processedElevationMeters": 152.24295159194685,
+          "gradientPercent": 15.219795649871115,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4904.930532997892,
+          "rawElevationMeters": 150.57659957340667,
+          "calibratedSourceElevationMeters": 152.9946572544573,
+          "filteredSourceElevationMeters": 152.9946572544573,
+          "processedElevationMeters": 153.0055914631394,
+          "gradientPercent": 15.357123333824802,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4909.930462185454,
+          "rawElevationMeters": 151.35302116708112,
+          "calibratedSourceElevationMeters": 153.7651101340867,
+          "filteredSourceElevationMeters": 153.7651101340867,
+          "processedElevationMeters": 153.77719534396581,
+          "gradientPercent": 15.523133569775382,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4914.930391373016,
+          "rawElevationMeters": 152.12602845812927,
+          "calibratedSourceElevationMeters": 154.53214871108983,
+          "filteredSourceElevationMeters": 154.53214871108983,
+          "processedElevationMeters": 154.55547684285088,
+          "gradientPercent": 15.71679976391897,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4919.9303205605775,
+          "rawElevationMeters": 152.91982399699404,
+          "calibratedSourceElevationMeters": 155.31997553590958,
+          "filteredSourceElevationMeters": 155.31997553590958,
+          "processedElevationMeters": 155.3446391640952,
+          "gradientPercent": 15.93663727339242,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4924.930249748139,
+          "rawElevationMeters": 153.734673438237,
+          "calibratedSourceElevationMeters": 156.12885626310748,
+          "filteredSourceElevationMeters": 156.12885626310748,
+          "processedElevationMeters": 156.14657412704506,
+          "gradientPercent": 16.194197299552343,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4929.9301789357005,
+          "rawElevationMeters": 154.5344009237602,
+          "calibratedSourceElevationMeters": 156.92261503458565,
+          "filteredSourceElevationMeters": 156.92261503458565,
+          "processedElevationMeters": 156.96025718514943,
+          "gradientPercent": 16.482440560411533,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4934.9301081232625,
+          "rawElevationMeters": 155.36686581864944,
+          "calibratedSourceElevationMeters": 157.74911121542988,
+          "filteredSourceElevationMeters": 157.74911121542988,
+          "processedElevationMeters": 157.79073480974733,
+          "gradientPercent": 16.78192491819277,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4939.9300373108235,
+          "rawElevationMeters": 156.23192531237066,
+          "calibratedSourceElevationMeters": 158.60820199510604,
+          "filteredSourceElevationMeters": 158.60820199510604,
+          "processedElevationMeters": 158.63892085108182,
+          "gradientPercent": 17.086325906731986,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4944.9299664983855,
+          "rawElevationMeters": 157.09058357212737,
+          "calibratedSourceElevationMeters": 159.46089154081773,
+          "filteredSourceElevationMeters": 159.46089154081773,
+          "processedElevationMeters": 159.5022984140339,
+          "gradientPercent": 17.37480054312914,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4949.929895685947,
+          "rawElevationMeters": 157.98115282862977,
+          "calibratedSourceElevationMeters": 160.3454920832751,
+          "filteredSourceElevationMeters": 160.3454920832751,
+          "processedElevationMeters": 160.3797584124662,
+          "gradientPercent": 17.59901371277317,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4954.929824873509,
+          "rawElevationMeters": 158.89890728465065,
+          "calibratedSourceElevationMeters": 161.25727782525092,
+          "filteredSourceElevationMeters": 161.25727782525092,
+          "processedElevationMeters": 161.27011518416978,
+          "gradientPercent": 17.72004166537579,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4959.92975406107,
+          "rawElevationMeters": 159.8200973772167,
+          "calibratedSourceElevationMeters": 162.17249920377196,
+          "filteredSourceElevationMeters": 162.17249920377196,
+          "processedElevationMeters": 162.1681546800459,
+          "gradientPercent": 17.707826218235937,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4964.929683248632,
+          "rawElevationMeters": 160.71840191110175,
+          "calibratedSourceElevationMeters": 163.06483502361198,
+          "filteredSourceElevationMeters": 163.06483502361198,
+          "processedElevationMeters": 163.06088455692264,
+          "gradientPercent": 17.541687021257644,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4969.929612436194,
+          "rawElevationMeters": 161.6411442188896,
+          "calibratedSourceElevationMeters": 163.98160861735477,
+          "filteredSourceElevationMeters": 163.98160861735477,
+          "processedElevationMeters": 163.94023213251648,
+          "gradientPercent": 17.223268562911812,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4974.929541623755,
+          "rawElevationMeters": 162.55998278181846,
+          "calibratedSourceElevationMeters": 164.8944784662386,
+          "filteredSourceElevationMeters": 164.8944784662386,
+          "processedElevationMeters": 164.79561509452833,
+          "gradientPercent": 16.761239167817735,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4979.929470811317,
+          "rawElevationMeters": 163.38147370857988,
+          "calibratedSourceElevationMeters": 165.710000678955,
+          "filteredSourceElevationMeters": 165.710000678955,
+          "processedElevationMeters": 165.62498023330969,
+          "gradientPercent": 16.168904343148256,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4984.929399998878,
+          "rawElevationMeters": 164.17836685610217,
+          "calibratedSourceElevationMeters": 166.50092511243224,
+          "filteredSourceElevationMeters": 166.50092511243224,
+          "processedElevationMeters": 166.424803680844,
+          "gradientPercent": 15.490434883074954,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4989.92932918644,
+          "rawElevationMeters": 164.9283690170487,
+          "calibratedSourceElevationMeters": 167.24495855933375,
+          "filteredSourceElevationMeters": 167.24495855933375,
+          "processedElevationMeters": 167.18473810918655,
+          "gradientPercent": 14.768341729220765,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 4994.929258374001,
+          "rawElevationMeters": 165.66743434700138,
+          "calibratedSourceElevationMeters": 167.9780551752414,
+          "filteredSourceElevationMeters": 167.9780551752414,
+          "processedElevationMeters": 167.9007177812143,
+          "gradientPercent": 14.015541503868006,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.202905513430458e-06,
+        "wayId": 910814186,
+        "name": "Signal Hill Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 5179.926638313779,
+      "endMeters": 5254.9255761272025,
+      "lengthMeters": 74.99893781342325,
+      "peakPositive25mGradientPercent": 20.692644951521288,
+      "peakNegative25mGradientPercent": 15.246046537596952,
+      "mean100mGradientPercent": 16.870699114625907,
+      "rawSamples": [
+        {
+          "distanceMeters": 5169.926779938655,
+          "rawElevationMeters": 183.45950216987288,
+          "calibratedSourceElevationMeters": 185.5612180065367,
+          "filteredSourceElevationMeters": 185.5612180065367,
+          "processedElevationMeters": 185.5907339116863,
+          "gradientPercent": 14.187992332738986,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5174.926709126217,
+          "rawElevationMeters": 184.1973817981497,
+          "calibratedSourceElevationMeters": 186.2931289207685,
+          "filteredSourceElevationMeters": 186.2931289207685,
+          "processedElevationMeters": 186.3163034477237,
+          "gradientPercent": 14.813624356115495,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5179.926638313779,
+          "rawElevationMeters": 184.95401828687255,
+          "calibratedSourceElevationMeters": 187.0437966954463,
+          "filteredSourceElevationMeters": 187.0437966954463,
+          "processedElevationMeters": 187.07005640459178,
+          "gradientPercent": 15.518020080424662,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5184.92656750134,
+          "rawElevationMeters": 185.71352700300804,
+          "calibratedSourceElevationMeters": 187.79733669753676,
+          "filteredSourceElevationMeters": 187.79733669753676,
+          "processedElevationMeters": 187.84938409841826,
+          "gradientPercent": 16.317983797067313,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5189.926496688902,
+          "rawElevationMeters": 186.49714964618192,
+          "calibratedSourceElevationMeters": 188.57499062666562,
+          "filteredSourceElevationMeters": 188.57499062666562,
+          "processedElevationMeters": 188.67958574151876,
+          "gradientPercent": 17.208096101795263,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5194.926425876463,
+          "rawElevationMeters": 187.32244742849392,
+          "calibratedSourceElevationMeters": 189.39431969493256,
+          "filteredSourceElevationMeters": 189.39431969493256,
+          "processedElevationMeters": 189.56384469076167,
+          "gradientPercent": 18.169846772106666,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5199.926355064025,
+          "rawElevationMeters": 188.21499449464778,
+          "calibratedSourceElevationMeters": 190.2808980470414,
+          "filteredSourceElevationMeters": 190.2808980470414,
+          "processedElevationMeters": 190.5020667483738,
+          "gradientPercent": 19.112983424427966,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5204.926284251586,
+          "rawElevationMeters": 189.3126946698916,
+          "calibratedSourceElevationMeters": 191.3726295082402,
+          "filteredSourceElevationMeters": 191.3726295082402,
+          "processedElevationMeters": 191.48821794623828,
+          "gradientPercent": 19.915758690670145,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5209.926213439148,
+          "rawElevationMeters": 190.42897544116522,
+          "calibratedSourceElevationMeters": 192.48294156546876,
+          "filteredSourceElevationMeters": 192.48294156546876,
+          "processedElevationMeters": 192.51601797389245,
+          "gradientPercent": 20.470367739279027,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5214.926142626709,
+          "rawElevationMeters": 191.56335368847257,
+          "calibratedSourceElevationMeters": 193.6113510987311,
+          "filteredSourceElevationMeters": 193.6113510987311,
+          "processedElevationMeters": 193.56931020157612,
+          "gradientPercent": 20.692644951521288,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5219.926071814271,
+          "rawElevationMeters": 192.65836638637455,
+          "calibratedSourceElevationMeters": 194.70039508258805,
+          "filteredSourceElevationMeters": 194.70039508258805,
+          "processedElevationMeters": 194.63186171569072,
+          "gradientPercent": 20.569523989234995,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5224.926001001832,
+          "rawElevationMeters": 193.73353083807652,
+          "calibratedSourceElevationMeters": 195.76959082024496,
+          "filteredSourceElevationMeters": 195.76959082024496,
+          "processedElevationMeters": 195.66909370438535,
+          "gradientPercent": 20.133511981677998,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5229.925930189394,
+          "rawElevationMeters": 194.73727402059498,
+          "calibratedSourceElevationMeters": 196.7673652887184,
+          "filteredSourceElevationMeters": 196.7673652887184,
+          "processedElevationMeters": 196.667372941639,
+          "gradientPercent": 19.442039593201685,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5234.925859376956,
+          "rawElevationMeters": 195.69463609176515,
+          "calibratedSourceElevationMeters": 197.71875864584354,
+          "filteredSourceElevationMeters": 197.71875864584354,
+          "processedElevationMeters": 197.6214846271207,
+          "gradientPercent": 18.60709756073038,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5239.9257885645175,
+          "rawElevationMeters": 196.61509958906925,
+          "calibratedSourceElevationMeters": 198.63325342910258,
+          "filteredSourceElevationMeters": 198.63325342910258,
+          "processedElevationMeters": 198.53046058422362,
+          "gradientPercent": 17.73788792301343,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5244.925717752079,
+          "rawElevationMeters": 197.45871110025593,
+          "calibratedSourceElevationMeters": 199.47089622624424,
+          "filteredSourceElevationMeters": 199.47089622624424,
+          "processedElevationMeters": 199.3915949068302,
+          "gradientPercent": 16.86993487703637,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5249.9256469396405,
+          "rawElevationMeters": 198.28391648515984,
+          "calibratedSourceElevationMeters": 200.29013289710312,
+          "filteredSourceElevationMeters": 200.29013289710312,
+          "processedElevationMeters": 200.21277769286533,
+          "gradientPercent": 16.032303146774666,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5254.9255761272025,
+          "rawElevationMeters": 199.06297908441053,
+          "calibratedSourceElevationMeters": 201.0632267823088,
+          "filteredSourceElevationMeters": 201.0632267823088,
+          "processedElevationMeters": 200.9925070077617,
+          "gradientPercent": 15.246046537596952,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5259.9255053147635,
+          "rawElevationMeters": 199.80325209463723,
+          "calibratedSourceElevationMeters": 201.79753107849044,
+          "filteredSourceElevationMeters": 201.79753107849044,
+          "processedElevationMeters": 201.73119812632407,
+          "gradientPercent": 14.510053833193071,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5264.9254345023255,
+          "rawElevationMeters": 200.5273345211565,
+          "calibratedSourceElevationMeters": 202.51564479096467,
+          "filteredSourceElevationMeters": 202.51564479096467,
+          "processedElevationMeters": 202.43678432570522,
+          "gradientPercent": 13.829021111175962,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.00022272210834042201,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 5499.922106317719,
+      "endMeters": 5559.9212565684575,
+      "lengthMeters": 59.99915025073824,
+      "peakPositive25mGradientPercent": 21.72791081148273,
+      "peakNegative25mGradientPercent": 15.59580636362557,
+      "mean100mGradientPercent": 16.369476850686127,
+      "rawSamples": [
+        {
+          "distanceMeters": 5489.922247942595,
+          "rawElevationMeters": 224.41469231627434,
+          "calibratedSourceElevationMeters": 226.134410454056,
+          "filteredSourceElevationMeters": 226.134410454056,
+          "processedElevationMeters": 226.33816981341548,
+          "gradientPercent": 12.621785149536095,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5494.922177130157,
+          "rawElevationMeters": 225.10210189906766,
+          "calibratedSourceElevationMeters": 226.81585132280426,
+          "filteredSourceElevationMeters": 226.81585132280426,
+          "processedElevationMeters": 227.0187499538192,
+          "gradientPercent": 14.634189919422965,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5499.922106317719,
+          "rawElevationMeters": 225.84745254696855,
+          "calibratedSourceElevationMeters": 227.55523325666013,
+          "filteredSourceElevationMeters": 227.55523325666013,
+          "processedElevationMeters": 227.80698051644274,
+          "gradientPercent": 16.59449440594301,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5504.92203550528,
+          "rawElevationMeters": 226.78183105945124,
+          "calibratedSourceElevationMeters": 228.4836430550978,
+          "filteredSourceElevationMeters": 228.4836430550978,
+          "processedElevationMeters": 228.70789677054205,
+          "gradientPercent": 18.366787089538775,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5509.921964692842,
+          "rawElevationMeters": 227.8302370691026,
+          "calibratedSourceElevationMeters": 229.52608035070412,
+          "filteredSourceElevationMeters": 229.52608035070412,
+          "processedElevationMeters": 229.68266735682823,
+          "gradientPercent": 19.842588674845956,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5514.921893880403,
+          "rawElevationMeters": 228.9534323146824,
+          "calibratedSourceElevationMeters": 230.64330688223887,
+          "filteredSourceElevationMeters": 230.64330688223887,
+          "processedElevationMeters": 230.72377364319092,
+          "gradientPercent": 20.90245834887594,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5519.921823067965,
+          "rawElevationMeters": 230.11284621872176,
+          "calibratedSourceElevationMeters": 231.7967520722332,
+          "filteredSourceElevationMeters": 231.7967520722332,
+          "processedElevationMeters": 231.8164141009606,
+          "gradientPercent": 21.520517941537264,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5524.921752255526,
+          "rawElevationMeters": 231.2798674185929,
+          "calibratedSourceElevationMeters": 232.9578045580593,
+          "filteredSourceElevationMeters": 232.9578045580593,
+          "processedElevationMeters": 232.93047599884855,
+          "gradientPercent": 21.72791081148273,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5529.921681443088,
+          "rawElevationMeters": 232.43162690192167,
+          "calibratedSourceElevationMeters": 234.10359532734304,
+          "filteredSourceElevationMeters": 234.10359532734304,
+          "processedElevationMeters": 234.0354884158622,
+          "gradientPercent": 21.508743609499447,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5534.921610630649,
+          "rawElevationMeters": 233.5377167496716,
+          "calibratedSourceElevationMeters": 235.20371646104795,
+          "filteredSourceElevationMeters": 235.20371646104795,
+          "processedElevationMeters": 235.11518919808924,
+          "gradientPercent": 20.915749232532335,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5539.921539818211,
+          "rawElevationMeters": 234.62204534298198,
+          "calibratedSourceElevationMeters": 236.2820763403133,
+          "filteredSourceElevationMeters": 236.2820763403133,
+          "processedElevationMeters": 236.155059846533,
+          "gradientPercent": 20.057466818498256,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5544.921469005772,
+          "rawElevationMeters": 235.60710498651366,
+          "calibratedSourceElevationMeters": 237.26116726979993,
+          "filteredSourceElevationMeters": 237.26116726979993,
+          "processedElevationMeters": 237.13935262757846,
+          "gradientPercent": 19.017552238809344,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5549.921398193334,
+          "rawElevationMeters": 236.55311878858694,
+          "calibratedSourceElevationMeters": 238.20121235782818,
+          "filteredSourceElevationMeters": 238.20121235782818,
+          "processedElevationMeters": 238.06526763071204,
+          "gradientPercent": 17.87882088896299,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5554.921327380896,
+          "rawElevationMeters": 237.43372175614292,
+          "calibratedSourceElevationMeters": 239.07584661133913,
+          "filteredSourceElevationMeters": 239.07584661133913,
+          "processedElevationMeters": 238.92929075906505,
+          "gradientPercent": 16.72212639995189,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5559.9212565684575,
+          "rawElevationMeters": 238.21169788422668,
+          "calibratedSourceElevationMeters": 239.84785402537784,
+          "filteredSourceElevationMeters": 239.84785402537784,
+          "processedElevationMeters": 239.73002981387478,
+          "gradientPercent": 15.59580636362557,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5564.921185756019,
+          "rawElevationMeters": 238.9548129221718,
+          "calibratedSourceElevationMeters": 240.58500034927795,
+          "filteredSourceElevationMeters": 240.58500034927795,
+          "processedElevationMeters": 240.47950296563698,
+          "gradientPercent": 14.549598726981685,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5569.9211149435805,
+          "rawElevationMeters": 239.62765964645823,
+          "calibratedSourceElevationMeters": 241.25187835951934,
+          "filteredSourceElevationMeters": 241.25187835951934,
+          "processedElevationMeters": 241.17585369629958,
+          "gradientPercent": 13.620584278598017,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.034082748435305e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 5679.919557069935,
+      "endMeters": 5714.919061382866,
+      "lengthMeters": 34.999504312931094,
+      "peakPositive25mGradientPercent": 18.064784613371557,
+      "peakNegative25mGradientPercent": 15.52602687070214,
+      "mean100mGradientPercent": 13.293005334444715,
+      "rawSamples": [
+        {
+          "distanceMeters": 5669.919698694812,
+          "rawElevationMeters": 246.64636023479775,
+          "calibratedSourceElevationMeters": 248.15120466695817,
+          "filteredSourceElevationMeters": 248.15120466695817,
+          "processedElevationMeters": 248.36322265156386,
+          "gradientPercent": 12.267234941175275,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5674.919627882374,
+          "rawElevationMeters": 247.3219777003653,
+          "calibratedSourceElevationMeters": 248.82085341848068,
+          "filteredSourceElevationMeters": 248.82085341848068,
+          "processedElevationMeters": 249.02436760896367,
+          "gradientPercent": 13.97676219635025,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5679.919557069935,
+          "rawElevationMeters": 248.0895284147847,
+          "calibratedSourceElevationMeters": 249.58243541885506,
+          "filteredSourceElevationMeters": 249.58243541885506,
+          "processedElevationMeters": 249.77730156737377,
+          "gradientPercent": 15.528488442598132,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5684.919486257497,
+          "rawElevationMeters": 248.92786999749808,
+          "calibratedSourceElevationMeters": 250.4148082875234,
+          "filteredSourceElevationMeters": 250.4148082875234,
+          "processedElevationMeters": 250.6125110306472,
+          "gradientPercent": 16.788544809898326,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5689.919415445058,
+          "rawElevationMeters": 249.94811342151746,
+          "calibratedSourceElevationMeters": 251.42908299749774,
+          "filteredSourceElevationMeters": 251.42908299749774,
+          "processedElevationMeters": 251.50505606706253,
+          "gradientPercent": 17.66065432544167,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5694.91934463262,
+          "rawElevationMeters": 250.97661936355354,
+          "calibratedSourceElevationMeters": 252.4516202254888,
+          "filteredSourceElevationMeters": 252.4516202254888,
+          "processedElevationMeters": 252.42576624159568,
+          "gradientPercent": 18.064784613371557,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5699.919273820181,
+          "rawElevationMeters": 251.96854005183627,
+          "calibratedSourceElevationMeters": 253.4375721997265,
+          "filteredSourceElevationMeters": 253.4375721997265,
+          "processedElevationMeters": 253.35598373402976,
+          "gradientPercent": 17.975890134074007,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5704.919203007743,
+          "rawElevationMeters": 252.93595648802034,
+          "calibratedSourceElevationMeters": 254.39901992186552,
+          "filteredSourceElevationMeters": 254.39901992186552,
+          "processedElevationMeters": 254.27589414516174,
+          "gradientPercent": 17.46696864103194,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5709.919132195305,
+          "rawElevationMeters": 253.80872992041267,
+          "calibratedSourceElevationMeters": 255.26582464021283,
+          "filteredSourceElevationMeters": 255.26582464021283,
+          "processedElevationMeters": 255.14618998684537,
+          "gradientPercent": 16.616704602121104,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5714.919061382866,
+          "rawElevationMeters": 254.64283186013853,
+          "calibratedSourceElevationMeters": 256.09395786589363,
+          "filteredSourceElevationMeters": 256.09395786589363,
+          "processedElevationMeters": 255.9592014015795,
+          "gradientPercent": 15.52602687070214,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5719.918990570428,
+          "rawElevationMeters": 255.40902387373714,
+          "calibratedSourceElevationMeters": 256.85418116544724,
+          "filteredSourceElevationMeters": 256.85418116544724,
+          "processedElevationMeters": 256.70498721727887,
+          "gradientPercent": 14.333246933294049,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5724.918919757989,
+          "rawElevationMeters": 256.08196531161786,
+          "calibratedSourceElevationMeters": 257.5211538892829,
+          "filteredSourceElevationMeters": 257.5211538892829,
+          "processedElevationMeters": 257.38500103338674,
+          "gradientPercent": 13.180181869235186,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.617710097864389e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 5779.918140821166,
+      "endMeters": 5829.917432696782,
+      "lengthMeters": 49.99929187561611,
+      "peakPositive25mGradientPercent": 16.42942276793997,
+      "peakNegative25mGradientPercent": 15.248954660912887,
+      "mean100mGradientPercent": 14.159480231121051,
+      "rawSamples": [
+        {
+          "distanceMeters": 5769.918282446043,
+          "rawElevationMeters": 261.1691099647194,
+          "calibratedSourceElevationMeters": 262.55458011597915,
+          "filteredSourceElevationMeters": 262.55458011597915,
+          "processedElevationMeters": 262.6194546848493,
+          "gradientPercent": 13.87226816265752,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5774.918211633605,
+          "rawElevationMeters": 261.89198618983437,
+          "calibratedSourceElevationMeters": 263.27148762704905,
+          "filteredSourceElevationMeters": 263.27148762704905,
+          "processedElevationMeters": 263.341746831732,
+          "gradientPercent": 14.618849257712554,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5779.918140821166,
+          "rawElevationMeters": 262.631924606081,
+          "calibratedSourceElevationMeters": 264.00545732925065,
+          "filteredSourceElevationMeters": 264.00545732925065,
+          "processedElevationMeters": 264.09966453940126,
+          "gradientPercent": 15.248954660912887,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5784.918070008728,
+          "rawElevationMeters": 263.46109338129787,
+          "calibratedSourceElevationMeters": 264.8286573904225,
+          "filteredSourceElevationMeters": 264.8286573904225,
+          "processedElevationMeters": 264.8827814264454,
+          "gradientPercent": 15.73503854269552,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5789.917999196289,
+          "rawElevationMeters": 264.312790713518,
+          "calibratedSourceElevationMeters": 265.6743860085976,
+          "filteredSourceElevationMeters": 265.6743860085976,
+          "processedElevationMeters": 265.6841718883823,
+          "gradientPercent": 16.08532307835094,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5794.917928383851,
+          "rawElevationMeters": 265.15141374381244,
+          "calibratedSourceElevationMeters": 266.507040324847,
+          "filteredSourceElevationMeters": 266.507040324847,
+          "processedElevationMeters": 266.50033861375636,
+          "gradientPercent": 16.300658161488855,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5799.917857571412,
+          "rawElevationMeters": 265.98820332198227,
+          "calibratedSourceElevationMeters": 267.33786118897183,
+          "filteredSourceElevationMeters": 267.33786118897183,
+          "processedElevationMeters": 267.3282723973396,
+          "gradientPercent": 16.408132425789063,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5804.917786758974,
+          "rawElevationMeters": 266.8206241965928,
+          "calibratedSourceElevationMeters": 268.16431334953734,
+          "filteredSourceElevationMeters": 268.16431334953734,
+          "processedElevationMeters": 268.1556882500439,
+          "gradientPercent": 16.42942276793997,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5809.917715946535,
+          "rawElevationMeters": 267.64693426576804,
+          "calibratedSourceElevationMeters": 268.9846547046675,
+          "filteredSourceElevationMeters": 268.9846547046675,
+          "processedElevationMeters": 268.9769731833332,
+          "gradientPercent": 16.370325247566825,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5814.917645134097,
+          "rawElevationMeters": 268.469242089479,
+          "calibratedSourceElevationMeters": 269.8009938143334,
+          "filteredSourceElevationMeters": 269.8009938143334,
+          "processedElevationMeters": 269.79393174352526,
+          "gradientPercent": 16.25431722716462,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5819.917574321659,
+          "rawElevationMeters": 269.29478534854337,
+          "calibratedSourceElevationMeters": 270.6205683593528,
+          "filteredSourceElevationMeters": 270.6205683593528,
+          "processedElevationMeters": 270.60517490008937,
+          "gradientPercent": 16.08414076298709,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5824.91750350922,
+          "rawElevationMeters": 270.1035662448584,
+          "calibratedSourceElevationMeters": 271.4233805416228,
+          "filteredSourceElevationMeters": 271.4233805416228,
+          "processedElevationMeters": 271.4084832209228,
+          "gradientPercent": 15.791883321917794,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5829.917432696782,
+          "rawElevationMeters": 270.9119046634719,
+          "calibratedSourceElevationMeters": 272.22575024619124,
+          "filteredSourceElevationMeters": 272.22575024619124,
+          "processedElevationMeters": 272.2025212193161,
+          "gradientPercent": 15.30109620102371,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5834.917361884343,
+          "rawElevationMeters": 271.70868641624605,
+          "calibratedSourceElevationMeters": 273.0165632849204,
+          "filteredSourceElevationMeters": 273.0165632849204,
+          "processedElevationMeters": 272.97209794116594,
+          "gradientPercent": 14.549014654221537,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 5839.917291071905,
+          "rawElevationMeters": 272.48556344074245,
+          "calibratedSourceElevationMeters": 273.7874715953717,
+          "filteredSourceElevationMeters": 273.7874715953717,
+          "processedElevationMeters": 273.69463962934105,
+          "gradientPercent": 13.492801698736457,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 6.651242178690586e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Logan Park -> Signal Hill Road lower",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Dundas Street",
+        "Forth Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Signal Hill Road",
+        "Union Street East"
+      ]
+    },
+    {
+      "startMeters": 7929.887691472638,
+      "endMeters": 7979.886983348254,
+      "lengthMeters": 49.99929187561611,
+      "peakPositive25mGradientPercent": -15.50136512632912,
+      "peakNegative25mGradientPercent": -16.668938869386693,
+      "mean100mGradientPercent": -14.388927665736297,
+      "rawSamples": [
+        {
+          "distanceMeters": 7919.887833097515,
+          "rawElevationMeters": 272.5389463890407,
+          "calibratedSourceElevationMeters": 271.3578695009358,
+          "filteredSourceElevationMeters": 271.3578695009358,
+          "processedElevationMeters": 271.26109113400355,
+          "gradientPercent": -13.652304429063406,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7924.887762285077,
+          "rawElevationMeters": 271.76328138770145,
+          "calibratedSourceElevationMeters": 270.57623578555155,
+          "filteredSourceElevationMeters": 270.57623578555155,
+          "processedElevationMeters": 270.5302814439359,
+          "gradientPercent": -14.730450666257866,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7929.887691472638,
+          "rawElevationMeters": 270.9676680189422,
+          "calibratedSourceElevationMeters": 269.7746537027473,
+          "filteredSourceElevationMeters": 269.7746537027473,
+          "processedElevationMeters": 269.7507642162085,
+          "gradientPercent": -15.50136512632912,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7934.8876206602,
+          "rawElevationMeters": 270.1593584909805,
+          "calibratedSourceElevationMeters": 268.9603754607405,
+          "filteredSourceElevationMeters": 268.9603754607405,
+          "processedElevationMeters": 268.94549107423154,
+          "gradientPercent": -16.00750305709016,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7939.887549847761,
+          "rawElevationMeters": 269.3516663362236,
+          "calibratedSourceElevationMeters": 268.1467145919386,
+          "filteredSourceElevationMeters": 268.1467145919386,
+          "processedElevationMeters": 268.13083561936895,
+          "gradientPercent": -16.309482864479378,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7944.887479035323,
+          "rawElevationMeters": 268.52608110725095,
+          "calibratedSourceElevationMeters": 267.3151606489209,
+          "filteredSourceElevationMeters": 267.3151606489209,
+          "processedElevationMeters": 267.3081569666883,
+          "gradientPercent": -16.483650755306826,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7949.887408222885,
+          "rawElevationMeters": 267.70431700116126,
+          "calibratedSourceElevationMeters": 266.48742782878617,
+          "filteredSourceElevationMeters": 266.48742782878617,
+          "processedElevationMeters": 266.47957450863026,
+          "gradientPercent": -16.603592004104485,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7954.887337410446,
+          "rawElevationMeters": 266.8781392033177,
+          "calibratedSourceElevationMeters": 265.6552813168976,
+          "filteredSourceElevationMeters": 265.6552813168976,
+          "processedElevationMeters": 265.6468438880931,
+          "gradientPercent": -16.668938869386693,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7959.887266598008,
+          "rawElevationMeters": 266.04631181725233,
+          "calibratedSourceElevationMeters": 264.8174852167872,
+          "filteredSourceElevationMeters": 264.8174852167872,
+          "processedElevationMeters": 264.8077024713472,
+          "gradientPercent": -16.65349975920458,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7964.887195785569,
+          "rawElevationMeters": 265.2093718108512,
+          "calibratedSourceElevationMeters": 263.97457649634106,
+          "filteredSourceElevationMeters": 263.97457649634106,
+          "processedElevationMeters": 263.96694544565577,
+          "gradientPercent": -16.552359677393724,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7969.887124973131,
+          "rawElevationMeters": 264.3720251455354,
+          "calibratedSourceElevationMeters": 263.1312611169802,
+          "filteredSourceElevationMeters": 263.1312611169802,
+          "processedElevationMeters": 263.13769468451454,
+          "gradientPercent": -16.34515895418258,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7974.887054160692,
+          "rawElevationMeters": 263.5194574173179,
+          "calibratedSourceElevationMeters": 262.2727246747176,
+          "filteredSourceElevationMeters": 262.2727246747176,
+          "processedElevationMeters": 262.3234032487559,
+          "gradientPercent": -16.00417189214113,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7979.886983348254,
+          "rawElevationMeters": 262.6825629257256,
+          "calibratedSourceElevationMeters": 261.4298614690803,
+          "filteredSourceElevationMeters": 261.4298614690803,
+          "processedElevationMeters": 261.52695067733885,
+          "gradientPercent": -15.52876054094213,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7984.886912535815,
+          "rawElevationMeters": 261.94134267148826,
+          "calibratedSourceElevationMeters": 260.68267250079793,
+          "filteredSourceElevationMeters": 260.68267250079793,
+          "processedElevationMeters": 260.75513028276004,
+          "gradientPercent": -14.906385997306188,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 7989.886841723377,
+          "rawElevationMeters": 261.21988015132234,
+          "calibratedSourceElevationMeters": 259.955241266587,
+          "filteredSourceElevationMeters": 259.955241266587,
+          "processedElevationMeters": 260.0175434561324,
+          "gradientPercent": -14.16409497752602,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 6.717896456787139e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road lower -> Signal Hill Road upper",
+      "mappedRoadNamesInLeg": [
+        "Signal Hill Road"
+      ]
+    },
+    {
+      "startMeters": 8044.886062786554,
+      "endMeters": 8079.885567099485,
+      "lengthMeters": 34.999504312931094,
+      "peakPositive25mGradientPercent": -15.686427641965563,
+      "peakNegative25mGradientPercent": -18.317342729635698,
+      "mean100mGradientPercent": -13.551710579374248,
+      "rawSamples": [
+        {
+          "distanceMeters": 8034.886204411431,
+          "rawElevationMeters": 256.12648972188026,
+          "calibratedSourceElevationMeters": 254.8081324107396,
+          "filteredSourceElevationMeters": 254.8081324107396,
+          "processedElevationMeters": 254.67289337600982,
+          "gradientPercent": -13.342760299718975,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8039.886133598992,
+          "rawElevationMeters": 255.46253999240588,
+          "calibratedSourceElevationMeters": 254.1382139672202,
+          "filteredSourceElevationMeters": 254.1382139672202,
+          "processedElevationMeters": 253.98550720633617,
+          "gradientPercent": -14.489471136135876,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8044.886062786554,
+          "rawElevationMeters": 254.69581501060924,
+          "calibratedSourceElevationMeters": 253.3655202713785,
+          "filteredSourceElevationMeters": 253.3655202713785,
+          "processedElevationMeters": 253.23177532864446,
+          "gradientPercent": -15.686427641965563,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8049.885991974115,
+          "rawElevationMeters": 253.86944232840855,
+          "calibratedSourceElevationMeters": 252.5331788751328,
+          "filteredSourceElevationMeters": 252.5331788751328,
+          "processedElevationMeters": 252.41196706992974,
+          "gradientPercent": -16.790292077291724,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8054.885921161677,
+          "rawElevationMeters": 252.99947170974298,
+          "calibratedSourceElevationMeters": 251.6572395424222,
+          "filteredSourceElevationMeters": 251.6572395424222,
+          "processedElevationMeters": 251.533553396034,
+          "gradientPercent": -17.65906847838005,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8059.885850349239,
+          "rawElevationMeters": 252.03555746179546,
+          "calibratedSourceElevationMeters": 250.68735658042962,
+          "filteredSourceElevationMeters": 250.68735658042962,
+          "processedElevationMeters": 250.60244408216613,
+          "gradientPercent": -18.19572057949972,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8064.8857795368,
+          "rawElevationMeters": 251.04829743759603,
+          "calibratedSourceElevationMeters": 249.69412784218517,
+          "filteredSourceElevationMeters": 249.69412784218517,
+          "processedElevationMeters": 249.6609258098632,
+          "gradientPercent": -18.317342729635698,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8069.885708724362,
+          "rawElevationMeters": 250.01937500292524,
+          "calibratedSourceElevationMeters": 248.65923669346935,
+          "filteredSourceElevationMeters": 248.65923669346935,
+          "processedElevationMeters": 248.72694199888315,
+          "gradientPercent": -17.942950519106944,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8074.885637911923,
+          "rawElevationMeters": 248.98655579364623,
+          "calibratedSourceElevationMeters": 247.6204487701453,
+          "filteredSourceElevationMeters": 247.6204487701453,
+          "processedElevationMeters": 247.81906245346036,
+          "gradientPercent": -17.099607917101366,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8079.885567099485,
+          "rawElevationMeters": 248.14696810280387,
+          "calibratedSourceElevationMeters": 246.7748923652579,
+          "filteredSourceElevationMeters": 246.7748923652579,
+          "processedElevationMeters": 246.96790912427676,
+          "gradientPercent": -15.862482906398782,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8084.885496287046,
+          "rawElevationMeters": 247.37333664986335,
+          "calibratedSourceElevationMeters": 245.99529219827235,
+          "filteredSourceElevationMeters": 245.99529219827235,
+          "processedElevationMeters": 246.19673363901475,
+          "gradientPercent": -14.324547302685458,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8089.885425474608,
+          "rawElevationMeters": 246.68609589009873,
+          "calibratedSourceElevationMeters": 245.3020827244627,
+          "filteredSourceElevationMeters": 245.3020827244627,
+          "processedElevationMeters": 245.51694710463647,
+          "gradientPercent": -12.623655170675875,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.688216478536794e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 8199.883867600962,
+      "endMeters": 8264.882947039263,
+      "lengthMeters": 64.99907943830112,
+      "peakPositive25mGradientPercent": -15.007439027798682,
+      "peakNegative25mGradientPercent": -21.96249525621988,
+      "mean100mGradientPercent": -16.464454525888634,
+      "rawSamples": [
+        {
+          "distanceMeters": 8189.88400922584,
+          "rawElevationMeters": 239.67493740174268,
+          "calibratedSourceElevationMeters": 238.17154995520596,
+          "filteredSourceElevationMeters": 238.17154995520596,
+          "processedElevationMeters": 238.09554459784945,
+          "gradientPercent": -13.797951555755276,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8194.8839384134,
+          "rawElevationMeters": 239.00109619103534,
+          "calibratedSourceElevationMeters": 237.4917400304536,
+          "filteredSourceElevationMeters": 237.4917400304536,
+          "processedElevationMeters": 237.39017069877772,
+          "gradientPercent": -14.719133864335049,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8199.883867600962,
+          "rawElevationMeters": 238.26455696284893,
+          "calibratedSourceElevationMeters": 236.74923208822216,
+          "filteredSourceElevationMeters": 236.74923208822216,
+          "processedElevationMeters": 236.63295513012318,
+          "gradientPercent": -15.759213666377606,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8204.883796788525,
+          "rawElevationMeters": 237.4954064999646,
+          "calibratedSourceElevationMeters": 235.97411291129276,
+          "filteredSourceElevationMeters": 235.97411291129276,
+          "processedElevationMeters": 235.82384008996453,
+          "gradientPercent": -16.880975990287652,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8209.883725976086,
+          "rawElevationMeters": 236.613859273263,
+          "calibratedSourceElevationMeters": 235.08659697054614,
+          "filteredSourceElevationMeters": 235.08659697054614,
+          "processedElevationMeters": 234.9518925303976,
+          "gradientPercent": -18.03839862653831,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8214.883655163647,
+          "rawElevationMeters": 235.67596700755485,
+          "calibratedSourceElevationMeters": 234.14273599079297,
+          "filteredSourceElevationMeters": 234.14273599079297,
+          "processedElevationMeters": 234.0188080574119,
+          "gradientPercent": -19.182158832217283,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8219.88358435121,
+          "rawElevationMeters": 234.69011241404516,
+          "calibratedSourceElevationMeters": 233.15091268323823,
+          "filteredSourceElevationMeters": 233.15091268323823,
+          "processedElevationMeters": 233.026539459979,
+          "gradientPercent": -20.229663991409325,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8224.88351353877,
+          "rawElevationMeters": 233.6130854830895,
+          "calibratedSourceElevationMeters": 232.06791703823754,
+          "filteredSourceElevationMeters": 232.06791703823754,
+          "processedElevationMeters": 231.9775149617275,
+          "gradientPercent": -21.10390610221657,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8229.883442726332,
+          "rawElevationMeters": 232.5112858784504,
+          "calibratedSourceElevationMeters": 230.96014871955342,
+          "filteredSourceElevationMeters": 230.96014871955342,
+          "processedElevationMeters": 230.8883352670345,
+          "gradientPercent": -21.718264755072596,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8234.883371913893,
+          "rawElevationMeters": 231.36045777913418,
+          "calibratedSourceElevationMeters": 229.80335190619215,
+          "filteredSourceElevationMeters": 229.80335190619215,
+          "processedElevationMeters": 229.77270610477078,
+          "gradientPercent": -21.96249525621988,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8239.883301101456,
+          "rawElevationMeters": 230.19401601051902,
+          "calibratedSourceElevationMeters": 228.63094142353197,
+          "filteredSourceElevationMeters": 228.63094142353197,
+          "processedElevationMeters": 228.64618727952796,
+          "gradientPercent": -21.78474971713797,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8244.883230289017,
+          "rawElevationMeters": 229.0313824087272,
+          "calibratedSourceElevationMeters": 227.46233910769513,
+          "filteredSourceElevationMeters": 227.46233910769513,
+          "processedElevationMeters": 227.54017644671367,
+          "gradientPercent": -21.19600205920824,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8249.883159476578,
+          "rawElevationMeters": 227.90834387002405,
+          "calibratedSourceElevationMeters": 226.33333185494692,
+          "filteredSourceElevationMeters": 226.33333185494692,
+          "processedElevationMeters": 226.4827795098338,
+          "gradientPercent": -20.16423358745942,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8254.883088664139,
+          "rawElevationMeters": 226.84626163566082,
+          "calibratedSourceElevationMeters": 225.26528090653866,
+          "filteredSourceElevationMeters": 225.26528090653866,
+          "processedElevationMeters": 225.4908432313433,
+          "gradientPercent": -18.714502152794125,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8259.883017851702,
+          "rawElevationMeters": 225.9127906517043,
+          "calibratedSourceElevationMeters": 224.32584120853713,
+          "filteredSourceElevationMeters": 224.32584120853713,
+          "processedElevationMeters": 224.57234115469075,
+          "gradientPercent": -16.958649057574803,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8264.882947039263,
+          "rawElevationMeters": 225.15128831860676,
+          "calibratedSourceElevationMeters": 223.55837016139455,
+          "filteredSourceElevationMeters": 223.55837016139455,
+          "processedElevationMeters": 223.76457240943793,
+          "gradientPercent": -15.007439027798682,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8269.882876226824,
+          "rawElevationMeters": 224.45868482801592,
+          "calibratedSourceElevationMeters": 222.85979795675865,
+          "filteredSourceElevationMeters": 222.85979795675865,
+          "processedElevationMeters": 223.06466812347122,
+          "gradientPercent": -12.996003191944624,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8274.882805414387,
+          "rawElevationMeters": 223.80628247226628,
+          "calibratedSourceElevationMeters": 222.201426886964,
+          "filteredSourceElevationMeters": 222.201426886964,
+          "processedElevationMeters": 222.47907964973984,
+          "gradientPercent": -11.101596323647186,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 3.133451050917165e-05,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 8504.879548042218,
+      "endMeters": 8584.878415043202,
+      "lengthMeters": 79.99886700098432,
+      "peakPositive25mGradientPercent": -15.099672401113025,
+      "peakNegative25mGradientPercent": -20.933694401443404,
+      "mean100mGradientPercent": -17.017900815599724,
+      "rawSamples": [
+        {
+          "distanceMeters": 8494.879689667096,
+          "rawElevationMeters": 200.5734876937301,
+          "calibratedSourceElevationMeters": 198.7060086904463,
+          "filteredSourceElevationMeters": 198.7060086904463,
+          "processedElevationMeters": 198.62889296971875,
+          "gradientPercent": -14.021244289696028,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8499.879618854657,
+          "rawElevationMeters": 199.85346680907054,
+          "calibratedSourceElevationMeters": 197.98001909174172,
+          "filteredSourceElevationMeters": 197.98001909174172,
+          "processedElevationMeters": 197.91361680585328,
+          "gradientPercent": -14.697998760732844,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8504.879548042218,
+          "rawElevationMeters": 199.11777000550555,
+          "calibratedSourceElevationMeters": 197.23835357413168,
+          "filteredSourceElevationMeters": 197.23835357413168,
+          "processedElevationMeters": 197.16618159238664,
+          "gradientPercent": -15.42990771127927,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8509.879477229779,
+          "rawElevationMeters": 198.3374626481892,
+          "calibratedSourceElevationMeters": 196.4520775027703,
+          "filteredSourceElevationMeters": 196.4520775027703,
+          "processedElevationMeters": 196.37707858562342,
+          "gradientPercent": -16.212966608815236,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8514.879406417342,
+          "rawElevationMeters": 197.51735120132324,
+          "calibratedSourceElevationMeters": 195.62599734185932,
+          "filteredSourceElevationMeters": 195.62599734185932,
+          "processedElevationMeters": 195.54737357918813,
+          "gradientPercent": -17.04860132000067,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8519.879335604903,
+          "rawElevationMeters": 196.67961695455398,
+          "calibratedSourceElevationMeters": 194.782294381045,
+          "filteredSourceElevationMeters": 194.782294381045,
+          "processedElevationMeters": 194.6770500825853,
+          "gradientPercent": -17.915153156056363,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8524.879264792464,
+          "rawElevationMeters": 195.75809080492365,
+          "calibratedSourceElevationMeters": 193.85479951736966,
+          "filteredSourceElevationMeters": 193.85479951736966,
+          "processedElevationMeters": 193.75909204351365,
+          "gradientPercent": -18.786945282158968,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8529.879193980025,
+          "rawElevationMeters": 194.80733364699825,
+          "calibratedSourceElevationMeters": 192.89807364539922,
+          "filteredSourceElevationMeters": 192.89807364539922,
+          "processedElevationMeters": 192.79652678574416,
+          "gradientPercent": -19.627973600092446,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8534.879123167588,
+          "rawElevationMeters": 193.80298333116602,
+          "calibratedSourceElevationMeters": 191.88775461552197,
+          "filteredSourceElevationMeters": 191.88775461552197,
+          "processedElevationMeters": 191.7892840196635,
+          "gradientPercent": -20.33105269889836,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8539.879052355149,
+          "rawElevationMeters": 192.73384473031905,
+          "calibratedSourceElevationMeters": 190.81264730062995,
+          "filteredSourceElevationMeters": 190.81264730062995,
+          "processedElevationMeters": 190.74182843227027,
+          "gradientPercent": -20.787345533540247,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8544.87898154271,
+          "rawElevationMeters": 191.6412868421181,
+          "calibratedSourceElevationMeters": 189.71412069838397,
+          "filteredSourceElevationMeters": 189.71412069838397,
+          "processedElevationMeters": 189.66874604871535,
+          "gradientPercent": -20.933694401443404,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8549.878910730273,
+          "rawElevationMeters": 190.50843283707397,
+          "calibratedSourceElevationMeters": 188.57529797929482,
+          "filteredSourceElevationMeters": 188.57529797929482,
+          "processedElevationMeters": 188.60201027093382,
+          "gradientPercent": -20.733992158968704,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8554.878839917834,
+          "rawElevationMeters": 189.38920884111627,
+          "calibratedSourceElevationMeters": 187.45010526929207,
+          "filteredSourceElevationMeters": 187.45010526929207,
+          "processedElevationMeters": 187.56007773694043,
+          "gradientPercent": -20.201165246000187,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8559.878769105395,
+          "rawElevationMeters": 188.28829511835482,
+          "calibratedSourceElevationMeters": 186.3432228324856,
+          "filteredSourceElevationMeters": 186.3432228324856,
+          "processedElevationMeters": 186.5590280818433,
+          "gradientPercent": -19.41304329914385,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8564.878698292956,
+          "rawElevationMeters": 187.3819642008426,
+          "calibratedSourceElevationMeters": 185.43092320092833,
+          "filteredSourceElevationMeters": 185.43092320092833,
+          "processedElevationMeters": 185.60523000626512,
+          "gradientPercent": -18.475900044185664,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8569.878627480519,
+          "rawElevationMeters": 186.55123659152753,
+          "calibratedSourceElevationMeters": 184.59422687756822,
+          "filteredSourceElevationMeters": 184.59422687756822,
+          "processedElevationMeters": 184.70490159573006,
+          "gradientPercent": -17.51346158617207,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8574.87855666808,
+          "rawElevationMeters": 185.7682781429546,
+          "calibratedSourceElevationMeters": 183.80529971495028,
+          "filteredSourceElevationMeters": 183.80529971495028,
+          "processedElevationMeters": 183.8594684816066,
+          "gradientPercent": -16.61657724945212,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8579.878485855641,
+          "rawElevationMeters": 185.0064813113858,
+          "calibratedSourceElevationMeters": 183.03753416933645,
+          "filteredSourceElevationMeters": 183.03753416933645,
+          "processedElevationMeters": 183.06479956024447,
+          "gradientPercent": -15.809656052651237,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8584.878415043202,
+          "rawElevationMeters": 184.24791496164408,
+          "calibratedSourceElevationMeters": 182.27299910554967,
+          "filteredSourceElevationMeters": 182.27299910554967,
+          "processedElevationMeters": 182.29770067413637,
+          "gradientPercent": -15.099672401113025,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8589.878344230765,
+          "rawElevationMeters": 183.51295804056696,
+          "calibratedSourceElevationMeters": 181.53207347042752,
+          "filteredSourceElevationMeters": 181.53207347042752,
+          "processedElevationMeters": 181.5583886841961,
+          "gradientPercent": -14.469340189519245,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8594.878273418326,
+          "rawElevationMeters": 182.76739366713508,
+          "calibratedSourceElevationMeters": 180.78054038295062,
+          "filteredSourceElevationMeters": 180.78054038295062,
+          "processedElevationMeters": 180.84702902065257,
+          "gradientPercent": -13.864267268546202,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.00020006395072325167,
+        "wayId": 19776149,
+        "name": "Signal Hill Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 8774.875724170543,
+      "endMeters": 8884.874166296897,
+      "lengthMeters": 109.99844212635435,
+      "peakPositive25mGradientPercent": -15.03451701252925,
+      "peakNegative25mGradientPercent": -17.96279688738332,
+      "mean100mGradientPercent": -15.963055973765757,
+      "rawSamples": [
+        {
+          "distanceMeters": 8764.875865795419,
+          "rawElevationMeters": 165.71588566348416,
+          "calibratedSourceElevationMeters": 163.52609610176853,
+          "filteredSourceElevationMeters": 163.52609610176853,
+          "processedElevationMeters": 163.44895732627108,
+          "gradientPercent": -14.200321336414959,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8769.875794982981,
+          "rawElevationMeters": 164.98113307339423,
+          "calibratedSourceElevationMeters": 162.78537479763358,
+          "filteredSourceElevationMeters": 162.78537479763358,
+          "processedElevationMeters": 162.72458609071094,
+          "gradientPercent": -14.955047145514868,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8774.875724170543,
+          "rawElevationMeters": 164.2333485460407,
+          "calibratedSourceElevationMeters": 162.031621556235,
+          "filteredSourceElevationMeters": 162.031621556235,
+          "processedElevationMeters": 161.9555764230326,
+          "gradientPercent": -15.679200200055563,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8779.875653358104,
+          "rawElevationMeters": 163.43520654686813,
+          "calibratedSourceElevationMeters": 161.2275108430174,
+          "filteredSourceElevationMeters": 161.2275108430174,
+          "processedElevationMeters": 161.14611831449474,
+          "gradientPercent": -16.36325651650975,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8784.875582545665,
+          "rawElevationMeters": 162.62466517651103,
+          "calibratedSourceElevationMeters": 160.41100075861527,
+          "filteredSourceElevationMeters": 160.41100075861527,
+          "processedElevationMeters": 160.30665032084383,
+          "gradientPercent": -16.964172305269926,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8789.875511733228,
+          "rawElevationMeters": 161.70436459261094,
+          "calibratedSourceElevationMeters": 159.48473146067016,
+          "filteredSourceElevationMeters": 159.48473146067016,
+          "processedElevationMeters": 159.44109107111586,
+          "gradientPercent": -17.435527360725246,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8794.875440920789,
+          "rawElevationMeters": 160.78209452950907,
+          "calibratedSourceElevationMeters": 158.55649268352323,
+          "filteredSourceElevationMeters": 158.55649268352323,
+          "processedElevationMeters": 158.5509384176041,
+          "gradientPercent": -17.764376814796492,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8799.87537010835,
+          "rawElevationMeters": 159.88139070624314,
+          "calibratedSourceElevationMeters": 157.64982014621228,
+          "filteredSourceElevationMeters": 157.64982014621228,
+          "processedElevationMeters": 157.64725639255963,
+          "gradientPercent": -17.940877840783514,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8804.875299295913,
+          "rawElevationMeters": 158.96399932361354,
+          "calibratedSourceElevationMeters": 156.72646004953765,
+          "filteredSourceElevationMeters": 156.72646004953765,
+          "processedElevationMeters": 156.7367964579207,
+          "gradientPercent": -17.96279688738332,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8809.875228483474,
+          "rawElevationMeters": 158.04406096977365,
+          "calibratedSourceElevationMeters": 155.80055298165271,
+          "filteredSourceElevationMeters": 155.80055298165271,
+          "processedElevationMeters": 155.83390715233577,
+          "gradientPercent": -17.85049559842537,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8814.875157671035,
+          "rawElevationMeters": 157.15121336987204,
+          "calibratedSourceElevationMeters": 154.90173666770607,
+          "filteredSourceElevationMeters": 154.90173666770607,
+          "processedElevationMeters": 154.94351966386367,
+          "gradientPercent": -17.63230785125711,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8819.875086858596,
+          "rawElevationMeters": 156.29322663235376,
+          "calibratedSourceElevationMeters": 154.03778121614278,
+          "filteredSourceElevationMeters": 154.03778121614278,
+          "processedElevationMeters": 154.06723646856614,
+          "gradientPercent": -17.346198073550795,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8824.875016046159,
+          "rawElevationMeters": 155.42592045183156,
+          "calibratedSourceElevationMeters": 153.16450632157552,
+          "filteredSourceElevationMeters": 153.16450632157552,
+          "processedElevationMeters": 153.20583553398365,
+          "gradientPercent": -17.042762789918356,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8829.87494523372,
+          "rawElevationMeters": 154.59116310851977,
+          "calibratedSourceElevationMeters": 152.3237802642187,
+          "filteredSourceElevationMeters": 152.3237802642187,
+          "processedElevationMeters": 152.36218760528217,
+          "gradientPercent": -16.74310144833214,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8834.87487442128,
+          "rawElevationMeters": 153.78918933747562,
+          "calibratedSourceElevationMeters": 151.51583777912953,
+          "filteredSourceElevationMeters": 151.51583777912953,
+          "processedElevationMeters": 151.53553944269908,
+          "gradientPercent": -16.453141720203803,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8839.874803608842,
+          "rawElevationMeters": 152.97597377985113,
+          "calibratedSourceElevationMeters": 150.69665350745998,
+          "filteredSourceElevationMeters": 150.69665350745998,
+          "processedElevationMeters": 150.72062673671658,
+          "gradientPercent": -16.192242628068925,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8844.874732796405,
+          "rawElevationMeters": 152.18030646717867,
+          "calibratedSourceElevationMeters": 149.8950174807425,
+          "filteredSourceElevationMeters": 149.8950174807425,
+          "processedElevationMeters": 149.91869751154368,
+          "gradientPercent": -15.969431771226708,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8849.874661983966,
+          "rawElevationMeters": 151.40645723010584,
+          "calibratedSourceElevationMeters": 149.11519952962465,
+          "filteredSourceElevationMeters": 149.11519952962465,
+          "processedElevationMeters": 149.12792062730142,
+          "gradientPercent": -15.773444493982083,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8854.874591171527,
+          "rawElevationMeters": 150.63061868879132,
+          "calibratedSourceElevationMeters": 148.33339227426507,
+          "filteredSourceElevationMeters": 148.33339227426507,
+          "processedElevationMeters": 148.344096444831,
+          "gradientPercent": -15.604913016419344,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8859.87452035909,
+          "rawElevationMeters": 149.85419687393656,
+          "calibratedSourceElevationMeters": 147.55100174536528,
+          "filteredSourceElevationMeters": 147.55100174536528,
+          "processedElevationMeters": 147.56902814059205,
+          "gradientPercent": -15.466100826658135,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8864.87444954665,
+          "rawElevationMeters": 149.09750591713933,
+          "calibratedSourceElevationMeters": 146.78834207452303,
+          "filteredSourceElevationMeters": 146.78834207452303,
+          "processedElevationMeters": 146.80052791875082,
+          "gradientPercent": -15.345276468891825,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8869.874378734212,
+          "rawElevationMeters": 148.34420105849782,
+          "calibratedSourceElevationMeters": 146.0290685018365,
+          "filteredSourceElevationMeters": 146.0290685018365,
+          "processedElevationMeters": 146.03645071560427,
+          "gradientPercent": -15.242696301840624,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8874.874307921773,
+          "rawElevationMeters": 147.59227664849385,
+          "calibratedSourceElevationMeters": 145.27117537778747,
+          "filteredSourceElevationMeters": 145.27117537778747,
+          "processedElevationMeters": 145.2772267708047,
+          "gradientPercent": -15.165040758202963,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8879.874237109336,
+          "rawElevationMeters": 146.84258591260522,
+          "calibratedSourceElevationMeters": 144.5155159278538,
+          "filteredSourceElevationMeters": 144.5155159278538,
+          "processedElevationMeters": 144.52226103389162,
+          "gradientPercent": -15.097515369489086,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8884.874166296897,
+          "rawElevationMeters": 146.09969780639508,
+          "calibratedSourceElevationMeters": 143.76665910759866,
+          "filteredSourceElevationMeters": 143.76665910759866,
+          "processedElevationMeters": 143.76962358271277,
+          "gradientPercent": -15.03451701252925,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8889.874095484458,
+          "rawElevationMeters": 145.35783207350963,
+          "calibratedSourceElevationMeters": 143.01882466066814,
+          "filteredSourceElevationMeters": 143.01882466066814,
+          "processedElevationMeters": 143.01751977673288,
+          "gradientPercent": -14.979550618684698,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 8894.874024672019,
+          "rawElevationMeters": 144.6112177138602,
+          "calibratedSourceElevationMeters": 142.2662415869737,
+          "filteredSourceElevationMeters": 142.2662415869737,
+          "processedElevationMeters": 142.27080815703346,
+          "gradientPercent": -14.918077826263584,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.7766606617841278e-05,
+        "wayId": 910814186,
+        "name": "Signal Hill Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 9484.865668804285,
+      "endMeters": 9499.86545636697,
+      "lengthMeters": 14.999787562685015,
+      "peakPositive25mGradientPercent": -15.219834991231721,
+      "peakNegative25mGradientPercent": -15.549276018493572,
+      "mean100mGradientPercent": -11.689172747109179,
+      "rawSamples": [
+        {
+          "distanceMeters": 9474.86581042916,
+          "rawElevationMeters": 97.46001346467617,
+          "calibratedSourceElevationMeters": 94.42266650856571,
+          "filteredSourceElevationMeters": 94.42266650856571,
+          "processedElevationMeters": 94.33207567122341,
+          "gradientPercent": -14.062068873421596,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9479.865739616722,
+          "rawElevationMeters": 96.71816185699268,
+          "calibratedSourceElevationMeters": 93.67484618683719,
+          "filteredSourceElevationMeters": 93.67484618683719,
+          "processedElevationMeters": 93.60386055163953,
+          "gradientPercent": -14.717648137475637,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9484.865668804285,
+          "rawElevationMeters": 95.95746286355772,
+          "calibratedSourceElevationMeters": 92.9081784793572,
+          "filteredSourceElevationMeters": 92.9081784793572,
+          "processedElevationMeters": 92.84349865588226,
+          "gradientPercent": -15.22175750590901,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9489.865597991846,
+          "rawElevationMeters": 95.13406314321423,
+          "calibratedSourceElevationMeters": 92.07881004496868,
+          "filteredSourceElevationMeters": 92.07881004496868,
+          "processedElevationMeters": 92.06065668581587,
+          "gradientPercent": -15.52324773439574,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9494.865527179407,
+          "rawElevationMeters": 94.32764217846774,
+          "calibratedSourceElevationMeters": 91.26642036617716,
+          "filteredSourceElevationMeters": 91.26642036617716,
+          "processedElevationMeters": 91.26626029564798,
+          "gradientPercent": -15.549276018493572,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9499.86545636697,
+          "rawElevationMeters": 93.50512595468187,
+          "calibratedSourceElevationMeters": 90.43793542834625,
+          "filteredSourceElevationMeters": 90.43793542834625,
+          "processedElevationMeters": 90.47567095039373,
+          "gradientPercent": -15.219834991231721,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9504.86538555453,
+          "rawElevationMeters": 92.70889902683952,
+          "calibratedSourceElevationMeters": 89.63573978645886,
+          "filteredSourceElevationMeters": 89.63573978645886,
+          "processedElevationMeters": 89.69874798927829,
+          "gradientPercent": -14.499278618231697,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 9509.865314742092,
+          "rawElevationMeters": 91.94101973181634,
+          "calibratedSourceElevationMeters": 88.86189177739065,
+          "filteredSourceElevationMeters": 88.86189177739065,
+          "processedElevationMeters": 88.97407836918897,
+          "gradientPercent": -13.38416363550067,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 2.1172717112966458e-05,
+        "wayId": 689022456,
+        "name": "Signal Hill Road",
+        "highway": "tertiary",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 10109.85681724948,
+      "endMeters": 10114.85674643704,
+      "lengthMeters": 4.999929187561065,
+      "peakPositive25mGradientPercent": -15.008304713966908,
+      "peakNegative25mGradientPercent": -15.020884670879298,
+      "mean100mGradientPercent": -12.971768706910073,
+      "rawSamples": [
+        {
+          "distanceMeters": 10099.856958874356,
+          "rawElevationMeters": 55.50475418739437,
+          "calibratedSourceElevationMeters": 55.50475418739437,
+          "filteredSourceElevationMeters": 55.50475418739437,
+          "processedElevationMeters": 55.46932834691967,
+          "gradientPercent": -14.453110082961246,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10104.856888061919,
+          "rawElevationMeters": 54.80592134597329,
+          "calibratedSourceElevationMeters": 54.80592134597329,
+          "filteredSourceElevationMeters": 54.80592134597329,
+          "processedElevationMeters": 54.734549042450055,
+          "gradientPercent": -14.782375002301421,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10109.85681724948,
+          "rawElevationMeters": 54.058108064332565,
+          "calibratedSourceElevationMeters": 54.058108064332565,
+          "filteredSourceElevationMeters": 54.058108064332565,
+          "processedElevationMeters": 53.980395936766584,
+          "gradientPercent": -15.008304713966908,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10114.85674643704,
+          "rawElevationMeters": 53.265783792415164,
+          "calibratedSourceElevationMeters": 53.265783792415164,
+          "filteredSourceElevationMeters": 53.265783792415164,
+          "processedElevationMeters": 53.21577429687951,
+          "gradientPercent": -15.020884670879298,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10119.856675624602,
+          "rawElevationMeters": 52.4410063890334,
+          "calibratedSourceElevationMeters": 52.4410063890334,
+          "filteredSourceElevationMeters": 52.4410063890334,
+          "processedElevationMeters": 52.4456081743066,
+          "gradientPercent": -14.771512236618037,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10124.856604812165,
+          "rawElevationMeters": 51.61462486024247,
+          "calibratedSourceElevationMeters": 51.61462486024247,
+          "filteredSourceElevationMeters": 51.61462486024247,
+          "processedElevationMeters": 51.70011571299405,
+          "gradientPercent": -14.267837353157717,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 10.854119778862222,
+        "wayId": 909481820,
+        "name": "\u014cpoho Road",
+        "highway": "residential",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 10894.845699696645,
+      "endMeters": 10929.845204009576,
+      "lengthMeters": 34.999504312931094,
+      "peakPositive25mGradientPercent": 20.967671105785826,
+      "peakNegative25mGradientPercent": 15.150901405647287,
+      "mean100mGradientPercent": 13.171453688839723,
+      "rawSamples": [
+        {
+          "distanceMeters": 10884.845841321521,
+          "rawElevationMeters": 36.042783012086325,
+          "calibratedSourceElevationMeters": 36.042783012086325,
+          "filteredSourceElevationMeters": 36.042783012086325,
+          "processedElevationMeters": 36.27681863489741,
+          "gradientPercent": 12.636172262016487,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 10889.845770509084,
+          "rawElevationMeters": 43.43035630696787,
+          "calibratedSourceElevationMeters": 36.42273464836121,
+          "filteredSourceElevationMeters": 36.42273464836121,
+          "processedElevationMeters": 36.95496384156636,
+          "gradientPercent": 14.704320627081643,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10894.845699696645,
+          "rawElevationMeters": 44.46635308203558,
+          "calibratedSourceElevationMeters": 37.46270300496019,
+          "filteredSourceElevationMeters": 37.46270300496019,
+          "processedElevationMeters": 37.723971729921786,
+          "gradientPercent": 16.902849838910356,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10899.845628884206,
+          "rawElevationMeters": 45.4676663613411,
+          "calibratedSourceElevationMeters": 38.46798786579699,
+          "filteredSourceElevationMeters": 38.46798786579699,
+          "processedElevationMeters": 38.61631334890743,
+          "gradientPercent": 18.932211981878083,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10904.845558071767,
+          "rawElevationMeters": 46.525251704304445,
+          "calibratedSourceElevationMeters": 39.52954479029161,
+          "filteredSourceElevationMeters": 39.52954479029161,
+          "processedElevationMeters": 39.63463319944411,
+          "gradientPercent": 20.349276974384253,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10909.84548725933,
+          "rawElevationMeters": 47.558363149897225,
+          "calibratedSourceElevationMeters": 40.566627817415664,
+          "filteredSourceElevationMeters": 40.566627817415664,
+          "processedElevationMeters": 40.788653871401024,
+          "gradientPercent": 20.967671105785826,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10914.845416446891,
+          "rawElevationMeters": 48.809576054390284,
+          "calibratedSourceElevationMeters": 41.821812303440005,
+          "filteredSourceElevationMeters": 41.821812303440005,
+          "processedElevationMeters": 41.909107231047976,
+          "gradientPercent": 20.706592931659316,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10919.845345634452,
+          "rawElevationMeters": 50.15481413526209,
+          "calibratedSourceElevationMeters": 43.17102196584309,
+          "filteredSourceElevationMeters": 43.17102196584309,
+          "processedElevationMeters": 42.94433906320895,
+          "gradientPercent": 19.48549691777285,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10924.845274822013,
+          "rawElevationMeters": 51.48069993994729,
+          "calibratedSourceElevationMeters": 44.50087935205957,
+          "filteredSourceElevationMeters": 44.50087935205957,
+          "processedElevationMeters": 43.87965214599442,
+          "gradientPercent": 17.500286082519523,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10929.845204009576,
+          "rawElevationMeters": 52.28172552884532,
+          "calibratedSourceElevationMeters": 45.30587652248887,
+          "filteredSourceElevationMeters": 45.30587652248887,
+          "processedElevationMeters": 44.72445893377814,
+          "gradientPercent": 15.150901405647287,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10934.845133197137,
+          "rawElevationMeters": 52.68648811574904,
+          "calibratedSourceElevationMeters": 45.71461069092387,
+          "filteredSourceElevationMeters": 45.71461069092387,
+          "processedElevationMeters": 45.441444103591266,
+          "gradientPercent": 12.717900892907636,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 10939.845062384698,
+          "rawElevationMeters": 53.04464221308374,
+          "calibratedSourceElevationMeters": 46.07673636978985,
+          "filteredSourceElevationMeters": 46.07673636978985,
+          "processedElevationMeters": 46.00634069468684,
+          "gradientPercent": 10.459422435304589,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        }
+      ],
+      "sourceTransitionNearby": [
+        {
+          "distanceMeters": 10889.845770509084,
+          "latitude": -45.85302906540645,
+          "longitude": 170.51700632133822,
+          "from": "1m",
+          "to": "8m",
+          "rawElevationBeforeMeters": 36.042783012086325,
+          "rawElevationAfterMeters": 43.43035630696787,
+          "rawStepMeters": 7.387573294881548,
+          "calibratedElevationBeforeMeters": 36.042783012086325,
+          "calibratedElevationAfterMeters": 36.42273464836121,
+          "calibratedStepMeters": 0.3799516362748818,
+          "smoothedElevationBeforeMeters": 36.27681863489741,
+          "smoothedElevationAfterMeters": 36.95496384156636,
+          "smoothedStepMeters": 0.6781452066689511,
+          "fromResolutionMeters": 1,
+          "toResolutionMeters": 8,
+          "nearestOsmRoad": {
+            "distanceMeters": 5.44670748502438e-05,
+            "wayId": 511253876,
+            "name": "Gladstone Road",
+            "highway": "unclassified",
+            "bridge": null,
+            "tunnel": null,
+            "layer": null
+          },
+          "leg": "Signal Hill Road upper -> North East Valley",
+          "mappedRoadNamesInLeg": [
+            "Balmoral Street",
+            "Gladstone Road",
+            "Hatfield Street",
+            "North Road",
+            "Ramsay Street",
+            "Signal Hill Road",
+            "\u014cpoho Road"
+          ]
+        }
+      ],
+      "nearSourceTransition": true,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.20312355766502788,
+        "wayId": 511253876,
+        "name": "Gladstone Road",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Signal Hill Road upper -> North East Valley",
+      "mappedRoadNamesInLeg": [
+        "Balmoral Street",
+        "Gladstone Road",
+        "Hatfield Street",
+        "North Road",
+        "Ramsay Street",
+        "Signal Hill Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 11049.843504511053,
+      "endMeters": 11084.843008823984,
+      "lengthMeters": 34.999504312931094,
+      "peakPositive25mGradientPercent": -16.009415784440648,
+      "peakNegative25mGradientPercent": -20.903632904538966,
+      "mean100mGradientPercent": -13.259206645764552,
+      "rawSamples": [
+        {
+          "distanceMeters": 11039.84364613593,
+          "rawElevationMeters": 52.90830904260921,
+          "calibratedSourceElevationMeters": 46.01983482994086,
+          "filteredSourceElevationMeters": 46.01983482994086,
+          "processedElevationMeters": 45.879197939275464,
+          "gradientPercent": -11.19758702650941,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11044.843575323492,
+          "rawElevationMeters": 52.53028887687199,
+          "calibratedSourceElevationMeters": 45.645786245734925,
+          "filteredSourceElevationMeters": 45.645786245734925,
+          "processedElevationMeters": 45.259592904019804,
+          "gradientPercent": -13.574187676859085,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11049.843504511053,
+          "rawElevationMeters": 52.076255030689445,
+          "calibratedSourceElevationMeters": 45.19572398108365,
+          "filteredSourceElevationMeters": 45.19572398108365,
+          "processedElevationMeters": 44.49242444034187,
+          "gradientPercent": -16.009415784440648,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11054.843433698616,
+          "rawElevationMeters": 50.93853329584992,
+          "calibratedSourceElevationMeters": 44.061973827775404,
+          "filteredSourceElevationMeters": 44.061973827775404,
+          "processedElevationMeters": 43.61315356626396,
+          "gradientPercent": -18.241651973041343,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11059.843362886177,
+          "rawElevationMeters": 49.603008113127544,
+          "calibratedSourceElevationMeters": 42.73042022658431,
+          "filteredSourceElevationMeters": 42.73042022658431,
+          "processedElevationMeters": 42.64360281833497,
+          "gradientPercent": -19.995336697701134,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11064.843292073738,
+          "rawElevationMeters": 48.27695859159002,
+          "calibratedSourceElevationMeters": 41.408342286578055,
+          "filteredSourceElevationMeters": 41.408342286578055,
+          "processedElevationMeters": 41.580649588755996,
+          "gradientPercent": -20.903632904538966,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11069.843221261299,
+          "rawElevationMeters": 47.094638289631206,
+          "calibratedSourceElevationMeters": 40.229993566150526,
+          "filteredSourceElevationMeters": 40.229993566150526,
+          "processedElevationMeters": 40.437440098981305,
+          "gradientPercent": -20.874703083511832,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11074.843150448862,
+          "rawElevationMeters": 46.09365273638735,
+          "calibratedSourceElevationMeters": 39.23297959443794,
+          "filteredSourceElevationMeters": 39.23297959443794,
+          "processedElevationMeters": 39.31704256157382,
+          "gradientPercent": -20.014608560662083,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11079.843079636423,
+          "rawElevationMeters": 45.061815199100224,
+          "calibratedSourceElevationMeters": 38.20511363868209,
+          "filteredSourceElevationMeters": 38.20511363868209,
+          "processedElevationMeters": 38.3368506677199,
+          "gradientPercent": -18.421546986799115,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11084.843008823984,
+          "rawElevationMeters": 44.04598753154765,
+          "calibratedSourceElevationMeters": 37.1932575526608,
+          "filteredSourceElevationMeters": 37.1932575526608,
+          "processedElevationMeters": 37.48268331887732,
+          "gradientPercent": -16.344829586211034,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11089.842938011545,
+          "rawElevationMeters": 43.067949463278616,
+          "calibratedSourceElevationMeters": 36.21919106592304,
+          "filteredSourceElevationMeters": 36.21919106592304,
+          "processedElevationMeters": 36.73439306826627,
+          "gradientPercent": -14.2114187185432,
+          "sourceDataset": "8m",
+          "sourceResolutionMeters": 8
+        },
+        {
+          "distanceMeters": 11094.842867199108,
+          "rawElevationMeters": 35.86907696960686,
+          "calibratedSourceElevationMeters": 35.86907696960686,
+          "filteredSourceElevationMeters": 35.86907696960686,
+          "processedElevationMeters": 36.0730509125833,
+          "gradientPercent": -12.233744395362521,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        }
+      ],
+      "sourceTransitionNearby": [
+        {
+          "distanceMeters": 11094.842867199108,
+          "latitude": -45.85307898343219,
+          "longitude": 170.51706240053088,
+          "from": "8m",
+          "to": "1m",
+          "rawElevationBeforeMeters": 43.067949463278616,
+          "rawElevationAfterMeters": 35.86907696960686,
+          "rawStepMeters": -7.198872493671757,
+          "calibratedElevationBeforeMeters": 36.21919106592304,
+          "calibratedElevationAfterMeters": 35.86907696960686,
+          "calibratedStepMeters": -0.35011409631618307,
+          "smoothedElevationBeforeMeters": 36.73439306826627,
+          "smoothedElevationAfterMeters": 36.0730509125833,
+          "smoothedStepMeters": -0.6613421556829735,
+          "fromResolutionMeters": 8,
+          "toResolutionMeters": 1,
+          "nearestOsmRoad": {
+            "distanceMeters": 6.157376942712825e-05,
+            "wayId": 511253876,
+            "name": "Gladstone Road",
+            "highway": "unclassified",
+            "bridge": null,
+            "tunnel": null,
+            "layer": null
+          },
+          "leg": "North East Valley -> Opoho",
+          "mappedRoadNamesInLeg": [
+            "Bank Street",
+            "Dolphin Street",
+            "Gladstone Road",
+            "Lovelock Avenue",
+            "Ramsay Street",
+            "\u014cpoho Loop Road",
+            "\u014cpoho Road"
+          ]
+        }
+      ],
+      "nearSourceTransition": true,
+      "nearestOsmRoad": {
+        "distanceMeters": 0.1453684150935172,
+        "wayId": 511253876,
+        "name": "Gladstone Road",
+        "highway": "unclassified",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ]
+    },
+    {
+      "startMeters": 12669.820561281,
+      "endMeters": 12759.819286657108,
+      "lengthMeters": 89.99872537610827,
+      "peakPositive25mGradientPercent": -15.03404204868923,
+      "peakNegative25mGradientPercent": -19.615188751361842,
+      "mean100mGradientPercent": -16.472044961360005,
+      "rawSamples": [
+        {
+          "distanceMeters": 12659.820702905876,
+          "rawElevationMeters": 75.49933443404282,
+          "calibratedSourceElevationMeters": 75.49933443404282,
+          "filteredSourceElevationMeters": 75.49933443404282,
+          "processedElevationMeters": 75.37119195387177,
+          "gradientPercent": -12.39655274788629,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12664.820632093439,
+          "rawElevationMeters": 74.85443361321767,
+          "calibratedSourceElevationMeters": 74.85443361321767,
+          "filteredSourceElevationMeters": 74.85443361321767,
+          "processedElevationMeters": 74.71689492918436,
+          "gradientPercent": -13.779776303278993,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12669.820561281,
+          "rawElevationMeters": 74.13972407167918,
+          "calibratedSourceElevationMeters": 74.13972407167918,
+          "filteredSourceElevationMeters": 74.13972407167918,
+          "processedElevationMeters": 73.98778788238793,
+          "gradientPercent": -15.03404204868923,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12674.82049046856,
+          "rawElevationMeters": 73.3192172701492,
+          "calibratedSourceElevationMeters": 73.3192172701492,
+          "filteredSourceElevationMeters": 73.3192172701492,
+          "processedElevationMeters": 73.1906910417555,
+          "gradientPercent": -16.138193268538714,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12679.820419656122,
+          "rawElevationMeters": 72.45421133503292,
+          "calibratedSourceElevationMeters": 72.45421133503292,
+          "filteredSourceElevationMeters": 72.45421133503292,
+          "processedElevationMeters": 72.34565405075315,
+          "gradientPercent": -17.051977669701614,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12684.820348843685,
+          "rawElevationMeters": 71.54476991026765,
+          "calibratedSourceElevationMeters": 71.54476991026765,
+          "filteredSourceElevationMeters": 71.54476991026765,
+          "processedElevationMeters": 71.46567521678506,
+          "gradientPercent": -17.732131682938416,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12689.820278031246,
+          "rawElevationMeters": 70.52314665789913,
+          "calibratedSourceElevationMeters": 70.52314665789913,
+          "filteredSourceElevationMeters": 70.52314665789913,
+          "processedElevationMeters": 70.5534259645344,
+          "gradientPercent": -18.208671091541873,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12694.820207218807,
+          "rawElevationMeters": 69.58407549702635,
+          "calibratedSourceElevationMeters": 69.58407549702635,
+          "filteredSourceElevationMeters": 69.58407549702635,
+          "processedElevationMeters": 69.62538536051481,
+          "gradientPercent": -18.507642852383526,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12699.82013640637,
+          "rawElevationMeters": 68.69458177544104,
+          "calibratedSourceElevationMeters": 68.69458177544104,
+          "filteredSourceElevationMeters": 68.69458177544104,
+          "processedElevationMeters": 68.68715060696123,
+          "gradientPercent": -18.64519645818791,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12704.82006559393,
+          "rawElevationMeters": 67.75397930592452,
+          "calibratedSourceElevationMeters": 67.75397930592452,
+          "filteredSourceElevationMeters": 67.75397930592452,
+          "processedElevationMeters": 67.74498549770735,
+          "gradientPercent": -18.71703227537563,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12709.819994781492,
+          "rawElevationMeters": 66.82293304201204,
+          "calibratedSourceElevationMeters": 66.82293304201204,
+          "filteredSourceElevationMeters": 66.82293304201204,
+          "processedElevationMeters": 66.81265067980533,
+          "gradientPercent": -18.783762748631887,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12714.819923969053,
+          "rawElevationMeters": 65.88656806015778,
+          "calibratedSourceElevationMeters": 65.88656806015778,
+          "filteredSourceElevationMeters": 65.88656806015778,
+          "processedElevationMeters": 65.88398263410984,
+          "gradientPercent": -18.872906691212137,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12719.819853156616,
+          "rawElevationMeters": 64.94961414549056,
+          "calibratedSourceElevationMeters": 64.94961414549056,
+          "filteredSourceElevationMeters": 64.94961414549056,
+          "processedElevationMeters": 64.93644536937468,
+          "gradientPercent": -19.036372757231106,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12724.819782344177,
+          "rawElevationMeters": 63.99680293258501,
+          "calibratedSourceElevationMeters": 63.99680293258501,
+          "filteredSourceElevationMeters": 63.99680293258501,
+          "processedElevationMeters": 63.98434308505608,
+          "gradientPercent": -19.260563321932864,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12729.819711531738,
+          "rawElevationMeters": 63.08339917715794,
+          "calibratedSourceElevationMeters": 63.08339917715794,
+          "filteredSourceElevationMeters": 63.08339917715794,
+          "processedElevationMeters": 63.011475284076816,
+          "gradientPercent": -19.465783821556357,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12734.819640719299,
+          "rawElevationMeters": 62.06182092229482,
+          "calibratedSourceElevationMeters": 62.06182092229482,
+          "filteredSourceElevationMeters": 62.06182092229482,
+          "processedElevationMeters": 62.028110172124634,
+          "gradientPercent": -19.615188751361842,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12739.819569906862,
+          "rawElevationMeters": 61.08926331569438,
+          "calibratedSourceElevationMeters": 61.08926331569438,
+          "filteredSourceElevationMeters": 61.08926331569438,
+          "processedElevationMeters": 61.038377329392624,
+          "gradientPercent": -19.598056647370413,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12744.819499094423,
+          "rawElevationMeters": 60.012858435157185,
+          "calibratedSourceElevationMeters": 60.012858435157185,
+          "filteredSourceElevationMeters": 60.012858435157185,
+          "processedElevationMeters": 60.04929590194761,
+          "gradientPercent": -19.27342537265264,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12749.819428281984,
+          "rawElevationMeters": 59.00301227649252,
+          "calibratedSourceElevationMeters": 59.00301227649252,
+          "filteredSourceElevationMeters": 59.00301227649252,
+          "processedElevationMeters": 59.0640353681311,
+          "gradientPercent": -18.582149347638932,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12754.819357469547,
+          "rawElevationMeters": 58.021484246366455,
+          "calibratedSourceElevationMeters": 58.021484246366455,
+          "filteredSourceElevationMeters": 58.021484246366455,
+          "processedElevationMeters": 58.132889507076094,
+          "gradientPercent": -17.514023031050897,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12759.819286657108,
+          "rawElevationMeters": 57.07323294046988,
+          "calibratedSourceElevationMeters": 57.07323294046988,
+          "filteredSourceElevationMeters": 57.07323294046988,
+          "processedElevationMeters": 57.2701139943696,
+          "gradientPercent": -16.15972319451845,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12764.819215844669,
+          "rawElevationMeters": 56.186575440442475,
+          "calibratedSourceElevationMeters": 56.186575440442475,
+          "filteredSourceElevationMeters": 56.186575440442475,
+          "processedElevationMeters": 56.50542307011245,
+          "gradientPercent": -14.659385511090278,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        },
+        {
+          "distanceMeters": 12769.81914503223,
+          "rawElevationMeters": 55.54379989490972,
+          "calibratedSourceElevationMeters": 55.54379989490972,
+          "filteredSourceElevationMeters": 55.54379989490972,
+          "processedElevationMeters": 55.82535684379218,
+          "gradientPercent": -13.144852940554074,
+          "sourceDataset": "1m",
+          "sourceResolutionMeters": 1
+        }
+      ],
+      "sourceTransitionNearby": [],
+      "nearSourceTransition": false,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.190847918408904e-05,
+        "wayId": 17940119,
+        "name": "Lovelock Shared Path",
+        "highway": "cycleway",
+        "bridge": null,
+        "tunnel": null,
+        "layer": null
+      },
+      "leg": "Opoho -> Octagon start",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Clyde Street",
+        "Harrow Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Stuart Street",
+        "The Octagon"
+      ]
+    }
+  ],
+  "suspiciousRawElevationSpikes": [],
+  "suspiciousGradientSpikeCount": 0,
+  "correctedRawDemOutliers": [
+    {
+      "startSampleIndex": 2314,
+      "endSampleIndex": 2314,
+      "rawElevationsMeters": [
+        21.2393813871532
+      ],
+      "filteredElevationsMeters": [
+        23.349753465776683
+      ],
+      "maximumResidualMeters": 2.1715190503474453,
+      "maximumCorrectionMeters": 2.1103720786234845,
+      "resolutionMeters": 1,
+      "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
+      "startDistanceMeters": 11569.836140017456,
+      "endDistanceMeters": 11569.836140017456,
+      "latitude": -45.855587728520845,
+      "longitude": 170.52068271408336,
+      "nearestOsmRoad": {
+        "distanceMeters": 1.0688211853895864e-06,
+        "wayId": 162559984,
+        "name": "\u014cpoho Road",
+        "highway": "tertiary",
+        "bridge": "yes",
+        "tunnel": null,
+        "layer": "1"
+      },
+      "leg": "North East Valley -> Opoho",
+      "mappedRoadNamesInLeg": [
+        "Bank Street",
+        "Dolphin Street",
+        "Gladstone Road",
+        "Lovelock Avenue",
+        "Ramsay Street",
+        "\u014cpoho Loop Road",
+        "\u014cpoho Road"
+      ],
+      "interpretation": "OSM-tagged bridge; the DEM sample is below the road deck and the short run is interpolated from adjacent road samples.",
+      "rawSamples": [
+        {
+          "distanceMeters": 11559.836281642332,
+          "rawElevationMeters": 22.758927410267138,
+          "filteredSourceElevationMeters": 22.758927410267138,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 11564.836210829893,
+          "rawElevationMeters": 23.03159701570508,
+          "filteredSourceElevationMeters": 23.03159701570508,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 11569.836140017456,
+          "rawElevationMeters": 21.2393813871532,
+          "filteredSourceElevationMeters": 23.349753465776683,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 11574.836069205017,
+          "rawElevationMeters": 23.667909915848284,
+          "filteredSourceElevationMeters": 23.667909915848284,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 11579.835998392578,
+          "rawElevationMeters": 23.968698150790864,
+          "filteredSourceElevationMeters": 23.968698150790864,
+          "sourceDataset": "1m"
+        }
+      ]
+    },
+    {
+      "startSampleIndex": 2757,
+      "endSampleIndex": 2758,
+      "rawElevationsMeters": [
+        2.009999990463257,
+        2.009999990463257
+      ],
+      "filteredElevationsMeters": [
+        6.768190165375953,
+        6.771640071850988
+      ],
+      "maximumResidualMeters": 4.691282999927723,
+      "maximumCorrectionMeters": 4.761640081387731,
+      "resolutionMeters": 1,
+      "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
+      "startDistanceMeters": 13784.804770107228,
+      "endDistanceMeters": 13789.80469929479,
+      "latitude": -45.86707740672357,
+      "longitude": 170.51593818792847,
+      "nearestOsmRoad": {
+        "distanceMeters": 4.465506017100305e-06,
+        "wayId": 1353130671,
+        "name": "Clyde Street",
+        "highway": "unclassified",
+        "bridge": "yes",
+        "tunnel": null,
+        "layer": "1"
+      },
+      "leg": "Opoho -> Octagon start",
+      "mappedRoadNamesInLeg": [
+        "Anzac Avenue",
+        "Castle Street",
+        "Clyde Street",
+        "Harrow Street",
+        "Lovelock Avenue",
+        "Lovelock Shared Path",
+        "Stuart Street",
+        "The Octagon"
+      ],
+      "interpretation": "OSM-tagged bridge; the DEM sample is below the road deck and the short run is interpolated from adjacent road samples.",
+      "rawSamples": [
+        {
+          "distanceMeters": 13774.804911732104,
+          "rawElevationMeters": 6.777236231292402,
+          "filteredSourceElevationMeters": 6.777236231292402,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 13779.804840919667,
+          "rawElevationMeters": 6.764740258900918,
+          "filteredSourceElevationMeters": 6.764740258900918,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 13784.804770107228,
+          "rawElevationMeters": 2.009999990463257,
+          "filteredSourceElevationMeters": 6.768190165375953,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 13789.80469929479,
+          "rawElevationMeters": 2.009999990463257,
+          "filteredSourceElevationMeters": 6.771640071850988,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 13794.80462848235,
+          "rawElevationMeters": 6.775089978326022,
+          "filteredSourceElevationMeters": 6.775089978326022,
+          "sourceDataset": "1m"
+        },
+        {
+          "distanceMeters": 13799.804557669913,
+          "rawElevationMeters": 6.71279754318473,
+          "filteredSourceElevationMeters": 6.71279754318473,
+          "sourceDataset": "1m"
+        }
+      ]
+    }
+  ],
+  "correctedRawDemOutlierCount": 2,
+  "elevationSamplesCsv": "dunedin-signal-hill-climbing-loop.elevation-samples.csv",
+  "manualVisualChecks": [
+    {
+      "distanceMeters": 0.0,
+      "reasons": [
+        "route start and lap seam"
+      ]
+    },
+    {
+      "distanceMeters": 1918.0,
+      "reasons": [
+        "Logan Park route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 1945.0,
+      "reasons": [
+        "sharp turn 89 degrees on Union Street East"
+      ]
+    },
+    {
+      "distanceMeters": 2375.0,
+      "reasons": [
+        "sharp turn 89 degrees on Forth Street"
+      ]
+    },
+    {
+      "distanceMeters": 2545.0,
+      "reasons": [
+        "steep section start on Forth Street"
+      ]
+    },
+    {
+      "distanceMeters": 2935.0,
+      "reasons": [
+        "sharp turn 117 degrees on Lovelock Avenue"
+      ]
+    },
+    {
+      "distanceMeters": 3415.0,
+      "reasons": [
+        "steep section start on Lovelock Shared Path"
+      ]
+    },
+    {
+      "distanceMeters": 3460.0,
+      "reasons": [
+        "maximum100mClimb at Lovelock Shared Path"
+      ]
+    },
+    {
+      "distanceMeters": 3700.0,
+      "reasons": [
+        "sharp turn 100 degrees on mapped road"
+      ]
+    },
+    {
+      "distanceMeters": 3870.0,
+      "reasons": [
+        "DEM transition 1m to 8m"
+      ]
+    },
+    {
+      "distanceMeters": 4265.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 4895.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 5180.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 5500.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 5680.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 5780.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 6880.0,
+      "reasons": [
+        "Signal Hill Road lower route leg boundary",
+        "sharp turn 180 degrees on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 7930.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 8003.0,
+      "reasons": [
+        "Signal Hill Road upper route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 8045.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 8200.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 8505.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 8775.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 9485.0,
+      "reasons": [
+        "steep section start on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 9765.0,
+      "reasons": [
+        "sharp turn 88 degrees on Signal Hill Road"
+      ]
+    },
+    {
+      "distanceMeters": 9875.0,
+      "reasons": [
+        "DEM transition 8m to 1m"
+      ]
+    },
+    {
+      "distanceMeters": 9890.0,
+      "reasons": [
+        "sharp turn 132 degrees on Hatfield Street"
+      ]
+    },
+    {
+      "distanceMeters": 10110.0,
+      "reasons": [
+        "steep section start on \u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 10590.0,
+      "reasons": [
+        "sharp turn 106 degrees on \u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 10890.0,
+      "reasons": [
+        "DEM transition 1m to 8m"
+      ]
+    },
+    {
+      "distanceMeters": 10895.0,
+      "reasons": [
+        "steep section start on Gladstone Road"
+      ]
+    },
+    {
+      "distanceMeters": 10989.0,
+      "reasons": [
+        "North East Valley route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 10990.0,
+      "reasons": [
+        "sharp turn 177 degrees on Ramsay Street"
+      ]
+    },
+    {
+      "distanceMeters": 11050.0,
+      "reasons": [
+        "steep section start on Gladstone Road"
+      ]
+    },
+    {
+      "distanceMeters": 11095.0,
+      "reasons": [
+        "DEM transition 8m to 1m"
+      ]
+    },
+    {
+      "distanceMeters": 11570.0,
+      "reasons": [
+        "corrected DEM sample on \u014cpoho Road"
+      ]
+    },
+    {
+      "distanceMeters": 12255.0,
+      "reasons": [
+        "DEM transition 1m to 8m"
+      ]
+    },
+    {
+      "distanceMeters": 12270.0,
+      "reasons": [
+        "sharp turn 126 degrees on Lovelock Avenue"
+      ]
+    },
+    {
+      "distanceMeters": 12310.0,
+      "reasons": [
+        "DEM transition 8m to 1m"
+      ]
+    },
+    {
+      "distanceMeters": 12375.0,
+      "reasons": [
+        "Opoho route leg boundary"
+      ]
+    },
+    {
+      "distanceMeters": 12475.0,
+      "reasons": [
+        "sharp turn 101 degrees on mapped road"
+      ]
+    },
+    {
+      "distanceMeters": 12670.0,
+      "reasons": [
+        "steep section start on Lovelock Shared Path"
+      ]
+    },
+    {
+      "distanceMeters": 12715.0,
+      "reasons": [
+        "maximum100mDescent at Lovelock Shared Path"
+      ]
+    },
+    {
+      "distanceMeters": 13787.0,
+      "reasons": [
+        "corrected DEM sample on Clyde Street"
+      ]
+    },
+    {
+      "distanceMeters": 14965.0,
+      "reasons": [
+        "sharp turn 88 degrees on Castle Street"
+      ]
+    },
+    {
+      "distanceMeters": 15440.0,
+      "reasons": [
+        "Octagon start route leg boundary",
+        "route lap seam"
+      ]
+    }
+  ]
+}
