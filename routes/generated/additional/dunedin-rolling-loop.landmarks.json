@@ -1,0 +1,329 @@
+{
+  "id": "dunedin-rolling-loop",
+  "routeName": "Dunedin Rolling City and Valley Loop",
+  "searchRadiusMeters": 150,
+  "nearbyCandidatesConsidered": 175,
+  "deduplicatedCandidateCount": 168,
+  "selectedCount": 20,
+  "source": "OpenStreetMap",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "landmarks": [
+    {
+      "name": "Toit\u016B Otago Settlers Museum",
+      "category": "attraction",
+      "latitude": -45.87725120999998,
+      "longitude": 170.50580412999994,
+      "distanceFromRouteMeters": 12.154977387837368,
+      "nearestRouteDistanceMeters": 8088.4427731822225,
+      "osmType": "way",
+      "osmId": 88748713,
+      "tags": {
+        "building": "yes",
+        "name": "Toit\u016B Otago Settlers Museum",
+        "operator": "Dunedin City Council",
+        "tourism": "museum",
+        "wikidata": "Q1431259"
+      }
+    },
+    {
+      "name": "Dunedin Chinese Garden",
+      "category": "attraction",
+      "latitude": -45.8782380425,
+      "longitude": 170.5053242975,
+      "distanceFromRouteMeters": 14.572218656569726,
+      "nearestRouteDistanceMeters": 8299.215964013312,
+      "osmType": "relation",
+      "osmId": 9490732,
+      "tags": {
+        "leisure": "garden",
+        "name": "Dunedin Chinese Garden",
+        "tourism": "attraction",
+        "wikidata": "Q5314967"
+      }
+    },
+    {
+      "name": "Cargill Monument",
+      "category": "monument",
+      "latitude": -45.8776645,
+      "longitude": 170.5018603,
+      "distanceFromRouteMeters": 19.32307282317943,
+      "nearestRouteDistanceMeters": 16903.528963791046,
+      "osmType": "node",
+      "osmId": 2361033629,
+      "tags": {
+        "historic": "monument",
+        "name": "Cargill Monument",
+        "name:en": "Cargill Monument",
+        "wikidata": "Q77293877"
+      }
+    },
+    {
+      "name": "Toit\u016B Tauraka Waka",
+      "category": "monument",
+      "latitude": -45.8778841,
+      "longitude": 170.5017575,
+      "distanceFromRouteMeters": 19.918916386325577,
+      "nearestRouteDistanceMeters": 16877.85336964489,
+      "osmType": "node",
+      "osmId": 11801423940,
+      "tags": {
+        "historic": "monument",
+        "name": "Toit\u016B Tauraka Waka",
+        "wikidata": "Q79308235"
+      }
+    },
+    {
+      "name": "Dunedin South African War Memorial",
+      "category": "monument",
+      "latitude": -45.8850248,
+      "longitude": 170.49801806,
+      "distanceFromRouteMeters": 37.838122474783496,
+      "nearestRouteDistanceMeters": 16034.6323623999,
+      "osmType": "way",
+      "osmId": 984839014,
+      "tags": {
+        "building": "yes",
+        "historic": "memorial",
+        "name": "Dunedin South African War Memorial",
+        "wikidata": "Q98962778"
+      }
+    },
+    {
+      "name": "University of Otago",
+      "category": "education/civic",
+      "latitude": -45.86624677273559,
+      "longitude": 170.5160496672464,
+      "distanceFromRouteMeters": 1.6713424917810864,
+      "nearestRouteDistanceMeters": 6276.708512050806,
+      "osmType": "relation",
+      "osmId": 2140346,
+      "tags": {
+        "amenity": "university",
+        "name": "University of Otago",
+        "name:en": "University of Otago",
+        "operator": "University of Otago",
+        "wikidata": "Q1201513"
+      }
+    },
+    {
+      "name": "Otago Polytechnic",
+      "category": "education/civic",
+      "latitude": -45.86650364712229,
+      "longitude": 170.52036751762608,
+      "distanceFromRouteMeters": 2.94529005139505,
+      "nearestRouteDistanceMeters": 5784.471165067827,
+      "osmType": "relation",
+      "osmId": 21080373,
+      "tags": {
+        "amenity": "university",
+        "name": "Otago Polytechnic",
+        "name:en": "Otago Polytechnic",
+        "operator": "Otago Polytechnic",
+        "wikidata": "Q7108352"
+      }
+    },
+    {
+      "name": "University of Otago College of Education",
+      "category": "education/civic",
+      "latitude": -45.86767456034484,
+      "longitude": 170.52040410862074,
+      "distanceFromRouteMeters": 3.5696120616960085,
+      "nearestRouteDistanceMeters": 5811.520265466331,
+      "osmType": "way",
+      "osmId": 1536828865,
+      "tags": {
+        "amenity": "university",
+        "name": "University of Otago College of Education",
+        "operator": "University of Otago",
+        "wikidata": "Q7896034"
+      }
+    },
+    {
+      "name": "George Street Normal School",
+      "category": "education/civic",
+      "latitude": -45.857642260000006,
+      "longitude": 170.51290093500003,
+      "distanceFromRouteMeters": 7.975876101618569,
+      "nearestRouteDistanceMeters": 2741.9286820544303,
+      "osmType": "relation",
+      "osmId": 19348420,
+      "tags": {
+        "amenity": "school",
+        "name": "George Street Normal School",
+        "wikidata": "Q63406385"
+      }
+    },
+    {
+      "name": "Bathgate Park School",
+      "category": "education/civic",
+      "latitude": -45.900581753846154,
+      "longitude": 170.4925282769231,
+      "distanceFromRouteMeters": 8.692128659792159,
+      "nearestRouteDistanceMeters": 13695.709284929093,
+      "osmType": "way",
+      "osmId": 116802696,
+      "tags": {
+        "amenity": "school",
+        "name": "Bathgate Park School",
+        "wikidata": "Q106234206"
+      }
+    },
+    {
+      "name": "Dunedin Cenotaph",
+      "category": "monument",
+      "latitude": -45.877598600000006,
+      "longitude": 170.5043625,
+      "distanceFromRouteMeters": 50.06878129702805,
+      "nearestRouteDistanceMeters": 8256.483557459087,
+      "osmType": "node",
+      "osmId": 1708656921,
+      "tags": {
+        "historic": "memorial",
+        "name": "Dunedin Cenotaph",
+        "wikidata": "Q22115506"
+      }
+    },
+    {
+      "name": "Cadbury Fry Hudson Building",
+      "category": "historic",
+      "latitude": -45.87452114,
+      "longitude": 170.50763247,
+      "distanceFromRouteMeters": 10.322476501596158,
+      "nearestRouteDistanceMeters": 7818.834457712445,
+      "osmType": "way",
+      "osmId": 381884371,
+      "tags": {
+        "building": "yes",
+        "historic": "building",
+        "name": "Cadbury Fry Hudson Building",
+        "wikidata": "Q108846208"
+      }
+    },
+    {
+      "name": "Robert Burns",
+      "category": "attraction",
+      "latitude": -45.8740121,
+      "longitude": 170.503197,
+      "distanceFromRouteMeters": 13.134122228354146,
+      "nearestRouteDistanceMeters": 3.735395758371017,
+      "osmType": "node",
+      "osmId": 2361033632,
+      "tags": {
+        "name": "Robert Burns",
+        "name:en": "Robert Burns",
+        "tourism": "artwork",
+        "wikidata": "Q24088428"
+      }
+    },
+    {
+      "name": "James Macandrew Statue",
+      "category": "attraction",
+      "latitude": -45.8769792,
+      "longitude": 170.5056863,
+      "distanceFromRouteMeters": 15.470784991661953,
+      "nearestRouteDistanceMeters": 8150.1409284261845,
+      "osmType": "node",
+      "osmId": 11801323187,
+      "tags": {
+        "name": "James Macandrew Statue",
+        "tourism": "artwork",
+        "wikidata": "Q79302100"
+      }
+    },
+    {
+      "name": "Dunedin Museum of Natural Mystery",
+      "category": "attraction",
+      "latitude": -45.86559072222222,
+      "longitude": 170.50447904444445,
+      "distanceFromRouteMeters": 19.766596441753965,
+      "nearestRouteDistanceMeters": 1183.1475374664583,
+      "osmType": "way",
+      "osmId": 984836628,
+      "tags": {
+        "building": "yes",
+        "name": "Dunedin Museum of Natural Mystery",
+        "tourism": "museum",
+        "wikidata": "Q64652513"
+      }
+    },
+    {
+      "name": "Dunedin Public Art Gallery \u0026 Museum",
+      "category": "attraction",
+      "latitude": -45.874549800000004,
+      "longitude": 170.5029662,
+      "distanceFromRouteMeters": 21.94222959674883,
+      "nearestRouteDistanceMeters": 17294.51861323241,
+      "osmType": "node",
+      "osmId": 2396772295,
+      "tags": {
+        "name": "Dunedin Public Art Gallery \u0026 Museum",
+        "name:en": "Dunedin Public Art Gallery \u0026 Museum",
+        "tourism": "museum",
+        "wikidata": "Q5314986"
+      }
+    },
+    {
+      "name": "Woodside",
+      "category": "historic",
+      "latitude": -45.862253425490195,
+      "longitude": 170.51911839803927,
+      "distanceFromRouteMeters": 31.09708162309552,
+      "nearestRouteDistanceMeters": 5171.343650072035,
+      "osmType": "way",
+      "osmId": 983389230,
+      "tags": {
+        "building": "detached",
+        "historic": "house",
+        "name": "Woodside",
+        "wikidata": "Q79311184"
+      }
+    },
+    {
+      "name": "Dalmore Reserve",
+      "category": "park",
+      "latitude": -45.85051217941175,
+      "longitude": 170.51759617500005,
+      "distanceFromRouteMeters": 5.625072824581562,
+      "nearestRouteDistanceMeters": 3481.251945347842,
+      "osmType": "way",
+      "osmId": 571263157,
+      "tags": {
+        "leisure": "park",
+        "name": "Dalmore Reserve",
+        "wikidata": "Q96064721"
+      }
+    },
+    {
+      "name": "Dunedin Botanic Garden",
+      "category": "park",
+      "latitude": -45.858980048655916,
+      "longitude": 170.5229010870968,
+      "distanceFromRouteMeters": 8.448963313885066,
+      "nearestRouteDistanceMeters": 4295.611574160718,
+      "osmType": "relation",
+      "osmId": 21297294,
+      "tags": {
+        "leisure": "park",
+        "name": "Dunedin Botanic Garden",
+        "name:en": "Dunedin Botanic Garden",
+        "wikidata": "Q5314964"
+      }
+    },
+    {
+      "name": "Logan Park",
+      "category": "park",
+      "latitude": -45.86506724514768,
+      "longitude": 170.52437144641357,
+      "distanceFromRouteMeters": 8.697192214144618,
+      "nearestRouteDistanceMeters": 5981.729833186643,
+      "osmType": "relation",
+      "osmId": 20619124,
+      "tags": {
+        "leisure": "park",
+        "name": "Logan Park",
+        "name:en": "Logan Park",
+        "wikidata": "Q6667113"
+      }
+    }
+  ]
+}

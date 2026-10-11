@@ -16,7 +16,8 @@ public static class BuildingMeshGeometry
 
     public static StyledMesh BuildStyled(IReadOnlyList<Vector3> closedFloorRing, float totalHeight,
         string? roofShape, float requestedRoofHeight, int storeys, bool addWindows,
-        int maximumWindowColumnsPerWall = 8, int maximumStoreys = 6, int maximumWindowsPerBuilding = 120)
+        int maximumWindowColumnsPerWall = 8, int maximumStoreys = 6, int maximumWindowsPerBuilding = 120,
+        uint facadePattern = 0)
     {
         if (!float.IsFinite(totalHeight) || totalHeight <= 0) throw new ArgumentOutOfRangeException(nameof(totalHeight));
         if (closedFloorRing.Count < 4 || Vector3.DistanceSquared(closedFloorRing[0], closedFloorRing[^1]) > .01f)
@@ -81,7 +82,7 @@ public static class BuildingMeshGeometry
 
         var windowCount = addWindows
             ? AddWindows(windows, floor, wallTop, Math.Clamp(storeys, 1, maximumStoreys),
-                Math.Clamp(maximumWindowColumnsPerWall, 0, 8), Math.Clamp(maximumWindowsPerBuilding, 0, 160)) : 0;
+                Math.Clamp(maximumWindowColumnsPerWall, 0, 8), Math.Clamp(maximumWindowsPerBuilding, 0, 160), facadePattern) : 0;
         _ = footprintWidth;
         return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), shape, wallTop, windowCount);
     }
@@ -189,7 +190,7 @@ public static class BuildingMeshGeometry
     }
 
     private static int AddWindows(List<Vector3> output, IReadOnlyList<Vector3> floor, float wallHeight,
-        int storeys, int maxColumnsPerWall, int maxWindows)
+        int storeys, int maxColumnsPerWall, int maxWindows, uint facadePattern)
     {
         if (wallHeight <= 1.2f || maxColumnsPerWall == 0 || maxWindows == 0) return 0;
         var area=SignedArea(floor);var emitted=0;var levelHeight=wallHeight/storeys;
@@ -207,17 +208,35 @@ public static class BuildingMeshGeometry
             for(var level=0;level<storeys && emitted<maxWindows;level++)
             for(var column=0;column<columns && emitted<maxWindows;column++)
             {
+                var hash = WindowHash(facadePattern, i, level, column);
+                // A stable per-building pattern breaks up the identical window grid
+                // without introducing per-frame randomness or additional nodes.
+                if (hash % 13 == 0) continue;
                 var centerT=(column+1f)/(columns+1f);
                 var center=a+(b-a)*centerT+outward;
-                var y=level*levelHeight+(levelHeight-height)/2;
-                var u=new Vector3(dx/length,0,dz/length)*(width/2);
-                var low=center+Vector3.UnitY*y;var high=low+Vector3.UnitY*height;
+                var widthScale = .78f + ((hash >> 8) & 0xff) / 255f * .22f;
+                var heightScale = .84f + ((hash >> 16) & 0xff) / 255f * .16f;
+                var actualWidth = width * widthScale;
+                var actualHeight = height * heightScale;
+                var y=level*levelHeight+(levelHeight-actualHeight)/2;
+                var u=new Vector3(dx/length,0,dz/length)*(actualWidth/2);
+                var low=center+Vector3.UnitY*y;var high=low+Vector3.UnitY*actualHeight;
                 if(area>0) AddQuad(output,low-u,high-u,high+u,low+u);
                 else AddQuad(output,low+u,high+u,high-u,low-u);
                 emitted++;
             }
         }
         return emitted;
+    }
+
+    private static uint WindowHash(uint seed, int wall, int level, int column)
+    {
+        unchecked
+        {
+            var value = seed ^ ((uint)wall * 0x9E3779B9u) ^ ((uint)level * 0x85EBCA6Bu) ^ ((uint)column * 0xC2B2AE35u);
+            value ^= value >> 16; value *= 0x7FEB352Du; value ^= value >> 15; value *= 0x846CA68Bu; value ^= value >> 16;
+            return value;
+        }
     }
     private static IReadOnlyList<Triangle> Triangulate(IReadOnlyList<Vector3> polygon)
     {

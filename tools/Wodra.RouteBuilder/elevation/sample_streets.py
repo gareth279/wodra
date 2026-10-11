@@ -19,7 +19,9 @@ def main():
                 c,r=round(col),round(row)
                 a=ds.read(1,window=((r,r+1),(c,c+1)),boundless=True)[0,0]
                 if math.isfinite(float(a)) and (ds.nodata is None or a!=ds.nodata): return float(a)
-            raise RuntimeError(f'No cached LINZ elevation for {lat:.7f},{lon:.7f}; no elevation fabricated.')
+            # Keep this sample unavailable. The C# caller drops only the affected
+            # street fragment, preserving measured streets without inventing height.
+            return None
         data['elevations']=[[value(p['longitude'],p['latitude']) for p in street['points']] for street in data['streets']]
         path.write_text(json.dumps(data),encoding='utf-8')
     finally:

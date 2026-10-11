@@ -1,0 +1,325 @@
+{
+  "id": "dunedin-signal-hill-climbing-loop",
+  "routeName": "Dunedin Signal Hill Climbing Loop",
+  "searchRadiusMeters": 150,
+  "nearbyCandidatesConsidered": 141,
+  "deduplicatedCandidateCount": 138,
+  "selectedCount": 20,
+  "source": "OpenStreetMap",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "landmarks": [
+    {
+      "name": "Otago Polytechnic",
+      "category": "education/civic",
+      "latitude": -45.86650364712229,
+      "longitude": 170.52036751762608,
+      "distanceFromRouteMeters": 2.94529005139505,
+      "nearestRouteDistanceMeters": 2289.6241966844013,
+      "osmType": "relation",
+      "osmId": 21080373,
+      "tags": {
+        "amenity": "university",
+        "name": "Otago Polytechnic",
+        "name:en": "Otago Polytechnic",
+        "operator": "Otago Polytechnic",
+        "wikidata": "Q7108352"
+      }
+    },
+    {
+      "name": "University of Otago",
+      "category": "education/civic",
+      "latitude": -45.86624677273559,
+      "longitude": 170.5160496672464,
+      "distanceFromRouteMeters": 3.193231831039065,
+      "nearestRouteDistanceMeters": 2289.7820491902125,
+      "osmType": "relation",
+      "osmId": 2140346,
+      "tags": {
+        "amenity": "university",
+        "name": "University of Otago",
+        "name:en": "University of Otago",
+        "operator": "University of Otago",
+        "wikidata": "Q1201513"
+      }
+    },
+    {
+      "name": "University of Otago College of Education",
+      "category": "education/civic",
+      "latitude": -45.86767456034484,
+      "longitude": 170.52040410862074,
+      "distanceFromRouteMeters": 3.5696120616960085,
+      "nearestRouteDistanceMeters": 2262.5750962858974,
+      "osmType": "way",
+      "osmId": 1536828865,
+      "tags": {
+        "amenity": "university",
+        "name": "University of Otago College of Education",
+        "operator": "University of Otago",
+        "wikidata": "Q7896034"
+      }
+    },
+    {
+      "name": "Dunedin North Intermediate School",
+      "category": "education/civic",
+      "latitude": -45.85439906956522,
+      "longitude": 170.52120273913042,
+      "distanceFromRouteMeters": 8.4346541619,
+      "nearestRouteDistanceMeters": 10441.843974213123,
+      "osmType": "way",
+      "osmId": 104743608,
+      "tags": {
+        "amenity": "school",
+        "name": "Dunedin North Intermediate School",
+        "wikidata": "Q106149657"
+      }
+    },
+    {
+      "name": "Cadbury Fry Hudson Building",
+      "category": "historic",
+      "latitude": -45.87452114,
+      "longitude": 170.50763247,
+      "distanceFromRouteMeters": 10.322476501596158,
+      "nearestRouteDistanceMeters": 14901.815310538826,
+      "osmType": "way",
+      "osmId": 381884371,
+      "tags": {
+        "building": "yes",
+        "historic": "building",
+        "name": "Cadbury Fry Hudson Building",
+        "wikidata": "Q108846208"
+      }
+    },
+    {
+      "name": "Robert Burns",
+      "category": "attraction",
+      "latitude": -45.8740121,
+      "longitude": 170.503197,
+      "distanceFromRouteMeters": 13.134122228354146,
+      "nearestRouteDistanceMeters": 15427.391451018442,
+      "osmType": "node",
+      "osmId": 2361033632,
+      "tags": {
+        "name": "Robert Burns",
+        "name:en": "Robert Burns",
+        "tourism": "artwork",
+        "wikidata": "Q24088428"
+      }
+    },
+    {
+      "name": "Woodside",
+      "category": "historic",
+      "latitude": -45.862253425490195,
+      "longitude": 170.51911839803927,
+      "distanceFromRouteMeters": 18.133744132932016,
+      "nearestRouteDistanceMeters": 2987.8873635287837,
+      "osmType": "way",
+      "osmId": 983389230,
+      "tags": {
+        "building": "detached",
+        "historic": "house",
+        "name": "Woodside",
+        "wikidata": "Q79311184"
+      }
+    },
+    {
+      "name": "Dunedin Public Art Gallery \u0026 Museum",
+      "category": "attraction",
+      "latitude": -45.874549800000004,
+      "longitude": 170.5029662,
+      "distanceFromRouteMeters": 21.94222959674883,
+      "nearestRouteDistanceMeters": 15374.4791031507,
+      "osmType": "node",
+      "osmId": 2396772295,
+      "tags": {
+        "name": "Dunedin Public Art Gallery \u0026 Museum",
+        "name:en": "Dunedin Public Art Gallery \u0026 Museum",
+        "tourism": "museum",
+        "wikidata": "Q5314986"
+      }
+    },
+    {
+      "name": "Dunedin Botanic Garden",
+      "category": "park",
+      "latitude": -45.858980048655916,
+      "longitude": 170.5229010870968,
+      "distanceFromRouteMeters": 0.8656319423495903,
+      "nearestRouteDistanceMeters": 3598.533194084129,
+      "osmType": "relation",
+      "osmId": 21297294,
+      "tags": {
+        "leisure": "park",
+        "name": "Dunedin Botanic Garden",
+        "name:en": "Dunedin Botanic Garden",
+        "wikidata": "Q5314964"
+      }
+    },
+    {
+      "name": "Lookout Memorial",
+      "category": "monument",
+      "latitude": -45.85875727391304,
+      "longitude": 170.54671340434786,
+      "distanceFromRouteMeters": 44.85242629969471,
+      "nearestRouteDistanceMeters": 6880.076246905909,
+      "osmType": "way",
+      "osmId": 381909437,
+      "tags": {
+        "building": "yes",
+        "historic": "memorial",
+        "name": "Lookout Memorial"
+      }
+    },
+    {
+      "name": "Dalmore Reserve",
+      "category": "park",
+      "latitude": -45.85051217941175,
+      "longitude": 170.51759617500005,
+      "distanceFromRouteMeters": 5.625072824581562,
+      "nearestRouteDistanceMeters": 10866.774244872548,
+      "osmType": "way",
+      "osmId": 571263157,
+      "tags": {
+        "leisure": "park",
+        "name": "Dalmore Reserve",
+        "wikidata": "Q96064721"
+      }
+    },
+    {
+      "name": "\u014Cpoho School",
+      "category": "education/civic",
+      "latitude": -45.85397852857143,
+      "longitude": 170.53302542857142,
+      "distanceFromRouteMeters": 7.275526398004925,
+      "nearestRouteDistanceMeters": 4522.083823375479,
+      "osmType": "way",
+      "osmId": 1125770152,
+      "tags": {
+        "amenity": "school",
+        "name": "\u014Cpoho School",
+        "wikidata": "Q106215696"
+      }
+    },
+    {
+      "name": "Logan Park",
+      "category": "park",
+      "latitude": -45.86506724514768,
+      "longitude": 170.52437144641357,
+      "distanceFromRouteMeters": 8.697192214144618,
+      "nearestRouteDistanceMeters": 2092.3655285655855,
+      "osmType": "relation",
+      "osmId": 20619124,
+      "tags": {
+        "leisure": "park",
+        "name": "Logan Park",
+        "name:en": "Logan Park",
+        "wikidata": "Q6667113"
+      }
+    },
+    {
+      "name": "Regent Theatre Dunedin",
+      "category": "theatre",
+      "latitude": -45.8747901,
+      "longitude": 170.50436844615385,
+      "distanceFromRouteMeters": 10.479115510993772,
+      "nearestRouteDistanceMeters": 15318.360619135248,
+      "osmType": "way",
+      "osmId": 381871932,
+      "tags": {
+        "amenity": "theatre",
+        "building": "yes",
+        "name": "Regent Theatre Dunedin",
+        "operator": "Regent Theatre Trust of Otago",
+        "wikidata": "Q7308109"
+      }
+    },
+    {
+      "name": "Hocken Collections",
+      "category": "library",
+      "latitude": -45.869831250000004,
+      "longitude": 170.51786005000002,
+      "distanceFromRouteMeters": 14.486068255481372,
+      "nearestRouteDistanceMeters": 1477.3325010849956,
+      "osmType": "way",
+      "osmId": 159925411,
+      "tags": {
+        "amenity": "library",
+        "building": "university",
+        "name": "Hocken Collections",
+        "operator": "University of Otago",
+        "wikidata": "Q622974"
+      }
+    },
+    {
+      "name": "New Zealand Sports Hall of Fame",
+      "category": "attraction",
+      "latitude": -45.875367000000004,
+      "longitude": 170.50882810000002,
+      "distanceFromRouteMeters": 64.27170100610381,
+      "nearestRouteDistanceMeters": 14859.072663910503,
+      "osmType": "node",
+      "osmId": 4118935990,
+      "tags": {
+        "name": "New Zealand Sports Hall of Fame",
+        "tourism": "museum",
+        "wikidata": "Q13954816"
+      }
+    },
+    {
+      "name": "Dunedin Railway Station",
+      "category": "railway/station",
+      "latitude": -45.87520266666668,
+      "longitude": 170.508946952381,
+      "distanceFromRouteMeters": 25.208317690446012,
+      "nearestRouteDistanceMeters": 14819.980288802175,
+      "osmType": "way",
+      "osmId": 88748723,
+      "tags": {
+        "building": "train_station",
+        "name": "Dunedin Railway Station",
+        "wikidata": "Q800694"
+      }
+    },
+    {
+      "name": "Thomas Bracken Memorial",
+      "category": "monument",
+      "latitude": -45.861260400000006,
+      "longitude": 170.5234028,
+      "distanceFromRouteMeters": 34.38229088108921,
+      "nearestRouteDistanceMeters": 3384.6603680654143,
+      "osmType": "node",
+      "osmId": 14134592388,
+      "tags": {
+        "historic": "memorial",
+        "name": "Thomas Bracken Memorial"
+      }
+    },
+    {
+      "name": "Aquinas College",
+      "category": "education/civic",
+      "latitude": -45.85096872631579,
+      "longitude": 170.51718999473684,
+      "distanceFromRouteMeters": 90.59103062316721,
+      "nearestRouteDistanceMeters": 10978.85093357433,
+      "osmType": "way",
+      "osmId": 158680592,
+      "tags": {
+        "amenity": "university",
+        "name": "Aquinas College",
+        "wikidata": "Q4782974"
+      }
+    },
+    {
+      "name": "Street Art Trail",
+      "category": "attraction",
+      "latitude": -45.8736406,
+      "longitude": 170.5032918,
+      "distanceFromRouteMeters": 11.807317150325632,
+      "nearestRouteDistanceMeters": 37.70607558671573,
+      "osmType": "node",
+      "osmId": 12401604701,
+      "tags": {
+        "name": "Street Art Trail",
+        "tourism": "artwork"
+      }
+    }
+  ]
+}

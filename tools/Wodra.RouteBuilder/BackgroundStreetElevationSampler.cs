@@ -22,10 +22,29 @@ public static class BackgroundStreetElevationSampler
             using var process=Process.Start(start)??throw new InvalidOperationException("Could not start Python for LINZ street sampling.");
             var stderr=process.StandardError.ReadToEndAsync();await process.WaitForExitAsync();if(process.ExitCode!=0)throw new InvalidDataException((await stderr).Trim());
             using var document=JsonDocument.Parse(await File.ReadAllTextAsync(path));
-            var elevations=document.RootElement.GetProperty("elevations").EnumerateArray().Select(a=>a.EnumerateArray().Select(v=>v.GetDouble()).ToArray()).ToArray();
+            var elevations=document.RootElement.GetProperty("elevations").EnumerateArray()
+                .Select(a=>a.EnumerateArray().Select(v=>v.ValueKind==JsonValueKind.Null?(double?)null:v.GetDouble()).ToArray()).ToArray();
             if(elevations.Length!=input.Streets.Count)throw new InvalidDataException("LINZ street sampler returned a different number of street profiles.");
-            var streets=input.Streets.Select((s,i)=>s with { Points=s.Points.Select((p,j)=>p with { ElevationMeters=elevations[i][j] }).ToArray() }).ToArray();
-            timer.Stop();return input with { Streets=streets,GenerationSeconds=input.GenerationSeconds+timer.Elapsed.TotalSeconds };
+            var streets=new List<BackgroundStreet>();var skippedStreetCount=0;var skippedPointCount=0;
+            for(var i=0;i<input.Streets.Count;i++)
+            {
+                var source=input.Streets[i];var run=new List<BackgroundStreetPoint>();var hadMissing=false;
+                void Flush()
+                {
+                    if(run.Count>=2)streets.Add(source with { Points=run.ToArray() });
+                    else skippedPointCount+=run.Count;
+                    run.Clear();
+                }
+                for(var j=0;j<source.Points.Count;j++)
+                {
+                    var elevation=elevations[i][j];
+                    if(elevation is null){hadMissing=true;skippedPointCount++;Flush();continue;}
+                    run.Add(source.Points[j] with { ElevationMeters=elevation.Value });
+                }
+                Flush();if(hadMissing)skippedStreetCount++;
+            }
+            timer.Stop();return input with { Streets=streets,GenerationSeconds=input.GenerationSeconds+timer.Elapsed.TotalSeconds,
+                ElevationSkippedStreetCount=skippedStreetCount,ElevationSkippedPointCount=skippedPointCount };
         }
         finally { if(File.Exists(path))File.Delete(path); }
     }

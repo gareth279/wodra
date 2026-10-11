@@ -18,8 +18,8 @@ public static class RouteStreetFurnitureDataLoader
 
     public static RouteStreetFurnitureData LoadEmbedded(Assembly assembly, string resourceName, string routeId)
     {
-        using var stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidDataException($"Embedded street-furniture resource '{resourceName}' was not found.");
+        using var stream = RoutePackageFiles.Open(assembly, resourceName, routeId)
+            ?? throw new InvalidDataException($"Route street-furniture resource '{resourceName}' was not found.");
         var file = JsonSerializer.Deserialize<FurnitureFile>(stream, Options)
             ?? throw new InvalidDataException($"Embedded street-furniture resource '{resourceName}' is empty.");
         if (!string.Equals(file.Id, routeId, StringComparison.Ordinal) || file.Items is null)

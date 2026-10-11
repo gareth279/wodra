@@ -23,8 +23,8 @@ public static class RouteBuildingDataLoader
 
     public static IReadOnlyList<RouteBuildingData> LoadEmbedded(Assembly assembly, string resourceName, string routeId)
     {
-        using var stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidDataException($"Embedded building resource '{resourceName}' was not found.");
+        using var stream = RoutePackageFiles.Open(assembly, resourceName, routeId)
+            ?? throw new InvalidDataException($"Route building resource '{resourceName}' was not found.");
         var file = JsonSerializer.Deserialize<BuildingFile>(stream, JsonOptions)
             ?? throw new InvalidDataException($"Embedded building resource '{resourceName}' is empty.");
         if (!string.Equals(file.Id, routeId, StringComparison.Ordinal) || file.Buildings is null)

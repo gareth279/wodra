@@ -4,7 +4,7 @@ using Godot;
 
 public static class ProceduralRoad
 {
-    public const float WidthMeters = 7;
+    public const float WidthMeters = RoadRibbonMath.RoadWidthMeters;
     public const double NonAsphaltJoinExclusionMeters = 6;
 
 #if DEBUG
@@ -50,10 +50,12 @@ public static class ProceduralRoad
 
         var surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);
-        var radius = roadWidth / 2 + 0.05f;
         foreach (var index in sharp)
         {
             var center = ToGodot(route.Samples[index].Position) + Vector3.Up * 0.012f;
+            var radius=RoadRibbonMath.SharpJoinFillRadius(
+                route.Samples[index==0?last-1:index-1].Position,route.Samples[index].Position,
+                route.Samples[index+1].Position,roadWidth);
             foreach (var triangle in RoadRibbonMath.BuildSharpJoinFill(ToNumerics(center), radius))
             {
                 Vertex(surface, ToGodot(triangle.A), Vector3.Up);
@@ -65,7 +67,7 @@ public static class ProceduralRoad
     }
 
     public static Node3D BuildKerbsAndFootpaths(VisualRoute route, bool includeKerbs = true,
-        bool includeFootpaths = true)
+        bool includeFootpaths = true, IReadOnlyList<RoadJunctionOpening>? junctionOpenings = null)
     {
 #if DEBUG
         includeKerbs &= !DebugDisableKerbs;
@@ -79,17 +81,17 @@ public static class ProceduralRoad
         {
             if (includeKerbs)
             {
-                edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.5f, 0.005f, 0.14f, kerbFace));
-                edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.73f, 0.14f, 0.14f, kerbTop));
+                edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.5f, 0.005f, 0.14f, kerbFace,junctionOpenings));
+                edges.AddChild(BuildProfileRibbon(route, side * 3.5f, side * 3.73f, 0.14f, 0.14f, kerbTop,junctionOpenings));
             }
             if (includeFootpaths)
-                edges.AddChild(BuildProfileRibbon(route, side * 3.73f, side * 6.0f, 0.14f, 0.11f, footpath));
+                edges.AddChild(BuildProfileRibbon(route, side * 3.73f, side * 6.0f, 0.14f, 0.11f, footpath,junctionOpenings));
         }
         return edges;
     }
 
     private static MeshInstance3D BuildProfileRibbon(VisualRoute route, float lateralStart, float lateralEnd,
-        float startHeight, float endHeight, Color colour)
+        float startHeight, float endHeight, Color colour,IReadOnlyList<RoadJunctionOpening>? junctionOpenings)
     {
         var surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);
@@ -97,7 +99,8 @@ public static class ProceduralRoad
         var distances = route.Samples.Select(sample => sample.DistanceMeters).ToArray();
         var quads = RoadRibbonMath.BuildProfileQuads(positions, distances,
             lateralStart, lateralEnd, startHeight, endHeight, NonAsphaltJoinExclusionMeters);
-        foreach (var profileQuad in quads)
+        foreach (var sourceQuad in quads)
+        foreach (var profileQuad in RoadRibbonMath.ClipProfileQuadAtJunctions(sourceQuad,distances[^1],junctionOpenings))
         {
             var quad = profileQuad.Quad;
             var forward = ToGodot(positions[profileQuad.SourceSegmentIndex + 1]

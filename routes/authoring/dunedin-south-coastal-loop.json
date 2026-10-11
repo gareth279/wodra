@@ -1,0 +1,115 @@
+{
+  "id": "dunedin-south-coastal-loop",
+  "buildings": {
+    "elevationCacheDirectory": "routes/cache/elevation",
+    "metersPerLevel": 3,
+    "ordinaryHeightMeters": 8,
+    "smallBuildingHeightMeters": 3.5,
+    "simplificationToleranceMeters": 0.75,
+    "searchRadiusMeters": 100,
+    "enabled": true
+  },
+  "maxOutputSpacingMeters": 20,
+  "routeCorridorMeters": 1500,
+  "elevation": {
+    "gradientWindowMeters": 25,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
+    "gradientReviewThresholdPercent": 15,
+    "smoothingWindowMeters": 30,
+    "resampleIntervalMeters": 5,
+    "maximumBridgeInterpolationMeters": 100,
+    "enabled": true,
+    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json"
+  },
+  "backgroundStreets": {
+    "sampleSpacingMeters": 15,
+    "enabled": true,
+    "searchRadiusMeters": 150,
+    "elevationCacheDirectory": "routes/cache/elevation",
+    "routeOverlapSuppressionMeters": 8
+  },
+  "maxSnapDistanceMeters": 120,
+  "bbox": {
+    "minLatitude": -45.94,
+    "maxLatitude": -45.83,
+    "maxLongitude": 170.57,
+    "minLongitude": 170.47
+  },
+  "detourWarningRatio": 1.8,
+  "vegetation": {
+    "elevationCacheDirectory": "routes/cache/elevation",
+    "totalTreeInstanceCap": 600,
+    "generatedTreeCapPerArea": 100,
+    "treeRowSpacingMeters": 10,
+    "simplificationToleranceMeters": 1,
+    "searchRadiusMeters": 130,
+    "enabled": true
+  },
+  "marginMeters": 400,
+  "routingMode": "anchors",
+  "loop": true,
+  "streetFurniture": {
+    "enabled": true,
+    "searchRadiusMeters": 60,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "profile": "cycling",
+  "detourFailureRatio": 2.8,
+  "name": "Dunedin South Dunedin Coastal Loop",
+  "anchors": [
+    {
+      "latitude": -45.907,
+      "sourceDistanceMeters": 0,
+      "longitude": 170.507,
+      "name": "Forbury Road start"
+    },
+    {
+      "latitude": -45.897,
+      "sourceDistanceMeters": 1000,
+      "longitude": 170.516,
+      "name": "Musselburgh Rise"
+    },
+    {
+      "latitude": -45.89955,
+      "sourceDistanceMeters": 2000,
+      "longitude": 170.529,
+      "name": "Spottiswoode Street"
+    },
+    {
+      "latitude": -45.908,
+      "sourceDistanceMeters": 3000,
+      "longitude": 170.518,
+      "name": "John Wilson Ocean Drive"
+    },
+    {
+      "latitude": -45.9095,
+      "sourceDistanceMeters": 4000,
+      "longitude": 170.497,
+      "name": "St Clair"
+    },
+    {
+      "latitude": -45.907,
+      "sourceDistanceMeters": 5000,
+      "longitude": 170.507,
+      "name": "Forbury Road start"
+    }
+  ],
+  "terrain": {
+    "elevationCacheDirectory": "routes/cache/elevation",
+    "spacingMeters": 10,
+    "roadCorridorRadiusMeters": 5,
+    "chunkSizeMeters": 250,
+    "roadClearanceMeters": 0.15,
+    "transitionOverlapMeters": 10,
+    "nearRadiusMeters": 250,
+    "farVerticalBiasMeters": 0.15,
+    "enabled": true,
+    "farRadiusMeters": 400,
+    "farChunkSizeMeters": 500,
+    "farSpacingMeters": 25,
+    "corridorRadiusMeters": 250,
+    "verticalBiasMeters": 0.08
+  },
+  "difficulty": "Easy",
+  "routeType": "loop"
+}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 public enum RoadJoinType { Normal, Bevel, Discontinuity }
@@ -8,10 +9,12 @@ public readonly record struct RoadRibbonQuad(Vector3 StartLeft, Vector3 EndLeft,
 public readonly record struct RoadRibbonTriangle(Vector3 A, Vector3 B, Vector3 C);
 public readonly record struct RoadProfileRibbonQuad(int SourceSegmentIndex, double StartDistanceMeters,
     double EndDistanceMeters, RoadRibbonQuad Quad);
+public readonly record struct RoadJunctionOpening(double RouteDistanceMeters, float RadiusMeters);
 
 /// <summary>Join classification and bounded horizontal offsets for canonical route ribbons.</summary>
 public static class RoadRibbonMath
 {
+    public const float RoadWidthMeters = 7;
     public const float NormalJoinMaximumDegrees = 25;
     public const float DiscontinuityMinimumDegrees = 60;
     public const float MaximumMiterScale = 1.5f;
@@ -107,6 +110,51 @@ public static class RoadRibbonMath
     public static bool ShouldBuildSharpProfileCap(float lateralStart, float lateralEnd) =>
         float.IsFinite(lateralStart) && float.IsFinite(lateralEnd) && MathF.Abs(lateralStart - lateralEnd) < 1e-5f;
 
+    public static bool ShouldBuildProfileAtJunction(double startDistance,double endDistance,double routeLength,
+        IReadOnlyList<RoadJunctionOpening>? openings)
+    {
+        if(openings is null||openings.Count==0||routeLength<=0)return true;
+        var middle=(startDistance+endDistance)*.5;
+        foreach(var opening in openings)
+        {
+            var delta=Math.Abs(middle-opening.RouteDistanceMeters);
+            delta=Math.Min(delta,routeLength-delta);
+            if(delta<=Math.Max(0,opening.RadiusMeters))return false;
+        }
+        return true;
+    }
+
+    public static IReadOnlyList<RoadProfileRibbonQuad> ClipProfileQuadAtJunctions(RoadProfileRibbonQuad source,
+        double routeLength,IReadOnlyList<RoadJunctionOpening>? openings)
+    {
+        if(openings is null||openings.Count==0||routeLength<=0)return [source];
+        var retained=new List<(double Start,double End)>{(source.StartDistanceMeters,source.EndDistanceMeters)};
+        foreach(var opening in openings)
+        for(var lap=-1;lap<=1;lap++)
+        {
+            var cutStart=opening.RouteDistanceMeters+lap*routeLength-Math.Max(0,opening.RadiusMeters);
+            var cutEnd=opening.RouteDistanceMeters+lap*routeLength+Math.Max(0,opening.RadiusMeters);
+            var next=new List<(double Start,double End)>();
+            foreach(var range in retained)
+            {
+                if(cutEnd<=range.Start||cutStart>=range.End){next.Add(range);continue;}
+                if(cutStart>range.Start)next.Add((range.Start,Math.Min(cutStart,range.End)));
+                if(cutEnd<range.End)next.Add((Math.Max(cutEnd,range.Start),range.End));
+            }
+            retained=next;
+        }
+        var duration=source.EndDistanceMeters-source.StartDistanceMeters;
+        if(duration<=0)return [];
+        return retained.Where(r=>r.End-r.Start>1e-5).Select(r=>
+        {
+            var t0=(float)((r.Start-source.StartDistanceMeters)/duration);var t1=(float)((r.End-source.StartDistanceMeters)/duration);
+            var q=source.Quad;
+            var clipped=new RoadRibbonQuad(Vector3.Lerp(q.StartLeft,q.EndLeft,t0),Vector3.Lerp(q.StartLeft,q.EndLeft,t1),
+                Vector3.Lerp(q.StartRight,q.EndRight,t0),Vector3.Lerp(q.StartRight,q.EndRight,t1));
+            return new RoadProfileRibbonQuad(source.SourceSegmentIndex,r.Start,r.End,clipped);
+        }).ToArray();
+    }
+
     /// <summary>Builds the small horizontal asphalt fan used to cover a sharp route join.</summary>
     public static IReadOnlyList<RoadRibbonTriangle> BuildSharpJoinFill(Vector3 center, float radius, int sides = 16)
     {
@@ -122,6 +170,19 @@ public static class RoadRibbonMath
                 center + new Vector3(MathF.Cos(b) * radius, 0, MathF.Sin(b) * radius));
         }
         return triangles;
+    }
+
+    /// <summary>Corner pad radius sufficient to cover the outside wedge where sharp ribbons meet.</summary>
+    public static float SharpJoinFillRadius(Vector3 previous,Vector3 current,Vector3 next,float roadWidth)
+    {
+        if(!float.IsFinite(roadWidth)||roadWidth<=0)throw new ArgumentOutOfRangeException(nameof(roadWidth));
+        var incoming=Horizontal(current-previous);var outgoing=Horizontal(next-current);
+        if(incoming.LengthSquared()<1e-8f||outgoing.LengthSquared()<1e-8f)return roadWidth*.5f+.05f;
+        var turn=MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(incoming),Vector3.Normalize(outgoing)),-1f,1f));
+        // The fan polygon is inscribed, so its radius includes a small allowance between facets.
+        // Clamp extreme near-reversals to avoid producing an oversized asphalt disk.
+        var radius=roadWidth*.5f/Math.Max(.35f,MathF.Cos(turn*.5f))*1.09f+.05f;
+        return Math.Min(radius,roadWidth*.8f);
     }
 
     /// <summary>

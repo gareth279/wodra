@@ -46,6 +46,8 @@ public partial class RideSessionNode : Node
 	public string? LastRecordingError { get; private set; }
 
 	private RideFitRecorder? _rideRecorder;
+	private double? _pendingDebugJumpDistanceMeters;
+	private bool _debugJumpFinalizationFailed;
 	private Task? _endRideTask;
 	public GhostRiderStateSource? GhostRider { get; private set; }
 	public Guid? GhostActivityId { get; private set; }
@@ -105,7 +107,7 @@ public partial class RideSessionNode : Node
 		}
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
-		_currentRoute = route ?? RouteCatalog.GetById("test-route");
+		_currentRoute = route ?? RouteCatalog.Routes[0];
 		_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
 		if (GhostRider is not null && GhostRider.RouteId != _currentRoute?.Id)
 		{ GhostRider = null; GhostActivityId = null; }
@@ -132,6 +134,7 @@ public partial class RideSessionNode : Node
 		_trainerSessionActive = true;
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
+		_hudController?.SetRecordingState(false, false);
 		_pauseGate.Resume();
 		_hudController?.SetRidePaused(false);
 		_elapsedSeconds = 0;
@@ -173,13 +176,14 @@ public partial class RideSessionNode : Node
 		_fitReplayClient = new FakeTrainerClient();
 		await _fitReplayClient.ConnectAsync();
 
-		_currentRoute = RouteCatalog.GetById("test-route");
+		_currentRoute = RouteCatalog.Routes[0];
 		_currentActivityId = null;
 		_currentRiderProfileId = null;
 		_sessionStarted = true;
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
 		_rideState = RideState.Initial;
+		_hudController?.SetRecordingState(false, false);
 		_pauseGate.Resume();
 		_hudController?.SetRidePaused(false);
 		_elapsedSeconds = 0;
@@ -456,6 +460,8 @@ public partial class RideSessionNode : Node
 
 	private void BeginDebugRide(string mode)
 	{
+		_debugJumpFinalizationFailed = false;
+		_pendingDebugJumpDistanceMeters = null;
 		_debugDiagnostics.Begin(GameBootstrap.DebugModeEnabled);
 		_lastLoggedLapNumber = 1;
 		_lastTelemetry = null;
@@ -654,27 +660,87 @@ public partial class RideSessionNode : Node
 	public void JumpToRouteDistance(string distanceText)
 	{
 		if (!_debugDiagnostics.Enabled || !_sessionStarted) return;
+		if (_debugJumpFinalizationFailed)
+		{
+			_hudController?.SetStatus("FIT finalization failed; route jump is disabled to preserve the recording.");
+			return;
+		}
 		if (!double.TryParse(distanceText, System.Globalization.NumberStyles.Float,
 			System.Globalization.CultureInfo.InvariantCulture, out var distance))
 		{
 			_hudController?.SetStatus("Enter a valid route distance in metres (for example 5830).");
 			return;
 		}
-		var before = _rideState.DistanceMeters;
-		var hasActiveRecording = _rideRecorder is not null;
-		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance,
-			hasActiveRecording, out var jumped))
+		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance, out _))
 		{
-			_hudController?.SetStatus(hasActiveRecording
-				? "Stop FIT recording before jumping route distance."
-				: "Enter a non-negative distance to jump.");
+			_hudController?.SetStatus("Enter a non-negative route distance in metres.");
 			return;
 		}
+		if (_rideRecorder is not null)
+		{
+			_pendingDebugJumpDistanceMeters = distance;
+			_hudController?.ShowDebugJumpConfirmation();
+			return;
+		}
+		ApplyDebugDistanceJump(distance);
+	}
+
+	public void CancelDebugDistanceJump()
+	{
+		_pendingDebugJumpDistanceMeters = null;
+	}
+
+	public void ConfirmDebugDistanceJump()
+	{
+		if (!_debugDiagnostics.Enabled || !_sessionStarted || _pendingDebugJumpDistanceMeters is not { } distance)
+			return;
+
+		if (_rideRecorder is not null)
+		{
+			var stopAttempted = false;
+			try
+			{
+				// Do not close the recorder if the final sample cannot be written.
+				RecordCurrentSample();
+				var recorder = _rideRecorder;
+				stopAttempted = true;
+				var path = recorder.Stop();
+				if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+					throw new IOException("The stopped FIT recording file was not found.");
+				_rideRecorder = null;
+				_lastStoppedRecordingPath = path;
+				_currentActivityFitPath = path;
+				_recordingSampleElapsedSeconds = 0;
+				_hudController?.SetRecordingState(false, false);
+			}
+			catch (Exception ex)
+			{
+				_debugJumpFinalizationFailed = stopAttempted;
+				LastRecordingError = ex.Message;
+				GameLogger.Log("debug_jump_fit_finalise_failed", new { message = ex.Message, filePath = _rideRecorder?.FilePath });
+				if (stopAttempted) _hudController?.SetRecordingFailureState();
+				_hudController?.SetStatus($"Could not save FIT recording; jump cancelled: {ex.Message}");
+				_pendingDebugJumpDistanceMeters = null;
+				return;
+			}
+		}
+
+		_pendingDebugJumpDistanceMeters = null;
+		ApplyDebugDistanceJump(distance);
+	}
+
+	private void ApplyDebugDistanceJump(double distance)
+	{
+		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance, out var jumped)) return;
+		var before = _rideState.DistanceMeters;
 		_rideState = jumped;
 		_recordingSampleElapsedSeconds = 0;
 		if (_currentRoute?.DistanceMeters > 0)
 			_lastLoggedLapNumber = (int)Math.Floor(distance / _currentRoute.DistanceMeters) + 1;
+		_trainerCommandDirty = true;
+		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
 		UpdateRouteHud();
+		_hudController?.SetDebugInspectionRecordingState();
 		var snapshot = BuildDebugSnapshot();
 		GameLogger.Log("debug_distance_jump", new { fromDistanceMeters = before, toDistanceMeters = distance, snapshot });
 		_hudController?.SetStatus($"Debug jump: {before:F1} m → {distance:F1} m; virtual speed reset.");

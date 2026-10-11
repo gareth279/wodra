@@ -88,7 +88,10 @@ internal static class RoadRefRouteBuilder
                 + GeoMath.HaversineMeters(graph.Nodes[startNodes[finish]].Coordinate, startArea) * 0.15
                 + (GeoMath.HaversineMeters(graph.Nodes[turnaroundNodes[turnIn]].Coordinate, turnaroundArea)
                     + GeoMath.HaversineMeters(graph.Nodes[turnaroundNodes[turnOut]].Coordinate, turnaroundArea)) * 0.1;
-            var score = total + areaBias;
+            // Prefer the configured approximate lap length when present; geometry remains measured on OSM edges.
+            var distanceFit = config.TargetDistanceMeters is { } target
+                ? Math.Abs(total - target) * 2.0 : total;
+            var score = distanceFit + areaBias;
             if (score >= bestScore) continue;
             bestScore = score;
             best = new LoopChoice(startNodes[start], turnaroundNodes[turnIn], turnaroundNodes[turnOut],

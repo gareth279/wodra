@@ -5,7 +5,7 @@ namespace Wodra.RouteBuilder;
 
 public static class StreetFurnitureElevationSampler
 {
-    private sealed record TreeOutput(int Index, double ElevationMeters);
+    private sealed record TreeOutput(int Index, double? ElevationMeters);
     private sealed record SamplerOutput(IReadOnlyList<TreeOutput> TreeElevations, int CacheHits);
     private static readonly JsonSerializerOptions Options = new()
     { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
@@ -34,8 +34,14 @@ public static class StreetFurnitureElevationSampler
             var heights = sampled.TreeElevations.ToDictionary(item => item.Index, item => item.ElevationMeters);
             if (heights.Count != input.Items.Count) throw new InvalidDataException("LINZ did not return every street-furniture elevation.");
             timer.Stop();
-            return input with { Items = input.Items.Select((item, index) => item with { ElevationMeters = heights[index] }).ToArray(),
-                ElevationSamples = heights.Count, GenerationSeconds = input.GenerationSeconds + timer.Elapsed.TotalSeconds };
+            var items = input.Items.Select((item, index) => (Item:item, Elevation:heights[index]))
+                .Where(sample => sample.Elevation.HasValue)
+                .Select(sample => sample.Item with { ElevationMeters = sample.Elevation }).ToArray();
+            var skipped = input.Items.Count - items.Length;
+            return input with { Items = items,
+                ItemsInsideRoadRibbon = items.Count(item => StreetFurnitureExtractor.IsInsideRoadRibbon(item.NearestRouteDistanceMeters)),
+                ElevationSamples = items.Length, ElevationSkippedCount = skipped,
+                GenerationSeconds = input.GenerationSeconds + timer.Elapsed.TotalSeconds };
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }

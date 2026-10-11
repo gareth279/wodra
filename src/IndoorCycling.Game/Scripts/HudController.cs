@@ -25,6 +25,8 @@ public partial class HudController : Control
 	private Button? _pauseRideButton;
 	private Label? _recordingIndicator;
 	private bool _recordingActive;
+	private bool _debugInspectionWithoutRecording;
+	private bool _recordingFailed;
 	private double _shownSpeed = double.NaN;
 	private double _shownGradient = double.NaN;
 	private double _shownDistance = double.NaN;
@@ -42,6 +44,7 @@ public partial class HudController : Control
 	private ScreenshotCaptureService? _screenshotCapture;
 	private Label? _screenshotToast;
 	private Label? _cameraInspectionLabel;
+	private Control? _debugJumpConfirmation;
 	private double _cameraInspectionLabelSeconds;
 	private int _screenshotToastSequence;
 	private Label? _dummySummary;
@@ -150,14 +153,34 @@ public partial class HudController : Control
 	public void SetRecordingState(bool active, bool paused)
 	{
 		_recordingActive = active;
+		_debugInspectionWithoutRecording = false;
+		_recordingFailed = false;
 		UpdateRecordingIndicator(paused);
+	}
+
+	public void SetDebugInspectionRecordingState()
+	{
+		_recordingActive = false;
+		_debugInspectionWithoutRecording = true;
+		_recordingFailed = false;
+		UpdateRecordingIndicator(false);
+	}
+
+	public void SetRecordingFailureState()
+	{
+		_recordingActive = false;
+		_debugInspectionWithoutRecording = false;
+		_recordingFailed = true;
+		UpdateRecordingIndicator(false);
 	}
 
 	private void UpdateRecordingIndicator(bool paused)
 	{
 		if (_recordingIndicator is null) return;
-		_recordingIndicator.Visible = _recordingActive;
-		_recordingIndicator.Text = paused ? "REC PAUSED" : "● REC";
+		_recordingIndicator.Visible = _recordingActive || _debugInspectionWithoutRecording || _recordingFailed;
+		_recordingIndicator.Text = _recordingFailed ? "FIT SAVE ERROR"
+			: _debugInspectionWithoutRecording ? "DEBUG · NOT RECORDING"
+			: paused ? "REC PAUSED" : "● REC";
 	}
 
 	public void SetDebugMode(bool enabled)
@@ -227,7 +250,70 @@ public partial class HudController : Control
 		layout.AddChild(actions);
 		_debugOverlay.AddChild(layout);
 		AddChild(_debugOverlay);
+		CreateDebugJumpConfirmation();
 		UpdateHudVisibility();
+	}
+
+	private void CreateDebugJumpConfirmation()
+	{
+		var shade = new ColorRect
+		{
+			Name = "DebugJumpConfirmation",
+			Color = new Color(0.015f, 0.02f, 0.025f, 0.72f),
+			Visible = false,
+			MouseFilter = Control.MouseFilterEnum.Stop,
+			ZIndex = 100
+		};
+		shade.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+		var panel = new PanelContainer
+		{
+			Name = "ConfirmationPanel",
+			AnchorLeft = 0.5f, AnchorRight = 0.5f,
+			AnchorTop = 0.5f, AnchorBottom = 0.5f,
+			OffsetLeft = -230, OffsetRight = 230,
+			OffsetTop = -82, OffsetBottom = 82,
+			MouseFilter = Control.MouseFilterEnum.Stop,
+			ZIndex = 101
+		};
+		var content = new VBoxContainer();
+		content.AddThemeConstantOverride("separation", 12);
+		content.AddChild(new Label
+		{
+			Text = "Jumping to another route position will save and stop the current FIT recording. Continue?",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			CustomMinimumSize = new Vector2(420, 58)
+		});
+		var buttons = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var continueButton = new Button { Text = "Continue", CustomMinimumSize = new Vector2(112, 36) };
+		continueButton.Pressed += () =>
+		{
+			HideDebugJumpConfirmation();
+			_rideSessionNode?.ConfirmDebugDistanceJump();
+		};
+		var cancelButton = new Button { Text = "Cancel", CustomMinimumSize = new Vector2(112, 36) };
+		cancelButton.Pressed += () =>
+		{
+			HideDebugJumpConfirmation();
+			_rideSessionNode?.CancelDebugDistanceJump();
+		};
+		buttons.AddChild(continueButton);
+		buttons.AddChild(cancelButton);
+		content.AddChild(buttons);
+		panel.AddChild(content);
+		shade.AddChild(panel);
+		_debugJumpConfirmation = shade;
+		AddChild(shade);
+	}
+
+	public void ShowDebugJumpConfirmation()
+	{
+		if (_debugJumpConfirmation is not null) _debugJumpConfirmation.Visible = true;
+	}
+
+	public void HideDebugJumpConfirmation()
+	{
+		if (_debugJumpConfirmation is not null) _debugJumpConfirmation.Visible = false;
 	}
 
 	private void UpdateDebugOverlayLayout()

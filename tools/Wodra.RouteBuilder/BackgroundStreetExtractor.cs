@@ -11,13 +11,14 @@ public sealed record BackgroundStreet(long OsmId, string? Name, string? Ref, str
 public sealed record BackgroundStreetExtractionResult(int WaysConsidered, int WaysIncluded,
     IReadOnlyDictionary<string, int> HighwayClassCounts, IReadOnlyDictionary<string, int> WidthSourceCounts,
     int NamedStreetCount, double TotalLengthMeters, double SuppressedOverlapMeters,
-    int RuntimeSampleCount, IReadOnlyList<BackgroundStreet> Streets, double GenerationSeconds = 0);
+    int RuntimeSampleCount, IReadOnlyList<BackgroundStreet> Streets, double GenerationSeconds = 0,
+    int ElevationSkippedStreetCount = 0, int ElevationSkippedPointCount = 0);
 
 /// <summary>Extracts real OSM highway ways as visual-only roads, clipping samples over the ride corridor.</summary>
 public static class BackgroundStreetExtractor
 {
     private static readonly HashSet<string> Included = new(StringComparer.OrdinalIgnoreCase)
-        { "motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential", "service", "living_street" };
+        { "motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential", "service", "living_street", "pedestrian", "footway", "path", "cycleway" };
     private static readonly HashSet<string> ExcludedService = new(StringComparer.OrdinalIgnoreCase)
         { "driveway", "parking_aisle", "emergency_access", "alley", "drive-through" };
 
@@ -31,8 +32,15 @@ public static class BackgroundStreetExtractor
     }
     public static bool IsWithinCorridor(double distanceMeters, double radiusMeters) =>
         double.IsFinite(distanceMeters) && double.IsFinite(radiusMeters) && distanceMeters >= 0 && radiusMeters > 0 && distanceMeters <= radiusMeters;
+    public static bool KeepCorridorSegment(double midpointDistanceMeters, double radiusMeters) =>
+        IsWithinCorridor(midpointDistanceMeters, radiusMeters);
     public static bool SuppressRouteOverlap(double distanceMeters, double overlapMeters) =>
         double.IsFinite(distanceMeters) && double.IsFinite(overlapMeters) && distanceMeters >= 0 && overlapMeters >= 0 && distanceMeters <= overlapMeters;
+    public static bool DirectionsFollowSameRoad((double X,double Y) street,(double X,double Y) route)
+    {
+        var a=Math.Sqrt(street.X*street.X+street.Y*street.Y);var b=Math.Sqrt(route.X*route.X+route.Y*route.Y);
+        return a>1e-9&&b>1e-9&&Math.Abs((street.X*route.X+street.Y*route.Y)/(a*b))>=.9;
+    }
 
     public static (double WidthMeters, string Source) ParseWidth(IReadOnlyDictionary<string, string> tags, string highway)
     {
@@ -53,6 +61,9 @@ public static class BackgroundStreetExtractor
             "motorway" or "trunk" or "primary" => 9,
             "secondary" or "tertiary" => 7.5,
             "service" => 4.5,
+            "pedestrian" => 3,
+            "cycleway" => 2.5,
+            "footway" or "path" => 2,
             "living_street" or "residential" or "unclassified" => 6,
             _ => 6
         };
@@ -106,7 +117,19 @@ public static class BackgroundStreetExtractor
                 var a=densified[i]; var b=densified[i+1]; var midpoint=new GeoPoint((a.Latitude+b.Latitude)/2,(a.Longitude+b.Longitude)/2);
                 var near = Nearest(XY(midpoint.Latitude, midpoint.Longitude, lat0, lon0), routeXY);
                 var segmentLength = Distance(a,b,lat0,lon0);
-                if (SuppressRouteOverlap(near.Distance,options.RouteOverlapSuppressionMeters))
+                // A way is selected by its closest point to the route, but its full
+                // OSM geometry can extend kilometres beyond the scenery radius.
+                // Keep only densified pieces in the configured corridor so scenery
+                // elevation sampling remains within the requested coverage area.
+                if (!KeepCorridorSegment(near.Distance, options.SearchRadiusMeters))
+                { if (current.Count >= 2) parts.Add(current); current=[]; continue; }
+                // Only remove mapped road that actually follows the selected ride road.
+                // The old distance-only cutoff also erased the middle of crossing and
+                // connecting streets, leaving gaps at exactly the intersections we need.
+                var segmentDirection = XY(b.Latitude,b.Longitude,lat0,lon0);
+                var previousDirection = XY(a.Latitude,a.Longitude,lat0,lon0);
+                if (SuppressRouteOverlap(near.Distance,options.RouteOverlapSuppressionMeters)
+                    && IsRouteAligned(previousDirection, segmentDirection, routeXY))
                 { suppressed += segmentLength; if (current.Count >= 2) parts.Add(current); current=[]; continue; }
                 if (current.Count == 0) current.Add(a);
                 else if (current[^1] != a) current.Add(a);
@@ -132,6 +155,22 @@ public static class BackgroundStreetExtractor
     }
 
     public static bool IsOneway(IReadOnlyDictionary<string,string> tags) => tags.GetValueOrDefault("oneway") is "yes" or "1" or "true" or "-1";
+    private static bool IsRouteAligned((double X,double Y) a, (double X,double Y) b,
+        (double X,double Y)[] route)
+    {
+        var dx=b.X-a.X;var dy=b.Y-a.Y;var length=Math.Sqrt(dx*dx+dy*dy);
+        if(length<1e-6)return false;
+        var midpoint=((a.X+b.X)*.5,(a.Y+b.Y)*.5);
+        var (_,chainage)=Nearest(midpoint,route);
+        var routeLength=0d;for(var i=0;i<route.Length-1;i++)routeLength+=Math.Sqrt(Math.Pow(route[i+1].X-route[i].X,2)+Math.Pow(route[i+1].Y-route[i].Y,2));
+        var before=PointAtChainage(route,Math.Max(0,chainage-5));var after=PointAtChainage(route,Math.Min(routeLength,chainage+5));
+        var rx=after.X-before.X;var ry=after.Y-before.Y;var routeMagnitude=Math.Sqrt(rx*rx+ry*ry);
+        return routeMagnitude>1e-6&&DirectionsFollowSameRoad((dx,dy),(rx,ry));
+    }
+    private static (double X,double Y) PointAtChainage((double X,double Y)[] line,double distance)
+    {
+        for(var i=0;i<line.Length-1;i++){var a=line[i];var b=line[i+1];var dx=b.X-a.X;var dy=b.Y-a.Y;var length=Math.Sqrt(dx*dx+dy*dy);if(distance<=length||i==line.Length-2){var t=length<1e-9?0:Math.Clamp(distance/length,0,1);return(a.X+dx*t,a.Y+dy*t);}distance-=length;}return line[^1];
+    }
     public static IReadOnlyList<GeoPoint> Densify(IReadOnlyList<GeoPoint> points, double spacingMeters, double lat0, double lon0)
     {
         var result=new List<GeoPoint>(); if(points.Count==0)return result; result.Add(points[0]);

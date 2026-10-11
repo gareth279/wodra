@@ -1,0 +1,302 @@
+{
+  "id": "dunedin-south-coastal-loop",
+  "routeName": "Dunedin South Dunedin Coastal Loop",
+  "searchRadiusMeters": 150,
+  "nearbyCandidatesConsidered": 22,
+  "deduplicatedCandidateCount": 22,
+  "selectedCount": 20,
+  "source": "OpenStreetMap",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "landmarks": [
+    {
+      "name": "Tainui School",
+      "category": "education/civic",
+      "latitude": -45.90295221999999,
+      "longitude": 170.52502938666666,
+      "distanceFromRouteMeters": 5.611502803900932,
+      "nearestRouteDistanceMeters": 3697.5454915200785,
+      "osmType": "way",
+      "osmId": 150886873,
+      "tags": {
+        "amenity": "school",
+        "name": "Tainui School",
+        "wikidata": "Q106237441"
+      }
+    },
+    {
+      "name": "St Brigids School",
+      "category": "education/civic",
+      "latitude": -45.89751290714285,
+      "longitude": 170.5290651107143,
+      "distanceFromRouteMeters": 6.7922813220330545,
+      "nearestRouteDistanceMeters": 2803.5196292987,
+      "osmType": "way",
+      "osmId": 370395213,
+      "tags": {
+        "amenity": "school",
+        "name": "St Brigids School",
+        "wikidata": "Q106237431"
+      }
+    },
+    {
+      "name": "Bayfield High School",
+      "category": "education/civic",
+      "latitude": -45.89543076734695,
+      "longitude": 170.5234086755102,
+      "distanceFromRouteMeters": 8.813821783425702,
+      "nearestRouteDistanceMeters": 2301.7939253320123,
+      "osmType": "way",
+      "osmId": 116779893,
+      "tags": {
+        "amenity": "school",
+        "name": "Bayfield High School",
+        "wikidata": "Q4874507"
+      }
+    },
+    {
+      "name": "Tahuna Normal Intermediate",
+      "category": "education/civic",
+      "latitude": -45.90324017777778,
+      "longitude": 170.51785583333333,
+      "distanceFromRouteMeters": 26.130544860608072,
+      "nearestRouteDistanceMeters": 4353.281087912631,
+      "osmType": "way",
+      "osmId": 178265912,
+      "tags": {
+        "amenity": "school",
+        "name": "Tahuna Normal Intermediate",
+        "wikidata": "Q7675692"
+      }
+    },
+    {
+      "name": "Hancock Park",
+      "category": "park",
+      "latitude": -45.9067653357143,
+      "longitude": 170.51250901785716,
+      "distanceFromRouteMeters": 1.1674371395276615,
+      "nearestRouteDistanceMeters": 4899.711265701449,
+      "osmType": "way",
+      "osmId": 385641072,
+      "tags": {
+        "leisure": "park",
+        "name": "Hancock Park"
+      }
+    },
+    {
+      "name": "T\u0101huna Park",
+      "category": "park",
+      "latitude": -45.905476691666664,
+      "longitude": 170.51702490000005,
+      "distanceFromRouteMeters": 1.5190968561552582,
+      "nearestRouteDistanceMeters": 4363.237078756071,
+      "osmType": "way",
+      "osmId": 385641102,
+      "tags": {
+        "leisure": "park",
+        "name": "T\u0101huna Park"
+      }
+    },
+    {
+      "name": "Ocean Beach Domain",
+      "category": "park",
+      "latitude": -45.90770207450981,
+      "longitude": 170.50700547843135,
+      "distanceFromRouteMeters": 6.2218659031154475,
+      "nearestRouteDistanceMeters": 7047.082867052456,
+      "osmType": "way",
+      "osmId": 385641112,
+      "tags": {
+        "leisure": "park",
+        "name": "Ocean Beach Domain"
+      }
+    },
+    {
+      "name": "Musselburgh Rise Playground",
+      "category": "park",
+      "latitude": -45.896105483333336,
+      "longitude": 170.5238955,
+      "distanceFromRouteMeters": 9.245944851272133,
+      "nearestRouteDistanceMeters": 2433.5798574942314,
+      "osmType": "way",
+      "osmId": 116779897,
+      "tags": {
+        "leisure": "park",
+        "name": "Musselburgh Rise Playground"
+      }
+    },
+    {
+      "name": "Barnes Lookout Viewing Area",
+      "category": "monument",
+      "latitude": -45.909915090909095,
+      "longitude": 170.49590052727274,
+      "distanceFromRouteMeters": 143.93343750103915,
+      "nearestRouteDistanceMeters": 7477.135682134724,
+      "osmType": "way",
+      "osmId": 548225426,
+      "tags": {
+        "historic": "monument",
+        "name": "Barnes Lookout Viewing Area"
+      }
+    },
+    {
+      "name": "Kettle Park",
+      "category": "park",
+      "latitude": -45.90900426603776,
+      "longitude": 170.49958685283022,
+      "distanceFromRouteMeters": 31.17984470636233,
+      "nearestRouteDistanceMeters": 7363.269272504441,
+      "osmType": "way",
+      "osmId": 385641074,
+      "tags": {
+        "leisure": "park",
+        "name": "Kettle Park"
+      }
+    },
+    {
+      "name": "Musselburgh School",
+      "category": "education/civic",
+      "latitude": -45.90345247777778,
+      "longitude": 170.5149192888889,
+      "distanceFromRouteMeters": 140.36890741981168,
+      "nearestRouteDistanceMeters": 4575.599633605885,
+      "osmType": "way",
+      "osmId": 236982024,
+      "tags": {
+        "amenity": "school",
+        "name": "Musselburgh School",
+        "wikidata": "Q106235063"
+      }
+    },
+    {
+      "name": "A Block",
+      "category": "building/civic",
+      "latitude": -45.89588888666669,
+      "longitude": 170.52318138,
+      "distanceFromRouteMeters": 21.568448370058988,
+      "nearestRouteDistanceMeters": 2329.700138845673,
+      "osmType": "way",
+      "osmId": 150885395,
+      "tags": {
+        "building": "school",
+        "name": "A Block"
+      }
+    },
+    {
+      "name": "Barnes Lookout",
+      "category": "monument",
+      "latitude": -45.9099086,
+      "longitude": 170.49591170000002,
+      "distanceFromRouteMeters": 148.6100874163709,
+      "nearestRouteDistanceMeters": 7477.135682134724,
+      "osmType": "node",
+      "osmId": 5296418439,
+      "tags": {
+        "historic": "monument",
+        "name": "Barnes Lookout"
+      }
+    },
+    {
+      "name": "Kettle Park",
+      "category": "park",
+      "latitude": -45.90838253793105,
+      "longitude": 170.50572344827586,
+      "distanceFromRouteMeters": 90.36678622627791,
+      "nearestRouteDistanceMeters": 7044.894499646368,
+      "osmType": "way",
+      "osmId": 1541169504,
+      "tags": {
+        "landuse": "recreation_ground",
+        "leisure": "park",
+        "name": "Kettle Park"
+      }
+    },
+    {
+      "name": "St Kilda Tongan Methodist Church",
+      "category": "place_of_worship",
+      "latitude": -45.90267159230769,
+      "longitude": 170.50958172307693,
+      "distanceFromRouteMeters": 12.86366650796386,
+      "nearestRouteDistanceMeters": 596.8573753660944,
+      "osmType": "way",
+      "osmId": 431360958,
+      "tags": {
+        "amenity": "place_of_worship",
+        "building": "yes",
+        "name": "St Kilda Tongan Methodist Church"
+      }
+    },
+    {
+      "name": "T Block",
+      "category": "building/civic",
+      "latitude": -45.89552748571429,
+      "longitude": 170.52363034285716,
+      "distanceFromRouteMeters": 59.704680692152216,
+      "nearestRouteDistanceMeters": 2374.7169327230736,
+      "osmType": "way",
+      "osmId": 150885376,
+      "tags": {
+        "building": "school",
+        "name": "T Block"
+      }
+    },
+    {
+      "name": "B Block",
+      "category": "building/civic",
+      "latitude": -45.895535527272735,
+      "longitude": 170.52279250909092,
+      "distanceFromRouteMeters": 60.16572686846341,
+      "nearestRouteDistanceMeters": 2299.1511012393253,
+      "osmType": "way",
+      "osmId": 129312211,
+      "tags": {
+        "building": "school",
+        "name": "B Block"
+      }
+    },
+    {
+      "name": "Dunedin South Presbyterian Church",
+      "category": "place_of_worship",
+      "latitude": -45.89963298,
+      "longitude": 170.50967158,
+      "distanceFromRouteMeters": 9.190011250462938,
+      "nearestRouteDistanceMeters": 935.0588614246604,
+      "osmType": "way",
+      "osmId": 385641265,
+      "tags": {
+        "amenity": "place_of_worship",
+        "building": "yes",
+        "name": "Dunedin South Presbyterian Church"
+      }
+    },
+    {
+      "name": "Musselburgh",
+      "category": "place",
+      "latitude": -45.897175700000005,
+      "longitude": 170.51837500000002,
+      "distanceFromRouteMeters": 52.181091585346394,
+      "nearestRouteDistanceMeters": 1873.486249125953,
+      "osmType": "node",
+      "osmId": 1314979046,
+      "tags": {
+        "name": "Musselburgh",
+        "name:en": "Musselburgh",
+        "place": "suburb",
+        "wikidata": "Q6943102"
+      }
+    },
+    {
+      "name": "C Block",
+      "category": "building/civic",
+      "latitude": -45.89527736000001,
+      "longitude": 170.52309874666668,
+      "distanceFromRouteMeters": 100.8361307423093,
+      "nearestRouteDistanceMeters": 2334.395216703569,
+      "osmType": "way",
+      "osmId": 129312212,
+      "tags": {
+        "building": "school",
+        "name": "C Block"
+      }
+    }
+  ]
+}

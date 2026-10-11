@@ -75,11 +75,17 @@ public static class RoadMarkingGeometry
         foreach (var crossing in crossings)
         {
             var firstOffset = -((ZebraStripeCount - 1) * (ZebraStripeWidthMeters + ZebraStripeGapMeters) / 2);
+            // All bars in one crossing use the same road frame. Sampling a new route
+            // tangent for every bar makes crossings fragment or fan out on bends.
+            var crossingPose=route.GetPoseAtDistance(crossing.Distance);
+            var crossingForward=Horizontal(crossingPose.Forward);
+            if(crossingForward.LengthSquared()<1e-8f)continue;
             for (var stripe = 0; stripe < ZebraStripeCount; stripe++)
             {
                 var offset = firstOffset + stripe * (ZebraStripeWidthMeters + ZebraStripeGapMeters);
                 var distance = route.WrapDistance(crossing.Distance + offset);
-                AddRectangle(triangles, route, RoadMarkingKind.ZebraStripe, distance,
+                var pose=crossingPose with { Position=crossingPose.Position+crossingForward*offset };
+                AddRectangle(triangles, RoadMarkingKind.ZebraStripe, distance,pose,
                     roadWidthMeters - 0.4f, ZebraStripeWidthMeters, 0);
             }
         }
@@ -151,6 +157,12 @@ public static class RoadMarkingGeometry
         double routeDistance, float widthAcross, float lengthAlong, float lateralOffset)
     {
         var pose = route.GetPoseAtDistance(routeDistance);
+        AddRectangle(output,kind,routeDistance,pose,widthAcross,lengthAlong,lateralOffset);
+    }
+
+    private static void AddRectangle(List<RoadMarkingTriangle> output,RoadMarkingKind kind,double routeDistance,
+        VisualRoutePose pose,float widthAcross,float lengthAlong,float lateralOffset)
+    {
         var forward = Vector3.Normalize(pose.Forward);
         var side = Vector3.Cross(Vector3.UnitY, forward);
         if (side.LengthSquared() < 1e-8f) return;

@@ -42,6 +42,8 @@ public partial class RouteSelectionPanelController : Control
 	{
 		if (_routeButtonsContainer is null)
 			return;
+		foreach (var error in RouteCatalog.PackageErrors)
+			GD.PushWarning($"Route package ignored: {error}");
 
 		foreach (var child in _routeButtonsContainer.GetChildren())
 		{
@@ -52,7 +54,9 @@ public partial class RouteSelectionPanelController : Control
 		{
 			var button = new Button
 			{
-				Text = $"{route.Name} - {route.DistanceMeters / 1000.0:0.0} km"
+				Text = $"{route.Name} · {route.DistanceMeters / 1000.0:0.0} km · {route.RouteType} · {route.Difficulty} · {route.TotalAscentMeters:0} m ↑",
+				TooltipText = $"Route ID: {route.Id}\n{route.SourceAttribution}\nRoute data version: {route.RouteDataVersion}\nGeometry SHA-256: {route.GeometryFingerprint}",
+				CustomMinimumSize = new Vector2(0, 58)
 			};
 
 			button.Pressed += () => OnRouteSelected(route);

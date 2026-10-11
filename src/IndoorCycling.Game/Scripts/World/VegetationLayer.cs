@@ -106,9 +106,10 @@ public partial class VegetationLayer : Node3D
                     return ScaledTransform(item.Position + Vector3.Up * centerY,
                         new Vector3(radius, canopyHeight, radius));
                 }).ToArray();
-                var canopyColor = type == "conifer" ? new Color(.18f, .32f, .20f) : new Color(.31f, .43f, .22f);
+                var canopyColors = selected.Select(item => CanopyColor(item.Tree.OsmId, type)).ToArray();
                 nodes.Add(CreateMultiMesh(type == "conifer" ? "ConiferCanopies" : "BroadleafCanopies", canopy,
-                    new StandardMaterial3D { AlbedoColor = canopyColor, Roughness = 1 }, canopyTransforms));
+                    new StandardMaterial3D { AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1 },
+                    canopyTransforms, canopyColors));
             }
             foreach (var node in nodes) AddChild(node);
             MultiMeshCount += nodes.Count;
@@ -153,16 +154,36 @@ public partial class VegetationLayer : Node3D
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
     private static Transform3D ScaledTransform(Vector3 position, Vector3 scale) =>
         new(new Basis(Vector3.Right * scale.X, Vector3.Up * scale.Y, Vector3.Back * scale.Z), position);
+    private static Color CanopyColor(long osmId, string type)
+    {
+        var palette = type == "conifer"
+            ? new[] { new Color(.14f,.27f,.18f), new Color(.18f,.33f,.21f), new Color(.22f,.37f,.23f), new Color(.16f,.30f,.24f) }
+            : new[] { new Color(.28f,.39f,.22f), new Color(.34f,.45f,.25f), new Color(.39f,.45f,.25f), new Color(.25f,.37f,.25f), new Color(.42f,.46f,.29f) };
+        unchecked
+        {
+            var hash = (ulong)osmId ^ ((ulong)osmId >> 32);
+            hash ^= type == "conifer" ? 0x9E3779B97F4A7C15UL : 0xD6E8FEB86659FD93UL;
+            hash ^= hash >> 30; hash *= 0xBF58476D1CE4E5B9UL;
+            hash ^= hash >> 27; hash *= 0x94D049BB133111EBUL;
+            hash ^= hash >> 31;
+            return palette[(int)(hash % (uint)palette.Length)];
+        }
+    }
     private static MultiMeshInstance3D CreateMultiMesh(string name, Mesh mesh, Material material,
-        IReadOnlyList<Transform3D> transforms)
+        IReadOnlyList<Transform3D> transforms, IReadOnlyList<Color>? colors = null)
     {
         var multimesh = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             Mesh = mesh,
+            UseColors = colors is not null,
             InstanceCount = transforms.Count
         };
-        for (var i = 0; i < transforms.Count; i++) multimesh.SetInstanceTransform(i, transforms[i]);
+        for (var i = 0; i < transforms.Count; i++)
+        {
+            multimesh.SetInstanceTransform(i, transforms[i]);
+            if (colors is not null) multimesh.SetInstanceColor(i, colors[i]);
+        }
         return new MultiMeshInstance3D { Name = name, Multimesh = multimesh, MaterialOverride = material };
     }
 }

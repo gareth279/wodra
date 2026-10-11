@@ -17,7 +17,7 @@ public static class RouteBackgroundStreetDataLoader
     private static readonly JsonSerializerOptions Options=new(){PropertyNameCaseInsensitive=true};
     public static RouteBackgroundStreetData LoadEmbedded(Assembly assembly,string resourceName,string routeId)
     {
-        using var stream=assembly.GetManifestResourceStream(resourceName)??throw new InvalidDataException($"Embedded background streets '{resourceName}' not found.");
+        using var stream=RoutePackageFiles.Open(assembly,resourceName,routeId)??throw new InvalidDataException($"Route background streets '{resourceName}' not found.");
         var file=JsonSerializer.Deserialize<StreetFile>(stream,Options)??throw new InvalidDataException($"Embedded background streets '{resourceName}' is empty.");
         if(file.Id!=routeId||file.Streets is null)throw new InvalidDataException($"Embedded background streets do not match '{routeId}'.");
         if(file.Streets.Any(s=>s.OsmId<=0||!double.IsFinite(s.WidthMeters)||s.WidthMeters is <2 or >40||s.Points.Count<2||s.Points.Any(p=>!double.IsFinite(p.Latitude)||!double.IsFinite(p.Longitude)||!double.IsFinite(p.ElevationMeters))))
@@ -26,7 +26,7 @@ public static class RouteBackgroundStreetDataLoader
     }
     public static RouteBackgroundStreetData? TryLoadEmbedded(Assembly assembly,string resourceName,string routeId)
     {
-        using var probe=assembly.GetManifestResourceStream(resourceName);if(probe is null)return null;
+        using var probe=RoutePackageFiles.Open(assembly,resourceName,routeId);if(probe is null)return null;
         return LoadEmbedded(assembly,resourceName,routeId);
     }
 }

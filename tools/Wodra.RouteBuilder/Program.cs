@@ -10,6 +10,22 @@ if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
 
 try
 {
+    if (args[0].Equals("refresh-package", StringComparison.OrdinalIgnoreCase))
+    {
+        var refreshOptions = ParseOptions(args.Skip(1).ToArray());
+        if (!refreshOptions.TryGetValue("--config", out var refreshConfigPath))
+            throw new ArgumentException("--config is required.");
+        if (!refreshOptions.TryGetValue("--output", out var refreshOutputDirectory))
+            throw new ArgumentException("--output is required.");
+        var refreshConfig = JsonSerializer.Deserialize<RouteAuthoringConfig>(
+            await File.ReadAllTextAsync(refreshConfigPath),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            ?? throw new InvalidDataException("Could not read route config JSON.");
+        refreshConfig.Validate();
+        await RoutePackageMetadata.RefreshAsync(refreshOutputDirectory, refreshConfig);
+        Console.WriteLine($"Refreshed route package metadata for {refreshConfig.Id}.");
+        return 0;
+    }
     if (!args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
         throw new ArgumentException($"Unknown command '{args[0]}'.");
     var options = ParseOptions(args.Skip(1).ToArray());
@@ -28,7 +44,8 @@ try
     if (options.TryGetValue("--max-snap-meters", out var snapText))
         config = new RouteAuthoringConfig
         {
-            Id = config.Id, Name = config.Name, Loop = config.Loop,
+            Id = config.Id, Name = config.Name, Loop = config.Loop, RouteType = config.RouteType,
+            Difficulty = config.Difficulty,
             RoutingMode = config.RoutingMode, PreferredRefs = config.PreferredRefs,
             StartArea = config.StartArea, TurnaroundArea = config.TurnaroundArea,
             StartAreaRadiusMeters = config.StartAreaRadiusMeters,
@@ -42,7 +59,7 @@ try
             StreetFurniture = config.StreetFurniture,
             BackgroundStreets = config.BackgroundStreets,
             LegacyReferencePoints = config.LegacyReferencePoints,
-            ReferenceDistanceMeters = config.ReferenceDistanceMeters, Bbox = config.Bbox,
+            ReferenceDistanceMeters = config.ReferenceDistanceMeters, TargetDistanceMeters = config.TargetDistanceMeters, Bbox = config.Bbox,
             MarginMeters = config.MarginMeters, MaxSnapDistanceMeters = double.Parse(snapText),
             RouteCorridorMeters = config.RouteCorridorMeters, DetourWarningRatio = config.DetourWarningRatio,
             DetourFailureRatio = config.DetourFailureRatio, MaxOutputSpacingMeters = config.MaxOutputSpacingMeters,
@@ -101,6 +118,8 @@ try
     {
         Console.WriteLine($"Street furniture extraction: candidates {streetFurniture.TotalCandidates}, selected {streetFurniture.Items.Count}, inside road ribbon {streetFurniture.ItemsInsideRoadRibbon}");
         streetFurniture = await StreetFurnitureElevationSampler.SampleAsync(streetFurniture, config.StreetFurniture!.ElevationCacheDirectory);
+        if (streetFurniture.ElevationSkippedCount > 0)
+            Console.WriteLine($"Street furniture omitted {streetFurniture.ElevationSkippedCount} features without cached DEM coverage; no elevations were fabricated.");
     }
     BackgroundStreetExtractionResult? backgroundStreets = result.IsValid && !routeOnly && config.BackgroundStreets is { Enabled: true } streetOptions
         ? BackgroundStreetExtractor.Extract(pbf, result.RoutePoints, streetOptions)
@@ -127,6 +146,8 @@ try
         Console.WriteLine($"Background streets: candidate ways {backgroundStreets.WaysConsidered}, included pieces {backgroundStreets.WaysIncluded}, total {backgroundStreets.TotalLengthMeters:F1} m, overlap suppressed {backgroundStreets.SuppressedOverlapMeters:F1} m");
         Console.WriteLine($"Background street classes: {string.Join(", ", backgroundStreets.HighwayClassCounts.Select(p=>$"{p.Key}={p.Value}"))}; named {backgroundStreets.NamedStreetCount}; width sources {string.Join(", ", backgroundStreets.WidthSourceCounts.Select(p=>$"{p.Key}={p.Value}"))}; samples {backgroundStreets.RuntimeSampleCount}; extraction/elevation seconds {backgroundStreets.GenerationSeconds:F2}");
         backgroundStreets = await BackgroundStreetElevationSampler.SampleAsync(backgroundStreets, config.BackgroundStreets!.ElevationCacheDirectory);
+        if (backgroundStreets.ElevationSkippedStreetCount > 0)
+            Console.WriteLine($"Background streets omitted {backgroundStreets.ElevationSkippedStreetCount} fragments containing {backgroundStreets.ElevationSkippedPointCount} unavailable/isolated elevation samples; no heights were fabricated.");
     }
     await BuildOutputs.WriteAsync(outputDirectory, config, pbf, graphStats, result,
         routeSolveSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets,
@@ -135,6 +156,8 @@ try
         await ElevationPipelineRunner.RunAsync(outputDirectory, config.Id, elevation);
     if (!routeOnly && result.IsValid && config.Terrain is { Enabled: true } terrain)
         await TerrainPipelineRunner.RunAsync(outputDirectory, config.Id, terrain);
+    if (result.IsValid)
+        await RoutePackageMetadata.RefreshAsync(outputDirectory, config);
     return result.IsValid ? 0 : 2;
 }
 catch (Exception ex)
@@ -210,5 +233,6 @@ Usage:
   dotnet run --project tools/Wodra.RouteBuilder -- build --pbf <file.osm.pbf> --config <route.json> --output <directory>
        [--max-snap-meters <metres>] [--cache-dir <directory|none>] [--route-only true] [--streets-json <existing-file>]
        [--approved-route-points <file> --approved-report <file>] [--no-bundle-streets true]
+  dotnet run --project tools/Wodra.RouteBuilder -- refresh-package --config <route.json> --output <directory>
   dotnet run --project tools/Wodra.RouteBuilder -- --help
 """);

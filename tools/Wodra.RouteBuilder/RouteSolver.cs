@@ -248,13 +248,13 @@ public static class RouteSolver
         var candidates = new IReadOnlyList<SnapCandidate>[config.Anchors.Count];
         for (var i = 0; i < config.Anchors.Count; i++)
         {
-            if (config.Loop && i == config.Anchors.Count - 1)
+            if (config.IsClosedRoute && i == config.Anchors.Count - 1)
             {
                 candidates[i] = candidates[0];
                 continue;
             }
-            var previous = i > 0 ? config.Anchors[i - 1] : config.Loop ? config.Anchors[^2] : null;
-            var next = i + 1 < config.Anchors.Count ? config.Anchors[i + 1] : config.Loop ? config.Anchors[1] : null;
+            var previous = i > 0 ? config.Anchors[i - 1] : config.IsClosedRoute ? config.Anchors[^2] : null;
+            var next = i + 1 < config.Anchors.Count ? config.Anchors[i + 1] : config.IsClosedRoute ? config.Anchors[1] : null;
             candidates[i] = GenerateSnapCandidates(graph, config.Anchors[i], config.MaxSnapDistanceMeters,
                 previous, next, config.Profile, config.RoadCostMultipliers);
         }
@@ -295,7 +295,7 @@ public static class RouteSolver
                 choice.Points));
         }
 
-        if (config.Loop && sourceCentreline.Count > 1)
+        if (config.IsClosedRoute && sourceCentreline.Count > 1)
         {
             if (GeoMath.HaversineMeters(sourceCentreline[0], sourceCentreline[^1]) > 0.001)
                 throw new InvalidOperationException("Loop route did not end at its starting projected edge position.");
@@ -358,7 +358,7 @@ public static class RouteSolver
         var bestTotal = double.PositiveInfinity;
         int[]? bestIndexes = null;
         LegChoice[]? bestChoices = null;
-        var initialCount = config.Loop ? candidates[0].Count : candidates[0].Count;
+        var initialCount = candidates[0].Count;
         for (var initial = 0; initial < initialCount; initial++)
         {
             var costs = Enumerable.Repeat(double.PositiveInfinity, candidates[0].Count).ToArray();
@@ -373,7 +373,7 @@ public static class RouteSolver
                     if (!double.IsFinite(costs[fromIndex])) continue;
                     for (var toIndex = 0; toIndex < nextCosts.Length; toIndex++)
                     {
-                        if (config.Loop && leg == anchorCount - 2 && toIndex != initial) continue;
+                        if (config.IsClosedRoute && leg == anchorCount - 2 && toIndex != initial) continue;
                         var choice = pairChoices[leg][fromIndex][toIndex];
                         if (choice is null) continue;
                         var candidateCost = costs[fromIndex] + choice.SelectionCost
@@ -385,7 +385,7 @@ public static class RouteSolver
                 }
                 costs = nextCosts;
             }
-            var finalIndex = config.Loop ? initial : Array.IndexOf(costs, costs.Min());
+            var finalIndex = config.IsClosedRoute ? initial : Array.IndexOf(costs, costs.Min());
             if (finalIndex < 0 || !double.IsFinite(costs[finalIndex]) || costs[finalIndex] >= bestTotal) continue;
             var indexes = new int[anchorCount];
             indexes[^1] = finalIndex;

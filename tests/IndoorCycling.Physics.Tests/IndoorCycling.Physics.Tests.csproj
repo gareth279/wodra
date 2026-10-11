@@ -9,5 +9,7 @@
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DebugRideDiagnostics.cs" Link="DebugRideDiagnostics.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/ScreenshotCaptureMetadata.cs" Link="ScreenshotCaptureMetadata.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingVisualStyle.cs" Link="BuildingVisualStyle.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />
   </ItemGroup>
 </Project>

@@ -65,18 +65,27 @@ public partial class BuildingLayer : Node3D
                 var category = building.VisualCategory == "generic" ? BuildingVisualStyle.Classify(tags) : building.VisualCategory;
                 var variant = building.MaterialVariant is >= 0 and < 10
                     ? building.MaterialVariant : BuildingVisualStyle.MaterialVariant(building.OsmId, category);
-                var facadeColour = ToGodotColour(BuildingVisualStyle.FacadeColor(variant, tags.GetValueOrDefault("building:colour")));
-                var roofColour = ToGodotColour(BuildingVisualStyle.RoofColor(variant, tags.GetValueOrDefault("roof:colour")));
+                var facadeColour = ToGodotColour(BuildingVisualStyle.FacadeColor(variant,
+                    tags.GetValueOrDefault("building:colour"), tags.GetValueOrDefault("building:material")));
+                var roofColour = ToGodotColour(BuildingVisualStyle.RoofColor(variant,
+                    tags.GetValueOrDefault("roof:colour"), tags.GetValueOrDefault("roof:material")));
                 var rawRoofShape = tags.GetValueOrDefault("roof:shape");
-                var shape = BuildingVisualStyle.NormalizeRoofShape(rawRoofShape);
+                var footprintArea = FootprintArea(ring);
+                var mappedOrInferredHeight = string.Equals(building.HeightSource, "Fallback", StringComparison.OrdinalIgnoreCase)
+                    ? BuildingVisualStyle.ResolveFallbackVisualHeight(building.OsmId, category, footprintArea, (float)building.HeightMeters)
+                    : (float)building.HeightMeters;
+                var shape = BuildingVisualStyle.ResolveRoofShape(building.OsmId, rawRoofShape, category,
+                    building.HeightSource, footprintArea, Math.Min(ring.Max(point => point.X) - ring.Min(point => point.X),
+                        ring.Max(point => point.Z) - ring.Min(point => point.Z)));
                 var footprintWidth = Math.Min(ring.Max(point => point.X) - ring.Min(point => point.X),
                     ring.Max(point => point.Z) - ring.Min(point => point.Z));
-                var roofHeight = BuildingVisualStyle.ResolveRoofHeight((float)building.HeightMeters, footprintWidth,
+                var roofHeight = BuildingVisualStyle.ResolveRoofHeight(mappedOrInferredHeight, footprintWidth,
                     tags.GetValueOrDefault("roof:height"), tags.GetValueOrDefault("roof:levels"));
-                var storeys = BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"), (float)building.HeightMeters);
+                var storeys = BuildingVisualStyle.ResolveStoreys(tags.GetValueOrDefault("building:levels"), mappedOrInferredHeight);
                 BuildingMeshGeometry.StyledMesh geometry;
-                try { geometry = BuildingMeshGeometry.BuildStyled(ring, (float)building.HeightMeters,
-                    shape, roofHeight, storeys, BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters)); }
+                try { geometry = BuildingMeshGeometry.BuildStyled(ring, mappedOrInferredHeight,
+                    shape, roofHeight, storeys, BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters),
+                    facadePattern: BuildingVisualStyle.FacadePattern(building.OsmId)); }
                 catch (ArgumentException) { continue; }
                 Add(facadeVertices, geometry.Facade, facadeColour);
                 Add(roofVertices, geometry.Roof, roofColour);
@@ -141,6 +150,17 @@ public partial class BuildingLayer : Node3D
     };
 
     private static Color ToGodotColour(BuildingRgb colour) => new(colour.R, colour.G, colour.B);
+
+    private static float FootprintArea(IReadOnlyList<System.Numerics.Vector3> closedRing)
+    {
+        double twiceArea = 0;
+        for (var index = 0; index < closedRing.Count - 1; index++)
+        {
+            var current = closedRing[index]; var next = closedRing[index + 1];
+            twiceArea += current.X * next.Z - next.X * current.Z;
+        }
+        return (float)(Math.Abs(twiceArea) * .5);
+    }
 
     private static void Add(List<(System.Numerics.Vector3 Vertex, Color Colour)> target,
         IReadOnlyList<System.Numerics.Vector3> vertices, Color colour)

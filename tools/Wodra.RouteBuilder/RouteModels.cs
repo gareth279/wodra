@@ -17,6 +17,11 @@ public sealed class RouteAuthoringConfig
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
     public bool Loop { get; init; }
+    /// <summary>Optional explicit catalogue type: loop or outAndBack. Blank preserves legacy Loop behaviour.</summary>
+    public string RouteType { get; init; } = "";
+    public string Difficulty { get; init; } = "";
+    [JsonIgnore]
+    public bool IsClosedRoute => Loop || RouteType is "loop" or "outAndBack";
     public string RoutingMode { get; init; } = "anchors";
     public List<string> PreferredRefs { get; init; } = [];
     public List<ClosureEdgeExclusion> ExcludedClosureEdges { get; init; } = [];
@@ -34,6 +39,8 @@ public sealed class RouteAuthoringConfig
     public BackgroundStreetBuildOptions? BackgroundStreets { get; init; } = new();
     public List<RouteAnchor> LegacyReferencePoints { get; init; } = [];
     public double? ReferenceDistanceMeters { get; init; }
+    /// <summary>Optional target for ranking valid loop candidates; it never rescales route geometry.</summary>
+    public double? TargetDistanceMeters { get; init; }
     public BoundingBox Bbox { get; init; } = new(0, 0, 0, 0);
     public double MarginMeters { get; init; } = 300;
     public double MaxSnapDistanceMeters { get; init; } = 150;
@@ -56,6 +63,8 @@ public sealed class RouteAuthoringConfig
         if (MarginMeters < 0 || MaxSnapDistanceMeters <= 0 || RouteCorridorMeters <= 0 || MaxOutputSpacingMeters <= 0)
             throw new InvalidDataException("Margin must be non-negative and snap, corridor, and output spacing must be positive.");
         if (ReferenceDistanceMeters is <= 0) throw new InvalidDataException("referenceDistanceMeters must be positive when provided.");
+        if (TargetDistanceMeters is { } target && (!double.IsFinite(target) || target <= 0))
+            throw new InvalidDataException("targetDistanceMeters must be finite and positive when provided.");
         if (!double.IsFinite(DetourWarningRatio) || !double.IsFinite(DetourFailureRatio)
             || DetourWarningRatio < 1 || DetourFailureRatio <= DetourWarningRatio)
             throw new InvalidDataException("Detour thresholds must satisfy 1 <= warning < failure.");
@@ -67,6 +76,12 @@ public sealed class RouteAuthoringConfig
             || edge.FromNodeId == edge.ToNodeId || string.IsNullOrWhiteSpace(edge.Reason)))
             throw new InvalidDataException("Excluded closure edges require a positive OSM way ID, two distinct node IDs, and a reason.");
         if (RoutingMode is not ("anchors" or "roadRef")) throw new InvalidDataException("routingMode must be 'anchors' or 'roadRef'.");
+        if (RouteType is not ("" or "loop" or "outAndBack" or "pointToPoint"))
+            throw new InvalidDataException("routeType must be 'loop', 'outAndBack', or 'pointToPoint'.");
+        if (Difficulty is not ("" or "Easy" or "Moderate" or "Challenging"))
+            throw new InvalidDataException("difficulty must be Easy, Moderate, or Challenging when provided.");
+        if (Loop && RouteType is not ("" or "loop"))
+            throw new InvalidDataException("The legacy loop flag can only be combined with routeType 'loop'.");
         Elevation?.Validate();
         Terrain?.Validate(Elevation);
         Buildings?.Validate();
@@ -75,7 +90,7 @@ public sealed class RouteAuthoringConfig
         BackgroundStreets?.Validate();
         if (RoutingMode == "roadRef")
         {
-            if (!Loop || PreferredRefs.Count == 0 || StartArea is null || TurnaroundArea is null)
+            if (!(Loop || RouteType == "loop") || PreferredRefs.Count == 0 || StartArea is null || TurnaroundArea is null)
                 throw new InvalidDataException("roadRef mode requires a loop, preferredRefs, startArea, and turnaroundArea.");
             if (StartAreaRadiusMeters <= 0 || TurnaroundAreaRadiusMeters <= 0 || MaximumConnectorDistanceMeters <= 0
                 || MinimumPreferredRefPercent is < 0 or > 100)
@@ -86,6 +101,8 @@ public sealed class RouteAuthoringConfig
                 throw new InvalidDataException("Legacy reference points must have valid names and coordinates.");
             return;
         }
+        if (TargetDistanceMeters is not null)
+            throw new InvalidDataException("targetDistanceMeters candidate ranking is currently supported only by roadRef loop generation.");
         if (Anchors.Count < 2) throw new InvalidDataException("At least two ordered anchors are required.");
         if (Anchors.Any(a => string.IsNullOrWhiteSpace(a.Name) || !double.IsFinite(a.SourceDistanceMeters)
             || a.Latitude is < -90 or > 90 || a.Longitude is < -180 or > 180))
@@ -96,9 +113,22 @@ public sealed class RouteAuthoringConfig
                 throw new InvalidDataException("Anchor distances must increase strictly in route order.");
         if (ReferenceDistanceMeters is { } reference && Math.Abs(Anchors[^1].SourceDistanceMeters - reference) > 0.001)
             throw new InvalidDataException("The final anchor source distance must equal referenceDistanceMeters.");
-        if (Loop && (Math.Abs(Anchors[0].Latitude - Anchors[^1].Latitude) > 0.00001
+        if (IsClosedRoute && (Math.Abs(Anchors[0].Latitude - Anchors[^1].Latitude) > 0.00001
             || Math.Abs(Anchors[0].Longitude - Anchors[^1].Longitude) > 0.00001))
-            throw new InvalidDataException("For loop routes, the final anchor must close onto the first anchor.");
+            throw new InvalidDataException("For loop and out-and-back routes, the final anchor must close onto the first anchor.");
+        if (RouteType == "outAndBack")
+        {
+            if (Anchors.Count < 3 || Anchors.Count % 2 == 0)
+                throw new InvalidDataException("An out-and-back route requires an odd number of anchors including a single turnaround anchor.");
+            for (var i = 0; i < Anchors.Count / 2; i++)
+            {
+                var outward = Anchors[i];
+                var returning = Anchors[Anchors.Count - 1 - i];
+                if (Math.Abs(outward.Latitude - returning.Latitude) > 0.0000001
+                    || Math.Abs(outward.Longitude - returning.Longitude) > 0.0000001)
+                    throw new InvalidDataException($"Out-and-back anchors must mirror the outward road path; '{outward.Name}' does not match '{returning.Name}'.");
+            }
+        }
     }
 }
 
@@ -278,7 +308,8 @@ public sealed record RouteRefSummary(IReadOnlyList<string> PreferredRefs,
     double MinimumPreferredRefPercent, IReadOnlyList<long> WayIds, IReadOnlyList<string> RoadNames,
     IReadOnlyList<NonPreferredConnector> NonPreferredConnectors, bool IsSuspicious);
 public sealed record RoutePointOutput(double DistanceMeters, double Latitude, double Longitude,
-    string? Bridge = null, string? Tunnel = null, string? Layer = null);
+    string? Bridge = null, string? Tunnel = null, string? Layer = null,
+    double? ElevationMeters = null, double? RawElevationMeters = null, double? GradientPercent = null);
 public sealed record RouteBuildResult(IReadOnlyList<GeoPoint> Centreline, IReadOnlyList<RoutePointOutput> RoutePoints,
     IReadOnlyList<AnchorSnap> Snaps, IReadOnlyList<RoutedLeg> Legs, double RawDistanceMeters,
     double MaximumAdjacentDistanceMeters, double MaximumSourceNodeSpacingMeters,
@@ -298,6 +329,10 @@ public sealed class BuildReport
     public string Source { get; init; } = "OpenStreetMap";
     public string SourcePbfFilename { get; init; } = "";
     public string RoutingMode { get; init; } = "anchors";
+    public string RouteType { get; init; } = "";
+    public string Difficulty { get; init; } = "";
+    public int RouteDataVersion { get; init; } = 1;
+    public string GeometryFingerprint { get; init; } = "";
     public IReadOnlyList<string> PreferredRefs { get; init; } = [];
     public BoundingBox BoundingBox { get; init; } = new(0, 0, 0, 0);
     public string Profile { get; init; } = "road";
@@ -321,6 +356,8 @@ public sealed class BuildReport
     public StreetFurnitureReport? StreetFurniture { get; init; }
     public double ActualOsmDistanceMeters { get; init; }
     public double? ReferenceDistanceMeters { get; init; }
+    public double? TargetDistanceMeters { get; init; }
+    public double? TargetDistanceDifferenceMeters { get; init; }
     public double? ReferenceDifferenceMeters { get; init; }
     public double? ActualToReferenceRatio { get; init; }
     public int FinalPointCount { get; init; }
@@ -343,6 +380,7 @@ public sealed record BuildingReport(int NearbyCandidates, int SelectedCount, int
     int GeneratedTriangleCount, int RuntimeMeshChunkCount, int RuntimeMeshInstanceCount,
     double ExtractionSeconds, string SourcePbfFilename)
 {
+    public int ElevationSkippedCount { get; init; }
     public IReadOnlyDictionary<string, int> VisualCategoryCounts { get; init; } = new Dictionary<string, int>();
     public IReadOnlyDictionary<string, int> RoofShapeTagCounts { get; init; } = new Dictionary<string, int>();
     public int BuildingsWithRoofMetadata { get; init; }
@@ -373,13 +411,20 @@ public sealed record VegetationReport(int PolygonsConsidered, int PolygonsInclud
     int OriginalPolygonVertices, int SimplifiedPolygonVertices, int LargestPolygonVertices,
     int DemSamples, int DemCacheHits, int MalformedOrSkippedGeometries, int AreaGroundOverlays,
     int AreaTriangleCount, int MultiMeshCount, int AreaMeshInstanceCount, int SceneNodeCount,
-    double GenerationSeconds, string SourcePbfFilename);
+    double GenerationSeconds, string SourcePbfFilename)
+{
+    public int DemSkippedAreas { get; init; }
+    public int DemSkippedTrees { get; init; }
+}
 
 public sealed record StreetFurnitureReport(int TotalCandidates, int SelectedItems,
     IReadOnlyDictionary<string, int> CategoryCounts, int StreetLamps, int TrafficSignals, int StopGiveWaySigns,
     int Bollards, int Crossings, int BusStops, int Benches, int MalformedOrSkippedItems,
     int ItemsInsideRoadRibbon, int ElevationSamples, int RuntimeMultiMeshCount,
-    int TotalRenderedInstances, int RenderedPrimitiveInstances, int SceneNodeCount, double GenerationSeconds, string SourcePbfFilename);
+    int TotalRenderedInstances, int RenderedPrimitiveInstances, int SceneNodeCount, double GenerationSeconds, string SourcePbfFilename)
+{
+    public int ElevationSkippedCount { get; init; }
+}
 
 public static class GeoMath
 {

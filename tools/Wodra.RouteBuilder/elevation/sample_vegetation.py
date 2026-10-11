@@ -44,7 +44,7 @@ def main():
                 if value is not None:
                     used_tiles.add(index)
                     return value
-            raise RuntimeError(f'No cached LINZ elevation at {label}; refusing to invent terrain height.')
+            return None
 
         used_tiles = set()
         for area in data['areas']:

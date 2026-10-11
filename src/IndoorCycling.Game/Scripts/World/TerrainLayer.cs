@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Godot;
@@ -22,7 +23,8 @@ public partial class TerrainLayer : Node3D
     public int RoadClearanceAdjustedVertices { get; private set; }
     public double BuildMilliseconds { get; private set; }
 
-    public bool Configure(VisualRoute route, string resourceName, string routeId)
+    public bool Configure(VisualRoute route, string resourceName, string routeId,
+        IReadOnlyList<TerrainRoadCorridor>? backgroundRoads = null)
     {
         var data = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly, resourceName, routeId);
         if (data is null) return false;
@@ -31,7 +33,9 @@ public partial class TerrainLayer : Node3D
         _route = route;
         TerrainSpacingMeters = data.SpacingMeters;
         FarTerrainSpacingMeters = data.FarSpacingMeters;
-        var built = TerrainMeshGeometry.Build(data, route.Samples);
+        var built = backgroundRoads is { Count: > 0 }
+            ? TerrainMeshGeometry.Build(data, route.Samples, backgroundRoads)
+            : TerrainMeshGeometry.Build(data, route.Samples);
         RoadClearanceAdjustedVertices = built.AdjustedForRoadClearanceVertices;
         TerrainTriangleCount = built.TriangleCount;
         var material = new StandardMaterial3D

@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 
 public sealed record RouteDefinition(
 	string Id,
@@ -10,6 +14,29 @@ public sealed record RouteDefinition(
 	IReadOnlyList<RoutePoint>? Points = null
 )
 {
+	/// <summary>Route geometry type shown in the route catalogue.</summary>
+	public string RouteType { get; init; } = "Loop";
+	public string Difficulty { get; init; } = "Unrated";
+	public string SourceAttribution { get; init; } = "";
+	public int RouteDataVersion { get; init; } = 1;
+	public double? PublishedTotalAscentMeters { get; init; }
+	public double TotalAscentMeters => PublishedTotalAscentMeters ?? (Points is not { Count: >= 2 } points ? 0
+		: points.Zip(points.Skip(1), (a, b) => Math.Max(0, b.ElevationMeters - a.ElevationMeters)).Sum());
+	/// <summary>Stable fingerprint of the ordered route geometry, independent of session state.</summary>
+	public string GeometryFingerprint
+	{
+		get
+		{
+			if (Points is not { Count: >= 2 } points) return "";
+			var canonical = string.Join("\n", points.Select(p => string.Join(",",
+				p.DistanceMeters.ToString("F3", CultureInfo.InvariantCulture),
+				p.Latitude.ToString("F7", CultureInfo.InvariantCulture),
+				p.Longitude.ToString("F7", CultureInfo.InvariantCulture),
+				p.ElevationMeters.ToString("F3", CultureInfo.InvariantCulture))));
+			return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
+		}
+	}
+
 	public double GetLoopDistance(double rideDistanceMeters)
 	{
 		if (DistanceMeters <= 0)

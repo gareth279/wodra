@@ -1,5 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Wodra.RouteBuilder;
 
@@ -36,12 +39,23 @@ public static class BuildOutputs
         var vegetationPath = Path.Combine(outputDirectory, $"{stem}.vegetation.json");
         var furniturePath = Path.Combine(outputDirectory, $"{stem}.street-furniture.json");
         var streetsPath = Path.Combine(outputDirectory, $"{stem}.streets.json");
+        var geometryFingerprint = GeometryFingerprint(result.RoutePoints);
+        var routeType = config.RouteType switch
+        {
+            "" when config.Loop => "loop",
+            "" => "pointToPoint",
+            var value => value
+        };
 
         await File.WriteAllTextAsync(geoJsonPath, SerializeGeoJson(config, result, generatedAt));
         var pointsOutput = new
         {
             id = config.Id,
             name = config.Name,
+            routeType,
+            difficulty = config.Difficulty,
+            routeDataVersion = 1,
+            geometryFingerprint,
             source = "OpenStreetMap",
             isValid = result.IsValid,
             errors = result.Errors,
@@ -66,6 +80,10 @@ public static class BuildOutputs
             Name = config.Name,
             SourcePbfFilename = Path.GetFileName(pbfPath),
             RoutingMode = config.RoutingMode,
+            RouteType = routeType,
+            Difficulty = config.Difficulty,
+            RouteDataVersion = 1,
+            GeometryFingerprint = geometryFingerprint,
             PreferredRefs = config.PreferredRefs,
             ExcludedClosureEdges = config.ExcludedClosureEdges,
             BoundingBox = config.Bbox,
@@ -84,6 +102,9 @@ public static class BuildOutputs
             RoadSegments = result.RoadSegments ?? [],
             ActualOsmDistanceMeters = result.RawDistanceMeters,
             ReferenceDistanceMeters = config.ReferenceDistanceMeters,
+            TargetDistanceMeters = config.TargetDistanceMeters,
+            TargetDistanceDifferenceMeters = config.TargetDistanceMeters is { } targetDistance
+                ? result.RawDistanceMeters - targetDistance : null,
             ReferenceDifferenceMeters = config.ReferenceDistanceMeters is { } reportReference
                 ? result.RawDistanceMeters - reportReference : null,
             ActualToReferenceRatio = config.ReferenceDistanceMeters is { } referenceLength && referenceLength > 0
@@ -175,7 +196,9 @@ public static class BuildOutputs
                 statistics=new { waysConsidered=backgroundStreets.WaysConsidered, waysIncluded=backgroundStreets.WaysIncluded,
                     highwayClassCounts=backgroundStreets.HighwayClassCounts, widthSourceCounts=backgroundStreets.WidthSourceCounts,
                     namedStreetCount=backgroundStreets.NamedStreetCount,totalLengthMeters=backgroundStreets.TotalLengthMeters,
-                    suppressedOverlapMeters=backgroundStreets.SuppressedOverlapMeters,runtimeSampleCount=backgroundStreets.RuntimeSampleCount },
+                    suppressedOverlapMeters=backgroundStreets.SuppressedOverlapMeters,runtimeSampleCount=backgroundStreets.RuntimeSampleCount,
+                    elevationSkippedStreetCount=backgroundStreets.ElevationSkippedStreetCount,
+                    elevationSkippedPointCount=backgroundStreets.ElevationSkippedPointCount },
                 streets=backgroundStreets.Streets };
             var streetJson=JsonSerializer.Serialize(streetData,JsonOptions);
             await File.WriteAllTextAsync(streetsPath,streetJson);
@@ -223,6 +246,16 @@ public static class BuildOutputs
             foreach (var connector in routeRef.NonPreferredConnectors)
                 Console.WriteLine($"CONNECTOR way {connector.WayId}: {connector.Name ?? connector.Highway}, {connector.DistanceMeters:F1} m ({connector.Reason})");
         }
+    }
+
+    private static string GeometryFingerprint(IReadOnlyList<RoutePointOutput> points)
+    {
+        var canonical = string.Join("\n", points.Select(point => string.Join(",",
+            point.DistanceMeters.ToString("F3", CultureInfo.InvariantCulture),
+            point.Latitude.ToString("F7", CultureInfo.InvariantCulture),
+            point.Longitude.ToString("F7", CultureInfo.InvariantCulture),
+            point.ElevationMeters?.ToString("F3", CultureInfo.InvariantCulture) ?? "")));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
     }
 
     public static string SerializeGeoJson(RouteAuthoringConfig config, RouteBuildResult result, DateTimeOffset generatedAt)
@@ -348,6 +381,7 @@ public static class BuildOutputs
             buildings.MaximumHeightMeters, buildings.MedianHeightMeters, triangles, instances, instances,
             buildings.ExtractionSeconds, Path.GetFileName(pbfPath))
         {
+            ElevationSkippedCount = buildings.ElevationSkippedCount,
             VisualCategoryCounts = categoryCounts,
             RoofShapeTagCounts = roofShapeCounts,
             BuildingsWithRoofMetadata = buildings.Buildings.Count(item => item.SourceTags.Keys.Any(key => key.StartsWith("roof:", StringComparison.OrdinalIgnoreCase))),
@@ -427,7 +461,8 @@ public static class BuildOutputs
             vegetation.OriginalPolygonVertices, vegetation.SimplifiedPolygonVertices, vegetation.LargestPolygonVertices,
             vegetation.DemSamples, vegetation.DemCacheHits, vegetation.MalformedOrSkippedGeometries,
             vegetation.Areas.Count(area => area.RenderGround), areaTriangles, multiMeshes, areaChunks,
-            1 + multiMeshes + areaChunks, vegetation.GenerationSeconds, Path.GetFileName(pbfPath));
+            1 + multiMeshes + areaChunks, vegetation.GenerationSeconds, Path.GetFileName(pbfPath))
+        { DemSkippedAreas = vegetation.DemSkippedAreas, DemSkippedTrees = vegetation.DemSkippedTrees };
     }
 
     private static StreetFurnitureReport ToStreetFurnitureReport(StreetFurnitureExtractionResult result, string pbfPath, double routeLength)
@@ -441,7 +476,8 @@ public static class BuildOutputs
             Count("bus-stop"), Count("bench"), result.MalformedOrSkippedItems, result.ItemsInsideRoadRibbon,
             result.ElevationSamples, multiMeshes, result.Items.Count,
             result.Items.Sum(item => StreetFurnitureExtractor.MeshPartCount(item.Category)),
-            1 + multiMeshes, result.GenerationSeconds, Path.GetFileName(pbfPath));
+            1 + multiMeshes, result.GenerationSeconds, Path.GetFileName(pbfPath))
+        { ElevationSkippedCount = result.ElevationSkippedCount };
     }
 
     private static int CountRuntimeMultiMeshes(IReadOnlyList<StreetFurnitureItem> items, double routeLength) =>

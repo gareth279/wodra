@@ -47,11 +47,10 @@ public sealed class DebugRideDiagnostics
         };
     }
 
-    public bool TryApplyDistanceJump(RideState current, double distanceMeters, bool fitRecordingActive,
-        out RideState updated)
+    public bool TryApplyDistanceJump(RideState current, double distanceMeters, out RideState updated)
     {
         updated = current;
-        if (!Enabled || fitRecordingActive || !double.IsFinite(distanceMeters) || distanceMeters < 0) return false;
+        if (!Enabled || !double.IsFinite(distanceMeters) || distanceMeters < 0) return false;
         updated = current with { DistanceMeters = distanceMeters, VirtualSpeedKph = 0 };
         return true;
     }

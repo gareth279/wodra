@@ -20,6 +20,8 @@ var tests = new (string Name, Action Run)[]
     ("Ride pause freezes progress and resumes without a distance jump", RidePauseSemantics),
     ("Repeated ride pause action toggles explicit ride state", RidePauseToggle),
     ("Debug mode off emits no periodic snapshots", DebugModeOff),
+    ("fallback building heights and roof profiles vary deterministically", BuildingFallbackVariation),
+    ("procedural facade windows vary by OSM identity and remain repeatable", BuildingFacadeVariation),
     ("Debug snapshot contains ride state and calculated lap position", DebugSnapshotFields),
     ("Debug marker numbering increments", DebugMarkerNumbers),
     ("Screenshot filename and marker sidecar share collision-safe names", ScreenshotNames),
@@ -27,7 +29,7 @@ var tests = new (string Name, Action Run)[]
     ("F12 selects clean or visible HUD capture", ScreenshotModeSelection),
     ("Screenshot directory falls back when Pictures is unavailable", ScreenshotDirectoryFallback),
     ("Screenshot failure does not interrupt debug marker creation", ScreenshotFailureKeepsMarker),
-    ("Debug distance jump resets speed and blocks active FIT recording", DebugDistanceJump)
+    ("Debug distance jump preserves elapsed ride state and supports later laps", DebugDistanceJump)
 };
 
 var failed = 0;
@@ -380,17 +382,61 @@ static void DebugDistanceJump()
 {
     var diagnostics = new DebugRideDiagnostics();
     diagnostics.Begin(true);
-    var current = RideState.Initial with { DistanceMeters = 100, ElapsedSeconds = 30, VirtualSpeedKph = 25 };
-    if (diagnostics.TryApplyDistanceJump(current, 5830, true, out _))
-        throw new Exception("Jump was allowed during active FIT recording.");
-    if (!diagnostics.TryApplyDistanceJump(current, 5830, false, out var jumped))
-        throw new Exception("Debug jump was rejected without active FIT recording.");
-    Near(5830, jumped.DistanceMeters, 0);
+    var current = RideState.Initial with { DistanceMeters = 100, ElapsedSeconds = 30, VirtualSpeedKph = 25, ElevationGainMeters = 42 };
+    if (!diagnostics.TryApplyDistanceJump(current, 2130, out var jumped))
+        throw new Exception("Debug jump was rejected while recording; recording must be finalized by the session first.");
+    Near(2130, jumped.DistanceMeters, 0);
     Near(0, jumped.VirtualSpeedKph, 0);
     Near(current.ElapsedSeconds, jumped.ElapsedSeconds, 0);
+    Near(current.ElevationGainMeters, jumped.ElevationGainMeters, 0);
+    if (!diagnostics.TryApplyDistanceJump(jumped, 12_000, out var laterLap))
+        throw new Exception("Jump to an absolute distance on a later lap was rejected.");
+    Near(12_000, laterLap.DistanceMeters, 0);
+    if (diagnostics.TryApplyDistanceJump(current, double.NaN, out _) ||
+        diagnostics.TryApplyDistanceJump(current, -1, out _))
+        throw new Exception("Invalid route jump distance was accepted.");
     diagnostics.Begin(false);
-    if (diagnostics.TryApplyDistanceJump(current, 5830, false, out _))
+    if (diagnostics.TryApplyDistanceJump(current, 5830, out _))
         throw new Exception("Jump was allowed outside Debug mode.");
+}
+
+static void BuildingFallbackVariation()
+{
+    var first = BuildingVisualStyle.ResolveFallbackVisualHeight(901, "generic", 72, 8);
+    Near(first, BuildingVisualStyle.ResolveFallbackVisualHeight(901, "generic", 72, 8), 0);
+    if (first is < 3.3f or > 4.8f) throw new Exception($"Fallback low-rise height was outside its visual band: {first} m.");
+    var variants = Enumerable.Range(1, 40)
+        .Select(id => BuildingVisualStyle.ResolveFallbackVisualHeight(id, "generic", 72, 8)).Distinct().Count();
+    if (variants < 10) throw new Exception("Fallback buildings did not get varied deterministic heights.");
+    Near(3, BuildingVisualStyle.ResolveFallbackVisualHeight(901, "industrial/service", 72, 3), 0);
+
+    var roofs = Enumerable.Range(1, 80)
+        .Select(id => BuildingVisualStyle.ResolveRoofShape(id, null, "generic", "Fallback", 90, 8)).ToArray();
+    if (!roofs.Contains("flat") || !roofs.Contains("gabled") || !roofs.Contains("hipped"))
+        throw new Exception("Unknown low-rise roofs did not receive the expected restrained style mix.");
+    if (BuildingVisualStyle.ResolveRoofShape(9, "gabled", "generic", "Fallback", 90, 8) != "gabled")
+        throw new Exception("Mapped roof metadata was not preserved.");
+    var brick = BuildingVisualStyle.FacadeColor(0, null, "brick");
+    if (brick != new BuildingRgb(.57f, .34f, .27f)) throw new Exception("Mapped brick facade material was not used.");
+    var explicitColour = BuildingVisualStyle.FacadeColor(0, "#abc", "brick");
+    if (explicitColour == brick) throw new Exception("Explicit mapped building colour did not take priority over material.");
+}
+
+static void BuildingFacadeVariation()
+{
+    var ring = new[]
+    {
+        new System.Numerics.Vector3(-12, 0, -6), new System.Numerics.Vector3(12, 0, -6),
+        new System.Numerics.Vector3(12, 0, 6), new System.Numerics.Vector3(-12, 0, 6),
+        new System.Numerics.Vector3(-12, 0, -6)
+    };
+    var firstPattern = BuildingVisualStyle.FacadePattern(431);
+    var first = BuildingMeshGeometry.BuildStyled(ring, 9, "flat", 0, 3, true, facadePattern: firstPattern);
+    var repeat = BuildingMeshGeometry.BuildStyled(ring, 9, "flat", 0, 3, true, facadePattern: firstPattern);
+    var other = BuildingMeshGeometry.BuildStyled(ring, 9, "flat", 0, 3, true,
+        facadePattern: BuildingVisualStyle.FacadePattern(877));
+    if (!first.Windows.SequenceEqual(repeat.Windows)) throw new Exception("Facade pattern was not repeatable.");
+    if (first.Windows.SequenceEqual(other.Windows)) throw new Exception("Distinct buildings got identical window rhythms.");
 }
 
 static void Near(double expected, double actual, double tolerance)

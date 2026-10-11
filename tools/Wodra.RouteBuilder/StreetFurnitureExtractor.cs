@@ -11,7 +11,8 @@ public sealed record StreetFurnitureCandidate(string OsmType, long OsmId, string
     double? DirectionDegrees, string? Name, IReadOnlyDictionary<string, string> Tags);
 public sealed record StreetFurnitureExtractionResult(int TotalCandidates, int MalformedOrSkippedItems,
     int ItemsInsideRoadRibbon, IReadOnlyList<StreetFurnitureItem> Items, int ElevationSamples,
-    double GenerationSeconds = 0, int RuntimeMultiMeshCount = 0, int SceneNodeCount = 0);
+    double GenerationSeconds = 0, int RuntimeMultiMeshCount = 0, int SceneNodeCount = 0,
+    int ElevationSkippedCount = 0);
 
 /// <summary>Extracts only explicit, mapped street-furniture objects from OSM point/linear features.</summary>
 public static class StreetFurnitureExtractor

@@ -24,8 +24,8 @@ public static class RouteVegetationDataLoader
 
     public static RouteVegetationData LoadEmbedded(Assembly assembly, string resourceName, string routeId)
     {
-        using var stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidDataException($"Embedded vegetation resource '{resourceName}' was not found.");
+        using var stream = RoutePackageFiles.Open(assembly, resourceName, routeId)
+            ?? throw new InvalidDataException($"Route vegetation resource '{resourceName}' was not found.");
         var file = JsonSerializer.Deserialize<VegetationFile>(stream, JsonOptions)
             ?? throw new InvalidDataException($"Embedded vegetation resource '{resourceName}' is empty.");
         if (!string.Equals(file.Id, routeId, StringComparison.Ordinal) || file.Areas is null || file.Trees is null)

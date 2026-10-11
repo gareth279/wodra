@@ -1,68 +1,52 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System;
 
 public static class RouteCatalog
 {
-	public static IReadOnlyList<RouteDefinition> Routes { get; } =
-	[
-		new RouteDefinition(
-			Id: "test-route",
-			Name: "Test Route",
-			Description: "Simple rolling test route.",
-			DistanceMeters: 3500,
-			Segments:
-			[
-				new RouteSegment(0, 500, 0, "Warm-up flat"),
-				new RouteSegment(500, 1500, 3, "Gentle climb"),
-				new RouteSegment(1500, 2500, 6, "Main climb"),
-				new RouteSegment(2500, 3500, -2, "Descent")
-			],
-			Points:
-			[
-				new RoutePoint(0, -45.8640, 170.5140, 100),
-				new RoutePoint(500, -45.8638, 170.5180, 100),
-				new RoutePoint(1500, -45.8620, 170.5240, 130),
-				new RoutePoint(2500, -45.8600, 170.5300, 190),
-				new RoutePoint(3500, -45.8640, 170.5140, 170)
-			]
-		),
-
-		new RouteDefinition(
-			Id: "flat-test-route",
-			Name: "Flat Test Route",
-			Description: "Mostly flat route for testing cadence, recording and UI without trainer resistance changes.",
-			DistanceMeters: 3000,
-			Segments:
-			[
-				new RouteSegment(0, 750, 0, "Flat start"),
-				new RouteSegment(750, 1500, 0.5, "Slight rise"),
-				new RouteSegment(1500, 2250, 0, "Flat middle"),
-				new RouteSegment(2250, 3000, -0.5, "Slight drop")
-			]
-		),
-
-		new RouteDefinition(
-			Id: "climb-test-route",
-			Name: "Climb Test Route",
-			Description: "Short climbing route to test trainer resistance and elevation recording.",
-			DistanceMeters: 3200,
-			Segments:
-			[
-				new RouteSegment(0, 400, 0, "Warm-up flat"),
-				new RouteSegment(400, 1000, 3, "Opening climb"),
-				new RouteSegment(1000, 1700, 6, "Steady climb"),
-				new RouteSegment(1700, 2400, 9, "Hard ramp"),
-				new RouteSegment(2400, 2800, 4, "Easing climb"),
-				new RouteSegment(2800, 3200, -3, "Recovery descent")
-			]
-		),
-
-		CreateDunedinRoute()
-	];
+	private static readonly List<string> _packageErrors = [];
+	public static IReadOnlyList<string> PackageErrors => _packageErrors;
+	public static IReadOnlyList<RouteDefinition> Routes { get; } = LoadRoutes();
 
 	public static RouteDefinition? GetById(string id)
 	{
 		return Routes.FirstOrDefault(route => route.Id == id);
+	}
+
+	private static IReadOnlyList<RouteDefinition> LoadRoutes()
+	{
+		var routes = new List<RouteDefinition> { CreateDunedinRoute() };
+		var reservedTestIds = new HashSet<string>(System.StringComparer.Ordinal)
+			{ "test-route", "flat-test-route", "climb-test-route" };
+		var packageRoot = RoutePackageFiles.UserPackagesDirectory;
+		if (!Directory.Exists(packageRoot)) return routes;
+		foreach (var directory in Directory.EnumerateDirectories(packageRoot).OrderBy(path => path, System.StringComparer.OrdinalIgnoreCase))
+		{
+			var packageId = Path.GetFileName(directory);
+			var routePointsPath = Path.Combine(directory, $"{packageId}.route-points.json");
+			if (!File.Exists(routePointsPath))
+			{
+				_packageErrors.Add($"{packageId}: missing {packageId}.route-points.json");
+				continue;
+			}
+			try
+			{
+				var route = RouteDataLoader.LoadPackage(routePointsPath);
+				if (reservedTestIds.Contains(route.Id))
+					throw new InvalidDataException("Development fixture IDs are reserved and cannot be installed as playable routes.");
+				if (!string.Equals(route.Id, packageId, System.StringComparison.Ordinal))
+					throw new InvalidDataException("Package folder name does not match its route ID.");
+				if (routes.Any(existing => existing.Id == route.Id))
+					throw new InvalidDataException("Route ID already exists in the built-in catalogue.");
+				routes.Add(route);
+			}
+			catch (Exception ex)
+			{
+				_packageErrors.Add($"{packageId}: {ex.Message}");
+			}
+		}
+		return routes;
 	}
 
 	private static RouteDefinition CreateDunedinRoute()
@@ -88,6 +72,13 @@ public static class RouteCatalog
 			"Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json",
 			"dunedin-one-way-oval-gardens", "Dunedin One-way: Oval to Gardens Loop",
 			"OSM SH1 one-way loop from the Oval to Gardens and back. Geometry © OpenStreetMap contributors, ODbL 1.0.",
-			segments);
+			segments) with
+		{
+			RouteType = "Loop",
+			Difficulty = "Easy",
+			SourceAttribution = "© OpenStreetMap contributors, ODbL 1.0; elevation: LINZ hosted Otago Regional Council LiDAR DEM, CC-BY-4.0",
+			RouteDataVersion = 1,
+			PublishedTotalAscentMeters = 18.164954589432845
+		};
 	}
 }

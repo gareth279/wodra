@@ -29,7 +29,7 @@ public static class RouteTerrainDataLoader
 
     public static RouteTerrainData? TryLoadEmbedded(Assembly assembly, string resourceName, string routeId)
     {
-        using var stream = assembly.GetManifestResourceStream(resourceName);
+        using var stream = RoutePackageFiles.Open(assembly, resourceName, routeId);
         if (stream is null) return null;
         var data = JsonSerializer.Deserialize<RouteTerrainData>(stream, Options)
             ?? throw new InvalidDataException($"Embedded terrain resource '{resourceName}' is empty.");

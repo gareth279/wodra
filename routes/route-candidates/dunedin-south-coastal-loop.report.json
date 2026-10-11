@@ -1,0 +1,2117 @@
+{
+  "id": "dunedin-south-coastal-loop",
+  "name": "Dunedin South Dunedin Coastal Loop",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "routingMode": "anchors",
+  "routeType": "loop",
+  "difficulty": "Easy",
+  "routeDataVersion": 1,
+  "geometryFingerprint": "5e5eeb4c77013e2fd3216342db515be16d7c64912e2fd54518bd55b9a1ed8a1d",
+  "preferredRefs": [],
+  "boundingBox": {
+    "minLatitude": -45.94,
+    "minLongitude": 170.47,
+    "maxLatitude": -45.83,
+    "maxLongitude": 170.57
+  },
+  "profile": "cycling",
+  "routeCorridorMeters": 1500,
+  "detourWarningRatio": 1.8,
+  "detourFailureRatio": 2.8,
+  "maxOutputSpacingMeters": 20,
+  "retainedOsmNodeCount": 507679,
+  "eligibleWayCount": 4304,
+  "graphNodeCount": 34624,
+  "graphEdgeCount": 64973,
+  "anchors": [
+    {
+      "anchor": {
+        "name": "Forbury Road start",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.907,
+        "longitude": 170.507
+      },
+      "fromNodeId": 1313610480,
+      "toNodeId": 3889764757,
+      "wayId": 116545468,
+      "snappedCoordinate": {
+        "latitude": -45.9065374800116,
+        "longitude": 170.5068024032115
+      },
+      "snapDistanceMeters": 53.654192630402314,
+      "bearingDegrees": 73.4443777132704,
+      "directionAlignmentDegrees": 26.83877073443119,
+      "highway": "tertiary",
+      "roadName": "Victoria Road"
+    },
+    {
+      "anchor": {
+        "name": "Musselburgh Rise",
+        "sourceDistanceMeters": 1000,
+        "latitude": -45.897,
+        "longitude": 170.516
+      },
+      "fromNodeId": 11477273478,
+      "toNodeId": 1637498027,
+      "wayId": 48567471,
+      "snappedCoordinate": {
+        "latitude": -45.89676217973553,
+        "longitude": 170.5159884738243
+      },
+      "snapDistanceMeters": 26.459445605352485,
+      "bearingDegrees": 88.0681500173896,
+      "directionAlignmentDegrees": 24.01593621722063,
+      "highway": "residential",
+      "roadName": "Rawhiti Street"
+    },
+    {
+      "anchor": {
+        "name": "Spottiswoode Street",
+        "sourceDistanceMeters": 2000,
+        "latitude": -45.89955,
+        "longitude": 170.529
+      },
+      "fromNodeId": 1315731727,
+      "toNodeId": 1315731229,
+      "wayId": 48568425,
+      "snappedCoordinate": {
+        "latitude": -45.89954873252322,
+        "longitude": 170.5289900732839
+      },
+      "snapDistanceMeters": 0.780977272740693,
+      "bearingDegrees": 190.39668309260196,
+      "directionAlignmentDegrees": 17.60756895311617,
+      "highway": "residential",
+      "roadName": "Spottiswoode Street"
+    },
+    {
+      "anchor": {
+        "name": "John Wilson Ocean Drive",
+        "sourceDistanceMeters": 3000,
+        "latitude": -45.908,
+        "longitude": 170.518
+      },
+      "fromNodeId": 1313605981,
+      "toNodeId": 6503742575,
+      "wayId": 1462169549,
+      "snappedCoordinate": {
+        "latitude": -45.907623,
+        "longitude": 170.51775740000002
+      },
+      "snapDistanceMeters": 45.93091130437839,
+      "bearingDegrees": 265.7000416493652,
+      "directionAlignmentDegrees": 19.777842483173604,
+      "highway": "unclassified",
+      "roadName": "John Wilson Ocean Drive"
+    },
+    {
+      "anchor": {
+        "name": "St Clair",
+        "sourceDistanceMeters": 4000,
+        "latitude": -45.9095,
+        "longitude": 170.497
+      },
+      "fromNodeId": 5296399248,
+      "toNodeId": 1313847533,
+      "wayId": 511224234,
+      "snappedCoordinate": {
+        "latitude": -45.9089381,
+        "longitude": 170.4972323
+      },
+      "snapDistanceMeters": 65.01405449544686,
+      "bearingDegrees": 245.87878523692495,
+      "directionAlignmentDegrees": 31.564601702906455,
+      "highway": "tertiary",
+      "roadName": "Victoria Road"
+    },
+    {
+      "anchor": {
+        "name": "Forbury Road start",
+        "sourceDistanceMeters": 5000,
+        "latitude": -45.907,
+        "longitude": 170.507
+      },
+      "fromNodeId": 1313610480,
+      "toNodeId": 3889764757,
+      "wayId": 116545468,
+      "snappedCoordinate": {
+        "latitude": -45.9065374800116,
+        "longitude": 170.5068024032115
+      },
+      "snapDistanceMeters": 53.654192630402314,
+      "bearingDegrees": 73.4443777132704,
+      "directionAlignmentDegrees": 26.83877073443119,
+      "highway": "tertiary",
+      "roadName": "Victoria Road"
+    }
+  ],
+  "legs": [
+    {
+      "fromAnchor": "Forbury Road start",
+      "toAnchor": "Musselburgh Rise",
+      "straightLineDistanceMeters": 1312.029635695206,
+      "distanceMeters": 1690.4563290066867,
+      "roadDirectRatio": 1.2884284645833959,
+      "maximumCorridorDeviationMeters": 284.8558312600454,
+      "startSnap": {
+        "anchor": {
+          "name": "Forbury Road start",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.907,
+          "longitude": 170.507
+        },
+        "fromNodeId": 1313610480,
+        "toNodeId": 3889764757,
+        "wayId": 116545468,
+        "snappedCoordinate": {
+          "latitude": -45.9065374800116,
+          "longitude": 170.5068024032115
+        },
+        "snapDistanceMeters": 53.654192630402314,
+        "bearingDegrees": 73.4443777132704,
+        "directionAlignmentDegrees": 26.83877073443119,
+        "highway": "tertiary",
+        "roadName": "Victoria Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Musselburgh Rise",
+          "sourceDistanceMeters": 1000,
+          "latitude": -45.897,
+          "longitude": 170.516
+        },
+        "fromNodeId": 11477273478,
+        "toNodeId": 1637498027,
+        "wayId": 48567471,
+        "snappedCoordinate": {
+          "latitude": -45.89676217973553,
+          "longitude": 170.5159884738243
+        },
+        "snapDistanceMeters": 26.459445605352485,
+        "bearingDegrees": 88.0681500173896,
+        "directionAlignmentDegrees": 24.01593621722063,
+        "highway": "residential",
+        "roadName": "Rawhiti Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        116545468,
+        48567471,
+        116545460,
+        116545478,
+        116545461,
+        116545458,
+        48331089,
+        1272971691,
+        116545450,
+        1050665407,
+        116545451,
+        48567451
+      ],
+      "ways": [
+        {
+          "wayId": 116545468,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        },
+        {
+          "wayId": 48567471,
+          "highway": "residential",
+          "name": "Rawhiti Street"
+        },
+        {
+          "wayId": 116545460,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        },
+        {
+          "wayId": 116545478,
+          "highway": "tertiary"
+        },
+        {
+          "wayId": 116545461,
+          "highway": "tertiary",
+          "name": "Queens Drive"
+        },
+        {
+          "wayId": 116545458,
+          "highway": "tertiary",
+          "name": "Queens Drive"
+        },
+        {
+          "wayId": 48331089,
+          "highway": "residential",
+          "name": "Rugby Street"
+        },
+        {
+          "wayId": 1272971691,
+          "highway": "residential",
+          "name": "Rugby Street"
+        },
+        {
+          "wayId": 116545450,
+          "highway": "residential",
+          "name": "Royal Crescent"
+        },
+        {
+          "wayId": 1050665407,
+          "highway": "residential",
+          "name": "Royal Crescent"
+        },
+        {
+          "wayId": 116545451,
+          "highway": "secondary",
+          "name": "Musselburgh Rise"
+        },
+        {
+          "wayId": 48567451,
+          "highway": "residential",
+          "name": "Moana Crescent"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.9065374800116,
+          "longitude": 170.5068024032115
+        },
+        {
+          "latitude": -45.906452300000005,
+          "longitude": 170.50721420000002
+        },
+        {
+          "latitude": -45.9063196,
+          "longitude": 170.50786300000001
+        },
+        {
+          "latitude": -45.9060858,
+          "longitude": 170.5090026
+        },
+        {
+          "latitude": -45.906049900000006,
+          "longitude": 170.50913680000002
+        },
+        {
+          "latitude": -45.906018800000005,
+          "longitude": 170.5093653
+        },
+        {
+          "latitude": -45.9060131,
+          "longitude": 170.5095349
+        },
+        {
+          "latitude": -45.906029600000004,
+          "longitude": 170.50960880000002
+        },
+        {
+          "latitude": -45.9060015,
+          "longitude": 170.50960120000002
+        },
+        {
+          "latitude": -45.905973100000004,
+          "longitude": 170.50960560000001
+        },
+        {
+          "latitude": -45.9059515,
+          "longitude": 170.5096177
+        },
+        {
+          "latitude": -45.905925800000006,
+          "longitude": 170.5096464
+        },
+        {
+          "latitude": -45.9059138,
+          "longitude": 170.5096695
+        },
+        {
+          "latitude": -45.9059054,
+          "longitude": 170.50969560000001
+        },
+        {
+          "latitude": -45.905900100000004,
+          "longitude": 170.5097413
+        },
+        {
+          "latitude": -45.9058581,
+          "longitude": 170.509724
+        },
+        {
+          "latitude": -45.9057856,
+          "longitude": 170.50972570000002
+        },
+        {
+          "latitude": -45.9049885,
+          "longitude": 170.50975640000001
+        },
+        {
+          "latitude": -45.9044011,
+          "longitude": 170.50977400000002
+        },
+        {
+          "latitude": -45.9030544,
+          "longitude": 170.50981610000002
+        },
+        {
+          "latitude": -45.9029686,
+          "longitude": 170.5098188
+        },
+        {
+          "latitude": -45.902956800000005,
+          "longitude": 170.5098193
+        },
+        {
+          "latitude": -45.9028847,
+          "longitude": 170.50982240000002
+        },
+        {
+          "latitude": -45.9028669,
+          "longitude": 170.5098232
+        },
+        {
+          "latitude": -45.9028213,
+          "longitude": 170.50982470000002
+        },
+        {
+          "latitude": -45.902776700000004,
+          "longitude": 170.50982630000001
+        },
+        {
+          "latitude": -45.902689200000005,
+          "longitude": 170.50982900000002
+        },
+        {
+          "latitude": -45.9025125,
+          "longitude": 170.5098342
+        },
+        {
+          "latitude": -45.901724200000004,
+          "longitude": 170.50986170000002
+        },
+        {
+          "latitude": -45.9015325,
+          "longitude": 170.50986740000002
+        },
+        {
+          "latitude": -45.9009305,
+          "longitude": 170.5098844
+        },
+        {
+          "latitude": -45.8999724,
+          "longitude": 170.5099149
+        },
+        {
+          "latitude": -45.8993249,
+          "longitude": 170.5099352
+        },
+        {
+          "latitude": -45.898896400000005,
+          "longitude": 170.5099496
+        },
+        {
+          "latitude": -45.8988968,
+          "longitude": 170.5100572
+        },
+        {
+          "latitude": -45.898896900000004,
+          "longitude": 170.510081
+        },
+        {
+          "latitude": -45.8989132,
+          "longitude": 170.51108330000002
+        },
+        {
+          "latitude": -45.898917000000004,
+          "longitude": 170.5111172
+        },
+        {
+          "latitude": -45.898924,
+          "longitude": 170.5111448
+        },
+        {
+          "latitude": -45.898931600000004,
+          "longitude": 170.51116240000002
+        },
+        {
+          "latitude": -45.8989084,
+          "longitude": 170.51124670000002
+        },
+        {
+          "latitude": -45.898909700000004,
+          "longitude": 170.5114895
+        },
+        {
+          "latitude": -45.8988906,
+          "longitude": 170.5115773
+        },
+        {
+          "latitude": -45.8988742,
+          "longitude": 170.5116523
+        },
+        {
+          "latitude": -45.8987661,
+          "longitude": 170.51160380000002
+        },
+        {
+          "latitude": -45.898705500000005,
+          "longitude": 170.5115849
+        },
+        {
+          "latitude": -45.8986559,
+          "longitude": 170.511572
+        },
+        {
+          "latitude": -45.898613000000005,
+          "longitude": 170.5115713
+        },
+        {
+          "latitude": -45.8985719,
+          "longitude": 170.5115795
+        },
+        {
+          "latitude": -45.8985246,
+          "longitude": 170.5116001
+        },
+        {
+          "latitude": -45.89851,
+          "longitude": 170.51161390000001
+        },
+        {
+          "latitude": -45.8984639,
+          "longitude": 170.511661
+        },
+        {
+          "latitude": -45.8986056,
+          "longitude": 170.511952
+        },
+        {
+          "latitude": -45.898653800000005,
+          "longitude": 170.51205330000002
+        },
+        {
+          "latitude": -45.898696300000005,
+          "longitude": 170.5121568
+        },
+        {
+          "latitude": -45.8987239,
+          "longitude": 170.51223760000002
+        },
+        {
+          "latitude": -45.898744300000004,
+          "longitude": 170.51231940000002
+        },
+        {
+          "latitude": -45.8987543,
+          "longitude": 170.5123905
+        },
+        {
+          "latitude": -45.8987569,
+          "longitude": 170.51247320000002
+        },
+        {
+          "latitude": -45.8987494,
+          "longitude": 170.5125451
+        },
+        {
+          "latitude": -45.8987314,
+          "longitude": 170.5126171
+        },
+        {
+          "latitude": -45.8987047,
+          "longitude": 170.5126802
+        },
+        {
+          "latitude": -45.8986649,
+          "longitude": 170.5127581
+        },
+        {
+          "latitude": -45.898581,
+          "longitude": 170.51289930000002
+        },
+        {
+          "latitude": -45.8983956,
+          "longitude": 170.51319420000002
+        },
+        {
+          "latitude": -45.898300500000005,
+          "longitude": 170.5133471
+        },
+        {
+          "latitude": -45.8982158,
+          "longitude": 170.5134841
+        },
+        {
+          "latitude": -45.8981383,
+          "longitude": 170.51362350000002
+        },
+        {
+          "latitude": -45.898067000000005,
+          "longitude": 170.5137661
+        },
+        {
+          "latitude": -45.8979907,
+          "longitude": 170.51392950000002
+        },
+        {
+          "latitude": -45.897950300000005,
+          "longitude": 170.5140227
+        },
+        {
+          "latitude": -45.8978994,
+          "longitude": 170.51415630000002
+        },
+        {
+          "latitude": -45.8978674,
+          "longitude": 170.5142652
+        },
+        {
+          "latitude": -45.8978393,
+          "longitude": 170.5143893
+        },
+        {
+          "latitude": -45.8978181,
+          "longitude": 170.514533
+        },
+        {
+          "latitude": -45.897800800000006,
+          "longitude": 170.51473330000002
+        },
+        {
+          "latitude": -45.8977876,
+          "longitude": 170.5149144
+        },
+        {
+          "latitude": -45.8977182,
+          "longitude": 170.514911
+        },
+        {
+          "latitude": -45.8977075,
+          "longitude": 170.5149101
+        },
+        {
+          "latitude": -45.897652900000004,
+          "longitude": 170.5149058
+        },
+        {
+          "latitude": -45.8973956,
+          "longitude": 170.5148867
+        },
+        {
+          "latitude": -45.8970294,
+          "longitude": 170.5148719
+        },
+        {
+          "latitude": -45.896969600000006,
+          "longitude": 170.51488270000002
+        },
+        {
+          "latitude": -45.8969254,
+          "longitude": 170.514904
+        },
+        {
+          "latitude": -45.896867400000005,
+          "longitude": 170.5149579
+        },
+        {
+          "latitude": -45.896784200000006,
+          "longitude": 170.5150495
+        },
+        {
+          "latitude": -45.896779900000006,
+          "longitude": 170.51523360000002
+        },
+        {
+          "latitude": -45.89676217973553,
+          "longitude": 170.5159884738243
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "Musselburgh Rise",
+      "toAnchor": "Spottiswoode Street",
+      "straightLineDistanceMeters": 1045.193132353837,
+      "distanceMeters": 1286.366185790655,
+      "roadDirectRatio": 1.2307449656636014,
+      "maximumCorridorDeviationMeters": 274.52033929363665,
+      "startSnap": {
+        "anchor": {
+          "name": "Musselburgh Rise",
+          "sourceDistanceMeters": 1000,
+          "latitude": -45.897,
+          "longitude": 170.516
+        },
+        "fromNodeId": 11477273478,
+        "toNodeId": 1637498027,
+        "wayId": 48567471,
+        "snappedCoordinate": {
+          "latitude": -45.89676217973553,
+          "longitude": 170.5159884738243
+        },
+        "snapDistanceMeters": 26.459445605352485,
+        "bearingDegrees": 88.0681500173896,
+        "directionAlignmentDegrees": 24.01593621722063,
+        "highway": "residential",
+        "roadName": "Rawhiti Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Spottiswoode Street",
+          "sourceDistanceMeters": 2000,
+          "latitude": -45.89955,
+          "longitude": 170.529
+        },
+        "fromNodeId": 1315731727,
+        "toNodeId": 1315731229,
+        "wayId": 48568425,
+        "snappedCoordinate": {
+          "latitude": -45.89954873252322,
+          "longitude": 170.5289900732839
+        },
+        "snapDistanceMeters": 0.780977272740693,
+        "bearingDegrees": 190.39668309260196,
+        "directionAlignmentDegrees": 17.60756895311617,
+        "highway": "residential",
+        "roadName": "Spottiswoode Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        48567471,
+        48568425,
+        116545451,
+        813876118,
+        813876117,
+        505514732,
+        48568431
+      ],
+      "ways": [
+        {
+          "wayId": 48567471,
+          "highway": "residential",
+          "name": "Rawhiti Street"
+        },
+        {
+          "wayId": 48568425,
+          "highway": "residential",
+          "name": "Spottiswoode Street"
+        },
+        {
+          "wayId": 116545451,
+          "highway": "secondary",
+          "name": "Musselburgh Rise"
+        },
+        {
+          "wayId": 813876118,
+          "highway": "secondary",
+          "name": "Musselburgh Rise"
+        },
+        {
+          "wayId": 813876117,
+          "highway": "secondary"
+        },
+        {
+          "wayId": 505514732,
+          "highway": "secondary",
+          "name": "Musselburgh Rise"
+        },
+        {
+          "wayId": 48568431,
+          "highway": "residential",
+          "name": "Bayfield Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.89676217973553,
+          "longitude": 170.5159884738243
+        },
+        {
+          "latitude": -45.896667300000004,
+          "longitude": 170.5200303
+        },
+        {
+          "latitude": -45.8966337,
+          "longitude": 170.5212473
+        },
+        {
+          "latitude": -45.8966313,
+          "longitude": 170.5214517
+        },
+        {
+          "latitude": -45.896647,
+          "longitude": 170.52157110000002
+        },
+        {
+          "latitude": -45.8967084,
+          "longitude": 170.5216823
+        },
+        {
+          "latitude": -45.897011400000004,
+          "longitude": 170.52220450000002
+        },
+        {
+          "latitude": -45.8970229,
+          "longitude": 170.5222238
+        },
+        {
+          "latitude": -45.897063,
+          "longitude": 170.5222966
+        },
+        {
+          "latitude": -45.8966945,
+          "longitude": 170.52273910000002
+        },
+        {
+          "latitude": -45.896545,
+          "longitude": 170.5229272
+        },
+        {
+          "latitude": -45.896491600000004,
+          "longitude": 170.5230043
+        },
+        {
+          "latitude": -45.8964549,
+          "longitude": 170.52305180000002
+        },
+        {
+          "latitude": -45.896441700000004,
+          "longitude": 170.5230697
+        },
+        {
+          "latitude": -45.8964252,
+          "longitude": 170.52309290000002
+        },
+        {
+          "latitude": -45.8964085,
+          "longitude": 170.5230751
+        },
+        {
+          "latitude": -45.8963855,
+          "longitude": 170.5230735
+        },
+        {
+          "latitude": -45.8963637,
+          "longitude": 170.52308290000002
+        },
+        {
+          "latitude": -45.8963514,
+          "longitude": 170.5231037
+        },
+        {
+          "latitude": -45.8963441,
+          "longitude": 170.5231362
+        },
+        {
+          "latitude": -45.8963508,
+          "longitude": 170.52316580000002
+        },
+        {
+          "latitude": -45.8963641,
+          "longitude": 170.52318730000002
+        },
+        {
+          "latitude": -45.896380900000004,
+          "longitude": 170.52319880000002
+        },
+        {
+          "latitude": -45.896375500000005,
+          "longitude": 170.523244
+        },
+        {
+          "latitude": -45.896349900000004,
+          "longitude": 170.523444
+        },
+        {
+          "latitude": -45.8963204,
+          "longitude": 170.5237023
+        },
+        {
+          "latitude": -45.8962876,
+          "longitude": 170.5239845
+        },
+        {
+          "latitude": -45.8961899,
+          "longitude": 170.52494660000002
+        },
+        {
+          "latitude": -45.8962385,
+          "longitude": 170.5249637
+        },
+        {
+          "latitude": -45.8962589,
+          "longitude": 170.5249751
+        },
+        {
+          "latitude": -45.896276300000004,
+          "longitude": 170.52498540000002
+        },
+        {
+          "latitude": -45.8962859,
+          "longitude": 170.5249933
+        },
+        {
+          "latitude": -45.8962943,
+          "longitude": 170.52500020000002
+        },
+        {
+          "latitude": -45.8963126,
+          "longitude": 170.5250188
+        },
+        {
+          "latitude": -45.8963273,
+          "longitude": 170.5250397
+        },
+        {
+          "latitude": -45.896344400000004,
+          "longitude": 170.52506770000002
+        },
+        {
+          "latitude": -45.8966283,
+          "longitude": 170.52555370000002
+        },
+        {
+          "latitude": -45.896645,
+          "longitude": 170.5255835
+        },
+        {
+          "latitude": -45.896658200000005,
+          "longitude": 170.5256124
+        },
+        {
+          "latitude": -45.896667300000004,
+          "longitude": 170.525639
+        },
+        {
+          "latitude": -45.896675,
+          "longitude": 170.52567280000002
+        },
+        {
+          "latitude": -45.896677800000006,
+          "longitude": 170.5257091
+        },
+        {
+          "latitude": -45.896677700000005,
+          "longitude": 170.52575760000002
+        },
+        {
+          "latitude": -45.8966748,
+          "longitude": 170.5258191
+        },
+        {
+          "latitude": -45.896658900000006,
+          "longitude": 170.52609460000002
+        },
+        {
+          "latitude": -45.8966566,
+          "longitude": 170.52616880000002
+        },
+        {
+          "latitude": -45.8966585,
+          "longitude": 170.5262337
+        },
+        {
+          "latitude": -45.896667400000005,
+          "longitude": 170.5262964
+        },
+        {
+          "latitude": -45.8966854,
+          "longitude": 170.52634510000001
+        },
+        {
+          "latitude": -45.896720200000004,
+          "longitude": 170.5264122
+        },
+        {
+          "latitude": -45.896883200000005,
+          "longitude": 170.5266944
+        },
+        {
+          "latitude": -45.8969212,
+          "longitude": 170.52675580000002
+        },
+        {
+          "latitude": -45.8969509,
+          "longitude": 170.52679980000002
+        },
+        {
+          "latitude": -45.896987800000005,
+          "longitude": 170.5268404
+        },
+        {
+          "latitude": -45.8970276,
+          "longitude": 170.5268753
+        },
+        {
+          "latitude": -45.8970757,
+          "longitude": 170.526912
+        },
+        {
+          "latitude": -45.8971193,
+          "longitude": 170.52694060000002
+        },
+        {
+          "latitude": -45.8975882,
+          "longitude": 170.52717710000002
+        },
+        {
+          "latitude": -45.898300400000004,
+          "longitude": 170.5275386
+        },
+        {
+          "latitude": -45.8983543,
+          "longitude": 170.5275703
+        },
+        {
+          "latitude": -45.8984067,
+          "longitude": 170.5276105
+        },
+        {
+          "latitude": -45.8984388,
+          "longitude": 170.52764470000002
+        },
+        {
+          "latitude": -45.898473700000004,
+          "longitude": 170.52768890000002
+        },
+        {
+          "latitude": -45.898557100000005,
+          "longitude": 170.5278158
+        },
+        {
+          "latitude": -45.8992383,
+          "longitude": 170.52898280000002
+        },
+        {
+          "latitude": -45.8992835,
+          "longitude": 170.52906000000002
+        },
+        {
+          "latitude": -45.89954873252322,
+          "longitude": 170.5289900732839
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "Spottiswoode Street",
+      "toAnchor": "John Wilson Ocean Drive",
+      "straightLineDistanceMeters": 1267.7888489077282,
+      "distanceMeters": 2748.6300427523615,
+      "roadDirectRatio": 2.1680503382881637,
+      "maximumCorridorDeviationMeters": 658.7317646457858,
+      "startSnap": {
+        "anchor": {
+          "name": "Spottiswoode Street",
+          "sourceDistanceMeters": 2000,
+          "latitude": -45.89955,
+          "longitude": 170.529
+        },
+        "fromNodeId": 1315731727,
+        "toNodeId": 1315731229,
+        "wayId": 48568425,
+        "snappedCoordinate": {
+          "latitude": -45.89954873252322,
+          "longitude": 170.5289900732839
+        },
+        "snapDistanceMeters": 0.780977272740693,
+        "bearingDegrees": 190.39668309260196,
+        "directionAlignmentDegrees": 17.60756895311617,
+        "highway": "residential",
+        "roadName": "Spottiswoode Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "John Wilson Ocean Drive",
+          "sourceDistanceMeters": 3000,
+          "latitude": -45.908,
+          "longitude": 170.518
+        },
+        "fromNodeId": 1313605981,
+        "toNodeId": 6503742575,
+        "wayId": 1462169549,
+        "snappedCoordinate": {
+          "latitude": -45.907623,
+          "longitude": 170.51775740000002
+        },
+        "snapDistanceMeters": 45.93091130437839,
+        "bearingDegrees": 265.7000416493652,
+        "directionAlignmentDegrees": 19.777842483173604,
+        "highway": "unclassified",
+        "roadName": "John Wilson Ocean Drive"
+      },
+      "status": "warning",
+      "wayIds": [
+        48568425,
+        1462169549,
+        48568444,
+        688761902,
+        1235771910,
+        1214435436,
+        1214435438,
+        1214435437,
+        1272971708
+      ],
+      "ways": [
+        {
+          "wayId": 48568425,
+          "highway": "residential",
+          "name": "Spottiswoode Street"
+        },
+        {
+          "wayId": 1462169549,
+          "highway": "unclassified",
+          "name": "John Wilson Ocean Drive"
+        },
+        {
+          "wayId": 48568444,
+          "highway": "residential",
+          "name": "Norman Street"
+        },
+        {
+          "wayId": 688761902,
+          "highway": "tertiary",
+          "name": "Tahuna Road"
+        },
+        {
+          "wayId": 1235771910,
+          "highway": "cycleway",
+          "name": "St Kilda Beach - Andersons Bay Cycleway"
+        },
+        {
+          "wayId": 1214435436,
+          "highway": "cycleway",
+          "name": "St Kilda Beach - Andersons Bay Cycleway"
+        },
+        {
+          "wayId": 1214435438,
+          "highway": "cycleway",
+          "name": "St Kilda Beach - Andersons Bay Cycleway"
+        },
+        {
+          "wayId": 1214435437,
+          "highway": "cycleway",
+          "name": "St Kilda Beach - Andersons Bay Cycleway"
+        },
+        {
+          "wayId": 1272971708,
+          "highway": "cycleway",
+          "name": "St Kilda Beach - Andersons Bay Cycleway"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.89954873252322,
+          "longitude": 170.5289900732839
+        },
+        {
+          "latitude": -45.8995547,
+          "longitude": 170.5289885
+        },
+        {
+          "latitude": -45.9003275,
+          "longitude": 170.5287734
+        },
+        {
+          "latitude": -45.900422000000006,
+          "longitude": 170.52874210000002
+        },
+        {
+          "latitude": -45.9005,
+          "longitude": 170.5287022
+        },
+        {
+          "latitude": -45.9005487,
+          "longitude": 170.5286608
+        },
+        {
+          "latitude": -45.9007148,
+          "longitude": 170.52846960000002
+        },
+        {
+          "latitude": -45.901442800000005,
+          "longitude": 170.52760020000002
+        },
+        {
+          "latitude": -45.901495800000006,
+          "longitude": 170.5275369
+        },
+        {
+          "latitude": -45.902492300000006,
+          "longitude": 170.5292377
+        },
+        {
+          "latitude": -45.9025516,
+          "longitude": 170.52933380000002
+        },
+        {
+          "latitude": -45.9025705,
+          "longitude": 170.5293612
+        },
+        {
+          "latitude": -45.9025912,
+          "longitude": 170.52938110000002
+        },
+        {
+          "latitude": -45.902610900000006,
+          "longitude": 170.52939460000002
+        },
+        {
+          "latitude": -45.902632000000004,
+          "longitude": 170.529401
+        },
+        {
+          "latitude": -45.9026481,
+          "longitude": 170.5294033
+        },
+        {
+          "latitude": -45.902684400000005,
+          "longitude": 170.52940840000002
+        },
+        {
+          "latitude": -45.902734,
+          "longitude": 170.52941380000001
+        },
+        {
+          "latitude": -45.902734200000005,
+          "longitude": 170.5293128
+        },
+        {
+          "latitude": -45.902742800000006,
+          "longitude": 170.5291555
+        },
+        {
+          "latitude": -45.902756700000005,
+          "longitude": 170.5289705
+        },
+        {
+          "latitude": -45.902861800000004,
+          "longitude": 170.5279519
+        },
+        {
+          "latitude": -45.9029894,
+          "longitude": 170.5266503
+        },
+        {
+          "latitude": -45.9030075,
+          "longitude": 170.5264979
+        },
+        {
+          "latitude": -45.903028000000006,
+          "longitude": 170.52635270000002
+        },
+        {
+          "latitude": -45.903041900000005,
+          "longitude": 170.52626360000002
+        },
+        {
+          "latitude": -45.903061900000004,
+          "longitude": 170.5261709
+        },
+        {
+          "latitude": -45.903090000000006,
+          "longitude": 170.52605440000002
+        },
+        {
+          "latitude": -45.9031249,
+          "longitude": 170.525937
+        },
+        {
+          "latitude": -45.9031687,
+          "longitude": 170.52579500000002
+        },
+        {
+          "latitude": -45.9032392,
+          "longitude": 170.5255775
+        },
+        {
+          "latitude": -45.9032877,
+          "longitude": 170.5254085
+        },
+        {
+          "latitude": -45.903328800000004,
+          "longitude": 170.5251886
+        },
+        {
+          "latitude": -45.9033394,
+          "longitude": 170.52507500000002
+        },
+        {
+          "latitude": -45.9033792,
+          "longitude": 170.5250824
+        },
+        {
+          "latitude": -45.9033881,
+          "longitude": 170.52508490000002
+        },
+        {
+          "latitude": -45.903405600000006,
+          "longitude": 170.525082
+        },
+        {
+          "latitude": -45.903421800000004,
+          "longitude": 170.52505630000002
+        },
+        {
+          "latitude": -45.9034428,
+          "longitude": 170.52500210000002
+        },
+        {
+          "latitude": -45.9034495,
+          "longitude": 170.5249537
+        },
+        {
+          "latitude": -45.9035529,
+          "longitude": 170.5236587
+        },
+        {
+          "latitude": -45.9035567,
+          "longitude": 170.52361330000002
+        },
+        {
+          "latitude": -45.9035315,
+          "longitude": 170.52339600000002
+        },
+        {
+          "latitude": -45.903539200000004,
+          "longitude": 170.5233152
+        },
+        {
+          "latitude": -45.9035956,
+          "longitude": 170.5226943
+        },
+        {
+          "latitude": -45.903602500000005,
+          "longitude": 170.522649
+        },
+        {
+          "latitude": -45.9036131,
+          "longitude": 170.522612
+        },
+        {
+          "latitude": -45.903643300000006,
+          "longitude": 170.5225436
+        },
+        {
+          "latitude": -45.903654700000004,
+          "longitude": 170.5225124
+        },
+        {
+          "latitude": -45.9036625,
+          "longitude": 170.52247250000002
+        },
+        {
+          "latitude": -45.903670700000006,
+          "longitude": 170.52236720000002
+        },
+        {
+          "latitude": -45.9036783,
+          "longitude": 170.5222597
+        },
+        {
+          "latitude": -45.9036799,
+          "longitude": 170.52221440000002
+        },
+        {
+          "latitude": -45.9036763,
+          "longitude": 170.52217290000002
+        },
+        {
+          "latitude": -45.9036691,
+          "longitude": 170.5221308
+        },
+        {
+          "latitude": -45.9036528,
+          "longitude": 170.5220456
+        },
+        {
+          "latitude": -45.903649300000005,
+          "longitude": 170.52201580000002
+        },
+        {
+          "latitude": -45.903650600000006,
+          "longitude": 170.52197220000002
+        },
+        {
+          "latitude": -45.9036708,
+          "longitude": 170.5217709
+        },
+        {
+          "latitude": -45.903685100000004,
+          "longitude": 170.52165200000002
+        },
+        {
+          "latitude": -45.9037008,
+          "longitude": 170.52153710000002
+        },
+        {
+          "latitude": -45.903764800000005,
+          "longitude": 170.5211322
+        },
+        {
+          "latitude": -45.9037762,
+          "longitude": 170.52104440000002
+        },
+        {
+          "latitude": -45.903807400000005,
+          "longitude": 170.52080420000001
+        },
+        {
+          "latitude": -45.903827400000004,
+          "longitude": 170.5206445
+        },
+        {
+          "latitude": -45.9038404,
+          "longitude": 170.5204483
+        },
+        {
+          "latitude": -45.9038545,
+          "longitude": 170.52031350000001
+        },
+        {
+          "latitude": -45.9038881,
+          "longitude": 170.52013340000002
+        },
+        {
+          "latitude": -45.9039421,
+          "longitude": 170.51987830000002
+        },
+        {
+          "latitude": -45.9043629,
+          "longitude": 170.5178715
+        },
+        {
+          "latitude": -45.9043809,
+          "longitude": 170.5178152
+        },
+        {
+          "latitude": -45.904734100000006,
+          "longitude": 170.51617530000001
+        },
+        {
+          "latitude": -45.9047593,
+          "longitude": 170.5160496
+        },
+        {
+          "latitude": -45.9049472,
+          "longitude": 170.5151744
+        },
+        {
+          "latitude": -45.9049616,
+          "longitude": 170.5151385
+        },
+        {
+          "latitude": -45.904990000000005,
+          "longitude": 170.51508710000002
+        },
+        {
+          "latitude": -45.9050018,
+          "longitude": 170.5150347
+        },
+        {
+          "latitude": -45.905022300000006,
+          "longitude": 170.5149441
+        },
+        {
+          "latitude": -45.905093,
+          "longitude": 170.5146314
+        },
+        {
+          "latitude": -45.9050912,
+          "longitude": 170.51455860000002
+        },
+        {
+          "latitude": -45.905087200000004,
+          "longitude": 170.51449010000002
+        },
+        {
+          "latitude": -45.905081100000004,
+          "longitude": 170.5144626
+        },
+        {
+          "latitude": -45.9050713,
+          "longitude": 170.51441870000002
+        },
+        {
+          "latitude": -45.905068500000006,
+          "longitude": 170.51437570000002
+        },
+        {
+          "latitude": -45.9052559,
+          "longitude": 170.5135308
+        },
+        {
+          "latitude": -45.905729900000004,
+          "longitude": 170.5113962
+        },
+        {
+          "latitude": -45.9057765,
+          "longitude": 170.5111884
+        },
+        {
+          "latitude": -45.9060281,
+          "longitude": 170.51003310000002
+        },
+        {
+          "latitude": -45.906195000000004,
+          "longitude": 170.50996320000002
+        },
+        {
+          "latitude": -45.906199400000006,
+          "longitude": 170.50995360000002
+        },
+        {
+          "latitude": -45.9062361,
+          "longitude": 170.50987270000002
+        },
+        {
+          "latitude": -45.906434600000004,
+          "longitude": 170.510074
+        },
+        {
+          "latitude": -45.9066957,
+          "longitude": 170.5103033
+        },
+        {
+          "latitude": -45.9069973,
+          "longitude": 170.5105771
+        },
+        {
+          "latitude": -45.9069985,
+          "longitude": 170.5105782
+        },
+        {
+          "latitude": -45.9074661,
+          "longitude": 170.51099530000002
+        },
+        {
+          "latitude": -45.907565000000005,
+          "longitude": 170.5110826
+        },
+        {
+          "latitude": -45.9076031,
+          "longitude": 170.51111780000002
+        },
+        {
+          "latitude": -45.9076394,
+          "longitude": 170.51115800000002
+        },
+        {
+          "latitude": -45.9076857,
+          "longitude": 170.5112278
+        },
+        {
+          "latitude": -45.9077167,
+          "longitude": 170.5112856
+        },
+        {
+          "latitude": -45.9077508,
+          "longitude": 170.51135440000002
+        },
+        {
+          "latitude": -45.907777900000006,
+          "longitude": 170.5114235
+        },
+        {
+          "latitude": -45.9077999,
+          "longitude": 170.5114988
+        },
+        {
+          "latitude": -45.9078254,
+          "longitude": 170.5115911
+        },
+        {
+          "latitude": -45.907841700000006,
+          "longitude": 170.5116748
+        },
+        {
+          "latitude": -45.907854300000004,
+          "longitude": 170.5117743
+        },
+        {
+          "latitude": -45.907881800000006,
+          "longitude": 170.5120353
+        },
+        {
+          "latitude": -45.9078991,
+          "longitude": 170.5122354
+        },
+        {
+          "latitude": -45.9079096,
+          "longitude": 170.5124175
+        },
+        {
+          "latitude": -45.9079143,
+          "longitude": 170.51256700000002
+        },
+        {
+          "latitude": -45.907912200000005,
+          "longitude": 170.5126873
+        },
+        {
+          "latitude": -45.907857500000006,
+          "longitude": 170.5135179
+        },
+        {
+          "latitude": -45.9078524,
+          "longitude": 170.5136246
+        },
+        {
+          "latitude": -45.907839700000004,
+          "longitude": 170.51416740000002
+        },
+        {
+          "latitude": -45.9078232,
+          "longitude": 170.5146091
+        },
+        {
+          "latitude": -45.9077512,
+          "longitude": 170.5157162
+        },
+        {
+          "latitude": -45.907690200000005,
+          "longitude": 170.5166311
+        },
+        {
+          "latitude": -45.907652000000006,
+          "longitude": 170.51720310000002
+        },
+        {
+          "latitude": -45.907623,
+          "longitude": 170.51775740000002
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "John Wilson Ocean Drive",
+      "toAnchor": "St Clair",
+      "straightLineDistanceMeters": 1633.304014754915,
+      "distanceMeters": 1751.6831245119122,
+      "roadDirectRatio": 1.0724783069701573,
+      "maximumCorridorDeviationMeters": 287.3702667460464,
+      "startSnap": {
+        "anchor": {
+          "name": "John Wilson Ocean Drive",
+          "sourceDistanceMeters": 3000,
+          "latitude": -45.908,
+          "longitude": 170.518
+        },
+        "fromNodeId": 1313605981,
+        "toNodeId": 6503742575,
+        "wayId": 1462169549,
+        "snappedCoordinate": {
+          "latitude": -45.907623,
+          "longitude": 170.51775740000002
+        },
+        "snapDistanceMeters": 45.93091130437839,
+        "bearingDegrees": 265.7000416493652,
+        "directionAlignmentDegrees": 19.777842483173604,
+        "highway": "unclassified",
+        "roadName": "John Wilson Ocean Drive"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "St Clair",
+          "sourceDistanceMeters": 4000,
+          "latitude": -45.9095,
+          "longitude": 170.497
+        },
+        "fromNodeId": 5296399248,
+        "toNodeId": 1313847533,
+        "wayId": 511224234,
+        "snappedCoordinate": {
+          "latitude": -45.9089381,
+          "longitude": 170.4972323
+        },
+        "snapDistanceMeters": 65.01405449544686,
+        "bearingDegrees": 245.87878523692495,
+        "directionAlignmentDegrees": 31.564601702906455,
+        "highway": "tertiary",
+        "roadName": "Victoria Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        1462169549,
+        511224234,
+        116545478,
+        116545460,
+        116545468
+      ],
+      "ways": [
+        {
+          "wayId": 1462169549,
+          "highway": "unclassified",
+          "name": "John Wilson Ocean Drive"
+        },
+        {
+          "wayId": 511224234,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        },
+        {
+          "wayId": 116545478,
+          "highway": "tertiary"
+        },
+        {
+          "wayId": 116545460,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        },
+        {
+          "wayId": 116545468,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.907623,
+          "longitude": 170.51775740000002
+        },
+        {
+          "latitude": -45.907652000000006,
+          "longitude": 170.51720310000002
+        },
+        {
+          "latitude": -45.907690200000005,
+          "longitude": 170.5166311
+        },
+        {
+          "latitude": -45.9077512,
+          "longitude": 170.5157162
+        },
+        {
+          "latitude": -45.9078232,
+          "longitude": 170.5146091
+        },
+        {
+          "latitude": -45.907839700000004,
+          "longitude": 170.51416740000002
+        },
+        {
+          "latitude": -45.9078524,
+          "longitude": 170.5136246
+        },
+        {
+          "latitude": -45.907857500000006,
+          "longitude": 170.5135179
+        },
+        {
+          "latitude": -45.907912200000005,
+          "longitude": 170.5126873
+        },
+        {
+          "latitude": -45.9079143,
+          "longitude": 170.51256700000002
+        },
+        {
+          "latitude": -45.9079096,
+          "longitude": 170.5124175
+        },
+        {
+          "latitude": -45.9078991,
+          "longitude": 170.5122354
+        },
+        {
+          "latitude": -45.907881800000006,
+          "longitude": 170.5120353
+        },
+        {
+          "latitude": -45.907854300000004,
+          "longitude": 170.5117743
+        },
+        {
+          "latitude": -45.907841700000006,
+          "longitude": 170.5116748
+        },
+        {
+          "latitude": -45.9078254,
+          "longitude": 170.5115911
+        },
+        {
+          "latitude": -45.9077999,
+          "longitude": 170.5114988
+        },
+        {
+          "latitude": -45.907777900000006,
+          "longitude": 170.5114235
+        },
+        {
+          "latitude": -45.9077508,
+          "longitude": 170.51135440000002
+        },
+        {
+          "latitude": -45.9077167,
+          "longitude": 170.5112856
+        },
+        {
+          "latitude": -45.9076857,
+          "longitude": 170.5112278
+        },
+        {
+          "latitude": -45.9076394,
+          "longitude": 170.51115800000002
+        },
+        {
+          "latitude": -45.9076031,
+          "longitude": 170.51111780000002
+        },
+        {
+          "latitude": -45.907565000000005,
+          "longitude": 170.5110826
+        },
+        {
+          "latitude": -45.9074661,
+          "longitude": 170.51099530000002
+        },
+        {
+          "latitude": -45.9069985,
+          "longitude": 170.5105782
+        },
+        {
+          "latitude": -45.9069973,
+          "longitude": 170.5105771
+        },
+        {
+          "latitude": -45.9066957,
+          "longitude": 170.5103033
+        },
+        {
+          "latitude": -45.906434600000004,
+          "longitude": 170.510074
+        },
+        {
+          "latitude": -45.9062361,
+          "longitude": 170.50987270000002
+        },
+        {
+          "latitude": -45.9061299,
+          "longitude": 170.5097891
+        },
+        {
+          "latitude": -45.906094100000004,
+          "longitude": 170.50976250000002
+        },
+        {
+          "latitude": -45.9060934,
+          "longitude": 170.5097141
+        },
+        {
+          "latitude": -45.9060812,
+          "longitude": 170.5096689
+        },
+        {
+          "latitude": -45.9060591,
+          "longitude": 170.50963230000002
+        },
+        {
+          "latitude": -45.906029600000004,
+          "longitude": 170.50960880000002
+        },
+        {
+          "latitude": -45.9060131,
+          "longitude": 170.5095349
+        },
+        {
+          "latitude": -45.906018800000005,
+          "longitude": 170.5093653
+        },
+        {
+          "latitude": -45.906049900000006,
+          "longitude": 170.50913680000002
+        },
+        {
+          "latitude": -45.9060858,
+          "longitude": 170.5090026
+        },
+        {
+          "latitude": -45.9063196,
+          "longitude": 170.50786300000001
+        },
+        {
+          "latitude": -45.906452300000005,
+          "longitude": 170.50721420000002
+        },
+        {
+          "latitude": -45.906543500000005,
+          "longitude": 170.50677330000002
+        },
+        {
+          "latitude": -45.906646300000006,
+          "longitude": 170.50627400000002
+        },
+        {
+          "latitude": -45.9067121,
+          "longitude": 170.50596910000002
+        },
+        {
+          "latitude": -45.906835,
+          "longitude": 170.5054047
+        },
+        {
+          "latitude": -45.9069305,
+          "longitude": 170.5049591
+        },
+        {
+          "latitude": -45.9071025,
+          "longitude": 170.50413650000002
+        },
+        {
+          "latitude": -45.907234100000004,
+          "longitude": 170.503507
+        },
+        {
+          "latitude": -45.907330800000004,
+          "longitude": 170.5030446
+        },
+        {
+          "latitude": -45.9074723,
+          "longitude": 170.5023739
+        },
+        {
+          "latitude": -45.9075487,
+          "longitude": 170.50195730000002
+        },
+        {
+          "latitude": -45.9075883,
+          "longitude": 170.5017487
+        },
+        {
+          "latitude": -45.907622200000006,
+          "longitude": 170.5015753
+        },
+        {
+          "latitude": -45.9077075,
+          "longitude": 170.5011891
+        },
+        {
+          "latitude": -45.9077295,
+          "longitude": 170.5010954
+        },
+        {
+          "latitude": -45.907815400000004,
+          "longitude": 170.5007907
+        },
+        {
+          "latitude": -45.9081509,
+          "longitude": 170.4997281
+        },
+        {
+          "latitude": -45.908182100000005,
+          "longitude": 170.49962150000002
+        },
+        {
+          "latitude": -45.9083485,
+          "longitude": 170.49909870000002
+        },
+        {
+          "latitude": -45.9085485,
+          "longitude": 170.4984723
+        },
+        {
+          "latitude": -45.908837000000005,
+          "longitude": 170.4975568
+        },
+        {
+          "latitude": -45.9089381,
+          "longitude": 170.4972323
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "St Clair",
+      "toAnchor": "Forbury Road start",
+      "straightLineDistanceMeters": 822.1289236607333,
+      "distanceMeters": 788.8043191269329,
+      "roadDirectRatio": 0.9594654760649773,
+      "maximumCorridorDeviationMeters": 78.13354429092654,
+      "startSnap": {
+        "anchor": {
+          "name": "St Clair",
+          "sourceDistanceMeters": 4000,
+          "latitude": -45.9095,
+          "longitude": 170.497
+        },
+        "fromNodeId": 5296399248,
+        "toNodeId": 1313847533,
+        "wayId": 511224234,
+        "snappedCoordinate": {
+          "latitude": -45.9089381,
+          "longitude": 170.4972323
+        },
+        "snapDistanceMeters": 65.01405449544686,
+        "bearingDegrees": 245.87878523692495,
+        "directionAlignmentDegrees": 31.564601702906455,
+        "highway": "tertiary",
+        "roadName": "Victoria Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "Forbury Road start",
+          "sourceDistanceMeters": 5000,
+          "latitude": -45.907,
+          "longitude": 170.507
+        },
+        "fromNodeId": 1313610480,
+        "toNodeId": 3889764757,
+        "wayId": 116545468,
+        "snappedCoordinate": {
+          "latitude": -45.9065374800116,
+          "longitude": 170.5068024032115
+        },
+        "snapDistanceMeters": 53.654192630402314,
+        "bearingDegrees": 73.4443777132704,
+        "directionAlignmentDegrees": 26.83877073443119,
+        "highway": "tertiary",
+        "roadName": "Victoria Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        511224234,
+        116545468
+      ],
+      "ways": [
+        {
+          "wayId": 511224234,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        },
+        {
+          "wayId": 116545468,
+          "highway": "tertiary",
+          "name": "Victoria Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.9089381,
+          "longitude": 170.4972323
+        },
+        {
+          "latitude": -45.908837000000005,
+          "longitude": 170.4975568
+        },
+        {
+          "latitude": -45.9085485,
+          "longitude": 170.4984723
+        },
+        {
+          "latitude": -45.9083485,
+          "longitude": 170.49909870000002
+        },
+        {
+          "latitude": -45.908182100000005,
+          "longitude": 170.49962150000002
+        },
+        {
+          "latitude": -45.9081509,
+          "longitude": 170.4997281
+        },
+        {
+          "latitude": -45.907815400000004,
+          "longitude": 170.5007907
+        },
+        {
+          "latitude": -45.9077295,
+          "longitude": 170.5010954
+        },
+        {
+          "latitude": -45.9077075,
+          "longitude": 170.5011891
+        },
+        {
+          "latitude": -45.907622200000006,
+          "longitude": 170.5015753
+        },
+        {
+          "latitude": -45.9075883,
+          "longitude": 170.5017487
+        },
+        {
+          "latitude": -45.9075487,
+          "longitude": 170.50195730000002
+        },
+        {
+          "latitude": -45.9074723,
+          "longitude": 170.5023739
+        },
+        {
+          "latitude": -45.907330800000004,
+          "longitude": 170.5030446
+        },
+        {
+          "latitude": -45.907234100000004,
+          "longitude": 170.503507
+        },
+        {
+          "latitude": -45.9071025,
+          "longitude": 170.50413650000002
+        },
+        {
+          "latitude": -45.9069305,
+          "longitude": 170.5049591
+        },
+        {
+          "latitude": -45.906835,
+          "longitude": 170.5054047
+        },
+        {
+          "latitude": -45.9067121,
+          "longitude": 170.50596910000002
+        },
+        {
+          "latitude": -45.906646300000006,
+          "longitude": 170.50627400000002
+        },
+        {
+          "latitude": -45.906543500000005,
+          "longitude": 170.50677330000002
+        },
+        {
+          "latitude": -45.9065374800116,
+          "longitude": 170.5068024032115
+        }
+      ],
+      "sectionType": "road"
+    }
+  ],
+  "roadSegments": [],
+  "excludedClosureEdges": [],
+  "nearbyLandmarkCandidatesConsidered": 0,
+  "selectedLandmarkCount": 0,
+  "actualOsmDistanceMeters": 8265.940001188557,
+  "finalPointCount": 631,
+  "sourceOsmNodeCount": 356,
+  "maximumAdjacentPointDistanceMeters": 19.919761178029557,
+  "maximumSourceOsmNodeSpacingMeters": 312.9608640121041,
+  "maximumCorridorDeviationMeters": 658.7317646457858,
+  "isValid": true,
+  "errors": [],
+  "warnings": [
+    "Spottiswoode Street -\u003E John Wilson Ocean Drive road/direct ratio 2.17 exceeds warning threshold 1.80."
+  ],
+  "timings": {
+    "nodeScanSeconds": 0,
+    "wayScanSeconds": 0,
+    "graphBuildSeconds": 0,
+    "routeSolveSeconds": 5.6723122,
+    "outputGenerationSeconds": 0.023645,
+    "cacheLoadSeconds": 0.4706945,
+    "cacheSaveSeconds": 0,
+    "cacheHit": true,
+    "cacheBuildSeconds": 68.7749962
+  },
+  "generatedAtUtc": "2026-10-11T08:45:03.847272\u002B00:00",
+  "totalAscentMeters": 0,
+  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0."
+}

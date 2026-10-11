@@ -16,8 +16,8 @@ public static class RouteLandmarkDataLoader
 
 	public static IReadOnlyList<RouteLandmarkData> LoadEmbedded(Assembly assembly, string resourceName, string routeId)
 	{
-		using var stream = assembly.GetManifestResourceStream(resourceName)
-			?? throw new InvalidDataException($"Embedded landmark resource '{resourceName}' was not found.");
+		using var stream = RoutePackageFiles.Open(assembly, resourceName, routeId)
+			?? throw new InvalidDataException($"Route landmark resource '{resourceName}' was not found.");
 		var file = JsonSerializer.Deserialize<LandmarkFile>(stream, JsonOptions)
 			?? throw new InvalidDataException($"Embedded landmark resource '{resourceName}' is empty.");
 		if (!string.Equals(file.Id, routeId, StringComparison.Ordinal) || file.Landmarks is null)

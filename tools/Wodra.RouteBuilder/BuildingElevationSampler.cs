@@ -6,7 +6,7 @@ namespace Wodra.RouteBuilder;
 public static class BuildingElevationSampler
 {
     private sealed record Sample(string Key, double Longitude, double Latitude);
-    private sealed record Elevation(string Key, double ElevationMeters);
+    private sealed record Elevation(string Key, double? ElevationMeters);
     private sealed record ElevationOutput(IReadOnlyList<Elevation> Elevations);
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
@@ -38,10 +38,13 @@ public static class BuildingElevationSampler
             var sampled = JsonSerializer.Deserialize<ElevationOutput>(await File.ReadAllTextAsync(inputPath), JsonOptions)
                 ?? throw new InvalidDataException("LINZ building sampler produced invalid output.");
             var values = sampled.Elevations.ToDictionary(item => item.Key, item => item.ElevationMeters, StringComparer.Ordinal);
-            var buildings = input.Buildings.Select(item => item with { BaseElevationMeters = values[Key(item)] }).ToArray();
-            Console.WriteLine($"LINZ building elevations sampled: {buildings.Length} ({string.Join("; ", (await stdout).Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries))})");
+            var buildings = input.Buildings.Where(item => values[Key(item)].HasValue)
+                .Select(item => item with { BaseElevationMeters = values[Key(item)] }).ToArray();
+            var skipped = input.Buildings.Count - buildings.Length;
+            Console.WriteLine($"LINZ building elevations sampled: {buildings.Length}, omitted {skipped} without DEM coverage ({string.Join("; ", (await stdout).Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries))})");
             timer.Stop();
-            return input with { Buildings = buildings, ExtractionSeconds = input.ExtractionSeconds + timer.Elapsed.TotalSeconds };
+            return input with { Buildings = buildings, SelectedCount = buildings.Length, ElevationSkippedCount = skipped,
+                ExtractionSeconds = input.ExtractionSeconds + timer.Elapsed.TotalSeconds };
         }
         finally { if (File.Exists(inputPath)) File.Delete(inputPath); }
     }

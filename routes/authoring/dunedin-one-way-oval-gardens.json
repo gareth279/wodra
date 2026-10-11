@@ -2,6 +2,8 @@
   "id": "dunedin-one-way-oval-gardens",
   "name": "Dunedin One-way: Oval to Gardens Loop",
   "loop": true,
+  "routeType": "loop",
+  "difficulty": "Easy",
   "routingMode": "roadRef",
   "preferredRefs": [ "SH 1" ],
   "startArea": { "latitude": -45.88355, "longitude": 170.49850 },

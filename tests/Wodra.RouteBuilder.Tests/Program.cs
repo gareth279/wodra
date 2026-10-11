@@ -3,6 +3,32 @@ using Wodra.RouteBuilder;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("out-and-back authoring requires a mirrored path and explicit mapped turnaround", () =>
+    {
+        var anchors = new List<RouteAnchor>
+        {
+            new("Start", 0, 0, 0), new("Out", 100, 0, .001), new("Turnaround", 200, 0, .002),
+            new("Return", 300, 0, .001), new("Finish", 400, 0, 0)
+        };
+        var valid = OutAndBackConfig(anchors);
+        valid.Validate();
+        Throws<InvalidDataException>(() => OutAndBackConfig(anchors.Take(anchors.Count - 1)
+            .Append(new RouteAnchor("Finish", 400, .001, 0)).ToList()).Validate());
+        Throws<InvalidDataException>(() => OutAndBackConfig(anchors.Take(anchors.Count - 1).ToList()).Validate());
+    }),
+    ("out-and-back solving uses connected legal road edges in both directions", () =>
+    {
+        var config = OutAndBackConfig([
+            new("Start", 0, 0, 0), new("Out", 100, 0, .001), new("Turnaround", 200, 0, .002),
+            new("Return", 300, 0, .001), new("Finish", 400, 0, 0)
+        ]);
+        var graph = LineGraph();
+        var route = RouteSolver.Build(graph, config);
+        Equal(true, route.IsValid);
+        Near(GeoMath.HaversineMeters(new(0, 0), new(0, .002)) * 2, route.RawDistanceMeters, 1);
+        if (GeoMath.HaversineMeters(route.Centreline[0], route.Centreline[^1]) > .001)
+            throw new Exception("Out-and-back route did not return to its mapped start.");
+    }),
     ("OSM street lamps extract with compact name and direction metadata", () =>
     {
         var lamp = StreetFurnitureExtractor.TryCreateCandidate("node", 10, new GeoPoint(0, .0005),
@@ -720,14 +746,17 @@ var tests = new (string Name, Action Run)[]
         foreach(var kind in new[]{"motorway","trunk","primary","secondary","tertiary","unclassified","residential","service","living_street"})
             Equal(true,BackgroundStreetExtractor.IsEligible(new Dictionary<string,string>{{"highway",kind}}));
     }),
-    ("background streets exclude footways paths private roads and parking aisles", () =>
+    ("background streets include mapped pedestrian ways but exclude private roads and parking aisles", () =>
     {
-        foreach(var tags in new[]{new Dictionary<string,string>{{"highway","footway"}},new(){{"highway","path"}},new(){{"highway","cycleway"}},new(){{"highway","service"},{"service","driveway"}},new(){{"highway","service"},{"service","parking_aisle"}},new(){{"highway","residential"},{"access","private"}}})
+        foreach(var kind in new[]{"footway","path","cycleway","pedestrian"})
+            Equal(true,BackgroundStreetExtractor.IsEligible(new Dictionary<string,string>{{"highway",kind}}));
+        foreach(var tags in new[]{new Dictionary<string,string>{{"highway","service"},{"service","driveway"}},new(){{"highway","service"},{"service","parking_aisle"}},new(){{"highway","residential"},{"access","private"}}})
             Equal(false,BackgroundStreetExtractor.IsEligible(tags));
     }),
     ("background street corridor radius is configurable", () =>
     {
         Equal(true,BackgroundStreetExtractor.IsWithinCorridor(199,200));Equal(false,BackgroundStreetExtractor.IsWithinCorridor(201,200));
+        Equal(true,BackgroundStreetExtractor.KeepCorridorSegment(149,150));Equal(false,BackgroundStreetExtractor.KeepCorridorSegment(151,150));
         Throws<InvalidDataException>(()=>new BackgroundStreetBuildOptions{Enabled=true,SearchRadiusMeters=0}.Validate());
     }),
     ("background street width parses explicit metric and feet values", () =>
@@ -746,6 +775,8 @@ var tests = new (string Name, Action Run)[]
     ("background route corridor overlap is suppressed", () =>
     {
         Equal(true,BackgroundStreetExtractor.SuppressRouteOverlap(7.9,8));Equal(false,BackgroundStreetExtractor.SuppressRouteOverlap(8.1,8));
+        Equal(true,BackgroundStreetExtractor.DirectionsFollowSameRoad((1,0),(-1,.1)));
+        Equal(false,BackgroundStreetExtractor.DirectionsFollowSameRoad((0,1),(1,0)));
     }),
     ("background street LINZ metadata carries each densified point elevation", () =>
     {
@@ -862,6 +893,13 @@ static RouteAuthoringConfig Config(List<RouteAnchor> anchors, bool loop = false,
     Bbox = new(-1, -1, 1, 1), Anchors = anchors, MaxSnapDistanceMeters = 50,
     RouteCorridorMeters = 1000, MaxOutputSpacingMeters = 30,
     DetourWarningRatio = warning, DetourFailureRatio = failure
+};
+
+static RouteAuthoringConfig OutAndBackConfig(List<RouteAnchor> anchors) => new()
+{
+    Id = "outback-test", Name = "Out and back test", RouteType = "outAndBack",
+    Bbox = new(-1, -1, 1, 1), Anchors = anchors, MaxSnapDistanceMeters = 50,
+    RouteCorridorMeters = 1000, MaxOutputSpacingMeters = 30
 };
 
 static void Near(double expected, double actual, double tolerance = 0.001)

@@ -60,6 +60,7 @@ var tests = new (string Name, Action Run)[]
     ("Ride pause pauses and resumes the same active FIT recording", RidePauseResumesSameRecording),
     ("Starting recording while paused does not resume ride or FIT timer", StartRecordingWhileRidePaused),
     ("Stopping FIT recording leaves the ride running", StopRecordingLeavesRideRunning),
+    ("Finalized FIT stays valid and ignores post-jump ride samples", FinalizedFitExcludesLaterDebugJump),
     ("Consecutive rides create separate FIT files", ConsecutiveRidesCreateSeparateFiles),
     ("Empty recording finalizes as a valid FIT file", EmptyRecording)
 };
@@ -176,6 +177,25 @@ static void StopRecordingLeavesRideRunning() => InTemporaryFolder(() =>
     state = gate.Toggle(state); // Running again.
     recorder.Stop();
     if (gate.IsPaused) throw new Exception("Stopping recording paused the ride.");
+});
+
+static void FinalizedFitExcludesLaterDebugJump() => InTemporaryFolder(() =>
+{
+    var recorder = new RideFitRecorder();
+    recorder.StartOrResume(100, 12);
+    recorder.RecordSample(State(100), Telemetry(), 0, Route(12));
+    recorder.RecordSample(State(200), Telemetry(), 1.5, Route(13.5));
+    var path = recorder.Stop()!;
+
+    // A route jump happens only after the active FIT has been closed.
+    recorder.RecordSample(State(2130), Telemetry(), 4, Route(80));
+    if (recorder.Stop() != path || recorder.IsRecording)
+        throw new Exception("The finalized recording restarted or changed after the debug jump.");
+    var frames = new FitRideLoader().Load(path);
+    Near(2, frames.Count);
+    Near(100, frames[^1].DistanceMeters!.Value);
+    if (frames[^1].ElevationMeters!.Value > 20)
+        throw new Exception("Post-jump route elevation leaked into the finalized FIT file.");
 });
 
 static void ConsecutiveRidesCreateSeparateFiles() => InTemporaryFolder(() =>

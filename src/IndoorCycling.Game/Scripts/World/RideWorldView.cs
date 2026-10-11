@@ -428,7 +428,11 @@ public partial class RideWorldView : Node3D
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
-        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, WodraWorldStyle.Grass.Darkened(0.08f)));
+        // Older routes without terrain data use a shallow grass apron to mask the
+        // plain ground plane. Dunedin has sampled terrain and mapped green areas;
+        // laying a 60 m flat ribbon over those surfaces creates an artificial strip.
+        if (route.Id != "dunedin-one-way-oval-gardens")
+            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, WodraWorldStyle.Grass.Darkened(0.08f)));
         var asphalt = WodraWorldStyle.Asphalt;
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
         var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
@@ -436,8 +440,14 @@ public partial class RideWorldView : Node3D
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
         foreach (float offset in new[] { -3.25f, 3.25f })
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
-        _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry));
-        _routeRoot.AddChild(RoadsideDelineators.Build(_geometry));
+        var assembly = typeof(RouteCatalog).Assembly;
+        var resourcePrefix = $"Wodra.GameData.Routes.{route.Id}.";
+        var backgroundStreetData = RouteBackgroundStreetDataLoader.TryLoadEmbedded(assembly,
+            resourcePrefix + "streets.json", route.Id);
+        var junctionOpenings=BackgroundStreetGeometry.BuildJunctionOpenings(_geometry,backgroundStreetData);
+        _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry,true,true,junctionOpenings));
+        // Route data has no road-class evidence for continuous delineators.
+        // Render only explicit OSM furniture from StreetFurnitureLayer below.
         _landmarkLayer = null;
         _buildingLayer = null;
         _vegetationLayer = null;
@@ -447,54 +457,65 @@ public partial class RideWorldView : Node3D
         _ambientActorManager = null;
         _terrainLayer = null;
         RouteVegetationData? vegetationData = null;
-        if (route.Id == "dunedin-one-way-oval-gardens")
         {
+            var streets=backgroundStreetData;
+            var terrainRoads=BackgroundStreetGeometry.BuildTerrainCorridors(_geometry,streets);
             var terrain = new TerrainLayer { Name = "LINZTerrain" };
-            if (terrain.Configure(_geometry, "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.terrain.json", route.Id))
+            if (terrain.Configure(_geometry, resourcePrefix + "terrain.json", route.Id,terrainRoads))
             {
                 _terrainLayer = terrain;
                 _routeRoot.AddChild(terrain);
                 _terrainLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
-            var buildings = RouteBuildingDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json", route.Id);
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
-            if (buildings.Count > 0)
-                groundPlaneY = Math.Min(groundPlaneY,
-                    (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
-            _buildingLayer = new BuildingLayer { Name = "RouteBuildings" };
-            _routeRoot.AddChild(_buildingLayer);
-            _buildingLayer.Configure(_geometry, route, buildings);
-            _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-            var landmarks = RouteLandmarkDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json", route.Id);
-            _landmarkLayer = new LandmarkLayer { Name = "RouteLandmarks" };
-            _routeRoot.AddChild(_landmarkLayer);
-            _landmarkLayer.Configure(_geometry, route, landmarks, buildings);
-            _landmarkLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-            vegetationData = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
-            var vegOriginElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
-            var renderableAreas = vegetationData.Areas.Where(item => item.RenderGround && item.BaseElevationMeters is not null).ToArray();
-            if (renderableAreas.Length > 0)
-                groundPlaneY = Math.Min(groundPlaneY,
-                    (float)(renderableAreas.Min(item => item.BaseElevationMeters!.Value - vegOriginElevation) - VisualRoute.GroundClearanceMeters));
-            _vegetationLayer = new VegetationLayer { Name = "RouteVegetation" };
-            _routeRoot.AddChild(_vegetationLayer);
-            _vegetationLayer.Configure(_geometry, route, vegetationData);
-            _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-            var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
-                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", route.Id);
-            _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
-            _routeRoot.AddChild(_streetFurnitureLayer);
-            _streetFurnitureLayer.Configure(_geometry, route, furniture);
-            _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-            _roadMarkingLayer = new RoadMarkingLayer { Name = "RoadMarkings" };
-            _routeRoot.AddChild(_roadMarkingLayer);
-            _roadMarkingLayer.Configure(_geometry, furniture);
-            _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
-            var streets=RouteBackgroundStreetDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
-                "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.streets.json",route.Id);
+            IReadOnlyList<RouteBuildingData> buildings = [];
+            var buildingResource = resourcePrefix + "buildings.json";
+            if (RoutePackageFiles.Exists(assembly, buildingResource, route.Id))
+            {
+                buildings = RouteBuildingDataLoader.LoadEmbedded(assembly, buildingResource, route.Id);
+                if (buildings.Count > 0)
+                    groundPlaneY = Math.Min(groundPlaneY,
+                        (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
+                _buildingLayer = new BuildingLayer { Name = "RouteBuildings" };
+                _routeRoot.AddChild(_buildingLayer);
+                _buildingLayer.Configure(_geometry, route, buildings);
+                _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
+            var landmarkResource = resourcePrefix + "landmarks.json";
+            if (RoutePackageFiles.Exists(assembly, landmarkResource, route.Id))
+            {
+                var landmarks = RouteLandmarkDataLoader.LoadEmbedded(assembly, landmarkResource, route.Id);
+                _landmarkLayer = new LandmarkLayer { Name = "RouteLandmarks" };
+                _routeRoot.AddChild(_landmarkLayer);
+                _landmarkLayer.Configure(_geometry, route, landmarks, buildings);
+                _landmarkLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
+            var vegetationResource = resourcePrefix + "vegetation.json";
+            if (RoutePackageFiles.Exists(assembly, vegetationResource, route.Id))
+            {
+                vegetationData = RouteVegetationDataLoader.LoadEmbedded(assembly, vegetationResource, route.Id);
+                var renderableAreas = vegetationData.Areas.Where(item => item.RenderGround && item.BaseElevationMeters is not null).ToArray();
+                if (renderableAreas.Length > 0)
+                    groundPlaneY = Math.Min(groundPlaneY,
+                        (float)(renderableAreas.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
+                _vegetationLayer = new VegetationLayer { Name = "RouteVegetation" };
+                _routeRoot.AddChild(_vegetationLayer);
+                _vegetationLayer.Configure(_geometry, route, vegetationData);
+                _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
+            var furnitureResource = resourcePrefix + "street-furniture.json";
+            if (RoutePackageFiles.Exists(assembly, furnitureResource, route.Id))
+            {
+                var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(assembly, furnitureResource, route.Id);
+                _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
+                _routeRoot.AddChild(_streetFurnitureLayer);
+                _streetFurnitureLayer.Configure(_geometry, route, furniture);
+                _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+                _roadMarkingLayer = new RoadMarkingLayer { Name = "RoadMarkings" };
+                _routeRoot.AddChild(_roadMarkingLayer);
+                _roadMarkingLayer.Configure(_geometry, furniture);
+                _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
+            }
             if(streets is not null){
                 _backgroundStreetLayer=new BackgroundStreetLayer{Name="BackgroundStreets"};
                 _routeRoot.AddChild(_backgroundStreetLayer);
@@ -551,6 +572,7 @@ public partial class RideWorldView : Node3D
              visibleStreetChunks = _backgroundStreetLayer?.VisibleChunkCount ?? 0,
              backgroundStreetMeshes = _backgroundStreetLayer?.MeshChunkCount ?? 0,
              backgroundStreetTriangles = _backgroundStreetLayer?.TriangleCount ?? 0,
+             backgroundStreetRouteConnections = junctionOpenings.Count,
              backgroundStreetBuildMilliseconds = _backgroundStreetLayer?.BuildMilliseconds ?? 0,
              terrainChunksLoaded = _terrainLayer?.TerrainChunksLoaded ?? 0,
              visibleTerrainChunks = _terrainLayer?.VisibleTerrainChunks ?? 0,

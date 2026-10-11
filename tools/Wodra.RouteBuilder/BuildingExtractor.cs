@@ -18,7 +18,7 @@ public sealed record BuildingExtractionResult(int NearbyCandidates, int Selected
     int ExplicitHeightCount, int LevelsHeightCount, int FallbackHeightCount, int MalformedHeights,
     int MalformedOrExcludedRecords, int OriginalVertices, int SimplifiedVertices, int LargestFootprintVertices,
     double MinimumHeightMeters, double MaximumHeightMeters, double MedianHeightMeters,
-    IReadOnlyList<RouteBuilding> Buildings, double ExtractionSeconds);
+    IReadOnlyList<RouteBuilding> Buildings, double ExtractionSeconds, int ElevationSkippedCount = 0);
 public sealed record RawBuilding(string OsmType, long OsmId, Dictionary<string, string> Tags, long[] NodeIds,
     IReadOnlyList<GeoPoint> Polygon);
 

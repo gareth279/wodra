@@ -44,8 +44,6 @@ def main():
                 value = sample(ds, transformer, item['longitude'], item['latitude'])
                 if value is not None:
                     break
-            if value is None:
-                raise RuntimeError(f"No cached LINZ elevation at building {item['key']}; refusing invented base height.")
             elevations.append({'key': item['key'], 'elevationMeters': value})
         building_path.write_text(json.dumps({'elevations': elevations}, separators=(',', ':')) + '\n', encoding='utf-8')
     finally:

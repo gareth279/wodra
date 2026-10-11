@@ -17,7 +17,8 @@ public sealed record VegetationExtractionResult(int PolygonsConsidered, int Poly
     int TreesRejectedForBuildingIntersection, int TreesRejectedAsDuplicates, int TreesRejectedNearLandmarks,
     int OriginalPolygonVertices, int SimplifiedPolygonVertices, int LargestPolygonVertices,
     int MalformedOrSkippedGeometries, int GeneratedTreeCap, IReadOnlyList<VegetationArea> Areas,
-    IReadOnlyList<VegetationTree> Trees, double GenerationSeconds, int DemSamples = 0, int DemCacheHits = 0);
+    IReadOnlyList<VegetationTree> Trees, double GenerationSeconds, int DemSamples = 0, int DemCacheHits = 0,
+    int DemSkippedAreas = 0, int DemSkippedTrees = 0);
 
 public sealed record RawVegetationArea(string OsmType, long OsmId, Dictionary<string, string> Tags,
     long[] NodeIds, IReadOnlyList<GeoPoint> Polygon, string Category);
