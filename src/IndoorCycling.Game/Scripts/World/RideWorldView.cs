@@ -50,6 +50,7 @@ public readonly record struct RideWorldDiagnostic(
 public partial class RideWorldView : Node3D
 {
     [Export] public bool DebugPoseLogging { get; set; }
+    [Export] public bool UseOriginalGameplayCamera { get; set; }
     [Export] public int AiRiderTargetCount { get; set; } = AiRiderPopulation.DefaultTargetCount;
     [Export] public int AiRiderMaximumCount { get; set; } = AiRiderPopulation.DefaultMaximumCount;
     [Export] public int AiRiderRandomSeed { get; set; } = AiRiderPopulation.DefaultSeed;
@@ -63,6 +64,8 @@ public partial class RideWorldView : Node3D
     private AiRiderPopulation? _aiPopulation;
     private readonly Dictionary<string, CyclistVisual> _riderVisuals = new(StringComparer.Ordinal);
     private ChaseCamera _camera = default!;
+    private RideMenuPanelController? _rideMenuPanel;
+    private HudController? _hudController;
     private LandmarkLayer? _landmarkLayer;
     private BuildingLayer? _buildingLayer;
     private VegetationLayer? _vegetationLayer;
@@ -75,10 +78,16 @@ public partial class RideWorldView : Node3D
     private bool _wasActive;
     private VisualRoutePose _lastPose;
 
+    public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
+
     public override void _Ready()
     {
         _session = GetNode<RideSessionNode>("../RideSessionNode");
+        _rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
+        _hudController = GetNodeOrNull<HudController>("../HudController");
+        SetProcessInput(true);
         _camera = new ChaseCamera { Name = "ChaseCamera" };
+        if (UseOriginalGameplayCamera) _camera.SetView(RiderCameraView.GameplayOriginal);
         AddChild(_camera);
         _rider = new CyclistVisual { Name = "CyclistVisual" };
         _rider.Build();
@@ -132,7 +141,98 @@ public partial class RideWorldView : Node3D
             }
         });
         Hide();
+#if DEBUG
+        var assembly = typeof(RideWorldView).Assembly;
+        var debugAssemblyPath = ProjectSettings.GlobalizePath("res://.godot/mono/temp/bin/Debug/IndoorCycling.Game.dll");
+        var debugAssemblyTime = System.IO.File.Exists(debugAssemblyPath)
+            ? System.IO.File.GetLastWriteTimeUtc(debugAssemblyPath).ToString("O") : "missing";
+        GD.Print($"[CameraInspect] RideWorldView ready node={GetPath()} visible={IsVisibleInTree()} " +
+            $"inputProcessing={IsProcessingInput()} debugBuild=true assembly={assembly.GetName().Version} " +
+            $"mvid={assembly.ManifestModule.ModuleVersionId} loadedPath='{assembly.Location}' " +
+            $"debugDll={debugAssemblyPath} debugDllModifiedUtc={debugAssemblyTime} " +
+            $"camera={_camera.GetPath()} initial={_camera.View} current={_camera.GlobalPosition}");
+#endif
     }
+
+    public RiderCameraView CurrentCameraView => _camera.View;
+
+    public string CycleCameraInspectionView()
+    {
+        var before = _camera.View;
+        var positionBefore = _camera.GlobalPosition;
+        var view = _camera.CycleView();
+        SnapCameraToSelectedView();
+        var label = FormatCameraView(view);
+        GameLogger.Log("camera_inspection_view", new { view = label });
+#if DEBUG
+        GD.Print($"[CameraInspect] cycle accepted source=F6 before={before} after={view} " +
+            $"positionBefore={positionBefore} positionAfter={_camera.GlobalPosition} " +
+            $"transform={_camera.GlobalTransform} current={_camera.Current}");
+#endif
+        return label;
+    }
+
+    public void SelectCameraInspectionView(RiderCameraView view)
+    {
+        if (_session?.IsRideActive != true) return;
+        var before = _camera.View;
+        var positionBefore = _camera.GlobalPosition;
+        _camera.SetView(view);
+        SnapCameraToSelectedView();
+        var label = FormatCameraView(_camera.View);
+        _hudController?.ShowCameraInspectionView(label);
+#if DEBUG
+        GD.Print($"[CameraInspect] selector accepted before={before} after={_camera.View} " +
+            $"positionBefore={positionBefore} positionAfter={_camera.GlobalPosition} " +
+            $"transform={_camera.GlobalTransform} current={_camera.Current}");
+#endif
+    }
+
+    private void SnapCameraToSelectedView()
+    {
+        if (_session?.IsRideActive != true) return;
+        _camera.Current = true;
+        _camera.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(_lastPose.Forward), 0);
+    }
+
+    // This shared gameplay input path runs before Control focus/unhandled-input
+    // routing and is available in both Debug and Release builds.
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is not InputEventKey key || (key.Keycode != Key.F6 && key.PhysicalKeycode != Key.F6)) return;
+
+        var rideActive = _session?.IsRideActive == true;
+        var menuVisible = _rideMenuPanel?.IsMenuVisible == true;
+        var accepted = CameraInspectionInputPolicy.CanCycle(rideActive, menuVisible, key.Pressed, key.Echo);
+#if DEBUG
+        GD.Print($"[CameraInspect] F6 received pressed={key.Pressed} echo={key.Echo} " +
+            $"rideActive={rideActive} menuVisible={menuVisible} accepted={accepted} " +
+            $"mode={_camera?.View.ToString() ?? "uninitialised"}");
+#endif
+        if (!accepted)
+        {
+#if DEBUG
+            if (!rideActive) GD.Print("[CameraInspect] F6 rejected: no active ride.");
+            else if (menuVisible) GD.Print("[CameraInspect] F6 rejected: in-ride menu/modal is open.");
+            else GD.Print("[CameraInspect] F6 rejected: key release or echo event.");
+#endif
+            return;
+        }
+
+        var view = CycleCameraInspectionView();
+        _hudController?.ShowCameraInspectionView(view);
+        GetViewport().SetInputAsHandled();
+    }
+
+    public static string FormatCameraView(RiderCameraView view) => view switch
+    {
+        RiderCameraView.GameplayOriginal => "Gameplay (original)",
+        RiderCameraView.GameplayRefined => "Gameplay (refined)",
+        RiderCameraView.CloseRear => "Close rear",
+        RiderCameraView.RearThreeQuarter => "Rear three-quarter",
+        RiderCameraView.Side => "Side",
+        _ => "Front three-quarter"
+    };
 
     public override void _Process(double delta)
     {
@@ -143,7 +243,8 @@ public partial class RideWorldView : Node3D
             _wasActive = false;
             return;
         }
-        if (!_wasActive || !ReferenceEquals(_loadedRoute, _session.CurrentRoute))
+        var rideJustActivated = !_wasActive;
+        if (rideJustActivated || !ReferenceEquals(_loadedRoute, _session.CurrentRoute))
         {
             LoadRoute(_session.CurrentRoute);
             _camera.ResetFollow();
@@ -151,6 +252,11 @@ public partial class RideWorldView : Node3D
         _wasActive = true;
         Show();
         _camera.Current = true;
+#if DEBUG
+        if (rideJustActivated)
+            GD.Print($"[CameraInspect] ride active route={_session.CurrentRoute.Id} node={GetPath()} " +
+                $"visible={IsVisibleInTree()} inputProcessing={IsProcessingInput()} mode={_camera.View} camera={_camera.GetPath()}");
+#endif
         var distance = _session.CurrentRideState.DistanceMeters;
         var pose = _geometry!.GetPoseAtDistance(distance);
         _lastPose = pose;
@@ -160,7 +266,7 @@ public partial class RideWorldView : Node3D
         var playerState = new RiderState("player", "You", _loadedRoute!.Id, distance, wrappedDistance,
             (int)Math.Floor(distance / routeLength) + 1, RiderLaneMath.RiderLateralOffsetMeters,
             Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
-            rideState.CurrentCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
+            _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
         _riderStateSource!.Update(playerState, routeLength, _loadedRoute.GetGradientAt, delta);
         _session.GhostRider?.Update(rideState.ElapsedSeconds, routeLength, _session.IsRidePaused);
         _session.UpdateGhostIndicator(distance);

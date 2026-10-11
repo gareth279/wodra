@@ -23,23 +23,26 @@ public partial class HudController : Control
 
 	private Button? _menuButton;
 	private Button? _pauseRideButton;
-	private Button? _endRideButton;
 	private Label? _recordingIndicator;
 	private bool _recordingActive;
 	private double _shownSpeed = double.NaN;
 	private double _shownGradient = double.NaN;
 	private double _shownDistance = double.NaN;
-	private int? _shownPower;
-	private int? _shownCadence;
+	private string? _shownPower;
+	private string? _shownCadence;
 	private int _shownElapsedSecond = -1;
 	private RideMenuPanelController? _rideMenuPanel;
 	private RideSessionNode? _rideSessionNode;
+	private RideWorldView? _rideWorldView;
 	private PanelContainer? _debugOverlay;
 	private Label? _debugSummaryLabel;
 	private bool _debugEnabled;
+	private bool _hudDisplayEnabled = true;
 	private bool? _debugEnabledBeforeCapture;
 	private ScreenshotCaptureService? _screenshotCapture;
 	private Label? _screenshotToast;
+	private Label? _cameraInspectionLabel;
+	private double _cameraInspectionLabelSeconds;
 	private int _screenshotToastSequence;
 	private Label? _dummySummary;
 	private Control? _dummyWkgPowerRow;
@@ -93,10 +96,10 @@ public partial class HudController : Control
 
 		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
 		_pauseRideButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
-		_endRideButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/EndRideButton");
 		_recordingIndicator = GetNodeOrNull<Label>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
 		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId);
 		_screenshotToast = new Label
 		{
@@ -106,6 +109,21 @@ public partial class HudController : Control
 			HorizontalAlignment = HorizontalAlignment.Center
 		};
 		AddChild(_screenshotToast);
+		_cameraInspectionLabel = new Label
+		{
+			Name = "CameraInspectionLabel",
+			Text = "CAMERA · GAMEPLAY (REFINED) · F6: VIEW · SHIFT+F12: SAVE",
+			Visible = false,
+			AnchorLeft = 0.5f, AnchorRight = 0.5f, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -300, OffsetRight = 300, OffsetTop = 10, OffsetBottom = 34,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			MouseFilter = Control.MouseFilterEnum.Ignore
+		};
+		_cameraInspectionLabel.AddThemeColorOverride("font_color", new Color(0.91f, 0.83f, 0.67f));
+		_cameraInspectionLabel.AddThemeColorOverride("font_outline_color", new Color(0.025f, 0.032f, 0.037f, 0.92f));
+		_cameraInspectionLabel.AddThemeConstantOverride("outline_size", 3);
+		_cameraInspectionLabel.AddThemeFontSizeOverride("font_size", 13);
+		AddChild(_cameraInspectionLabel);
 
 		if (_menuButton is not null)
 		{
@@ -113,7 +131,6 @@ public partial class HudController : Control
 		}
 
 		if (_pauseRideButton is not null) _pauseRideButton.Pressed += OnPauseRidePressed;
-		if (_endRideButton is not null) _endRideButton.Pressed += OnEndRidePressed;
 		SetRecordingState(false, false);
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
@@ -122,11 +139,6 @@ public partial class HudController : Control
 	private void OnPauseRidePressed()
 	{
 		_rideSessionNode?.ToggleRidePause();
-	}
-
-	private void OnEndRidePressed()
-	{
-		_rideMenuPanel?.ShowEndRideConfirmation();
 	}
 
 	public void SetRidePaused(bool paused)
@@ -155,6 +167,21 @@ public partial class HudController : Control
 		UpdateHudVisibility();
 		if (_modeLabel is not null && _modeLabel.Text.Length > 0)
 			_modeLabel.Text = _modeLabel.Text.Replace(" [DEBUG]", "") + (enabled ? " [DEBUG]" : "");
+	}
+
+	public bool HudDisplayEnabled => _hudDisplayEnabled;
+	public bool DebugDisplayEnabled => _debugEnabled;
+
+	public void SetHudDisplayEnabled(bool enabled)
+	{
+		_hudDisplayEnabled = enabled;
+		UpdateHudVisibility();
+	}
+
+	public void SetDebugDisplayEnabled(bool enabled)
+	{
+		_debugEnabled = enabled;
+		UpdateHudVisibility();
 	}
 
 	private void EnsureDebugOverlay()
@@ -276,6 +303,8 @@ public partial class HudController : Control
 		_ = HideScreenshotToastLater(sequence);
 	}
 
+	public void ShowCameraInspectionView(string view) => UpdateCameraInspectionLabel(view);
+
 	private async Task HideScreenshotToastLater(int sequence)
 	{
 		await ToSignal(GetTree().CreateTimer(1.6), SceneTreeTimer.SignalName.Timeout);
@@ -286,6 +315,17 @@ public partial class HudController : Control
 	public override void _UnhandledKeyInput(InputEvent @event)
 	{
 		if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
+		if (_rideSessionNode?.IsRideActive == true && key.Keycode == Key.Escape)
+		{
+			_rideMenuPanel?.ToggleInRideMenu();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+		if (_rideMenuPanel?.IsMenuVisible == true)
+		{
+			GetViewport().SetInputAsHandled();
+			return;
+		}
 		if (key.Keycode == Key.F12 && _rideSessionNode?.IsRideActive == true)
 		{
 			var mode = ScreenshotCapturePolicy.ForF12(key.ShiftPressed);
@@ -322,7 +362,7 @@ public partial class HudController : Control
 			return;
 		}
 
-		_rideMenuPanel.ShowEndRideConfirmation();
+		_rideMenuPanel.ShowInRideMenu();
 	}
 
 	public void SetModeText(string mode)
@@ -358,8 +398,8 @@ public partial class HudController : Control
 		if (_routeLabel is not null) _routeLabel.Text = "Route";
 		if (_segmentLabel is not null) _segmentLabel.Text = string.Empty;
 
-		if (_powerLabel is not null) _powerLabel.Text = "0";
-		if (_cadenceLabel is not null) _cadenceLabel.Text = "0";
+		if (_powerLabel is not null) _powerLabel.Text = "—";
+		if (_cadenceLabel is not null) _cadenceLabel.Text = "—";
 		if (_speedLabel is not null) _speedLabel.Text = "0.0";
 		if (_gradientLabel is not null) _gradientLabel.Text = "0.0%";
 		if (_distanceLabel is not null) _distanceLabel.Text = "0.00";
@@ -383,38 +423,41 @@ public partial class HudController : Control
 		}
 	}
 
-	public void UpdateFromRideState(RideState rideState, TrainerTelemetry telemetry, double elapsedSeconds)
+	public void UpdateFromRideState(RideState rideState, TrainerTelemetry? telemetry, double elapsedSeconds)
 	{
 		UpdateHudVisibility();
-		if (_powerLabel is not null && _shownPower != telemetry.PowerWatts)
+		var metrics = RideHudMetrics.From(rideState, telemetry, DateTimeOffset.UtcNow, elapsedSeconds);
+		var powerText = metrics.PowerWatts?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
+		if (_powerLabel is not null && _shownPower != powerText)
 		{
-			_shownPower = telemetry.PowerWatts;
-			_powerLabel.Text = telemetry.PowerWatts.ToString();
+			_shownPower = powerText;
+			_powerLabel.Text = powerText;
 		}
-		if (_cadenceLabel is not null && _shownCadence != telemetry.CadenceRpm)
+		var cadenceText = metrics.CadenceRpm?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
+		if (_cadenceLabel is not null && _shownCadence != cadenceText)
 		{
-			_shownCadence = telemetry.CadenceRpm;
-			_cadenceLabel.Text = telemetry.CadenceRpm.ToString();
+			_shownCadence = cadenceText;
+			_cadenceLabel.Text = cadenceText;
 		}
-		var speed = Math.Round(rideState.VirtualSpeedKph, 1);
+		var speed = Math.Round(metrics.SimulatedSpeedKph, 1);
 		if (_speedLabel is not null && _shownSpeed != speed)
 		{
 			_shownSpeed = speed;
 			_speedLabel.Text = speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
 		}
-		var gradient = Math.Round(rideState.CurrentGradientPercent, 1);
+		var gradient = Math.Round(metrics.GradientPercent, 1);
 		if (_gradientLabel is not null && _shownGradient != gradient)
 		{
 			_shownGradient = gradient;
 			_gradientLabel.Text = $"{gradient:+0.0;-0.0;0.0}%";
 		}
-		var distance = Math.Round(rideState.DistanceMeters / 1000.0, 2);
+		var distance = Math.Round(metrics.DistanceMeters / 1000.0, 2);
 		if (_distanceLabel is not null && _shownDistance != distance)
 		{
 			_shownDistance = distance;
 			_distanceLabel.Text = distance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 		}
-		var elapsedSecond = Math.Max(0, (int)elapsedSeconds);
+		var elapsedSecond = Math.Max(0, (int)metrics.ElapsedSeconds);
 		if (_elapsedLabel is not null && _shownElapsedSecond != elapsedSecond)
 		{
 			_shownElapsedSecond = elapsedSecond;
@@ -463,13 +506,34 @@ public partial class HudController : Control
 	private void UpdateHudVisibility()
 	{
 		var rideIsActive = _rideSessionNode?.IsRideActive == true;
-		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && !_debugEnabled;
+		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && _hudDisplayEnabled;
 		var dummyVisible = rideIsActive && _dummyActive && _debugEnabled;
 		if (_dummyControlPanel is not null) _dummyControlPanel.Visible = dummyVisible;
 		var wkgMode = GameBootstrap.Settings?.DummyTrainer?.Mode == "W/kg";
 		if (_dummyWkgPowerRow is not null) _dummyWkgPowerRow.Visible = wkgMode;
 		if (_dummyWattsPowerRow is not null) _dummyWattsPowerRow.Visible = !wkgMode;
 		if (_debugOverlay is not null) _debugOverlay.Visible = _debugEnabled;
+		if (_cameraInspectionLabel is not null)
+		{
+			if (!rideIsActive) _cameraInspectionLabelSeconds = 0;
+			_cameraInspectionLabel.Visible = rideIsActive && _cameraInspectionLabelSeconds > 0;
+		}
+	}
+
+	private void UpdateCameraInspectionLabel(string view)
+	{
+		if (_cameraInspectionLabel is null) return;
+		_cameraInspectionLabel.Text = $"CAMERA · {view.ToUpperInvariant()} · F6: VIEW · SHIFT+F12: SAVE";
+		_cameraInspectionLabelSeconds = 2.8;
+		_cameraInspectionLabel.Visible = _rideSessionNode?.IsRideActive == true;
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_cameraInspectionLabelSeconds <= 0) return;
+		_cameraInspectionLabelSeconds = Math.Max(0, _cameraInspectionLabelSeconds - delta);
+		if (_cameraInspectionLabelSeconds == 0 && _cameraInspectionLabel is not null)
+			_cameraInspectionLabel.Visible = false;
 	}
 
 	private static void ConfigureClippedLabel(Label? label)

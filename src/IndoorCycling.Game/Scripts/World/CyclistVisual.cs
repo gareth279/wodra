@@ -5,12 +5,26 @@ using IndoorCycling.Core.Models;
 /// <summary>Procedural articulated rider and road-bike proxy. It consumes ride state and never simulates it.</summary>
 public partial class CyclistVisual : Node3D
 {
+    private const string ImportedModelPath = "res://Assets/Models/WodraCyclist.glb";
     private sealed record Dimensions(double RiderHeight, float WheelRadius, float Wheelbase, float CrankRadius,
-        float CrankY, float CrankZ, float SaddleY, float SaddleZ, float HeadY, float HeadZ,
-        float HipY, float HipZ, float ShoulderY, float ShoulderZ, float UpperLeg, float LowerLeg);
+        float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
+
+    // One seated road-cyclist reference pose drives all visible rider anchors. Coordinates use
+    // +Y up and -Z forward, matching the bicycle and the existing cadence/IK solver.
+    private sealed record RiderPose(Vector3 Pelvis, Vector3 LeftHip, Vector3 RightHip,
+        Vector3 NeckBase, Vector3 NeckTop, Vector3 HeadCenter, Vector3 HelmetCenter,
+        Vector3 LeftShoulder, Vector3 RightShoulder, Vector3 LeftElbow, Vector3 RightElbow,
+        Vector3 LeftWrist, Vector3 RightWrist);
 
     private static readonly Dimensions Size = new(1.78, .35f, 1.02f, .17f, .39f, .10f,
-        .80f, .25f, 1.57f, -.22f, 1.00f, .21f, 1.34f, -.13f, .43f, .43f);
+        .80f, .25f, .43f, .43f);
+    private static readonly RiderPose SeatedPose = new(
+        new Vector3(0, .99f, .19f), new Vector3(-.13f, .98f, .19f), new Vector3(.13f, .98f, .19f),
+        new Vector3(0, 1.285f, -.055f), new Vector3(0, 1.355f, -.105f),
+        new Vector3(0, 1.475f, -.17f), new Vector3(0, 1.59f, -.19f),
+        new Vector3(-.19f, 1.285f, -.055f), new Vector3(.19f, 1.285f, -.055f),
+        new Vector3(-.295f, 1.105f, -.345f), new Vector3(.295f, 1.105f, -.345f),
+        new Vector3(-.30f, .955f, -.565f), new Vector3(.30f, .955f, -.565f));
     private static readonly CylinderMesh RodMesh = new() { TopRadius = .5f, BottomRadius = .5f, Height = 1, RadialSegments = 8 };
     private static readonly BoxMesh UnitBoxMesh = new() { Size = Vector3.One };
     private static readonly SphereMesh UnitSphereMesh = new() { Radius = .5f, Height = 1, RadialSegments = 12, Rings = 8 };
@@ -20,16 +34,17 @@ public partial class CyclistVisual : Node3D
         Material(new Color(.12f,.63f,.72f)), Material(new Color(.20f,.38f,.63f)),
         Material(new Color(.72f,.37f,.12f)), Material(new Color(.27f,.48f,.27f))];
     private static readonly StandardMaterial3D[] JerseyPalette = [
-        Material(new Color(.88f,.23f,.13f)), Material(new Color(.18f,.42f,.78f)),
-        Material(new Color(.87f,.66f,.16f)), Material(new Color(.34f,.62f,.38f)),
-        Material(new Color(.66f,.34f,.68f)), Material(new Color(.91f,.91f,.88f))];
+        Material(new Color(.70f,.25f,.19f)), Material(new Color(.25f,.40f,.53f)),
+        Material(new Color(.72f,.52f,.20f)), Material(new Color(.31f,.47f,.35f)),
+        Material(new Color(.48f,.34f,.49f)), Material(new Color(.76f,.76f,.69f))];
     private static readonly StandardMaterial3D TyreMaterial = Material(new Color(.025f,.03f,.04f));
     private static readonly StandardMaterial3D RimMaterial = Material(new Color(.67f,.72f,.76f));
     private static readonly StandardMaterial3D MetalMaterial = Material(new Color(.28f,.31f,.34f));
     private static readonly StandardMaterial3D ShortsMaterial = Material(new Color(.07f,.09f,.12f));
     private static readonly StandardMaterial3D SkinMaterial = Material(new Color(.78f,.57f,.43f));
     private static readonly StandardMaterial3D ShoeMaterial = Material(new Color(.88f,.87f,.79f));
-    private static readonly StandardMaterial3D HelmetMaterial = Material(new Color(.95f,.75f,.12f));
+    private static readonly StandardMaterial3D HelmetMaterial = Material(new Color(.79f,.61f,.27f));
+    private static readonly StandardMaterial3D GloveMaterial = Material(new Color(.10f,.12f,.14f));
     private StandardMaterial3D _frameMaterial = FramePalette[0];
     private StandardMaterial3D _tyreMaterial = TyreMaterial;
     private StandardMaterial3D _rimMaterial = RimMaterial;
@@ -50,14 +65,30 @@ public partial class CyclistVisual : Node3D
     private MeshInstance3D _rightLowerLeg = default!;
     private MeshInstance3D _leftFoot = default!;
     private MeshInstance3D _rightFoot = default!;
+    private MeshInstance3D _leftAnkle = default!;
+    private MeshInstance3D _rightAnkle = default!;
+    private MeshInstance3D _leftSole = default!;
+    private MeshInstance3D _rightSole = default!;
     private MeshInstance3D _leftKnee = default!;
     private MeshInstance3D _rightKnee = default!;
+    private Node3D _crankPivot = default!;
+    private Node3D _bicycleModel = default!;
+    private Node3D _riderModel = default!;
+    private Node3D _upperBody = default!;
+    private Node3D _headRig = default!;
+    private Node3D _leftArmRig = default!;
+    private Node3D _rightArmRig = default!;
+    private Node3D _leftLegRig = default!;
+    private Node3D _rightLegRig = default!;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
     private double _wheelAngle;
     private double _crankAngle;
+    private double _animatedCadenceRpm;
     private double _leanRadians;
     private bool _built;
+
+    public bool UsesImportedModel { get; private set; }
 
     public double WheelAngleRadians => _wheelAngle;
     public double CrankAngleRadians => _crankAngle;
@@ -65,19 +96,33 @@ public partial class CyclistVisual : Node3D
     public double CurrentGradientPercent { get; private set; }
     public double RiderHeightMeters => Size.RiderHeight;
     public int ApproximateNodeCount => CountNodes(this);
-    public int ApproximateTriangleCount => 3000;
+    public int ApproximateTriangleCount => 2200;
 
     public void Build(int visualVariant = 0)
     {
         if (_built) return;
-        _built = true;
         _frameMaterial = FramePalette[Math.Abs(visualVariant) % FramePalette.Length];
         _jerseyMaterial = JerseyPalette[Math.Abs(visualVariant) % JerseyPalette.Length];
+        if (TryBuildImportedModel())
+        {
+            _built = true;
+            UsesImportedModel = true;
+            UpdatePedalingGeometry();
+#if DEBUG
+            ValidateImportedModelBounds();
+#endif
+            return;
+        }
+        _built = true;
+        _bicycleModel = new Node3D { Name = "BicycleModel" };
+        _riderModel = new Node3D { Name = "RiderModel" };
+        AddChild(_bicycleModel);
+        AddChild(_riderModel);
         var rearZ = Size.Wheelbase / 2;
         var frontZ = -Size.Wheelbase / 2;
         var wheelY = Size.WheelRadius;
-        _rearWheel = AddWheel("RearWheel", new Vector3(0,wheelY,rearZ));
-        _frontWheel = AddWheel("FrontWheel", new Vector3(0,wheelY,frontZ));
+        _rearWheel = AddWheel("RearWheel", new Vector3(0,wheelY,rearZ), _bicycleModel);
+        _frontWheel = AddWheel("FrontWheel", new Vector3(0,wheelY,frontZ), _bicycleModel);
 
         var rearHub = new Vector3(0,wheelY,rearZ);
         var frontHub = new Vector3(0,wheelY,frontZ);
@@ -85,43 +130,197 @@ public partial class CyclistVisual : Node3D
         var seatTop = new Vector3(0,Size.SaddleY,Size.SaddleZ);
         var headLow = new Vector3(0,.72f,-.34f);
         var headHigh = new Vector3(0,.84f,-.39f);
-        AddRod("SeatTube",bottomBracket,seatTop,.035f,_frameMaterial);
-        AddRod("DownTube",bottomBracket,headLow,.035f,_frameMaterial);
-        AddRod("TopTube",seatTop,headHigh,.03f,_frameMaterial);
-        AddRod("ChainStay",rearHub,bottomBracket,.023f,_frameMaterial);
-        AddRod("SeatStay",rearHub,seatTop,.022f,_frameMaterial);
-        AddRod("Fork",frontHub,headLow,.025f,_frameMaterial);
-        AddRod("HeadTube",headLow,headHigh,.045f,_frameMaterial);
-        AddRod("SeatPost",seatTop,new Vector3(0,.88f,.27f),.025f,_metalMaterial);
-        AddRod("Stem",headHigh,new Vector3(0,.91f,-.48f),.025f,_metalMaterial);
-        AddRod("Handlebar",new Vector3(-.34f,.91f,-.48f),new Vector3(.34f,.91f,-.48f),.022f,_metalMaterial);
-        AddBox("Saddle",new Vector3(.27f,.055f,.13f),new Vector3(0,.91f,.27f),_shortsMaterial);
-        AddRod("CrankAxle",new Vector3(-.1f,Size.CrankY,Size.CrankZ),new Vector3(.1f,Size.CrankY,Size.CrankZ),.045f,_metalMaterial);
+        AddRod("SeatTube",bottomBracket,seatTop,.035f,_frameMaterial,_bicycleModel);
+        AddRod("DownTube",bottomBracket,headLow,.035f,_frameMaterial,_bicycleModel);
+        AddRod("TopTube",seatTop,headHigh,.03f,_frameMaterial,_bicycleModel);
+        foreach (var side in new[] { -.052f, .052f })
+        {
+            AddRod("ChainStay",new Vector3(side,wheelY,rearZ),new Vector3(side,Size.CrankY,Size.CrankZ),.018f,_frameMaterial,_bicycleModel);
+            AddRod("SeatStay",new Vector3(side,wheelY,rearZ),new Vector3(side,Size.SaddleY,Size.SaddleZ),.018f,_frameMaterial,_bicycleModel);
+            AddRod("ForkLeg",new Vector3(side,wheelY,frontZ),new Vector3(side,.72f,-.34f),.019f,_frameMaterial,_bicycleModel);
+        }
+        AddRod("HeadTube",headLow,headHigh,.045f,_frameMaterial,_bicycleModel);
+        AddRod("SeatPost",seatTop,new Vector3(0,.88f,.27f),.025f,_metalMaterial,_bicycleModel);
+        AddRod("Stem",headHigh,new Vector3(0,.95f,-.565f),.025f,_metalMaterial,_bicycleModel);
+        AddRod("HandlebarTop",new Vector3(-.31f,.95f,-.565f),new Vector3(.31f,.95f,-.565f),.018f,_metalMaterial,_bicycleModel);
+        foreach (var side in new[] { -1f, 1f })
+        {
+            var hoodBase = new Vector3(side*.29f,.95f,-.565f);
+            var hoodFront = new Vector3(side*.30f,.94f,-.645f);
+            var drop = new Vector3(side*.27f,.82f,-.635f);
+            AddRod("BarCurve",hoodBase,hoodFront,.018f,_metalMaterial,_bicycleModel);
+            AddRod("BarDrop",hoodFront,drop,.018f,_metalMaterial,_bicycleModel);
+            AddRod("BarReturn",drop,new Vector3(side*.20f,.81f,-.565f),.018f,_metalMaterial,_bicycleModel);
+            AddSphere("BrakeHood",new Vector3(side*.29f,.985f,-.565f),new Vector3(.055f,.07f,.09f),GloveMaterial,_bicycleModel);
+        }
+        AddBox("Saddle",new Vector3(.24f,.04f,.13f),new Vector3(0,.91f,.27f),_shortsMaterial,_bicycleModel);
+        AddRod("CrankAxle",new Vector3(-.1f,Size.CrankY,Size.CrankZ),new Vector3(.1f,Size.CrankY,Size.CrankZ),.045f,_metalMaterial,_bicycleModel);
+        AddCrankAndChain(rearHub,bottomBracket,_bicycleModel);
 
-        AddRod("Torso",new Vector3(0,Size.HipY,Size.HipZ),new Vector3(0,Size.ShoulderY,Size.ShoulderZ),.19f,_jerseyMaterial);
-        AddSphere("Shorts",new Vector3(0,.99f,.20f),new Vector3(.29f,.22f,.26f),_shortsMaterial);
-        AddSphere("Head",new Vector3(0,Size.HeadY,Size.HeadZ),new Vector3(.16f,.19f,.16f),_skinMaterial);
-        AddSphere("Helmet",new Vector3(0,1.70f,Size.HeadZ),new Vector3(.19f,.12f,.21f),HelmetMaterial);
-        AddSphere("LeftHand",new Vector3(-.30f,.91f,-.47f),new Vector3(.075f,.065f,.08f),_skinMaterial);
-        AddSphere("RightHand",new Vector3(.30f,.91f,-.47f),new Vector3(.075f,.065f,.08f),_skinMaterial);
-        AddRod("LeftUpperArm",new Vector3(-.17f,1.32f,-.13f),new Vector3(-.28f,1.11f,-.34f),.052f,_jerseyMaterial);
-        AddRod("LeftForearm",new Vector3(-.28f,1.11f,-.34f),new Vector3(-.30f,.92f,-.47f),.043f,_skinMaterial);
-        AddRod("RightUpperArm",new Vector3(.17f,1.32f,-.13f),new Vector3(.28f,1.11f,-.34f),.052f,_jerseyMaterial);
-        AddRod("RightForearm",new Vector3(.28f,1.11f,-.34f),new Vector3(.30f,.92f,-.47f),.043f,_skinMaterial);
+        _upperBody = new Node3D { Name = "TorsoRig" };
+        _riderModel.AddChild(_upperBody);
+        var torso = new MeshInstance3D { Name = "JerseyTorso", Mesh = BuildJerseyMesh(), MaterialOverride = _jerseyMaterial };
+        _upperBody.AddChild(torso);
+        AddSphere("PelvisAndShorts",SeatedPose.Pelvis,new Vector3(.235f,.145f,.205f),_shortsMaterial,_upperBody);
+        AddRod("Neck",SeatedPose.NeckBase,SeatedPose.NeckTop,.065f,_skinMaterial,_upperBody);
+        _headRig = new Node3D { Name = "HeadRig" };
+        _upperBody.AddChild(_headRig);
+        AddSphere("Head",SeatedPose.HeadCenter,new Vector3(.205f,.235f,.205f),_skinMaterial,_headRig);
+        AddSphere("HelmetShell",SeatedPose.HelmetCenter,new Vector3(.245f,.14f,.275f),HelmetMaterial,_headRig);
+        AddBox("HelmetBrim",new Vector3(.22f,.022f,.125f),new Vector3(0,1.545f,-.325f),HelmetMaterial,_headRig);
 
-        _leftCrank=AddRod("LeftCrank",Vector3.Zero,Vector3.Up,.024f,_metalMaterial);
-        _rightCrank=AddRod("RightCrank",Vector3.Zero,Vector3.Up,.024f,_metalMaterial);
-        _leftPedal=AddBox("LeftPedal",new Vector3(.18f,.045f,.075f),Vector3.Zero,_metalMaterial);
-        _rightPedal=AddBox("RightPedal",new Vector3(.18f,.045f,.075f),Vector3.Zero,_metalMaterial);
-        _leftUpperLeg=AddRod("LeftThigh",Vector3.Zero,Vector3.Up,.085f,_shortsMaterial);
-        _leftLowerLeg=AddRod("LeftShin",Vector3.Zero,Vector3.Up,.055f,_skinMaterial);
-        _rightUpperLeg=AddRod("RightThigh",Vector3.Zero,Vector3.Up,.085f,_shortsMaterial);
-        _rightLowerLeg=AddRod("RightShin",Vector3.Zero,Vector3.Up,.055f,_skinMaterial);
-        _leftFoot=AddBox("LeftFoot",new Vector3(.14f,.08f,.22f),Vector3.Zero,_shoeMaterial);
-        _rightFoot=AddBox("RightFoot",new Vector3(.14f,.08f,.22f),Vector3.Zero,_shoeMaterial);
-        _leftKnee=AddSphere("LeftKnee",Vector3.Zero,new Vector3(.105f,.105f,.105f),_shortsMaterial);
-        _rightKnee=AddSphere("RightKnee",Vector3.Zero,new Vector3(.105f,.105f,.105f),_shortsMaterial);
+        _leftArmRig = new Node3D { Name = "LeftArmRig" };
+        _rightArmRig = new Node3D { Name = "RightArmRig" };
+        _upperBody.AddChild(_leftArmRig);
+        _upperBody.AddChild(_rightArmRig);
+        AddLoftLimb("LeftJerseySleeve",SeatedPose.LeftShoulder,SeatedPose.LeftElbow,.074f,.056f,_jerseyMaterial,_leftArmRig);
+        AddLoftLimb("RightJerseySleeve",SeatedPose.RightShoulder,SeatedPose.RightElbow,.074f,.056f,_jerseyMaterial,_rightArmRig);
+        AddLoftLimb("LeftForearm",SeatedPose.LeftElbow,SeatedPose.LeftWrist,.054f,.043f,_skinMaterial,_leftArmRig);
+        AddLoftLimb("RightForearm",SeatedPose.RightElbow,SeatedPose.RightWrist,.054f,.043f,_skinMaterial,_rightArmRig);
+        AddSphere("LeftElbowJoint",SeatedPose.LeftElbow,new Vector3(.076f,.076f,.076f),_skinMaterial,_leftArmRig);
+        AddSphere("RightElbowJoint",SeatedPose.RightElbow,new Vector3(.076f,.076f,.076f),_skinMaterial,_rightArmRig);
+        AddSphere("LeftGlovedHand",SeatedPose.LeftWrist,new Vector3(.09f,.068f,.09f),GloveMaterial,_leftArmRig);
+        AddSphere("RightGlovedHand",SeatedPose.RightWrist,new Vector3(.09f,.068f,.09f),GloveMaterial,_rightArmRig);
+
+        _crankPivot = new Node3D { Name = "CrankPivot", Position = bottomBracket };
+        _bicycleModel.AddChild(_crankPivot);
+        _leftCrank=AddRod("LeftCrank",new Vector3(-.13f,0,0),new Vector3(-.13f,0,Size.CrankRadius),.024f,_metalMaterial,_crankPivot);
+        _rightCrank=AddRod("RightCrank",new Vector3(.13f,0,0),new Vector3(.13f,0,-Size.CrankRadius),.024f,_metalMaterial,_crankPivot);
+        _leftPedal=AddBox("LeftPedal",new Vector3(.18f,.045f,.075f),new Vector3(-.13f,0,Size.CrankRadius),_metalMaterial,_crankPivot);
+        _rightPedal=AddBox("RightPedal",new Vector3(.18f,.045f,.075f),new Vector3(.13f,0,-Size.CrankRadius),_metalMaterial,_crankPivot);
+        _leftLegRig = new Node3D { Name = "LeftLegRig" };
+        _rightLegRig = new Node3D { Name = "RightLegRig" };
+        _riderModel.AddChild(_leftLegRig);
+        _riderModel.AddChild(_rightLegRig);
+        _leftUpperLeg=AddRod("LeftThigh",Vector3.Zero,Vector3.Up,.085f,_shortsMaterial,_leftLegRig);
+        _leftLowerLeg=AddRod("LeftShin",Vector3.Zero,Vector3.Up,.055f,_skinMaterial,_leftLegRig);
+        _rightUpperLeg=AddRod("RightThigh",Vector3.Zero,Vector3.Up,.085f,_shortsMaterial,_rightLegRig);
+        _rightLowerLeg=AddRod("RightShin",Vector3.Zero,Vector3.Up,.055f,_skinMaterial,_rightLegRig);
+        _leftFoot=AddSphere("LeftCyclingShoe",Vector3.Zero,new Vector3(.15f,.065f,.22f),_shoeMaterial,_leftLegRig);
+        _rightFoot=AddSphere("RightCyclingShoe",Vector3.Zero,new Vector3(.15f,.065f,.22f),_shoeMaterial,_rightLegRig);
+        _leftSole=AddBox("LeftShoeSole",new Vector3(.13f,.018f,.19f),Vector3.Zero,_shortsMaterial,_leftLegRig);
+        _rightSole=AddBox("RightShoeSole",new Vector3(.13f,.018f,.19f),Vector3.Zero,_shortsMaterial,_rightLegRig);
+        _leftAnkle=AddSphere("LeftAnkle",Vector3.Zero,new Vector3(.065f,.065f,.065f),_skinMaterial,_leftLegRig);
+        _rightAnkle=AddSphere("RightAnkle",Vector3.Zero,new Vector3(.065f,.065f,.065f),_skinMaterial,_rightLegRig);
+        _leftKnee=AddSphere("LeftKnee",Vector3.Zero,new Vector3(.095f,.095f,.095f),_shortsMaterial,_leftLegRig);
+        _rightKnee=AddSphere("RightKnee",Vector3.Zero,new Vector3(.095f,.095f,.095f),_shortsMaterial,_rightLegRig);
         UpdatePedalingGeometry();
+    }
+
+    private bool TryBuildImportedModel()
+    {
+        if (!ResourceLoader.Exists(ImportedModelPath)) return false;
+        var packedScene = ResourceLoader.Load<PackedScene>(ImportedModelPath);
+        var instance = packedScene?.Instantiate();
+        if (instance is null)
+        {
+            GD.PushWarning($"Imported cyclist at {ImportedModelPath} could not be loaded; using procedural fallback.");
+            return false;
+        }
+        AddChild(instance);
+        var requiredTargets = new (string Name, Type Type)[]
+        {
+            ("BicycleModel", typeof(Node3D)), ("RiderModel", typeof(Node3D)),
+            ("FrontWheelSpin", typeof(Node3D)), ("RearWheelSpin", typeof(Node3D)),
+            ("CrankPivot", typeof(Node3D)), ("TorsoRig", typeof(Node3D)),
+            ("LeftCrank", typeof(MeshInstance3D)), ("RightCrank", typeof(MeshInstance3D)),
+            ("LeftPedal", typeof(MeshInstance3D)), ("RightPedal", typeof(MeshInstance3D)),
+            ("LeftThigh", typeof(MeshInstance3D)), ("LeftShin", typeof(MeshInstance3D)),
+            ("RightThigh", typeof(MeshInstance3D)), ("RightShin", typeof(MeshInstance3D)),
+            ("LeftCyclingShoe", typeof(MeshInstance3D)), ("RightCyclingShoe", typeof(MeshInstance3D)),
+            ("LeftShoeSole", typeof(MeshInstance3D)), ("RightShoeSole", typeof(MeshInstance3D)),
+            ("LeftAnkle", typeof(MeshInstance3D)), ("RightAnkle", typeof(MeshInstance3D)),
+            ("LeftKnee", typeof(MeshInstance3D)), ("RightKnee", typeof(MeshInstance3D))
+        };
+        var invalidTargets = new System.Collections.Generic.List<string>();
+        foreach (var required in requiredTargets)
+        {
+            var found = instance.FindChild(required.Name, true, false);
+            if (found is null || !required.Type.IsInstanceOfType(found))
+                invalidTargets.Add(required.Name);
+        }
+        if (invalidTargets.Count > 0)
+        {
+            GD.PushWarning($"Imported cyclist at {ImportedModelPath} is missing or has invalid animation targets: {string.Join(", ", invalidTargets)}; using procedural fallback.");
+            RemoveChild(instance);
+            instance.QueueFree();
+            return false;
+        }
+        _bicycleModel = FindModelNode<Node3D>(instance, "BicycleModel")!;
+        _riderModel = FindModelNode<Node3D>(instance, "RiderModel")!;
+        _frontWheel = FindModelNode<Node3D>(instance, "FrontWheelSpin")!;
+        _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
+        _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
+        _upperBody = FindModelNode<Node3D>(instance, "TorsoRig")!;
+        _leftCrank = FindModelNode<MeshInstance3D>(instance, "LeftCrank")!;
+        _rightCrank = FindModelNode<MeshInstance3D>(instance, "RightCrank")!;
+        _leftPedal = FindModelNode<MeshInstance3D>(instance, "LeftPedal")!;
+        _rightPedal = FindModelNode<MeshInstance3D>(instance, "RightPedal")!;
+        _leftUpperLeg = FindModelNode<MeshInstance3D>(instance, "LeftThigh")!;
+        _leftLowerLeg = FindModelNode<MeshInstance3D>(instance, "LeftShin")!;
+        _rightUpperLeg = FindModelNode<MeshInstance3D>(instance, "RightThigh")!;
+        _rightLowerLeg = FindModelNode<MeshInstance3D>(instance, "RightShin")!;
+        _leftFoot = FindModelNode<MeshInstance3D>(instance, "LeftCyclingShoe")!;
+        _rightFoot = FindModelNode<MeshInstance3D>(instance, "RightCyclingShoe")!;
+        _leftSole = FindModelNode<MeshInstance3D>(instance, "LeftShoeSole")!;
+        _rightSole = FindModelNode<MeshInstance3D>(instance, "RightShoeSole")!;
+        _leftAnkle = FindModelNode<MeshInstance3D>(instance, "LeftAnkle")!;
+        _rightAnkle = FindModelNode<MeshInstance3D>(instance, "RightAnkle")!;
+        _leftKnee = FindModelNode<MeshInstance3D>(instance, "LeftKnee")!;
+        _rightKnee = FindModelNode<MeshInstance3D>(instance, "RightKnee")!;
+
+        if (_bicycleModel is null || _riderModel is null || _frontWheel is null || _rearWheel is null ||
+            _crankPivot is null || _upperBody is null || _leftCrank is null || _rightCrank is null ||
+            _leftPedal is null || _rightPedal is null || _leftUpperLeg is null || _leftLowerLeg is null ||
+            _rightUpperLeg is null || _rightLowerLeg is null || _leftFoot is null || _rightFoot is null ||
+            _leftSole is null || _rightSole is null || _leftAnkle is null || _rightAnkle is null ||
+            _leftKnee is null || _rightKnee is null)
+        {
+            GD.PushWarning($"Imported cyclist at {ImportedModelPath} does not match the Wodra animation-target contract; using procedural fallback.");
+            RemoveChild(instance);
+            instance.QueueFree();
+            return false;
+        }
+
+        SetImportedMaterial(instance, "BikeFrame", _frameMaterial);
+        SetImportedMaterial(instance, "JerseyTorso", _jerseyMaterial);
+        SetImportedMaterial(instance, "LeftJerseySleeve", _jerseyMaterial);
+        SetImportedMaterial(instance, "RightJerseySleeve", _jerseyMaterial);
+        return true;
+    }
+
+    private static T? FindModelNode<T>(Node root, string name) where T : Node =>
+        root.FindChild(name, true, false) as T;
+
+    private static void SetImportedMaterial(Node root, string name, Material material)
+    {
+        if (FindModelNode<MeshInstance3D>(root, name) is { } mesh)
+            mesh.MaterialOverride = material;
+    }
+
+    private void AddCrankAndChain(Vector3 rearHub, Vector3 bottomBracket, Node3D parent)
+    {
+        var ring = new MeshInstance3D
+        {
+            Name = "Chainring",
+            Mesh = new CylinderMesh { TopRadius = .105f, BottomRadius = .105f, Height = .018f, RadialSegments = 16 },
+            Position = new Vector3(.11f, bottomBracket.Y, bottomBracket.Z),
+            Rotation = new Vector3(0, 0, Mathf.Pi / 2), MaterialOverride = MetalMaterial
+        };
+        parent.AddChild(ring);
+        var cassette = new MeshInstance3D
+        {
+            Name = "RearCassette",
+            Mesh = new CylinderMesh { TopRadius = .055f, BottomRadius = .055f, Height = .025f, RadialSegments = 12 },
+            Position = new Vector3(.09f, rearHub.Y, rearHub.Z),
+            Rotation = new Vector3(0, 0, Mathf.Pi / 2), MaterialOverride = MetalMaterial
+        };
+        parent.AddChild(cassette);
+        var chainX = .12f;
+        AddRod("ChainUpper", new Vector3(chainX, bottomBracket.Y + .07f, bottomBracket.Z + .07f),
+            new Vector3(chainX, rearHub.Y + .025f, rearHub.Z), .006f, MetalMaterial, parent);
+        AddRod("ChainLower", new Vector3(chainX, bottomBracket.Y - .07f, bottomBracket.Z + .07f),
+            new Vector3(chainX, rearHub.Y - .025f, rearHub.Z), .006f, MetalMaterial, parent);
     }
 
     public void UpdateFromRiderState(RiderState rider, VisualRoutePose routePose,
@@ -142,8 +341,9 @@ public partial class CyclistVisual : Node3D
         var delta = Math.Max(0,deltaSeconds);
         var speed = paused ? 0 : Math.Max(0,virtualSpeedKph);
         var cadence = paused ? 0 : Math.Max(0,cadenceRpm);
+        _animatedCadenceRpm = CyclistAnimationMath.SmoothCadence(_animatedCadenceRpm, cadence, delta);
         _wheelAngle=CyclistAnimationMath.AdvanceWheelAngle(_wheelAngle,speed,delta,Size.WheelRadius,paused);
-        _crankAngle=CyclistAnimationMath.AdvanceCrankAngle(_crankAngle,cadence,delta,paused);
+        _crankAngle=CyclistAnimationMath.AdvanceCrankAngle(_crankAngle,_animatedCadenceRpm,delta,paused);
         _frontWheel.Rotation=new Vector3((float)_wheelAngle,0,0);
         _rearWheel.Rotation=new Vector3((float)_wheelAngle,0,0);
         var targetLean=_hasPreviousForward
@@ -155,6 +355,7 @@ public partial class CyclistVisual : Node3D
         GlobalPosition=routePosition;
         LookAt(routePosition+routeForward,Vector3.Up);
         RotateObjectLocal(Vector3.Back,(float)_leanRadians);
+        _upperBody.Position = new Vector3(0, paused ? 0 : (float)(.003 * Math.Sin(_crankAngle * 2) * Math.Clamp(_animatedCadenceRpm / 90, 0, 1)), 0);
         UpdatePedalingGeometry();
     }
 
@@ -164,20 +365,96 @@ public partial class CyclistVisual : Node3D
         var left=PedalWorldPosition(_crankAngle);
         var right=PedalWorldPosition(_crankAngle+Math.PI);
         left.X=-.13f; right.X=.13f;
-        SetRod(_leftCrank,bb,left,.024f); SetRod(_rightCrank,bb,right,.024f);
-        _leftPedal.Position=left; _rightPedal.Position=right;
+        _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
+        // The GLB stores these meshes as normalized one-metre templates. The procedural
+        // fallback creates them at final size, so apply the same dimensions here for both
+        // paths. Without this, the imported crank rods and shoe/sole/knee meshes render as
+        // large blocks around the rider.
+        SetRod(_leftCrank, new Vector3(-.13f, 0, 0), new Vector3(-.13f, 0, Size.CrankRadius), .018f);
+        SetRod(_rightCrank, new Vector3(.13f, 0, 0), new Vector3(.13f, 0, -Size.CrankRadius), .018f);
+        _leftPedal.Position = new Vector3(-.13f, 0, Size.CrankRadius);
+        _rightPedal.Position = new Vector3(.13f, 0, -Size.CrankRadius);
+        _leftPedal.Scale = _rightPedal.Scale = new Vector3(.18f, .045f, .075f);
         _leftFoot.Position=left+new Vector3(-.015f,.04f,-.035f);
         _rightFoot.Position=right+new Vector3(.015f,.04f,-.035f);
-        var leftHip=new Vector3(-.13f,Size.HipY,Size.HipZ);
-        var rightHip=new Vector3(.13f,Size.HipY,Size.HipZ);
-        var leftKnee2=CyclistAnimationMath.SolveKnee(new System.Numerics.Vector2(leftHip.Z,leftHip.Y),new System.Numerics.Vector2(left.Z,left.Y),Size.UpperLeg,Size.LowerLeg,1);
+        _leftFoot.Scale = _rightFoot.Scale = new Vector3(.15f,.065f,.22f);
+        _leftSole.Position=_leftFoot.Position+new Vector3(0,-.05f,0);
+        _rightSole.Position=_rightFoot.Position+new Vector3(0,-.05f,0);
+        _leftSole.Scale = _rightSole.Scale = new Vector3(.13f,.018f,.19f);
+        _leftAnkle.Position=left+new Vector3(-.015f,.035f,.035f);
+        _rightAnkle.Position=right+new Vector3(.015f,.035f,.035f);
+        _leftAnkle.Scale = _rightAnkle.Scale = Vector3.One * .065f;
+        _leftFoot.Rotation = new Vector3((float)(.12 * Math.Sin(_crankAngle)), 0, 0);
+        _rightFoot.Rotation = new Vector3((float)(.12 * Math.Sin(_crankAngle + Math.PI)), 0, 0);
+        _leftSole.Rotation = _leftFoot.Rotation;
+        _rightSole.Rotation = _rightFoot.Rotation;
+        var leftHip=SeatedPose.LeftHip;
+        var rightHip=SeatedPose.RightHip;
+        var leftKnee2=CyclistAnimationMath.SolveKnee(new System.Numerics.Vector2(leftHip.Z,leftHip.Y),new System.Numerics.Vector2(left.Z,left.Y),Size.UpperLeg,Size.LowerLeg,-1);
         var rightKnee2=CyclistAnimationMath.SolveKnee(new System.Numerics.Vector2(rightHip.Z,rightHip.Y),new System.Numerics.Vector2(right.Z,right.Y),Size.UpperLeg,Size.LowerLeg,-1);
         var leftKnee=new Vector3(-.15f,leftKnee2.Y,leftKnee2.X);
         var rightKnee=new Vector3(.15f,rightKnee2.Y,rightKnee2.X);
         _leftKnee.Position=leftKnee; _rightKnee.Position=rightKnee;
+        _leftKnee.Scale = _rightKnee.Scale = Vector3.One * .095f;
         SetRod(_leftUpperLeg,leftHip,leftKnee,.085f); SetRod(_leftLowerLeg,leftKnee,left,.055f);
         SetRod(_rightUpperLeg,rightHip,rightKnee,.085f); SetRod(_rightLowerLeg,rightKnee,right,.055f);
     }
+
+#if DEBUG
+    private void ValidateImportedModelBounds()
+    {
+        if (_bicycleModel is null || _riderModel is null) return;
+        var modelMin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        var modelMax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        var meshCount = 0;
+        foreach (Node child in GetChildren())
+            if (child is Node3D node)
+                ReportBounds(node, Transform3D.Identity, ref modelMin, ref modelMax, ref meshCount);
+
+        var size = modelMax - modelMin;
+        GD.Print($"[Cyclist GLB] Runtime model bounds: {size}; meshes inspected: {meshCount}");
+        if (size.X > 1.3f || size.Y > 2.1f || size.Z > 2.2f)
+            GD.PushWarning($"[Cyclist GLB] Overall bounds exceed adult rider/bicycle sanity limits: {size}.");
+    }
+
+    private static void ReportBounds(Node3D node, Transform3D parentTransform,
+        ref Vector3 modelMin, ref Vector3 modelMax, ref int meshCount)
+    {
+        var transform = parentTransform * node.Transform;
+        var nodeScale = node.Scale;
+        if (Math.Abs(nodeScale.X - 1) > .0001f || Math.Abs(nodeScale.Y - 1) > .0001f || Math.Abs(nodeScale.Z - 1) > .0001f)
+            GD.Print($"[Cyclist GLB] Non-unit node scale: {node.GetPath()} = {nodeScale}");
+        if (node is MeshInstance3D instance && instance.Mesh is { } mesh)
+        {
+            var local = mesh.GetAabb();
+            var transformedMin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            var transformedMax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+            for (var x = 0; x < 2; x++)
+            for (var y = 0; y < 2; y++)
+            for (var z = 0; z < 2; z++)
+            {
+                var corner = local.Position + new Vector3(x == 0 ? 0 : local.Size.X,
+                    y == 0 ? 0 : local.Size.Y, z == 0 ? 0 : local.Size.Z);
+                var point = transform * corner;
+                transformedMin = transformedMin.Min(point);
+                transformedMax = transformedMax.Max(point);
+                modelMin = modelMin.Min(point);
+                modelMax = modelMax.Max(point);
+            }
+            var transformedSize = transformedMax - transformedMin;
+            var scale = instance.Scale;
+            GD.Print($"[Cyclist GLB] {instance.Name}: local={local.Size}, transformed={transformedSize}, scale={scale}");
+            if (transformedSize.X > 1.25f || transformedSize.Y > 1.25f || transformedSize.Z > 1.25f)
+                GD.PushWarning($"[Cyclist GLB] Unexpectedly large mesh {instance.Name}: {transformedSize}.");
+            if (!float.IsFinite(scale.X) || !float.IsFinite(scale.Y) || !float.IsFinite(scale.Z))
+                GD.PushWarning($"[Cyclist GLB] Invalid mesh scale on {instance.Name}: {scale}.");
+            meshCount++;
+        }
+        foreach (Node child in node.GetChildren())
+            if (child is Node3D child3D)
+                ReportBounds(child3D, transform, ref modelMin, ref modelMax, ref meshCount);
+    }
+#endif
 
     private static Vector3 PedalWorldPosition(double angle)
     {
@@ -187,18 +464,108 @@ public partial class CyclistVisual : Node3D
 
     private static System.Numerics.Vector3 ToNumerics(Vector3 value) => new(value.X, value.Y, value.Z);
 
-    private Node3D AddWheel(string name,Vector3 position)
+    private static ArrayMesh BuildJerseyMesh()
     {
-        var wheel=new Node3D{Name=name,Position=position}; AddChild(wheel);
+        // Shared ring normals give the jersey a shaped cloth silhouette instead of a stack
+        // of visibly separate cylinders. The z-center shift defines its seated forward lean.
+        var rings = new (float Y, float Z, float XRadius, float ZRadius)[]
+        {
+            (.905f, .18f, .125f, .105f),
+            (.98f, .15f, .15f, .12f),
+            (1.075f, .105f, .17f, .13f),
+            (1.18f, .035f, .195f, .14f),
+            (1.265f, -.035f, .19f, .125f),
+            (1.315f, -.065f, .145f, .105f)
+        };
+        const int sides = 12;
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        for (var ring = 0; ring < rings.Length - 1; ring++)
+        for (var side = 0; side < sides; side++)
+        {
+            var a = TorsoPoint(rings[ring], side);
+            var b = TorsoPoint(rings[ring + 1], side);
+            var c = TorsoPoint(rings[ring + 1], side + 1);
+            var d = TorsoPoint(rings[ring], side + 1);
+            surface.AddVertex(a); surface.AddVertex(b); surface.AddVertex(c);
+            surface.AddVertex(a); surface.AddVertex(c); surface.AddVertex(d);
+        }
+        surface.Index();
+        surface.GenerateNormals();
+        return surface.Commit();
+    }
+
+    private static Vector3 TorsoPoint((float Y, float Z, float XRadius, float ZRadius) ring, int side)
+    {
+        var angle = side * Mathf.Tau / 12f;
+        return new Vector3(Mathf.Cos(angle) * ring.XRadius, ring.Y,
+            ring.Z + Mathf.Sin(angle) * ring.ZRadius);
+    }
+
+    private Node3D AddWheel(string name,Vector3 position, Node3D parent)
+    {
+        var wheel=new Node3D{Name=name,Position=position}; parent.AddChild(wheel);
         foreach(var pair in new[]{(Mesh:TyreMesh,Material:_tyreMaterial),(Mesh:RimMesh,Material:_rimMaterial)})
             wheel.AddChild(new MeshInstance3D{Mesh=pair.Mesh,Rotation=new Vector3(0,0,-Mathf.Pi/2),MaterialOverride=pair.Material});
+        var spokeRadius = .287f;
+        for (var spoke = 0; spoke < 16; spoke++)
+        {
+            var angle = spoke * (float)Math.Tau / 16;
+            var offset = new Vector3(spoke % 2 == 0 ? -.009f : .009f, Mathf.Cos(angle) * spokeRadius, Mathf.Sin(angle) * spokeRadius);
+            var spokeMesh = new MeshInstance3D { Name = "Spoke", Mesh = RodMesh, MaterialOverride = _metalMaterial };
+            wheel.AddChild(spokeMesh);
+            SetRod(spokeMesh, new Vector3(-offset.X, 0, 0), offset, .0035f);
+        }
         return wheel;
     }
 
-    private MeshInstance3D AddRod(string name,Vector3 a,Vector3 b,float radius,Material material)
+    private MeshInstance3D AddRod(string name,Vector3 a,Vector3 b,float radius,Material material,Node3D? parent=null)
     {
         var rod=new MeshInstance3D{Name=name,Mesh=RodMesh,MaterialOverride=material};
-        AddChild(rod); SetRod(rod,a,b,radius); return rod;
+        (parent ?? this).AddChild(rod); SetRod(rod,a,b,radius); return rod;
+    }
+
+    private MeshInstance3D AddLoftLimb(string name, Vector3 start, Vector3 end,
+        float startRadius, float endRadius, Material material, Node3D parent)
+    {
+        var mesh = new MeshInstance3D { Name = name, Mesh = BuildLimbMesh(start, end, startRadius, endRadius), MaterialOverride = material };
+        parent.AddChild(mesh);
+        return mesh;
+    }
+
+    private static ArrayMesh BuildLimbMesh(Vector3 start, Vector3 end, float startRadius, float endRadius)
+    {
+        var direction = (end - start).Normalized();
+        var reference = Math.Abs(direction.Dot(Vector3.Up)) > .9f ? Vector3.Right : Vector3.Up;
+        var sideAxis = direction.Cross(reference).Normalized();
+        var depthAxis = direction.Cross(sideAxis).Normalized();
+        var rings = new (float Along, float Radius)[]
+        {
+            (0f, startRadius * .68f), (.14f, startRadius), (.78f, endRadius), (1f, endRadius * .72f)
+        };
+        const int sides = 10;
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        for (var ring = 0; ring < rings.Length - 1; ring++)
+        for (var side = 0; side < sides; side++)
+        {
+            var a = LimbPoint(rings[ring], side);
+            var b = LimbPoint(rings[ring + 1], side);
+            var c = LimbPoint(rings[ring + 1], side + 1);
+            var d = LimbPoint(rings[ring], side + 1);
+            surface.AddVertex(a); surface.AddVertex(b); surface.AddVertex(c);
+            surface.AddVertex(a); surface.AddVertex(c); surface.AddVertex(d);
+        }
+        surface.Index();
+        surface.GenerateNormals();
+        return surface.Commit();
+
+        Vector3 LimbPoint((float Along, float Radius) ring, int side)
+        {
+            var angle = side * Mathf.Tau / sides;
+            var radial = sideAxis * Mathf.Cos(angle) + depthAxis * Mathf.Sin(angle);
+            return start.Lerp(end, ring.Along) + radial * ring.Radius;
+        }
     }
     private static void SetRod(MeshInstance3D rod,Vector3 a,Vector3 b,float radius)
     {
@@ -211,13 +578,13 @@ public partial class CyclistVisual : Node3D
         var basis=rotation.Scaled(new Vector3(radius*2,length,radius*2));
         rod.Transform=new Transform3D(basis,(a+b)*.5f);
     }
-    private MeshInstance3D AddBox(string name,Vector3 size,Vector3 position,Material material)
+    private MeshInstance3D AddBox(string name,Vector3 size,Vector3 position,Material material,Node3D? parent=null)
     {
-        var mesh=new MeshInstance3D{Name=name,Mesh=UnitBoxMesh,Position=position,Scale=size,MaterialOverride=material}; AddChild(mesh); return mesh;
+        var mesh=new MeshInstance3D{Name=name,Mesh=UnitBoxMesh,Position=position,Scale=size,MaterialOverride=material}; (parent ?? this).AddChild(mesh); return mesh;
     }
-    private MeshInstance3D AddSphere(string name,Vector3 position,Vector3 scale,Material material)
+    private MeshInstance3D AddSphere(string name,Vector3 position,Vector3 scale,Material material,Node3D? parent=null)
     {
-        var mesh=new MeshInstance3D{Name=name,Mesh=UnitSphereMesh,Position=position,Scale=scale,MaterialOverride=material}; AddChild(mesh); return mesh;
+        var mesh=new MeshInstance3D{Name=name,Mesh=UnitSphereMesh,Position=position,Scale=scale,MaterialOverride=material}; (parent ?? this).AddChild(mesh); return mesh;
     }
     private static StandardMaterial3D Material(Color color)=>new(){AlbedoColor=color,Roughness=.88f};
     private static int CountNodes(Node node)

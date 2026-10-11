@@ -14,6 +14,8 @@ var tests = new (string Name, Action Run)[]
     ("Low-speed reference is configurable and speed is used above it", LaunchReferenceIsConfigurable),
     ("Speed never becomes negative", SpeedNeverNegative),
     ("Trainer speed telemetry does not determine game speed", TrainerSpeedIsIgnored),
+	("HUD telemetry uses live ride state and simulated speed", HudMetricsUseRideState),
+	("HUD marks stale rider sensors unavailable", HudMetricsMarkStaleSensors),
     ("Mass and bike resistance profile affect acceleration", ProfilesAffectPhysics),
     ("Ride pause freezes progress and resumes without a distance jump", RidePauseSemantics),
     ("Repeated ride pause action toggles explicit ride state", RidePauseToggle),
@@ -49,6 +51,39 @@ static RideState Run(RideState state, int power, double grade, int ticks, double
 {
     for (var i = 0; i < ticks; i++) state = Tick(state, power, grade, dt);
     return state;
+}
+
+static void HudMetricsUseRideState()
+{
+	var now = DateTimeOffset.UtcNow;
+	var state = RideState.Initial with
+	{
+		CurrentPowerWatts = 264,
+		CurrentCadenceRpm = 85,
+		VirtualSpeedKph = 25.5,
+		CurrentGradientPercent = 0,
+		DistanceMeters = 60
+	};
+	var rawTelemetry = new TrainerTelemetry(now, 999, 1, 34.5);
+	var metrics = RideHudMetrics.From(state, rawTelemetry, now, 12.7);
+	if (metrics.PowerWatts != 264 || metrics.CadenceRpm != 85)
+		throw new Exception("HUD power and cadence should come from current ride state.");
+	Near(25.5, metrics.SimulatedSpeedKph, 0);
+	Near(0, metrics.GradientPercent, 0);
+	Near(60, metrics.DistanceMeters, 0);
+	Near(12.7, metrics.ElapsedSeconds, 0);
+	if (metrics.SimulatedSpeedKph == rawTelemetry.SpeedKph)
+		throw new Exception("HUD speed must use simulated speed, not raw trainer speed.");
+}
+
+static void HudMetricsMarkStaleSensors()
+{
+	var now = DateTimeOffset.UtcNow;
+	var state = RideState.Initial with { CurrentPowerWatts = 250, CurrentCadenceRpm = 90 };
+	var staleTelemetry = new TrainerTelemetry(now - TimeSpan.FromSeconds(6), 250, 90, 30);
+	var metrics = RideHudMetrics.From(state, staleTelemetry, now, 8);
+	if (metrics.PowerWatts is not null || metrics.CadenceRpm is not null)
+		throw new Exception("Stale power and cadence should be displayed as unavailable.");
 }
 
 static void ZeroPowerFlatDeceleration()

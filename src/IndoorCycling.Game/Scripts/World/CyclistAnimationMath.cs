@@ -7,6 +7,19 @@ public static class CyclistAnimationMath
     public const double DefaultWheelRadiusMeters = 0.35;
     public const double MaximumLeanDegrees = 10;
     public const double GravityMetersPerSecondSquared = 9.80665;
+    public const double CadenceResponseSeconds = 0.22;
+
+    public static double SmoothCadence(double currentRpm, double targetRpm, double deltaSeconds,
+        double responseSeconds = CadenceResponseSeconds)
+    {
+        if (!double.IsFinite(currentRpm) || !double.IsFinite(targetRpm) || !double.IsFinite(deltaSeconds)
+            || !double.IsFinite(responseSeconds) || currentRpm < 0 || targetRpm < 0 || responseSeconds <= 0)
+            throw new ArgumentOutOfRangeException(nameof(currentRpm));
+        if (deltaSeconds <= 0) return currentRpm;
+        var weight = 1 - Math.Exp(-deltaSeconds / responseSeconds);
+        var smoothed = currentRpm + (targetRpm - currentRpm) * weight;
+        return smoothed < 0.02 ? 0 : smoothed;
+    }
 
     public static double AdvanceCrankAngle(double angleRadians, double cadenceRpm, double deltaSeconds, bool paused = false)
     {

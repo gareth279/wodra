@@ -29,6 +29,8 @@ public partial class RideSessionNode : Node
 	private int _lastLoggedLapNumber = 1;
 	// Read-only rendering input. This remains the only authority for ride progress.
 	public RideState CurrentRideState => _rideState;
+	public int CurrentAnimationCadenceRpm => _lastTelemetry?.IsFreshAt(DateTimeOffset.UtcNow) == true
+		? _rideState.CurrentCadenceRpm : 0;
 	public RouteDefinition? CurrentRoute => _currentRoute;
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
@@ -798,6 +800,7 @@ public partial class RideSessionNode : Node
 		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsConnected)
 		{
 			_hudController?.SetStatus("Trainer not connected.");
+			_hudController?.UpdateFromRideState(_rideState, _lastTelemetry, _elapsedSeconds);
 			return;
 		}
 

@@ -4,6 +4,8 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <Nullable>enable</Nullable>
     <AssemblyName>IndoorCycling.Game</AssemblyName>
+    <RestoreBuildInParallel>false</RestoreBuildInParallel>
+    <BuildInParallel>false</BuildInParallel>
   </PropertyGroup>
 
   <ItemGroup>

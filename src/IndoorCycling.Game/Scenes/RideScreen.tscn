@@ -493,29 +493,6 @@ theme_override_colors/font_color = Color(0.9, 0.88, 0.8, 1)
 theme_override_font_sizes/font_size = 14
 layout_mode = 2
 
-[node name="PowerLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=668261802]
-layout_mode = 2
-text = "0 W"
-
-[node name="CadenceLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1435129084]
-layout_mode = 2
-text = "0 rpm"
-
-[node name="SpeedLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=1107721793]
-layout_mode = 2
-text = "0.0 km/h"
-
-[node name="GradientLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=2036337385]
-layout_mode = 2
-text = "0.0 %"
-
-[node name="DistanceLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=2081383482]
-layout_mode = 2
-text = "0.00 km"
-
-[node name="ElapsedLabel" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer" unique_id=25549261]
-layout_mode = 2
-
 [node name="BottomBar" type="PanelContainer" parent="HudController" unique_id=236134331]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
@@ -539,10 +516,6 @@ layout_mode = 2
 [node name="PauseRideButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=165903913]
 layout_mode = 2
 text = "Pause"
-
-[node name="EndRideButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=945416178]
-layout_mode = 2
-text = "End Ride"
 
 [node name="RecordingIndicator" type="Label" parent="HudController/BottomBar/MarginContainer/HBoxContainer"]
 visible = false
@@ -669,17 +642,17 @@ mouse_filter = 0
 color = Color(0.015, 0.022, 0.028, 0.62)
 
 [node name="PanelContainer" type="PanelContainer" parent="RideMenuPanel" unique_id=1049868500]
-custom_minimum_size = Vector2(390, 260)
+custom_minimum_size = Vector2(410, 330)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -194.0
-offset_top = -131.0
-offset_right = 196.0
-offset_bottom = 129.0
+offset_left = -205.0
+offset_top = -165.0
+offset_right = 205.0
+offset_bottom = 165.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
@@ -689,27 +662,6 @@ layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="RideMenuPanel/PanelContainer" unique_id=1004658819]
 layout_mode = 2
-
-[node name="TitleLabel" type="Label" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=1736102257]
-layout_mode = 2
-text = "End this ride?"
-theme_override_colors/font_color = Color(0.93, 0.83, 0.67, 1)
-theme_override_font_sizes/font_size = 20
-
-[node name="ConfirmationLabel" type="Label" parent="RideMenuPanel/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Your ride will be saved automatically as a FIT file."
-autowrap_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.81, 0.78, 1)
-
-[node name="KeepRidingButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer"]
-layout_mode = 2
-text = "Keep Riding"
-
-[node name="EndRideButton" type="Button" parent="RideMenuPanel/PanelContainer/VBoxContainer" unique_id=2062167002]
-layout_mode = 2
-text = "End Ride"
-focus_mode = 0
 
 [node name="RouteSelectionPanel" type="Control" parent="." unique_id=261971885]
 layout_mode = 1

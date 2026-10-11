@@ -5,6 +5,31 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("camera inspection cycles all six views and only accepts unconsumed active-ride F6", () =>
+    {
+        var expected = new[]
+        {
+            RiderCameraView.GameplayRefined, RiderCameraView.CloseRear,
+            RiderCameraView.RearThreeQuarter, RiderCameraView.Side,
+            RiderCameraView.FrontThreeQuarter, RiderCameraView.GameplayOriginal
+        };
+        if (!RiderCameraViewCycle.Views.SequenceEqual(expected))
+            throw new Exception("Camera selector and F6 cycle order differ.");
+        var current = expected[0];
+        foreach (var view in expected.Skip(1))
+        {
+            current = RiderCameraViewCycle.Next(current);
+            Equal(view, current);
+        }
+        Equal(expected[0], RiderCameraViewCycle.Next(current));
+        if (!CameraInspectionInputPolicy.CanCycle(true, false, true, false))
+            throw new Exception("Active ride F6 should be handled while no menu is open.");
+        if (CameraInspectionInputPolicy.CanCycle(false, false, true, false) ||
+            CameraInspectionInputPolicy.CanCycle(true, true, true, false) ||
+            CameraInspectionInputPolicy.CanCycle(true, false, false, false) ||
+            CameraInspectionInputPolicy.CanCycle(true, false, true, true))
+            throw new Exception("Inactive, modal, released or repeated F6 input should be ignored.");
+    }),
     ("dummy W/kg uses body weight and simulation mass adds bike weight", () =>
     {
         Equal(150, DummyTrainerMath.WattsFromKilograms(2.0, 75));
@@ -355,6 +380,29 @@ var tests = new (string Name, Action Run)[]
         Near((float)Math.Tau,(float)CyclistAnimationMath.CrankAngularSpeedRadiansPerSecond(60));
         Near((float)Math.PI,(float)CyclistAnimationMath.AdvanceCrankAngle(0,60,.5));
     }),
+    ("90 and 110 rpm map directly to crank revolutions", () =>
+    {
+        Near((float)(Math.Tau * 1.5), (float)CyclistAnimationMath.CrankAngularSpeedRadiansPerSecond(90));
+        Near((float)(Math.Tau * 110 / 60), (float)CyclistAnimationMath.CrankAngularSpeedRadiansPerSecond(110));
+        Near((float)Math.PI, (float)CyclistAnimationMath.AdvanceCrankAngle(0, 90, 1));
+    }),
+    ("cadence changes smooth consistently across frame rates and stale cadence decays", () =>
+    {
+        var at30 = 0d; var at60 = 0d; var at144 = 0d;
+        for (var i = 0; i < 30; i++) at30 = CyclistAnimationMath.SmoothCadence(at30, 90, 1d / 30);
+        for (var i = 0; i < 60; i++) at60 = CyclistAnimationMath.SmoothCadence(at60, 90, 1d / 60);
+        for (var i = 0; i < 144; i++) at144 = CyclistAnimationMath.SmoothCadence(at144, 90, 1d / 144);
+        NearD(at30, at60, .0001); NearD(at60, at144, .0001);
+        for (var i = 0; i < 120; i++) at60 = CyclistAnimationMath.SmoothCadence(at60, 0, 1d / 60);
+        if (at60 != 0) throw new Exception("Stale cadence did not settle at stopped.");
+    }),
+    ("visual cadence freshness expires instead of retaining stale sensor values", () =>
+    {
+        var now = DateTimeOffset.UtcNow;
+        var fresh = new TrainerTelemetry(now, 200, 90, 30);
+        var stale = new TrainerTelemetry(now - TimeSpan.FromSeconds(6), 200, 90, 30);
+        if (!fresh.IsFreshAt(now) || stale.IsFreshAt(now)) throw new Exception("Trainer freshness window was not applied.");
+    }),
     ("left and right pedals remain half a revolution apart", () =>
     {
         for(var i=0;i<360;i++)
@@ -379,13 +427,17 @@ var tests = new (string Name, Action Run)[]
     }),
     ("leg solver remains finite through a complete crank revolution", () =>
     {
-        var hip=new Vector2(.2f,1.0f);
+        var hip=new Vector2(.21f,1.0f);
         for(var i=0;i<360;i++)
         {
             var angle=i*Math.PI/180;
             var offset=CyclistAnimationMath.PedalOffset(angle,.17);
-            var knee=CyclistAnimationMath.SolveKnee(hip,new Vector2(.1f+offset.X,.39f+offset.Y),.43,.43,1);
+            var pedal=new Vector2(.1f+offset.X,.39f+offset.Y);
+            var knee=CyclistAnimationMath.SolveKnee(hip,pedal,.43,.43,-1);
             if(!float.IsFinite(knee.X+knee.Y)) throw new Exception($"Invalid knee at {i} degrees.");
+            NearD(.43,Vector2.Distance(hip,knee),.001);
+            NearD(.43,Vector2.Distance(knee,pedal),.001);
+            if(knee.X>=hip.X) throw new Exception($"Knee did not bend forward at {i} degrees.");
         }
     }),
     ("corner lean remains within ten degree visual clamp", () =>
@@ -1402,6 +1454,29 @@ var tests = new (string Name, Action Run)[]
         var rider=RiderLaneMath.OffsetPosition(new Vector3(10,3,20),new Vector3(0,0,-1));
         NearVector(rider-new Vector3(0,0,-1)*8+Vector3.UnitY*4,ChaseCameraMath.FollowPosition(rider,new Vector3(0,0,-1)));
         NearVector(rider+new Vector3(0,0,-1)*6+Vector3.UnitY,ChaseCameraMath.LookTarget(rider,new Vector3(0,0,-1)));
+    }),
+    ("rider camera inspection views retain original framing and frame full bike", () =>
+    {
+        var rider = new Vector3(0, 0, 0);
+        var forward = new Vector3(0, 0, -1);
+        var original = ChaseCameraMath.FollowPosition(rider, forward, RiderCameraView.GameplayOriginal);
+        var refined = ChaseCameraMath.FollowPosition(rider, forward, RiderCameraView.GameplayRefined);
+        var close = ChaseCameraMath.FollowPosition(rider, forward, RiderCameraView.CloseRear);
+        var side = ChaseCameraMath.FollowPosition(rider, forward, RiderCameraView.Side);
+        var front = ChaseCameraMath.FollowPosition(rider, forward, RiderCameraView.FrontThreeQuarter);
+        NearVector(original, ChaseCameraMath.FollowPosition(rider, forward));
+        if (refined.Length() >= original.Length() || close.Length() >= refined.Length())
+            throw new Exception("Refined and close views must frame the rider nearer than original gameplay.");
+        if (Math.Abs(side.X) < 3.9f || Math.Abs(side.Z) > .3f)
+            throw new Exception("Side view should sit beside the complete bicycle and rider.");
+        if (front.Z >= 0)
+            throw new Exception("Front three-quarter view should move ahead of the rider.");
+        foreach (var view in Enum.GetValues<RiderCameraView>())
+        {
+            var look = ChaseCameraMath.LookTarget(rider, forward, view);
+            if (Vector3.Distance(ChaseCameraMath.FollowPosition(rider, forward, view), look) < 1)
+                throw new Exception($"Camera view {view} has an unusably short look vector.");
+        }
     }),
     ("crossing nodes retain source location but suppress physical proxy", () =>
     {

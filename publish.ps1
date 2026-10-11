@@ -1,3 +1,7 @@
+param(
+    [string]$PublishRoot
+)
+
 $ErrorActionPreference = "Stop"
 
 # ------------------------------------------------------------
@@ -14,9 +18,20 @@ $Solution = Join-Path $RepoDir "wodra.sln"
 # C:\Users\garet\OneDrive\wodra_publish
 # C:\Users\garet\OneDrive\wodra_publish.zip
 $ParentDir = Split-Path $RepoDir -Parent
-$PublishDir = Join-Path $ParentDir "wodra_publish"
+$PublishDir = if ([string]::IsNullOrWhiteSpace($PublishRoot)) {
+    Join-Path $ParentDir "wodra_publish"
+} else {
+    [System.IO.Path]::GetFullPath($PublishRoot)
+}
 $ExePath = Join-Path $PublishDir "wodra.exe"
-$ZipPath = Join-Path $ParentDir "wodra_publish.zip"
+$PckPath = Join-Path $PublishDir "wodra.pck"
+$ManagedDataDir = Join-Path $PublishDir "data_IndoorCycling.Game_windows_x86_64"
+$ManagedGameAssemblyPath = Join-Path $ManagedDataDir "IndoorCycling.Game.dll"
+$ZipPath = if ([string]::IsNullOrWhiteSpace($PublishRoot)) {
+    Join-Path $ParentDir "wodra_publish.zip"
+} else {
+    "$PublishDir.zip"
+}
 
 Write-Host ""
 Write-Host "========================================"
@@ -102,8 +117,17 @@ if ($LASTEXITCODE -ne 0) {
     throw "Godot export failed with exit code $LASTEXITCODE"
 }
 
-if (-not (Test-Path $ExePath)) {
-    throw "Godot export completed but wodra.exe was not found at: $ExePath"
+# OneDrive may materialize exported files just after Godot exits.
+$ExportWaitDeadline = [DateTime]::UtcNow.AddSeconds(30)
+while ((-not (Test-Path $ExePath) -or -not (Test-Path $PckPath) -or
+        -not (Test-Path $ManagedGameAssemblyPath)) -and
+       [DateTime]::UtcNow -lt $ExportWaitDeadline) {
+    Start-Sleep -Milliseconds 250
+}
+
+if (-not (Test-Path $ExePath) -or -not (Test-Path $PckPath) -or
+    -not (Test-Path $ManagedGameAssemblyPath)) {
+    throw "Godot export did not materialize all required files (EXE, PCK, managed game assembly) in: $PublishDir"
 }
 
 # ------------------------------------------------------------
@@ -114,13 +138,44 @@ Write-Host ""
 Write-Host "Creating portable ZIP..."
 Write-Host ""
 
-Compress-Archive `
-    -Path (Join-Path $PublishDir "*") `
-    -DestinationPath $ZipPath `
-    -CompressionLevel Optimal
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$ZipCreated = $false
+for ($Attempt = 1; $Attempt -le 4 -and -not $ZipCreated; $Attempt++) {
+    try {
+        [System.IO.Compression.ZipFile]::CreateFromDirectory(
+            $PublishDir,
+            $ZipPath,
+            [System.IO.Compression.CompressionLevel]::Optimal,
+            $false
+        )
+        $ZipCreated = $true
+    }
+    catch {
+        if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
+        if ($Attempt -eq 4) { throw }
+        Start-Sleep -Seconds 2
+    }
+}
 
 if (-not (Test-Path $ZipPath)) {
     throw "ZIP creation failed: $ZipPath was not created."
+}
+
+$PublishedArchive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+try {
+    $RequiredArchiveEntries = @(
+        "wodra.exe",
+        "wodra.pck",
+        "data_IndoorCycling.Game_windows_x86_64/IndoorCycling.Game.dll"
+    )
+    foreach ($EntryName in $RequiredArchiveEntries) {
+        if ($null -eq $PublishedArchive.GetEntry($EntryName)) {
+            throw "ZIP is missing required published file: $EntryName"
+        }
+    }
+}
+finally {
+    $PublishedArchive.Dispose()
 }
 
 # ------------------------------------------------------------
