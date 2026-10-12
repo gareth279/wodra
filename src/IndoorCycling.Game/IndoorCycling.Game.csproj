@@ -6,6 +6,10 @@
     <AssemblyName>IndoorCycling.Game</AssemblyName>
     <RestoreBuildInParallel>false</RestoreBuildInParallel>
     <BuildInParallel>false</BuildInParallel>
+    <EosSdkRoot Condition="'$(EosSdkRoot)' == '' and '$(EOS_SDK_ROOT)' != ''">$(EOS_SDK_ROOT)</EosSdkRoot>
+    <EosSdkRoot Condition="'$(EosSdkRoot)' == ''">$(LOCALAPPDATA)\Wodra\EOS-SDK</EosSdkRoot>
+    <EnableEpicOnlineServices Condition="'$(EnableEpicOnlineServices)' == '' and Exists('$(EosSdkRoot)\SDK\Source\Generated\Bindings.cs') and Exists('$(EosSdkRoot)\SDK\Bin\EOSSDK-Win64-Shipping.dll')">true</EnableEpicOnlineServices>
+    <EnableEpicOnlineServices Condition="'$(EnableEpicOnlineServices)' == ''">false</EnableEpicOnlineServices>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,4 +29,18 @@
   <ItemGroup>
     <ProjectReference Include="..\IndoorCycling.Persistence.Sqlite\IndoorCycling.Persistence.Sqlite.csproj" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(EnableEpicOnlineServices)' == 'true'">
+    <Compile Include="$(EosSdkRoot)\SDK\Source\Core\**\*.cs" Link="EOS-SDK\Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(EosSdkRoot)\SDK\Source\Generated\**\*.cs" Exclude="$(EosSdkRoot)\SDK\Source\Generated\Android\**\*.cs" Link="EOS-SDK\Generated\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="$(EosSdkRoot)\SDK\Bin\EOSSDK-Win64-Shipping.dll" Link="EOSSDK-Win64-Shipping.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(EnableEpicOnlineServices)' == 'true'">
+    <DefineConstants>$(DefineConstants);EOS_PLATFORM_WINDOWS_64;WODRA_EOS_SDK</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="RequireEpicOnlineServicesSdk" BeforeTargets="CoreCompile" Condition="'$(EnableEpicOnlineServices)' == 'true' and !Exists('$(EosSdkRoot)\SDK\Source\Generated\Bindings.cs')">
+    <Error Text="EOS SDK was requested but not found. Set EOS_SDK_ROOT or EosSdkRoot to the extracted EOS C# SDK root." />
+  </Target>
 </Project>

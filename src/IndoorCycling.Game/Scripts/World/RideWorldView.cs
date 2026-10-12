@@ -9,6 +9,10 @@ using IndoorCycling.Core.Simulation;
 public sealed record AiRiderDebugState(string Name, double RelativeDistanceMeters,
     double RouteDistanceMeters, double SpeedKph, int PowerWatts, int CadenceRpm);
 
+public sealed record RemoteHumanRiderDebugState(string RiderId, string Name, bool HasState,
+	double? RelativeDistanceMeters, double? StateAgeSeconds, bool VisualExists, bool VisualVisible,
+	bool WithinVisualRange, bool? BehindCamera, bool? InsideCameraFrustum);
+
 public readonly record struct RideWorldDiagnostic(
     VisualRoutePose Pose, Godot.Vector3 RiderWorldPosition,
     Godot.Vector3 RiderForward, Godot.Vector3 RiderRotation,
@@ -45,7 +49,8 @@ public readonly record struct RideWorldDiagnostic(
       double? FirstPedestrianSpeedMps = null, bool? FirstPedestrianVisible = null,
       int AiRiders = 0, string? NearestAiName = null,
       double? NearestAiRelativeDistanceMeters = null, double? NearestAiSpeedKph = null,
-      IReadOnlyList<AiRiderDebugState>? NearestAiRiders = null);
+      IReadOnlyList<AiRiderDebugState>? NearestAiRiders = null,
+      IReadOnlyList<RemoteHumanRiderDebugState>? RemoteHumanRiders = null);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -495,22 +500,33 @@ public partial class RideWorldView : Node3D
             if (remote.DistanceMeters is not { } absoluteDistance) continue;
             activeIds.Add(remote.RiderId);
             var wrapped = ((absoluteDistance % routeLength) + routeLength) % routeLength;
-            var nearbyDistance = MultiplayerRoutePosition.WrappedSeparation(absoluteDistance, localDistance, routeLength);
+            var relativeDistance = MultiplayerRoutePosition.SignedWrappedSeparation(absoluteDistance, localDistance, routeLength);
+            var nearbyDistance = Math.Abs(relativeDistance);
             if (nearbyDistance > RemoteVisualRadiusMeters)
             {
-                if (_remoteVisuals.TryGetValue(remote.RiderId, out var hiddenVisual)) hiddenVisual.Visible = false;
+                if (_remoteVisuals.TryGetValue(remote.RiderId, out var hiddenVisual) && hiddenVisual.Visible)
+                {
+                    hiddenVisual.Visible = false;
+                    LogRemoteRiderDiagnostic("multiplayer_remote_visual_left_range", new
+                    {
+                        riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(remote.RiderId),
+                        relativeDistanceMeters = relativeDistance,
+                        visualRangeMeters = RemoteVisualRadiusMeters
+                    });
+                }
                 continue;
             }
             if (!_remoteVisuals.TryGetValue(remote.RiderId, out var visual))
             {
                 visual = new CyclistVisual { Name = "RemoteCyclist_" + remote.RiderId };
-                visual.Build(Math.Abs(StringComparer.Ordinal.GetHashCode(remote.RiderId)));
+                visual.Build(StringComparer.Ordinal.GetHashCode(remote.RiderId) & int.MaxValue);
+                visual.Visible = false;
                 var name = new Label3D
                 {
                     Name = "RiderName",
                     Text = remote.DisplayName,
-                    FontSize = 32,
-                    PixelSize = .0025f,
+                    FontSize = 36,
+                    PixelSize = .0055f,
                     Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
                     NoDepthTest = true,
                     Modulate = new Color(.95f, .87f, .70f, .95f),
@@ -522,7 +538,10 @@ public partial class RideWorldView : Node3D
                 (_remoteVisualRoot ?? this).AddChild(visual);
                 _remoteVisuals.Add(remote.RiderId, visual);
                 _remoteNameLabels.Add(remote.RiderId, name);
+                LogRemoteRiderDiagnostic("multiplayer_remote_visual_created", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(remote.RiderId), name = remote.DisplayName });
             }
+            if (!visual.Visible)
+                LogRemoteRiderDiagnostic("multiplayer_remote_visual_entered_range", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(remote.RiderId), relativeDistanceMeters = relativeDistance });
             visual.Visible = true;
             if (_remoteNameLabels.TryGetValue(remote.RiderId, out var label))
             {
@@ -543,7 +562,19 @@ public partial class RideWorldView : Node3D
             _remoteVisuals.Remove(id);
             _remoteNameLabels.Remove(id);
             visual.QueueFree();
+            LogRemoteRiderDiagnostic("multiplayer_remote_visual_removed", new
+            {
+                riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(id),
+                reason = _session.MultiplayerRiders.Any(rider => rider.RiderId == id) ? "stale_or_no_render_sample" : "left_or_disconnected"
+            });
         }
+    }
+
+    private static void LogRemoteRiderDiagnostic(string eventName, object details)
+    {
+#if DEBUG
+        if (GameBootstrap.DebugModeEnabled) GameLogger.Log(eventName, details);
+#endif
     }
 
     public void ResetAfterReposition()
@@ -617,7 +648,43 @@ public partial class RideWorldView : Node3D
             AmbientPosition(_ambientActorManager?.FirstPedestrianState), AmbientDistance(_ambientActorManager?.FirstPedestrianState),
             _ambientActorManager?.FirstPedestrianState?.SpeedMetersPerSecond, _ambientActorManager?.FirstPedestrianVisible,
             Math.Max(0, ( _riderStateSource?.GetRiders().Count ?? 1) - 1),
-            nearestAiRider?.Name, nearestAiRider?.RelativeDistanceMeters, nearestAiRider?.SpeedKph, nearestAi);
+            nearestAiRider?.Name, nearestAiRider?.RelativeDistanceMeters, nearestAiRider?.SpeedKph, nearestAi,
+            GetRemoteHumanRiderDiagnostics(distance, routeLength: _geometry?.LengthMeters ?? 0));
+    }
+
+    private IReadOnlyList<RemoteHumanRiderDebugState> GetRemoteHumanRiderDiagnostics(double localDistance, double routeLength)
+    {
+        var geometry = _geometry;
+        if (geometry is null || _loadedRoute is null || routeLength <= 0)
+            return Array.Empty<RemoteHumanRiderDebugState>();
+        var now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
+        return _session.MultiplayerRiders.Select(remote =>
+        {
+            var routeDistance = remote.DistanceMeters;
+            var hasState = remote.HasState && routeDistance.HasValue;
+            var relative = hasState
+                ? MultiplayerRoutePosition.SignedWrappedSeparation(routeDistance!.Value, localDistance, routeLength)
+                : (double?)null;
+            var hasVisual = _remoteVisuals.TryGetValue(remote.RiderId, out var visual);
+            var visualValid = hasVisual && visual is not null && GodotObject.IsInstanceValid(visual);
+            var visible = visualValid && visual!.Visible;
+            var age = hasState ? Math.Max(0, now - remote.ReceivedAtSeconds) : (double?)null;
+            bool? behind = null;
+            bool? inFrustum = null;
+            if (hasState && relative is { } signed)
+            {
+                var wrapped = ((routeDistance!.Value % routeLength) + routeLength) % routeLength;
+                var position = visualValid
+                    ? visual!.GlobalPosition
+                    : ProceduralRoad.ToGodot(geometry.GetPoseAtDistance(wrapped).Position);
+                behind = _camera.IsPositionBehind(position);
+                inFrustum = _camera.IsPositionInFrustum(position);
+            }
+            return new RemoteHumanRiderDebugState(remote.RiderId, remote.DisplayName, hasState,
+                relative, age, hasVisual, visible, relative is { } distance && Math.Abs(distance) <= RemoteVisualRadiusMeters,
+                behind, inFrustum);
+        }).OrderBy(rider => rider.RelativeDistanceMeters is { } relative ? Math.Abs(relative) : double.PositiveInfinity)
+            .Take(5).ToArray();
     }
 
     private IReadOnlyList<AiRiderDebugState> GetNearestAiDebugStates()

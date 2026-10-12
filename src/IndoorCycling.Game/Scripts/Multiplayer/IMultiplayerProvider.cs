@@ -22,6 +22,8 @@ public interface IMultiplayerProvider : IAsyncDisposable
 	Task PublishRepositionAsync(RiderRepositionedMessage state, CancellationToken cancellationToken = default);
 	IReadOnlyList<ProtocolMessage> DrainEvents();
 	Task LeaveSessionAsync();
+	/// <summary>Advance any SDK callbacks on the host application's main loop.</summary>
+	void Tick(double deltaSeconds) { }
 }
 
 public sealed record RoutePresenceResult(bool IsAvailable, int? ActiveRiders, string? Message = null)

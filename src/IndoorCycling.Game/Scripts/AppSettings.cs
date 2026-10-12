@@ -12,6 +12,7 @@ public sealed class AppSettings
 	public StravaSettings Strava { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
 	public bool OnlineRidingEnabled { get; set; }
+	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();

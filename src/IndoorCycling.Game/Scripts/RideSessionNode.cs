@@ -89,6 +89,8 @@ public partial class RideSessionNode : Node
 	private double _automaticRetryRemaining;
 	private int _automaticRetryAttempt;
 	private string _onlineStatus = "Offline";
+	private bool _loggedMissingEosConfiguration;
+	private bool? _onlineServiceAvailable;
 	private readonly Dictionary<string, MultiplayerRemoteRider> _remoteRiders = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, RemoteRiderInterpolator> _remoteInterpolators = new(StringComparer.Ordinal);
 	private double _multiplayerPublishElapsed;
@@ -100,6 +102,7 @@ public partial class RideSessionNode : Node
 	public bool IsMultiplayerConnected => _multiplayerProvider?.IsConnected == true;
 	public bool HasMultiplayerClient => _multiplayerProvider is not null;
 	public bool OnlineRidingEnabled => GameBootstrap.Settings?.OnlineRidingEnabled == true;
+	public bool? OnlineServiceAvailable => _onlineServiceAvailable;
 	public string OnlineStatus => _multiplayerProvider?.IsConnected == true ? "Connected" : _onlineStatus;
 	public IReadOnlyList<MultiplayerRemoteRider> MultiplayerRiders => _remoteRiders.Values.ToArray();
 	public IReadOnlyList<MultiplayerRemoteRider> GetInterpolatedRemoteRiders() => _remoteInterpolators.Values
@@ -719,6 +722,10 @@ public partial class RideSessionNode : Node
 			nearestAiRiders = world?.NearestAiRiders?.Select(rider => new AiRiderDebugSnapshot(
 				rider.Name, rider.RelativeDistanceMeters, rider.RouteDistanceMeters, rider.SpeedKph,
 				rider.PowerWatts, rider.CadenceRpm)).ToArray() ?? Array.Empty<AiRiderDebugSnapshot>(),
+			remoteHumanRiders = world?.RemoteHumanRiders?.Select(rider => new RemoteHumanRiderDebugSnapshot(
+				EosIdentityDiagnostics.HashProductUserId(rider.RiderId), rider.Name, rider.HasState, rider.RelativeDistanceMeters, rider.StateAgeSeconds,
+				rider.VisualExists, rider.VisualVisible, rider.WithinVisualRange, rider.BehindCamera,
+				rider.InsideCameraFrustum)).ToArray() ?? Array.Empty<RemoteHumanRiderDebugSnapshot>(),
 			terrainNearChunks = world?.NearTerrainChunks ?? 0,
 			terrainFarChunks = world?.FarTerrainChunks ?? 0,
 			terrainVisibleChunks = world?.VisibleTerrainChunks ?? 0,
@@ -990,6 +997,7 @@ public partial class RideSessionNode : Node
 			_automaticRetryRemaining = 0;
 			_automaticRetryAttempt = 0;
 			_onlineStatus = "Offline";
+			_onlineServiceAvailable = null;
 			return;
 		}
 
@@ -999,26 +1007,78 @@ public partial class RideSessionNode : Node
 			_onlineLifetime = new CancellationTokenSource();
 		}
 		var token = _onlineLifetime.Token;
-		_onlineStatus = "Connecting…";
-		var probe = new WebSocketMultiplayerProvider();
+		await RefreshOnlineAvailabilityAsync(token);
+	}
+
+	public async Task<bool> RefreshOnlineAvailabilityAsync(CancellationToken cancellationToken = default)
+	{
+		if (!OnlineRidingEnabled) return false;
+		var usingEos = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
+		if (usingEos && EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS configuration invalid";
+			return false;
+		}
+		if (usingEos && !EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS not configured";
+			if (!_loggedMissingEosConfiguration)
+			{
+				_loggedMissingEosConfiguration = true;
+				GameLogger.Log("eos_configuration_missing", new
+				{
+					missingVariables = EpicOnlineServicesMultiplayerProvider.MissingConfigurationVariables
+				});
+			}
+			return false;
+		}
+		if (usingEos && EosNativeLibraryLoader.LoadFailed)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS runtime unavailable";
+			return false;
+		}
+		_onlineStatus = "Checking service…";
+		var probe = CreateOnlineProvider();
 		var available = false;
-		try { available = await probe.CheckAvailabilityAsync(GameBootstrap.Settings.MultiplayerServerAddress, token); }
-		catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+		var providerStatus = "Offline";
+		try
+		{
+			available = await probe.CheckAvailabilityAsync(GameBootstrap.Settings.MultiplayerServerAddress, cancellationToken);
+			providerStatus = probe.Status;
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+		catch (Exception ex)
+		{
+			providerStatus = ex.Message;
+			GameLogger.Log("multiplayer_availability_failed", new { provider = GameBootstrap.Settings.OnlineMultiplayerProvider, message = ex.Message });
+		}
 		finally { await probe.DisposeAsync(); }
-		if (token.IsCancellationRequested || !OnlineRidingEnabled) return;
-		_onlineStatus = available ? "Available · joins when you start a ride" : "Server unavailable · local riding is available";
+		if (cancellationToken.IsCancellationRequested || !OnlineRidingEnabled) return false;
+		_onlineServiceAvailable = available;
+		_onlineStatus = available ? "Online ready" :
+			usingEos && EosNativeLibraryLoader.LoadFailed ? "EOS runtime unavailable" : "Online unavailable";
+		GameLogger.Log("multiplayer_availability_result", new
+		{
+			provider = GameBootstrap.Settings.OnlineMultiplayerProvider,
+			available,
+			providerStatus
+		});
 		if (_sessionStarted)
 		{
 			_automaticRetryAttempt = 0;
 			_automaticRetryRemaining = 0;
 		}
+		return available;
 	}
 
 	public async Task<RoutePresenceResult> GetRoutePresenceAsync(RouteDefinition route,
 		CancellationToken cancellationToken = default)
 	{
 		if (!OnlineRidingEnabled) return RoutePresenceResult.Unavailable("Online Riding is off.");
-		var provider = new WebSocketMultiplayerProvider();
+		var provider = CreateOnlineProvider();
 		try
 		{
 			return await provider.GetRoutePresenceAsync(GameBootstrap.Settings.MultiplayerServerAddress,
@@ -1031,6 +1091,29 @@ public partial class RideSessionNode : Node
 	{
 		if (!OnlineRidingEnabled || !_sessionStarted || !_trainerSessionActive || _currentRoute is null ||
 			_automaticJoinTask is { IsCompleted: false } || _multiplayerProvider is not null) return;
+		if (OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider) && EosNativeLibraryLoader.LoadFailed)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS runtime unavailable";
+			_automaticRetryRemaining = 0;
+			return;
+		}
+		if (OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider) &&
+			EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS configuration invalid";
+			_automaticRetryRemaining = 0;
+			return;
+		}
+		if (OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider) &&
+			!EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration)
+		{
+			_onlineServiceAvailable = false;
+			_onlineStatus = "EOS not configured";
+			_automaticRetryRemaining = 0;
+			return;
+		}
 		var lifetimeToken = _onlineLifetime?.Token ?? CancellationToken.None;
 		_automaticJoinCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken);
 		_automaticJoinTask = AutomaticRouteJoinAsync(_currentRoute, _automaticJoinCts.Token);
@@ -1038,7 +1121,7 @@ public partial class RideSessionNode : Node
 
 	private async Task AutomaticRouteJoinAsync(RouteDefinition route, CancellationToken cancellationToken)
 	{
-		var provider = new WebSocketMultiplayerProvider();
+		var provider = CreateOnlineProvider();
 		_multiplayerProvider = provider;
 		_remoteRiders.Clear();
 		_remoteInterpolators.Clear();
@@ -1060,6 +1143,7 @@ public partial class RideSessionNode : Node
 				return;
 			}
 			_onlineStatus = "Connected";
+			_onlineServiceAvailable = true;
 			_automaticRetryAttempt = 0;
 			_automaticRetryRemaining = 0;
 			GameLogger.Log("multiplayer_auto_joined", new { routeId = route.Id, sessionId = "public" });
@@ -1073,12 +1157,23 @@ public partial class RideSessionNode : Node
 		{
 			if (ReferenceEquals(_multiplayerProvider, provider)) _multiplayerProvider = null;
 			await provider.DisposeAsync();
+			_onlineServiceAvailable = false;
 			GameLogger.Log("multiplayer_auto_join_failed", new { routeId = route.Id, message = ex.Message });
 			if (OnlineRidingEnabled && _trainerSessionActive && !cancellationToken.IsCancellationRequested)
 			{
-				_automaticRetryAttempt++;
-				_automaticRetryRemaining = AutomaticRetryDelaySeconds(_automaticRetryAttempt);
-				_onlineStatus = "Server unavailable · retrying";
+				var nativeRuntimeUnavailable = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider) &&
+					EosNativeLibraryLoader.LoadFailed;
+				if (nativeRuntimeUnavailable)
+				{
+					_automaticRetryRemaining = 0;
+					_onlineStatus = "EOS runtime unavailable";
+				}
+				else
+				{
+					_automaticRetryAttempt++;
+					_automaticRetryRemaining = AutomaticRetryDelaySeconds(_automaticRetryAttempt);
+					_onlineStatus = "Server unavailable · retrying";
+				}
 			}
 		}
 		finally
@@ -1089,6 +1184,17 @@ public partial class RideSessionNode : Node
 				_automaticJoinCts = null;
 			}
 		}
+	}
+
+	private static IMultiplayerProvider CreateOnlineProvider()
+	{
+		var selected = GameBootstrap.Settings.OnlineMultiplayerProvider?.Trim();
+		if (string.Equals(selected, "WebSocket", StringComparison.OrdinalIgnoreCase))
+			return new WebSocketMultiplayerProvider();
+		if (string.IsNullOrEmpty(selected) || string.Equals(selected, "EpicOnlineServices", StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(selected, "EOS", StringComparison.OrdinalIgnoreCase))
+			return new EpicOnlineServicesMultiplayerProvider();
+		throw new InvalidOperationException($"Unknown multiplayer provider '{selected}'. Choose EpicOnlineServices or WebSocket.");
 	}
 
 	private static double AutomaticRetryDelaySeconds(int attempt) =>
@@ -1113,6 +1219,7 @@ public partial class RideSessionNode : Node
 			await client.JoinRouteSessionAsync(address, displayName, roomCode, _currentRoute.Id,
 				_currentRoute.GeometryFingerprint);
 			_onlineStatus = "Connected";
+			_onlineServiceAvailable = true;
 		}
 		catch
 		{
@@ -1151,6 +1258,7 @@ public partial class RideSessionNode : Node
 
 	private void ProcessMultiplayer(double delta)
 	{
+		UpdateNearbyHumanRiderHud();
 		var client = _multiplayerProvider;
 		if (client is null)
 		{
@@ -1162,7 +1270,11 @@ public partial class RideSessionNode : Node
 			}
 			return;
 		}
-		if (!client.IsConnected && !client.Status.Equals("Connecting…", StringComparison.Ordinal))
+		client.Tick(delta);
+		var eosProviderSelected = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
+		var automaticJoinInProgress = _automaticJoinTask is { IsCompleted: false };
+		if (!client.IsConnected && !client.Status.Equals("Connecting…", StringComparison.Ordinal) &&
+			!(eosProviderSelected && automaticJoinInProgress))
 		{
 			if (ReferenceEquals(_multiplayerProvider, client)) _multiplayerProvider = null;
 			_remoteRiders.Clear();
@@ -1170,6 +1282,7 @@ public partial class RideSessionNode : Node
 			_hudController?.HideCatchUpOffer();
 			if (OnlineRidingEnabled && _trainerSessionActive && _onlineLifetime?.IsCancellationRequested != true)
 			{
+				_onlineServiceAvailable = false;
 				_onlineStatus = "Reconnecting…";
 				_automaticRetryAttempt++;
 				_automaticRetryRemaining = AutomaticRetryDelaySeconds(_automaticRetryAttempt);
@@ -1183,8 +1296,11 @@ public partial class RideSessionNode : Node
 			switch (message)
 			{
 				case RiderJoinedMessage joined:
-					_remoteRiders[joined.Rider.RiderId] = new MultiplayerRemoteRider(joined.Rider.RiderId,
-						joined.Rider.DisplayName, null, null, null, false, false);
+					if (_remoteRiders.TryGetValue(joined.Rider.RiderId, out var existingJoinedRider))
+						_remoteRiders[joined.Rider.RiderId] = existingJoinedRider with { DisplayName = joined.Rider.DisplayName };
+					else
+						_remoteRiders[joined.Rider.RiderId] = new MultiplayerRemoteRider(joined.Rider.RiderId,
+							joined.Rider.DisplayName, null, null, null, false, false);
 					break;
 				case RiderStateMessage state when state.RiderId != client.RiderId:
 					var joiningRider = !_remoteRiders.TryGetValue(state.RiderId, out var knownRider) || !knownRider.HasState;
@@ -1213,8 +1329,15 @@ public partial class RideSessionNode : Node
 		{
 			_remoteRiders.Remove(riderId);
 			_remoteInterpolators.Remove(riderId);
+			if (_debugDiagnostics.Enabled) GameLogger.Log("multiplayer_remote_rider_stale", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(riderId) });
 		}
-		_hudController?.SetMultiplayerStatus(client.IsConnected ? $"Online · {_remoteRiders.Count + 1} rider(s)" : null);
+		UpdateNearbyHumanRiderHud();
+		var multiplayerStatus = client.IsConnected
+			? eosProviderSelected
+				? client.Status
+				: $"Online · {_remoteRiders.Count + 1} rider(s)"
+			: eosProviderSelected && automaticJoinInProgress ? client.Status : null;
+		_hudController?.SetMultiplayerStatus(multiplayerStatus);
 		if (!client.IsConnected)
 		{
 			_remoteRiders.Clear();
@@ -1260,6 +1383,9 @@ public partial class RideSessionNode : Node
 		});
 	}
 
+	private void UpdateNearbyHumanRiderHud() => _hudController?.SetNearbyHumanRiders(
+		_remoteRiders.Values, _rideState.DistanceMeters, _currentRoute?.DistanceMeters ?? 0, MonotonicSeconds());
+
 	private void ApplyRemoteSample(string riderId, string name, double distance, double speed, int cadence,
 		int power, bool paused, long sequence, bool reposition)
 	{
@@ -1290,12 +1416,13 @@ public partial class RideSessionNode : Node
 
 	public async Task<bool> CatchUpToRiderAsync(string riderId)
 	{
-		GameLogger.Log("multiplayer_catch_up_operation_started", new { riderId });
+		var riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(riderId);
+		GameLogger.Log("multiplayer_catch_up_operation_started", new { riderIdentityHash });
 		var error = "";
 		MultiplayerRemoteRider target = null!;
 		if (!_sessionStarted || _currentRoute is null || _rideWorldView is null || !TryGetCatchUpTarget(riderId, out target, out error))
 		{
-			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = error.Length == 0 ? "Catch Up is unavailable." : error });
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderIdentityHash, reason = error.Length == 0 ? "Catch Up is unavailable." : error });
 			_hudController?.SetStatus(error.Length == 0 ? "Catch Up is unavailable." : error);
 			return false;
 		}
@@ -1303,7 +1430,7 @@ public partial class RideSessionNode : Node
 		if (route is null || target.DistanceMeters is not { } absoluteDistance)
 		{
 			const string reason = "The selected rider's route position is unavailable.";
-			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason });
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderIdentityHash, reason });
 			_hudController?.SetStatus(reason);
 			return false;
 		}
@@ -1311,13 +1438,13 @@ public partial class RideSessionNode : Node
 		var wasPaused = _pauseGate.IsPaused || _rideRecorder?.IsPaused == true;
 		if (shouldRestartRecording && !FinaliseRecordingForCatchUp())
 		{
-			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = "FIT finalisation failed; rider was not repositioned." });
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderIdentityHash, reason = "FIT finalisation failed; rider was not repositioned." });
 			return false;
 		}
 		// Re-read after closing the current segment: position can advance while the final FIT sample is written.
 		if (!TryGetCatchUpTarget(riderId, out target, out error))
 		{
-			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = error, stage = "post_fit_finalisation" });
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderIdentityHash, reason = error, stage = "post_fit_finalisation" });
 			_hudController?.SetStatus($"Catch Up cancelled: {error}");
 			return false;
 		}
@@ -1376,7 +1503,7 @@ public partial class RideSessionNode : Node
 		}
 		if (!fitRestartFailed)
 			_hudController?.SetStatus($"Caught up to {remote.DisplayName} · {_rideState.DistanceMeters / 1000:0.00} km.");
-		GameLogger.Log("multiplayer_catch_up_reposition_completed", new { riderId, targetDisplayName = remote.DisplayName, distanceMeters = destination, wasPaused });
+		GameLogger.Log("multiplayer_catch_up_reposition_completed", new { riderIdentityHash, targetDisplayName = remote.DisplayName, distanceMeters = destination, wasPaused });
 		return true;
 	}
 

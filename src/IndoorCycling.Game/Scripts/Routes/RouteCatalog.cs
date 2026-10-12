@@ -19,31 +19,35 @@ public static class RouteCatalog
 		var routes = new List<RouteDefinition> { CreateDunedinRoute() };
 		var reservedTestIds = new HashSet<string>(System.StringComparer.Ordinal)
 			{ "test-route", "flat-test-route", "climb-test-route" };
-		var packageRoot = RoutePackageFiles.UserPackagesDirectory;
-		if (!Directory.Exists(packageRoot)) return routes;
-		foreach (var directory in Directory.EnumerateDirectories(packageRoot).OrderBy(path => path, System.StringComparer.OrdinalIgnoreCase))
+		foreach (var packageRoot in RoutePackageFiles.PackageDirectories.Distinct(System.StringComparer.OrdinalIgnoreCase))
 		{
-			var packageId = Path.GetFileName(directory);
-			var routePointsPath = Path.Combine(directory, $"{packageId}.route-points.json");
-			if (!File.Exists(routePointsPath))
+			if (!Directory.Exists(packageRoot)) continue;
+			foreach (var directory in Directory.EnumerateDirectories(packageRoot).OrderBy(path => path, System.StringComparer.OrdinalIgnoreCase))
 			{
-				_packageErrors.Add($"{packageId}: missing {packageId}.route-points.json");
-				continue;
-			}
-			try
-			{
-				var route = RouteDataLoader.LoadPackage(routePointsPath);
-				if (reservedTestIds.Contains(route.Id))
-					throw new InvalidDataException("Development fixture IDs are reserved and cannot be installed as playable routes.");
-				if (!string.Equals(route.Id, packageId, System.StringComparison.Ordinal))
-					throw new InvalidDataException("Package folder name does not match its route ID.");
-				if (routes.Any(existing => existing.Id == route.Id))
-					throw new InvalidDataException("Route ID already exists in the built-in catalogue.");
-				routes.Add(route);
-			}
-			catch (Exception ex)
-			{
-				_packageErrors.Add($"{packageId}: {ex.Message}");
+				var packageId = Path.GetFileName(directory);
+				// Packaged built-ins take precedence over a same-ID optional user installation.
+				if (routes.Any(existing => existing.Id == packageId)) continue;
+				var routePointsPath = Path.Combine(directory, $"{packageId}.route-points.json");
+				if (!File.Exists(routePointsPath))
+				{
+					_packageErrors.Add($"{packageId}: missing {packageId}.route-points.json");
+					continue;
+				}
+				try
+				{
+					var route = RouteDataLoader.LoadPackage(routePointsPath);
+					if (reservedTestIds.Contains(route.Id))
+						throw new InvalidDataException("Development fixture IDs are reserved and cannot be installed as playable routes.");
+					if (!string.Equals(route.Id, packageId, System.StringComparison.Ordinal))
+						throw new InvalidDataException("Package folder name does not match its route ID.");
+					if (routes.Any(existing => existing.Id == route.Id))
+						throw new InvalidDataException("Route ID already exists in the built-in catalogue.");
+					routes.Add(route);
+				}
+				catch (Exception ex)
+				{
+					_packageErrors.Add($"{packageId}: {ex.Message}");
+				}
 			}
 		}
 		return routes;

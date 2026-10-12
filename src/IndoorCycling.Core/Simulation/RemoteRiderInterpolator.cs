@@ -75,12 +75,30 @@ public static class MultiplayerRoutePosition
     public static double WrappedSeparation(double firstAbsoluteDistanceMeters, double secondAbsoluteDistanceMeters,
         double routeLengthMeters)
     {
+		return Math.Abs(SignedWrappedSeparation(firstAbsoluteDistanceMeters, secondAbsoluteDistanceMeters, routeLengthMeters));
+	}
+
+	/// <summary>Shortest signed physical separation on a loop; positive means the first rider is ahead.</summary>
+	public static double SignedWrappedSeparation(double firstAbsoluteDistanceMeters, double secondAbsoluteDistanceMeters,
+		double routeLengthMeters)
+	{
         if (routeLengthMeters <= 0 || !double.IsFinite(routeLengthMeters)) throw new ArgumentOutOfRangeException(nameof(routeLengthMeters));
         var first = ((firstAbsoluteDistanceMeters % routeLengthMeters) + routeLengthMeters) % routeLengthMeters;
         var second = ((secondAbsoluteDistanceMeters % routeLengthMeters) + routeLengthMeters) % routeLengthMeters;
-        var gap = Math.Abs(first - second);
-        return Math.Min(gap, routeLengthMeters - gap);
+		var separation = first - second;
+		if (separation > routeLengthMeters / 2) separation -= routeLengthMeters;
+		else if (separation < -routeLengthMeters / 2) separation += routeLengthMeters;
+		return separation;
     }
+
+	public static int LapDifference(double firstAbsoluteDistanceMeters, double secondAbsoluteDistanceMeters,
+		double routeLengthMeters)
+	{
+		if (routeLengthMeters <= 0 || !double.IsFinite(routeLengthMeters)) throw new ArgumentOutOfRangeException(nameof(routeLengthMeters));
+		var firstLap = (int)Math.Floor(Math.Max(0, firstAbsoluteDistanceMeters) / routeLengthMeters);
+		var secondLap = (int)Math.Floor(Math.Max(0, secondAbsoluteDistanceMeters) / routeLengthMeters);
+		return firstLap - secondLap;
+	}
 }
 
 /// <summary>Chooses a safe initial local speed from a fresh remote rider sample.</summary>

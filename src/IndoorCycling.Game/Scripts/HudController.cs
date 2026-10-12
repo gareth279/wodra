@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 
 public partial class HudController : Control
 {
@@ -19,6 +21,7 @@ public partial class HudController : Control
 	private Label? _elapsedLabel;
 	private Label? _ghostLabel;
 	private Label? _multiplayerStatusLabel;
+	private Label? _nearbyHumanRidersLabel;
 	private Control? _topHudPanel;
 	private Control? _dummyControlPanel;
 
@@ -81,7 +84,19 @@ public partial class HudController : Control
 		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_ghostLabel);
 		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
 		_multiplayerStatusLabel = new Label { Name = "MultiplayerStatus", Visible = false };
-		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_multiplayerStatusLabel);
+		var topHudLayout = GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer");
+		topHudLayout?.AddChild(_multiplayerStatusLabel);
+		_nearbyHumanRidersLabel = new Label
+		{
+			Name = "NearbyHumanRiders",
+			Visible = false,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			MouseFilter = Control.MouseFilterEnum.Ignore
+		};
+		_nearbyHumanRidersLabel.AddThemeColorOverride("font_color", new Color(.87f, .84f, .73f, .96f));
+		_nearbyHumanRidersLabel.AddThemeFontSizeOverride("font_size", 12);
+		topHudLayout?.AddChild(_nearbyHumanRidersLabel);
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
 		_dummyControlPanel = GetNodeOrNull<Control>("DummyControlPanel");
 		_dummySummary = GetNodeOrNull<Label>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummySummaryLabel");
@@ -189,6 +204,32 @@ public partial class HudController : Control
 		_multiplayerStatusLabel.Text = status ?? "";
 	}
 
+	public void SetNearbyHumanRiders(IEnumerable<MultiplayerRemoteRider> riders, double localDistanceMeters,
+		double routeLengthMeters, double nowSeconds)
+	{
+		if (_nearbyHumanRidersLabel is null) return;
+		if (routeLengthMeters <= 0)
+		{
+			_nearbyHumanRidersLabel.Visible = false;
+			return;
+		}
+		var nearby = riders.Where(rider => rider.HasState &&
+			-rider.ReceivedAtSeconds + nowSeconds <= RemoteRiderInterpolator.StaleAfterSeconds &&
+			rider.DistanceMeters is not null)
+			.Select(rider => (Rider: rider, Distance: MultiplayerRoutePosition.SignedWrappedSeparation(
+				rider.DistanceMeters!.Value, localDistanceMeters, routeLengthMeters),
+				Laps: MultiplayerRoutePosition.LapDifference(rider.DistanceMeters!.Value, localDistanceMeters, routeLengthMeters)))
+			.Where(item => Math.Abs(item.Distance) <= 300)
+			.OrderBy(item => Math.Abs(item.Distance)).Take(3).ToArray();
+		_nearbyHumanRidersLabel.Visible = nearby.Length > 0 && _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
+		_nearbyHumanRidersLabel.Text = string.Join("   ·   ", nearby.Select(item =>
+		{
+			var distance = $"{Math.Abs(item.Distance):0} m {(item.Distance >= 0 ? "ahead" : "behind")}";
+			var lap = item.Laps == 0 ? "" : $" · {Math.Abs(item.Laps)} lap{(Math.Abs(item.Laps) == 1 ? "" : "s")} {(item.Laps > 0 ? "ahead" : "behind")}";
+			return $"{item.Rider.DisplayName}{lap} · {distance}";
+		}));
+	}
+
 	public void HideCatchUpOffer()
 	{
 		if (_catchUpOfferPanel is not null) _catchUpOfferPanel.Visible = false;
@@ -276,7 +317,7 @@ public partial class HudController : Control
 			OffsetLeft = 12,
 			OffsetRight = 332,
 			OffsetTop = 12,
-			OffsetBottom = 430,
+			OffsetBottom = 550,
 			ClipContents = true
 		};
 		var layout = new VBoxContainer();
@@ -376,7 +417,7 @@ public partial class HudController : Control
 	{
 		if (_debugOverlay is null) return;
 		_debugOverlay.OffsetRight = 332;
-		_debugOverlay.OffsetBottom = 430;
+		_debugOverlay.OffsetBottom = 550;
 	}
 
 	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
@@ -401,6 +442,21 @@ public partial class HudController : Control
 		lines.Add($"Raw trainer: {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm · {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "—"} km/h · age {snapshot.telemetryAgeSeconds?.ToString("F1") ?? "—"} s");
 		if (snapshot.trainerKind == "real") lines.Add($"FTMS grade command: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "—"}%");
 		lines.Add($"Riders: AI {snapshot.aiRiderCount} · Nearest {NearestRider(snapshot)}");
+		var humanRiders = snapshot.remoteHumanRiders;
+		lines.Add($"Human riders: {humanRiders.Count}");
+		foreach (var rider in humanRiders.Take(4))
+		{
+			if (!rider.hasState)
+			{
+				lines.Add($"Human {rider.name}: waiting for state · visual {(rider.visualExists ? "exists" : "none")}");
+				continue;
+			}
+			var distance = rider.relativeDistanceMeters is { } relative ? $"{relative:+0;-0;0} m" : "—";
+			var age = rider.stateAgeSeconds?.ToString("F1") ?? "—";
+			var cameraView = rider.behindCamera == true ? "behind camera" :
+				rider.insideCameraFrustum == true ? "in view" : "outside view";
+			lines.Add($"Human {rider.name}: {distance} · age {age}s · visual {(rider.visualExists ? rider.visualVisible ? "visible" : "hidden" : "none")} · range {(rider.withinVisualRange ? "in" : "out")} · {cameraView}");
+		}
 		if (snapshot.ghostActivityId is not null) lines.Add(snapshot.ghostFinished == true
 			? $"Ghost: Finished {snapshot.ghostRelativeDistanceMeters:+0;-0;0} m"
 			: $"Ghost: {snapshot.ghostRelativeDistanceMeters:+0;-0;0} m");

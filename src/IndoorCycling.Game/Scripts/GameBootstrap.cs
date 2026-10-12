@@ -89,6 +89,16 @@ public partial class GameBootstrap : Node
 		GD.Print("GameBootstrap initialised.");
 	}
 
+	public override void _Process(double delta)
+	{
+		EpicOnlineServicesMultiplayerProvider.TickPlatform(delta);
+	}
+
+	public override void _ExitTree()
+	{
+		EpicOnlineServicesMultiplayerProvider.ShutdownPlatform();
+	}
+
 	public static async Task<RiderProfileRecord> GetPersistentRiderAsync()
 	{
 		if (_persistentRider is not null) return _persistentRider;

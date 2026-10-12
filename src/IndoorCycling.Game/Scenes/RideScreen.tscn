@@ -43,7 +43,6 @@ content_margin_right = 18.0
 content_margin_bottom = 14.0
 
 [node name="Control" type="Control" unique_id=141499871]
-custom_minimum_size = Vector2(1024, 768)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -84,17 +83,17 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.5019608)
 
 [node name="PanelContainer" type="PanelContainer" parent="StartPanel" unique_id=252191979]
-custom_minimum_size = Vector2(480, 520)
+custom_minimum_size = Vector2(480, 640)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -340.0
-offset_top = -370.0
-offset_right = 140.0
-offset_bottom = 150.0
+offset_left = -240.0
+offset_top = -320.0
+offset_right = 240.0
+offset_bottom = 320.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -685,12 +684,26 @@ grow_vertical = 2
 script = ExtResource("7_05hhs")
 
 [node name="PanelContainer" type="PanelContainer" parent="RouteSelectionPanel" unique_id=619640184]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(800, 600)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -300.0
+offset_right = 400.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="RouteSelectionPanel/PanelContainer" unique_id=20280134]
 layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
 
 [node name="VBoxContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer" unique_id=1636506050]
 layout_mode = 2

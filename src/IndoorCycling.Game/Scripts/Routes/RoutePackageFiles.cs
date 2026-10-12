@@ -8,6 +8,21 @@ public static class RoutePackageFiles
 	public static string UserPackagesDirectory => Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Wodra", "Routes");
 
+	/// <summary>Portable route packages shipped next to the Windows application.</summary>
+	public static string PackagedPackagesDirectory
+	{
+		get => ResolvePackagedPackagesDirectory(Environment.ProcessPath, AppContext.BaseDirectory);
+	}
+
+	public static string ResolvePackagedPackagesDirectory(string? processPath, string? applicationBaseDirectory)
+	{
+		var processDirectory = string.IsNullOrWhiteSpace(processPath) ? null : Path.GetDirectoryName(processPath);
+		var root = string.IsNullOrWhiteSpace(processDirectory) ? applicationBaseDirectory : processDirectory;
+		return Path.Combine(string.IsNullOrWhiteSpace(root) ? AppContext.BaseDirectory : root, "Routes");
+	}
+
+	public static string[] PackageDirectories => [PackagedPackagesDirectory, UserPackagesDirectory];
+
 	public static Stream? Open(Assembly assembly, string resourceName, string routeId)
 	{
 		var embedded = assembly.GetManifestResourceStream(resourceName);
@@ -19,8 +34,12 @@ public static class RoutePackageFiles
 		var markerIndex = resourceName.IndexOf(marker, StringComparison.Ordinal);
 		if (markerIndex < 0) return null;
 		var filename = resourceName[(markerIndex + marker.Length)..];
-		var candidate = Path.Combine(UserPackagesDirectory, routeId, filename);
-		return File.Exists(candidate) ? File.OpenRead(candidate) : null;
+		foreach (var packageDirectory in PackageDirectories)
+		{
+			var candidate = Path.Combine(packageDirectory, routeId, filename);
+			if (File.Exists(candidate)) return File.OpenRead(candidate);
+		}
+		return null;
 	}
 
 	public static bool Exists(Assembly assembly, string resourceName, string routeId)

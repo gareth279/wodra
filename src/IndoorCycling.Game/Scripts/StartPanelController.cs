@@ -55,6 +55,8 @@ public partial class StartPanelController : Control
 		_typedHudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
 		_onlineRidingCheckButton = GetNodeOrNull<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/OnlineRidingCheckButton");
 		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/OnlineStatusLabel");
+		ConfigureStartupStatusLabel(_statusLabel);
+		ConfigureStartupStatusLabel(_onlineStatusLabel);
 		if (_onlineRidingCheckButton is not null)
 		{
 			_onlineRidingCheckButton.ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled;
@@ -78,8 +80,21 @@ public partial class StartPanelController : Control
 	public override void _Process(double delta)
 	{
 		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
-		_onlineStatusLabel.Text = _rideSessionNode.OnlineRidingEnabled
-			? _rideSessionNode.OnlineStatus : "Offline · local rides are always available";
+		var usingEos = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
+		_onlineStatusLabel.Text = OnlineStatusText.ForStartup(_rideSessionNode.OnlineRidingEnabled,
+			_rideSessionNode.IsMultiplayerConnected, _rideSessionNode.OnlineServiceAvailable,
+			EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration, usingEos,
+			EosNativeLibraryLoader.LoadFailed, EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid);
+	}
+
+	private static void ConfigureStartupStatusLabel(Label? label)
+	{
+		if (label is null) return;
+		label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+		label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		label.ClipText = true;
+		label.AddThemeFontSizeOverride("font_size", 14);
+		label.Modulate = new Color(0.78f, 0.78f, 0.72f, 0.9f);
 	}
 
 	private void BuildLocalSettingsUi()
@@ -225,7 +240,11 @@ public partial class StartPanelController : Control
 		if (_rideSessionNode is null) return;
 		if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = true;
 		try { await _rideSessionNode.SetOnlineRidingEnabledAsync(enabled); }
-		catch (Exception ex) { SetStatus($"Online Riding setting failed: {ex.Message}"); }
+		catch (Exception ex)
+		{
+			GameLogger.Log("multiplayer_startup_toggle_failed", new { message = ex.Message });
+			if (_onlineStatusLabel is not null) _onlineStatusLabel.Text = "Online unavailable";
+		}
 		finally { if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = false; }
 	}
 

@@ -1,0 +1,7 @@
+{
+  "ProductId": "<EOS Product ID>",
+  "SandboxId": "<EOS Sandbox ID>",
+  "DeploymentId": "<EOS Deployment ID>",
+  "ClientId": "<Wodra Player user client ID>",
+  "ClientSecret": "<Wodra Player user client secret>"
+}

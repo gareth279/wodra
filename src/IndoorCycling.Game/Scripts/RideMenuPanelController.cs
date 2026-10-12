@@ -189,7 +189,7 @@ public partial class RideMenuPanelController : Control
 		MoveToFront();
 		if (view == MenuView.CatchUpConfirmation)
 		{
-			GameLogger.Log("multiplayer_catch_up_confirmation_shown", new { riderId = _catchUpRiderId });
+			GameLogger.Log("multiplayer_catch_up_confirmation_shown", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId) });
 			if (_content.GetChild(_content.GetChildCount() - 1).GetChild(0) is Control cancelButton)
 				cancelButton.CallDeferred(Control.MethodName.GrabFocus);
 		}
@@ -257,7 +257,7 @@ public partial class RideMenuPanelController : Control
 	private void CancelCatchUpConfirmation()
 	{
 		if (_view != MenuView.CatchUpConfirmation || _endingRide) return;
-		GameLogger.Log("multiplayer_catch_up_cancelled", new { riderId = _catchUpRiderId });
+		GameLogger.Log("multiplayer_catch_up_cancelled", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId) });
 		if (_catchUpReturnsToMultiplayer) ShowView(MenuView.Multiplayer);
 		else CloseMenu();
 		if (_catchUpReturnsToMultiplayer) _catchUpButton?.CallDeferred(Control.MethodName.GrabFocus);
@@ -394,7 +394,7 @@ public partial class RideMenuPanelController : Control
 		if (_multiplayerRiderSelect is null || _multiplayerRiderSelect.Selected < 0) return;
 		_catchUpRiderId = _multiplayerRiderSelect.GetItemMetadata(_multiplayerRiderSelect.Selected).AsString();
 		_catchUpReturnsToMultiplayer = true;
-		GameLogger.Log("multiplayer_catch_up_requested", new { riderId = _catchUpRiderId, source = "menu" });
+		GameLogger.Log("multiplayer_catch_up_requested", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId), source = "menu" });
 		ShowView(MenuView.CatchUpConfirmation);
 	}
 
@@ -408,7 +408,7 @@ public partial class RideMenuPanelController : Control
 		}
 		_catchUpRiderId = riderId;
 		_catchUpReturnsToMultiplayer = false;
-		GameLogger.Log("multiplayer_catch_up_requested", new { riderId, source = "join_offer" });
+		GameLogger.Log("multiplayer_catch_up_requested", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(riderId), source = "join_offer" });
 		ShowView(MenuView.CatchUpConfirmation);
 	}
 
@@ -417,7 +417,7 @@ public partial class RideMenuPanelController : Control
 		if (_endingRide || _catchUpRiderId is null || _rideSessionNode is null) return;
 		_endingRide = true;
 		confirmButton.Disabled = true;
-		GameLogger.Log("multiplayer_catch_up_confirmed", new { riderId = _catchUpRiderId });
+		GameLogger.Log("multiplayer_catch_up_confirmed", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId) });
 		try
 		{
 			var moved = await _rideSessionNode.CatchUpToRiderAsync(_catchUpRiderId);
@@ -432,7 +432,7 @@ public partial class RideMenuPanelController : Control
 		}
 		catch (Exception ex)
 		{
-			GameLogger.Log("multiplayer_catch_up_failed", new { riderId = _catchUpRiderId, message = ex.Message });
+			GameLogger.Log("multiplayer_catch_up_failed", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId), message = ex.Message });
 			_hudController?.SetStatus($"Catch Up failed: {ex.Message}");
 			if (_catchUpReturnsToMultiplayer) ShowView(MenuView.Multiplayer);
 			else CloseMenu();

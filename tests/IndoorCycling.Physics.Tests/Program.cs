@@ -35,9 +35,16 @@ var tests = new (string Name, Action Run)[]
     ,("Stale remote rider tracks stop producing render positions", RemoteRiderStaleness)
     ,("FIT recording segment rebases route distance after catch-up", RecordingSegmentRebasesAfterTeleport)
     ,("Catch-up position stays behind absolute distance across laps and route seams", CatchUpRoutePosition)
+	,("Human rider relative distance is signed and wraps at lap boundaries", SignedRemoteRiderDistance)
     ,("Catch-up matches a fresh remote speed and leaves subsequent motion to local physics", CatchUpMatchesFreshRemoteSpeed)
     ,("Catch-up speed falls back safely for stale invalid stationary and paused targets", CatchUpSpeedFallbacks)
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
+    ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
+    ,("EOS lobby UI status distinguishes membership and P2P phases", EosLobbyStatusPhases)
+    ,("EOS Product User ID diagnostics are stable truncated hashes", EosProductUserHashesArePrivate)
+    ,("EOS client configuration loads file values and environment overrides", EosConfigurationPrecedence)
+    ,("EOS client configuration reports missing and malformed sources safely", EosConfigurationValidation)
+    ,("Packaged route directory resolves relative to the exported application", PackagedRouteDirectoryResolution)
 };
 
 var failed = 0;
@@ -136,6 +143,15 @@ static void CatchUpRoutePosition()
     Near(11996, MultiplayerRoutePosition.PositionBehind(12000), .001);
     Near(4, MultiplayerRoutePosition.WrappedSeparation(5998, 2, 6000), .001);
     Near(20, MultiplayerRoutePosition.WrappedSeparation(12010, 11990, 6000), .001);
+}
+
+static void SignedRemoteRiderDistance()
+{
+	Near(4, MultiplayerRoutePosition.SignedWrappedSeparation(2, 5998, 6000), .001);
+	Near(-4, MultiplayerRoutePosition.SignedWrappedSeparation(5998, 2, 6000), .001);
+	Near(0, MultiplayerRoutePosition.SignedWrappedSeparation(6004, 4, 6000), .001);
+	if (MultiplayerRoutePosition.LapDifference(6004, 4, 6000) != 1)
+		throw new Exception("Wrapped relative position must retain the remote rider's lap difference.");
 }
 
 static void CatchUpMatchesFreshRemoteSpeed()
@@ -544,4 +560,109 @@ static void BuildingFacadeVariation()
 static void Near(double expected, double actual, double tolerance)
 {
     if (Math.Abs(expected - actual) > tolerance) throw new Exception($"Expected {expected}, got {actual}.");
+}
+
+static void StartupOnlineStatusIsCompact()
+{
+    if (!OnlineStatusText.UsesEos("EOS") || !OnlineStatusText.UsesEos("EpicOnlineServices") || OnlineStatusText.UsesEos("WebSocket"))
+        throw new Exception("The configured EOS provider names should be recognized consistently.");
+    if (OnlineStatusText.ForStartup(false, false, null, false, true) != "Online Riding: Off")
+        throw new Exception("New offline users should see the compact off state.");
+    if (OnlineStatusText.ForStartup(true, false, false, false, true) != "EOS not configured")
+        throw new Exception("Missing EOS settings should have a concise unavailable state.");
+    if (OnlineStatusText.ForStartup(true, false, false, true, true, eosConfigurationInvalid: true) != "EOS configuration invalid")
+        throw new Exception("Invalid EOS settings should have a concise configuration error state.");
+    if (OnlineStatusText.ForStartup(true, false, false, true, true) != "Online unavailable")
+        throw new Exception("A temporary EOS outage should not expose provider diagnostics.");
+    if (OnlineStatusText.ForStartup(true, false, false, true, true, eosRuntimeUnavailable: true) != "EOS runtime unavailable")
+        throw new Exception("A failed native EOS load should be named clearly in the UI.");
+    if (OnlineStatusText.ForStartup(true, false, false, true, false) != "Online unavailable")
+        throw new Exception("A WebSocket outage should stay concise.");
+    if (OnlineStatusText.ForStartup(true, true, true, true, true) != "Online")
+        throw new Exception("Connected state should be clear and concise.");
+}
+
+static void EosLobbyStatusPhases()
+{
+    if (EosLobbyStatusText.ForMembership(1, 0, false) != "EOS lobby joined · 1 rider")
+        throw new Exception("One member should be reported as a joined singleton lobby.");
+    if (EosLobbyStatusText.ForMembership(2, 0, false) != "EOS lobby joined · 2 riders · P2P pending")
+        throw new Exception("Multiple members should show that P2P is pending.");
+    if (EosLobbyStatusText.ForMembership(2, 1, false) != "EOS lobby joined · 2 riders · P2P connected")
+        throw new Exception("All peers connected should be reported as connected.");
+    if (EosLobbyStatusText.ForMembership(2, 0, true) != "EOS lobby joined · 2 riders · P2P failed")
+        throw new Exception("A P2P failure should remain distinct from authentication or lobby join.");
+}
+
+static void EosProductUserHashesArePrivate()
+{
+    const string productUserId = "test-product-user-id-value";
+    var first = EosIdentityDiagnostics.HashProductUserId(productUserId);
+    var second = EosIdentityDiagnostics.HashProductUserId(productUserId);
+    if (first != second || first.Length != 16 || first == productUserId)
+        throw new Exception("Product User ID diagnostics must be stable, truncated, and must not expose the source ID.");
+    if (first == EosIdentityDiagnostics.HashProductUserId("another-product-user-id"))
+        throw new Exception("Distinct Product User IDs should produce distinct diagnostic hashes.");
+    if (EosIdentityDiagnostics.HashProductUserId(null) != "missing")
+        throw new Exception("Missing Product User IDs should be represented safely.");
+}
+
+static void EosConfigurationPrecedence()
+{
+    var root = Path.Combine(Path.GetTempPath(), "wodra-eos-config-tests", Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+        var userFile = Path.Combine(root, "user.json");
+        var packagedFile = Path.Combine(root, "packaged.json");
+        File.WriteAllText(userFile, """{"ProductId":"file-product","SandboxId":"file-sandbox","DeploymentId":"file-deployment","ClientId":"file-client","ClientSecret":"file-secret"}""");
+        File.WriteAllText(packagedFile, """{"ProductId":"package-product","SandboxId":"package-sandbox","DeploymentId":"package-deployment","ClientId":"package-client","ClientSecret":"package-secret"}""");
+        var fileLoaded = EosClientConfiguration.LoadFromSources(new Dictionary<string, string?>(), new[] { userFile, packagedFile });
+        if (!fileLoaded.IsConfigured || fileLoaded.SourcePath != Path.GetFullPath(userFile) || fileLoaded.ProductId != "file-product")
+            throw new Exception("The first (per-user) JSON candidate should load before the packaged file.");
+
+        var overridden = EosClientConfiguration.LoadFromSources(new Dictionary<string, string?>
+        {
+            ["WODRA_EOS_PRODUCT_ID"] = "environment-product",
+            ["WODRA_EOS_CLIENT_SECRET"] = "environment-secret"
+        }, new[] { userFile, packagedFile });
+        if (!overridden.IsConfigured || overridden.ProductId != "environment-product" || overridden.ClientSecret != "environment-secret" || overridden.SandboxId != "file-sandbox")
+            throw new Exception("Non-empty environment values should override matching file fields only.");
+    }
+    finally { Directory.Delete(root, recursive: true); }
+}
+
+static void EosConfigurationValidation()
+{
+    var root = Path.Combine(Path.GetTempPath(), "wodra-eos-config-tests", Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+        var malformed = Path.Combine(root, "eos-client.json");
+        const string secretSentinel = "NEVER-LOG-THIS-SECRET";
+        File.WriteAllText(malformed, secretSentinel);
+        var invalid = EosClientConfiguration.LoadFromSources(new Dictionary<string, string?>(), new[] { malformed });
+        if (!invalid.IsInvalid || invalid.IsConfigured || invalid.LoadError!.Contains(secretSentinel, StringComparison.Ordinal))
+            throw new Exception("Malformed configuration should yield a generic diagnostic without echoing file contents.");
+
+        var missing = EosClientConfiguration.LoadFromSources(new Dictionary<string, string?>(), Array.Empty<string>());
+        if (missing.IsInvalid || missing.IsConfigured || missing.MissingVariables.Count != 5)
+            throw new Exception("Missing configuration should be distinguishable from malformed configuration and identify required fields.");
+        try { missing.Validate(); throw new Exception("Missing configuration should fail validation."); }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("WODRA_EOS_CLIENT_SECRET", StringComparison.Ordinal)) { }
+    }
+    finally { Directory.Delete(root, recursive: true); }
+}
+
+static void PackagedRouteDirectoryResolution()
+{
+    var exportRoot = Path.Combine(Path.GetTempPath(), "WodraExport");
+    var resolved = RoutePackageFiles.ResolvePackagedPackagesDirectory(Path.Combine(exportRoot, "wodra.exe"),
+        Path.Combine(exportRoot, "managed"));
+    if (!string.Equals(resolved, Path.Combine(exportRoot, "Routes"), StringComparison.OrdinalIgnoreCase))
+        throw new Exception("Exported route data should resolve from the executable directory, regardless of current working directory.");
+
+    var fallback = RoutePackageFiles.ResolvePackagedPackagesDirectory(null, Path.Combine(exportRoot, "managed"));
+    if (!string.Equals(fallback, Path.Combine(exportRoot, "managed", "Routes"), StringComparison.OrdinalIgnoreCase))
+        throw new Exception("The application base directory should be used when no executable path is available.");
 }

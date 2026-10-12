@@ -52,6 +52,7 @@ logs/
 settings.json
 appsettings.local.json
 appsettings.Development.json
+eos-client.json
 *.secrets.json
 .env
 .env.*

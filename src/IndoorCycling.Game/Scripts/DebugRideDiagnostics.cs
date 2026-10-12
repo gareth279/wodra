@@ -169,6 +169,7 @@ public sealed record RideDebugSnapshot
     public double? nearestAiRiderRelativeDistanceMeters { get; init; }
     public double? nearestAiRiderSpeedKph { get; init; }
     public IReadOnlyList<AiRiderDebugSnapshot> nearestAiRiders { get; init; } = Array.Empty<AiRiderDebugSnapshot>();
+	public IReadOnlyList<RemoteHumanRiderDebugSnapshot> remoteHumanRiders { get; init; } = Array.Empty<RemoteHumanRiderDebugSnapshot>();
     public int terrainNearChunks { get; init; }
     public int terrainFarChunks { get; init; }
     public int terrainVisibleChunks { get; init; }
@@ -191,5 +192,9 @@ public sealed record RideDebugSnapshot
 
 public sealed record AiRiderDebugSnapshot(string name, double relativeDistanceMeters,
     double routeDistanceMeters, double speedKph, int powerWatts, int cadenceRpm);
+
+public sealed record RemoteHumanRiderDebugSnapshot(string riderId, string name, bool hasState,
+	double? relativeDistanceMeters, double? stateAgeSeconds, bool visualExists, bool visualVisible,
+	bool withinVisualRange, bool? behindCamera, bool? insideCameraFrustum);
 
 public readonly record struct DebugVector3(float x, float y, float z);

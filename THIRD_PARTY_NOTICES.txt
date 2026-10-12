@@ -1,0 +1,45 @@
+Wodra Windows x64 alpha release notices
+=======================================
+
+OpenStreetMap route and streetscape data
+----------------------------------------
+© OpenStreetMap contributors. The derived route and streetscape data in the
+Routes/ directory is made available under the Open Database License (ODbL)
+1.0. License text: https://opendatacommons.org/licenses/odbl/1-0/ .
+The route files contain their route-specific attribution and geometry
+fingerprints. OpenStreetMap attribution information:
+https://www.openstreetmap.org/copyright
+
+Elevation data
+--------------
+The generated Dunedin elevation profiles and terrain use Otago Regional
+Council LiDAR data hosted/processed by Toitū Te Whenua Land Information New
+Zealand. The source dataset is licensed under Creative Commons Attribution
+4.0 (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/ . AAM NZ is the
+data producer. Route package metadata records the applicable elevation source.
+
+Epic Online Services runtime
+----------------------------
+The EOSSDK-Win64-Shipping.dll file is a proprietary Epic Games component and
+is distributed separately from Wodra source and other Wodra licensing terms.
+See ThirdPartyNotices/EOS/ThirdPartySoftwareNotice.txt, supplied from the
+matching official EOS SDK package, for supporting-library notices. This
+release does not include the EOS SDK source or Samples directory. EOS SDK use
+and redistribution remain subject to the terms accepted for the official SDK.
+
+Microsoft Visual C++ runtime
+----------------------------
+The release includes MSVCP140.dll, VCRUNTIME140.dll, and
+VCRUNTIME140_1.dll from the licensed Visual Studio x64 redistributable folder
+as local dependencies of the EOS SDK DLL. These Microsoft binaries are
+unmodified. The matching Visual Studio Redist.txt notice is included at
+ThirdPartyNotices/Microsoft/VisualCpp-Redist.txt. Redistribution is subject
+to the applicable Microsoft Visual Studio license terms; see:
+https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files .
+
+Wodra source licensing
+----------------------
+This repository currently has no root LICENSE/COPYING file. This notice does
+not grant or imply a license for Wodra source code. Add the project's chosen
+open-source license before describing the source as open source in a public
+release.
