@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Text.Json;
 using IndoorCycling.Game.Multiplayer;
 using Wodra.Multiplayer.Protocol;
 
@@ -24,6 +25,7 @@ public partial class RideSessionNode : Node
 
 	private RideState _rideState = RideState.Initial;
 	private readonly RidePauseGate _pauseGate = new();
+	private double? _catchUpResumeSpeedKph;
 	private readonly DebugRideDiagnostics _debugDiagnostics = new();
 	private RideWorldView? _rideWorldView;
 	private TrainerTelemetry? _lastTelemetry;
@@ -37,12 +39,17 @@ public partial class RideSessionNode : Node
 	public RouteDefinition? CurrentRoute => _currentRoute;
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
+	public bool HasRideRecording => _rideRecorder is not null;
 	private double _elapsedSeconds;
 	private Guid? _currentActivityId;
 	private Guid? _currentRiderProfileId;
 	private DateTimeOffset _activityStartedAtUtc;
 	private string? _currentActivityFitPath;
 	private readonly RideActivityAccumulator _activityAccumulator = new();
+	private double _actualRiddenDistanceMeters;
+	private readonly List<FitSegmentManifestEntry> _fitSegments = new();
+	private double _recordingSegmentStartDistanceMeters;
+	private double _recordingSegmentStartActualDistanceMeters;
 	public Guid? CurrentActivityId => _currentActivityId;
 	public Guid? LastCompletedActivityId { get; private set; }
 	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
@@ -76,12 +83,21 @@ public partial class RideSessionNode : Node
 	private bool _trainerCommandDirty = true;
 	private MultiplayerClient? _multiplayerClient;
 	private readonly Dictionary<string, MultiplayerRemoteRider> _remoteRiders = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, RemoteRiderInterpolator> _remoteInterpolators = new(StringComparer.Ordinal);
 	private double _multiplayerPublishElapsed;
 	private long _multiplayerSequence;
+	private RiderRepositionedMessage? _pendingRepositionMessage;
+	private Task? _repositionSendTask;
+	private double _repositionRetryElapsed;
 	public string MultiplayerStatus => _multiplayerClient?.Status ?? "Disconnected";
 	public bool IsMultiplayerConnected => _multiplayerClient?.IsConnected == true;
 	public bool HasMultiplayerClient => _multiplayerClient?.HasClient == true;
 	public IReadOnlyList<MultiplayerRemoteRider> MultiplayerRiders => _remoteRiders.Values.ToArray();
+	public IReadOnlyList<MultiplayerRemoteRider> GetInterpolatedRemoteRiders() => _remoteInterpolators.Values
+		.Select(track => track.TrySample(MonotonicSeconds(), out var sample)
+			? new MultiplayerRemoteRider(sample.RiderId, sample.DisplayName, sample.DistanceMeters, sample.SpeedKph,
+				sample.PowerWatts, sample.Paused, true, sample.CadenceRpm, track.LastReceivedAtSeconds)
+			: null).Where(rider => rider is not null).Cast<MultiplayerRemoteRider>().ToArray();
 
 	private const double TrainerCommandMinIntervalSeconds = 1.0;
 	private const double TrainerGradientChangeThresholdPercent = 0.1;
@@ -139,12 +155,15 @@ public partial class RideSessionNode : Node
 		_lastStoppedRecordingPath = null;
 		LastRecordingError = null;
 		_activityAccumulator.Reset();
+		_actualRiddenDistanceMeters = 0;
+		_fitSegments.Clear();
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
 		_sessionStarted = true;
 		_trainerSessionActive = true;
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
+		_catchUpResumeSpeedKph = null;
 		_hudController?.SetRecordingState(false, false);
 		_pauseGate.Resume();
 		_hudController?.SetRidePaused(false);
@@ -194,6 +213,7 @@ public partial class RideSessionNode : Node
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
 		_rideState = RideState.Initial;
+		_catchUpResumeSpeedKph = null;
 		_hudController?.SetRecordingState(false, false);
 		_pauseGate.Resume();
 		_hudController?.SetRidePaused(false);
@@ -272,7 +292,7 @@ public partial class RideSessionNode : Node
 			{
 				if (_hudController is not null) await _hudController.FlushScreenshotCapturesAsync();
 				var draft = _activityAccumulator.CreateDraft(activityId, _currentRiderProfileId ?? Guid.Empty,
-					route.Id, route.Name, _activityStartedAtUtc, _rideState.DistanceMeters, route.DistanceMeters,
+					route.Id, route.Name, _activityStartedAtUtc, _actualRiddenDistanceMeters, route.DistanceMeters,
 					_rideState.ElevationGainMeters,
 					fitPath is not null && File.Exists(fitPath) ? fitPath : _currentActivityFitPath is not null && File.Exists(_currentActivityFitPath) ? _currentActivityFitPath : null);
 				LastCompletedActivityDraft = draft;
@@ -383,7 +403,13 @@ public partial class RideSessionNode : Node
 		{
 			_lastStoppedRecordingPath = recorder.Stop();
 			if (_currentActivityId is not null && _lastStoppedRecordingPath is not null && File.Exists(_lastStoppedRecordingPath))
+			{
 				_currentActivityFitPath = _lastStoppedRecordingPath;
+				_fitSegments.Add(new FitSegmentManifestEntry(Path.GetFileName(_lastStoppedRecordingPath),
+					_recordingSegmentStartDistanceMeters, _rideState.DistanceMeters,
+					Math.Max(0, _actualRiddenDistanceMeters - _recordingSegmentStartActualDistanceMeters), DateTimeOffset.UtcNow));
+				WriteFitSegmentManifest();
+			}
 			if (finalSampleError is not null)
 				LastRecordingError = $"The final FIT sample could not be recorded: {finalSampleError.Message}";
 		}
@@ -395,11 +421,35 @@ public partial class RideSessionNode : Node
 		return _lastStoppedRecordingPath;
 	}
 
+	private bool FinaliseRecordingForCatchUp()
+	{
+		if (_rideRecorder is null) return true;
+		try
+		{
+			LastRecordingError = null;
+			var path = FinaliseRecording();
+			if (LastRecordingError is not null || string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+				throw new IOException(LastRecordingError ?? "The FIT file was not created.");
+			GameLogger.Log("multiplayer_catch_up_fit_finalised", new { path });
+			return true;
+		}
+		catch (Exception ex)
+		{
+			LastRecordingError = ex.Message;
+			GameLogger.Log("multiplayer_catch_up_fit_finalise_failed", new { message = ex.Message });
+			_hudController?.SetStatus($"Catch Up cancelled; the current FIT recording could not be saved: {ex.Message}");
+			GD.PushWarning($"Catch Up cancelled to preserve the FIT recording: {ex.Message}");
+			return false;
+		}
+	}
+
 	private void StartAutomaticRideRecording()
 	{
 		try
 		{
 			_rideRecorder = new RideFitRecorder();
+			_recordingSegmentStartDistanceMeters = _rideState.DistanceMeters;
+			_recordingSegmentStartActualDistanceMeters = _actualRiddenDistanceMeters;
 			_rideRecorder.StartOrResume(_rideState.DistanceMeters,
 				_currentRoute?.GetSampleAt(_rideState.DistanceMeters).ElevationMeters);
 			RecordCurrentSample();
@@ -415,6 +465,30 @@ public partial class RideSessionNode : Node
 			LastRecordingError = ex.Message;
 			GameLogger.Log("ride_recording_auto_start_failed", new { message = ex.Message });
 			GD.PushWarning($"Ride started, but FIT recording could not start: {ex.Message}");
+		}
+	}
+
+	private void WriteFitSegmentManifest()
+	{
+		if (_currentActivityId is not { } activityId || _currentRoute is null || _fitSegments.Count == 0) return;
+		try
+		{
+			var directory = Path.GetDirectoryName(_currentActivityFitPath);
+			if (string.IsNullOrWhiteSpace(directory)) return;
+			var manifestPath = Path.Combine(directory, $"{activityId:N}.segments.json");
+			var manifest = new
+			{
+				activityId,
+				routeId = _currentRoute.Id,
+				routeFingerprint = _currentRoute.GeometryFingerprint,
+				startedAtUtc = _activityStartedAtUtc,
+				segments = _fitSegments
+			};
+			File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("fit_segment_manifest_write_failed", new { message = ex.Message });
 		}
 	}
 
@@ -815,7 +889,12 @@ public partial class RideSessionNode : Node
 	public void ResumeRide()
 	{
 		if (!_sessionStarted || !_pauseGate.IsPaused) return;
-		_pauseGate.Resume();
+		if (_catchUpResumeSpeedKph is { } catchUpSpeed)
+		{
+			_rideState = _pauseGate.Resume(_rideState, catchUpSpeed);
+			_catchUpResumeSpeedKph = null;
+		}
+		else _pauseGate.Resume();
 		_hudController?.SetRidePaused(false);
 		if (_rideRecorder?.IsPaused == true)
 		{
@@ -896,6 +975,8 @@ public partial class RideSessionNode : Node
 		_remoteRiders.Clear();
 		_multiplayerPublishElapsed = 0;
 		_multiplayerSequence = 0;
+		_pendingRepositionMessage = null;
+		_repositionSendTask = null;
 		try { await client.ConnectAsync(address, displayName, roomCode, _currentRoute); }
 		catch
 		{
@@ -908,13 +989,18 @@ public partial class RideSessionNode : Node
 		var client = _multiplayerClient;
 		_multiplayerClient = null;
 		_remoteRiders.Clear();
+		_remoteInterpolators.Clear();
+		_pendingRepositionMessage = null;
+		_repositionSendTask = null;
+		_hudController?.SetMultiplayerStatus(null);
+		_hudController?.HideCatchUpOffer();
 		if (client is not null) await client.DisposeAsync();
 	}
 
 	private void ProcessMultiplayer(double delta)
 	{
 		var client = _multiplayerClient;
-		if (client is null) return;
+		if (client is null) { _hudController?.SetMultiplayerStatus(null); return; }
 		foreach (var message in client.DrainEvents())
 		{
 			switch (message)
@@ -924,23 +1010,56 @@ public partial class RideSessionNode : Node
 						joined.Rider.DisplayName, null, null, null, false, false);
 					break;
 				case RiderStateMessage state when state.RiderId != client.RiderId:
-					_remoteRiders[state.RiderId] = new MultiplayerRemoteRider(state.RiderId, state.DisplayName,
-						state.DistanceMeters, state.SpeedKph, state.PowerWatts, state.Paused, true);
+					var joiningRider = !_remoteRiders.TryGetValue(state.RiderId, out var knownRider) || !knownRider.HasState;
+					ApplyRemoteSample(state.RiderId, state.DisplayName, state.DistanceMeters, state.SpeedKph,
+						state.CadenceRpm, state.PowerWatts, state.Paused, state.Sequence, reposition: false);
+					if (joiningRider && state.DistanceMeters > _rideState.DistanceMeters + 100)
+						_hudController?.ShowCatchUpOffer(state.RiderId, state.DisplayName, state.DistanceMeters - _rideState.DistanceMeters);
+					break;
+				case RiderRepositionedMessage reposition when reposition.RiderId != client.RiderId:
+					ApplyRemoteSample(reposition.RiderId, reposition.DisplayName, reposition.DistanceMeters, reposition.SpeedKph,
+						reposition.CadenceRpm, reposition.PowerWatts, reposition.Paused, reposition.Sequence, reposition: true);
 					break;
 				case RiderLeftMessage left:
 					_remoteRiders.Remove(left.RiderId);
+					_remoteInterpolators.Remove(left.RiderId);
 					break;
 				case ErrorMessage error:
 					GameLogger.Log("multiplayer_server_error", new { error.Code, error.Message });
 					break;
 			}
 		}
+		_hudController?.SetMultiplayerStatus(client.IsConnected ? $"Online · {_remoteRiders.Count + 1} rider(s)" : null);
 		if (!client.IsConnected)
 		{
 			_remoteRiders.Clear();
+			_remoteInterpolators.Clear();
 			return;
 		}
 		if (!_sessionStarted) return;
+		if (_pendingRepositionMessage is { } pending)
+		{
+			if (_repositionSendTask?.IsCompleted == true)
+			{
+				if (_repositionSendTask.IsCompletedSuccessfully)
+					_pendingRepositionMessage = null;
+				else
+				{
+					GameLogger.Log("multiplayer_reposition_retry", new { pending.DistanceMeters });
+					_repositionSendTask = null;
+				}
+			}
+			if (_pendingRepositionMessage is not null)
+			{
+				_repositionRetryElapsed += delta;
+				if (_repositionSendTask is null && _repositionRetryElapsed >= 1.0)
+				{
+					_repositionRetryElapsed = 0;
+					_repositionSendTask = client.PublishRepositionAsync(_pendingRepositionMessage);
+				}
+				return;
+			}
+		}
 		_multiplayerPublishElapsed += delta;
 		if (_multiplayerPublishElapsed < 0.15) return;
 		_multiplayerPublishElapsed = 0;
@@ -954,6 +1073,126 @@ public partial class RideSessionNode : Node
 			Paused = _pauseGate.IsPaused,
 			Sequence = ++_multiplayerSequence
 		});
+	}
+
+	private void ApplyRemoteSample(string riderId, string name, double distance, double speed, int cadence,
+		int power, bool paused, long sequence, bool reposition)
+	{
+		var now = MonotonicSeconds();
+		var sample = new RemoteRiderSample(riderId, name, distance, speed, cadence, power, paused, sequence, now);
+		if (!_remoteInterpolators.TryGetValue(riderId, out var track))
+			_remoteInterpolators[riderId] = track = new RemoteRiderInterpolator();
+		if (reposition) track.Reset(sample);
+		else track.Add(sample);
+		_remoteRiders[riderId] = new MultiplayerRemoteRider(riderId, name, distance, speed, power, paused, true, cadence, now);
+	}
+
+	private static double MonotonicSeconds() => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
+
+	public bool TryGetCatchUpTarget(string riderId, out MultiplayerRemoteRider rider, out string error)
+	{
+		rider = null!;
+		if (_multiplayerClient?.IsConnected != true) { error = "Multiplayer is disconnected."; return false; }
+		if (_currentRoute is null) { error = "No route is active."; return false; }
+		if (!_remoteInterpolators.TryGetValue(riderId, out var track) ||
+			MonotonicSeconds() - track.LastReceivedAtSeconds > RemoteRiderInterpolator.StaleAfterSeconds ||
+			!_remoteRiders.TryGetValue(riderId, out var latest) || !latest.HasState)
+		{ error = "That rider's position is unavailable or stale."; return false; }
+		rider = latest;
+		error = "";
+		return true;
+	}
+
+	public async Task<bool> CatchUpToRiderAsync(string riderId)
+	{
+		GameLogger.Log("multiplayer_catch_up_operation_started", new { riderId });
+		var error = "";
+		MultiplayerRemoteRider target = null!;
+		if (!_sessionStarted || _currentRoute is null || _rideWorldView is null || !TryGetCatchUpTarget(riderId, out target, out error))
+		{
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = error.Length == 0 ? "Catch Up is unavailable." : error });
+			_hudController?.SetStatus(error.Length == 0 ? "Catch Up is unavailable." : error);
+			return false;
+		}
+		var route = _currentRoute;
+		if (route is null || target.DistanceMeters is not { } absoluteDistance)
+		{
+			const string reason = "The selected rider's route position is unavailable.";
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason });
+			_hudController?.SetStatus(reason);
+			return false;
+		}
+		var shouldRestartRecording = _rideRecorder is not null;
+		var wasPaused = _pauseGate.IsPaused || _rideRecorder?.IsPaused == true;
+		if (shouldRestartRecording && !FinaliseRecordingForCatchUp())
+		{
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = "FIT finalisation failed; rider was not repositioned." });
+			return false;
+		}
+		// Re-read after closing the current segment: position can advance while the final FIT sample is written.
+		if (!TryGetCatchUpTarget(riderId, out target, out error))
+		{
+			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderId, reason = error, stage = "post_fit_finalisation" });
+			_hudController?.SetStatus($"Catch Up cancelled: {error}");
+			return false;
+		}
+		absoluteDistance = target.DistanceMeters!.Value;
+		var remote = target;
+		var matchedSpeedKph = CatchUpSpeedResolver.Resolve(remote.SpeedKph ?? double.NaN,
+			MonotonicSeconds() - remote.ReceivedAtSeconds, remote.Paused);
+		var destination = MultiplayerRoutePosition.PositionBehind(absoluteDistance);
+		var routeSample = route.GetSampleAt(destination);
+		_catchUpResumeSpeedKph = wasPaused ? matchedSpeedKph : null;
+		_rideState = _rideState with { DistanceMeters = destination,
+			VirtualSpeedKph = wasPaused ? 0 : matchedSpeedKph,
+			CurrentGradientPercent = routeSample.GradientPercent + _manualGradientOffsetPercent };
+		_recordingSampleElapsedSeconds = 0;
+		_lastLoggedLapNumber = (int)Math.Floor(destination / route.DistanceMeters) + 1;
+		_trainerCommandDirty = true;
+		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
+		_lastSentTrainerGradientPercent = null;
+		UpdateRouteHud();
+		_rideWorldView.ResetAfterReposition();
+		var fitRestartFailed = false;
+		if (shouldRestartRecording)
+		{
+			StartAutomaticRideRecording();
+			if (_rideRecorder is { IsRecording: true })
+				GameLogger.Log("multiplayer_catch_up_new_fit_started", new { path = _rideRecorder.FilePath, distanceMeters = destination });
+			else
+			{
+				fitRestartFailed = true;
+				GameLogger.Log("multiplayer_catch_up_new_fit_failed", new { message = LastRecordingError ?? "FIT recording did not start.", distanceMeters = destination });
+				_hudController?.SetStatus($"Caught up, but the new FIT recording could not start: {LastRecordingError ?? "unknown error"}");
+			}
+			if (wasPaused && _rideRecorder is { IsRecording: true })
+			{
+				RecordCurrentSample();
+				_rideRecorder.Pause();
+				_hudController?.SetRecordingState(true, true);
+			}
+		}
+		if (_multiplayerClient is { IsConnected: true } client)
+		{
+			var reposition = new RiderRepositionedMessage { Sequence = ++_multiplayerSequence,
+				RouteId = route.Id, RouteFingerprint = route.GeometryFingerprint,
+				DistanceMeters = destination, SpeedKph = _pauseGate.IsPaused ? 0 : matchedSpeedKph,
+				CadenceRpm = _pauseGate.IsPaused ? 0 : _rideState.CurrentCadenceRpm,
+				PowerWatts = _rideState.CurrentPowerWatts, Paused = _pauseGate.IsPaused };
+			_pendingRepositionMessage = reposition;
+			_repositionRetryElapsed = 0;
+			_repositionSendTask = client.PublishRepositionAsync(reposition);
+			try
+			{
+				await _repositionSendTask.WaitAsync(TimeSpan.FromSeconds(2));
+				if (ReferenceEquals(_pendingRepositionMessage, reposition)) _pendingRepositionMessage = null;
+			}
+			catch (Exception ex) { GameLogger.Log("multiplayer_reposition_send_failed", new { message = ex.Message }); }
+		}
+		if (!fitRestartFailed)
+			_hudController?.SetStatus($"Caught up to {remote.DisplayName} · {_rideState.DistanceMeters / 1000:0.00} km.");
+		GameLogger.Log("multiplayer_catch_up_reposition_completed", new { riderId, targetDisplayName = remote.DisplayName, distanceMeters = destination, wasPaused });
+		return true;
 	}
 
 	private void ProcessTrainerMode(double delta)
@@ -989,6 +1228,7 @@ public partial class RideSessionNode : Node
 
 		var previousDistance = _rideState.DistanceMeters;
 		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
+		_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - previousDistance);
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_trainerCommandElapsedSeconds += delta;
@@ -1081,6 +1321,7 @@ public partial class RideSessionNode : Node
 
 		var previousDistance = _rideState.DistanceMeters;
 		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
+		_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - previousDistance);
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_ = _fitReplayClient.SetSimulationAsync(
@@ -1098,4 +1339,7 @@ public partial class RideSessionNode : Node
 }
 
 public sealed record MultiplayerRemoteRider(string RiderId, string DisplayName, double? DistanceMeters,
-	double? SpeedKph, int? PowerWatts, bool Paused, bool HasState);
+	double? SpeedKph, int? PowerWatts, bool Paused, bool HasState, int CadenceRpm = 0, double ReceivedAtSeconds = 0);
+
+public sealed record FitSegmentManifestEntry(string FileName, double RouteStartDistanceMeters,
+	double RouteEndDistanceMeters, double RiddenDistanceMeters, DateTimeOffset FinalisedAtUtc);

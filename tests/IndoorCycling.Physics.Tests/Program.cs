@@ -30,6 +30,14 @@ var tests = new (string Name, Action Run)[]
     ("Screenshot directory falls back when Pictures is unavailable", ScreenshotDirectoryFallback),
     ("Screenshot failure does not interrupt debug marker creation", ScreenshotFailureKeepsMarker),
     ("Debug distance jump preserves elapsed ride state and supports later laps", DebugDistanceJump)
+    ,("Remote riders interpolate absolute lap progress and telemetry", RemoteRiderInterpolation)
+    ,("Remote rider reposition clears the old interpolation path", RemoteRiderRepositionReset)
+    ,("Stale remote rider tracks stop producing render positions", RemoteRiderStaleness)
+    ,("FIT recording segment rebases route distance after catch-up", RecordingSegmentRebasesAfterTeleport)
+    ,("Catch-up position stays behind absolute distance across laps and route seams", CatchUpRoutePosition)
+    ,("Catch-up matches a fresh remote speed and leaves subsequent motion to local physics", CatchUpMatchesFreshRemoteSpeed)
+    ,("Catch-up speed falls back safely for stale invalid stationary and paused targets", CatchUpSpeedFallbacks)
+    ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
 };
 
 var failed = 0;
@@ -76,6 +84,100 @@ static void HudMetricsUseRideState()
 	Near(12.7, metrics.ElapsedSeconds, 0);
 	if (metrics.SimulatedSpeedKph == rawTelemetry.SpeedKph)
 		throw new Exception("HUD speed must use simulated speed, not raw trainer speed.");
+}
+
+static void RemoteRiderInterpolation()
+{
+    var track = new RemoteRiderInterpolator();
+    track.Add(new RemoteRiderSample("r", "Rider", 1990, 18, 70, 150, false, 1, 10));
+    track.Add(new RemoteRiderSample("r", "Rider", 2010, 22, 90, 250, false, 2, 10.2));
+    if (!track.TrySample(10.3, out var sample)) throw new Exception("Expected interpolated remote sample.");
+    Near(2000, sample.DistanceMeters, .01);
+    Near(20, sample.SpeedKph, .01);
+    if (sample.CadenceRpm != 80 || sample.PowerWatts != 200) throw new Exception("Remote telemetry did not interpolate.");
+}
+
+static void RemoteRiderRepositionReset()
+{
+    var track = new RemoteRiderInterpolator();
+    track.Add(new RemoteRiderSample("r", "Rider", 400, 20, 80, 200, false, 1, 10));
+    track.Add(new RemoteRiderSample("r", "Rider", 410, 20, 80, 200, false, 2, 10.2));
+    track.Reset(new RemoteRiderSample("r", "Rider", 3000, 35, 80, 200, false, 3, 10.3));
+    if (!track.TrySample(10.31, out var sample)) throw new Exception("Expected repositioned sample.");
+    Near(3000, sample.DistanceMeters, .01);
+    Near(35, sample.SpeedKph, .01);
+    if (track.Add(new RemoteRiderSample("r", "Rider", 420, 20, 80, 200, false, 2, 10.4)))
+        throw new Exception("Older network state was accepted after reposition.");
+}
+
+static void RemoteRiderStaleness()
+{
+    var track = new RemoteRiderInterpolator();
+    track.Add(new RemoteRiderSample("r", "Rider", 500, 36, 80, 200, false, 1, 10));
+    if (track.TrySample(12.01, out _)) throw new Exception("A stale rider continued to render.");
+}
+
+static void RecordingSegmentRebasesAfterTeleport()
+{
+    var segment = new RecordingProgress();
+    segment.Rebase(3000, 125);
+    segment.Advance(3000, 4, 125);
+    Near(0, segment.DistanceMeters, .001);
+    segment.Advance(3012, 4, 125.48);
+    Near(12, segment.DistanceMeters, .001);
+    Near(125.48, segment.AltitudeMeters, .001);
+    Near(.48, segment.AscentMeters, .001);
+}
+
+static void CatchUpRoutePosition()
+{
+    Near(0, MultiplayerRoutePosition.PositionBehind(2), .001);
+    Near(5996, MultiplayerRoutePosition.PositionBehind(6000), .001);
+    Near(11996, MultiplayerRoutePosition.PositionBehind(12000), .001);
+    Near(4, MultiplayerRoutePosition.WrappedSeparation(5998, 2, 6000), .001);
+    Near(20, MultiplayerRoutePosition.WrappedSeparation(12010, 11990, 6000), .001);
+}
+
+static void CatchUpMatchesFreshRemoteSpeed()
+{
+    var speed = CatchUpSpeedResolver.Resolve(35, .1, targetPaused: false);
+    Near(35, speed, 0);
+    var snapped = RideState.Initial with
+    {
+        DistanceMeters = 6000,
+        VirtualSpeedKph = speed,
+        CurrentPowerWatts = 123,
+        CurrentCadenceRpm = 71
+    };
+    var next = Tick(snapped, power: 200, grade: 0, dt: .1);
+    if (next.DistanceMeters <= snapped.DistanceMeters || next.VirtualSpeedKph < 30)
+        throw new Exception("The first local physics step did not continue from the matched speed.");
+    if (next.CurrentPowerWatts != 200 || next.CurrentCadenceRpm != 80)
+        throw new Exception("The snap overwrote local power or cadence telemetry.");
+}
+
+static void CatchUpSpeedFallbacks()
+{
+    Near(0, CatchUpSpeedResolver.Resolve(35, 2.1, targetPaused: false), 0);
+    Near(0, CatchUpSpeedResolver.Resolve(double.NaN, .1, targetPaused: false), 0);
+    Near(0, CatchUpSpeedResolver.Resolve(81, .1, targetPaused: false), 0);
+    Near(0, CatchUpSpeedResolver.Resolve(0, .1, targetPaused: false), 0);
+    Near(0, CatchUpSpeedResolver.Resolve(35, .1, targetPaused: true), 0);
+}
+
+static void PausedCatchUpResumeSpeed()
+{
+    var gate = new RidePauseGate();
+    var paused = gate.Pause(RideState.Initial with { DistanceMeters = 4200, VirtualSpeedKph = 20 });
+    var beforeResume = gate.Tick(new SimulationEngine(), paused,
+        new SimulationTickInput(new TrainerTelemetry(DateTimeOffset.UtcNow, 250, 85, 30), 0, 1,
+            new RiderProfile("Test", 75), new BikeProfile("Test", 9)));
+    Near(4200, beforeResume.DistanceMeters, 0);
+    Near(0, beforeResume.VirtualSpeedKph, 0);
+    var resumed = gate.Resume(beforeResume, 35);
+    Near(4200, resumed.DistanceMeters, 0);
+    Near(35, resumed.VirtualSpeedKph, 0);
+    if (gate.IsPaused) throw new Exception("The pause gate remained paused after resuming.");
 }
 
 static void HudMetricsMarkStaleSensors()

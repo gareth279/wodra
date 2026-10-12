@@ -43,7 +43,7 @@ Choose the dummy trainer mode in each game instance; no physical trainer is need
 
 ## Session matching and protocol
 
-Messages are UTF-8 JSON objects with a `type` and `protocolVersion` (currently `1`). The initial `JoinSession` carries the stable route ID, the existing SHA-256 route geometry fingerprint, room code and display name. A session is keyed by route ID and room code; clients presenting different fingerprints for that pair are rejected. The server assigns a random rider ID and relays `RiderJoined`, `RiderState` and `RiderLeft` messages to peers.
+Messages are UTF-8 JSON objects with a `type` and `protocolVersion`. The Phase 2 protocol version is `2`; Phase 1 clients and servers must be updated together. The initial `JoinSession` carries the stable route ID, the existing SHA-256 route geometry fingerprint, room code and display name. A session is keyed by route ID and room code; clients presenting different fingerprints for that pair are rejected. The server assigns a random rider ID and relays `RiderJoined`, `RiderState`, `RiderRepositioned` and `RiderLeft` messages to peers.
 
 Rider snapshots carry absolute ride distance, simulated speed, power, cadence, pause state and a monotonically increasing sequence number. The game publishes about 6–7 snapshots per second. The server caps messages at 8 KiB, validates names, IDs, finite value ranges and sequence numbers, and limits rider-state updates to approximately 13 per second. The protocol is defined in `src/Wodra.Multiplayer.Protocol`.
 

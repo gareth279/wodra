@@ -72,9 +72,31 @@ public static class MultiplayerServer
                 var message = await ReceiveMessageAsync(socket, context.RequestAborted);
                 if (message is null) break;
                 if (message is LeaveSessionMessage) break;
+                if (message is RiderRepositionedMessage reposition)
+                {
+                    var repositionError = room is null ? "Rider is not in a route room." :
+                        MultiplayerProtocol.ValidateReposition(reposition, connection.RiderId, room.RouteId, room.Fingerprint);
+                    if (repositionError is not null)
+                    {
+                        await connection.SendAsync(new ErrorMessage { Code = "invalid_reposition", Message = repositionError }, context.RequestAborted);
+                        continue;
+                    }
+                    var repositionNow = Environment.TickCount64;
+                    if (reposition.Sequence <= connection.LastSequence) continue;
+                    if (connection.LastRepositionAtMs != 0 && repositionNow - connection.LastRepositionAtMs < 2_000)
+                    {
+                        await connection.SendAsync(new ErrorMessage { Code = "reposition_rate_limited", Message = "Rider repositioning is limited to once every two seconds." }, context.RequestAborted);
+                        continue;
+                    }
+                    connection.LastSequence = reposition.Sequence;
+                    connection.LastRepositionAtMs = repositionNow;
+                    connection.LastStateAtMs = repositionNow;
+                    await registry.BroadcastRepositionAsync(room, connection, reposition with { DisplayName = connection.DisplayName }, context.RequestAborted);
+                    continue;
+                }
                 if (message is not RiderStateMessage state)
                 {
-                    await connection.SendAsync(new ErrorMessage { Code = "unexpected_message", Message = "Expected RiderState or LeaveSession." }, context.RequestAborted);
+                    await connection.SendAsync(new ErrorMessage { Code = "unexpected_message", Message = "Expected RiderState, RiderRepositioned or LeaveSession." }, context.RequestAborted);
                     continue;
                 }
                 if (MultiplayerProtocol.ValidateState(state, connection.RiderId) is { } stateError)
@@ -167,6 +189,9 @@ public sealed class SessionRegistry
     public Task BroadcastStateAsync(RoomSession? room, ClientConnection sender, RiderStateMessage state, CancellationToken cancellationToken) =>
         room is null ? Task.CompletedTask : BroadcastAsync(room, sender, state, cancellationToken);
 
+    public Task BroadcastRepositionAsync(RoomSession? room, ClientConnection sender, RiderRepositionedMessage state, CancellationToken cancellationToken) =>
+        room is null ? Task.CompletedTask : BroadcastAsync(room, sender, state, cancellationToken);
+
     public async Task LeaveAsync(RoomSession room, ClientConnection connection, string reason)
     {
         var removed = false;
@@ -209,6 +234,7 @@ public sealed class ClientConnection(WebSocket socket)
     public string DisplayName { get; set; } = "";
     public long LastSequence { get; set; } = -1;
     public long LastStateAtMs { get; set; }
+    public long LastRepositionAtMs { get; set; }
 
     public Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken) =>
         SendBytesAsync(MultiplayerProtocol.Serialize(message), cancellationToken);

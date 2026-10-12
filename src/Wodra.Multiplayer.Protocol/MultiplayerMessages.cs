@@ -5,7 +5,7 @@ namespace Wodra.Multiplayer.Protocol;
 
 public static class MultiplayerProtocol
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
     public const int MaximumMessageBytes = 8 * 1024;
     public const int MinimumUpdateIntervalMs = 75;
     public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -36,6 +36,7 @@ public static class MultiplayerProtocol
                 "RiderJoined" => JsonSerializer.Deserialize<RiderJoinedMessage>(utf8, JsonOptions),
                 "RiderLeft" => JsonSerializer.Deserialize<RiderLeftMessage>(utf8, JsonOptions),
                 "RiderState" => JsonSerializer.Deserialize<RiderStateMessage>(utf8, JsonOptions),
+                "RiderRepositioned" => JsonSerializer.Deserialize<RiderRepositionedMessage>(utf8, JsonOptions),
                 "LeaveSession" => JsonSerializer.Deserialize<LeaveSessionMessage>(utf8, JsonOptions),
                 "Error" => JsonSerializer.Deserialize<ErrorMessage>(utf8, JsonOptions),
                 _ => null
@@ -66,6 +67,17 @@ public static class MultiplayerProtocol
         if (state.CadenceRpm is < 0 or > 250 || state.PowerWatts is < 0 or > 3000)
             return "Invalid rider telemetry.";
         return null;
+    }
+
+    public static string? ValidateReposition(RiderRepositionedMessage state, string assignedRiderId, string routeId, string fingerprint)
+    {
+        if (!string.Equals(state.RouteId, routeId, StringComparison.Ordinal) ||
+            !string.Equals(state.RouteFingerprint, fingerprint, StringComparison.OrdinalIgnoreCase))
+            return "Rider reposition does not match the joined route.";
+        return ValidateState(new RiderStateMessage { ProtocolVersion = state.ProtocolVersion, RiderId = state.RiderId,
+            DisplayName = state.DisplayName, DistanceMeters = state.DistanceMeters, SpeedKph = state.SpeedKph,
+            CadenceRpm = state.CadenceRpm, PowerWatts = state.PowerWatts, Paused = state.Paused,
+            Sequence = state.Sequence }, assignedRiderId);
     }
 
     private static bool ValidIdentifier(string? value, int min, int max) =>
@@ -119,6 +131,21 @@ public sealed record RiderLeftMessage : ProtocolMessage
 public sealed record RiderStateMessage : ProtocolMessage
 {
     public override string Type => "RiderState";
+    public string RiderId { get; init; } = "";
+    public string DisplayName { get; init; } = "";
+    public double DistanceMeters { get; init; }
+    public double SpeedKph { get; init; }
+    public int CadenceRpm { get; init; }
+    public int PowerWatts { get; init; }
+    public bool Paused { get; init; }
+    public long Sequence { get; init; }
+}
+
+public sealed record RiderRepositionedMessage : ProtocolMessage
+{
+    public override string Type => "RiderRepositioned";
+    public string RouteId { get; init; } = "";
+    public string RouteFingerprint { get; init; } = "";
     public string RiderId { get; init; } = "";
     public string DisplayName { get; init; } = "";
     public double DistanceMeters { get; init; }

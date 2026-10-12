@@ -207,6 +207,12 @@ public partial class CyclistVisual : Node3D
         UpdatePedalingGeometry();
     }
 
+    public void ResetVisualInterpolation()
+    {
+        _hasPreviousForward = false;
+        _leanRadians = 0;
+    }
+
     private bool TryBuildImportedModel()
     {
         if (!ResourceLoader.Exists(ImportedModelPath)) return false;

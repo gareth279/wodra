@@ -15,6 +15,14 @@ public sealed class RidePauseGate
 
     public void Resume() => IsPaused = false;
 
+    public RideState Resume(RideState state, double initialSpeedKph)
+    {
+        IsPaused = false;
+        var safeSpeed = double.IsFinite(initialSpeedKph)
+            ? Math.Clamp(initialSpeedKph, 0, CatchUpSpeedResolver.MaximumCatchUpSpeedKph) : 0;
+        return state with { VirtualSpeedKph = safeSpeed };
+    }
+
     public RideState Toggle(RideState state)
     {
         if (IsPaused)

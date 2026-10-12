@@ -5,7 +5,7 @@ using Godot;
 
 public partial class RideMenuPanelController : Control
 {
-	private enum MenuView { Closed, Main, Settings, Display, Multiplayer, Confirmation }
+	private enum MenuView { Closed, Main, Settings, Display, Multiplayer, CatchUpConfirmation, Confirmation }
 
 	private RideSessionNode? _rideSessionNode;
 	private HudController? _hudController;
@@ -14,6 +14,7 @@ public partial class RideMenuPanelController : Control
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private RideHistoryPanelController? _rideHistoryPanel;
 	private VBoxContainer? _content;
+	private PanelContainer? _menuPanel;
 	private Button? _keepRidingButton;
 	private Button? _endRideButton;
 	private bool _endingRide;
@@ -25,6 +26,11 @@ public partial class RideMenuPanelController : Control
 	private LineEdit? _multiplayerAddressInput;
 	private LineEdit? _multiplayerNameInput;
 	private LineEdit? _multiplayerRoomInput;
+	private OptionButton? _multiplayerRiderSelect;
+	private Button? _catchUpButton;
+	private string? _catchUpRiderId;
+	private bool _catchUpReturnsToMultiplayer;
+	private string _riderOptionIds = "";
 
 	public bool IsMenuVisible => _view != MenuView.Closed;
 
@@ -36,8 +42,19 @@ public partial class RideMenuPanelController : Control
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
-		_content = GetNode<VBoxContainer>("PanelContainer/VBoxContainer");
+		_menuPanel = GetNode<PanelContainer>("PanelContainer");
+		// VBoxContainer is nested under MarginContainer in RideScreen.tscn. Looking it up
+		// as a direct child left the content outside the PanelContainer's layout slot.
+		_content = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
 		Hide();
+	}
+
+	public override void _Input(InputEvent @event)
+	{
+		if (_view != MenuView.CatchUpConfirmation || @event is not InputEventKey key ||
+			!key.Pressed || key.Echo || key.Keycode != Key.Escape) return;
+		CancelCatchUpConfirmation();
+		GetViewport().SetInputAsHandled();
 	}
 
 	public override void _Process(double delta)
@@ -70,12 +87,28 @@ public partial class RideMenuPanelController : Control
 	{
 		_view = MenuView.Closed;
 		Hide();
+		_hudController?.CallDeferred(Control.MethodName.GrabFocus);
 	}
 
 	private void ShowView(MenuView view)
 	{
 		if (_content is null) return;
 		_view = view;
+		if (_menuPanel is not null)
+		{
+			var viewport = GetViewportRect().Size;
+			var width = view == MenuView.CatchUpConfirmation
+				? Math.Min(440, Math.Max(280, viewport.X - 32))
+				: 540;
+			var height = view == MenuView.CatchUpConfirmation
+				? Math.Min(260, Math.Max(190, viewport.Y - 32))
+				: 560;
+			_menuPanel.CustomMinimumSize = new Vector2(width, height);
+			_menuPanel.OffsetLeft = -width / 2;
+			_menuPanel.OffsetRight = width / 2;
+			_menuPanel.OffsetTop = -height / 2;
+			_menuPanel.OffsetBottom = height / 2;
+		}
 		foreach (var child in _content.GetChildren())
 		{
 			_content.RemoveChild(child);
@@ -90,6 +123,7 @@ public partial class RideMenuPanelController : Control
 				MenuView.Settings => "Settings",
 				MenuView.Display => "HUD & Display",
 				MenuView.Multiplayer => "Multiplayer",
+				MenuView.CatchUpConfirmation => CatchUpTitle(),
 				_ => "End this ride?"
 			},
 			HorizontalAlignment = HorizontalAlignment.Center
@@ -127,6 +161,9 @@ public partial class RideMenuPanelController : Control
 				BuildMultiplayerView();
 				AddAction("Back", () => ShowView(MenuView.Main));
 				break;
+			case MenuView.CatchUpConfirmation:
+				BuildCatchUpConfirmation();
+				break;
 			case MenuView.Display:
 				var showHud = new CheckButton { Text = "Show riding HUD", ButtonPressed = _hudController?.HudDisplayEnabled ?? true };
 				showHud.Toggled += enabled => _hudController?.SetHudDisplayEnabled(enabled);
@@ -160,6 +197,63 @@ public partial class RideMenuPanelController : Control
 		}
 		Show();
 		MoveToFront();
+		if (view == MenuView.CatchUpConfirmation)
+		{
+			GameLogger.Log("multiplayer_catch_up_confirmation_shown", new { riderId = _catchUpRiderId });
+			if (_content.GetChild(_content.GetChildCount() - 1).GetChild(0) is Control cancelButton)
+				cancelButton.CallDeferred(Control.MethodName.GrabFocus);
+		}
+	}
+
+	private string CatchUpTitle()
+	{
+		if (_catchUpRiderId is not null && _rideSessionNode?.TryGetCatchUpTarget(_catchUpRiderId, out var rider, out _) == true)
+			return $"Catch Up to {rider.DisplayName}?";
+		return "Catch Up?";
+	}
+
+	private void BuildCatchUpConfirmation()
+	{
+		var targetIsFresh = _catchUpRiderId is not null &&
+			_rideSessionNode?.TryGetCatchUpTarget(_catchUpRiderId, out _, out _) == true;
+		var body = new Label
+		{
+			Text = "The selected rider's position is no longer available. Close this dialog and select a connected rider.",
+			HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsVertical = Control.SizeFlags.ExpandFill
+		};
+		if (targetIsFresh && _catchUpRiderId is not null &&
+			_rideSessionNode?.TryGetCatchUpTarget(_catchUpRiderId, out var rider, out _) == true)
+		{
+			var current = _rideSessionNode.CurrentRideState.DistanceMeters;
+			var target = rider.DistanceMeters ?? current;
+			var destination = Math.Max(0, target - 4);
+			var fitText = _rideSessionNode.HasRideRecording
+				? "Your current FIT recording will be saved, and a new recording will begin at the new location."
+				: "FIT recording is currently off and will remain off.";
+			body.Text = $"Move from {current:0} m to approximately {destination:0} m.\n\n{fitText}";
+		}
+		body.AddThemeColorOverride("font_color", new Color(0.9f, 0.88f, 0.8f, 1));
+		_content!.AddChild(body);
+		var buttons = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		buttons.AddThemeConstantOverride("separation", 14);
+		var cancel = new Button { Text = "Cancel", CustomMinimumSize = new Vector2(112, 36) };
+		cancel.Pressed += CancelCatchUpConfirmation;
+		var confirm = new Button { Text = "Catch Up", CustomMinimumSize = new Vector2(112, 36), Disabled = !targetIsFresh };
+		confirm.Pressed += () => OnCatchUpConfirmed(confirm);
+		buttons.AddChild(cancel);
+		buttons.AddChild(confirm);
+		_content.AddChild(buttons);
+	}
+
+	private void CancelCatchUpConfirmation()
+	{
+		if (_view != MenuView.CatchUpConfirmation || _endingRide) return;
+		GameLogger.Log("multiplayer_catch_up_cancelled", new { riderId = _catchUpRiderId });
+		if (_catchUpReturnsToMultiplayer) ShowView(MenuView.Multiplayer);
+		else CloseMenu();
+		if (_catchUpReturnsToMultiplayer) _catchUpButton?.CallDeferred(Control.MethodName.GrabFocus);
 	}
 
 	private void BuildMultiplayerView()
@@ -179,6 +273,9 @@ public partial class RideMenuPanelController : Control
 		_content.AddChild(_multiplayerStatusLabel);
 		_multiplayerRidersLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
 		_content.AddChild(_multiplayerRidersLabel);
+		_multiplayerRiderSelect = new OptionButton();
+		_content.AddChild(_multiplayerRiderSelect);
+		_catchUpButton = AddAction("Catch Up to selected rider", OnCatchUpSelected);
 		UpdateMultiplayerView();
 	}
 
@@ -199,10 +296,85 @@ public partial class RideMenuPanelController : Control
 		_multiplayerJoinButton!.Disabled = _rideSessionNode.IsMultiplayerConnected;
 		_multiplayerLeaveButton!.Disabled = !_rideSessionNode.HasMultiplayerClient;
 		var riders = _rideSessionNode.MultiplayerRiders;
-		_multiplayerRidersLabel.Text = riders.Count == 0 ? "No other riders in this session." : string.Join("\n", riders.Select(rider =>
-			rider.HasState
-				? $"{rider.DisplayName} · {rider.DistanceMeters:0} m · {rider.SpeedKph:0.0} km/h · {rider.PowerWatts} W · {(rider.Paused ? "Paused" : "Riding")}"
-				: $"{rider.DisplayName} · Connected · waiting for rider data"));
+		_multiplayerRidersLabel.Text = riders.Count == 0 ? "No other riders in this session." : "Connected riders (absolute route distance):";
+		if (_multiplayerRiderSelect is not null)
+		{
+			var currentDistance = _rideSessionNode.CurrentRideState.DistanceMeters;
+			var routeLength = _rideSessionNode.CurrentRoute?.DistanceMeters ?? 0;
+			var ids = string.Join("|", riders.Select(r => r.RiderId));
+			if (ids != _riderOptionIds)
+			{
+				var oldSelection = _multiplayerRiderSelect.Selected;
+				_multiplayerRiderSelect.Clear();
+				foreach (var rider in riders)
+				{
+					_multiplayerRiderSelect.AddItem(rider.DisplayName);
+					_multiplayerRiderSelect.SetItemMetadata(_multiplayerRiderSelect.ItemCount - 1, rider.RiderId);
+				}
+				if (_multiplayerRiderSelect.ItemCount > 0) _multiplayerRiderSelect.Select(Math.Clamp(oldSelection, 0, _multiplayerRiderSelect.ItemCount - 1));
+				_riderOptionIds = ids;
+			}
+			for (var i = 0; i < riders.Count && i < _multiplayerRiderSelect.ItemCount; i++)
+			{
+				var rider = riders[i];
+				var label = rider.HasState && rider.DistanceMeters is { } d
+					? $"{rider.DisplayName} · lap {Math.Max(1, (int)Math.Floor(d / Math.Max(1, routeLength)) + 1)} · {d / 1000:0.00} km · {Math.Abs(d-currentDistance)/1000:0.00} km {(d >= currentDistance ? "ahead" : "behind")}"
+					: $"{rider.DisplayName} · waiting for rider data";
+				_multiplayerRiderSelect.SetItemText(i, label);
+			}
+			_catchUpButton!.Disabled = riders.Count == 0 || !_rideSessionNode.IsMultiplayerConnected;
+		}
+	}
+
+	private void OnCatchUpSelected()
+	{
+		if (_multiplayerRiderSelect is null || _multiplayerRiderSelect.Selected < 0) return;
+		_catchUpRiderId = _multiplayerRiderSelect.GetItemMetadata(_multiplayerRiderSelect.Selected).AsString();
+		_catchUpReturnsToMultiplayer = true;
+		GameLogger.Log("multiplayer_catch_up_requested", new { riderId = _catchUpRiderId, source = "menu" });
+		ShowView(MenuView.CatchUpConfirmation);
+	}
+
+	public void ShowCatchUpConfirmation(string riderId)
+	{
+		var error = "";
+		if (_rideSessionNode is null || !_rideSessionNode.TryGetCatchUpTarget(riderId, out _, out error))
+		{
+			_hudController?.SetStatus(string.IsNullOrEmpty(error) ? "That rider is unavailable." : error);
+			return;
+		}
+		_catchUpRiderId = riderId;
+		_catchUpReturnsToMultiplayer = false;
+		GameLogger.Log("multiplayer_catch_up_requested", new { riderId, source = "join_offer" });
+		ShowView(MenuView.CatchUpConfirmation);
+	}
+
+	private async void OnCatchUpConfirmed(Button confirmButton)
+	{
+		if (_endingRide || _catchUpRiderId is null || _rideSessionNode is null) return;
+		_endingRide = true;
+		confirmButton.Disabled = true;
+		GameLogger.Log("multiplayer_catch_up_confirmed", new { riderId = _catchUpRiderId });
+		try
+		{
+			var moved = await _rideSessionNode.CatchUpToRiderAsync(_catchUpRiderId);
+			if (moved) CloseMenu();
+			else
+			{
+				_hudController?.SetStatus(_rideSessionNode.LastRecordingError is { Length: > 0 } message
+					? $"Catch Up failed: {message}" : "Catch Up failed. The ride position was not changed.");
+				if (_catchUpReturnsToMultiplayer) ShowView(MenuView.Multiplayer);
+				else CloseMenu();
+			}
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("multiplayer_catch_up_failed", new { riderId = _catchUpRiderId, message = ex.Message });
+			_hudController?.SetStatus($"Catch Up failed: {ex.Message}");
+			if (_catchUpReturnsToMultiplayer) ShowView(MenuView.Multiplayer);
+			else CloseMenu();
+		}
+		finally { _endingRide = false; }
 	}
 
 	private async void OnJoinMultiplayerPressed()

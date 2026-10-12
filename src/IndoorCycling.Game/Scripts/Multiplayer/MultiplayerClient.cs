@@ -80,6 +80,9 @@ public sealed class MultiplayerClient : IAsyncDisposable
     public bool TryQueueState(RiderStateMessage state) =>
         IsConnected && _outgoing.Writer.TryWrite(state with { RiderId = RiderId, DisplayName = DisplayName });
 
+    public Task PublishRepositionAsync(RiderRepositionedMessage state, CancellationToken cancellationToken = default) =>
+        SendMessageAsync(state with { RiderId = RiderId, DisplayName = DisplayName }, cancellationToken);
+
     public IReadOnlyList<ProtocolMessage> DrainEvents()
     {
         var result = new List<ProtocolMessage>();

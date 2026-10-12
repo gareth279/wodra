@@ -66,6 +66,22 @@ internal static class MultiplayerIntegrationTests
         if (liveState.DistanceMeters != 2130 || liveState.DisplayName != "Rider One" || liveState.PowerWatts != 264)
             throw new InvalidOperationException("Rider state was not relayed or server-side name sanitization failed.");
 
+        var repositionMessage = new RiderRepositionedMessage
+        {
+            RouteId = RouteId, RouteFingerprint = Fingerprint,
+            RiderId = first.RiderId, DisplayName = "spoofed", DistanceMeters = 3120,
+            SpeedKph = 35, CadenceRpm = 85, PowerWatts = 264, Sequence = 2
+        };
+        if (MultiplayerProtocol.Deserialize(MultiplayerProtocol.Serialize(repositionMessage)) is not RiderRepositionedMessage)
+            throw new InvalidOperationException("Rider reposition protocol roundtrip failed.");
+        if (MultiplayerProtocol.ValidateReposition(repositionMessage with { RouteFingerprint = new string('b', 64) },
+                first.RiderId, RouteId, Fingerprint) is null)
+            throw new InvalidOperationException("A reposition for another route was accepted.");
+        await first.SendAsync(repositionMessage);
+        var reposition = await second.ReadUntilAsync<RiderRepositionedMessage>();
+        if (reposition.DistanceMeters != 3120 || reposition.SpeedKph != 35 || reposition.DisplayName != "Rider One")
+            throw new InvalidOperationException("Explicit rider reposition was not relayed or name sanitization failed.");
+
         await second.SendAsync(new RiderStateMessage
         {
             RiderId = second.RiderId, DistanceMeters = 1550, SpeedKph = 18, CadenceRpm = 72,

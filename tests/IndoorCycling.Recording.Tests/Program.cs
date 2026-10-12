@@ -85,6 +85,7 @@ var tests = new (string Name, Action Run)[]
     ("Stopping FIT recording leaves the ride running", StopRecordingLeavesRideRunning),
     ("Finalized FIT stays valid and ignores post-jump ride samples", FinalizedFitExcludesLaterDebugJump),
     ("Consecutive rides create separate FIT files", ConsecutiveRidesCreateSeparateFiles),
+    ("Catch-up closes the old FIT and starts a rebased segment without jump distance", CatchUpCreatesIndependentRecordingSegments),
     ("Empty recording finalizes as a valid FIT file", EmptyRecording)
 };
 
@@ -235,6 +236,31 @@ static void ConsecutiveRidesCreateSeparateFiles() => InTemporaryFolder(() =>
         throw new Exception("Consecutive rides did not retain separate FIT files.");
     _ = new FitRideLoader().Load(firstPath);
     _ = new FitRideLoader().Load(secondPath);
+});
+
+static void CatchUpCreatesIndependentRecordingSegments() => InTemporaryFolder(() =>
+{
+    var old = new RideFitRecorder();
+    old.StartOrResume(0, 10);
+    old.RecordSample(State(0), Telemetry(), 0, Route(10));
+    old.RecordSample(State(500), Telemetry(), 1, Route(15));
+    var oldPath = old.Stop()!;
+
+    var next = new RideFitRecorder();
+    next.StartOrResume(3000, 80);
+    next.RecordSample(State(3000), Telemetry(), 4, Route(80));
+    next.RecordSample(State(3012), Telemetry(), 4, Route(80.5));
+    var nextPath = next.Stop()!;
+
+    if (oldPath == nextPath) throw new Exception("Catch-up reused the earlier FIT file.");
+    var oldFrames = new FitRideLoader().Load(oldPath);
+    var nextFrames = new FitRideLoader().Load(nextPath);
+    Near(500, oldFrames[^1].DistanceMeters!.Value);
+    Near(0, nextFrames[0].DistanceMeters!.Value);
+    Near(12, nextFrames[^1].DistanceMeters!.Value);
+    Near(80, nextFrames[0].ElevationMeters!.Value);
+    if (Math.Abs(80.5 - nextFrames[^1].ElevationMeters!.Value) > .2)
+        throw new Exception("The catch-up segment did not retain the route altitude within FIT resolution.");
 });
 
 static void InTemporaryFolder(Action action)

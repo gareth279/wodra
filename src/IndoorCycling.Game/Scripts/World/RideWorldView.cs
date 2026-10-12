@@ -61,6 +61,10 @@ public partial class RideWorldView : Node3D
     private Node3D? _routeRoot;
     private CyclistVisual _rider = default!;
     private Node3D? _aiVisualRoot;
+    private Node3D? _remoteVisualRoot;
+    private readonly Dictionary<string, CyclistVisual> _remoteVisuals = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Label3D> _remoteNameLabels = new(StringComparer.Ordinal);
+    private const double RemoteVisualRadiusMeters = 300;
     private LocalRiderStateSource? _riderStateSource;
     private AiRiderPopulation? _aiPopulation;
     private readonly Dictionary<string, CyclistVisual> _riderVisuals = new(StringComparer.Ordinal);
@@ -438,6 +442,7 @@ public partial class RideWorldView : Node3D
             var riderPose = _geometry.GetPoseAtDistance(riderState.WrappedRouteDistanceMeters);
             visual.UpdateFromRiderState(riderState, riderPose, _loadedRoute.GetGradientAt(riderState.WrappedRouteDistanceMeters), delta);
         }
+        UpdateRemoteRiders(delta, routeLength);
         var position = _rider.GlobalPosition;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
         _camera.Follow(position, forward, delta);
@@ -478,6 +483,91 @@ public partial class RideWorldView : Node3D
             if (_roadMarkingLayer is { } markingLayer)
                 GD.Print($"Road markings loaded: {markingLayer.LoadedMarkingCount}; nearby crossings: {markingLayer.NearbyCrossingCount}");
         }
+    }
+
+    private void UpdateRemoteRiders(double delta, double routeLength)
+    {
+        if (_geometry is null || _loadedRoute is null || routeLength <= 0) return;
+        var activeIds = new HashSet<string>(StringComparer.Ordinal);
+        var localDistance = _session.CurrentRideState.DistanceMeters;
+        foreach (var remote in _session.GetInterpolatedRemoteRiders())
+        {
+            if (remote.DistanceMeters is not { } absoluteDistance) continue;
+            activeIds.Add(remote.RiderId);
+            var wrapped = ((absoluteDistance % routeLength) + routeLength) % routeLength;
+            var nearbyDistance = MultiplayerRoutePosition.WrappedSeparation(absoluteDistance, localDistance, routeLength);
+            if (nearbyDistance > RemoteVisualRadiusMeters)
+            {
+                if (_remoteVisuals.TryGetValue(remote.RiderId, out var hiddenVisual)) hiddenVisual.Visible = false;
+                continue;
+            }
+            if (!_remoteVisuals.TryGetValue(remote.RiderId, out var visual))
+            {
+                visual = new CyclistVisual { Name = "RemoteCyclist_" + remote.RiderId };
+                visual.Build(Math.Abs(StringComparer.Ordinal.GetHashCode(remote.RiderId)));
+                var name = new Label3D
+                {
+                    Name = "RiderName",
+                    Text = remote.DisplayName,
+                    FontSize = 32,
+                    PixelSize = .0025f,
+                    Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                    NoDepthTest = true,
+                    Modulate = new Color(.95f, .87f, .70f, .95f),
+                    OutlineSize = 6,
+                    OutlineModulate = new Color(.08f, .07f, .06f, .9f),
+                    Position = new Vector3(0, 2.05f, 0)
+                };
+                visual.AddChild(name);
+                (_remoteVisualRoot ?? this).AddChild(visual);
+                _remoteVisuals.Add(remote.RiderId, visual);
+                _remoteNameLabels.Add(remote.RiderId, name);
+            }
+            visual.Visible = true;
+            if (_remoteNameLabels.TryGetValue(remote.RiderId, out var label))
+            {
+                label.Text = remote.DisplayName;
+                var alpha = (float)Math.Clamp(1.0 - Math.Max(0, nearbyDistance - 90) / 260.0, .18, .94);
+                label.Modulate = new Color(.95f, .87f, .70f, alpha);
+            }
+            var pose = _geometry.GetPoseAtDistance(wrapped);
+            var rider = new RiderState(remote.RiderId, remote.DisplayName, _loadedRoute.Id, absoluteDistance, wrapped,
+                (int)Math.Floor(absoluteDistance / routeLength) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+                (remote.Paused ? 0 : remote.SpeedKph ?? 0) / 3.6, remote.PowerWatts ?? 0,
+                remote.CadenceRpm, remote.Paused, 0);
+            visual.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), delta);
+        }
+        foreach (var id in _remoteVisuals.Keys.Where(id => !activeIds.Contains(id)).ToArray())
+        {
+            var visual = _remoteVisuals[id];
+            _remoteVisuals.Remove(id);
+            _remoteNameLabels.Remove(id);
+            visual.QueueFree();
+        }
+    }
+
+    public void ResetAfterReposition()
+    {
+        _rider?.ResetVisualInterpolation();
+        _camera?.ResetFollow();
+        if (_geometry is null || _loadedRoute is null) return;
+        var distance = _session.CurrentRideState.DistanceMeters;
+        var wrapped = _geometry.WrapDistance(distance);
+        var pose = _geometry.GetPoseAtDistance(distance);
+        _lastPose = pose;
+        var state = _session.CurrentRideState;
+        var rider = new RiderState("player", "You", _loadedRoute.Id, distance, wrapped,
+            (int)Math.Floor(distance / _geometry.LengthMeters) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+            0, state.CurrentPowerWatts, _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, state.ElapsedSeconds);
+        _rider!.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), 0);
+        _camera!.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(pose.Forward), 1);
+        _landmarkLayer?.UpdateForRideDistance(distance);
+        _buildingLayer?.UpdateForRideDistance(distance);
+        _vegetationLayer?.UpdateForRideDistance(distance);
+        _streetFurnitureLayer?.UpdateForRideDistance(distance);
+        _roadMarkingLayer?.UpdateForRideDistance(distance);
+        _backgroundStreetLayer?.UpdateForRideDistance(distance);
+        _terrainLayer?.UpdateForRideDistance(distance);
     }
 
     public RideWorldDiagnostic GetDiagnosticState()
@@ -553,6 +643,14 @@ public partial class RideWorldView : Node3D
 
     private void LoadRoute(RouteDefinition route)
     {
+        if (_remoteVisualRoot is not null)
+        {
+            RemoveChild(_remoteVisualRoot);
+            _remoteVisualRoot.QueueFree();
+            _remoteVisualRoot = null;
+        }
+        _remoteVisuals.Clear();
+        _remoteNameLabels.Clear();
         if (_aiVisualRoot is not null)
         {
             RemoveChild(_aiVisualRoot);
@@ -565,6 +663,8 @@ public partial class RideWorldView : Node3D
         _riderStateSource = new LocalRiderStateSource(_aiPopulation);
         _aiVisualRoot = new Node3D { Name = "AiRiderVisuals" };
         AddChild(_aiVisualRoot);
+        _remoteVisualRoot = new Node3D { Name = "RemoteRiderVisuals" };
+        AddChild(_remoteVisualRoot);
         for (var i = 0; i < _aiPopulation.Controllers.Count; i++)
         {
             var controller = _aiPopulation.Controllers[i];
@@ -807,6 +907,14 @@ public partial class RideWorldView : Node3D
 
     private void CleanupFailedRouteLoad()
     {
+        if (_remoteVisualRoot is not null)
+        {
+            RemoveChild(_remoteVisualRoot);
+            _remoteVisualRoot.QueueFree();
+            _remoteVisualRoot = null;
+        }
+        _remoteVisuals.Clear();
+        _remoteNameLabels.Clear();
         if (_routeRoot is not null)
         {
             RemoveChild(_routeRoot);

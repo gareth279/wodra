@@ -18,6 +18,7 @@ public partial class HudController : Control
 	private Label? _distanceLabel;
 	private Label? _elapsedLabel;
 	private Label? _ghostLabel;
+	private Label? _multiplayerStatusLabel;
 	private Control? _topHudPanel;
 	private Control? _dummyControlPanel;
 
@@ -43,6 +44,9 @@ public partial class HudController : Control
 	private bool? _debugEnabledBeforeCapture;
 	private ScreenshotCaptureService? _screenshotCapture;
 	private Label? _screenshotToast;
+	private PanelContainer? _catchUpOfferPanel;
+	private Label? _catchUpOfferText;
+	private string _catchUpOfferRiderId = "";
 	private Label? _cameraInspectionLabel;
 	private Control? _debugJumpConfirmation;
 	private double _cameraInspectionLabelSeconds;
@@ -76,6 +80,8 @@ public partial class HudController : Control
 		_ghostLabel = new Label { Name = "GhostIndicator", Visible = false };
 		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_ghostLabel);
 		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
+		_multiplayerStatusLabel = new Label { Name = "MultiplayerStatus", Visible = false };
+		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_multiplayerStatusLabel);
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
 		_dummyControlPanel = GetNodeOrNull<Control>("DummyControlPanel");
 		_dummySummary = GetNodeOrNull<Label>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummySummaryLabel");
@@ -112,6 +118,7 @@ public partial class HudController : Control
 			HorizontalAlignment = HorizontalAlignment.Center
 		};
 		AddChild(_screenshotToast);
+		BuildCatchUpOffer();
 		_cameraInspectionLabel = new Label
 		{
 			Name = "CameraInspectionLabel",
@@ -137,6 +144,55 @@ public partial class HudController : Control
 		SetRecordingState(false, false);
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
+	}
+
+	private void BuildCatchUpOffer()
+	{
+		_catchUpOfferPanel = new PanelContainer
+		{
+			Name = "CatchUpOffer",
+			Visible = false,
+			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -230, OffsetRight = 230, OffsetTop = 40, OffsetBottom = 106,
+			MouseFilter = Control.MouseFilterEnum.Stop
+		};
+		var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_catchUpOfferText = new Label { Name = "OfferText", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+		row.AddChild(_catchUpOfferText);
+		var catchUp = new Button { Text = "Catch Up" };
+		catchUp.Pressed += () =>
+		{
+			if (!string.IsNullOrEmpty(_catchUpOfferRiderId)) _rideMenuPanel?.ShowCatchUpConfirmation(_catchUpOfferRiderId);
+			if (_catchUpOfferPanel is not null) _catchUpOfferPanel.Visible = false;
+		};
+		row.AddChild(catchUp);
+		var keep = new Button { Text = "Keep Riding" };
+		keep.Pressed += () => { if (_catchUpOfferPanel is not null) _catchUpOfferPanel.Visible = false; };
+		row.AddChild(keep);
+		_catchUpOfferPanel.AddChild(row);
+		AddChild(_catchUpOfferPanel);
+	}
+
+	public void ShowCatchUpOffer(string riderId, string displayName, double distanceAheadMeters)
+	{
+		if (_catchUpOfferPanel is null || distanceAheadMeters <= 100) return;
+		_catchUpOfferRiderId = riderId;
+		if (_catchUpOfferText is not null) _catchUpOfferText.Text =
+			$"Ride with {displayName} · {(distanceAheadMeters / 1000):0.0} km ahead";
+		_catchUpOfferPanel.Visible = true;
+	}
+
+	public void SetMultiplayerStatus(string? status)
+	{
+		if (_multiplayerStatusLabel is null) return;
+		_multiplayerStatusLabel.Visible = !string.IsNullOrWhiteSpace(status);
+		_multiplayerStatusLabel.Text = status ?? "";
+	}
+
+	public void HideCatchUpOffer()
+	{
+		if (_catchUpOfferPanel is not null) _catchUpOfferPanel.Visible = false;
+		_catchUpOfferRiderId = "";
 	}
 
 	private void OnPauseRidePressed()
