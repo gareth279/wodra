@@ -1,5 +1,6 @@
 using System.Net.WebSockets;
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -18,7 +19,7 @@ internal static class MultiplayerIntegrationTests
     {
         ProtocolRoundTripsAndRejectsInvalidData();
         await TwoClientLifecycleAsync();
-        Console.WriteLine("PASS: multiplayer protocol validation and two-client server lifecycle");
+        Console.WriteLine("PASS: multiplayer protocol validation, public route presence and two-client server lifecycle");
     }
 
     private static void ProtocolRoundTripsAndRejectsInvalidData()
@@ -45,6 +46,10 @@ internal static class MultiplayerIntegrationTests
         var address = server.Features.Get<IServerAddressesFeature>()!.Addresses.Single();
         var httpUri = new Uri(address);
         var wsUri = new UriBuilder(httpUri) { Scheme = "ws", Path = "/ws" }.Uri;
+        using var http = new HttpClient();
+        var presenceUri = new Uri(httpUri, $"presence?routeId={RouteId}&routeFingerprint={Fingerprint}");
+        if (await ReadActiveRidersAsync(http, presenceUri) != 0)
+            throw new InvalidOperationException("An empty public route session reported riders.");
         using var first = new SimulatedClient();
         using var second = new SimulatedClient();
         using var incompatible = new SimulatedClient();
@@ -65,6 +70,8 @@ internal static class MultiplayerIntegrationTests
         var liveState = await second.ReadUntilAsync<RiderStateMessage>();
         if (liveState.DistanceMeters != 2130 || liveState.DisplayName != "Rider One" || liveState.PowerWatts != 264)
             throw new InvalidOperationException("Rider state was not relayed or server-side name sanitization failed.");
+        if (await ReadActiveRidersAsync(http, presenceUri) != 1)
+            throw new InvalidOperationException("Public route presence did not include the active rider.");
 
         var repositionMessage = new RiderRepositionedMessage
         {
@@ -90,6 +97,8 @@ internal static class MultiplayerIntegrationTests
         var paused = await first.ReadUntilAsync<RiderStateMessage>();
         if (!paused.Paused || paused.DistanceMeters != 1550)
             throw new InvalidOperationException("Rider pause state was not relayed independently.");
+        if (await ReadActiveRidersAsync(http, presenceUri) != 1)
+            throw new InvalidOperationException("Paused riders should not count as active route presence.");
 
         await incompatible.ConnectAndSendJoinAsync(wsUri, "Rider Three", new string('b', 64));
         var rejected = await incompatible.ReadUntilAsync<JoinRejectedMessage>();
@@ -112,9 +121,20 @@ internal static class MultiplayerIntegrationTests
         var dropped = await second.ReadUntilAsync<RiderLeftMessage>();
         if (dropped.RiderId != droppedRiderId) throw new InvalidOperationException("Abrupt disconnect did not remove the rider.");
         await second.LeaveAsync();
+        if (await ReadActiveRidersAsync(http, presenceUri) != 0)
+            throw new InvalidOperationException("Disconnected riders remained in public route presence.");
         await incompatible.LeaveAsync();
         await app.StopAsync();
     }
+
+    private static async Task<int> ReadActiveRidersAsync(HttpClient http, Uri uri)
+    {
+        var payload = await http.GetFromJsonAsync<RoutePresenceResponse>(uri)
+            ?? throw new InvalidOperationException("Route presence returned an empty response.");
+        return payload.ActiveRiders;
+    }
+
+    private sealed record RoutePresenceResponse(string RouteId, string RouteFingerprint, int ActiveRiders);
 
     private sealed class SimulatedClient : IDisposable
     {
@@ -133,7 +153,7 @@ internal static class MultiplayerIntegrationTests
             await _socket.ConnectAsync(uri, CancellationToken.None);
             await SendAsync(new JoinSessionMessage
             {
-                RouteId = RouteId, RouteFingerprint = fingerprint, RoomCode = "test-room", DisplayName = name
+                RouteId = RouteId, RouteFingerprint = fingerprint, RoomCode = "public", DisplayName = name
             });
         }
 

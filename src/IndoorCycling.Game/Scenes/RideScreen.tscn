@@ -84,7 +84,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.5019608)
 
 [node name="PanelContainer" type="PanelContainer" parent="StartPanel" unique_id=252191979]
-custom_minimum_size = Vector2(480, 280)
+custom_minimum_size = Vector2(480, 520)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -92,9 +92,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -340.0
-offset_top = -340.0
+offset_top = -370.0
 offset_right = 140.0
-offset_bottom = -60.0
+offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -119,6 +119,14 @@ text = "Choose how you want to start"
 [node name="DebugModeCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Debug mode"
+
+[node name="OnlineRidingCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Online Riding"
+
+[node name="OnlineStatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Offline · local rides are always available"
 
 [node name="ConnectTrainerButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1036208023]
 layout_mode = 2

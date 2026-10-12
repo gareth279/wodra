@@ -4,6 +4,8 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -11,8 +13,9 @@ using Wodra.Multiplayer.Protocol;
 
 namespace IndoorCycling.Game.Multiplayer;
 
-public sealed class MultiplayerClient : IAsyncDisposable
+public sealed class WebSocketMultiplayerProvider : IMultiplayerProvider
 {
+    private static readonly HttpClient Http = new() { Timeout = Timeout.InfiniteTimeSpan };
     private readonly ClientWebSocket _socket = new();
     private readonly SemaphoreSlim _sendGate = new(1, 1);
     private readonly ConcurrentQueue<ProtocolMessage> _events = new();
@@ -34,12 +37,56 @@ public sealed class MultiplayerClient : IAsyncDisposable
     public string RiderId { get; private set; } = "";
     public string DisplayName { get; private set; } = "";
 
-    public async Task ConnectAsync(string address, string displayName, string roomCode, RouteDefinition route,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> CheckAvailabilityAsync(string serverAddress, CancellationToken cancellationToken = default)
     {
-        if (route.GeometryFingerprint.Length != 64)
+        _status = "Connecting…";
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(3));
+        try
+        {
+            using var response = await Http.GetAsync(BuildHttpUri(serverAddress, "healthz"),
+                HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            var available = response.IsSuccessStatusCode;
+            _status = available ? "Available" : "Server unavailable";
+            return available;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or InvalidOperationException)
+        {
+            _status = "Server unavailable";
+            return false;
+        }
+    }
+
+    public async Task<RoutePresenceResult> GetRoutePresenceAsync(string serverAddress, string routeId,
+        string routeFingerprint, CancellationToken cancellationToken = default)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(3));
+        try
+        {
+            var path = $"presence?routeId={Uri.EscapeDataString(routeId)}&routeFingerprint={Uri.EscapeDataString(routeFingerprint)}";
+            using var response = await Http.GetAsync(BuildHttpUri(serverAddress, path),
+                HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            if (!response.IsSuccessStatusCode) return RoutePresenceResult.Unavailable($"Presence unavailable ({(int)response.StatusCode}).");
+            await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
+            using var json = await JsonDocument.ParseAsync(stream, cancellationToken: timeout.Token);
+            if (!json.RootElement.TryGetProperty("activeRiders", out var activeRiders) ||
+                !activeRiders.TryGetInt32(out var count))
+                return RoutePresenceResult.Unavailable("Presence response was invalid.");
+            return new RoutePresenceResult(true, Math.Max(0, count));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or InvalidOperationException or JsonException)
+        {
+            return RoutePresenceResult.Unavailable(ex.Message);
+        }
+    }
+
+    public async Task JoinRouteSessionAsync(string serverAddress, string displayName, string sessionId,
+        string routeId, string routeFingerprint, CancellationToken cancellationToken = default)
+    {
+        if (routeFingerprint.Length != 64)
             throw new InvalidOperationException("The selected route has no valid geometry fingerprint.");
-        var uri = NormalizeAddress(address);
+        var uri = NormalizeAddress(serverAddress);
         DisplayName = displayName.Trim();
         _status = "Connecting…";
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -49,9 +96,9 @@ public sealed class MultiplayerClient : IAsyncDisposable
             await _socket.ConnectAsync(uri, timeout.Token);
             await SendMessageAsync(new JoinSessionMessage
             {
-                RouteId = route.Id,
-                RouteFingerprint = route.GeometryFingerprint,
-                RoomCode = roomCode.Trim(),
+                RouteId = routeId,
+                RouteFingerprint = routeFingerprint,
+                RoomCode = sessionId.Trim(),
                 DisplayName = DisplayName
             }, timeout.Token);
             var response = await ReceiveMessageAsync(_socket, timeout.Token);
@@ -109,6 +156,8 @@ public sealed class MultiplayerClient : IAsyncDisposable
             catch (Exception ex) when (ex is WebSocketException or OperationCanceledException) { }
         }
     }
+
+    public Task LeaveSessionAsync() => LeaveAsync();
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
     {
@@ -180,6 +229,18 @@ public sealed class MultiplayerClient : IAsyncDisposable
         if (uri.Scheme is not ("ws" or "wss")) throw new InvalidOperationException("Server address must use ws:// or wss://.");
         if (uri.AbsolutePath is "" or "/") uri = new UriBuilder(uri) { Path = "/ws" }.Uri;
         return uri;
+    }
+
+    private static Uri BuildHttpUri(string address, string path)
+    {
+        var socketUri = NormalizeAddress(address);
+        var builder = new UriBuilder(socketUri)
+        {
+            Scheme = socketUri.Scheme == "wss" ? "https" : "http",
+            Path = "/" + path.TrimStart('/'),
+            Query = ""
+        };
+        return builder.Uri;
     }
 
     private async Task AwaitLoopsAsync()

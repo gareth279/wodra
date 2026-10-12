@@ -20,6 +20,8 @@ public partial class StartPanelController : Control
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private CheckButton? _debugModeCheckButton;
+	private CheckButton? _onlineRidingCheckButton;
+	private Label? _onlineStatusLabel;
 	private HudController? _typedHudController;
 	private RideHistoryPanelController? _rideHistoryPanel;
 	private OptionButton? _profilePicker;
@@ -51,6 +53,15 @@ public partial class StartPanelController : Control
 		_debugModeCheckButton.ButtonPressed = GameBootstrap.DebugModeEnabled;
 		_debugModeCheckButton.Toggled += OnDebugModeToggled;
 		_typedHudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
+		_onlineRidingCheckButton = GetNodeOrNull<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/OnlineRidingCheckButton");
+		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/OnlineStatusLabel");
+		if (_onlineRidingCheckButton is not null)
+		{
+			_onlineRidingCheckButton.ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled;
+			_onlineRidingCheckButton.Toggled += OnOnlineRidingToggled;
+			if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null)
+				_ = _rideSessionNode.SetOnlineRidingEnabledAsync(true);
+		}
 		_hudController?.Hide();
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
@@ -62,6 +73,13 @@ public partial class StartPanelController : Control
 		{
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
+		_onlineStatusLabel.Text = _rideSessionNode.OnlineRidingEnabled
+			? _rideSessionNode.OnlineStatus : "Offline · local rides are always available";
 	}
 
 	private void BuildLocalSettingsUi()
@@ -200,6 +218,15 @@ public partial class StartPanelController : Control
 		GameBootstrap.Settings.DebugModeEnabled = enabled;
 		GameBootstrap.Settings.Save();
 		_typedHudController?.SetDebugMode(enabled);
+	}
+
+	private async void OnOnlineRidingToggled(bool enabled)
+	{
+		if (_rideSessionNode is null) return;
+		if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = true;
+		try { await _rideSessionNode.SetOnlineRidingEnabledAsync(enabled); }
+		catch (Exception ex) { SetStatus($"Online Riding setting failed: {ex.Message}"); }
+		finally { if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = false; }
 	}
 
 	private void OnConnectTrainerPressed()

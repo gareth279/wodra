@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Collections.Generic;
 using System.Text.Json;
 using IndoorCycling.Game.Multiplayer;
@@ -81,7 +82,13 @@ public partial class RideSessionNode : Node
 	private double _trainerCommandElapsedSeconds;
 	private double? _lastSentTrainerGradientPercent;
 	private bool _trainerCommandDirty = true;
-	private MultiplayerClient? _multiplayerClient;
+	private IMultiplayerProvider? _multiplayerProvider;
+	private CancellationTokenSource? _onlineLifetime;
+	private CancellationTokenSource? _automaticJoinCts;
+	private Task? _automaticJoinTask;
+	private double _automaticRetryRemaining;
+	private int _automaticRetryAttempt;
+	private string _onlineStatus = "Offline";
 	private readonly Dictionary<string, MultiplayerRemoteRider> _remoteRiders = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, RemoteRiderInterpolator> _remoteInterpolators = new(StringComparer.Ordinal);
 	private double _multiplayerPublishElapsed;
@@ -89,9 +96,11 @@ public partial class RideSessionNode : Node
 	private RiderRepositionedMessage? _pendingRepositionMessage;
 	private Task? _repositionSendTask;
 	private double _repositionRetryElapsed;
-	public string MultiplayerStatus => _multiplayerClient?.Status ?? "Disconnected";
-	public bool IsMultiplayerConnected => _multiplayerClient?.IsConnected == true;
-	public bool HasMultiplayerClient => _multiplayerClient?.HasClient == true;
+	public string MultiplayerStatus => _multiplayerProvider?.Status ?? (OnlineRidingEnabled ? _onlineStatus : "Disconnected");
+	public bool IsMultiplayerConnected => _multiplayerProvider?.IsConnected == true;
+	public bool HasMultiplayerClient => _multiplayerProvider is not null;
+	public bool OnlineRidingEnabled => GameBootstrap.Settings?.OnlineRidingEnabled == true;
+	public string OnlineStatus => _multiplayerProvider?.IsConnected == true ? "Connected" : _onlineStatus;
 	public IReadOnlyList<MultiplayerRemoteRider> MultiplayerRiders => _remoteRiders.Values.ToArray();
 	public IReadOnlyList<MultiplayerRemoteRider> GetInterpolatedRemoteRiders() => _remoteInterpolators.Values
 		.Select(track => track.TrySample(MonotonicSeconds(), out var sample)
@@ -965,29 +974,165 @@ public partial class RideSessionNode : Node
 		if (_debugDiagnostics.Enabled && _debugDiagnostics.SnapshotDue(delta)) WriteDebugSnapshot();
 	}
 
+	public async Task SetOnlineRidingEnabledAsync(bool enabled)
+	{
+		if (GameBootstrap.Settings.OnlineRidingEnabled == enabled &&
+			(enabled ? _onlineLifetime is { IsCancellationRequested: false } : _onlineLifetime is null or { IsCancellationRequested: true }))
+			return;
+		GameBootstrap.Settings.OnlineRidingEnabled = enabled;
+		GameBootstrap.Settings.Save();
+		if (!enabled)
+		{
+			_onlineLifetime?.Cancel();
+			if (_automaticJoinTask is { IsCompleted: false } activeJoin)
+				try { await activeJoin; } catch { }
+			await LeaveMultiplayerAsync();
+			_automaticRetryRemaining = 0;
+			_automaticRetryAttempt = 0;
+			_onlineStatus = "Offline";
+			return;
+		}
+
+		if (_onlineLifetime is null || _onlineLifetime.IsCancellationRequested)
+		{
+			_onlineLifetime?.Dispose();
+			_onlineLifetime = new CancellationTokenSource();
+		}
+		var token = _onlineLifetime.Token;
+		_onlineStatus = "Connecting…";
+		var probe = new WebSocketMultiplayerProvider();
+		var available = false;
+		try { available = await probe.CheckAvailabilityAsync(GameBootstrap.Settings.MultiplayerServerAddress, token); }
+		catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+		finally { await probe.DisposeAsync(); }
+		if (token.IsCancellationRequested || !OnlineRidingEnabled) return;
+		_onlineStatus = available ? "Available · joins when you start a ride" : "Server unavailable · local riding is available";
+		if (_sessionStarted)
+		{
+			_automaticRetryAttempt = 0;
+			_automaticRetryRemaining = 0;
+		}
+	}
+
+	public async Task<RoutePresenceResult> GetRoutePresenceAsync(RouteDefinition route,
+		CancellationToken cancellationToken = default)
+	{
+		if (!OnlineRidingEnabled) return RoutePresenceResult.Unavailable("Online Riding is off.");
+		var provider = new WebSocketMultiplayerProvider();
+		try
+		{
+			return await provider.GetRoutePresenceAsync(GameBootstrap.Settings.MultiplayerServerAddress,
+				route.Id, route.GeometryFingerprint, cancellationToken);
+		}
+		finally { await provider.DisposeAsync(); }
+	}
+
+	private void StartAutomaticRouteJoin()
+	{
+		if (!OnlineRidingEnabled || !_sessionStarted || !_trainerSessionActive || _currentRoute is null ||
+			_automaticJoinTask is { IsCompleted: false } || _multiplayerProvider is not null) return;
+		var lifetimeToken = _onlineLifetime?.Token ?? CancellationToken.None;
+		_automaticJoinCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken);
+		_automaticJoinTask = AutomaticRouteJoinAsync(_currentRoute, _automaticJoinCts.Token);
+	}
+
+	private async Task AutomaticRouteJoinAsync(RouteDefinition route, CancellationToken cancellationToken)
+	{
+		var provider = new WebSocketMultiplayerProvider();
+		_multiplayerProvider = provider;
+		_remoteRiders.Clear();
+		_remoteInterpolators.Clear();
+		_multiplayerPublishElapsed = 0;
+		_multiplayerSequence = 0;
+		_pendingRepositionMessage = null;
+		_repositionSendTask = null;
+		_onlineStatus = "Connecting…";
+		try
+		{
+			var displayName = GameBootstrap.RiderProfile?.Name ?? GameBootstrap.Settings.Rider.Name;
+			await provider.JoinRouteSessionAsync(GameBootstrap.Settings.MultiplayerServerAddress, displayName,
+				"public", route.Id, route.GeometryFingerprint, cancellationToken);
+			if (cancellationToken.IsCancellationRequested || !OnlineRidingEnabled || !_sessionStarted ||
+				!string.Equals(_currentRoute?.Id, route.Id, StringComparison.Ordinal))
+			{
+				if (ReferenceEquals(_multiplayerProvider, provider)) _multiplayerProvider = null;
+				await provider.DisposeAsync();
+				return;
+			}
+			_onlineStatus = "Connected";
+			_automaticRetryAttempt = 0;
+			_automaticRetryRemaining = 0;
+			GameLogger.Log("multiplayer_auto_joined", new { routeId = route.Id, sessionId = "public" });
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			if (ReferenceEquals(_multiplayerProvider, provider)) _multiplayerProvider = null;
+			await provider.DisposeAsync();
+		}
+		catch (Exception ex)
+		{
+			if (ReferenceEquals(_multiplayerProvider, provider)) _multiplayerProvider = null;
+			await provider.DisposeAsync();
+			GameLogger.Log("multiplayer_auto_join_failed", new { routeId = route.Id, message = ex.Message });
+			if (OnlineRidingEnabled && _trainerSessionActive && !cancellationToken.IsCancellationRequested)
+			{
+				_automaticRetryAttempt++;
+				_automaticRetryRemaining = AutomaticRetryDelaySeconds(_automaticRetryAttempt);
+				_onlineStatus = "Server unavailable · retrying";
+			}
+		}
+		finally
+		{
+			if (_automaticJoinCts?.Token == cancellationToken)
+			{
+				_automaticJoinCts.Dispose();
+				_automaticJoinCts = null;
+			}
+		}
+	}
+
+	private static double AutomaticRetryDelaySeconds(int attempt) =>
+		Math.Min(30, Math.Pow(2, Math.Clamp(attempt - 1, 0, 5)));
+
 	public async Task JoinMultiplayerAsync(string address, string displayName, string roomCode)
 	{
 		if (!_sessionStarted || _currentRoute is null)
 			throw new InvalidOperationException("Start a ride and select a route before joining multiplayer.");
 		await LeaveMultiplayerAsync();
-		var client = new MultiplayerClient();
-		_multiplayerClient = client;
+		GameBootstrap.Settings.MultiplayerServerAddress = address.Trim();
+		GameBootstrap.Settings.Save();
+		var client = new WebSocketMultiplayerProvider();
+		_multiplayerProvider = client;
 		_remoteRiders.Clear();
 		_multiplayerPublishElapsed = 0;
 		_multiplayerSequence = 0;
 		_pendingRepositionMessage = null;
 		_repositionSendTask = null;
-		try { await client.ConnectAsync(address, displayName, roomCode, _currentRoute); }
+		try
+		{
+			await client.JoinRouteSessionAsync(address, displayName, roomCode, _currentRoute.Id,
+				_currentRoute.GeometryFingerprint);
+			_onlineStatus = "Connected";
+		}
 		catch
 		{
+			_multiplayerProvider = null;
+			await client.DisposeAsync();
 			throw;
 		}
 	}
 
 	public async Task LeaveMultiplayerAsync()
 	{
-		var client = _multiplayerClient;
-		_multiplayerClient = null;
+		_automaticJoinCts?.Cancel();
+		if (_automaticJoinTask is { IsCompleted: false } automaticJoin)
+			try { await automaticJoin; } catch { }
+		_automaticJoinCts?.Dispose();
+		_automaticJoinCts = null;
+		_automaticJoinTask = null;
+		var client = _multiplayerProvider;
+		_automaticRetryRemaining = 0;
+		_multiplayerProvider = null;
 		_remoteRiders.Clear();
 		_remoteInterpolators.Clear();
 		_pendingRepositionMessage = null;
@@ -995,12 +1140,44 @@ public partial class RideSessionNode : Node
 		_hudController?.SetMultiplayerStatus(null);
 		_hudController?.HideCatchUpOffer();
 		if (client is not null) await client.DisposeAsync();
+		if (OnlineRidingEnabled) _onlineStatus = "Available · joins when you start a ride";
+	}
+
+	public async Task<RoutePresenceResult> GetCurrentRoutePresenceAsync(CancellationToken cancellationToken = default)
+	{
+		if (_currentRoute is null) return RoutePresenceResult.Unavailable("Select a route to check its public session.");
+		return await GetRoutePresenceAsync(_currentRoute, cancellationToken);
 	}
 
 	private void ProcessMultiplayer(double delta)
 	{
-		var client = _multiplayerClient;
-		if (client is null) { _hudController?.SetMultiplayerStatus(null); return; }
+		var client = _multiplayerProvider;
+		if (client is null)
+		{
+			_hudController?.SetMultiplayerStatus(OnlineRidingEnabled ? _onlineStatus : null);
+			if (OnlineRidingEnabled && _trainerSessionActive)
+			{
+				_automaticRetryRemaining = Math.Max(0, _automaticRetryRemaining - delta);
+				if (_automaticRetryRemaining <= 0) StartAutomaticRouteJoin();
+			}
+			return;
+		}
+		if (!client.IsConnected && !client.Status.Equals("Connecting…", StringComparison.Ordinal))
+		{
+			if (ReferenceEquals(_multiplayerProvider, client)) _multiplayerProvider = null;
+			_remoteRiders.Clear();
+			_remoteInterpolators.Clear();
+			_hudController?.HideCatchUpOffer();
+			if (OnlineRidingEnabled && _trainerSessionActive && _onlineLifetime?.IsCancellationRequested != true)
+			{
+				_onlineStatus = "Reconnecting…";
+				_automaticRetryAttempt++;
+				_automaticRetryRemaining = AutomaticRetryDelaySeconds(_automaticRetryAttempt);
+			}
+			_ = client.DisposeAsync();
+			_hudController?.SetMultiplayerStatus(OnlineRidingEnabled ? _onlineStatus : null);
+			return;
+		}
 		foreach (var message in client.DrainEvents())
 		{
 			switch (message)
@@ -1028,6 +1205,14 @@ public partial class RideSessionNode : Node
 					GameLogger.Log("multiplayer_server_error", new { error.Code, error.Message });
 					break;
 			}
+		}
+		var staleRiders = _remoteRiders.Values
+			.Where(r => r.HasState && MonotonicSeconds() - r.ReceivedAtSeconds > RemoteRiderInterpolator.StaleAfterSeconds)
+			.Select(r => r.RiderId).ToArray();
+		foreach (var riderId in staleRiders)
+		{
+			_remoteRiders.Remove(riderId);
+			_remoteInterpolators.Remove(riderId);
 		}
 		_hudController?.SetMultiplayerStatus(client.IsConnected ? $"Online · {_remoteRiders.Count + 1} rider(s)" : null);
 		if (!client.IsConnected)
@@ -1092,7 +1277,7 @@ public partial class RideSessionNode : Node
 	public bool TryGetCatchUpTarget(string riderId, out MultiplayerRemoteRider rider, out string error)
 	{
 		rider = null!;
-		if (_multiplayerClient?.IsConnected != true) { error = "Multiplayer is disconnected."; return false; }
+		if (_multiplayerProvider?.IsConnected != true) { error = "Multiplayer is disconnected."; return false; }
 		if (_currentRoute is null) { error = "No route is active."; return false; }
 		if (!_remoteInterpolators.TryGetValue(riderId, out var track) ||
 			MonotonicSeconds() - track.LastReceivedAtSeconds > RemoteRiderInterpolator.StaleAfterSeconds ||
@@ -1172,7 +1357,7 @@ public partial class RideSessionNode : Node
 				_hudController?.SetRecordingState(true, true);
 			}
 		}
-		if (_multiplayerClient is { IsConnected: true } client)
+		if (_multiplayerProvider is { IsConnected: true } client)
 		{
 			var reposition = new RiderRepositionedMessage { Sequence = ++_multiplayerSequence,
 				RouteId = route.Id, RouteFingerprint = route.GeometryFingerprint,

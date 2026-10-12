@@ -8,6 +8,7 @@ The Dunedin One-way: Oval to Gardens Loop uses bundled OSM-derived route geometr
 
 Phase 1 server setup, two-client dummy-trainer instructions, protocol and limitations are documented in [docs/multiplayer-phase1.md](docs/multiplayer-phase1.md).
 Phase 2 remote cyclist rendering, Catch Up, FIT segmentation and two-client checks are documented in [docs/multiplayer-phase2.md](docs/multiplayer-phase2.md).
+Phase 3 automatic opt-in online riding, route presence and reconnection are documented in [docs/multiplayer-phase3.md](docs/multiplayer-phase3.md).
 
 ## Developer commands
 

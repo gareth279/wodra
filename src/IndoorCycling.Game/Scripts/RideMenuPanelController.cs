@@ -21,8 +21,12 @@ public partial class RideMenuPanelController : Control
 	private MenuView _view;
 	private Label? _multiplayerStatusLabel;
 	private Label? _multiplayerRidersLabel;
+	private Label? _routePresenceLabel;
 	private Button? _multiplayerJoinButton;
 	private Button? _multiplayerLeaveButton;
+	private Button? _onlineToggleButton;
+	private CheckButton? _advancedMultiplayerToggle;
+	private VBoxContainer? _advancedMultiplayerContainer;
 	private LineEdit? _multiplayerAddressInput;
 	private LineEdit? _multiplayerNameInput;
 	private LineEdit? _multiplayerRoomInput;
@@ -94,21 +98,7 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_content is null) return;
 		_view = view;
-		if (_menuPanel is not null)
-		{
-			var viewport = GetViewportRect().Size;
-			var width = view == MenuView.CatchUpConfirmation
-				? Math.Min(440, Math.Max(280, viewport.X - 32))
-				: 540;
-			var height = view == MenuView.CatchUpConfirmation
-				? Math.Min(260, Math.Max(190, viewport.Y - 32))
-				: 560;
-			_menuPanel.CustomMinimumSize = new Vector2(width, height);
-			_menuPanel.OffsetLeft = -width / 2;
-			_menuPanel.OffsetRight = width / 2;
-			_menuPanel.OffsetTop = -height / 2;
-			_menuPanel.OffsetBottom = height / 2;
-		}
+		ResizeMenuPanel(view);
 		foreach (var child in _content.GetChildren())
 		{
 			_content.RemoveChild(child);
@@ -205,6 +195,23 @@ public partial class RideMenuPanelController : Control
 		}
 	}
 
+	private void ResizeMenuPanel(MenuView view)
+	{
+		if (_menuPanel is null) return;
+		var viewport = GetViewportRect().Size;
+		var width = view == MenuView.CatchUpConfirmation
+			? Math.Min(440, Math.Max(280, viewport.X - 32))
+			: 540;
+		var requestedHeight = view == MenuView.CatchUpConfirmation ? 260 :
+			view == MenuView.Multiplayer && _advancedMultiplayerToggle?.ButtonPressed == true ? 720 : 560;
+		var height = Math.Min(requestedHeight, Math.Max(190, viewport.Y - 32));
+		_menuPanel.CustomMinimumSize = new Vector2(width, height);
+		_menuPanel.OffsetLeft = -width / 2;
+		_menuPanel.OffsetRight = width / 2;
+		_menuPanel.OffsetTop = -height / 2;
+		_menuPanel.OffsetBottom = height / 2;
+	}
+
 	private string CatchUpTitle()
 	{
 		if (_catchUpRiderId is not null && _rideSessionNode?.TryGetCatchUpTarget(_catchUpRiderId, out var rider, out _) == true)
@@ -260,40 +267,65 @@ public partial class RideMenuPanelController : Control
 	{
 		_content!.AddChild(new Label
 		{
-			Text = "Connect riders using the same route data and room code.",
+			Text = "Ride with others on the same route. Your position is shared only while Online Riding is on.",
 			HorizontalAlignment = HorizontalAlignment.Center,
 			AutowrapMode = TextServer.AutowrapMode.WordSmart
 		});
-		_multiplayerAddressInput = AddInputRow("Server", "ws://127.0.0.1:8787/ws");
-		_multiplayerNameInput = AddInputRow("Display name", GameBootstrap.RiderProfile.DisplayName);
-		_multiplayerRoomInput = AddInputRow("Room code", "dunedin");
-		_multiplayerJoinButton = AddAction("Join session", OnJoinMultiplayerPressed);
-		_multiplayerLeaveButton = AddAction("Leave multiplayer", OnLeaveMultiplayerPressed);
+		_onlineToggleButton = AddAction("", OnOnlineTogglePressed);
 		_multiplayerStatusLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
 		_content.AddChild(_multiplayerStatusLabel);
+		_content.AddChild(new Label { Text = $"Public route session · {_rideSessionNode?.CurrentRoute?.Name ?? "No route selected"}", HorizontalAlignment = HorizontalAlignment.Center });
+		AddAction("Check riders on this route", OnCheckRoutePresencePressed);
+		_routePresenceLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_content.AddChild(_routePresenceLabel);
 		_multiplayerRidersLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
 		_content.AddChild(_multiplayerRidersLabel);
 		_multiplayerRiderSelect = new OptionButton();
 		_content.AddChild(_multiplayerRiderSelect);
 		_catchUpButton = AddAction("Catch Up to selected rider", OnCatchUpSelected);
+		_advancedMultiplayerToggle = new CheckButton { Text = "Advanced / Development Multiplayer" };
+		_content.AddChild(_advancedMultiplayerToggle);
+		_advancedMultiplayerContainer = new VBoxContainer { Visible = false };
+		_content.AddChild(_advancedMultiplayerContainer);
+		_multiplayerAddressInput = AddAdvancedInputRow("Server", GameBootstrap.Settings.MultiplayerServerAddress);
+		_multiplayerNameInput = AddAdvancedInputRow("Display name", GameBootstrap.RiderProfile.DisplayName);
+		_multiplayerRoomInput = AddAdvancedInputRow("Room code", "development");
+		_multiplayerJoinButton = AddAdvancedAction("Join development room", OnJoinMultiplayerPressed);
+		_multiplayerLeaveButton = AddAdvancedAction("Go Offline (leave session)", OnLeaveMultiplayerPressed);
+		_advancedMultiplayerToggle.Toggled += expanded =>
+		{
+			_advancedMultiplayerContainer.Visible = expanded;
+			ResizeMenuPanel(MenuView.Multiplayer);
+		};
 		UpdateMultiplayerView();
 	}
 
-	private LineEdit AddInputRow(string label, string initialValue)
+	private LineEdit AddAdvancedInputRow(string label, string initialValue)
 	{
 		var row = new HBoxContainer();
 		row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(94, 0), VerticalAlignment = VerticalAlignment.Center });
 		var input = new LineEdit { Text = initialValue, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
 		row.AddChild(input);
-		_content!.AddChild(row);
+		_advancedMultiplayerContainer!.AddChild(row);
 		return input;
+	}
+
+	private Button AddAdvancedAction(string text, Action action)
+	{
+		var button = new Button { Text = text, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		button.Pressed += action;
+		_advancedMultiplayerContainer!.AddChild(button);
+		return button;
 	}
 
 	private void UpdateMultiplayerView()
 	{
 		if (_multiplayerStatusLabel is null || _multiplayerRidersLabel is null || _rideSessionNode is null) return;
-		_multiplayerStatusLabel.Text = $"{_rideSessionNode.MultiplayerStatus} · {_rideSessionNode.MultiplayerRiders.Count} other rider(s)";
-		_multiplayerJoinButton!.Disabled = _rideSessionNode.IsMultiplayerConnected;
+		_multiplayerStatusLabel.Text = _rideSessionNode.OnlineRidingEnabled
+			? $"Online Riding · {_rideSessionNode.OnlineStatus}"
+			: "Online Riding is off · your ride stays private";
+		_onlineToggleButton!.Text = _rideSessionNode.OnlineRidingEnabled ? "Go Offline" : "Go Online";
+		_multiplayerJoinButton!.Disabled = !_rideSessionNode.OnlineRidingEnabled || _rideSessionNode.IsMultiplayerConnected;
 		_multiplayerLeaveButton!.Disabled = !_rideSessionNode.HasMultiplayerClient;
 		var riders = _rideSessionNode.MultiplayerRiders;
 		_multiplayerRidersLabel.Text = riders.Count == 0 ? "No other riders in this session." : "Connected riders (absolute route distance):";
@@ -323,6 +355,37 @@ public partial class RideMenuPanelController : Control
 				_multiplayerRiderSelect.SetItemText(i, label);
 			}
 			_catchUpButton!.Disabled = riders.Count == 0 || !_rideSessionNode.IsMultiplayerConnected;
+		}
+	}
+
+	private async void OnOnlineTogglePressed()
+	{
+		if (_rideSessionNode is null || _onlineToggleButton is null) return;
+		_onlineToggleButton.Disabled = true;
+		try { await _rideSessionNode.SetOnlineRidingEnabledAsync(!_rideSessionNode.OnlineRidingEnabled); }
+		catch (Exception ex)
+		{
+			GameLogger.Log("multiplayer_online_toggle_failed", new { message = ex.Message });
+			_hudController?.SetStatus($"Online Riding could not be changed: {ex.Message}");
+		}
+		finally { _onlineToggleButton.Disabled = false; UpdateMultiplayerView(); }
+	}
+
+	private async void OnCheckRoutePresencePressed()
+	{
+		if (_rideSessionNode is null || _routePresenceLabel is null) return;
+		_routePresenceLabel.Text = "Checking route session…";
+		try
+		{
+			var presence = await _rideSessionNode.GetCurrentRoutePresenceAsync();
+			_routePresenceLabel.Text = presence.IsAvailable
+				? $"{presence.ActiveRiders ?? 0} active rider(s) on this route."
+				: presence.Message ?? "Route session is unavailable.";
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("multiplayer_route_presence_failed", new { message = ex.Message });
+			_routePresenceLabel.Text = $"Could not check route session: {ex.Message}";
 		}
 	}
 
@@ -398,7 +461,7 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_rideSessionNode is null) return;
 		if (_multiplayerLeaveButton is not null) _multiplayerLeaveButton.Disabled = true;
-		await _rideSessionNode.LeaveMultiplayerAsync();
+		await _rideSessionNode.SetOnlineRidingEnabledAsync(false);
 		UpdateMultiplayerView();
 	}
 

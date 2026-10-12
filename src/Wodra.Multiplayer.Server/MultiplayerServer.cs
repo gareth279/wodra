@@ -19,6 +19,14 @@ public static class MultiplayerServer
         var app = builder.Build();
         app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
         app.MapGet("/healthz", () => Results.Ok(new { status = "ok", protocolVersion = MultiplayerProtocol.CurrentVersion }));
+        app.MapGet("/presence", (string routeId, string routeFingerprint, SessionRegistry sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(routeId) || routeId.Length > 80 ||
+                routeFingerprint is not { Length: 64 } || !routeFingerprint.All(Uri.IsHexDigit))
+                return Results.BadRequest(new { error = "Valid routeId and routeFingerprint are required." });
+            return Results.Ok(new { routeId, routeFingerprint = routeFingerprint.ToLowerInvariant(),
+                activeRiders = sessions.GetPublicActiveRiderCount(routeId, routeFingerprint) });
+        });
         app.Map("/ws", HandleWebSocketAsync);
         return app;
     }
@@ -90,7 +98,17 @@ public static class MultiplayerServer
                     }
                     connection.LastSequence = reposition.Sequence;
                     connection.LastRepositionAtMs = repositionNow;
-                    connection.LastStateAtMs = repositionNow;
+                    lock (room!.Clients)
+                    {
+                        connection.LastStateAtMs = repositionNow;
+                        connection.LastState = new RiderStateMessage
+                        {
+                            RiderId = connection.RiderId, DisplayName = connection.DisplayName,
+                            DistanceMeters = reposition.DistanceMeters, SpeedKph = reposition.SpeedKph,
+                            CadenceRpm = reposition.CadenceRpm, PowerWatts = reposition.PowerWatts,
+                            Paused = reposition.Paused, Sequence = reposition.Sequence
+                        };
+                    }
                     await registry.BroadcastRepositionAsync(room, connection, reposition with { DisplayName = connection.DisplayName }, context.RequestAborted);
                     continue;
                 }
@@ -112,8 +130,12 @@ public static class MultiplayerServer
                 }
                 if (state.Sequence <= connection.LastSequence) continue;
                 connection.LastSequence = state.Sequence;
-                connection.LastStateAtMs = now;
                 var sanitized = state with { DisplayName = connection.DisplayName };
+                lock (room!.Clients)
+                {
+                    connection.LastStateAtMs = now;
+                    connection.LastState = sanitized;
+                }
                 await registry.BroadcastStateAsync(room, connection, sanitized, context.RequestAborted);
             }
         }
@@ -186,6 +208,20 @@ public sealed class SessionRegistry
         }
     }
 
+    public int GetPublicActiveRiderCount(string routeId, string routeFingerprint)
+    {
+        lock (_gate)
+        {
+            var key = $"{routeId}\npublic";
+            if (!_rooms.TryGetValue(key, out var room) ||
+                !string.Equals(room.Fingerprint, routeFingerprint, StringComparison.OrdinalIgnoreCase)) return 0;
+            var now = Environment.TickCount64;
+            lock (room.Clients)
+                return room.Clients.Count(client => client.LastState is { Paused: false } &&
+                    now - client.LastStateAtMs <= 6_000);
+        }
+    }
+
     public Task BroadcastStateAsync(RoomSession? room, ClientConnection sender, RiderStateMessage state, CancellationToken cancellationToken) =>
         room is null ? Task.CompletedTask : BroadcastAsync(room, sender, state, cancellationToken);
 
@@ -235,6 +271,7 @@ public sealed class ClientConnection(WebSocket socket)
     public long LastSequence { get; set; } = -1;
     public long LastStateAtMs { get; set; }
     public long LastRepositionAtMs { get; set; }
+    public RiderStateMessage? LastState { get; set; }
 
     public Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken) =>
         SendBytesAsync(MultiplayerProtocol.Serialize(message), cancellationToken);
