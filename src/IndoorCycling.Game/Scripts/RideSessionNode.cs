@@ -7,6 +7,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using IndoorCycling.Game.Multiplayer;
+using Wodra.Multiplayer.Protocol;
 
 public partial class RideSessionNode : Node
 {
@@ -71,6 +74,14 @@ public partial class RideSessionNode : Node
 	private double _trainerCommandElapsedSeconds;
 	private double? _lastSentTrainerGradientPercent;
 	private bool _trainerCommandDirty = true;
+	private MultiplayerClient? _multiplayerClient;
+	private readonly Dictionary<string, MultiplayerRemoteRider> _remoteRiders = new(StringComparer.Ordinal);
+	private double _multiplayerPublishElapsed;
+	private long _multiplayerSequence;
+	public string MultiplayerStatus => _multiplayerClient?.Status ?? "Disconnected";
+	public bool IsMultiplayerConnected => _multiplayerClient?.IsConnected == true;
+	public bool HasMultiplayerClient => _multiplayerClient?.HasClient == true;
+	public IReadOnlyList<MultiplayerRemoteRider> MultiplayerRiders => _remoteRiders.Values.ToArray();
 
 	private const double TrainerCommandMinIntervalSeconds = 1.0;
 	private const double TrainerGradientChangeThresholdPercent = 0.1;
@@ -298,6 +309,7 @@ public partial class RideSessionNode : Node
 			}
 			finally
 			{
+				await LeaveMultiplayerAsync();
 				if (_fitReplayClient is not null)
 					await _fitReplayClient.DisconnectAsync();
 				_fitReplayClient = null;
@@ -867,10 +879,81 @@ public partial class RideSessionNode : Node
 
 		if (_trainerSessionActive) ProcessTrainerMode(delta);
 		else if (_fitReplaySessionActive) ProcessFitReplayMode(delta);
+		ProcessMultiplayer(delta);
 
 		if (_trainerSessionActive || _fitReplaySessionActive)
 			_activityAccumulator.AddFrame(activeDelta, _rideState.VirtualSpeedKph, _lastTelemetry?.PowerWatts, _lastTelemetry?.CadenceRpm, _rideState.ElevationGainMeters);
 		if (_debugDiagnostics.Enabled && _debugDiagnostics.SnapshotDue(delta)) WriteDebugSnapshot();
+	}
+
+	public async Task JoinMultiplayerAsync(string address, string displayName, string roomCode)
+	{
+		if (!_sessionStarted || _currentRoute is null)
+			throw new InvalidOperationException("Start a ride and select a route before joining multiplayer.");
+		await LeaveMultiplayerAsync();
+		var client = new MultiplayerClient();
+		_multiplayerClient = client;
+		_remoteRiders.Clear();
+		_multiplayerPublishElapsed = 0;
+		_multiplayerSequence = 0;
+		try { await client.ConnectAsync(address, displayName, roomCode, _currentRoute); }
+		catch
+		{
+			throw;
+		}
+	}
+
+	public async Task LeaveMultiplayerAsync()
+	{
+		var client = _multiplayerClient;
+		_multiplayerClient = null;
+		_remoteRiders.Clear();
+		if (client is not null) await client.DisposeAsync();
+	}
+
+	private void ProcessMultiplayer(double delta)
+	{
+		var client = _multiplayerClient;
+		if (client is null) return;
+		foreach (var message in client.DrainEvents())
+		{
+			switch (message)
+			{
+				case RiderJoinedMessage joined:
+					_remoteRiders[joined.Rider.RiderId] = new MultiplayerRemoteRider(joined.Rider.RiderId,
+						joined.Rider.DisplayName, null, null, null, false, false);
+					break;
+				case RiderStateMessage state when state.RiderId != client.RiderId:
+					_remoteRiders[state.RiderId] = new MultiplayerRemoteRider(state.RiderId, state.DisplayName,
+						state.DistanceMeters, state.SpeedKph, state.PowerWatts, state.Paused, true);
+					break;
+				case RiderLeftMessage left:
+					_remoteRiders.Remove(left.RiderId);
+					break;
+				case ErrorMessage error:
+					GameLogger.Log("multiplayer_server_error", new { error.Code, error.Message });
+					break;
+			}
+		}
+		if (!client.IsConnected)
+		{
+			_remoteRiders.Clear();
+			return;
+		}
+		if (!_sessionStarted) return;
+		_multiplayerPublishElapsed += delta;
+		if (_multiplayerPublishElapsed < 0.15) return;
+		_multiplayerPublishElapsed = 0;
+		client.TryQueueState(new RiderStateMessage
+		{
+			DisplayName = client.DisplayName,
+			DistanceMeters = Math.Max(0, _rideState.DistanceMeters),
+			SpeedKph = _pauseGate.IsPaused ? 0 : Math.Max(0, _rideState.VirtualSpeedKph),
+			CadenceRpm = _pauseGate.IsPaused ? 0 : Math.Max(0, _rideState.CurrentCadenceRpm),
+			PowerWatts = Math.Max(0, _rideState.CurrentPowerWatts),
+			Paused = _pauseGate.IsPaused,
+			Sequence = ++_multiplayerSequence
+		});
 	}
 
 	private void ProcessTrainerMode(double delta)
@@ -1013,3 +1096,6 @@ public partial class RideSessionNode : Node
 	}
 
 }
+
+public sealed record MultiplayerRemoteRider(string RiderId, string DisplayName, double? DistanceMeters,
+	double? SpeedKph, int? PowerWatts, bool Paused, bool HasState);

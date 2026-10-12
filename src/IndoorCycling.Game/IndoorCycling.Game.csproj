@@ -19,6 +19,7 @@
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />    
     <ProjectReference Include="..\IndoorCycling.Trainer.Windows\IndoorCycling.Trainer.Windows.csproj" />
+    <ProjectReference Include="..\Wodra.Multiplayer.Protocol\Wodra.Multiplayer.Protocol.csproj" />
 </ItemGroup>
 
   <ItemGroup>

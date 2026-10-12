@@ -1,10 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 
 public partial class RideMenuPanelController : Control
 {
-	private enum MenuView { Closed, Main, Settings, Display, Confirmation }
+	private enum MenuView { Closed, Main, Settings, Display, Multiplayer, Confirmation }
 
 	private RideSessionNode? _rideSessionNode;
 	private HudController? _hudController;
@@ -17,6 +18,13 @@ public partial class RideMenuPanelController : Control
 	private Button? _endRideButton;
 	private bool _endingRide;
 	private MenuView _view;
+	private Label? _multiplayerStatusLabel;
+	private Label? _multiplayerRidersLabel;
+	private Button? _multiplayerJoinButton;
+	private Button? _multiplayerLeaveButton;
+	private LineEdit? _multiplayerAddressInput;
+	private LineEdit? _multiplayerNameInput;
+	private LineEdit? _multiplayerRoomInput;
 
 	public bool IsMenuVisible => _view != MenuView.Closed;
 
@@ -30,6 +38,11 @@ public partial class RideMenuPanelController : Control
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
 		_content = GetNode<VBoxContainer>("PanelContainer/VBoxContainer");
 		Hide();
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_view == MenuView.Multiplayer) UpdateMultiplayerView();
 	}
 
 	public void ShowInRideMenu()
@@ -76,6 +89,7 @@ public partial class RideMenuPanelController : Control
 				MenuView.Main => "Ride Menu",
 				MenuView.Settings => "Settings",
 				MenuView.Display => "HUD & Display",
+				MenuView.Multiplayer => "Multiplayer",
 				_ => "End this ride?"
 			},
 			HorizontalAlignment = HorizontalAlignment.Center
@@ -90,6 +104,7 @@ public partial class RideMenuPanelController : Control
 				AddAction("Continue Riding", CloseMenu);
 				AddAction("Settings", () => ShowView(MenuView.Settings));
 				AddAction("HUD & Display", () => ShowView(MenuView.Display));
+				AddAction("Multiplayer", () => ShowView(MenuView.Multiplayer));
 				AddAction("End Ride", ShowEndRideConfirmation);
 				break;
 			case MenuView.Settings:
@@ -106,6 +121,10 @@ public partial class RideMenuPanelController : Control
 				#endif
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
+				AddAction("Back", () => ShowView(MenuView.Main));
+				break;
+			case MenuView.Multiplayer:
+				BuildMultiplayerView();
 				AddAction("Back", () => ShowView(MenuView.Main));
 				break;
 			case MenuView.Display:
@@ -141,6 +160,74 @@ public partial class RideMenuPanelController : Control
 		}
 		Show();
 		MoveToFront();
+	}
+
+	private void BuildMultiplayerView()
+	{
+		_content!.AddChild(new Label
+		{
+			Text = "Connect riders using the same route data and room code.",
+			HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart
+		});
+		_multiplayerAddressInput = AddInputRow("Server", "ws://127.0.0.1:8787/ws");
+		_multiplayerNameInput = AddInputRow("Display name", GameBootstrap.RiderProfile.DisplayName);
+		_multiplayerRoomInput = AddInputRow("Room code", "dunedin");
+		_multiplayerJoinButton = AddAction("Join session", OnJoinMultiplayerPressed);
+		_multiplayerLeaveButton = AddAction("Leave multiplayer", OnLeaveMultiplayerPressed);
+		_multiplayerStatusLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_content.AddChild(_multiplayerStatusLabel);
+		_multiplayerRidersLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_content.AddChild(_multiplayerRidersLabel);
+		UpdateMultiplayerView();
+	}
+
+	private LineEdit AddInputRow(string label, string initialValue)
+	{
+		var row = new HBoxContainer();
+		row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(94, 0), VerticalAlignment = VerticalAlignment.Center });
+		var input = new LineEdit { Text = initialValue, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+		row.AddChild(input);
+		_content!.AddChild(row);
+		return input;
+	}
+
+	private void UpdateMultiplayerView()
+	{
+		if (_multiplayerStatusLabel is null || _multiplayerRidersLabel is null || _rideSessionNode is null) return;
+		_multiplayerStatusLabel.Text = $"{_rideSessionNode.MultiplayerStatus} · {_rideSessionNode.MultiplayerRiders.Count} other rider(s)";
+		_multiplayerJoinButton!.Disabled = _rideSessionNode.IsMultiplayerConnected;
+		_multiplayerLeaveButton!.Disabled = !_rideSessionNode.HasMultiplayerClient;
+		var riders = _rideSessionNode.MultiplayerRiders;
+		_multiplayerRidersLabel.Text = riders.Count == 0 ? "No other riders in this session." : string.Join("\n", riders.Select(rider =>
+			rider.HasState
+				? $"{rider.DisplayName} · {rider.DistanceMeters:0} m · {rider.SpeedKph:0.0} km/h · {rider.PowerWatts} W · {(rider.Paused ? "Paused" : "Riding")}"
+				: $"{rider.DisplayName} · Connected · waiting for rider data"));
+	}
+
+	private async void OnJoinMultiplayerPressed()
+	{
+		if (_rideSessionNode is null || _multiplayerAddressInput is null || _multiplayerNameInput is null || _multiplayerRoomInput is null) return;
+		if (_multiplayerJoinButton is not null) _multiplayerJoinButton.Disabled = true;
+		if (_multiplayerStatusLabel is not null) _multiplayerStatusLabel.Text = "Connecting…";
+		try
+		{
+			await _rideSessionNode.JoinMultiplayerAsync(_multiplayerAddressInput.Text,
+				_multiplayerNameInput.Text, _multiplayerRoomInput.Text);
+		}
+		catch (Exception ex)
+		{
+			if (_multiplayerStatusLabel is not null) _multiplayerStatusLabel.Text = $"Could not join: {ex.Message}";
+		}
+		UpdateMultiplayerView();
+	}
+
+	private async void OnLeaveMultiplayerPressed()
+	{
+		if (_rideSessionNode is null) return;
+		if (_multiplayerLeaveButton is not null) _multiplayerLeaveButton.Disabled = true;
+		await _rideSessionNode.LeaveMultiplayerAsync();
+		UpdateMultiplayerView();
 	}
 
 	private void AddDummyTrainerSettings()
