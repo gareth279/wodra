@@ -66,6 +66,11 @@ public partial class StartPanelController : Control
 		{
 			_updatePanel = new VelopackUpdatePanel();
 			startupColumn.AddChild(_updatePanel);
+			// Keep update status/actions with the startup choices, before the terminal
+			// Quit action, rather than extending the menu below it.
+			var quitButton = startupColumn.GetNodeOrNull<Button>("QuitButton");
+			if (quitButton is not null)
+				startupColumn.MoveChild(_updatePanel, quitButton.GetIndex());
 			_updatePanel.Attach();
 		}
 		if (_onlineRidingCheckButton is not null)

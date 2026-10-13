@@ -10,27 +10,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Velopack;
 
 public partial class GameBootstrap : Node
 {
-	public override void _EnterTree()
-	{
-		// Godot owns Main(), so run Velopack's supported install/update/uninstall
-		// hooks at the earliest scene lifecycle point, before any gameplay nodes start.
-		try
-		{
-			VelopackApp.Build()
-				.SetArgs(System.Environment.GetCommandLineArgs().Skip(1).ToArray())
-				.Run();
-		}
-		catch (Exception ex)
-		{
-			GD.PushError($"Wodra installation hook failed: {ex.Message}");
-			throw;
-		}
-	}
-
 	public enum SessionMode
 	{
 		None,

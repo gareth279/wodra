@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.Multiplayer.Integrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.Multiplayer.Protocol.Tests", "tests\Wodra.Multiplayer.Protocol.Tests\Wodra.Multiplayer.Protocol.Tests.csproj", "{A91EB136-DB9C-40E2-A145-CCDC4C44DD94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.Update.Tests", "tests\Wodra.Update.Tests\Wodra.Update.Tests.csproj", "{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -229,6 +231,18 @@ Global
 		{A91EB136-DB9C-40E2-A145-CCDC4C44DD94}.Release|x64.Build.0 = Release|Any CPU
 		{A91EB136-DB9C-40E2-A145-CCDC4C44DD94}.Release|x86.ActiveCfg = Release|Any CPU
 		{A91EB136-DB9C-40E2-A145-CCDC4C44DD94}.Release|x86.Build.0 = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|x64.Build.0 = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Debug|x86.Build.0 = Debug|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x64.ActiveCfg = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x64.Build.0 = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x86.ActiveCfg = Release|Any CPU
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -249,6 +263,7 @@ Global
 		{708A1045-D7A2-4A71-8A81-C7BF07B45AB0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B77AC15C-D5F5-4F05-8B58-3D8B5EEF279D} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{A91EB136-DB9C-40E2-A145-CCDC4C44DD94} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9B4DDF9E-AAEC-4638-89A4-64D030C1F24F}
