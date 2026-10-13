@@ -41,6 +41,8 @@ var tests = new (string Name, Action Run)[]
     ,("Catch-up speed falls back safely for stale invalid stationary and paused targets", CatchUpSpeedFallbacks)
     ,("Trainer difficulty scales signed grades and preserves actual ride physics", TrainerDifficultyScalesSignedGrades)
     ,("Catch-up grade transition is gradual and safely replaceable", CatchUpTrainerGradeTransition)
+    ,("Trainer readiness requires successful setup and ignores stale attempt results", TrainerConnectionReadiness)
+    ,("GATT discovery initiates the link before connection status is required", GattDiscoveryStartsConnection)
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
     ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
     ,("EOS lobby UI status distinguishes membership and P2P phases", EosLobbyStatusPhases)
@@ -224,6 +226,68 @@ static void CatchUpTrainerGradeTransition()
     Near(4, pausedValue, 1e-9);
     transition.Cancel(4);
     if (transition.IsActive) throw new Exception("Disconnected transition was not cancelled.");
+}
+
+static void TrainerConnectionReadiness()
+{
+    var state = new TrainerConnectionState();
+    if (state.CanContinue) throw new Exception("Idle state was marked ready.");
+
+    var firstAttempt = state.BeginAttempt();
+    if (state.Phase != TrainerConnectionPhase.Scanning || state.CanContinue) throw new Exception("Scanning was marked ready.");
+    state.SetPhase(firstAttempt, TrainerConnectionPhase.NoTrainer);
+    if (state.CanContinue) throw new Exception("No-trainer state was marked ready.");
+
+    var retryAttempt = state.BeginAttempt();
+    if (state.SetPhase(firstAttempt, TrainerConnectionPhase.Ready)) throw new Exception("A stale attempt changed the current state.");
+    if (state.Phase != TrainerConnectionPhase.Scanning || state.CanContinue) throw new Exception("Retry did not return to scanning state.");
+    state.SetPhase(retryAttempt, TrainerConnectionPhase.Connecting);
+    state.SetPhase(retryAttempt, TrainerConnectionPhase.SettingUp);
+    if (state.CanContinue) throw new Exception("Connection without setup was marked ready.");
+    state.SetPhase(retryAttempt, TrainerConnectionPhase.Failed, "telemetry subscription failed");
+    if (state.CanContinue) throw new Exception("Setup failure was marked ready.");
+
+    var successfulAttempt = state.BeginAttempt();
+    state.SetPhase(successfulAttempt, TrainerConnectionPhase.Connecting);
+    state.SetPhase(successfulAttempt, TrainerConnectionPhase.SettingUp);
+    state.SetPhase(successfulAttempt, TrainerConnectionPhase.Ready);
+    if (!state.CanContinue) throw new Exception("Successful setup was not ready while stationary.");
+    state.SetPhase(successfulAttempt, TrainerConnectionPhase.Disconnected);
+    if (state.CanContinue) throw new Exception("Disconnect did not clear readiness.");
+
+    var demoAttempt = state.BeginAttempt();
+    state.SetPhase(demoAttempt, TrainerConnectionPhase.Demo);
+    if (!state.CanContinue || state.Phase != TrainerConnectionPhase.Demo) throw new Exception("Demo mode was not separately recognized.");
+}
+
+static void GattDiscoveryStartsConnection()
+{
+    var connected = false;
+    var discoveryStartedWhileDisconnected = false;
+    var serviceResult = GattConnectionSequence.DiscoverAndWaitForConnectionAsync(
+        _ =>
+        {
+            discoveryStartedWhileDisconnected = !connected;
+            connected = true; // Model Windows raising ConnectionStatusChanged after GATT is requested.
+            return Task.FromResult("FTMS service discovered");
+        },
+        () => connected,
+        TimeSpan.FromSeconds(1),
+        TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+
+    if (!discoveryStartedWhileDisconnected || serviceResult != "FTMS service discovered")
+        throw new Exception("The sequence required a connected flag before starting GATT discovery.");
+
+    try
+    {
+        GattConnectionSequence.DiscoverAndWaitForConnectionAsync(
+            _ => Task.FromResult("GATT operation completed"),
+            () => false,
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromMilliseconds(100)).GetAwaiter().GetResult();
+        throw new Exception("A link that stayed disconnected was accepted.");
+    }
+    catch (TimeoutException) { }
 }
 
 static void PausedCatchUpResumeSpeed()

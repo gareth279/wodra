@@ -24,7 +24,9 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     private ulong? _lastSeenAddress;
     private string? _lastSeenName;
 
-    public bool IsConnected => _device is not null;
+    public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
+
+    public event Action? Disconnected;
 
     public event Action<object>? DebugEvent;
 
@@ -32,6 +34,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
     private (double Minimum, double Maximum)? _supportedInclinationRangePercent;
+    private TaskCompletionSource<byte[]>? _pendingControlPointResponse;
     public double? LastRequestedSimulationGradePercent { get; private set; }
     public double? LastAppliedSimulationGradePercent { get; private set; }
     private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
@@ -64,8 +67,14 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _supportedInclinationRangePercent = null;
         LastRequestedSimulationGradePercent = null;
         LastAppliedSimulationGradePercent = null;
+        _pendingControlPointResponse?.TrySetCanceled(cancellationToken);
+        _pendingControlPointResponse = null;
 
-        _device?.Dispose();
+        if (_device is not null)
+        {
+            _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
+            _device.Dispose();
+        }
         _device = null;
 
         Console.WriteLine("BLE trainer disconnected.");
@@ -198,6 +207,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
+        _lastSeenAddress = null;
+        _lastSeenName = null;
         var found = new Dictionary<ulong, BleDiscoveredDevice>();
 
         void Handler(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args)
@@ -214,11 +225,6 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
             found[args.BluetoothAddress] = item;
 
-            if (LooksLikeTrainer(name, uuids))
-            {
-                _lastSeenAddress = args.BluetoothAddress;
-                _lastSeenName = string.IsNullOrWhiteSpace(name) ? "(unnamed device)" : name;
-            }
         }
 
         var watcher = new BluetoothLEAdvertisementWatcher
@@ -245,22 +251,34 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             .OrderByDescending(x => x.Rssi)
             .ToList();
 
-        Console.WriteLine($"Found {results.Count} BLE device(s).");
+        var compatible = results.Where(x => LooksLikeTrainer(x.Name, x.ServiceUuids)).ToList();
+        if (compatible.Count > 0)
+        {
+            _lastSeenAddress = compatible[0].BluetoothAddress;
+            _lastSeenName = string.IsNullOrWhiteSpace(compatible[0].Name) ? "(unnamed device)" : compatible[0].Name;
+            EmitDebug("trainer_selected", new { address = FormatAddress(compatible[0].BluetoothAddress), name = _lastSeenName, rssi = compatible[0].Rssi, services = compatible[0].ServiceUuids });
+        }
+        else EmitDebug("trainer_not_found", new { discoveredDeviceCount = results.Count });
+
+        foreach (var candidate in compatible)
+            EmitDebug("trainer_discovered", new { address = FormatAddress(candidate.BluetoothAddress), name = candidate.Name, rssi = candidate.Rssi, services = candidate.ServiceUuids });
+
+        Console.WriteLine($"Found {results.Count} BLE device(s), {compatible.Count} compatible trainer(s).");
 
         foreach (var d in results)
         {
             Console.WriteLine($"- {FormatAddress(d.BluetoothAddress)} | {d.Name} | RSSI {d.Rssi} | Services: {string.Join(", ", d.ServiceUuids)}");
         }
 
-        return results;
+        return compatible;
     }
 
     public async Task ConnectToLastSeenDeviceAsync(CancellationToken cancellationToken = default)
     {
         if (_lastSeenAddress is null)
         {
-            Console.WriteLine("No BLE trainer candidate has been discovered yet.");
-            return;
+            EmitDebug("trainer_connection_stage_failed", new { stage = "selection", reason = "no_compatible_trainer" });
+            throw new InvalidOperationException("No compatible trainer was found during scanning.");
         }
 
         await ConnectToDeviceAsync(_lastSeenAddress.Value, cancellationToken);
@@ -268,30 +286,49 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task ConnectToDeviceAsync(ulong bluetoothAddress, CancellationToken cancellationToken = default)
     {
-        _device?.Dispose();
+        if (_device is not null)
+        {
+            _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
+            _device.Dispose();
+        }
         _device = null;
 
-        Console.WriteLine($"Connecting to {FormatAddress(bluetoothAddress)} ...");
-
-        var device = await BluetoothLEDevice.FromBluetoothAddressAsync(bluetoothAddress);
-
-        if (device is null)
+        var stage = "ble_device_creation";
+        EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress) });
+        try
         {
-            Console.WriteLine("Failed to create BluetoothLEDevice.");
-            return;
+            var device = await BluetoothLEDevice.FromBluetoothAddressAsync(bluetoothAddress)
+                .AsTask(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(12), cancellationToken);
+
+            if (device is null)
+                throw new InvalidOperationException("Windows could not create a BLE device for the discovered trainer.");
+
+            _device = device;
+            _device.ConnectionStatusChanged += OnConnectionStatusChanged;
+            EmitDebug("ble_device_created", new { address = FormatAddress(bluetoothAddress), name = device.Name, connectionStatus = device.ConnectionStatus.ToString() });
+            Console.WriteLine($"BLE device created: {device.Name}, status={device.ConnectionStatus}");
+
+            // Windows does not necessarily establish the BLE link when the device
+            // object is created. Uncached GATT discovery is the operation that
+            // initiates the connection, so do that before requiring Connected.
+            stage = "ftms_gatt_service_discovery";
+            EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress), connectionStatus = device.ConnectionStatus.ToString() });
+            await ResolveFtmsCharacteristicsAsync(cancellationToken);
+            EnsureConnected();
+            EmitDebug("connect", new { address = FormatAddress(bluetoothAddress), name = device.Name, connectionStatus = device.ConnectionStatus.ToString() });
         }
-
-        _device = device;
-
-        Console.WriteLine($"Connected to device: {device.Name}");
-
-        EmitDebug("connect", new
+        catch (Exception ex)
         {
-            address = FormatAddress(bluetoothAddress),
-            name = device.Name
-        });
-
-        await ResolveFtmsCharacteristicsAsync(cancellationToken);
+            EmitDebug("trainer_connection_stage_failed", new { stage, reason = ex.Message, exceptionType = ex.GetType().FullName, connectionStatus = _device?.ConnectionStatus.ToString() });
+            if (_device is not null)
+            {
+                _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
+                _device.Dispose();
+                _device = null;
+            }
+            throw;
+        }
 
         // Later:
         // - enumerate GATT services
@@ -303,10 +340,10 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task ResolveFtmsCharacteristicsAsync(CancellationToken cancellationToken = default)
     {
-        if (_device is null)
+        var device = _device;
+        if (device is null)
         {
-            Console.WriteLine("No BLE device connected.");
-            return;
+            throw new InvalidOperationException("Cannot configure FTMS because the trainer is disconnected.");
         }
 
         var ftmsUuid = Guid.Parse("00001826-0000-1000-8000-00805f9b34fb");
@@ -315,24 +352,52 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         var fitnessMachineControlPointUuid = Guid.Parse("00002ad9-0000-1000-8000-00805f9b34fb");
         var supportedInclinationRangeUuid = Guid.Parse("00002ad5-0000-1000-8000-00805f9b34fb");
 
-        var servicesResult = await _device.GetGattServicesForUuidAsync(ftmsUuid, BluetoothCacheMode.Cached);
+        GattDeviceServicesResult servicesResult;
+        try
+        {
+            servicesResult = await GattConnectionSequence.DiscoverAndWaitForConnectionAsync(
+                async token =>
+                {
+                    EmitDebug("gatt_discovery_started", new { stage = "ftms_service", serviceUuid = ftmsUuid, cacheMode = "Uncached", connectionStatus = device.ConnectionStatus.ToString() });
+                    var result = await device.GetGattServicesForUuidAsync(ftmsUuid, BluetoothCacheMode.Uncached)
+                        .AsTask(token)
+                        .WaitAsync(TimeSpan.FromSeconds(15), token);
+                    EmitDebug("gatt_discovery_result", new { stage = "ftms_service", status = result.Status.ToString(), serviceCount = result.Services.Count, communicationError = result.ProtocolError, connectionStatus = device.ConnectionStatus.ToString() });
+                    if (result.Status != GattCommunicationStatus.Success)
+                        throw new InvalidOperationException($"FTMS GATT service discovery failed ({result.Status}, protocol error {result.ProtocolError?.ToString() ?? "none"}).");
+                    return result;
+                },
+                () => device.ConnectionStatus == BluetoothConnectionStatus.Connected,
+                TimeSpan.FromSeconds(18),
+                TimeSpan.FromSeconds(6),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            EmitDebug("gatt_discovery_error", new { stage = "ftms_service", reason = ex.Message, exceptionType = ex.GetType().FullName, connectionStatus = device.ConnectionStatus.ToString() });
+            throw;
+        }
 
         if (servicesResult.Status != GattCommunicationStatus.Success || servicesResult.Services.Count == 0)
         {
             Console.WriteLine($"Could not access FTMS service: {servicesResult.Status}");
-            return;
+            throw new InvalidOperationException($"Trainer FTMS service is unavailable ({servicesResult.Status}).");
         }
 
         var ftmsService = servicesResult.Services[0];
         Console.WriteLine("FTMS service found.");
         EmitDebug("ftms_service_found", new { serviceUuid = ftmsUuid });
 
-        var charsResult = await ftmsService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
+        EmitDebug("gatt_discovery_started", new { stage = "ftms_characteristics", serviceUuid = ftmsUuid, cacheMode = "Uncached" });
+        var charsResult = await ftmsService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached)
+            .AsTask(cancellationToken)
+            .WaitAsync(TimeSpan.FromSeconds(12), cancellationToken);
+        EmitDebug("gatt_discovery_result", new { stage = "ftms_characteristics", status = charsResult.Status.ToString(), characteristicCount = charsResult.Characteristics.Count, communicationError = charsResult.ProtocolError });
 
         if (charsResult.Status != GattCommunicationStatus.Success)
         {
             Console.WriteLine($"Could not access FTMS characteristics: {charsResult.Status}");
-            return;
+            throw new InvalidOperationException($"Could not read trainer FTMS characteristics ({charsResult.Status}).");
         }
 
         _ftmsIndoorBikeDataCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == indoorBikeDataUuid);
@@ -340,6 +405,19 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _ftmsControlPointCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineControlPointUuid);
         var supportedInclinationRange = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == supportedInclinationRangeUuid);
         _supportedInclinationRangePercent = await ReadSupportedInclinationRangeAsync(supportedInclinationRange, cancellationToken);
+
+        EmitDebug("ftms_required_characteristics", new
+        {
+            indoorBikeDataFound = _ftmsIndoorBikeDataCharacteristic is not null,
+            indoorBikeDataProperties = _ftmsIndoorBikeDataCharacteristic?.CharacteristicProperties.ToString(),
+            controlPointFound = _ftmsControlPointCharacteristic is not null,
+            controlPointProperties = _ftmsControlPointCharacteristic?.CharacteristicProperties.ToString()
+        });
+
+        if (_ftmsIndoorBikeDataCharacteristic is null)
+            throw new InvalidOperationException("Trainer is missing the required FTMS Indoor Bike Data characteristic.");
+        if (_ftmsControlPointCharacteristic is null)
+            throw new InvalidOperationException("Trainer is missing the required FTMS Control Point characteristic.");
 
         Console.WriteLine($"Indoor Bike Data char found: {_ftmsIndoorBikeDataCharacteristic is not null}");
         Console.WriteLine($"Fitness Machine Status char found: {_ftmsFitnessMachineStatusCharacteristic is not null}");
@@ -360,7 +438,9 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         if (characteristic is null) return null;
         try
         {
-            var result = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached).AsTask(cancellationToken);
+            var result = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached)
+                .AsTask(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
             if (result.Status != GattCommunicationStatus.Success || result.Value.Length < 6) return null;
             var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(result.Value);
             var bytes = new byte[checked((int)reader.UnconsumedBufferLength)];
@@ -377,10 +457,10 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
         if (_ftmsIndoorBikeDataCharacteristic is null)
         {
-            Console.WriteLine("FTMS Indoor Bike Data characteristic is not resolved.");
-            return;
+            throw new InvalidOperationException("FTMS Indoor Bike Data characteristic is not resolved.");
         }
 
         _ftmsIndoorBikeDataCharacteristic.ValueChanged -= OnFtmsIndoorBikeDataChanged;
@@ -388,18 +468,23 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
         var status = await _ftmsIndoorBikeDataCharacteristic
             .WriteClientCharacteristicConfigurationDescriptorAsync(
-                GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                GattClientCharacteristicConfigurationDescriptorValue.Notify)
+            .AsTask(cancellationToken)
+            .WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
         Console.WriteLine($"Subscribe FTMS telemetry result: {status}");
         EmitDebug("subscribe_ftms_telemetry", new { status = status.ToString() });
+        EmitDebug(status == GattCommunicationStatus.Success ? "ftms_telemetry_subscription_succeeded" : "ftms_telemetry_subscription_failed", new { status = status.ToString(), communicationError = status.ToString() });
+        if (status != GattCommunicationStatus.Success)
+            throw new InvalidOperationException($"Trainer telemetry subscription failed ({status}).");
     }
 
     public async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
         if (_ftmsControlPointCharacteristic is null)
         {
-            Console.WriteLine("FTMS Control Point characteristic is not resolved.");
-            return;
+            throw new InvalidOperationException("FTMS Control Point characteristic is not resolved.");
         }
 
         _ftmsControlPointCharacteristic.ValueChanged -= OnFtmsControlPointChanged;
@@ -407,15 +492,42 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
         var status = await _ftmsControlPointCharacteristic
             .WriteClientCharacteristicConfigurationDescriptorAsync(
-                GattClientCharacteristicConfigurationDescriptorValue.Indicate);
+                GattClientCharacteristicConfigurationDescriptorValue.Indicate)
+            .AsTask(cancellationToken)
+            .WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
         Console.WriteLine($"Subscribe FTMS control point result: {status}");
         EmitDebug("subscribe_control_point", new { status = status.ToString() });
+        EmitDebug(status == GattCommunicationStatus.Success ? "ftms_control_subscription_succeeded" : "ftms_control_subscription_failed", new { status = status.ToString(), communicationError = status.ToString() });
+        if (status != GattCommunicationStatus.Success)
+            throw new InvalidOperationException($"Trainer control subscription failed ({status}).");
     }
 
     public async Task RequestControlAsync(CancellationToken cancellationToken = default)
     {
-        await WriteControlPointAsync(new byte[] { 0x00 }, cancellationToken);
+        EnsureConnected();
+        var response = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingControlPointResponse = response;
+        try
+        {
+            await WriteControlPointAsync(new byte[] { 0x00 }, cancellationToken);
+            var data = await response.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            if (data.Length < 3 || data[0] != 0x80 || data[1] != 0x00 || data[2] != 0x01)
+            {
+                EmitDebug("ftms_control_acknowledgement_failed", new { response = BitConverter.ToString(data), opcode = data.Length > 1 ? data[1] : (byte?)null, result = data.Length > 2 ? data[2] : (byte?)null });
+                throw new InvalidOperationException($"Trainer rejected FTMS control request ({BitConverter.ToString(data)}).");
+            }
+            EmitDebug("ftms_control_acknowledgement_succeeded", new { opcode = (byte)0x00, result = (byte)0x01 });
+        }
+        catch (TimeoutException ex)
+        {
+            EmitDebug("ftms_control_acknowledgement_failed", new { reason = "timeout", timeoutSeconds = 5 });
+            throw new InvalidOperationException("Trainer did not acknowledge the FTMS control request.", ex);
+        }
+        finally
+        {
+            if (ReferenceEquals(_pendingControlPointResponse, response)) _pendingControlPointResponse = null;
+        }
     }
 
     public async Task SetTargetPowerAsync(short watts, CancellationToken cancellationToken = default)
@@ -464,16 +576,9 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     private async Task WriteControlPointAsync(byte[] payload, CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
         if (_ftmsControlPointCharacteristic is null)
-        {
-            Console.WriteLine("FTMS Control Point characteristic is not resolved.");
-            EmitDebug("control_point_write_skipped", new
-            {
-                reason = "control_point_not_resolved",
-                payload = BitConverter.ToString(payload)
-            });
-            return;
-        }
+            throw new InvalidOperationException("FTMS Control Point characteristic is not resolved.");
 
         await _controlPointWriteLock.WaitAsync(cancellationToken);
 
@@ -483,8 +588,10 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             writer.WriteBytes(payload);
 
             var status = await _ftmsControlPointCharacteristic.WriteValueAsync(
-                writer.DetachBuffer(),
-                GattWriteOption.WriteWithResponse);
+                    writer.DetachBuffer(),
+                    GattWriteOption.WriteWithResponse)
+                .AsTask(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
             Console.WriteLine($"Control point write [{BitConverter.ToString(payload)}] => {status}");
 
@@ -493,17 +600,14 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 payload = BitConverter.ToString(payload),
                 status = status.ToString()
             });
+            if (status != GattCommunicationStatus.Success)
+                throw new InvalidOperationException($"Trainer control command failed ({status}).");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Control point write failed [{BitConverter.ToString(payload)}]: {ex.Message}");
-
-            EmitDebug("control_point_write_failed", new
-            {
-                payload = BitConverter.ToString(payload),
-                message = ex.Message,
-                exceptionType = ex.GetType().FullName
-            });
+            EmitDebug("control_point_write_failed", new { payload = BitConverter.ToString(payload), message = ex.Message, exceptionType = ex.GetType().FullName });
+            throw;
         }
         finally
         {
@@ -520,6 +624,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             reader.ReadBytes(data);
 
             Console.WriteLine($"FTMS Control Point response: {BitConverter.ToString(data)}");
+            if (data.Length >= 3 && data[0] == 0x80)
+                _pendingControlPointResponse?.TrySetResult(data);
             EmitDebug("control_point_response", new
             {
                 data = BitConverter.ToString(data)
@@ -533,6 +639,22 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 message = ex.Message
             });
         }
+    }
+
+    private void OnConnectionStatusChanged(BluetoothLEDevice sender, object args)
+    {
+        EmitDebug("ble_connection_status_changed", new { address = FormatAddress(sender.BluetoothAddress), name = sender.Name, connectionStatus = sender.ConnectionStatus.ToString() });
+        if (sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
+        {
+            EmitDebug("connection_lost", new { name = sender.Name });
+            Disconnected?.Invoke();
+        }
+    }
+
+    private void EnsureConnected()
+    {
+        if (!IsConnected)
+            throw new InvalidOperationException("Trainer is not connected.");
     }
 
     private void OnFtmsIndoorBikeDataChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
