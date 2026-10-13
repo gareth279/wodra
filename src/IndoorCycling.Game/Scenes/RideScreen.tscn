@@ -172,35 +172,121 @@ offset_right = 40.0
 offset_bottom = 40.0
 
 [node name="PanelContainer" type="PanelContainer" parent="DeviceConnectionPanel" unique_id=1955237708]
-custom_minimum_size = Vector2(900, 520)
+custom_minimum_size = Vector2(700, 450)
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_left = 0.06
+anchor_top = 0.08
+anchor_right = 0.94
+anchor_bottom = 0.92
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="DeviceConnectionPanel/PanelContainer" unique_id=1832862266]
 layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
 
 [node name="VBoxContainer" type="VBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer" unique_id=800476260]
 layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995051879]
 layout_mode = 2
-text = "Device Connections"
+text = "Trainer connection"
 
 [node name="SubtitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1042406415]
 layout_mode = 2
-text = "Connect your devices"
+text = "Bluetooth FTMS is supported. ANT+ is not available yet."
 
 [node name="OverallStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995716997]
 layout_mode = 2
-text = "Waiting"
+text = "Connect your trainer to begin."
+autowrap_mode = 2
+
+[node name="TrainerNameLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "No trainer connected"
+theme_override_font_sizes/font_size = 24
+
+[node name="ProtocolStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Bluetooth FTMS · Not connected"
+
+[node name="ReadingsRow" type="HBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="PowerCard" type="PanelContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow"]
+custom_minimum_size = Vector2(220, 112)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/PowerCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="PowerVBox" type="VBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/PowerCard/MarginContainer"]
+layout_mode = 2
+
+[node name="PowerTitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/PowerCard/MarginContainer/PowerVBox"]
+layout_mode = 2
+text = "POWER"
+
+[node name="PowerStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/PowerCard/MarginContainer/PowerVBox"]
+layout_mode = 2
+text = "Waiting for connection"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="CadenceCard" type="PanelContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow"]
+custom_minimum_size = Vector2(220, 112)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/CadenceCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="CadenceVBox" type="VBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/CadenceCard/MarginContainer"]
+layout_mode = 2
+
+[node name="CadenceTitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/CadenceCard/MarginContainer/CadenceVBox"]
+layout_mode = 2
+text = "CADENCE"
+
+[node name="CadenceStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/CadenceCard/MarginContainer/CadenceVBox"]
+layout_mode = 2
+text = "Waiting for connection"
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="TrainerPicker" type="OptionButton" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DiagnosticsButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Technical details"
+flat = true
+
+[node name="DiagnosticsLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = ""
+autowrap_mode = 2
 
 [node name="GridContainer" type="GridContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=2028954431]
 layout_mode = 2
 columns = 3
+visible = false
 
 [node name="PowerCard" type="PanelContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/GridContainer" unique_id=1246684935]
 layout_mode = 2
@@ -329,6 +415,7 @@ text = "Coming Soon"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=2064893719]
 layout_mode = 2
+visible = false
 
 [node name="BackButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=119656213]
 layout_mode = 2
@@ -337,6 +424,35 @@ text = "Back"
 [node name="ContinueButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=255480153]
 layout_mode = 2
 text = "Continue"
+
+[node name="ActionsRow" type="HBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConnectButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Connect trainer"
+
+[node name="CancelButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="DisconnectButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Disconnect"
+
+[node name="ChangeTrainerButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Change trainer"
+
+[node name="BackButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Back"
+
+[node name="ContinueButton" type="Button" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer/ActionsRow"]
+layout_mode = 2
+text = "Continue"
+size_flags_horizontal = 4
 
 [node name="HudController" type="Control" parent="." unique_id=96029640]
 layout_mode = 1

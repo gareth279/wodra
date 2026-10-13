@@ -12,19 +12,36 @@ namespace IndoorCycling.Trainer.Windows
 public sealed class WindowsBleTrainerClient : ITrainerClient
 {
     private BluetoothLEAdvertisementWatcher? _watcher;
+    private BluetoothLEAdvertisementWatcher? _activeScanWatcher;
+    private CancellationTokenSource? _activeScanCancellation;
     private BluetoothLEDevice? _device;
     private TrainerTelemetry _latestTelemetry = new(
-        Timestamp: DateTimeOffset.UtcNow,
+        Timestamp: DateTimeOffset.MinValue,
         PowerWatts: 0,
         CadenceRpm: 0,
         SpeedKph: 0,
-        HeartRateBpm: null
+        HeartRateBpm: null,
+        HasPowerMeasurement: false,
+        HasCadenceMeasurement: false,
+        HasReceivedMeasurement: false,
+        HasSpeedMeasurement: false
     );
 
     private ulong? _lastSeenAddress;
     private string? _lastSeenName;
+    public string? ConnectedDeviceName => _deviceName;
+    public string ActiveProtocol => "Bluetooth FTMS";
+    private string? _deviceName;
+    public ulong? ConnectedBluetoothAddress { get; private set; }
 
     public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
+    public bool IsReady { get; private set; }
+
+    public void MarkReady()
+    {
+        EnsureConnected();
+        IsReady = true;
+    }
 
     public event Action? Disconnected;
 
@@ -38,6 +55,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     public double? LastRequestedSimulationGradePercent { get; private set; }
     public double? LastAppliedSimulationGradePercent { get; private set; }
     private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
+    private readonly SemaphoreSlim _connectionSetupLock = new(1, 1);
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
@@ -49,6 +67,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
+        IsReady = false;
         await StopScanAsync();
 
         if (_ftmsIndoorBikeDataCharacteristic is not null)
@@ -76,6 +95,16 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             _device.Dispose();
         }
         _device = null;
+        _deviceName = null;
+        ConnectedBluetoothAddress = null;
+        _latestTelemetry = _latestTelemetry with
+        {
+            Timestamp = DateTimeOffset.MinValue,
+            HasPowerMeasurement = false,
+            HasCadenceMeasurement = false,
+            HasReceivedMeasurement = false,
+            HasSpeedMeasurement = false
+        };
 
         Console.WriteLine("BLE trainer disconnected.");
         EmitDebug("disconnect", new { });
@@ -85,6 +114,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     SimulationCommand command,
     CancellationToken cancellationToken = default)
     {
+        EnsureConnected();
         LastRequestedSimulationGradePercent = command.GradePercent;
         if (_ftmsControlPointCharacteristic is null)
         {
@@ -183,6 +213,14 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public Task StopScanAsync()
     {
+        if (_activeScanWatcher is { } active)
+        {
+            _activeScanCancellation?.Cancel();
+            active.Received -= OnAdvertisementReceived;
+            if (active.Status is BluetoothLEAdvertisementWatcherStatus.Started or BluetoothLEAdvertisementWatcherStatus.Created)
+                active.Stop();
+            _activeScanWatcher = null;
+        }
         if (_watcher is null)
         {
             return Task.CompletedTask;
@@ -207,9 +245,12 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
+        if (_activeScanWatcher is not null)
+            throw new InvalidOperationException("Bluetooth trainer discovery is already running.");
         _lastSeenAddress = null;
         _lastSeenName = null;
         var found = new Dictionary<ulong, BleDiscoveredDevice>();
+        var foundLock = new object();
 
         void Handler(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args)
         {
@@ -223,7 +264,11 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 Rssi: args.RawSignalStrengthInDBm
             );
 
-            found[args.BluetoothAddress] = item;
+            lock (foundLock)
+            {
+                if (!found.TryGetValue(args.BluetoothAddress, out var previous) || item.Rssi > previous.Rssi || string.IsNullOrWhiteSpace(previous.Name))
+                    found[args.BluetoothAddress] = item;
+            }
 
         }
 
@@ -233,44 +278,38 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         };
 
         watcher.Received += Handler;
-        watcher.Start();
-
-        Console.WriteLine($"Scanning for BLE devices for {duration.TotalSeconds:0} seconds...");
-
+        _activeScanWatcher = watcher;
+        var scanCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _activeScanCancellation = scanCancellation;
         try
         {
-            await Task.Delay(duration, cancellationToken);
+            watcher.Start();
+            Console.WriteLine($"Scanning for BLE devices for {duration.TotalSeconds:0} seconds...");
+            await Task.Delay(duration, scanCancellation.Token);
         }
         finally
         {
-            watcher.Stop();
+            if (watcher.Status is BluetoothLEAdvertisementWatcherStatus.Started or BluetoothLEAdvertisementWatcherStatus.Created)
+                watcher.Stop();
             watcher.Received -= Handler;
+            if (ReferenceEquals(_activeScanWatcher, watcher)) _activeScanWatcher = null;
+            if (ReferenceEquals(_activeScanCancellation, scanCancellation)) _activeScanCancellation = null;
+            scanCancellation.Dispose();
         }
 
-        var results = found.Values
-            .OrderByDescending(x => x.Rssi)
-            .ToList();
-
-        var compatible = results.Where(x => LooksLikeTrainer(x.Name, x.ServiceUuids)).ToList();
-        if (compatible.Count > 0)
-        {
-            _lastSeenAddress = compatible[0].BluetoothAddress;
-            _lastSeenName = string.IsNullOrWhiteSpace(compatible[0].Name) ? "(unnamed device)" : compatible[0].Name;
-            EmitDebug("trainer_selected", new { address = FormatAddress(compatible[0].BluetoothAddress), name = _lastSeenName, rssi = compatible[0].Rssi, services = compatible[0].ServiceUuids });
-        }
-        else EmitDebug("trainer_not_found", new { discoveredDeviceCount = results.Count });
-
-        foreach (var candidate in compatible)
+        BleDiscoveredDevice[] candidates;
+        lock (foundLock) candidates = TrainerDiscoveryPolicy.Select(found.Values, null).Candidates.ToArray();
+        if (candidates.Length == 0) EmitDebug("trainer_not_found", new { discoveredDeviceCount = found.Count });
+        foreach (var candidate in candidates)
             EmitDebug("trainer_discovered", new { address = FormatAddress(candidate.BluetoothAddress), name = candidate.Name, rssi = candidate.Rssi, services = candidate.ServiceUuids });
 
-        Console.WriteLine($"Found {results.Count} BLE device(s), {compatible.Count} compatible trainer(s).");
-
-        foreach (var d in results)
+        Console.WriteLine($"Found {found.Count} BLE device(s), {candidates.Length} compatible trainer(s).");
+        foreach (var d in candidates)
         {
             Console.WriteLine($"- {FormatAddress(d.BluetoothAddress)} | {d.Name} | RSSI {d.Rssi} | Services: {string.Join(", ", d.ServiceUuids)}");
         }
 
-        return compatible;
+        return candidates;
     }
 
     public async Task ConnectToLastSeenDeviceAsync(CancellationToken cancellationToken = default)
@@ -286,12 +325,18 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task ConnectToDeviceAsync(ulong bluetoothAddress, CancellationToken cancellationToken = default)
     {
-        if (_device is not null)
+        await _connectionSetupLock.WaitAsync(cancellationToken);
+        try
         {
-            _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
-            _device.Dispose();
+            await ConnectToDeviceCoreAsync(bluetoothAddress, cancellationToken);
         }
-        _device = null;
+        finally { _connectionSetupLock.Release(); }
+    }
+
+    private async Task ConnectToDeviceCoreAsync(ulong bluetoothAddress, CancellationToken cancellationToken)
+    {
+        ReleaseDevice();
+        _lastSeenAddress = bluetoothAddress;
 
         var stage = "ble_device_creation";
         EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress) });
@@ -305,6 +350,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 throw new InvalidOperationException("Windows could not create a BLE device for the discovered trainer.");
 
             _device = device;
+            _deviceName = string.IsNullOrWhiteSpace(device.Name) ? _lastSeenName ?? "Trainer" : device.Name;
+            ConnectedBluetoothAddress = bluetoothAddress;
             _device.ConnectionStatusChanged += OnConnectionStatusChanged;
             EmitDebug("ble_device_created", new { address = FormatAddress(bluetoothAddress), name = device.Name, connectionStatus = device.ConnectionStatus.ToString() });
             Console.WriteLine($"BLE device created: {device.Name}, status={device.ConnectionStatus}");
@@ -316,6 +363,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress), connectionStatus = device.ConnectionStatus.ToString() });
             await ResolveFtmsCharacteristicsAsync(cancellationToken);
             EnsureConnected();
+            _lastSeenName = _deviceName;
             EmitDebug("connect", new { address = FormatAddress(bluetoothAddress), name = device.Name, connectionStatus = device.ConnectionStatus.ToString() });
         }
         catch (Exception ex)
@@ -323,9 +371,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             EmitDebug("trainer_connection_stage_failed", new { stage, reason = ex.Message, exceptionType = ex.GetType().FullName, connectionStatus = _device?.ConnectionStatus.ToString() });
             if (_device is not null)
             {
-                _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
-                _device.Dispose();
-                _device = null;
+                ReleaseDevice();
             }
             throw;
         }
@@ -335,6 +381,33 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         // - find FTMS service
         // - subscribe to indoor bike data / trainer data
         //await DumpServicesAsync(cancellationToken);
+    }
+
+    private void ReleaseDevice()
+    {
+        IsReady = false;
+        if (_ftmsIndoorBikeDataCharacteristic is not null)
+            _ftmsIndoorBikeDataCharacteristic.ValueChanged -= OnFtmsIndoorBikeDataChanged;
+        if (_ftmsControlPointCharacteristic is not null)
+            _ftmsControlPointCharacteristic.ValueChanged -= OnFtmsControlPointChanged;
+        _ftmsIndoorBikeDataCharacteristic = null;
+        _ftmsFitnessMachineStatusCharacteristic = null;
+        _ftmsControlPointCharacteristic = null;
+        _supportedInclinationRangePercent = null;
+        LastRequestedSimulationGradePercent = null;
+        LastAppliedSimulationGradePercent = null;
+        _pendingControlPointResponse?.TrySetCanceled();
+        _pendingControlPointResponse = null;
+        if (_device is not null)
+        {
+            _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
+            _device.Dispose();
+        }
+        _device = null;
+        _deviceName = null;
+        ConnectedBluetoothAddress = null;
+        _latestTelemetry = new TrainerTelemetry(DateTimeOffset.MinValue, 0, 0, 0,
+            HasPowerMeasurement: false, HasCadenceMeasurement: false, HasReceivedMeasurement: false, HasSpeedMeasurement: false);
     }
 
 
@@ -643,9 +716,11 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     private void OnConnectionStatusChanged(BluetoothLEDevice sender, object args)
     {
+        if (!ReferenceEquals(sender, _device)) return;
         EmitDebug("ble_connection_status_changed", new { address = FormatAddress(sender.BluetoothAddress), name = sender.Name, connectionStatus = sender.ConnectionStatus.ToString() });
         if (sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
         {
+            IsReady = false;
             EmitDebug("connection_lost", new { name = sender.Name });
             Disconnected?.Invoke();
         }
@@ -659,13 +734,15 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     private void OnFtmsIndoorBikeDataChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
     {
+        if (!ReferenceEquals(sender, _ftmsIndoorBikeDataCharacteristic)) return;
         try
         {
             var reader = global::Windows.Storage.Streams.DataReader.FromBuffer(args.CharacteristicValue);
             var data = new byte[reader.UnconsumedBufferLength];
             reader.ReadBytes(data);
-
-            if (data.Length < 8)
+            reader.Dispose();
+            var timestamp = DateTimeOffset.UtcNow;
+            if (!FtmsIndoorBikeDataParser.TryParse(data, timestamp, out var telemetry))
             {
                 Console.WriteLine($"FTMS packet too short: {BitConverter.ToString(data)}");
                 EmitDebug("ftms_packet_too_short", new
@@ -674,36 +751,20 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
                 });
                 return;
             }
-
-            var flags = BitConverter.ToUInt16(data, 0);
-            var speedRaw = BitConverter.ToUInt16(data, 2);
-            var cadenceRaw = BitConverter.ToUInt16(data, 4);
-            var powerRaw = BitConverter.ToInt16(data, 6);
-
-            var speedKph = speedRaw / 100.0;
-            var cadenceRpm = (int)Math.Round(cadenceRaw / 2.0);
-            var powerWatts = (int)powerRaw;
-
-            var timestamp = DateTimeOffset.UtcNow;
-
-            _latestTelemetry = new TrainerTelemetry(
-                Timestamp: timestamp,
-                PowerWatts: powerWatts,
-                CadenceRpm: cadenceRpm,
-                SpeedKph: speedKph,
-                HeartRateBpm: null
-            );
+            _latestTelemetry = telemetry;
 
             Console.WriteLine(
-                $"FTMS flags=0x{flags:X4} speed={speedKph:0.0} kph cadence={cadenceRpm} rpm power={powerWatts} W");
+                $"FTMS speed={telemetry.SpeedKph:0.0} kph cadence={(telemetry.HasCadenceMeasurement ? telemetry.CadenceRpm.ToString() : "n/a")} rpm power={(telemetry.HasPowerMeasurement ? telemetry.PowerWatts.ToString() : "n/a")} W");
 
             EmitDebug("ftms_telemetry", new
             {
                 timestamp,
-                flags = $"0x{flags:X4}",
-                speedKph,
-                cadenceRpm,
-                powerWatts
+                powerSupported = telemetry.HasPowerMeasurement,
+                cadenceSupported = telemetry.HasCadenceMeasurement,
+                telemetry.SpeedKph,
+                telemetry.CadenceRpm,
+                telemetry.PowerWatts,
+                telemetry.HeartRateBpm
             });
         }
         catch (Exception ex)
@@ -819,12 +880,4 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         return string.Join(":", bytes.Select(b => b.ToString("X2")));
     }
 }
-
-
-public sealed record BleDiscoveredDevice(
-    ulong BluetoothAddress,
-    string Name,
-    IReadOnlyList<string> ServiceUuids,
-    short Rssi
-);
 }

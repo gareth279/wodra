@@ -10,6 +10,7 @@ public enum TrainerConnectionPhase
     NoTrainer,
     Failed,
     Disconnected,
+    IntentionalDisconnect,
     Demo
 }
 
@@ -20,6 +21,7 @@ public sealed class TrainerConnectionState
     public TrainerConnectionPhase Phase { get; private set; } = TrainerConnectionPhase.Idle;
     public string? Error { get; private set; }
     public bool CanContinue => Phase is TrainerConnectionPhase.Ready or TrainerConnectionPhase.Demo;
+    public bool IsCurrent(long attemptId) => attemptId == AttemptId;
 
     public long BeginAttempt()
     {

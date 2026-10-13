@@ -3,6 +3,7 @@ using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
 using IndoorCycling.Trainer.Implementations;
+using IndoorCycling.Trainer.Windows;
 using System;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,7 @@ using Wodra.Multiplayer.Protocol;
 public partial class RideSessionNode : Node
 {
 	private HudController? _hudController;
+	private DeviceConnectionPanelController? _deviceConnectionPanel;
 
 	private RouteDefinition? _currentRoute;
 	private bool _sessionStarted;
@@ -133,26 +135,37 @@ public partial class RideSessionNode : Node
 	{
 		GetTree().AutoAcceptQuit = false;
 		_hudController = GetNodeOrNull<HudController>("../HudController");
+		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 
-	public async Task StartTrainerSessionAsync(RouteDefinition? route = null)
+	public async Task<bool> StartTrainerSessionAsync(RouteDefinition? route = null)
 	{
 		if (GameBootstrap.TrainerClient is null)
 		{
 			_hudController?.SetStatus("No trainer client configured.");
-			return;
+			return false;
 		}
 
-		if (!GameBootstrap.TrainerClient.IsConnected)
+		if (!GameBootstrap.TrainerClient.IsReady)
 		{
+			if (GameBootstrap.TrainerClient is WindowsBleTrainerClient)
+			{
+				_hudController?.SetStatus("Trainer is reconnecting. Wait for the connection screen to show Ready before starting the ride.");
+				return false;
+			}
 			_hudController?.SetStatus("Connecting to trainer...");
 			await GameBootstrap.TrainerClient.ConnectAsync();
 		}
 		else
 		{
 			_hudController?.SetStatus("Trainer already connected.");
+		}
+		if (GameBootstrap.TrainerClient?.IsReady != true)
+		{
+			_hudController?.SetStatus("Trainer is not ready. Reconnect before starting the ride.");
+			return false;
 		}
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
@@ -218,6 +231,25 @@ public partial class RideSessionNode : Node
 			GameLogger.Log("ride_started", new { mode = DebugTrainerMode, routeId = _currentRoute?.Id, routeName = _currentRoute?.Name });
 
 		GD.Print("Trainer ride session started.");
+		return true;
+	}
+
+	/// <summary>Reapplies only the current ride target after trainer reconnection, never a queued historical command.</summary>
+	public async Task ReapplyCurrentTrainerSettingsAsync()
+	{
+		if (!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
+			return;
+		await _trainerCommandTask;
+		if (!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
+			return;
+		var gradient = GetTrainerGradeTarget(GetCurrentGradient());
+		await GameBootstrap.TrainerClient.SetSimulationAsync(new SimulationCommand(
+			GradePercent: gradient,
+			RiderWeightKg: CurrentRiderProfile.WeightKg,
+			BikeWeightKg: CurrentBikeProfile.WeightKg));
+		_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient.LastAppliedSimulationGradePercent ?? gradient;
+		_trainerCommandDirty = false;
+		GameLogger.Log("trainer_current_settings_restored", new { gradientPercent = gradient });
 	}
 
 	private void UpdateRouteHud()
@@ -368,7 +400,10 @@ public partial class RideSessionNode : Node
 			{
 				if (disconnectTrainer && GameBootstrap.TrainerClient is not null)
 				{
-					await GameBootstrap.TrainerClient.DisconnectAsync();
+					if (GameBootstrap.TrainerClient is WindowsBleTrainerClient ble && _deviceConnectionPanel is not null)
+						await _deviceConnectionPanel.DisconnectForMainMenuAsync(ble);
+					else
+						await GameBootstrap.TrainerClient.DisconnectAsync();
 					if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_disconnected", new { mode = DebugTrainerMode });
 				}
 			}
@@ -1615,21 +1650,24 @@ public partial class RideSessionNode : Node
 
 	private void ProcessTrainerMode(double delta)
 	{
-		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsConnected)
+		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsReady)
 		{
 			_trainerGradeTransition.Cancel();
 			_trainerCommandDirty = true;
-			_hudController?.SetStatus("Trainer not connected.");
+			_hudController?.SetStatus(GameBootstrap.TrainerClient is null
+				? "No trainer is configured. Return to trainer connections to reconnect."
+				: "Trainer reconnecting. The ride is paused until fresh measurements and control are restored.");
 			_hudController?.UpdateFromRideState(_rideState, _lastTelemetry, _elapsedSeconds);
 			return;
 		}
 
 		var telemetry = GameBootstrap.TrainerClient.GetLatestTelemetry();
 		_lastTelemetry = telemetry;
+		var riderInput = telemetry.ForRiderInput(DateTimeOffset.UtcNow);
 		if (_pauseGate.IsPaused)
 		{
 			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
-				new SimulationTickInput(telemetry, GetCurrentGradient(), 0,
+				new SimulationTickInput(riderInput, GetCurrentGradient(), 0,
 					CurrentRiderProfile, CurrentBikeProfile));
 			UpdateRouteHud();
 			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
@@ -1639,7 +1677,7 @@ public partial class RideSessionNode : Node
 		var gradient = GetCurrentGradient();
 
 		var input = new SimulationTickInput(
-			Telemetry: telemetry,
+			Telemetry: riderInput,
 			GradientPercent: gradient,
 			DeltaSeconds: delta,
 			RiderProfile: CurrentRiderProfile,

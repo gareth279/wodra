@@ -42,6 +42,12 @@ var tests = new (string Name, Action Run)[]
     ,("Trainer difficulty scales signed grades and preserves actual ride physics", TrainerDifficultyScalesSignedGrades)
     ,("Catch-up grade transition is gradual and safely replaceable", CatchUpTrainerGradeTransition)
     ,("Trainer readiness requires successful setup and ignores stale attempt results", TrainerConnectionReadiness)
+    ,("Bluetooth discovery automatically selects one and remembers the preferred trainer", TrainerDiscoverySelection)
+    ,("Bluetooth discovery asks riders to choose among multiple compatible trainers", TrainerDiscoveryMultipleSelection)
+    ,("FTMS parser reads optional fields and distinguishes unsupported metrics", FtmsTelemetryParsing)
+    ,("Telemetry presentation distinguishes zero awaiting unsupported and stale readings", TrainerTelemetryPresentationStates)
+    ,("Stale trainer readings cannot continue to drive rider power or cadence", StaleTelemetryIsNotRiderInput)
+    ,("Trainer recovery is bounded and never follows an intentional disconnect", TrainerRecoveryIsBounded)
     ,("GATT discovery initiates the link before connection status is required", GattDiscoveryStartsConnection)
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
     ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
@@ -288,6 +294,93 @@ static void GattDiscoveryStartsConnection()
         throw new Exception("A link that stayed disconnected was accepted.");
     }
     catch (TimeoutException) { }
+}
+
+static void TrainerDiscoverySelection()
+{
+    var trainer = new BleDiscoveredDevice(11, "Tacx Flux 2", [], -45);
+    var selection = TrainerDiscoveryPolicy.Select([trainer], preferredAddress: null);
+    if (selection.Outcome != TrainerDiscoveryOutcome.ConnectAutomatically || selection.Selected != trainer)
+        throw new Exception("Exactly one compatible Bluetooth trainer should connect automatically.");
+    var preferred = new BleDiscoveredDevice(12, "FTMS Bike", [TrainerDiscoveryPolicy.FtmsServiceUuid], -70);
+    selection = TrainerDiscoveryPolicy.Select([trainer, preferred], preferred.BluetoothAddress);
+    if (selection.Outcome != TrainerDiscoveryOutcome.ConnectAutomatically || selection.Selected != preferred)
+        throw new Exception("A remembered trainer should be preferred when available among multiple devices.");
+    selection = TrainerDiscoveryPolicy.Select([new BleDiscoveredDevice(13, "Keyboard", [], -10)], null);
+    if (selection.Outcome != TrainerDiscoveryOutcome.None) throw new Exception("An incompatible BLE peripheral was accepted as a trainer.");
+}
+
+static void TrainerDiscoveryMultipleSelection()
+{
+    var devices = new[]
+    {
+        new BleDiscoveredDevice(1, "Tacx Flux 2", [], -55),
+        new BleDiscoveredDevice(2, "Wahoo Trainer", [], -42),
+        new BleDiscoveredDevice(1, "Tacx Flux 2", [], -50)
+    };
+    var selection = TrainerDiscoveryPolicy.Select(devices, null);
+    if (selection.Outcome != TrainerDiscoveryOutcome.Choose || selection.Candidates.Count != 2 || selection.Selected is not null)
+        throw new Exception("Multiple unique compatible trainers should require explicit rider choice.");
+}
+
+static void FtmsTelemetryParsing()
+{
+    var timestamp = DateTimeOffset.UtcNow;
+    byte[] packet = [0x44, 0x00, 0xE8, 0x03, 0xB4, 0x00, 0xFA, 0x00];
+    if (!FtmsIndoorBikeDataParser.TryParse(packet, timestamp, out var telemetry))
+        throw new Exception("A valid FTMS data packet was rejected.");
+    if (telemetry.SpeedKph != 10 || telemetry.CadenceRpm != 90 || telemetry.PowerWatts != 250 ||
+        !telemetry.HasPowerMeasurement || !telemetry.HasCadenceMeasurement || telemetry.Timestamp != timestamp)
+        throw new Exception("FTMS speed, cadence or power fields were parsed at the wrong offsets.");
+
+    byte[] powerOnly = [0x40, 0x00, 0xE8, 0x03, 0x00, 0x00];
+    if (!FtmsIndoorBikeDataParser.TryParse(powerOnly, timestamp, out var partial) || !partial.HasPowerMeasurement || partial.HasCadenceMeasurement)
+        throw new Exception("An omitted cadence field should be reported as unsupported, not zero cadence.");
+    if (FtmsIndoorBikeDataParser.TryParse([0x40, 0x00, 0xE8], timestamp, out _))
+        throw new Exception("Truncated optional data was accepted.");
+    byte[] noInstantSpeed = [0x41, 0x00, 0xB4, 0x00, 0xFA, 0x00];
+    if (!FtmsIndoorBikeDataParser.TryParse(noInstantSpeed, timestamp, out var noSpeed) || noSpeed.HasSpeedMeasurement)
+        throw new Exception("The More Data flag was not honored when determining whether instantaneous speed was included.");
+}
+
+static void TrainerTelemetryPresentationStates()
+{
+    var now = DateTimeOffset.UtcNow;
+    var waiting = new TrainerTelemetry(now, 0, 0, 0, HasReceivedMeasurement: false, HasPowerMeasurement: false, HasCadenceMeasurement: false);
+    if (TrainerTelemetryPresentation.Power(waiting, now).State != TelemetryReadingState.Awaiting)
+        throw new Exception("No first notification should be shown as an awaiting reading.");
+    var measuredZero = new TrainerTelemetry(now, 0, 0, 0);
+    var power = TrainerTelemetryPresentation.Power(measuredZero, now);
+    if (power.State != TelemetryReadingState.Fresh || power.Value != 0)
+        throw new Exception("A valid stationary zero should remain a real zero reading.");
+    if (!measuredZero.HasSpeedMeasurement) throw new Exception("A synthetic fresh stationary sample should include its speed measurement.");
+    var unsupported = measuredZero with { HasCadenceMeasurement = false };
+    if (TrainerTelemetryPresentation.Cadence(unsupported, now).State != TelemetryReadingState.Unsupported)
+        throw new Exception("An omitted cadence measurement was not distinguished from a zero.");
+    var stale = measuredZero with { Timestamp = now - TimeSpan.FromSeconds(6) };
+    if (TrainerTelemetryPresentation.Power(stale, now).State != TelemetryReadingState.Stale)
+        throw new Exception("An old reading was shown as current.");
+}
+
+static void StaleTelemetryIsNotRiderInput()
+{
+    var now = DateTimeOffset.UtcNow;
+    var stale = new TrainerTelemetry(now - TimeSpan.FromSeconds(8), 290, 94, 30);
+    var input = stale.ForRiderInput(now);
+    if (input.PowerWatts != 0 || input.CadenceRpm != 0 || input.Timestamp != stale.Timestamp || input.IsFreshAt(now))
+        throw new Exception("Stale measurements were retained as fresh rider input.");
+    if (TrainerTelemetryPresentation.Power(input, now).State != TelemetryReadingState.Stale)
+        throw new Exception("The stale marker was not retained for UI feedback.");
+}
+
+static void TrainerRecoveryIsBounded()
+{
+    if (!TrainerRecoveryPolicy.ShouldRetry(0, false) || !TrainerRecoveryPolicy.ShouldRetry(2, false) ||
+        TrainerRecoveryPolicy.ShouldRetry(3, false) || TrainerRecoveryPolicy.ShouldRetry(0, true))
+        throw new Exception("Trainer recovery did not enforce its bounded, non-intentional policy.");
+    if (TrainerRecoveryPolicy.DelayBeforeAttempt(1) != TimeSpan.FromMilliseconds(600) ||
+        TrainerRecoveryPolicy.DelayBeforeAttempt(3) != TimeSpan.FromMilliseconds(1800))
+        throw new Exception("Recovery backoff was not deterministic.");
 }
 
 static void PausedCatchUpResumeSpeed()

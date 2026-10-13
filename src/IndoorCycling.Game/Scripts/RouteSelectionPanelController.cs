@@ -229,7 +229,12 @@ public partial class RouteSelectionPanelController : Control
 		Hide();
 		_hudController?.Show();
 
-		await _rideSessionNode.StartTrainerSessionAsync(route);
+		var started = await _rideSessionNode.StartTrainerSessionAsync(route);
+		if (!started)
+		{
+			_hudController?.Hide();
+			(_deviceConnectionPanel as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen();
+		}
 	}
 
 	private void OnBackPressed()

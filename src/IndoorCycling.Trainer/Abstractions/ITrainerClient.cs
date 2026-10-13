@@ -6,6 +6,7 @@ namespace IndoorCycling.Trainer.Abstractions;
 public interface ITrainerClient
 {
     bool IsConnected { get; }
+    bool IsReady => IsConnected;
     double? LastRequestedSimulationGradePercent => null;
     double? LastAppliedSimulationGradePercent => null;
 

@@ -16,6 +16,8 @@ public sealed class AppSettings
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
+	/// <summary>Last successfully used Bluetooth trainer address; reserved for protocol-neutral preference storage.</summary>
+	public ulong? LastTrainerBluetoothAddress { get; set; }
 
 	public static string SettingsPath
 	{
