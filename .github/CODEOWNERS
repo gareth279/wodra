@@ -1,0 +1,4 @@
+# Wodra source ownership
+# Pull requests affecting any path should request Gareth's review.
+# Enforce code-owner review for main in repository branch rules, with an admin bypass for changes authored by the sole maintainer.
+* @gareth279
