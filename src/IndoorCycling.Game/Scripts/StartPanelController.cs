@@ -39,6 +39,7 @@ public partial class StartPanelController : Control
 	private OptionButton? _profileEditPicker;
 	private List<RiderProfileRecord> _profiles = [];
 	private Guid? _editingProfileId;
+	private VelopackUpdatePanel? _updatePanel;
 
 	public override void _Ready()
 	{
@@ -60,6 +61,13 @@ public partial class StartPanelController : Control
 		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/OnlineStatusLabel");
 		ConfigureStartupStatusLabel(_statusLabel);
 		ConfigureStartupStatusLabel(_onlineStatusLabel);
+		var startupColumn = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
+		if (startupColumn is not null)
+		{
+			_updatePanel = new VelopackUpdatePanel();
+			startupColumn.AddChild(_updatePanel);
+			_updatePanel.Attach();
+		}
 		if (_onlineRidingCheckButton is not null)
 		{
 			_onlineRidingCheckButton.ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled;
@@ -78,6 +86,12 @@ public partial class StartPanelController : Control
 		{
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
+	}
+
+	public override void _Notification(int what)
+	{
+		if (what == NotificationVisibilityChanged && Visible)
+			_updatePanel?.OnStartupShown();
 	}
 
 	public override void _Process(double delta)

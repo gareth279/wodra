@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.161" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />

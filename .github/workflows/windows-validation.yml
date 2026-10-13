@@ -1,0 +1,82 @@
+name: Windows validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Source ref to validate; defaults to the triggering commit
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.204
+      - name: Install pinned Godot .NET editor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $godotVersion = '4.6.2-stable'
+          $root = Join-Path $env:RUNNER_TEMP 'Godot'
+          $archive = Join-Path $env:RUNNER_TEMP 'Godot_mono_win64.zip'
+          $url = "https://github.com/godotengine/godot-builds/releases/download/$godotVersion/Godot_v$godotVersion`_mono_win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '7c530d4b45d9f7aadd788b85a4d9dbdb5f2a239a72999afd7d29fda506fbedb6') { throw 'Godot 4.6.2 mono archive checksum mismatch.' }
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $godot = Join-Path $root 'Godot_v4.6.2-stable_mono_win64_console.exe'
+          if (-not (Test-Path $godot)) { throw 'Godot .NET console editor is missing.' }
+          "GODOT_PATH=$godot" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Verify pinned toolchain
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet --version
+          if ((dotnet --version).Trim() -ne '10.0.204') { throw 'Unexpected .NET SDK version.' }
+          & $env:GODOT_PATH --version
+          if ($LASTEXITCODE -ne 0) { throw 'Godot version probe failed.' }
+      - name: Build solution without proprietary EOS SDK
+        shell: pwsh
+        run: dotnet build wodra.sln -c ${{ matrix.configuration }} -m:1 -p:EnableEpicOnlineServices=false -p:NuGetAudit=false
+      - name: Launch source project headlessly
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: |
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --quit-after 2 --log-file "$env:RUNNER_TEMP\wodra-headless.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Godot headless startup failed.' }
+      - name: Run regression suites
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $projects = @(
+            'tests/IndoorCycling.Physics.Tests/IndoorCycling.Physics.Tests.csproj',
+            'tests/IndoorCycling.Persistence.Tests/IndoorCycling.Persistence.Tests.csproj',
+            'tests/IndoorCycling.Recording.Tests/IndoorCycling.Recording.Tests.csproj',
+            'tests/IndoorCycling.VisualRoute.Tests/IndoorCycling.VisualRoute.Tests.csproj',
+            'tests/Wodra.Multiplayer.Integration.Tests/Wodra.Multiplayer.Integration.Tests.csproj',
+            'tests/Wodra.Multiplayer.Protocol.Tests/Wodra.Multiplayer.Protocol.Tests.csproj',
+            'tests/Wodra.RouteBuilder.Tests/Wodra.RouteBuilder.Tests.csproj'
+          )
+          foreach ($project in $projects) {
+            dotnet run --project $project -c Release -p:EnableEpicOnlineServices=false -p:NuGetAudit=false
+            if ($LASTEXITCODE -ne 0) { throw "Regression suite failed: $project" }
+          }

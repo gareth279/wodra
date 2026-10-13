@@ -4,7 +4,9 @@ param(
     [string]$Version,
     [string]$PublishRoot,
     [string]$VisualStudioRoot,
+    [string]$GodotPath,
     [string]$EosClientConfigPath,
+    [string]$ReleaseNotesPath,
     [switch]$SkipOfflineSmokeTest,
     [switch]$CreateGitHubDraft,
     [string]$GitHubTag
@@ -14,7 +16,9 @@ $ErrorActionPreference = 'Stop'
 $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
 $Solution = Join-Path $RepoDir 'wodra.sln'
-$Godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+$Godot = if ([string]::IsNullOrWhiteSpace($GodotPath)) {
+    'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+} else { [System.IO.Path]::GetFullPath($GodotPath) }
 $EosSdkRoot = if ([string]::IsNullOrWhiteSpace($env:EOS_SDK_ROOT)) {
     Join-Path $env:LOCALAPPDATA 'Wodra\EOS-SDK'
 } else { [System.IO.Path]::GetFullPath($env:EOS_SDK_ROOT) }
@@ -174,16 +178,26 @@ try {
         if ([string]::IsNullOrWhiteSpace($description)) {
             throw 'Cannot derive a release version from Git. Supply -Version explicitly.'
         }
-        if ($description -match '^(.+)-(\d+)-g([0-9a-f]+)(-dirty)?$') {
-            $localSuffix = if ($Matches[4]) { '.local' } else { '' }
-            $Version = "$($Matches[1])-alpha.$($Matches[2])+g$($Matches[3])$localSuffix"
+        if ($description -match '^v?(\d+\.\d+\.\d+(?:-alpha\.\d+)?)-(\d+)-g[0-9a-f]+(?:-dirty)?$') {
+            $baseVersion = $Matches[1]
+            $distance = [int]$Matches[2]
+            if ($baseVersion -match '^(\d+\.\d+\.\d+)-alpha\.(\d+)$') {
+                $alphaNumber = [int]$Matches[2] + $distance
+                $Version = "$($Matches[1])-alpha.$alphaNumber"
+            } elseif ($distance -eq 0) {
+                $Version = "$baseVersion-alpha.0"
+            } else {
+                $Version = "$baseVersion-alpha.$distance"
+            }
         } else {
-            $Version = $description
+            $Version = $description -replace '^v', ''
         }
     }
-    if ($Version -notmatch '^[A-Za-z0-9][A-Za-z0-9._+-]*$') {
-        throw 'Version may contain only letters, digits, dot, underscore, plus, and hyphen.'
+    $Version = $Version -replace '^v', ''
+    if ($Version -notmatch '^\d+\.\d+\.\d+-alpha\.\d+$') {
+        throw "Version '$Version' is invalid. Alpha package versions must use MAJOR.MINOR.PATCH-alpha.N (for example 0.2.0-alpha.1)."
     }
+    $PackageVersion = $Version
     if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
         if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) { throw 'LOCALAPPDATA is unavailable; supply -EosClientConfigPath.' }
         $ConfigPath = Join-Path $env:LOCALAPPDATA 'Wodra\eos-client.json'
@@ -299,13 +313,19 @@ try {
     $buildLog = Join-Path $workRoot "build-$safeVersion.log"
     $exportLog = Join-Path $workRoot "godot-export-$safeVersion.log"
     Write-Host "Output: $PublishDir"
+    Write-Host "Version/channel: $PackageVersion / alpha"
     Write-Host 'EOS configuration: Loaded (values hidden)'
     Complete-Phase
 
     Write-Phase 2 "Building $Configuration..."
+    $dotnet = (Get-Command dotnet -ErrorAction Stop).Source
+    [void](Invoke-TrackedProcess -FilePath $dotnet `
+        -ArgumentList @('tool', 'restore', '--tool-manifest', (Join-Path $RepoDir '.config\dotnet-tools.json')) `
+        -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'tools-restore.log') `
+        -TimeoutSeconds 300 -Label 'Pinned release tool restore')
     [void](Invoke-TrackedProcess -FilePath ((Get-Command dotnet -ErrorAction Stop).Source) `
         -ArgumentList @('build', $Solution, '-c', $Configuration, '-m:1', '-p:EnableEpicOnlineServices=true',
-            "-p:EosSdkRoot=$EosSdkRoot", '-p:NuGetAudit=false') `
+            "-p:EosSdkRoot=$EosSdkRoot", "-p:Version=$PackageVersion", "-p:InformationalVersion=$PackageVersion", '-p:NuGetAudit=false') `
         -WorkingDirectory $RepoDir -LogPath $buildLog -TimeoutSeconds 900 -Label 'Release solution build')
     Complete-Phase
 
@@ -354,7 +374,8 @@ try {
     [void](Invoke-TrackedProcess -FilePath ((Get-Command dotnet -ErrorAction Stop).Source) `
         -ArgumentList @('publish', $GameProject, '-c', 'ExportRelease', '-r', 'win-x64', '--self-contained', 'true',
             '-p:GodotTargetPlatform=Windows', '-p:EnableEpicOnlineServices=true', "-p:EosSdkRoot=$EosSdkRoot",
-            '-p:NuGetAudit=false', '-p:DebugSymbols=false', '-p:IncludeSymbols=false', '-o', $ManagedDataDir) `
+            "-p:Version=$PackageVersion", "-p:InformationalVersion=$PackageVersion", '-p:NuGetAudit=false',
+            '-p:DebugSymbols=false', '-p:IncludeSymbols=false', '-o', $ManagedDataDir) `
         -WorkingDirectory $RepoDir -LogPath $managedPublishLog -TimeoutSeconds 900 -Label 'Fresh self-contained managed publish')
     $requiredManaged = @(
         'IndoorCycling.Game.dll', 'IndoorCycling.Game.deps.json', 'IndoorCycling.Game.runtimeconfig.json',
@@ -422,7 +443,7 @@ try {
             SourceAttribution = $attribution
         }
     }
-    [pscustomobject]@{ Version = $Version; Routes = @($routeManifest) } |
+    [pscustomobject]@{ Version = $PackageVersion; Routes = @($routeManifest) } |
         ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $builtInRoot 'builtin-route-manifest.json')
 
     # Symbols are development artifacts and can expose local source paths.
@@ -465,6 +486,69 @@ try {
         finally { Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue }
     }
 
+    Write-Phase 7 'Creating and validating the per-user installer/update package...'
+    $releaseNotes = Join-Path $workRoot 'release-notes.md'
+    if ([string]::IsNullOrWhiteSpace($ReleaseNotesPath)) {
+        $gitExe = (Get-Command git -ErrorAction Stop).Source
+        $changes = Invoke-TrackedProcess -FilePath $gitExe `
+            -ArgumentList @('-C', $RepoDir, 'log', '-8', '--format=%s') -WorkingDirectory $RepoDir `
+            -LogPath (Join-Path $workRoot 'release-commit-notes.log') -TimeoutSeconds 30 -Label 'Release note summary'
+        $changeLines = @($changes.StdOut -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            ForEach-Object { "- $_" })
+        if ($changeLines.Count -eq 0) { $changeLines = @('- Initial Wodra alpha package.') }
+        @("# Wodra $PackageVersion", '', '## Changes', '') + $changeLines + @('', '## Verification', '',
+            'Windows x64 alpha. See the Wodra repository issues for current hardware and multiplayer verification status.') |
+            Set-Content -LiteralPath $releaseNotes -Encoding utf8
+    } else {
+        $resolvedNotes = [System.IO.Path]::GetFullPath($ReleaseNotesPath)
+        if (-not (Test-Path -LiteralPath $resolvedNotes -PathType Leaf)) { throw "Release notes were not found: $resolvedNotes" }
+        Copy-Item -LiteralPath $resolvedNotes -Destination $releaseNotes -Force
+    }
+    $velopackStage = Join-Path $workRoot 'Velopack'
+    New-Item -ItemType Directory -Path $velopackStage -Force | Out-Null
+    $vpkArguments = @('tool', 'run', 'vpk', '--', 'pack', '--packId', 'Wodra', '--packVersion', $PackageVersion,
+        '--runtime', 'win-x64',
+        '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', 'alpha', '--packTitle', 'Wodra',
+        '--packAuthors', 'Wodra', '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
+    [void](Invoke-TrackedProcess -FilePath $dotnet -ArgumentList $vpkArguments -WorkingDirectory $RepoDir `
+        -LogPath (Join-Path $workRoot 'velopack-pack.log') -TimeoutSeconds 900 -Label 'Velopack full installer and update feed packaging')
+    $setup = Get-ChildItem -LiteralPath $velopackStage -Filter '*Setup.exe' -File | Select-Object -First 1
+    $fullPackage = Get-ChildItem -LiteralPath $velopackStage -Filter '*-full.nupkg' -File | Select-Object -First 1
+    $channelManifest = Join-Path $velopackStage 'releases.alpha.json'
+    $assetManifest = Join-Path $velopackStage 'assets.alpha.json'
+    if ($null -eq $setup -or $null -eq $fullPackage -or -not (Test-Path -LiteralPath $channelManifest -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $assetManifest -PathType Leaf)) {
+        throw 'Velopack did not produce the installer, full package, alpha release feed and build-asset manifest.'
+    }
+    $fullPackageZip = [System.IO.Compression.ZipFile]::OpenRead($fullPackage.FullName)
+    try {
+        $packageEntries = @($fullPackageZip.Entries | ForEach-Object { $_.FullName })
+        $nuspecEntry = $fullPackageZip.Entries | Where-Object { $_.FullName -match '\.nuspec$' } | Select-Object -First 1
+        if ($null -eq $nuspecEntry) { throw 'Velopack full package has no package metadata.' }
+        $nuspecReader = [System.IO.StreamReader]::new($nuspecEntry.Open())
+        try { [xml]$packageMetadata = $nuspecReader.ReadToEnd() }
+        finally { $nuspecReader.Dispose() }
+        $namespace = [System.Xml.XmlNamespaceManager]::new($packageMetadata.NameTable)
+        $namespace.AddNamespace('n', 'http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd')
+        $packageRid = $packageMetadata.SelectSingleNode('/n:package/n:metadata/n:rid', $namespace).InnerText
+        if ($packageRid -ne 'win-x64') { throw "Velopack package must target win-x64; it declares '$packageRid'." }
+        foreach ($required in @('Wodra.exe', 'Wodra.pck', 'eos-client.json',
+                'data_IndoorCycling.Game_windows_x86_64/GodotSharp.dll',
+                'data_IndoorCycling.Game_windows_x86_64/coreclr.dll',
+                'data_IndoorCycling.Game_windows_x86_64/EOSSDK-Win64-Shipping.dll',
+                'dunedin-one-way-oval-gardens.route-points.json',
+                'dunedin-south-coastal-loop.route-points.json')) {
+            if (-not ($packageEntries | Where-Object { $_ -eq $required -or $_.EndsWith("/$required", [System.StringComparison]::OrdinalIgnoreCase) })) {
+                throw "Velopack full package is missing required runtime content: $required"
+            }
+        }
+    }
+    finally { $fullPackageZip.Dispose() }
+    $installerChecksum = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    Set-Content -LiteralPath "$($setup.FullName).sha256" -Value "$installerChecksum  $($setup.Name)"
+    Write-Host "Velopack installer and alpha feed verified: $($setup.Name), $($fullPackage.Name)"
+    Complete-Phase
+
     $hash = (Get-FileHash -LiteralPath $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     Set-Content -LiteralPath $ChecksumPath -Value "$hash  $(Split-Path $ArchivePath -Leaf)"
     Write-Host "SHA-256 verified: $hash"
@@ -475,16 +559,28 @@ try {
     $finalExport = Join-Path $PublishDir 'Wodra-windows-x64'
     $finalArchive = Join-Path $PublishDir (Split-Path $ArchivePath -Leaf)
     $finalChecksum = "$finalArchive.sha256"
+    $finalVelopack = Join-Path $PublishDir "Wodra-Velopack-$PackageVersion"
     $incomingExport = Join-Path $PublishDir ".Wodra-windows-x64.incoming-$runId"
     $incomingArchive = Join-Path $PublishDir ".$(Split-Path $ArchivePath -Leaf).incoming-$runId"
     $incomingChecksum = Join-Path $PublishDir ".$(Split-Path $ChecksumPath -Leaf).incoming-$runId"
-    $incomingArtifacts = @($incomingExport, $incomingArchive, $incomingChecksum)
+    $incomingVelopack = Join-Path $PublishDir ".Wodra-Velopack-$PackageVersion.incoming-$runId"
+    $incomingArtifacts = @($incomingExport, $incomingArchive, $incomingChecksum, $incomingVelopack)
     New-Item -ItemType Directory -Path $incomingExport -Force | Out-Null
     foreach ($item in Get-ChildItem -LiteralPath $PublishDirStage -Force) {
         Copy-WithRetry $item.FullName (Join-Path $incomingExport $item.Name)
     }
     Copy-WithRetry $ArchivePath $incomingArchive
     Copy-WithRetry $ChecksumPath $incomingChecksum
+    New-Item -ItemType Directory -Path $incomingVelopack -Force | Out-Null
+    foreach ($item in Get-ChildItem -LiteralPath $velopackStage -Force) {
+        Copy-WithRetry $item.FullName (Join-Path $incomingVelopack $item.Name)
+    }
+    if (-not (Get-ChildItem -LiteralPath $incomingVelopack -Filter '*Setup.exe' -File) -or
+        -not (Get-ChildItem -LiteralPath $incomingVelopack -Filter '*-full.nupkg' -File) -or
+        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack 'releases.alpha.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack 'assets.alpha.json') -PathType Leaf)) {
+        throw "Copied Velopack installer/feed output is incomplete: $incomingVelopack"
+    }
     if (-not (Test-Path -LiteralPath (Join-Path $incomingExport 'Wodra.exe') -PathType Leaf) -or
         -not (Test-Path -LiteralPath (Join-Path (Join-Path $incomingExport $ManagedDirName) 'EOSSDK-Win64-Shipping.dll') -PathType Leaf) -or
         -not (Test-Path -LiteralPath (Join-Path $incomingExport 'eos-client.json') -PathType Leaf)) {
@@ -501,7 +597,8 @@ try {
     $replacements = @(
         [pscustomobject]@{ Incoming = $incomingExport; Target = $finalExport },
         [pscustomobject]@{ Incoming = $incomingArchive; Target = $finalArchive },
-        [pscustomobject]@{ Incoming = $incomingChecksum; Target = $finalChecksum }
+        [pscustomobject]@{ Incoming = $incomingChecksum; Target = $finalChecksum },
+        [pscustomobject]@{ Incoming = $incomingVelopack; Target = $finalVelopack }
     )
     $backups = [System.Collections.Generic.List[object]]::new()
     $installed = [System.Collections.Generic.List[string]]::new()
@@ -537,16 +634,17 @@ try {
     Write-Host "    executable: $finalExport"
     Write-Host "    ZIP: $finalArchive"
     Write-Host "    SHA-256: $finalChecksum"
+    Write-Host "    Installer/update packages: $finalVelopack"
     Complete-Phase
-    foreach ($temporary in @($incomingExport, $incomingArchive, $incomingChecksum)) {
+    foreach ($temporary in @($incomingExport, $incomingArchive, $incomingChecksum, $incomingVelopack)) {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue }
     }
 
     if ($CreateGitHubDraft) {
         if ([string]::IsNullOrWhiteSpace($GitHubTag)) { throw 'Pass -GitHubTag with an existing, reviewed Git tag to create a GitHub draft.' }
-        if ($GitHubTag -ne $Version) { throw 'For GitHub publishing, -Version must exactly match -GitHubTag.' }
-        $ghCommand = Get-Command gh -ErrorAction SilentlyContinue
-        if ($null -eq $ghCommand) { throw 'GitHub CLI (gh) is required for -CreateGitHubDraft.' }
+        if ($GitHubTag -ne "v$PackageVersion") { throw 'For GitHub publishing, GitHubTag must be vMAJOR.MINOR.PATCH-alpha.N and match the package version.' }
+        $githubToken = if (-not [string]::IsNullOrWhiteSpace($env:VPK_TOKEN)) { $env:VPK_TOKEN } else { $env:GH_TOKEN }
+        if ([string]::IsNullOrWhiteSpace($githubToken)) { throw 'Set GH_TOKEN or VPK_TOKEN with a least-privilege repository contents:write token to create a draft release.' }
         $gitExe = (Get-Command git -ErrorAction Stop).Source
         $tagResult = Invoke-TrackedProcess -FilePath $gitExe `
             -ArgumentList @('-C', $RepoDir, 'rev-parse', '--verify', "refs/tags/$GitHubTag^{commit}") `
@@ -564,12 +662,19 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($statusResult.StdOut)) {
             throw 'The GitHub release source tree must be clean. Commit the reviewed release pipeline and assets before publishing.'
         }
-        [void](Invoke-TrackedProcess -FilePath $ghCommand.Source `
-            -ArgumentList @('release', 'create', $GitHubTag, $finalArchive, $finalChecksum, '--draft', '--prerelease',
-                '--verify-tag', '--title', "Wodra $GitHubTag", '--notes',
-                'Windows x64 alpha build. See the release notes for verification scope and known issues.') `
-            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
-            -TimeoutSeconds 600 -Label 'GitHub draft release upload')
+        $previousVpkToken = $env:VPK_TOKEN
+        $env:VPK_TOKEN = $githubToken
+        try {
+            [void](Invoke-TrackedProcess -FilePath $dotnet `
+                -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
+                    '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
+                    '--releaseName', "Wodra $GitHubTag", '--pre') `
+                -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
+                -TimeoutSeconds 600 -Label 'Velopack GitHub draft release upload')
+        } finally {
+            if ($null -eq $previousVpkToken) { Remove-Item Env:VPK_TOKEN -ErrorAction SilentlyContinue }
+            else { $env:VPK_TOKEN = $previousVpkToken }
+        }
     }
 
     Write-Host ("`nSUCCESS (total {0:n1}s)" -f $phaseClock.Elapsed.TotalSeconds)

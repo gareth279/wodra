@@ -1332,5 +1332,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     {
         if (result != Result.Success) throw new InvalidOperationException($"EOS {operation} failed: {result}");
     }
+#else
+    public static void ShutdownPlatform() { }
 #endif
 }

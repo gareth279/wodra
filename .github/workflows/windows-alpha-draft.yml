@@ -1,0 +1,71 @@
+name: Prepare Windows alpha draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing reviewed tag (vMAJOR.MINOR.PATCH-alpha.N)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate-source:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/windows-validation.yml
+    with:
+      ref: ${{ inputs.tag }}
+    permissions:
+      contents: read
+
+  package-draft:
+    if: github.ref == 'refs/heads/main'
+    needs: [validate-source]
+    environment: alpha-release
+    runs-on: [self-hosted, Windows, X64, wodra-release]
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.204
+      - name: Verify approved alpha tag and release workstation
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+-alpha\.\d+$') { throw 'Tag must be vMAJOR.MINOR.PATCH-alpha.N.' }
+          git fetch origin main --tags --force
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch main and tags.' }
+          git merge-base --is-ancestor "refs/tags/$env:RELEASE_TAG" 'refs/remotes/origin/main'
+          if ($LASTEXITCODE -ne 0) { throw 'Release tag is not reachable from protected origin/main.' }
+          git checkout --detach "refs/tags/$env:RELEASE_TAG"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not check out the selected tag.' }
+          if ((dotnet --version).Trim() -ne '10.0.204') { throw 'Release runner did not install .NET SDK 10.0.204.' }
+          $godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+          if (-not (Test-Path $godot)) { throw 'Pinned Godot 4.6.2 .NET editor is missing from this release runner.' }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Wodra\EOS-SDK\SDK\Bin\EOSSDK-Win64-Shipping.dll")) { throw 'Licensed EOS SDK is not provisioned for the release runner.' }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Wodra\eos-client.json")) { throw 'Approved Wodra Player EOS client config is not provisioned for the release runner.' }
+          "PUBLISH_ROOT=$env:RUNNER_TEMP\Wodra-alpha-release" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Build, validate and create GitHub draft prerelease
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = $env:RELEASE_TAG.Substring(1)
+          .\publish.ps1 -Version $version -GitHubTag $env:RELEASE_TAG -CreateGitHubDraft -PublishRoot $env:PUBLISH_ROOT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wodra-${{ inputs.tag }}-Windows-x64
+          path: ${{ runner.temp }}/Wodra-alpha-release
+          if-no-files-found: error
+          retention-days: 30
