@@ -93,6 +93,7 @@ public partial class RideSessionNode : Node
 	private bool? _onlineServiceAvailable;
 	private readonly Dictionary<string, MultiplayerRemoteRider> _remoteRiders = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, RemoteRiderInterpolator> _remoteInterpolators = new(StringComparer.Ordinal);
+	private readonly HashSet<string> _catchUpAssessmentLogged = new(StringComparer.Ordinal);
 	private double _multiplayerPublishElapsed;
 	private long _multiplayerSequence;
 	private RiderRepositionedMessage? _pendingRepositionMessage;
@@ -1125,6 +1126,7 @@ public partial class RideSessionNode : Node
 		_multiplayerProvider = provider;
 		_remoteRiders.Clear();
 		_remoteInterpolators.Clear();
+		_catchUpAssessmentLogged.Clear();
 		_multiplayerPublishElapsed = 0;
 		_multiplayerSequence = 0;
 		_pendingRepositionMessage = null;
@@ -1132,7 +1134,16 @@ public partial class RideSessionNode : Node
 		_onlineStatus = "Connecting…";
 		try
 		{
-			var displayName = GameBootstrap.RiderProfile?.Name ?? GameBootstrap.Settings.Rider.Name;
+			// Resolve from persistent selection at the point of joining. Provider creation or
+			// EOS authentication may have started before the user changed the startup profile.
+			var selectedProfile = await GameBootstrap.GetPersistentRiderAsync();
+			var displayName = RiderDisplayName.Resolve(selectedProfile.Name, GameBootstrap.Settings.Rider.Name);
+			GameLogger.Log("multiplayer_local_display_name_selected", new
+			{
+				provider = GameBootstrap.Settings.OnlineMultiplayerProvider,
+				profileId = selectedProfile.Id,
+				displayName
+			});
 			await provider.JoinRouteSessionAsync(GameBootstrap.Settings.MultiplayerServerAddress, displayName,
 				"public", route.Id, route.GeometryFingerprint, cancellationToken);
 			if (cancellationToken.IsCancellationRequested || !OnlineRidingEnabled || !_sessionStarted ||
@@ -1306,8 +1317,23 @@ public partial class RideSessionNode : Node
 					var joiningRider = !_remoteRiders.TryGetValue(state.RiderId, out var knownRider) || !knownRider.HasState;
 					ApplyRemoteSample(state.RiderId, state.DisplayName, state.DistanceMeters, state.SpeedKph,
 						state.CadenceRpm, state.PowerWatts, state.Paused, state.Sequence, reposition: false);
-					if (joiningRider && state.DistanceMeters > _rideState.DistanceMeters + 100)
-						_hudController?.ShowCatchUpOffer(state.RiderId, state.DisplayName, state.DistanceMeters - _rideState.DistanceMeters);
+					if (joiningRider)
+					{
+						var distanceAhead = state.DistanceMeters - _rideState.DistanceMeters;
+						var eligible = _sessionStarted && distanceAhead > 100;
+						if (_debugDiagnostics.Enabled && _catchUpAssessmentLogged.Add(state.RiderId))
+							GameLogger.Log("multiplayer_catch_up_offer_assessed", new
+							{
+								riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(state.RiderId),
+								eligible,
+								reason = !_sessionStarted ? "local ride is not active" : eligible ? "remote rider is more than 100 m ahead" : "remote rider is not more than 100 m ahead",
+								localDistanceMeters = _rideState.DistanceMeters,
+								remoteDistanceMeters = state.DistanceMeters,
+								distanceAheadMeters = distanceAhead
+							});
+						if (eligible)
+							_hudController?.ShowCatchUpOffer(state.RiderId, state.DisplayName, distanceAhead);
+					}
 					break;
 				case RiderRepositionedMessage reposition when reposition.RiderId != client.RiderId:
 					ApplyRemoteSample(reposition.RiderId, reposition.DisplayName, reposition.DistanceMeters, reposition.SpeedKph,

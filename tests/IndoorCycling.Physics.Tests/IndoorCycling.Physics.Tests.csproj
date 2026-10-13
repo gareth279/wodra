@@ -11,6 +11,8 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/OnlineStatusText.cs" Link="OnlineStatusText.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosIdentityDiagnostics.cs" Link="EosIdentityDiagnostics.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosLobbyStatusText.cs" Link="EosLobbyStatusText.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosPeerMembershipGate.cs" Link="EosPeerMembershipGate.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosReceiveBufferPolicy.cs" Link="EosReceiveBufferPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosClientConfiguration.cs" Link="EosClientConfiguration.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RoutePackageFiles.cs" Link="RoutePackageFiles.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/ScreenshotCaptureMetadata.cs" Link="ScreenshotCaptureMetadata.cs" />

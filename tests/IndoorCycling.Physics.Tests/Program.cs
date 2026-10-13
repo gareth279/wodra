@@ -41,6 +41,8 @@ var tests = new (string Name, Action Run)[]
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
     ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
     ,("EOS lobby UI status distinguishes membership and P2P phases", EosLobbyStatusPhases)
+    ,("EOS P2P requests are deferred until lobby membership is confirmed", EosPeerRequestWaitsForMembership)
+    ,("EOS receive buffer capacity matches MaxDataSizeBytes and bounds malformed sizes", EosReceiveBufferSizing)
     ,("EOS Product User ID diagnostics are stable truncated hashes", EosProductUserHashesArePrivate)
     ,("EOS client configuration loads file values and environment overrides", EosConfigurationPrecedence)
     ,("EOS client configuration reports missing and malformed sources safely", EosConfigurationValidation)
@@ -584,14 +586,47 @@ static void StartupOnlineStatusIsCompact()
 
 static void EosLobbyStatusPhases()
 {
-    if (EosLobbyStatusText.ForMembership(1, 0, false) != "EOS lobby joined · 1 rider")
+    if (EosLobbyStatusText.ForMembership(1, 0, 0, false) != "EOS lobby joined · 1 rider")
         throw new Exception("One member should be reported as a joined singleton lobby.");
-    if (EosLobbyStatusText.ForMembership(2, 0, false) != "EOS lobby joined · 2 riders · P2P pending")
-        throw new Exception("Multiple members should show that P2P is pending.");
-    if (EosLobbyStatusText.ForMembership(2, 1, false) != "EOS lobby joined · 2 riders · P2P connected")
-        throw new Exception("All peers connected should be reported as connected.");
-    if (EosLobbyStatusText.ForMembership(2, 0, true) != "EOS lobby joined · 2 riders · P2P failed")
+    if (EosLobbyStatusText.ForMembership(2, 0, 0, false) != "EOS lobby joined · 2 riders · peers discovered")
+        throw new Exception("Lobby membership should be distinguished from P2P negotiation.");
+    if (EosLobbyStatusText.ForMembership(2, 1, 0, false) != "EOS lobby joined · 2 riders · waiting for rider state")
+        throw new Exception("An established transport without state must not be reported as gameplay-connected.");
+    if (EosLobbyStatusText.ForMembership(2, 1, 1, false) != "EOS lobby joined · 2 riders · rider-state exchange active")
+        throw new Exception("Accepted live state should be reported as an active exchange.");
+    if (EosLobbyStatusText.ForMembership(2, 0, 0, true) != "EOS lobby joined · 2 riders · P2P failed")
         throw new Exception("A P2P failure should remain distinct from authentication or lobby join.");
+}
+
+static void EosPeerRequestWaitsForMembership()
+{
+	var gate = new EosPeerMembershipGate();
+	if (gate.OnIncomingRequest("peer-1"))
+		throw new Exception("An unknown peer must not be accepted before the lobby confirms membership.");
+	if (!gate.AddMember("peer-1"))
+		throw new Exception("The deferred request should become eligible when membership arrives.");
+	if (!gate.OnIncomingRequest("peer-1"))
+		throw new Exception("A confirmed lobby member's next P2P request should be accepted immediately.");
+	gate.RemoveMember("peer-1");
+	if (gate.OnIncomingRequest("peer-1"))
+		throw new Exception("A peer who left the lobby must no longer be accepted.");
+}
+
+static void EosReceiveBufferSizing()
+{
+	const int maximum = 8192;
+	var small = EosReceiveBufferPlan.ForPacket(236, maximum);
+	if (small.BufferLength != 236 || small.MaxDataSizeBytes != 236 || small.Oversized)
+		throw new Exception("Small packets need a matching allocated buffer and EOS receive capacity.");
+	var empty = EosReceiveBufferPlan.ForPacket(0, maximum);
+	if (empty.BufferLength != maximum || empty.MaxDataSizeBytes != maximum || empty.Oversized)
+		throw new Exception("A zero reported size must still use a bounded, explicit receive capacity and be rejected after receive.");
+	var large = EosReceiveBufferPlan.ForPacket(maximum + 1u, maximum);
+	if (large.BufferLength != maximum || large.MaxDataSizeBytes != maximum || !large.Oversized)
+		throw new Exception("Oversized packets must be drained only into a bounded buffer, then discarded.");
+	var next = EosReceiveBufferPlan.ForPacket(64, maximum);
+	if (next.BufferLength != 64 || next.MaxDataSizeBytes != 64 || next.Oversized)
+		throw new Exception("Buffer capacity must be recalculated independently for successive packets.");
 }
 
 static void EosProductUserHashesArePrivate()

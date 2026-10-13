@@ -29,6 +29,7 @@ public partial class GameBootstrap : Node
 	public static IRideHistoryRepository? RideHistory { get; private set; }
 	private static RiderProfileRecord? _persistentRider;
 	private static Task<RiderProfileRecord>? _persistentRiderTask;
+	private static Task? _pendingProfileSelectionTask;
 
 	public static SessionMode Mode { get; private set; } = SessionMode.None;
 	public static string? FitReplayPath { get; private set; }
@@ -101,6 +102,10 @@ public partial class GameBootstrap : Node
 
 	public static async Task<RiderProfileRecord> GetPersistentRiderAsync()
 	{
+		// A profile picker change is asynchronous. If a ride or online join starts
+		// immediately after selection, wait for that selection to become authoritative.
+		if (_pendingProfileSelectionTask is { } pendingSelection)
+			await pendingSelection;
 		if (_persistentRider is not null) return _persistentRider;
 		_persistentRiderTask ??= InitializePersistentRiderAsync();
 		return await _persistentRiderTask;
@@ -138,7 +143,15 @@ public partial class GameBootstrap : Node
 		return _persistentRider!;
 	}
 
-	public static async Task SetActiveProfileAsync(Guid id)
+	public static Task SetActiveProfileAsync(Guid id)
+	{
+		var selection = SetActiveProfileCoreAsync(id);
+		_pendingProfileSelectionTask = selection;
+		_ = ClearCompletedProfileSelectionAsync(selection);
+		return selection;
+	}
+
+	private static async Task SetActiveProfileCoreAsync(Guid id)
 	{
 		var repository = RideHistory ?? throw new InvalidOperationException("Ride history is unavailable.");
 		var profile = await repository.GetProfileAsync(id) ?? throw new InvalidOperationException("Rider profile does not exist.");
@@ -146,6 +159,14 @@ public partial class GameBootstrap : Node
 		Settings.ActiveProfileId = profile.Id;
 		Settings.Save();
 		ApplyActiveProfile(profile);
+	}
+
+	private static async Task ClearCompletedProfileSelectionAsync(Task selection)
+	{
+		try { await selection; }
+		catch { /* The picker reports selection errors; leave the prior profile active. */ }
+		if (ReferenceEquals(_pendingProfileSelectionTask, selection))
+			_pendingProfileSelectionTask = null;
 	}
 
 	public static async Task SaveProfileAsync(RiderProfileRecord profile)
@@ -160,6 +181,7 @@ public partial class GameBootstrap : Node
 		RiderProfile = new RiderProfile(profile.Name, profile.BodyWeightKg, profile.Id, profile.BikeWeightKg,
 			profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc);
 		BikeProfile = new BikeProfile(Settings.Rider.BikeName, profile.BikeWeightKg);
+		GameLogger.Log("rider_profile_activated", new { profileId = profile.Id, displayName = profile.Name });
 	}
 
 	private static async Task ObservePersistenceStartupAsync(Task<RiderProfileRecord> startup)

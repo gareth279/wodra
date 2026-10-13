@@ -24,11 +24,15 @@ internal static class MultiplayerIntegrationTests
 
     private static void ProtocolRoundTripsAndRejectsInvalidData()
     {
+        if (RiderDisplayName.Resolve(" Sue ", "Gareth") != "Sue" ||
+            RiderDisplayName.Resolve("Test", "Gareth") != "Test" ||
+            RiderDisplayName.Resolve("  ", "Legacy") != "Legacy")
+            throw new InvalidOperationException("Selected profile display-name resolution failed.");
         var encoded = MultiplayerProtocol.Serialize(new JoinSessionMessage
         {
-            RouteId = RouteId, RouteFingerprint = Fingerprint, RoomCode = "test-room", DisplayName = "Rider One"
+            RouteId = RouteId, RouteFingerprint = Fingerprint, RoomCode = "test-room", DisplayName = RiderDisplayName.Resolve("Test", "Gareth")
         });
-        if (MultiplayerProtocol.Deserialize(encoded) is not JoinSessionMessage { DisplayName: "Rider One" })
+        if (MultiplayerProtocol.Deserialize(encoded) is not JoinSessionMessage { DisplayName: "Test" })
             throw new InvalidOperationException("JoinSession protocol roundtrip failed.");
         if (MultiplayerProtocol.Deserialize("{"u8) is not null)
             throw new InvalidOperationException("Malformed JSON was accepted.");
@@ -54,12 +58,12 @@ internal static class MultiplayerIntegrationTests
         using var second = new SimulatedClient();
         using var incompatible = new SimulatedClient();
 
-        await first.JoinAsync(wsUri, "Rider One", Fingerprint);
-        await second.JoinAsync(wsUri, "Rider Two", Fingerprint);
+        await first.JoinAsync(wsUri, "Test", Fingerprint);
+        await second.JoinAsync(wsUri, "Sue", Fingerprint);
         if (first.RiderId == second.RiderId) throw new InvalidOperationException("Server assigned a duplicate rider identity.");
         var firstJoined = await first.ReadUntilAsync<RiderJoinedMessage>();
         var secondJoined = await second.ReadUntilAsync<RiderJoinedMessage>();
-        if (firstJoined.Rider.DisplayName != "Rider Two" || secondJoined.Rider.DisplayName != "Rider One")
+        if (firstJoined.Rider.DisplayName != "Sue" || secondJoined.Rider.DisplayName != "Test")
             throw new InvalidOperationException("Connected riders were not discovered by each other.");
 
         await first.SendAsync(new RiderStateMessage
@@ -68,10 +72,19 @@ internal static class MultiplayerIntegrationTests
             SpeedKph = 25.5, CadenceRpm = 85, PowerWatts = 264, Sequence = 1
         });
         var liveState = await second.ReadUntilAsync<RiderStateMessage>();
-        if (liveState.DistanceMeters != 2130 || liveState.DisplayName != "Rider One" || liveState.PowerWatts != 264)
+        if (liveState.DistanceMeters != 2130 || liveState.DisplayName != "Test" || liveState.PowerWatts != 264)
             throw new InvalidOperationException("Rider state was not relayed or server-side name sanitization failed.");
-        if (await ReadActiveRidersAsync(http, presenceUri) != 1)
-            throw new InvalidOperationException("Public route presence did not include the active rider.");
+        await Task.Delay(MultiplayerProtocol.MinimumUpdateIntervalMs + 10);
+        await second.SendAsync(new RiderStateMessage
+        {
+            RiderId = second.RiderId, DisplayName = "spoofed", DistanceMeters = 2200,
+            SpeedKph = 23, CadenceRpm = 82, PowerWatts = 210, Sequence = 1
+        });
+        var sueState = await first.ReadUntilAsync<RiderStateMessage>();
+        if (sueState.DistanceMeters != 2200 || sueState.DisplayName != "Sue")
+            throw new InvalidOperationException("Sue's selected profile name did not reach Test through rider state.");
+        if (await ReadActiveRidersAsync(http, presenceUri) != 2)
+            throw new InvalidOperationException("Public route presence did not include both active profile riders.");
 
         var repositionMessage = new RiderRepositionedMessage
         {
@@ -86,13 +99,14 @@ internal static class MultiplayerIntegrationTests
             throw new InvalidOperationException("A reposition for another route was accepted.");
         await first.SendAsync(repositionMessage);
         var reposition = await second.ReadUntilAsync<RiderRepositionedMessage>();
-        if (reposition.DistanceMeters != 3120 || reposition.SpeedKph != 35 || reposition.DisplayName != "Rider One")
+        if (reposition.DistanceMeters != 3120 || reposition.SpeedKph != 35 || reposition.DisplayName != "Test")
             throw new InvalidOperationException("Explicit rider reposition was not relayed or name sanitization failed.");
 
+        await Task.Delay(MultiplayerProtocol.MinimumUpdateIntervalMs + 10);
         await second.SendAsync(new RiderStateMessage
         {
-            RiderId = second.RiderId, DistanceMeters = 1550, SpeedKph = 18, CadenceRpm = 72,
-            PowerWatts = 180, Paused = true, Sequence = 1
+            RiderId = second.RiderId, DisplayName = "spoofed", DistanceMeters = 1550, SpeedKph = 18, CadenceRpm = 72,
+            PowerWatts = 180, Paused = true, Sequence = 2
         });
         var paused = await first.ReadUntilAsync<RiderStateMessage>();
         if (!paused.Paused || paused.DistanceMeters != 1550)
@@ -110,10 +124,10 @@ internal static class MultiplayerIntegrationTests
         if (left.RiderId != first.RiderId) throw new InvalidOperationException("Rider departure was not broadcast.");
 
         using var reconnected = new SimulatedClient();
-        await reconnected.JoinAsync(wsUri, "Rider One", Fingerprint);
+        await reconnected.JoinAsync(wsUri, "Test", Fingerprint);
         var rejoinAtExisting = await second.ReadUntilAsync<RiderJoinedMessage>();
         var rejoinAtNew = await reconnected.ReadUntilAsync<RiderJoinedMessage>();
-        if (rejoinAtExisting.Rider.DisplayName != "Rider One" || rejoinAtNew.Rider.DisplayName != "Rider Two")
+        if (rejoinAtExisting.Rider.DisplayName != "Test" || rejoinAtNew.Rider.DisplayName != "Sue")
             throw new InvalidOperationException("Reconnecting rider was not discovered by both clients.");
 
         var droppedRiderId = reconnected.RiderId;

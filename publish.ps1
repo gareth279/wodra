@@ -433,8 +433,15 @@ try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::CreateFromDirectory(
         $PublishDirStage, $ArchivePath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
-    & (Join-Path $RepoDir 'tools\Verify-WodraRelease.ps1') -ZipPath $ArchivePath
-    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'Release archive verification failed.' }
+    # This is a PowerShell script, so its success/failure is communicated by
+    # terminating errors rather than $LASTEXITCODE (which belongs to the most
+    # recent native process and may still contain an unrelated exit code).
+    try {
+        & (Join-Path $RepoDir 'tools\Verify-WodraRelease.ps1') -ZipPath $ArchivePath -ErrorAction Stop
+    }
+    catch {
+        throw "Release archive verification failed: $($_.Exception.Message)"
+    }
 
     if (-not $SkipOfflineSmokeTest) {
         $extractDir = Join-Path $workRoot "smoke-$safeVersion-$([guid]::NewGuid().ToString('N'))"

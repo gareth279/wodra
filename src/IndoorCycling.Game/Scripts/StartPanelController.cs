@@ -85,6 +85,8 @@ public partial class StartPanelController : Control
 			_rideSessionNode.IsMultiplayerConnected, _rideSessionNode.OnlineServiceAvailable,
 			EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration, usingEos,
 			EosNativeLibraryLoader.LoadFailed, EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid);
+		if (usingEos && _rideSessionNode.OnlineRidingEnabled)
+			_onlineStatusLabel.Text += "\nWindows may request network access if direct peer connections need it.";
 	}
 
 	private static void ConfigureStartupStatusLabel(Label? label)

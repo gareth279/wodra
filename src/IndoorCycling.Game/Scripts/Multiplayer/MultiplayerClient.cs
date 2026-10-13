@@ -87,7 +87,7 @@ public sealed class WebSocketMultiplayerProvider : IMultiplayerProvider
         if (routeFingerprint.Length != 64)
             throw new InvalidOperationException("The selected route has no valid geometry fingerprint.");
         var uri = NormalizeAddress(serverAddress);
-        DisplayName = displayName.Trim();
+        DisplayName = RiderDisplayName.Resolve(displayName);
         _status = "Connecting…";
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(8));

@@ -27,9 +27,22 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     private const string ProtocolAttribute = "wodra_protocol_version";
     private readonly ConcurrentQueue<ProtocolMessage> _events = new();
     private readonly ConcurrentDictionary<string, byte> _members = new(StringComparer.Ordinal);
+    private readonly EosPeerMembershipGate _peerMembershipGate = new();
     private readonly ConcurrentDictionary<string, byte> _connectedPeers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _pendingEstablishedPeers = new(StringComparer.Ordinal);
+#if WODRA_EOS_SDK
+    private readonly ConcurrentDictionary<string, SocketId?> _pendingPeerRequests = new(StringComparer.Ordinal);
+#endif
     private readonly ConcurrentDictionary<string, byte> _firstStateSendLogged = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _firstStateAttemptLogged = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, byte> _firstStateReceiveLogged = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _firstStateWireReceiveLogged = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, double> _lastAcceptedStateAt = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _receiveDiagnosticsLogged = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _firstRemoteStateAcceptedLogged = new(StringComparer.Ordinal);
+#if DEBUG
+    private int _firstSuccessfulReceiveLogged;
+#endif
     private readonly PeerSequenceGate _sequenceGate = new();
     private string _status = "Offline";
     private string _lobbyId = "";
@@ -78,7 +91,6 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     private static P2PInterface? _p2p;
     private static ProductUserId? _localUser;
     private static Task<ProductUserId>? _loginTask;
-    private static string? _loginDisplayName;
     private static string? _expectedProductUserId;
     private static bool _shutdown;
     private readonly SocketId _socketId = new() { SocketName = SocketName };
@@ -116,7 +128,10 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             if (_joined)
             {
                 var riderCount = _members.Count + 1;
-                return EosLobbyStatusText.ForMembership(riderCount, _connectedPeers.Count, _p2pFailed);
+                var now = System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
+                var activeStatePeers = _lastAcceptedStateAt.Count(item =>
+                    _members.ContainsKey(item.Key) && now - item.Value <= IndoorCycling.Core.Simulation.RemoteRiderInterpolator.StaleAfterSeconds);
+                return EosLobbyStatusText.ForMembership(riderCount, _connectedPeers.Count, activeStatePeers, _p2pFailed);
             }
 #endif
             return _status;
@@ -244,8 +259,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         if (_joined) await LeaveSessionAsync();
         if (string.IsNullOrWhiteSpace(routeId) || routeFingerprint is not { Length: 64 } || !routeFingerprint.All(Uri.IsHexDigit))
             throw new InvalidOperationException("EOS lobby join requires a valid route ID and SHA-256 route fingerprint.");
-        _displayName = (displayName ?? "Rider").Trim();
-        if (_displayName.Length is < 1 or > 32) _displayName = "Rider";
+        _displayName = RiderDisplayName.Resolve(displayName);
         _routeId = routeId;
         _routeFingerprint = routeFingerprint.ToLowerInvariant();
         _status = "Connecting…";
@@ -337,6 +351,11 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         foreach (var member in _members.Keys)
             _events.Enqueue(new RiderLeftMessage { RiderId = member, Reason = "left" });
         _members.Clear();
+        _peerMembershipGate.Clear();
+        _connectedPeers.Clear();
+        _pendingEstablishedPeers.Clear();
+        _pendingPeerRequests.Clear();
+        _lastAcceptedStateAt.Clear();
         _sequenceGate.Clear();
         _lobbyId = "";
         _joined = false;
@@ -360,7 +379,6 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         {
             if (_localUser?.IsValid() == true && _connect?.GetLoginStatus(_localUser) == LoginStatus.LoggedIn)
                 return _localUser;
-            _loginDisplayName = displayName;
             task = _loginTask ??= AuthenticateCoreAsync(displayName);
         }
         using var registration = cancellationToken.Register(() => { });
@@ -812,7 +830,25 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                 if (member is null || string.IsNullOrEmpty(memberId)) continue;
                 distinctMemberIds.Add(memberId);
                 if (memberId == user.ToString()) continue;
-                _members[memberId] = 0;
+                _members.TryAdd(memberId, 0);
+                var acceptDeferredRequest = _peerMembershipGate.AddMember(memberId);
+                if (_pendingEstablishedPeers.TryRemove(memberId, out _))
+                {
+                    _connectedPeers[memberId] = 0;
+                    _p2pFailed = false;
+                }
+#if DEBUG
+                GameLogger.Log("eos_debug_outbound_peer_added", new
+                {
+                    peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(memberId),
+                    source = "lobby membership snapshot"
+                });
+#endif
+                if (acceptDeferredRequest && _pendingPeerRequests.TryRemove(memberId, out var pendingSocket))
+                {
+                    var pendingUser = ProductUserId.FromString(memberId);
+                    if (pendingUser?.IsValid() == true) AcceptPeerConnection(pendingUser, pendingSocket);
+                }
                 SendProtocol(member, new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = _riderId, DisplayName = _displayName } }, PacketReliability.ReliableOrdered, 1);
             }
 #if DEBUG
@@ -854,6 +890,22 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             case LobbyMemberStatus.Joined:
                 if (_members.TryAdd(memberId, 0))
                 {
+                    var acceptDeferredRequest = _peerMembershipGate.AddMember(memberId);
+#if DEBUG
+                    GameLogger.Log("eos_debug_outbound_peer_added", new
+                    {
+                        peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(memberId),
+                        memberCount = _members.Count + 1,
+                        source = "lobby notification"
+                    });
+#endif
+                    if (_pendingEstablishedPeers.TryRemove(memberId, out _))
+                    {
+                        _connectedPeers[memberId] = 0;
+                        _p2pFailed = false;
+                    }
+                    if (acceptDeferredRequest && _pendingPeerRequests.TryRemove(memberId, out var pendingSocket) && info.TargetUserId?.IsValid() == true)
+                        AcceptPeerConnection(info.TargetUserId, pendingSocket);
                     _events.Enqueue(new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = memberId, DisplayName = "Rider" } });
                     if (info.TargetUserId?.IsValid() == true)
                         SendProtocol(info.TargetUserId, new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = _riderId, DisplayName = _displayName } }, PacketReliability.ReliableOrdered, 1);
@@ -866,7 +918,11 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             case LobbyMemberStatus.Closed:
                 if (_members.TryRemove(memberId, out _))
                 {
+                    _peerMembershipGate.RemoveMember(memberId);
                     _connectedPeers.TryRemove(memberId, out _);
+                    _pendingEstablishedPeers.TryRemove(memberId, out _);
+                    _pendingPeerRequests.TryRemove(memberId, out _);
+                    _lastAcceptedStateAt.TryRemove(memberId, out _);
                     _sequenceGate.Remove(memberId);
                     _events.Enqueue(new RiderLeftMessage { RiderId = memberId, Reason = info.CurrentStatus.ToString() });
                 }
@@ -896,9 +952,29 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             knownLobbyMember = !string.IsNullOrEmpty(remoteId) && _members.ContainsKey(remoteId)
         });
 #endif
-        if (string.IsNullOrEmpty(remoteId) || !_members.ContainsKey(remoteId) || _localUser is null) return;
-        if (info.RemoteUserId is null) return;
-        var options = new AcceptConnectionOptions { LocalUserId = _localUser, RemoteUserId = info.RemoteUserId, SocketId = info.SocketId };
+        if (string.IsNullOrEmpty(remoteId) || info.RemoteUserId?.IsValid() != true || _localUser is null) return;
+        // The lobby-member and incoming-P2P callbacks can arrive in either order.
+        // Hold a valid peer request until the lobby confirms that peer.
+        if (!_peerMembershipGate.OnIncomingRequest(remoteId))
+        {
+            _pendingPeerRequests[remoteId] = info.SocketId ?? _socketId;
+#if DEBUG
+            GameLogger.Log("eos_debug_p2p_request_waiting_for_membership", new
+            {
+                peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(remoteId),
+                socketName = info.SocketId?.SocketName
+            });
+#endif
+            return;
+        }
+        AcceptPeerConnection(info.RemoteUserId, info.SocketId);
+    }
+
+    private void AcceptPeerConnection(ProductUserId remoteUser, SocketId? socketId)
+    {
+        var remoteId = remoteUser.ToString();
+        if (_localUser?.IsValid() != true || !_members.ContainsKey(remoteId)) return;
+        var options = new AcceptConnectionOptions { LocalUserId = _localUser, RemoteUserId = remoteUser, SocketId = socketId };
         var result = _p2p!.AcceptConnection(ref options);
         if (result != Result.Success) _p2pFailed = true;
         GameLogger.Log(result == Result.Success ? "eos_p2p_connection_accepted" : "eos_p2p_accept_failed",
@@ -918,6 +994,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         if (!string.IsNullOrEmpty(id) && _members.ContainsKey(id))
         {
             _connectedPeers.TryRemove(id, out _);
+            _lastAcceptedStateAt.TryRemove(id, out _);
             _p2pFailed = true;
             GameLogger.Log("eos_p2p_peer_closed", new
             {
@@ -935,6 +1012,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         if (!string.IsNullOrEmpty(id) && _members.ContainsKey(id))
         {
             _connectedPeers.TryRemove(id, out _);
+            _lastAcceptedStateAt.TryRemove(id, out _);
             _p2pFailed = true;
             GameLogger.Log("eos_p2p_peer_interrupted", new
             {
@@ -949,18 +1027,27 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     private void OnPeerEstablished(ref OnPeerConnectionEstablishedInfo info)
     {
         var id = info.RemoteUserId?.ToString();
-        if (!string.IsNullOrEmpty(id) && _members.ContainsKey(id))
+        if (!string.IsNullOrEmpty(id))
         {
-            _connectedPeers[id] = 0;
-            _p2pFailed = false;
+            var knownLobbyMember = _members.ContainsKey(id);
+            if (knownLobbyMember)
+            {
+                _connectedPeers[id] = 0;
+                _p2pFailed = false;
+            }
+            else _pendingEstablishedPeers[id] = 0;
+#if DEBUG
             GameLogger.Log("eos_p2p_peer_established", new
             {
-#if DEBUG
                 peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(id),
-#endif
                 socket = info.SocketId?.SocketName,
+                knownLobbyMember,
+                deferredUntilMembership = !knownLobbyMember,
                 success = true
             });
+#else
+            if (knownLobbyMember) GameLogger.Log("eos_p2p_peer_established", new { socket = info.SocketId?.SocketName, success = true });
+#endif
         }
     }
 
@@ -995,6 +1082,17 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             DisableAutoAcceptConnection = false
         };
         var result = _p2p.SendPacket(ref options);
+#if DEBUG
+        if (message is RiderStateMessage && _firstStateAttemptLogged.TryAdd(remote.ToString(), 0))
+            GameLogger.Log("eos_debug_first_rider_state_send_attempt", new
+            {
+                peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(remote.ToString()),
+                bytes = bytes.Length,
+                channel,
+                socketName = SocketName,
+                result = result.ToString()
+            });
+#endif
         if (result == Result.Success && message is RiderStateMessage && _firstStateSendLogged.TryAdd(remote.ToString(), 0))
         {
 #if DEBUG
@@ -1037,26 +1135,99 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                 GameLogger.Log("eos_p2p_packet_size_invalid", new { result = sizeResult.ToString(), packetSize });
                 return;
             }
-            var oversized = packetSize > MultiplayerProtocol.MaximumMessageBytes;
-            var buffer = new byte[oversized || packetSize == 0 ? MultiplayerProtocol.MaximumMessageBytes : checked((int)packetSize)];
+            var receivePlan = EosReceiveBufferPlan.ForPacket(packetSize, MultiplayerProtocol.MaximumMessageBytes);
+            var buffer = new byte[receivePlan.BufferLength];
             var peer = (ProductUserId)null!;
             var socket = default(SocketId);
-            var options = new ReceivePacketOptions { LocalUserId = _localUser };
+            var options = new ReceivePacketOptions
+            {
+                LocalUserId = _localUser,
+                MaxDataSizeBytes = receivePlan.MaxDataSizeBytes
+            };
             var result = _p2p.ReceivePacket(ref options, ref peer, ref socket, out var channel, new ArraySegment<byte>(buffer), out var written);
             if (result != Result.Success)
             {
-                GameLogger.Log("eos_p2p_packet_receive_failed", new { result = result.ToString(), packetSize });
+                if (_receiveDiagnosticsLogged.TryAdd("receive-result:" + result, 0))
+                    GameLogger.Log("eos_p2p_packet_receive_failed", new
+                    {
+                        result = result.ToString(), packetSize,
+                        bufferLength = buffer.Length,
+                        maxDataSizeBytes = options.MaxDataSizeBytes,
+                        written,
+                        channel,
+                        socketName = socket.SocketName,
+                        peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peer?.ToString())
+                    });
                 continue;
             }
-            if (oversized || written == 0 || written > packetSize || written > buffer.Length)
+#if DEBUG
+            if (!receivePlan.Oversized && written > 0 && written <= packetSize && written <= buffer.Length &&
+                Interlocked.CompareExchange(ref _firstSuccessfulReceiveLogged, 1, 0) == 0)
+                GameLogger.Log("eos_p2p_first_packet_receive_succeeded", new
+                {
+                    result = result.ToString(), packetSize,
+                    bufferLength = buffer.Length,
+                    maxDataSizeBytes = options.MaxDataSizeBytes,
+                    written,
+                    channel,
+                    socketName = socket.SocketName,
+                    peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peer?.ToString())
+                });
+#endif
+            if (receivePlan.Oversized || written == 0 || written > packetSize || written > buffer.Length)
             {
-                GameLogger.Log("eos_p2p_packet_dropped", new { reason = oversized ? "message too large" : "invalid message size", packetSize, written });
+                var reason = receivePlan.Oversized ? "message too large" : "invalid message size";
+                if (_receiveDiagnosticsLogged.TryAdd("drop:" + reason, 0))
+                    GameLogger.Log("eos_p2p_packet_dropped", new
+                    {
+                        reason, result = result.ToString(), packetSize,
+                        bufferLength = buffer.Length,
+                        maxDataSizeBytes = options.MaxDataSizeBytes,
+                        written,
+                        channel,
+                        socketName = socket.SocketName,
+                        peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peer?.ToString())
+                    });
                 continue;
             }
             var peerId = peer?.ToString();
-            if (string.IsNullOrEmpty(peerId) || !_members.ContainsKey(peerId) || socket.SocketName != SocketName) continue;
+            if (string.IsNullOrEmpty(peerId) || !_members.ContainsKey(peerId) || socket.SocketName != SocketName)
+            {
+#if DEBUG
+                var reason = string.IsNullOrEmpty(peerId) ? "missing sender" : !_members.ContainsKey(peerId) ? "sender is not a lobby member" : "socket mismatch";
+                var peerHash = EosIdentityDiagnostics.HashProductUserId(peerId);
+                if (_receiveDiagnosticsLogged.TryAdd($"reject:{peerHash}:{reason}", 0))
+                    GameLogger.Log("eos_debug_packet_rejected", new
+                {
+                    reason,
+                    peerIdentityHash = peerHash,
+                    channel,
+                    socketName = socket.SocketName,
+                    bytes = written
+                });
+#endif
+                continue;
+            }
             var message = MultiplayerProtocol.Deserialize(buffer.AsSpan(0, checked((int)written)));
-            if (message is null) continue;
+            if (message is null)
+            {
+#if DEBUG
+                if (_receiveDiagnosticsLogged.TryAdd("reject:" + EosIdentityDiagnostics.HashProductUserId(peerId) + ":deserialize", 0))
+                    GameLogger.Log("eos_debug_packet_rejected", new { reason = "deserialize or protocol version failed", peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peerId), channel, bytes = written });
+#endif
+                continue;
+            }
+#if DEBUG
+            if (message is RiderStateMessage && _firstStateWireReceiveLogged.TryAdd(peerId, 0))
+                GameLogger.Log("eos_debug_rider_packet_received", new
+                {
+                    peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peerId),
+                    type = message.Type,
+                    channel,
+                    bytes = written,
+                    socketName = socket.SocketName
+                });
+#endif
             switch (message)
             {
                 case RiderJoinedMessage joined when joined.Rider.RiderId == peerId:
@@ -1064,12 +1235,36 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                     break;
                 case RiderLeftMessage left when left.RiderId == peerId:
                     _members.TryRemove(peerId, out _);
+                    _peerMembershipGate.RemoveMember(peerId);
+                    _connectedPeers.TryRemove(peerId, out _);
+                    _pendingEstablishedPeers.TryRemove(peerId, out _);
+                    _lastAcceptedStateAt.TryRemove(peerId, out _);
                     _sequenceGate.Remove(peerId);
                     _events.Enqueue(left);
                     break;
-                case RiderStateMessage state when channel == 0 && state.RiderId == peerId &&
-                    MultiplayerProtocol.ValidateState(state, peerId) is null && _sequenceGate.TryAcceptSnapshot(peerId, state.Sequence):
+                case RiderStateMessage state:
+                    var validationError = channel != 0 ? "state on wrong channel" :
+                        state.RiderId != peerId ? "sender identity mismatch" :
+                        MultiplayerProtocol.ValidateState(state, peerId) ??
+                        (_sequenceGate.TryAcceptSnapshot(peerId, state.Sequence) ? null : "stale or duplicate sequence");
+                    if (validationError is not null)
+                    {
 #if DEBUG
+                        if (_receiveDiagnosticsLogged.TryAdd("reject:" + EosIdentityDiagnostics.HashProductUserId(peerId) + ":" + validationError, 0))
+                            GameLogger.Log("eos_debug_packet_rejected", new { reason = validationError, peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peerId), channel, sequence = state.Sequence });
+#endif
+                        break;
+                    }
+                    _lastAcceptedStateAt[peerId] = System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
+#if DEBUG
+                    if (_firstRemoteStateAcceptedLogged.TryAdd(peerId, 0))
+                        GameLogger.Log("multiplayer_remote_state_accepted", new
+                        {
+                            peerIdentityHash = EosIdentityDiagnostics.HashProductUserId(peerId),
+                            channel,
+                            sequence = state.Sequence,
+                            distanceMeters = state.DistanceMeters
+                        });
                     if (_firstStateReceiveLogged.TryAdd(peerId, 0))
                         GameLogger.Log("eos_p2p_first_rider_state_received", new
                         {
