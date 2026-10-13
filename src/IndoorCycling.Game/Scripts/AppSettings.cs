@@ -114,7 +114,7 @@ public sealed class AppSettings
 
 public sealed class RiderSettings
 {
-	public string Name { get; set; } = "Gareth";
+	public string Name { get; set; } = "Rider";
 	public double WeightKg { get; set; } = 88.0;
 	public string BikeName { get; set; } = "Indoor Bike";
 	public double BikeWeightKg { get; set; } = 9.0;

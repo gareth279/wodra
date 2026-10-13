@@ -41,9 +41,18 @@ public partial class RideSessionNode : Node
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
 	public bool HasRideRecording => _rideRecorder is not null;
+	public double ActiveRiderBodyWeightKg => CurrentRiderProfile.WeightKg;
+	public string ActiveRiderDisplayName => CurrentRiderProfile.DisplayName;
 	private double _elapsedSeconds;
 	private Guid? _currentActivityId;
 	private Guid? _currentRiderProfileId;
+	private RiderProfile? _activeRideRiderProfile;
+	private BikeProfile? _activeRideBikeProfile;
+	private RiderProfile CurrentRiderProfile => _activeRideRiderProfile ?? GameBootstrap.RiderProfile;
+	private BikeProfile CurrentBikeProfile => _activeRideBikeProfile ?? GameBootstrap.BikeProfile;
+	private readonly TrainerGradeTransition _trainerGradeTransition = new();
+	private double _trainerTargetGradePercent;
+	private double _effectiveTrainerGradePercent;
 	private DateTimeOffset _activityStartedAtUtc;
 	private string? _currentActivityFitPath;
 	private readonly RideActivityAccumulator _activityAccumulator = new();
@@ -157,6 +166,19 @@ public partial class RideSessionNode : Node
 		{
 			var rider = await GameBootstrap.GetPersistentRiderAsync();
 			_currentRiderProfileId = rider.Id;
+			SetActiveRideProfile(rider);
+			GameLogger.Log("ride_profile_snapshot_created", new
+			{
+				profileId = rider.Id,
+				profileName = rider.Name,
+				bodyWeightKg = rider.BodyWeightKg,
+				bikeWeightKg = rider.BikeWeightKg,
+				trainerDifficultyPercent = rider.TrainerDifficultyPercent
+			});
+			if (GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } dummy)
+				dummy.SetDummyOutput(GameBootstrap.Settings.DummyTrainer.CalculateWatts(rider.BodyWeightKg),
+					GameBootstrap.Settings.DummyTrainer.CadenceRpm);
+			_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
 		}
 		catch (Exception ex)
 		{
@@ -215,6 +237,8 @@ public partial class RideSessionNode : Node
 
 	public async Task StartFitReplaySessionAsync(string fitPath)
 	{
+		try { SetActiveRideProfile(await GameBootstrap.GetPersistentRiderAsync()); }
+		catch (Exception ex) { GameLogger.Log("ride_profile_snapshot_unavailable", new { message = ex.Message }); }
 		_hudController?.SetDummyTrainerControls(null);
 		_fitReplayClient = new FakeTrainerClient();
 		await _fitReplayClient.ConnectAsync();
@@ -239,6 +263,14 @@ public partial class RideSessionNode : Node
 		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_started", new { mode = "fit_replay", fitPath });
 
 		GD.Print($"FIT replay session selected: {fitPath}");
+	}
+
+	private void SetActiveRideProfile(RiderProfileRecord profile)
+	{
+		_currentRiderProfileId = profile.Id;
+		_activeRideRiderProfile = new RiderProfile(profile.Name, profile.BodyWeightKg, profile.Id,
+			profile.BikeWeightKg, profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc);
+		_activeRideBikeProfile = new BikeProfile(GameBootstrap.Settings.Rider.BikeName, profile.BikeWeightKg);
 	}
 
 	public async Task ExitToMainMenuAsync()
@@ -354,6 +386,9 @@ public partial class RideSessionNode : Node
 				_manualGradientOffsetPercent = 0;
 				_currentActivityId = null;
 				_currentRiderProfileId = null;
+				_activeRideRiderProfile = null;
+				_activeRideBikeProfile = null;
+				_trainerGradeTransition.Cancel();
 			}
 		}
 	}
@@ -529,6 +564,41 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus($"Manual gradient offset: {_manualGradientOffsetPercent:+0.0;-0.0;0.0}%");
 	}
 
+	public async Task SetTrainerDifficultyAsync(int percent)
+	{
+		var previousEffectiveGrade = GetEffectiveTrainerGrade();
+		await GameBootstrap.SetTrainerDifficultyAsync(percent);
+		var target = GetTrainerGradeTarget(GetCurrentGradient());
+		_trainerTargetGradePercent = target;
+		if (_sessionStarted && GameBootstrap.TrainerClient?.IsConnected == true)
+			_trainerGradeTransition.Start(previousEffectiveGrade, target);
+		else
+		{
+			_trainerGradeTransition.Cancel(target);
+			_effectiveTrainerGradePercent = target;
+		}
+		_trainerCommandDirty = true;
+		if (_sessionStarted) _trainerCommandElapsedSeconds = Math.Max(_trainerCommandElapsedSeconds, TrainerCommandMinIntervalSeconds);
+		GameLogger.Log("trainer_difficulty_changed", new
+		{
+			profileId = CurrentRiderProfile.ProfileId,
+			trainerDifficultyPercent = GameBootstrap.TrainerDifficultyPercent,
+			routeGradientPercent = GetRouteGradient(),
+			trainerTargetGradePercent = target,
+			transitionStarted = _trainerGradeTransition.IsActive
+		});
+	}
+
+	private double GetTrainerGradeTarget(double routeGradientPercent) =>
+		GameBootstrap.TrainerClient is FakeTrainerClient
+			? routeGradientPercent
+			: TrainerDifficultyPolicy.ScaleGrade(routeGradientPercent, GameBootstrap.TrainerDifficultyPercent);
+
+	private double GetEffectiveTrainerGrade() => _trainerGradeTransition.IsActive
+		? _trainerGradeTransition.CurrentPercent
+		: GameBootstrap.TrainerClient?.LastAppliedSimulationGradePercent ??
+			_lastSentTrainerGradientPercent ?? GetTrainerGradeTarget(GetCurrentGradient());
+
 	private double GetRouteGradient()
 	{
 		if (_currentRoute is null)
@@ -548,7 +618,7 @@ public partial class RideSessionNode : Node
 		var settings = GameBootstrap.Settings.DummyTrainer;
 		if (settings.Mode == "W/kg") settings.WattsPerKg = Math.Clamp(settings.WattsPerKg + increment, 0, 12);
 		else settings.TargetWatts = Math.Clamp(settings.TargetWatts + (int)increment, 0, 1500);
-		settings.Validate(); dummy.SetDummyOutput(settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg), settings.CadenceRpm);
+		settings.Validate(); dummy.SetDummyOutput(settings.CalculateWatts(CurrentRiderProfile.BodyWeightKg), settings.CadenceRpm);
 		GameBootstrap.Settings.Save();
 		_hudController?.SetDummyTrainerControls(dummy);
 	}
@@ -557,7 +627,7 @@ public partial class RideSessionNode : Node
 	{
 		if (GameBootstrap.TrainerClient is not FakeTrainerClient { HasLiveDummyControls: true } dummy) return;
 		var settings = GameBootstrap.Settings.DummyTrainer; settings.CadenceRpm = Math.Clamp(settings.CadenceRpm + increment, 0, 160);
-		dummy.SetDummyOutput(settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg), settings.CadenceRpm);
+		dummy.SetDummyOutput(settings.CalculateWatts(CurrentRiderProfile.BodyWeightKg), settings.CadenceRpm);
 		GameBootstrap.Settings.Save(); _hudController?.SetDummyTrainerControls(dummy);
 	}
 
@@ -609,6 +679,8 @@ public partial class RideSessionNode : Node
 		var telemetry = _lastTelemetry;
 		var now = DateTimeOffset.UtcNow;
 		var trainer = _trainerSessionActive ? GameBootstrap.TrainerClient : _fitReplayClient;
+		var routeGradient = routeSample?.GradientPercent ?? 0;
+		var trainerTargetGrade = _trainerSessionActive ? GetTrainerGradeTarget(GetCurrentGradient()) : 0;
 		var recordingState = _rideRecorder is null ? "inactive" : _rideRecorder.IsRecording ? "recording" : _rideRecorder.IsPaused ? "paused" : "stopped";
 		var pose = world?.Pose ?? default;
 		var fitState = _fitReplaySessionActive ? "fit_replay" : DebugTrainerMode;
@@ -620,14 +692,14 @@ public partial class RideSessionNode : Node
 			ridePaused = _pauseGate.IsPaused,
 			fitRecordingState = recordingState,
 			elapsedRidingSeconds = _elapsedSeconds,
-			profileId = GameBootstrap.RiderProfile.ProfileId,
-			profileName = GameBootstrap.RiderProfile.DisplayName,
-			bodyWeightKg = GameBootstrap.RiderProfile.BodyWeightKg,
-			bikeWeightKg = GameBootstrap.BikeProfile.WeightKg,
+			profileId = CurrentRiderProfile.ProfileId,
+			profileName = CurrentRiderProfile.DisplayName,
+			bodyWeightKg = CurrentRiderProfile.BodyWeightKg,
+			bikeWeightKg = CurrentBikeProfile.WeightKg,
 			trainerKind = DebugTrainerMode,
 			dummyMode = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } ? GameBootstrap.Settings.DummyTrainer.Mode : null,
 			dummyWattsPerKg = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } && GameBootstrap.Settings.DummyTrainer.Mode == "W/kg" ? GameBootstrap.Settings.DummyTrainer.WattsPerKg : null,
-			dummyTargetWatts = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } ? GameBootstrap.Settings.DummyTrainer.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg) : null,
+			dummyTargetWatts = GameBootstrap.TrainerClient is FakeTrainerClient { HasLiveDummyControls: true } ? GameBootstrap.Settings.DummyTrainer.CalculateWatts(CurrentRiderProfile.BodyWeightKg) : null,
 			ghostActivityId = GhostRider is null ? null : GhostActivityId,
 			ghostElapsedSeconds = GhostRider?.ElapsedSeconds,
 			ghostTotalDistanceMeters = GhostRider?.Sample?.DistanceMeters,
@@ -647,8 +719,13 @@ public partial class RideSessionNode : Node
 			virtualSpeedKph = _rideState.VirtualSpeedKph,
 			totalRideDistanceMeters = _rideState.DistanceMeters,
 			currentPowerWatts = _rideState.CurrentPowerWatts,
-			totalSystemMassKg = GameBootstrap.RiderProfile.WeightKg + GameBootstrap.BikeProfile.WeightKg,
-			routeGradientPercent = routeSample?.GradientPercent ?? 0,
+			totalSystemMassKg = CurrentRiderProfile.WeightKg + CurrentBikeProfile.WeightKg,
+			routeGradientPercent = routeGradient,
+			trainerDifficultyPercent = GameBootstrap.TrainerDifficultyPercent,
+			trainerGradeTargetPercent = trainerTargetGrade,
+			trainerGradeCommandedPercent = trainer?.IsConnected == true
+				? trainer.LastAppliedSimulationGradePercent ?? _lastSentTrainerGradientPercent : null,
+			trainerGradeTransitionActive = _trainerGradeTransition.IsActive,
 			manualGradientOffsetPercent = _manualGradientOffsetPercent,
 			routeId = route?.Id,
 			routeName = route?.Name,
@@ -1134,14 +1211,14 @@ public partial class RideSessionNode : Node
 		_onlineStatus = "Connecting…";
 		try
 		{
-			// Resolve from persistent selection at the point of joining. Provider creation or
-			// EOS authentication may have started before the user changed the startup profile.
-			var selectedProfile = await GameBootstrap.GetPersistentRiderAsync();
-			var displayName = RiderDisplayName.Resolve(selectedProfile.Name, GameBootstrap.Settings.Rider.Name);
+			// Use the profile snapshot captured when this ride began, even if provider
+			// availability checks or authentication started earlier in startup.
+			var selectedProfile = CurrentRiderProfile;
+			var displayName = RiderDisplayName.Resolve(selectedProfile.DisplayName);
 			GameLogger.Log("multiplayer_local_display_name_selected", new
 			{
 				provider = GameBootstrap.Settings.OnlineMultiplayerProvider,
-				profileId = selectedProfile.Id,
+				profileId = selectedProfile.ProfileId,
 				displayName
 			});
 			await provider.JoinRouteSessionAsync(GameBootstrap.Settings.MultiplayerServerAddress, displayName,
@@ -1462,6 +1539,7 @@ public partial class RideSessionNode : Node
 		}
 		var shouldRestartRecording = _rideRecorder is not null;
 		var wasPaused = _pauseGate.IsPaused || _rideRecorder?.IsPaused == true;
+		var previousTrainerGrade = GetEffectiveTrainerGrade();
 		if (shouldRestartRecording && !FinaliseRecordingForCatchUp())
 		{
 			GameLogger.Log("multiplayer_catch_up_reposition_failed", new { riderIdentityHash, reason = "FIT finalisation failed; rider was not repositioned." });
@@ -1484,11 +1562,13 @@ public partial class RideSessionNode : Node
 		_rideState = _rideState with { DistanceMeters = destination,
 			VirtualSpeedKph = wasPaused ? 0 : matchedSpeedKph,
 			CurrentGradientPercent = routeSample.GradientPercent + _manualGradientOffsetPercent };
+		_trainerTargetGradePercent = GetTrainerGradeTarget(routeSample.GradientPercent + _manualGradientOffsetPercent);
+		_trainerGradeTransition.Start(previousTrainerGrade, _trainerTargetGradePercent);
+		_effectiveTrainerGradePercent = previousTrainerGrade;
 		_recordingSampleElapsedSeconds = 0;
 		_lastLoggedLapNumber = (int)Math.Floor(destination / route.DistanceMeters) + 1;
 		_trainerCommandDirty = true;
 		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
-		_lastSentTrainerGradientPercent = null;
 		UpdateRouteHud();
 		_rideWorldView.ResetAfterReposition();
 		var fitRestartFailed = false;
@@ -1537,6 +1617,8 @@ public partial class RideSessionNode : Node
 	{
 		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsConnected)
 		{
+			_trainerGradeTransition.Cancel();
+			_trainerCommandDirty = true;
 			_hudController?.SetStatus("Trainer not connected.");
 			_hudController?.UpdateFromRideState(_rideState, _lastTelemetry, _elapsedSeconds);
 			return;
@@ -1548,7 +1630,7 @@ public partial class RideSessionNode : Node
 		{
 			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
 				new SimulationTickInput(telemetry, GetCurrentGradient(), 0,
-					GameBootstrap.RiderProfile, GameBootstrap.BikeProfile));
+					CurrentRiderProfile, CurrentBikeProfile));
 			UpdateRouteHud();
 			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 			return;
@@ -1560,8 +1642,8 @@ public partial class RideSessionNode : Node
 			Telemetry: telemetry,
 			GradientPercent: gradient,
 			DeltaSeconds: delta,
-			RiderProfile: GameBootstrap.RiderProfile,
-			BikeProfile: GameBootstrap.BikeProfile
+			RiderProfile: CurrentRiderProfile,
+			BikeProfile: CurrentBikeProfile
 		);
 
 		var previousDistance = _rideState.DistanceMeters;
@@ -1570,10 +1652,12 @@ public partial class RideSessionNode : Node
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_trainerCommandElapsedSeconds += delta;
+		_trainerTargetGradePercent = GetTrainerGradeTarget(gradient);
+		_effectiveTrainerGradePercent = _trainerGradeTransition.Advance(delta, _trainerTargetGradePercent);
 
-		if (_trainerCommandTask.IsCompleted && ShouldSendTrainerSimulationCommand(gradient))
+		if (_trainerCommandTask.IsCompleted && ShouldSendTrainerSimulationCommand(_effectiveTrainerGradePercent))
 		{
-			_trainerCommandTask = SendTrainerSimulationCommandAsync(gradient);
+			_trainerCommandTask = SendTrainerSimulationCommandAsync(_effectiveTrainerGradePercent);
 		}
 		RecordRideSampleIfNeeded(delta, telemetry, gradient);
 		UpdateRouteHud();
@@ -1599,12 +1683,12 @@ public partial class RideSessionNode : Node
 			await GameBootstrap.TrainerClient!.SetSimulationAsync(
 				new SimulationCommand(
 					GradePercent: gradient,
-					RiderWeightKg: GameBootstrap.RiderProfile.WeightKg,
-					BikeWeightKg: GameBootstrap.BikeProfile.WeightKg
+					RiderWeightKg: CurrentRiderProfile.WeightKg,
+					BikeWeightKg: CurrentBikeProfile.WeightKg
 				)
 			);
 
-			_lastSentTrainerGradientPercent = gradient;
+			_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient!.LastAppliedSimulationGradePercent ?? gradient;
 			if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_simulation_command_succeeded", new { gradientPercent = gradient });
 		}
 		catch (Exception ex)
@@ -1644,7 +1728,7 @@ public partial class RideSessionNode : Node
 		{
 			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
 				new SimulationTickInput(telemetry, gradient, 0,
-					GameBootstrap.RiderProfile, GameBootstrap.BikeProfile));
+					CurrentRiderProfile, CurrentBikeProfile));
 			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 			return;
 		}
@@ -1653,8 +1737,8 @@ public partial class RideSessionNode : Node
 			Telemetry: telemetry,
 			GradientPercent: gradient,
 			DeltaSeconds: delta,
-			RiderProfile: GameBootstrap.RiderProfile,
-			BikeProfile: GameBootstrap.BikeProfile
+			RiderProfile: CurrentRiderProfile,
+			BikeProfile: CurrentBikeProfile
 		);
 
 		var previousDistance = _rideState.DistanceMeters;
@@ -1665,8 +1749,8 @@ public partial class RideSessionNode : Node
 		_ = _fitReplayClient.SetSimulationAsync(
 			new SimulationCommand(
 				GradePercent: gradient,
-				RiderWeightKg: GameBootstrap.RiderProfile.WeightKg,
-				BikeWeightKg: GameBootstrap.BikeProfile.WeightKg
+				RiderWeightKg: CurrentRiderProfile.WeightKg,
+				BikeWeightKg: CurrentBikeProfile.WeightKg
 			)
 		);
 

@@ -9,6 +9,8 @@ public sealed class FakeTrainerClient : ITrainerClient
     private readonly Random _random = new();
     private bool _isConnected;
     private double _gradePercent;
+    public double? LastRequestedSimulationGradePercent { get; private set; }
+    public double? LastAppliedSimulationGradePercent { get; private set; }
     private int _power = 180;
     private int _cadence = 85;
     private double _speedKph = 30.0;
@@ -45,6 +47,8 @@ public sealed class FakeTrainerClient : ITrainerClient
         CancellationToken cancellationToken = default)
     {
         _gradePercent = command.GradePercent;
+        LastRequestedSimulationGradePercent = command.GradePercent;
+        LastAppliedSimulationGradePercent = command.GradePercent;
         return Task.CompletedTask;
     }
 

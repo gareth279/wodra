@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
+    <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DebugRideDiagnostics.cs" Link="DebugRideDiagnostics.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/OnlineStatusText.cs" Link="OnlineStatusText.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosIdentityDiagnostics.cs" Link="EosIdentityDiagnostics.cs" />

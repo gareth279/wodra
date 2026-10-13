@@ -6,6 +6,8 @@ namespace IndoorCycling.Trainer.Abstractions;
 public interface ITrainerClient
 {
     bool IsConnected { get; }
+    double? LastRequestedSimulationGradePercent => null;
+    double? LastAppliedSimulationGradePercent => null;
 
     Task ConnectAsync(CancellationToken cancellationToken = default);
     Task DisconnectAsync(CancellationToken cancellationToken = default);

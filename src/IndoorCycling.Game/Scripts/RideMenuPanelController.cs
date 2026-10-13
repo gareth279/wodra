@@ -143,6 +143,7 @@ public partial class RideMenuPanelController : Control
 				};
 				_content.AddChild(debugMode);
 				#endif
+				AddTrainerDifficultyControl();
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
 				AddAction("Back", () => ShowView(MenuView.Main));
@@ -288,7 +289,7 @@ public partial class RideMenuPanelController : Control
 		_advancedMultiplayerContainer = new VBoxContainer { Visible = false };
 		_content.AddChild(_advancedMultiplayerContainer);
 		_multiplayerAddressInput = AddAdvancedInputRow("Server", GameBootstrap.Settings.MultiplayerServerAddress);
-		_multiplayerNameInput = AddAdvancedInputRow("Display name", GameBootstrap.RiderProfile.DisplayName);
+		_multiplayerNameInput = AddAdvancedInputRow("Display name", _rideSessionNode?.ActiveRiderDisplayName ?? GameBootstrap.RiderProfile.DisplayName);
 		_multiplayerRoomInput = AddAdvancedInputRow("Room code", "development");
 		_multiplayerJoinButton = AddAdvancedAction("Join development room", OnJoinMultiplayerPressed);
 		_multiplayerLeaveButton = AddAdvancedAction("Go Offline (leave session)", OnLeaveMultiplayerPressed);
@@ -471,7 +472,7 @@ public partial class RideMenuPanelController : Control
 		var settings = GameBootstrap.Settings.DummyTrainer;
 		var power = new Label { HorizontalAlignment = HorizontalAlignment.Center };
 		void UpdatePowerLabel() => power.Text = settings.Mode == "W/kg"
-			? $"Target: {settings.WattsPerKg:0.0} W/kg · {settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg)} W"
+			? $"Target: {settings.WattsPerKg:0.0} W/kg · {settings.CalculateWatts(_rideSessionNode?.ActiveRiderBodyWeightKg ?? GameBootstrap.RiderProfile.BodyWeightKg)} W"
 			: $"Target: {settings.TargetWatts} W";
 		var powerRow = new HBoxContainer();
 		var powerStep = settings.Mode == "W/kg" ? .1 : 25;
@@ -497,6 +498,42 @@ public partial class RideMenuPanelController : Control
 		cadenceUp.Pressed += () => { _rideSessionNode?.AdjustDummyCadence(5); cadence.Text = $"{GameBootstrap.Settings.DummyTrainer.CadenceRpm} rpm"; };
 		cadenceRow.AddChild(cadenceUp);
 		_content.AddChild(cadenceRow);
+	}
+
+	private void AddTrainerDifficultyControl()
+	{
+		_content!.AddChild(new Label { Text = "Trainer Difficulty", HorizontalAlignment = HorizontalAlignment.Center });
+		_content.AddChild(new Label
+		{
+			Text = "Scales simulated resistance sent to the trainer. Ride physics keeps the full route gradient.",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center
+		});
+		var row = new HBoxContainer();
+		var slider = new HSlider
+		{
+			MinValue = 0, MaxValue = 100, Step = 5,
+			Value = GameBootstrap.TrainerDifficultyPercent,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		var valueLabel = new Label { Text = $"{GameBootstrap.TrainerDifficultyPercent}%", CustomMinimumSize = new Vector2(48, 0) };
+		slider.ValueChanged += value =>
+		{
+			valueLabel.Text = $"{value:0}%";
+			_ = ApplyTrainerDifficultyAsync((int)value);
+		};
+		row.AddChild(slider); row.AddChild(valueLabel); _content.AddChild(row);
+	}
+
+	private async Task ApplyTrainerDifficultyAsync(int percent)
+	{
+		if (_rideSessionNode is null) return;
+		try { await _rideSessionNode.SetTrainerDifficultyAsync(percent); }
+		catch (Exception ex)
+		{
+			GameLogger.Log("trainer_difficulty_save_failed", new { percent, message = ex.Message });
+			_hudController?.SetStatus($"Trainer difficulty could not be saved: {ex.Message}");
+		}
 	}
 
 	private Button AddAction(string text, Action action)

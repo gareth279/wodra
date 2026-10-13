@@ -3,14 +3,16 @@ namespace IndoorCycling.Core.Models;
 public enum RideActivityStatus { InProgress, Completed, Abandoned }
 
 public sealed record RiderProfileRecord(Guid Id, string Name, DateTimeOffset CreatedAtUtc, DateTimeOffset UpdatedAtUtc,
-    double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false)
+    double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false, int TrainerDifficultyPercent = 50)
 {
     public Guid ProfileId => Id;
-    public static void Validate(string name, double bodyWeightKg, double bikeWeightKg)
+    public static void Validate(string name, double bodyWeightKg, double bikeWeightKg, int trainerDifficultyPercent = 50)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Profile name is required.", nameof(name));
         if (!double.IsFinite(bodyWeightKg) || bodyWeightKg is < 30 or > 200) throw new ArgumentOutOfRangeException(nameof(bodyWeightKg), "Body weight must be 30–200 kg.");
         if (!double.IsFinite(bikeWeightKg) || bikeWeightKg is < 4 or > 30) throw new ArgumentOutOfRangeException(nameof(bikeWeightKg), "Bike weight must be 4–30 kg.");
+        if (trainerDifficultyPercent is < 0 or > 100 || trainerDifficultyPercent % 5 != 0)
+            throw new ArgumentOutOfRangeException(nameof(trainerDifficultyPercent), "Trainer difficulty must be 0–100% in 5% steps.");
     }
 }
 

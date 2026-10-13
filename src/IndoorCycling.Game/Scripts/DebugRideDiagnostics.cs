@@ -96,6 +96,10 @@ public sealed record RideDebugSnapshot
     public int currentPowerWatts { get; init; }
     public double totalSystemMassKg { get; init; }
     public double routeGradientPercent { get; init; }
+    public int trainerDifficultyPercent { get; init; } = 50;
+    public double trainerGradeTargetPercent { get; init; }
+    public double? trainerGradeCommandedPercent { get; init; }
+    public bool trainerGradeTransitionActive { get; init; }
     public double manualGradientOffsetPercent { get; init; }
     public string? routeId { get; init; }
     public string? routeName { get; init; }

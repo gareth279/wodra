@@ -32,6 +32,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
     private (double Minimum, double Maximum)? _supportedInclinationRangePercent;
+    public double? LastRequestedSimulationGradePercent { get; private set; }
+    public double? LastAppliedSimulationGradePercent { get; private set; }
     private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
@@ -60,6 +62,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _ftmsFitnessMachineStatusCharacteristic = null;
         _ftmsControlPointCharacteristic = null;
         _supportedInclinationRangePercent = null;
+        LastRequestedSimulationGradePercent = null;
+        LastAppliedSimulationGradePercent = null;
 
         _device?.Dispose();
         _device = null;
@@ -72,6 +76,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     SimulationCommand command,
     CancellationToken cancellationToken = default)
     {
+        LastRequestedSimulationGradePercent = command.GradePercent;
         if (_ftmsControlPointCharacteristic is null)
         {
             Console.WriteLine("FTMS Control Point characteristic is not resolved. Cannot set simulation.");
@@ -130,6 +135,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         });
 
         await WriteControlPointAsync(payload, cancellationToken);
+        LastAppliedSimulationGradePercent = appliedGradePercent;
     }
 
     public Task SetResistanceAsync(

@@ -438,9 +438,14 @@ public partial class HudController : Control
 		else
 			lines.Add($"Trainer: {TrainerLabel(snapshot.trainerKind)} · {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm");
 		lines.Add($"Ride: {snapshot.totalRideDistanceMeters / 1000:0.00} km · Lap {snapshot.lapNumber} · {snapshot.virtualSpeedKph:0.0} km/h · {snapshot.elapsedRidingSeconds:0}s");
-		lines.Add($"Gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}% · Elevation: {snapshot.routeElevationMeters?.ToString("F0") ?? "—"} m");
+		lines.Add($"Route gradient: {snapshot.routeGradientPercent:+0.0;-0.0;0.0}% · Elevation: {snapshot.routeElevationMeters?.ToString("F0") ?? "—"} m");
 		lines.Add($"Raw trainer: {snapshot.rawTrainerPowerWatts?.ToString() ?? "—"} W · {snapshot.rawTrainerCadenceRpm?.ToString() ?? "—"} rpm · {snapshot.rawTrainerSpeedKph?.ToString("F1") ?? "—"} km/h · age {snapshot.telemetryAgeSeconds?.ToString("F1") ?? "—"} s");
-		if (snapshot.trainerKind == "real") lines.Add($"FTMS grade command: {snapshot.requestedTrainerGradientPercent?.ToString("+0.0;-0.0;0.0") ?? "—"}%");
+		if (snapshot.trainerKind == "real")
+		{
+			lines.Add($"Trainer difficulty: {snapshot.trainerDifficultyPercent}%");
+			lines.Add($"FTMS target grade: {snapshot.trainerGradeTargetPercent:+0.0;-0.0;0.0}%");
+			lines.Add($"FTMS commanded grade: {snapshot.trainerGradeCommandedPercent?.ToString("+0.0;-0.0;0.0") ?? "—"}%{(snapshot.trainerGradeTransitionActive ? " · transitioning" : "")}");
+		}
 		lines.Add($"Riders: AI {snapshot.aiRiderCount} · Nearest {NearestRider(snapshot)}");
 		var humanRiders = snapshot.remoteHumanRiders;
 		lines.Add($"Human riders: {humanRiders.Count}");
@@ -694,7 +699,7 @@ public partial class HudController : Control
 			return;
 		}
 		var settings = GameBootstrap.Settings.DummyTrainer;
-		var watts = settings.CalculateWatts(GameBootstrap.RiderProfile.BodyWeightKg);
+		var watts = settings.CalculateWatts(_rideSessionNode?.ActiveRiderBodyWeightKg ?? GameBootstrap.RiderProfile.BodyWeightKg);
 		_dummySummary!.Text = settings.Mode == "W/kg"
 			? $"Dummy: {settings.WattsPerKg:0.0} W/kg = {watts} W · {settings.CadenceRpm} rpm"
 			: $"Dummy: {watts} W · {settings.CadenceRpm} rpm";

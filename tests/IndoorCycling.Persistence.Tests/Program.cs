@@ -18,9 +18,10 @@ try
     Assert(rider.Name == "Test Rider", "first-run profile name");
     Assert((await repository.EnsureRiderProfileAsync("Ignored")).Id == rider.Id, "profile is stable across launches");
     Assert((await repository.GetProfileAsync(rider.Id))?.Name == "Test Rider", "profile roundtrip");
-    var renamed = rider with { Name = "Updated Rider", UpdatedAtUtc = DateTimeOffset.UtcNow };
+    Assert(rider.TrainerDifficultyPercent == 50, "new profiles default trainer difficulty to 50 percent");
+    var renamed = rider with { Name = "Updated Rider", UpdatedAtUtc = DateTimeOffset.UtcNow, TrainerDifficultyPercent = 75 };
     await repository.SaveProfileAsync(renamed);
-    Assert((await repository.GetProfileAsync(rider.Id))?.Name == "Updated Rider", "profile save");
+    Assert((await repository.GetProfileAsync(rider.Id)) is { Name: "Updated Rider", TrainerDifficultyPercent: 75 }, "profile save retains per-profile trainer difficulty");
     var dev = new RiderProfileRecord(Guid.NewGuid(), "Dev Rider", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 75, 8, true);
     await repository.SaveProfileAsync(dev);
     Assert((await repository.GetAllProfilesAsync()).Count == 2 && (await repository.GetProfileAsync(dev.Id))?.IsTestProfile == true,
@@ -71,12 +72,17 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 2, "0 to 2 profile schema migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 3, "0 to 3 profile schema migration");
     }
     RiderProfileRecord.Validate("Valid", 75, 8);
     foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })
     {
         try { RiderProfileRecord.Validate("Invalid", weights.Item1, weights.Item2); throw new Exception("invalid rider or bike mass accepted"); }
+        catch (ArgumentOutOfRangeException) { }
+    }
+    foreach (var difficulty in new[] { -5, 105, 52 })
+    {
+        try { RiderProfileRecord.Validate("Invalid", 75, 8, difficulty); throw new Exception("invalid trainer difficulty accepted"); }
         catch (ArgumentOutOfRangeException) { }
     }
     Console.WriteLine("PASS SQLite migration/profile/activity/media/recent ordering and accumulator tests");
@@ -107,6 +113,8 @@ static void TestRiderProfileStartupSelection()
     Assert(invalidActive.ActiveProfile?.Id == first.Id && !invalidActive.OpenCreateProfile
         && missingActive.ActiveProfile?.Id == first.Id && !missingActive.OpenCreateProfile,
         "missing or invalid active profile falls back to first existing profile");
+    var sueOnly = RiderProfileStartupSelection.Resolve([new RiderProfileRecord(Guid.NewGuid(), "Sue", now, now)], Guid.NewGuid());
+    Assert(sueOnly.ActiveProfile?.Name == "Sue", "single Sue profile remains selected when no matching or Gareth profile exists");
 
     var empty = RiderProfileStartupSelection.Resolve([], null);
     Assert(empty.ActiveProfile is null && empty.OpenCreateProfile,
@@ -141,7 +149,7 @@ INSERT INTO ride_activities VALUES($activity,$profile,'route','Route',$now,$now,
     }
     var repository = new SqliteRideHistoryRepository(databasePath); await repository.InitializeAsync();
     var profile = await repository.GetProfileAsync(profileId); var ride = await repository.GetActivityAsync(activityId);
-    Assert(profile is { Id: var id, Name: "Legacy Rider", BodyWeightKg: 75, BikeWeightKg: 8 } && id == profileId,
+    Assert(profile is { Id: var id, Name: "Legacy Rider", BodyWeightKg: 75, BikeWeightKg: 8, TrainerDifficultyPercent: 50 } && id == profileId,
         "v1 profile row is retained with conservative weight defaults");
     Assert(ride is { Id: var savedId, RiderProfileId: var owner } && savedId == activityId && owner == profileId,
         "existing ride and ProfileId survive profile schema upgrade");

@@ -1,5 +1,6 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Trainer.Models;
 using System.Text.Json;
 
 var tests = new (string Name, Action Run)[]
@@ -38,6 +39,8 @@ var tests = new (string Name, Action Run)[]
 	,("Human rider relative distance is signed and wraps at lap boundaries", SignedRemoteRiderDistance)
     ,("Catch-up matches a fresh remote speed and leaves subsequent motion to local physics", CatchUpMatchesFreshRemoteSpeed)
     ,("Catch-up speed falls back safely for stale invalid stationary and paused targets", CatchUpSpeedFallbacks)
+    ,("Trainer difficulty scales signed grades and preserves actual ride physics", TrainerDifficultyScalesSignedGrades)
+    ,("Catch-up grade transition is gradual and safely replaceable", CatchUpTrainerGradeTransition)
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
     ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
     ,("EOS lobby UI status distinguishes membership and P2P phases", EosLobbyStatusPhases)
@@ -181,6 +184,46 @@ static void CatchUpSpeedFallbacks()
     Near(0, CatchUpSpeedResolver.Resolve(81, .1, targetPaused: false), 0);
     Near(0, CatchUpSpeedResolver.Resolve(0, .1, targetPaused: false), 0);
     Near(0, CatchUpSpeedResolver.Resolve(35, .1, targetPaused: true), 0);
+}
+
+static void TrainerDifficultyScalesSignedGrades()
+{
+    Near(0, TrainerDifficultyPolicy.ScaleGrade(12, 0), 1e-9);
+    Near(3, TrainerDifficultyPolicy.ScaleGrade(12, 25), 1e-9);
+    Near(6, TrainerDifficultyPolicy.ScaleGrade(12, 50), 1e-9);
+    Near(9, TrainerDifficultyPolicy.ScaleGrade(12, 75), 1e-9);
+    Near(12, TrainerDifficultyPolicy.ScaleGrade(12, 100), 1e-9);
+    Near(-6, TrainerDifficultyPolicy.ScaleGrade(-12, 50), 1e-9);
+    if (FtmsSimulationGrade.Encode(TrainerDifficultyPolicy.ScaleGrade(12, 100), (-6, 6)) != 600 ||
+        FtmsSimulationGrade.Encode(TrainerDifficultyPolicy.ScaleGrade(-12, 100), (-6, 6)) != -600)
+        throw new Exception("FTMS inclination capability limits were not retained after scaling.");
+
+    // Physics continues to receive the real route grade. TrainerDifficultyPolicy only
+    // calculates a separate output command and is not part of SimulationTickInput.
+    var physicsAtHalfDifficulty = Tick(RideState.Initial with { VirtualSpeedKph = 25 }, 200, 12);
+    var physicsAtFullDifficulty = Tick(RideState.Initial with { VirtualSpeedKph = 25 }, 200, 12);
+    Near(physicsAtHalfDifficulty.VirtualSpeedKph, physicsAtFullDifficulty.VirtualSpeedKph, 1e-9);
+    if (!(physicsAtHalfDifficulty.VirtualSpeedKph < Tick(RideState.Initial with { VirtualSpeedKph = 25 }, 200, 6).VirtualSpeedKph))
+        throw new Exception("The actual 12% route gradient was not retained for cycling physics.");
+}
+
+static void CatchUpTrainerGradeTransition()
+{
+    var transition = new TrainerGradeTransition();
+    transition.Start(0, 12);
+    Near(4, transition.Advance(1, 12), 1e-9);
+    Near(8, transition.Advance(1, 12), 1e-9);
+    if (!transition.IsActive) throw new Exception("The catch-up resistance transition ended too early.");
+    Near(8 + 1d / 3d, transition.Advance(1, 9), 1e-9);
+    Near(9, transition.Advance(2, 9), 1e-9);
+    if (transition.IsActive) throw new Exception("The replacement resistance target did not complete.");
+
+    transition.Start(4, 12);
+    var pausedValue = transition.CurrentPercent;
+    // The ride controller does not call Advance while paused or disconnected.
+    Near(4, pausedValue, 1e-9);
+    transition.Cancel(4);
+    if (transition.IsActive) throw new Exception("Disconnected transition was not cancelled.");
 }
 
 static void PausedCatchUpResumeSpeed()

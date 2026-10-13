@@ -4,6 +4,7 @@ using System.Linq;
 using System;
 using System.Threading.Tasks;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Trainer.Models;
 
 
 
@@ -32,6 +33,8 @@ public partial class StartPanelController : Control
 	private LineEdit? _profileName;
 	private SpinBox? _profileBody;
 	private SpinBox? _profileBike;
+	private HSlider? _profileTrainerDifficulty;
+	private Label? _profileTrainerDifficultyValue;
 	private CheckButton? _profileTest;
 	private OptionButton? _profileEditPicker;
 	private List<RiderProfileRecord> _profiles = [];
@@ -161,7 +164,7 @@ public partial class StartPanelController : Control
 
 	private void BuildProfileEditor()
 	{
-		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(420, 340), Exclusive = true };
+		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(460, 410), Exclusive = true };
 		var root = new VBoxContainer(); root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		var margin = new MarginContainer(); margin.AddThemeConstantOverride("margin_left", 16); margin.AddThemeConstantOverride("margin_right", 16); margin.AddThemeConstantOverride("margin_top", 16); margin.AddThemeConstantOverride("margin_bottom", 16);
 		var body = new VBoxContainer(); margin.AddChild(body); root.AddChild(margin); _profileWindow.AddChild(root); AddChild(_profileWindow);
@@ -170,6 +173,12 @@ public partial class StartPanelController : Control
 		_profileName = new LineEdit { PlaceholderText = "Name" }; body.AddChild(_profileName);
 		_profileBody = ProfileSpin(30, 200, 75); body.AddChild(Labeled("Body weight (kg)", _profileBody));
 		_profileBike = ProfileSpin(4, 30, 8); body.AddChild(Labeled("Bike weight (kg)", _profileBike));
+		_profileTrainerDifficulty = new HSlider { MinValue = 0, MaxValue = 100, Step = 5, Value = TrainerDifficultyPolicy.DefaultPercent, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_profileTrainerDifficultyValue = new Label { Text = $"{TrainerDifficultyPolicy.DefaultPercent}%", CustomMinimumSize = new Vector2(48, 0) };
+		_profileTrainerDifficulty.ValueChanged += value => _profileTrainerDifficultyValue.Text = $"{value:0}%";
+		var difficultyRow = new HBoxContainer();
+		difficultyRow.AddChild(new Label { Text = "Trainer difficulty", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+		difficultyRow.AddChild(_profileTrainerDifficulty); difficultyRow.AddChild(_profileTrainerDifficultyValue); body.AddChild(difficultyRow);
 		_profileTest = new CheckButton { Text = "Test profile" }; body.AddChild(_profileTest);
 		var buttons = new HBoxContainer();
 		var save = new Button { Text = "Save" }; save.Pressed += SaveEditedProfile; buttons.AddChild(save);
@@ -187,8 +196,8 @@ public partial class StartPanelController : Control
 		_profileWindow?.PopupCentered();
 	}
 	private void OnEditProfileSelected(long index) { if (index >= 0 && index < _profiles.Count) LoadProfileEditor(_profiles[(int)index]); }
-	private void LoadProfileEditor(RiderProfileRecord profile) { _editingProfileId = profile.Id; _profileName!.Text = profile.Name; _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; }
-	private void StartNewProfile() { _editingProfileId = null; _profileName!.Text = ""; _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileName.GrabFocus(); }
+	private void LoadProfileEditor(RiderProfileRecord profile) { _editingProfileId = profile.Id; _profileName!.Text = profile.Name; _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; _profileTrainerDifficulty!.Value = profile.TrainerDifficultyPercent; _profileTrainerDifficultyValue!.Text = $"{profile.TrainerDifficultyPercent}%"; }
+	private void StartNewProfile() { _editingProfileId = null; _profileName!.Text = ""; _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileTrainerDifficulty!.Value = TrainerDifficultyPolicy.DefaultPercent; _profileTrainerDifficultyValue!.Text = $"{TrainerDifficultyPolicy.DefaultPercent}%"; _profileName.GrabFocus(); }
 	private async void SaveEditedProfile()
 	{
 		try
@@ -196,7 +205,7 @@ public partial class StartPanelController : Control
 			var now = DateTimeOffset.UtcNow;
 			var existing = _profiles.FirstOrDefault(p => p.Id == _editingProfileId);
 			var profile = new RiderProfileRecord(_editingProfileId ?? Guid.NewGuid(), _profileName!.Text.Trim(), existing?.CreatedAtUtc ?? now, now,
-				_profileBody!.Value, _profileBike!.Value, _profileTest!.ButtonPressed);
+				_profileBody!.Value, _profileBike!.Value, _profileTest!.ButtonPressed, (int)_profileTrainerDifficulty!.Value);
 			await GameBootstrap.SaveProfileAsync(profile);
 			if (RiderProfileStartupSelection.ShouldActivateProfileAfterSave(_editingProfileId is null, GameBootstrap.Settings.ActiveProfileId))
 				await GameBootstrap.SetActiveProfileAsync(profile.Id);
