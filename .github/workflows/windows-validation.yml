@@ -61,8 +61,18 @@ jobs:
         if: matrix.configuration == 'Release'
         shell: pwsh
         run: |
-          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --quit-after 2 --log-file "$env:RUNNER_TEMP\wodra-headless.log"
+          $importLog = "$env:RUNNER_TEMP\wodra-import.log"
+          & $env:GODOT_PATH --headless --editor --path src/IndoorCycling.Game --import --quit --log-file $importLog
+          if ($LASTEXITCODE -ne 0) { throw 'Godot headless resource import failed.' }
+          dotnet build src/IndoorCycling.Game/IndoorCycling.Game.csproj -c Debug -m:1 -p:EnableEpicOnlineServices=false -p:NuGetAudit=false
+          if ($LASTEXITCODE -ne 0) { throw 'Godot game assembly build for headless startup failed.' }
+          $startupLog = "$env:RUNNER_TEMP\wodra-headless.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --quit-after 2 --log-file $startupLog
           if ($LASTEXITCODE -ne 0) { throw 'Godot headless startup failed.' }
+          $startupOutput = Get-Content -LiteralPath $startupLog -Raw
+          if ($startupOutput -match 'Main scene''s path could not be resolved|Cannot instantiate C# script|SCRIPT ERROR:') {
+            throw 'Godot headless startup reported project or C# script-loading errors.'
+          }
       - name: Run regression suites
         if: matrix.configuration == 'Release'
         shell: pwsh
