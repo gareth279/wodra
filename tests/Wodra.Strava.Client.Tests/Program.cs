@@ -21,6 +21,37 @@ Check(StravaPolicies.ClassifyCallback(true, null, "code") == StravaOAuthOutcome.
 Check(StravaPolicies.MaySubmitAgain(null) && StravaPolicies.MaySubmitAgain(StravaUploadStatus.Failed), "new and definite failure may submit");
 Check(!StravaPolicies.MaySubmitAgain(StravaUploadStatus.Submitting) && !StravaPolicies.MaySubmitAgain(StravaUploadStatus.Unknown), "ambiguous submission must block duplicate retry");
 Check(!StravaPolicies.MaySubmitAgain(StravaUploadStatus.Processing) && !StravaPolicies.MaySubmitAgain(StravaUploadStatus.Complete), "pending and complete upload must not resubmit");
+Check(StravaPolicies.MaySubmitAgain(StravaUploadStatus.Queued), "durable queued upload can be claimed once");
+Check(StravaPolicies.ShouldAutomaticallyUpload(true, true, false, false, true), "eligible real linked ride is queued");
+Check(!StravaPolicies.ShouldAutomaticallyUpload(true, true, true, false, true) && !StravaPolicies.ShouldAutomaticallyUpload(true, true, false, true, true), "test profiles and synthetic rides are excluded");
+Check(!StravaPolicies.ShouldAutomaticallyUpload(true, false, false, false, true) && !StravaPolicies.ShouldAutomaticallyUpload(true, true, false, false, false), "unlinked and missing FIT rides are excluded");
+Check(StravaPolicies.AutomaticRetryDelay(1) < StravaPolicies.AutomaticRetryDelay(2), "automatic retry backoff increases");
+var profileLinkJson = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, StravaProfileLink>
+{
+    [riderA.ToString("D")] = new StravaProfileLink(riderA, 42, "Athlete", "read,activity:write", true),
+    [riderB.ToString("D")] = new StravaProfileLink(riderB, 43, "Second Athlete", "read,activity:write")
+});
+var restoredLinks = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, StravaProfileLink>>(profileLinkJson)!;
+Check(restoredLinks[riderA.ToString("D")].AutomaticUploadEnabled && !restoredLinks[riderB.ToString("D")].AutomaticUploadEnabled,
+    "automatic upload preference persists per profile and defaults off");
+var now = DateTimeOffset.UtcNow;
+Check(StravaAutomaticUploadJournal.CanResume(StravaUploadStatus.Queued, true, true, 42, 42, null, now), "queued work resumes for its recorded athlete");
+Check(!StravaAutomaticUploadJournal.CanResume(StravaUploadStatus.Queued, true, true, 42, 43, null, now), "relinking to another athlete cannot transfer queued work");
+Check(!StravaAutomaticUploadJournal.CanResume(StravaUploadStatus.Queued, true, false, 42, 42, null, now), "disabling automatic upload stops queued work");
+Check(!StravaAutomaticUploadJournal.CanResume(StravaUploadStatus.Queued, true, true, 42, 42, now.AddMinutes(1), now), "offline retry waits for its backoff deadline");
+Check(StravaAutomaticUploadJournal.CanResumeAfterRestart(StravaUploadStatus.Queued) && StravaAutomaticUploadJournal.CanResumeAfterRestart(StravaUploadStatus.Processing), "queued and known upload IDs survive restart");
+Check(!StravaAutomaticUploadJournal.CanResumeAfterRestart(StravaUploadStatus.Unknown) && StravaAutomaticUploadJournal.CanRetryAfterHttpFailure(429) && !StravaAutomaticUploadJournal.CanRetryAfterHttpFailure(403), "ambiguous work is not retried and only rate limits auto retry");
+Check(StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Queued, 429, false) &&
+    StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Failed, 429, false) &&
+    StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Queued, null, true) &&
+    StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Processing, 503, false), "safe pre-submission network and known-upload failures can retry");
+Check(!StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Queued, 403, false) &&
+    !StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Unknown, 503, false), "access failures and ambiguous submissions never auto retry");
+var queued = new StravaUploadEntry("key", riderA, Guid.NewGuid(), 0, "hash", "external", StravaUploadStatus.Queued,
+    null, null, null, null, now, 42, true, "ride.fit", 2, now.AddMinutes(5));
+var restoredQueue = System.Text.Json.JsonSerializer.Deserialize<StravaUploadEntry>(System.Text.Json.JsonSerializer.Serialize(queued))!;
+Check(restoredQueue.Status == StravaUploadStatus.Queued && restoredQueue.IsAutomatic && restoredQueue.AthleteId == 42 && restoredQueue.NextAttemptAtUtc == queued.NextAttemptAtUtc,
+    "durable queued segment restores its owner, retry time, and safe status");
 Check(StravaPolicies.JournalKey(riderA, Guid.NewGuid(), 0, "abc") != StravaPolicies.JournalKey(riderB, Guid.NewGuid(), 0, "abc"), "upload journal keys must include profile identity");
 
 var forbidden = StravaUploadDiagnostic.Parse(403, "{\"message\":\"This application has been deactivated\",\"errors\":[{\"resource\":\"Application\",\"field\":\"access\",\"code\":\"not_authorized\"}]}");

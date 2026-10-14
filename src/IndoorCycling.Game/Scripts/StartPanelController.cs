@@ -39,6 +39,7 @@ public partial class StartPanelController : Control
 	private CheckButton? _profileTest;
 	private OptionButton? _profileEditPicker;
 	private Label? _stravaProfileStatus;
+	private CheckButton? _stravaAutoUpload;
 	private Button? _stravaLinkButton;
 	private Button? _stravaDisconnectButton;
 	private Button? _stravaCancelButton;
@@ -204,7 +205,7 @@ public partial class StartPanelController : Control
 
 	private void BuildProfileEditor()
 	{
-		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(480, 500), MinSize = new Vector2I(440, 450), Exclusive = true };
+		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(480, 560), MinSize = new Vector2I(440, 500), Exclusive = true };
 		var root = new VBoxContainer(); root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		var margin = new MarginContainer(); margin.AddThemeConstantOverride("margin_left", 16); margin.AddThemeConstantOverride("margin_right", 16); margin.AddThemeConstantOverride("margin_top", 16); margin.AddThemeConstantOverride("margin_bottom", 16);
 		var body = new VBoxContainer(); margin.AddChild(body); root.AddChild(margin); _profileWindow.AddChild(root); AddChild(_profileWindow);
@@ -222,6 +223,10 @@ public partial class StartPanelController : Control
 		_profileTest = new CheckButton { Text = "Test profile" }; body.AddChild(_profileTest);
 		_stravaProfileStatus = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		body.AddChild(_stravaProfileStatus);
+		_stravaAutoUpload = new CheckButton { Text = "Automatically upload completed rides to Strava", Disabled = true, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_stravaAutoUpload.Toggled += OnAutomaticUploadToggled;
+		body.AddChild(_stravaAutoUpload);
+		body.AddChild(new Label { Text = "When enabled, future completed rides recorded by this profile are queued after their FIT files are saved. Test profiles and synthetic trainer rides are excluded; existing rides are never queued.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
 		var stravaActions = new HBoxContainer();
 		_stravaLinkButton = new Button { Text = "Link Strava" }; _stravaLinkButton.Pressed += OnLinkStravaPressed; stravaActions.AddChild(_stravaLinkButton);
 		_stravaDisconnectButton = new Button { Text = "Disconnect Strava" }; _stravaDisconnectButton.Pressed += OnDisconnectStravaPressed; stravaActions.AddChild(_stravaDisconnectButton);
@@ -256,6 +261,25 @@ public partial class StartPanelController : Control
 		if (_stravaLinkButton is not null) _stravaLinkButton.Visible = link is null;
 		if (_stravaDisconnectButton is not null) _stravaDisconnectButton.Visible = link is not null;
 		if (_stravaLinkButton is not null) _stravaLinkButton.Disabled = _editingProfileId is null || _stravaLinkCancellation is not null;
+		if (_stravaAutoUpload is not null)
+		{
+			_stravaAutoUpload.SetPressedNoSignal(link?.AutomaticUploadEnabled == true);
+			_stravaAutoUpload.Disabled = link is null;
+			_stravaAutoUpload.TooltipText = link is null ? "Link Strava to enable this option." : "Only future completed rides recorded by this profile are considered. Test profiles and synthetic trainer rides are never uploaded automatically.";
+		}
+	}
+	private async void OnAutomaticUploadToggled(bool enabled)
+	{
+		if (_stravaAutoUpload is not null) _stravaAutoUpload.Disabled = true;
+		if (_editingProfileId is not { } profileId || StravaIntegrationClient.Shared.GetLink(profileId) is null)
+		{
+			if (_stravaAutoUpload is not null) _stravaAutoUpload.SetPressedNoSignal(false);
+			if (_stravaAutoUpload is not null) _stravaAutoUpload.Disabled = StravaIntegrationClient.Shared.GetLink(_editingProfileId ?? Guid.Empty) is null;
+			return;
+		}
+		try { await StravaIntegrationClient.Shared.SetAutomaticUploadAsync(profileId, enabled); }
+		catch (Exception ex) { if (_stravaAutoUpload is not null) _stravaAutoUpload.SetPressedNoSignal(!enabled); SetStatus($"Automatic Strava upload setting could not be saved: {ex.Message}"); }
+		finally { if (_stravaAutoUpload is not null) _stravaAutoUpload.Disabled = StravaIntegrationClient.Shared.GetLink(profileId) is null; }
 	}
 	private async void OnLinkStravaPressed()
 	{

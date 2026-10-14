@@ -49,6 +49,7 @@ public partial class RideSessionNode : Node
 	private double _elapsedSeconds;
 	private Guid? _currentActivityId;
 	private Guid? _currentRiderProfileId;
+	private long? _currentRideStravaAthleteId;
 	private RiderProfile? _activeRideRiderProfile;
 	private BikeProfile? _activeRideBikeProfile;
 	private RiderProfile CurrentRiderProfile => _activeRideRiderProfile ?? GameBootstrap.RiderProfile;
@@ -176,11 +177,13 @@ public partial class RideSessionNode : Node
 		{ GhostRider = null; GhostActivityId = null; }
 		_currentActivityId = Guid.NewGuid();
 		_currentRiderProfileId = null;
+		_currentRideStravaAthleteId = null;
 		try
 		{
 			var rider = await GameBootstrap.GetPersistentRiderAsync();
 			_currentRiderProfileId = rider.Id;
 			SetActiveRideProfile(rider);
+			_currentRideStravaAthleteId = StravaIntegrationClient.Shared.GetLink(rider.Id)?.AthleteId;
 			GameLogger.Log("ride_profile_snapshot_created", new
 			{
 				profileId = rider.Id,
@@ -381,8 +384,23 @@ public partial class RideSessionNode : Node
 						.Where(s => s.ActivityId == activityId && File.Exists(s.ImagePath))
 						.Select(s => new RideActivityMedia(Guid.NewGuid(), activityId, s.ImagePath, s.SidecarPath,
 							s.CapturedAt.ToUniversalTime(), s.Mode.ToString(), s.MarkerNumber)).ToArray();
-					try { await history.SaveCompletedActivityAsync(draft, media); }
+					var historySaved = false;
+					try { await history.SaveCompletedActivityAsync(draft, media); historySaved = true; }
 					catch (Exception ex) { GameLogger.Log("ride_history_save_failed", new { activityId, message = ex.Message }); GD.PushWarning($"Ride finished, but ride history could not be saved: {ex.Message}"); }
+					var recordingLink = StravaIntegrationClient.Shared.GetLink(riderId);
+					var hasFinalizedFit = LastRecordingError is null && fitPath is not null &&
+						StravaIntegrationClient.GetFitSegments(activityId, fitPath).Any(segment => segment.IsValid);
+					var realRide = StravaPolicies.ShouldAutomaticallyUpload(recordingLink?.AutomaticUploadEnabled == true,
+						recordingLink is not null && recordingLink.AthleteId == _currentRideStravaAthleteId,
+						_activeRideRiderProfile?.IsTestProfile == true,
+						GameBootstrap.TrainerClient is FakeTrainerClient,
+						hasFinalizedFit);
+					if (historySaved && realRide && _currentRideStravaAthleteId is { } athleteId && fitPath is not null)
+						_ = Task.Run(async () =>
+						{
+							try { await StravaIntegrationClient.Shared.QueueAutomaticUploadsAsync(riderId, athleteId, activityId, fitPath); }
+							catch (Exception queueError) { GameLogger.Log("strava_automatic_upload_queue_failed", new { activityId, message = queueError.Message }); }
+						});
 				}
 			}
 		}
@@ -422,6 +440,7 @@ public partial class RideSessionNode : Node
 				_manualGradientOffsetPercent = 0;
 				_currentActivityId = null;
 				_currentRiderProfileId = null;
+				_currentRideStravaAthleteId = null;
 				_activeRideRiderProfile = null;
 				_activeRideBikeProfile = null;
 				_trainerGradeTransition.Cancel();

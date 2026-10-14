@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
@@ -27,9 +28,12 @@ public partial class RideHistoryPanelController : Control
     private RideActivity? _selected;
     private bool _summaryMode;
     private bool _returnToRouteSelection;
+    private int _stravaJournalChanged;
+    private readonly List<(Guid ProfileId, Guid ActivityId, int SegmentIndex, string Path, Label Status, Button Action)> _stravaRows = [];
 
     public override void _Ready()
     {
+        StravaIntegrationClient.Shared.UploadJournalChanged += OnStravaJournalChanged;
         _startPanel = GetNodeOrNull<Control>("../StartPanel");
         _routeSelection = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
         _hud = GetNodeOrNull<HudController>("../HudController");
@@ -61,6 +65,39 @@ public partial class RideHistoryPanelController : Control
         FitPanelToViewport();
         Hide();
     }
+
+    public override void _ExitTree() => StravaIntegrationClient.Shared.UploadJournalChanged -= OnStravaJournalChanged;
+
+    public override void _Process(double delta)
+    {
+        if (_stravaUploads is null || !_stravaUploads.Visible || Interlocked.Exchange(ref _stravaJournalChanged, 0) == 0) return;
+        foreach (var item in _stravaRows)
+        {
+            var entry = StravaIntegrationClient.Shared.GetUpload(item.ProfileId, item.ActivityId, item.SegmentIndex, item.Path);
+            item.Status.Text = entry?.Status switch
+            {
+                StravaUploadStatus.Queued => $"Segment {item.SegmentIndex + 1}: queued for automatic upload.",
+                StravaUploadStatus.Submitting => $"Segment {item.SegmentIndex + 1}: uploading to Strava.",
+                StravaUploadStatus.Processing => $"Segment {item.SegmentIndex + 1}: Strava is processing this saved upload.",
+                StravaUploadStatus.Complete => $"Segment {item.SegmentIndex + 1}: uploaded.",
+                StravaUploadStatus.Failed => $"Segment {item.SegmentIndex + 1}: {entry.SafeMessage ?? "upload failed"}. The saved FIT file is available to retry.",
+                StravaUploadStatus.Cancelled => $"Segment {item.SegmentIndex + 1}: automatic upload was disabled. The saved FIT file remains available for manual upload.",
+                _ => $"Segment {item.SegmentIndex + 1}: ready to upload."
+            };
+            item.Action.Text = entry?.Status switch
+            {
+                StravaUploadStatus.Queued => "Queued",
+                StravaUploadStatus.Submitting or StravaUploadStatus.Unknown => "Submission pending",
+                StravaUploadStatus.Processing => "Check Status",
+                StravaUploadStatus.Complete => "Uploaded",
+                StravaUploadStatus.Cancelled or StravaUploadStatus.Failed => "Retry upload",
+                _ => "Upload to Strava"
+            };
+            item.Action.Disabled = entry?.Status is StravaUploadStatus.Queued or StravaUploadStatus.Submitting or StravaUploadStatus.Unknown or StravaUploadStatus.Complete;
+        }
+    }
+
+    private void OnStravaJournalChanged() => Interlocked.Exchange(ref _stravaJournalChanged, 1);
 
     private void FitPanelToViewport()
     {
@@ -200,6 +237,7 @@ public partial class RideHistoryPanelController : Control
 
     private void BuildStravaUploadControls(Guid activityId, Guid profileId, string? fitPath)
     {
+        _stravaRows.Clear();
         foreach (var child in _stravaUploads.GetChildren()) { _stravaUploads.RemoveChild(child); child.QueueFree(); }
         _stravaUploads.Visible = true;
         _stravaUploads.AddChild(new HSeparator());
@@ -211,7 +249,21 @@ public partial class RideHistoryPanelController : Control
         {
             AddDisabledUploadRow(unavailableReason);
             foreach (var segment in segments)
-                _stravaUploads.AddChild(new Label { Text = $"Segment {segment.Index + 1}: {segment.DisplayName}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+            {
+                var saved = segment.IsValid ? StravaIntegrationClient.Shared.GetUpload(profileId, activityId, segment.Index, segment.Path) : null;
+                var state = saved?.Status switch
+                {
+                    StravaUploadStatus.Queued => "queued automatically",
+                    StravaUploadStatus.Submitting => "uploading",
+                    StravaUploadStatus.Processing => "processing",
+                    StravaUploadStatus.Complete => "uploaded",
+                    StravaUploadStatus.Failed => saved.SafeMessage ?? "failed · manual retry available",
+                    StravaUploadStatus.Cancelled => "automatic upload disabled · manual retry available",
+                    StravaUploadStatus.Unknown => "submission outcome unknown · check Strava before retrying",
+                    _ => "not uploaded"
+                };
+                _stravaUploads.AddChild(new Label { Text = $"Segment {segment.Index + 1}: {segment.DisplayName} · {state}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+            }
             return;
         }
         if (linked is null) return;
@@ -228,13 +280,16 @@ public partial class RideHistoryPanelController : Control
             var existing = StravaIntegrationClient.Shared.GetUpload(profileId, activityId, segment.Index, segment.Path);
             var text = existing?.Status switch
             {
+                StravaUploadStatus.Queued => "Queued",
                 StravaUploadStatus.Complete => "Uploaded",
                 StravaUploadStatus.Processing => "Check Status",
-                StravaUploadStatus.Failed => "Retry upload",
+                StravaUploadStatus.Failed or StravaUploadStatus.Cancelled => "Retry upload",
                 StravaUploadStatus.Submitting or StravaUploadStatus.Unknown => "Submission pending",
                 _ => "Upload to Strava"
             };
-            var button = new Button { Text = text, Disabled = existing?.Status is StravaUploadStatus.Complete or StravaUploadStatus.Submitting or StravaUploadStatus.Unknown };
+            var button = new Button { Text = text, Disabled = existing?.Status is StravaUploadStatus.Complete or StravaUploadStatus.Queued or StravaUploadStatus.Submitting or StravaUploadStatus.Unknown };
+            if (existing?.Status == StravaUploadStatus.Queued) status.Text = $"Segment {segment.Index + 1}: queued for automatic upload{(existing.NextAttemptAtUtc is { } retryAt && retryAt > DateTimeOffset.UtcNow ? $" · retry after {retryAt.ToLocalTime():t}" : "")}.";
+            if (existing?.Status == StravaUploadStatus.Submitting) status.Text = $"Segment {segment.Index + 1}: uploading to Strava.";
             if (existing?.Status == StravaUploadStatus.Processing) status.Text = $"Segment {segment.Index + 1}: Strava is processing this saved upload.";
             if (existing?.Status == StravaUploadStatus.Complete) status.Text = $"Segment {segment.Index + 1}: uploaded";
             if (existing?.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting)
@@ -244,7 +299,8 @@ public partial class RideHistoryPanelController : Control
                 checkStrava.Pressed += () => OS.ShellOpen("https://www.strava.com/athlete/training");
                 row.AddChild(checkStrava);
             }
-            if (existing?.Status == StravaUploadStatus.Failed) status.Text = $"Segment {segment.Index + 1}: upload failed. The saved FIT file is available to retry.";
+            if (existing?.Status == StravaUploadStatus.Failed) status.Text = $"Segment {segment.Index + 1}: {existing.SafeMessage ?? "upload failed"}. The saved FIT file is available to retry.";
+            if (existing?.Status == StravaUploadStatus.Cancelled) status.Text = $"Segment {segment.Index + 1}: automatic upload was disabled. The saved FIT file remains available for manual upload.";
             if (existing?.Status == StravaUploadStatus.Complete && !string.IsNullOrWhiteSpace(existing.ActivityUrl))
             {
                 var open = new Button { Text = "Open activity" };
@@ -275,14 +331,16 @@ public partial class RideHistoryPanelController : Control
                     button.Text = latest?.Status switch
                     {
                         StravaUploadStatus.Processing => "Check Status",
-                        StravaUploadStatus.Failed => "Retry upload",
+                        StravaUploadStatus.Failed or StravaUploadStatus.Cancelled => "Retry upload",
+                        StravaUploadStatus.Queued => "Queued",
                         StravaUploadStatus.Unknown or StravaUploadStatus.Submitting => "Submission pending",
                         _ => "Retry upload"
                     };
-                    button.Disabled = latest?.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting;
+                    button.Disabled = latest?.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting or StravaUploadStatus.Queued;
                 }
             };
             row.AddChild(status); row.AddChild(button); _stravaUploads.AddChild(row);
+            _stravaRows.Add((profileId, activityId, segment.Index, segment.Path, status, button));
         }
     }
 

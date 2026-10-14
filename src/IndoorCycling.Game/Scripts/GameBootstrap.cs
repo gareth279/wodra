@@ -63,6 +63,7 @@ public partial class GameBootstrap : Node
 		GameLogger.Init();
 
 		Settings = AppSettings.LoadOrCreate();
+		StravaIntegrationClient.Shared.ResumePendingAutomaticUploads();
 		ConfigureMainWindow();
 		Settings.DummyTrainer ??= new DummyTrainerSettings();
 		Settings.DummyTrainer.Validate();

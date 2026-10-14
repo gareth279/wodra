@@ -14,7 +14,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-/// <summary>Manual Strava linking and FIT uploads. All long-lived credentials stay in Windows Credential Manager.</summary>
+/// <summary>Strava linking and FIT uploads. All long-lived credentials stay in Windows Credential Manager.</summary>
 public sealed class StravaIntegrationClient
 {
     public static StravaIntegrationClient Shared { get; } = new();
@@ -25,6 +25,9 @@ public sealed class StravaIntegrationClient
     private static readonly SemaphoreSlim UploadLock = new(1, 1);
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
     private readonly WindowsCredentialStore _credentials = new();
+    private readonly object _automaticQueueGate = new();
+    private Task? _automaticQueueTask;
+    public event Action? UploadJournalChanged;
 
     private string BrokerRoot => GameBootstrap.Settings.StravaClient.BrokerBaseUrl.TrimEnd('/') + "/";
     private string ClientId => GameBootstrap.Settings.StravaClient.ClientId;
@@ -32,6 +35,149 @@ public sealed class StravaIntegrationClient
     private string UploadJournalPath => Path.Combine(Path.GetDirectoryName(AppSettings.SettingsPath)!, "strava-uploads.json");
 
     public StravaProfileLink? GetLink(Guid profileId) => ReadMetadata().Profiles.GetValueOrDefault(profileId.ToString("D"));
+
+    public async Task SetAutomaticUploadAsync(Guid profileId, bool enabled)
+    {
+        UpdateMetadata(data =>
+        {
+            var key = profileId.ToString("D");
+            if (!data.Profiles.TryGetValue(key, out var link))
+            {
+                if (enabled) throw new InvalidOperationException("Link Strava before enabling automatic uploads.");
+                return;
+            }
+            data.Profiles[key] = link with { AutomaticUploadEnabled = enabled };
+        });
+        if (!enabled)
+        {
+            await UploadLock.WaitAsync();
+            try { CancelQueuedAutomaticUploads(profileId); }
+            finally { UploadLock.Release(); }
+        }
+        else ResumePendingAutomaticUploads();
+    }
+
+    public async Task QueueAutomaticUploadsAsync(Guid profileId, long athleteId, Guid activityId, string? fitPath)
+    {
+        var link = GetLink(profileId);
+        if (link is null || !link.AutomaticUploadEnabled || link.AthleteId != athleteId || string.IsNullOrWhiteSpace(fitPath)) return;
+        var segments = GetFitSegments(activityId, fitPath);
+        if (segments.Count == 0) return;
+        await UploadLock.WaitAsync();
+        try
+        {
+            link = GetLink(profileId);
+            if (link is null || !link.AutomaticUploadEnabled || link.AthleteId != athleteId) return;
+            var journal = ReadJournal();
+            var changed = false;
+            foreach (var segment in segments)
+            {
+                if (!segment.IsValid) continue;
+                using var input = File.OpenRead(segment.Path);
+                var hash = Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant();
+                var key = StravaPolicies.JournalKey(profileId, activityId, segment.Index, hash);
+                if (journal.Uploads.ContainsKey(key)) continue;
+                var externalId = $"wodra-{activityId:N}-{segment.Index}-{hash[..16]}";
+                journal.Uploads[key] = new StravaUploadEntry(key, profileId, activityId, segment.Index, hash,
+                    externalId, StravaUploadStatus.Queued, null, null, null, null, DateTimeOffset.UtcNow,
+                    AthleteId: athleteId, IsAutomatic: true, FitPath: segment.Path);
+                changed = true;
+            }
+            if (changed) WriteJournal(journal);
+        }
+        finally { UploadLock.Release(); }
+        ResumePendingAutomaticUploads();
+    }
+
+    public void ResumePendingAutomaticUploads()
+    {
+        lock (_automaticQueueGate)
+        {
+            if (_automaticQueueTask is { IsCompleted: false }) return;
+            _automaticQueueTask = Task.Run(ProcessAutomaticQueueAsync);
+        }
+    }
+
+    private void CancelQueuedAutomaticUploads(Guid profileId)
+    {
+        var journal = ReadJournal();
+        var changed = false;
+        foreach (var pair in journal.Uploads.ToArray())
+        {
+            if (pair.Value.ProfileId != profileId || !pair.Value.IsAutomatic || pair.Value.Status != StravaUploadStatus.Queued) continue;
+            journal.Uploads[pair.Key] = pair.Value with { Status = StravaUploadStatus.Cancelled, UpdatedAtUtc = DateTimeOffset.UtcNow };
+            changed = true;
+        }
+        if (changed) WriteJournal(journal);
+    }
+
+    private async Task ProcessAutomaticQueueAsync()
+    {
+        while (true)
+        {
+            StravaUploadEntry? entry;
+            var journal = ReadJournal();
+            var now = DateTimeOffset.UtcNow;
+            entry = journal.Uploads.Values
+                .Where(item => item.IsAutomatic && item.Status is StravaUploadStatus.Queued or StravaUploadStatus.Processing && item.FitPath is not null &&
+                    StravaAutomaticUploadJournal.CanResume(item.Status, item.IsAutomatic,
+                        GetLink(item.ProfileId)?.AutomaticUploadEnabled == true, item.AthleteId,
+                        GetLink(item.ProfileId)?.AthleteId, item.Status == StravaUploadStatus.Processing ? null : item.NextAttemptAtUtc, now))
+                .OrderBy(item => item.NextAttemptAtUtc ?? item.UpdatedAtUtc).FirstOrDefault();
+            if (entry is null)
+            {
+                var due = journal.Uploads.Values.Where(item => item.IsAutomatic && item.Status == StravaUploadStatus.Queued &&
+                    item.NextAttemptAtUtc is { } at && item.FitPath is not null &&
+                    StravaAutomaticUploadJournal.CanResume(item.Status, item.IsAutomatic,
+                        GetLink(item.ProfileId)?.AutomaticUploadEnabled == true, item.AthleteId,
+                        GetLink(item.ProfileId)?.AthleteId, null, now)).Select(item => item.NextAttemptAtUtc!.Value).DefaultIfEmpty().Min();
+                if (due == default) return;
+                var wait = due > now ? due - now : TimeSpan.FromSeconds(1);
+                await Task.Delay(wait > TimeSpan.FromSeconds(5) ? TimeSpan.FromSeconds(5) : wait);
+                continue;
+            }
+            try { await UploadAsync(entry.ProfileId, entry.ActivityId, entry.SegmentIndex, entry.FitPath!, null, automaticSubmission: true); }
+            catch (Exception ex)
+            {
+                var current = ReadJournal().Uploads.GetValueOrDefault(entry.Key);
+                if (current is null || current.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting or StravaUploadStatus.Complete or StravaUploadStatus.Cancelled) continue;
+                if (current.Status == StravaUploadStatus.Failed && current.LastHttpStatus != 429) continue;
+                var transient = StravaAutomaticUploadJournal.IsTransientFailure(current.Status,
+                    ex is StravaHttpException httpFailure ? httpFailure.StatusCode : current.LastHttpStatus,
+                    ex is HttpRequestException or TaskCanceledException or StravaTransientException);
+                if (!transient)
+                {
+                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, SafeMessage = SafeAutomaticError(ex), UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    continue;
+                }
+                var attempts = current.RetryCount + 1;
+                if (attempts > 5)
+                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, RetryCount = attempts, SafeMessage = "Automatic retries were exhausted. The saved segment remains available for manual retry.", UpdatedAtUtc = DateTimeOffset.UtcNow });
+                else
+                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Queued, RetryCount = attempts,
+                        NextAttemptAtUtc = DateTimeOffset.UtcNow + StravaPolicies.AutomaticRetryDelay(attempts),
+                        SafeMessage = SafeAutomaticError(ex), UpdatedAtUtc = DateTimeOffset.UtcNow });
+            }
+            await Task.Delay(100);
+        }
+    }
+
+    private static string SafeAutomaticError(Exception exception) => exception switch
+    {
+        StravaHttpException http => http.Diagnostic.UserMessage,
+        StravaAuthorizationException => "Strava authorization expired. Relink this rider profile.",
+        StravaTransientException temporary => temporary.Message,
+        InvalidOperationException invalid when invalid.Message.Contains("upload access", StringComparison.OrdinalIgnoreCase) => invalid.Message,
+        InvalidOperationException invalid when invalid.Message.Contains("Strava authorization expired", StringComparison.OrdinalIgnoreCase) => invalid.Message,
+        _ => "The upload could not be completed. Wodra will retry when the connection is available."
+    };
+
+    private void UpdateJournalEntry(StravaUploadEntry entry)
+    {
+        var journal = ReadJournal();
+        journal.Uploads[entry.Key] = entry;
+        WriteJournal(journal);
+    }
 
     public async Task<StravaProfileLink> LinkAsync(Guid profileId, CancellationToken cancellationToken)
     {
@@ -72,10 +218,16 @@ public sealed class StravaIntegrationClient
                 throw new InvalidOperationException("Strava did not grant both read and activity upload access. Disconnect and link again with both permissions.");
             if (token.Athlete?.Id is null) throw new InvalidOperationException("Strava linked without returning an athlete identity.");
 
-            _credentials.Write(profileId, new StravaCredential(token.RefreshToken, scopesText));
             var name = string.Join(" ", new[] { token.Athlete.FirstName, token.Athlete.LastName }.Where(part => !string.IsNullOrWhiteSpace(part)));
-            var link = new StravaProfileLink(profileId, token.Athlete.Id.Value, string.IsNullOrWhiteSpace(name) ? $"Athlete {token.Athlete.Id}" : name, scopesText);
-            UpdateMetadata(data => data.Profiles[profileId.ToString("D")] = link);
+            var link = new StravaProfileLink(profileId, token.Athlete.Id.Value, string.IsNullOrWhiteSpace(name) ? $"Athlete {token.Athlete.Id}" : name, scopesText, false);
+            await UploadLock.WaitAsync(cancellationToken);
+            try
+            {
+                _credentials.Write(profileId, new StravaCredential(token.RefreshToken, scopesText));
+                UpdateMetadata(data => data.Profiles[profileId.ToString("D")] = link);
+                CancelQueuedAutomaticUploads(profileId);
+            }
+            finally { UploadLock.Release(); }
             return link;
         }
         catch
@@ -89,14 +241,17 @@ public sealed class StravaIntegrationClient
     public async Task<bool> DisconnectAsync(Guid profileId, CancellationToken cancellationToken = default)
     {
         var credential = _credentials.Read(profileId);
+        _credentials.Delete(profileId);
+        UpdateMetadata(data => data.Profiles.Remove(profileId.ToString("D")));
+        await UploadLock.WaitAsync(cancellationToken);
+        try { CancelQueuedAutomaticUploads(profileId); }
+        finally { UploadLock.Release(); }
         var revokedRemotely = credential is null;
         if (credential is not null && IsConfigured(out _))
         {
             try { await PostJsonAsync<JsonElement>("oauth/revoke", new { refresh_token = credential.RefreshToken }, cancellationToken); revokedRemotely = true; }
             catch { revokedRemotely = false; /* Local disconnect must remain usable when the broker or Strava is offline. */ }
         }
-        _credentials.Delete(profileId);
-        UpdateMetadata(data => data.Profiles.Remove(profileId.ToString("D")));
         return revokedRemotely;
     }
 
@@ -110,7 +265,7 @@ public sealed class StravaIntegrationClient
     }
 
     public async Task<StravaUploadResult> UploadAsync(Guid profileId, Guid activityId, int segmentIndex,
-        string fitPath, Action<string>? progress, CancellationToken cancellationToken = default)
+        string fitPath, Action<string>? progress, CancellationToken cancellationToken = default, bool automaticSubmission = false)
     {
         await UploadLock.WaitAsync(cancellationToken);
         try
@@ -131,6 +286,11 @@ public sealed class StravaIntegrationClient
             var externalId = $"wodra-{activityId:N}-{segmentIndex}-{hash[..16]}";
             var journal = ReadJournal();
             journal.Uploads.TryGetValue(key, out var entry);
+            var linkedAthleteId = GetLink(profileId)?.AthleteId;
+            if (entry is { AthleteId: 0, Status: not StravaUploadStatus.Complete })
+                throw new InvalidOperationException("This older saved upload has no recorded Strava athlete identity. Wodra will not risk transferring it after a relink; check Strava before taking any further action.");
+            if (entry is not null && entry.AthleteId != 0 && linkedAthleteId != entry.AthleteId)
+                throw new InvalidOperationException("This saved segment belongs to a different Strava athlete than the profile currently linked. Relinking cannot transfer pending uploads.");
             if (entry?.Status == StravaUploadStatus.Complete)
                 return new(StravaUploadStatus.Complete, entry.StravaActivityId, "Already uploaded", entry.ActivityUrl);
             if (entry?.Status is StravaUploadStatus.Submitting or StravaUploadStatus.Unknown)
@@ -140,8 +300,15 @@ public sealed class StravaIntegrationClient
             {
                 if (!StravaPolicies.MaySubmitAgain(entry?.Status))
                     throw new InvalidOperationException("This upload is already pending or its submission result is unknown. Check Strava before resolving it; resubmitting could create a duplicate.");
-                entry = new StravaUploadEntry(key, profileId, activityId, segmentIndex, hash, externalId,
-                    StravaUploadStatus.Submitting, null, null, null, DateTimeOffset.UtcNow);
+                if (automaticSubmission && (GetLink(profileId) is not { AutomaticUploadEnabled: true } currentLink || currentLink.AthleteId != entry?.AthleteId))
+                {
+                    if (entry is not null) UpdateJournalEntry(entry with { Status = StravaUploadStatus.Cancelled, UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    throw new InvalidOperationException("Automatic upload was disabled or this profile's linked athlete changed before submission.");
+                }
+                entry = (entry ?? new StravaUploadEntry(key, profileId, activityId, segmentIndex, hash, externalId,
+                    StravaUploadStatus.Queued, null, null, null, null, DateTimeOffset.UtcNow,
+                    AthleteId: linkedAthleteId ?? 0)) with { Status = StravaUploadStatus.Submitting,
+                        IsAutomatic = automaticSubmission, UpdatedAtUtc = DateTimeOffset.UtcNow };
                 journal.Uploads[key] = entry; WriteJournal(journal);
                 progress?.Invoke("Uploading saved FIT segment…");
                 try
@@ -152,7 +319,7 @@ public sealed class StravaIntegrationClient
                 }
                 catch (StravaHttpException ex) when (ex.StatusCode is >= 400 and < 500)
                 {
-                    journal.Uploads[key] = entry with { Status = StravaUploadStatus.Failed, UpdatedAtUtc = DateTimeOffset.UtcNow };
+                    journal.Uploads[key] = entry with { Status = StravaUploadStatus.Failed, LastHttpStatus = ex.StatusCode, UpdatedAtUtc = DateTimeOffset.UtcNow };
                     WriteJournal(journal);
                     if (ex.StatusCode == 401) throw new StravaAuthorizationException();
                     throw new InvalidOperationException(ex.Diagnostic.UserMessage);
@@ -200,12 +367,14 @@ public sealed class StravaIntegrationClient
         {
             _credentials.Delete(profileId);
             UpdateMetadata(data => data.Profiles.Remove(profileId.ToString("D")));
+            CancelQueuedAutomaticUploads(profileId);
             throw new InvalidOperationException("Strava authorization expired or was revoked. Link this profile again in Manage Profiles.");
         }
         catch (StravaHttpException ex) when (ex.StatusCode == 401)
         {
             _credentials.Delete(profileId);
             UpdateMetadata(data => data.Profiles.Remove(profileId.ToString("D")));
+            CancelQueuedAutomaticUploads(profileId);
             throw new InvalidOperationException("Strava authorization expired or was revoked. Link this profile again in Manage Profiles.");
         }
         finally { UploadLock.Release(); }
@@ -265,6 +434,13 @@ public sealed class StravaIntegrationClient
         if (!response.IsSuccessStatusCode)
         {
             if (response.StatusCode == HttpStatusCode.Unauthorized) throw new StravaAuthorizationException();
+            var safeMessage = response.StatusCode switch
+            {
+                HttpStatusCode.TooManyRequests => "Strava or its broker is temporarily rate limited. Wodra will retry the saved segment.",
+                HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.InternalServerError => "Strava broker or Strava is temporarily unavailable. Wodra will retry the saved segment.",
+                _ => null
+            };
+            if (safeMessage is not null) throw new StravaTransientException(safeMessage);
             throw new InvalidOperationException(response.StatusCode switch
         {
             HttpStatusCode.TooManyRequests => "Strava linking is temporarily rate limited. Wait a minute and retry.",
@@ -360,6 +536,7 @@ public sealed class StravaIntegrationClient
     {
         Directory.CreateDirectory(Path.GetDirectoryName(UploadJournalPath)!);
         WriteAtomically(UploadJournalPath, JsonSerializer.Serialize(journal, Json));
+        try { UploadJournalChanged?.Invoke(); } catch { /* UI refresh observers cannot affect upload safety. */ }
     }
     private static void WriteAtomically(string path, string value)
     {
@@ -395,6 +572,7 @@ public sealed class StravaIntegrationClient
         public int StatusCode => Diagnostic.HttpStatus;
     }
     private sealed class StravaAuthorizationException : Exception { }
+    private sealed class StravaTransientException(string message) : Exception(message);
 
     private StravaUploadJournal ReadUploadJournal() => ReadJournal();
     public StravaUploadEntry? GetUpload(Guid profileId, Guid activityId, int segmentIndex, string fitPath)
@@ -410,12 +588,7 @@ public sealed class StravaIntegrationClient
         => StravaFitSegmentReader.Read(activityId, fitPath);
 }
 
-public sealed record StravaProfileLink(Guid ProfileId, long AthleteId, string AthleteName, string Scopes);
 public sealed record StravaCredential(string RefreshToken, string Scopes);
-public sealed record StravaUploadEntry(string Key, Guid ProfileId, Guid ActivityId, int SegmentIndex, string FileHash,
-    string ExternalId, StravaUploadStatus Status, long? UploadId,
-    [property: System.Text.Json.Serialization.JsonPropertyName("strava_activity_id")] long? StravaActivityId,
-    string? ActivityUrl, DateTimeOffset UpdatedAtUtc);
 public sealed record StravaUploadResult(StravaUploadStatus Status, long? ActivityId, string Message, string? ActivityUrl);
 public sealed class StravaProfileMetadata { public Dictionary<string, StravaProfileLink> Profiles { get; set; } = new(StringComparer.OrdinalIgnoreCase); }
 public sealed class StravaUploadJournal { public Dictionary<string, StravaUploadEntry> Uploads { get; set; } = new(StringComparer.Ordinal); }
