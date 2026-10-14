@@ -23,6 +23,7 @@ public partial class HudController : Control
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
 	private Control? _topHudPanel;
+	private RouteGradientInset? _routeGradientInset;
 	private Control? _dummyControlPanel;
 
 	private Button? _menuButton;
@@ -127,6 +128,15 @@ public partial class HudController : Control
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
+		_routeGradientInset = new RouteGradientInset
+		{
+			Name = "RouteGradientInset",
+			AnchorLeft = 1, AnchorRight = 1, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -326, OffsetRight = -12, OffsetTop = 222, OffsetBottom = 452,
+			CustomMinimumSize = new Vector2(280, 210),
+			MouseFilter = Control.MouseFilterEnum.Ignore
+		};
+		AddChild(_routeGradientInset);
 		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId);
 		_screenshotToast = new Label
 		{
@@ -343,6 +353,14 @@ public partial class HudController : Control
 	{
 		_hudDisplayEnabled = enabled;
 		UpdateHudVisibility();
+	}
+
+	public void SetRouteGradientInsetVisible(bool enabled)
+	{
+		GameBootstrap.Settings.Display.RouteGradientInsetVisible = enabled;
+		GameBootstrap.Settings.Save();
+		if (_routeGradientInset is not null)
+			_routeGradientInset.Visible = enabled && _rideSessionNode?.IsRideActive == true;
 	}
 
 	public void SetDebugDisplayEnabled(bool enabled)
@@ -757,6 +775,8 @@ public partial class HudController : Control
 	{
 		var rideIsActive = _rideSessionNode?.IsRideActive == true;
 		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && _hudDisplayEnabled;
+		if (_routeGradientInset is not null)
+			_routeGradientInset.Visible = rideIsActive && (GameBootstrap.Settings?.Display.RouteGradientInsetVisible ?? true);
 		var dummyVisible = rideIsActive && _dummyActive && _debugEnabled;
 		if (_dummyControlPanel is not null) _dummyControlPanel.Visible = dummyVisible;
 		var wkgMode = GameBootstrap.Settings?.DummyTrainer?.Mode == "W/kg";

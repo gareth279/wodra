@@ -32,6 +32,7 @@ public partial class RideMenuPanelController : Control
 	private LineEdit? _multiplayerRoomInput;
 	private OptionButton? _multiplayerRiderSelect;
 	private Button? _catchUpButton;
+	private ScrollContainer? _menuScroll;
 	private string? _catchUpRiderId;
 	private bool _catchUpReturnsToMultiplayer;
 	private string _riderOptionIds = "";
@@ -52,17 +53,19 @@ public partial class RideMenuPanelController : Control
 		_content = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
 		var menuMargin = GetNode<MarginContainer>("PanelContainer/MarginContainer");
 		menuMargin.RemoveChild(_content);
-		var menuScroll = new ScrollContainer { Name = "MenuScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-		menuMargin.AddChild(menuScroll);
-		menuScroll.AddChild(_content);
+		_menuScroll = new ScrollContainer { Name = "MenuScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+		menuMargin.AddChild(_menuScroll);
+		_menuScroll.AddChild(_content);
 		Hide();
 	}
 
 	public override void _Input(InputEvent @event)
 	{
-		if (_view != MenuView.CatchUpConfirmation || @event is not InputEventKey key ||
+		if (!IsMenuVisible || @event is not InputEventKey key ||
 			!key.Pressed || key.Echo || key.Keycode != Key.Escape) return;
-		CancelCatchUpConfirmation();
+		if (_view == MenuView.CatchUpConfirmation) CancelCatchUpConfirmation();
+		else if (_view == MenuView.Main) CloseMenu();
+		else ShowView(MenuView.Main);
 		GetViewport().SetInputAsHandled();
 	}
 
@@ -70,6 +73,14 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_view == MenuView.Multiplayer) UpdateMultiplayerView();
 	}
+
+	public override void _Notification(int what)
+	{
+		if (what == NotificationResized && _view != MenuView.Closed && IsInsideTree())
+			CallDeferred(nameof(ResizeCurrentMenuPanel));
+	}
+
+	private void ResizeCurrentMenuPanel() => ResizeMenuPanel(_view);
 
 	public void ShowInRideMenu()
 	{
@@ -103,7 +114,7 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_content is null) return;
 		_view = view;
-		ResizeMenuPanel(view);
+		_menuPanel!.CustomMinimumSize = new Vector2(320, 150);
 		foreach (var child in _content.GetChildren())
 		{
 			_content.RemoveChild(child);
@@ -166,6 +177,9 @@ public partial class RideMenuPanelController : Control
 				var showHud = new CheckButton { Text = "Show riding HUD", ButtonPressed = _hudController?.HudDisplayEnabled ?? true };
 				showHud.Toggled += enabled => _hudController?.SetHudDisplayEnabled(enabled);
 				_content.AddChild(showHud);
+				var showInset = new CheckButton { Text = "Show route and gradient inset", ButtonPressed = GameBootstrap.Settings.Display.RouteGradientInsetVisible };
+				showInset.Toggled += enabled => _hudController?.SetRouteGradientInsetVisible(enabled);
+				_content.AddChild(showInset);
 				#if DEBUG
 				var showDebug = new CheckButton { Text = "Show debug overlay", ButtonPressed = _hudController?.DebugDisplayEnabled ?? false };
 				showDebug.Toggled += enabled => _hudController?.SetDebugDisplayEnabled(enabled);
@@ -188,13 +202,23 @@ public partial class RideMenuPanelController : Control
 					HorizontalAlignment = HorizontalAlignment.Center,
 					AutowrapMode = TextServer.AutowrapMode.WordSmart
 				});
-				_keepRidingButton = AddAction("Keep Riding", () => ShowView(MenuView.Main));
-				_endRideButton = AddAction("End Ride", OnEndRideButtonPressed);
-				_endRideButton.FocusMode = Control.FocusModeEnum.None;
+				var actions = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+				actions.AddThemeConstantOverride("separation", 12);
+				_keepRidingButton = new Button { Text = "Continue Riding", CustomMinimumSize = new Vector2(136, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+				_keepRidingButton.Pressed += () => ShowView(MenuView.Main);
+				_endRideButton = new Button { Text = "End Ride", CustomMinimumSize = new Vector2(136, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+				_endRideButton.Pressed += OnEndRideButtonPressed;
+				actions.AddChild(_keepRidingButton);
+				actions.AddChild(_endRideButton);
+				_content.AddChild(actions);
 				break;
 		}
 		Show();
 		MoveToFront();
+		ResizeMenuPanel(view);
+		var firstAction = _content.GetChildren().OfType<Control>().FirstOrDefault(child => child is Button or CheckButton or OptionButton or LineEdit);
+		firstAction?.CallDeferred(Control.MethodName.GrabFocus);
+		if (view == MenuView.Confirmation) _keepRidingButton?.CallDeferred(Control.MethodName.GrabFocus);
 		if (view == MenuView.CatchUpConfirmation)
 		{
 			GameLogger.Log("multiplayer_catch_up_confirmation_shown", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId) });
@@ -207,12 +231,12 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_menuPanel is null) return;
 		var viewport = GetViewportRect().Size;
-		var width = view == MenuView.CatchUpConfirmation
-			? Math.Min(440, Math.Max(280, viewport.X - 32))
-			: 540;
-		var requestedHeight = view == MenuView.CatchUpConfirmation ? 260 :
-			view == MenuView.Multiplayer && _advancedMultiplayerToggle?.ButtonPressed == true ? 720 : 560;
-		var height = Math.Min(requestedHeight, Math.Max(190, viewport.Y - 32));
+		var minimum = _content?.GetCombinedMinimumSize() ?? new Vector2(320, 180);
+		var preferredWidth = view == MenuView.Multiplayer ? 540 : view == MenuView.CatchUpConfirmation ? 400 : 420;
+		var desired = RideMenuLayoutPolicy.PanelSize(viewport.X, viewport.Y,
+			Math.Max(minimum.X, preferredWidth - 40), minimum.Y);
+		var width = desired.Width;
+		var height = desired.Height;
 		_menuPanel.CustomMinimumSize = new Vector2(width, height);
 		_menuPanel.OffsetLeft = -width / 2;
 		_menuPanel.OffsetRight = width / 2;
@@ -545,7 +569,7 @@ public partial class RideMenuPanelController : Control
 
 	private Button AddAction(string text, Action action)
 	{
-		var button = new Button { Text = text, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var button = new Button { Text = text, CustomMinimumSize = new Vector2(300, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		button.Pressed += action;
 		_content!.AddChild(button);
 		return button;

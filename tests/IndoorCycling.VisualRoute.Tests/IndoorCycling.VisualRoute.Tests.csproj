@@ -17,6 +17,8 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VisualRoute.cs" Link="VisualRoute.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/RideSummaryLayoutPolicy.cs" Link="RideSummaryLayoutPolicy.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/RideDisplayPreferences.cs" Link="RideDisplayPreferences.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RouteOverviewGeometry.cs" Link="RouteOverviewGeometry.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/AmbientActorMath.cs" Link="AmbientActorMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/TerrainMeshGeometry.cs" Link="TerrainMeshGeometry.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />

@@ -16,6 +16,7 @@ public sealed class AppSettings
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
+	public RideDisplayPreferences Display { get; set; } = new();
 	/// <summary>Last successfully used Bluetooth trainer address; reserved for protocol-neutral preference storage.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
@@ -66,6 +67,7 @@ public sealed class AppSettings
 				defaults.Save();
 				return defaults;
 			}
+			settings.Display ??= new RideDisplayPreferences();
 
 			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
 				settings.Recording.OutputFolder,

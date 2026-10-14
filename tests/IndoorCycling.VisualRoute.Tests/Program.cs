@@ -1,10 +1,82 @@
 using System.Numerics;
+using System.Text.Json;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("route overview follows canonical route pose through lap seams, turns, and repositioning", () =>
+    {
+        var routeIds = new[] { "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop", "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop" };
+        foreach (var id in routeIds)
+        {
+            var route = RouteCatalog.GetById(id) ?? throw new Exception($"Missing overview route {id}.");
+            var visual = new VisualRoute(route);
+            var overview = new RouteOverviewGeometry(route, visual);
+            var size = new Vector2(300, 116);
+            var line = overview.BuildMapPolyline(size);
+            if (line.Length < 2 || line.Any(point => point.X < 0 || point.X > size.X || point.Y < 0 || point.Y > size.Y))
+                throw new Exception($"{id} overview map escaped its bounds.");
+            var mapRatio = (line.Max(point => point.X) - line.Min(point => point.X)) /
+                Math.Max(.001f, line.Max(point => point.Y) - line.Min(point => point.Y));
+            var worldRatio = (visual.Samples.Max(sample => sample.Position.X) - visual.Samples.Min(sample => sample.Position.X)) /
+                Math.Max(.001f, visual.Samples.Max(sample => -sample.Position.Z) - visual.Samples.Min(sample => -sample.Position.Z));
+            if (Math.Abs(mapRatio - worldRatio) > .01 * Math.Max(1, worldRatio))
+                throw new Exception($"{id} route overview distorted its map proportions.");
+            foreach (var distance in new[] { 0d, route.DistanceMeters * .25, route.DistanceMeters * .5,
+                         route.DistanceMeters * .75, route.DistanceMeters - .1, route.DistanceMeters,
+                         route.DistanceMeters + .1, route.DistanceMeters * 3 + .2 })
+            {
+                var pose = overview.GetMapPose(distance, size);
+                var expected = visual.GetPoseAtDistance(distance);
+                if (Math.Abs(pose.LapDistanceMeters - visual.WrapDistance(distance)) > 1e-6 ||
+                    Vector2.Distance(pose.Position, Project(expected.Position, line, visual.Samples)) > .05f)
+                    throw new Exception($"{id} overview does not project canonical rider distance {distance:0.0} m.");
+                if (!float.IsFinite(pose.Direction.X) || !float.IsFinite(pose.Direction.Y) || Math.Abs(pose.Direction.Length() - 1) > .001)
+                    throw new Exception($"{id} has invalid travel direction at {distance:0.0} m.");
+            }
+            var start = overview.GetMapPose(0, size);
+            var seam = overview.GetMapPose(route.DistanceMeters, size);
+            var secondLap = overview.GetMapPose(route.DistanceMeters + 20, size);
+            if (start.Lap != 1 || seam.Lap != 2 || secondLap.Lap != 2 || Vector2.Distance(start.Position, seam.Position) > .01)
+                throw new Exception($"{id} lap seam does not preserve route position and lap progress.");
+            var profile = overview.BuildProfilePolyline(new Vector2(12, 150), new Vector2(276, 46));
+            var marker = overview.GetProfilePosition(route.DistanceMeters * .63, new Vector2(12, 150), new Vector2(276, 46));
+            if (profile.Length < 2 || marker.X < 12 || marker.X > 288 || marker.Y < 150 || marker.Y > 196)
+                throw new Exception($"{id} elevation profile or progress cursor is outside its chart.");
+        }
+
+        static Vector2 Project(Vector3 position, Vector2[] points, IReadOnlyList<VisualRouteSample> samples)
+        {
+            var minX = samples.Min(s => s.Position.X); var minY = samples.Min(s => -s.Position.Z);
+            var spanWorldX = samples.Max(s => s.Position.X) - minX;
+            var spanWorldY = samples.Max(s => -s.Position.Z) - minY;
+            var scale = Math.Min(276f / Math.Max(.001f, spanWorldX), 92f / Math.Max(.001f, spanWorldY));
+            var spanX = spanWorldX * scale;
+            var spanY = spanWorldY * scale;
+            var origin = new Vector2((300 - spanX) / 2, (116 - spanY) / 2);
+            return origin + new Vector2((position.X - minX) * scale, (-position.Z - minY) * scale);
+        }
+    }),
+    ("route inset visibility preference persists and dialogs remain content-sized and bounded", () =>
+    {
+        var hidden = new RideDisplayPreferences { RouteGradientInsetVisible = false };
+        var roundTrip = JsonSerializer.Deserialize<RideDisplayPreferences>(JsonSerializer.Serialize(hidden));
+        Equal(false, roundTrip?.RouteGradientInsetVisible ?? true);
+        Equal(true, new RideDisplayPreferences().RouteGradientInsetVisible);
+        foreach (var (width, height) in new[] { (960f, 540f), (1152f, 648f), (1366f, 768f),
+                     (1920f, 1080f), (1093f, 614f), (853f, 480f) })
+        {
+            var shortMenu = RideMenuLayoutPolicy.PanelSize(width, height, 300, 200);
+            if (shortMenu.Width > width - RideMenuLayoutPolicy.ViewportMargin ||
+                shortMenu.Height > height - RideMenuLayoutPolicy.ViewportMargin || shortMenu.Height > 240)
+                throw new Exception($"Short menu did not stay compact at {width}x{height}: {shortMenu}.");
+        }
+        var minimum = RideMenuLayoutPolicy.PanelSize(960, 540, 600, 1000);
+        if (minimum.Width > 936 || minimum.Height > 516)
+            throw new Exception($"Overflowing menu escaped the minimum viewport: {minimum}.");
+    }),
     ("ride summary stays viewport bounded with empty, long, and large screenshot lists", () =>
     {
         // Includes representative physical sizes and effective client coordinates at 125%/150% scaling.

@@ -171,6 +171,7 @@ public partial class RideWorldView : Node3D
     }
 
     public RiderCameraView CurrentCameraView => _camera.View;
+    public VisualRoute? RouteGeometry => _geometry;
 
     public string CycleCameraInspectionView()
     {
