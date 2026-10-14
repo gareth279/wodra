@@ -11,6 +11,13 @@ var tests = new (string Name, Action Run)[]
         Equal(false, VegetationGroundPolicy.ShouldRenderGround(20, 3.01));
         Equal(false, VegetationGroundPolicy.ShouldRenderGround(double.NaN, .2));
     }),
+    ("background street packages retain OSM reverse-only one-way direction", () =>
+    {
+        var tags = new Dictionary<string, string> { ["highway"] = "residential", ["oneway"] = "-1" };
+        Equal(true, BackgroundStreetExtractor.IsOneway(tags));
+        Equal(-1, BackgroundStreetExtractor.OnewayDirection(tags));
+        Equal(1, BackgroundStreetExtractor.OnewayDirection(new Dictionary<string, string> { ["highway"] = "residential" }));
+    }),
     ("out-and-back authoring requires a mirrored path and explicit mapped turnaround", () =>
     {
         var anchors = new List<RouteAnchor>

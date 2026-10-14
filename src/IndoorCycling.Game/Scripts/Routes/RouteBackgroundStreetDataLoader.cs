@@ -8,7 +8,10 @@ using System.Text.Json;
 public sealed record RouteBackgroundStreetPoint(double Latitude,double Longitude,double ElevationMeters);
 public sealed record RouteBackgroundStreet(long OsmId,string? Name,string? Ref,string Highway,bool Oneway,
     double WidthMeters,string WidthSource,IReadOnlyList<RouteBackgroundStreetPoint> Points,
-    double DistanceFromRouteMeters,double NearestRouteDistanceMeters);
+    double DistanceFromRouteMeters,double NearestRouteDistanceMeters)
+{
+    public int OnewayDirection { get; init; } = 1;
+}
 public sealed record RouteBackgroundStreetData(string Id,IReadOnlyList<RouteBackgroundStreet> Streets)
 {
     public int ElevationSamplerVersion { get; init; }

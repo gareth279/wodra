@@ -10,6 +10,59 @@ var tests = new (string Name, Action Run)[]
         Equal(true, RouteGroundFallbackPolicy.ShouldAddLegacyApron(false));
         Equal(false, RouteGroundFallbackPolicy.ShouldAddLegacyApron(true));
     }),
+    ("background street ribbon faces use Godot's clockwise top-face winding", () =>
+    {
+        foreach (var positions in new[]
+        {
+            new[] { new Vector3(-10, 0, 0), new Vector3(10, 0, 0) },
+            new[] { new Vector3(10, 0, 0), new Vector3(-10, 0, 0) },
+            new[] { new Vector3(0, 0, 10), new Vector3(0, 0, -10) }
+        })
+        foreach (var quad in BackgroundStreetGeometry.BuildRibbon(positions, 6))
+        foreach (var triangle in new[]
+        {
+            BackgroundStreetGeometry.BuildTopFaceTriangles(quad).First,
+            BackgroundStreetGeometry.BuildTopFaceTriangles(quad).Second
+        })
+        {
+            var screenCross = (triangle.B.X - triangle.A.X) * (-(triangle.C.Z - triangle.A.Z))
+                - (-(triangle.B.Z - triangle.A.Z)) * (triangle.C.X - triangle.A.X);
+            if (screenCross >= -1e-5f)
+                throw new Exception($"Street surface triangle is not clockwise when viewed from above: {screenCross}.");
+        }
+    }),
+    ("cars entering a route junction continue around the route without endpoint despawn", () =>
+    {
+        var route = new AmbientRouteSample[]
+        {
+            new(0, Vector3.Zero, -Vector3.UnitZ),
+            new(50, new Vector3(0, 0, -50), -Vector3.UnitZ),
+            new(100, Vector3.Zero, -Vector3.UnitZ)
+        };
+        var street = new AmbientRoadInput(77, "residential", false, 6,
+            [new Vector3(20, 0, 0), new Vector3(10, 0, 0), Vector3.Zero], "Junction Road",
+            [new AmbientRoadRouteConnection(2, 0, Vector3.Zero)]);
+        var paths = AmbientActorMath.BuildCarPaths([street], route, 100);
+        var approach = paths.Single(path => path.Direction == AmbientActorPathDirection.Forward);
+        if (!approach.ContinuesAroundRoute || approach.RouteConnectionDistanceMeters != 0)
+            throw new Exception("The connected incoming lane was not extended onto the route loop.");
+        var state = new AmbientActorState(1, AmbientActorKind.Car, approach.Sample(0).Position,
+            approach.Sample(0).Heading, 10, true);
+        var distance = approach.LengthMeters - 1;
+        state = state with { WorldPosition = approach.Sample(distance).Position };
+        var next = AmbientActorMath.Advance(state, approach, distance, 1, paused: false);
+        if (!next.Active) throw new Exception("A car disappeared when its connected route segment reached the loop seam.");
+        if (Vector3.Distance(next.WorldPosition, approach.Sample(approach.LoopStartDistanceMeters!.Value).Position) > 11)
+            throw new Exception("The route continuation did not return to its connected junction.");
+        if (paths.Any(path => street.Oneway && path.Direction == AmbientActorPathDirection.Reverse))
+            throw new Exception("One-way road produced a reverse car path.");
+        var reverseOnly = AmbientActorMath.BuildCarPaths([
+            new AmbientRoadInput(78, "residential", true, 6,
+                [Vector3.Zero, Vector3.UnitX * 20], "Reverse One Way", OnewayDirection: -1)
+        ]);
+        if (reverseOnly.Count != 1 || reverseOnly[0].Direction != AmbientActorPathDirection.Reverse)
+            throw new Exception("OSM oneway=-1 did not produce only the reverse permitted direction.");
+    }),
     ("tree canopies overlap their trunks for both rendered proxy types", () =>
     {
         foreach (var (scale, meshHeight) in new[] { (.43f, 1.6f), (.32f, 1.5f) })
@@ -174,6 +227,18 @@ var tests = new (string Name, Action Run)[]
                     && Math.Abs(item.NearestRouteDistanceMeters - 5000) <= 60 && item.DistanceFromRouteMeters <= 12).ToArray();
                 if (mappedRoadsAtFiveKm.Length == 0)
                     throw new Exception("South Dunedin has no mapped asphalt road geometry within 60 m of its 5,000 m junction.");
+                var survivingJunctionQuads = 0;
+                foreach (var street in mappedRoadsAtFiveKm)
+                {
+                    var points = BackgroundStreetGeometry.ConvertPoints(routeVisual, street.Points);
+                    var connected = BackgroundStreetGeometry.ConnectRouteEnds(points, routeVisual.Samples, spatialIndex: routeIndex);
+                    survivingJunctionQuads += BackgroundStreetGeometry.BuildRibbon(connected.Points, (float)street.WidthMeters)
+                        .Count(quad => !BackgroundStreetGeometry.OverlapsRoute(quad, routeVisual.Samples,
+                            (float)street.WidthMeters, spatialIndex: routeIndex));
+                }
+                if (survivingJunctionQuads == 0)
+                    throw new Exception("South Coastal's mapped 5 km junction produced no drawable side-street quads after route-overlap clipping.");
+                Console.WriteLine($"CHECK South Coastal 5 km drawable side-street quads={survivingJunctionQuads}");
             }
             var terrainData = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "terrain.json", id) ?? throw new Exception($"{id} has no installed terrain sidecar data.");

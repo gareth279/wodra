@@ -11,7 +11,9 @@ public readonly record struct AmbientActorState(int ActorId, AmbientActorKind Ki
 
 public readonly record struct AmbientRouteSample(double DistanceMeters, Vector3 Position, Vector3 Forward);
 public sealed record AmbientRoadInput(long OsmId, string Highway, bool Oneway, double WidthMeters,
-    IReadOnlyList<Vector3> Points, string? Name = null);
+    IReadOnlyList<Vector3> Points, string? Name = null,
+    IReadOnlyList<AmbientRoadRouteConnection>? RouteConnections = null, int OnewayDirection = 1);
+public readonly record struct AmbientRoadRouteConnection(int EndIndex, double RouteDistanceMeters, Vector3 RoutePosition);
 public readonly record struct AmbientSpeedRange(float MinimumMetersPerSecond, float MaximumMetersPerSecond);
 public readonly record struct AmbientSpawnSelection(int PathIndex, double DistanceMeters, Vector3 Position);
 
@@ -28,9 +30,13 @@ public sealed class AmbientActorPath
     public AmbientSpeedRange SpeedRange { get; }
     public IReadOnlyList<Vector3> Points => _points;
     public double LengthMeters => _cumulative.Length == 0 ? 0 : _cumulative[^1];
+    public double? LoopStartDistanceMeters { get; }
+    public bool ContinuesAroundRoute => LoopStartDistanceMeters.HasValue;
+    public double? RouteConnectionDistanceMeters { get; }
 
     public AmbientActorPath(AmbientActorKind kind, long sourceId, int direction,
-        IEnumerable<Vector3> points, AmbientSpeedRange speedRange, string? sourceName = null, string? sourceClass = null)
+        IEnumerable<Vector3> points, AmbientSpeedRange speedRange, string? sourceName = null, string? sourceClass = null,
+        double? loopStartDistanceMeters = null, double? routeConnectionDistanceMeters = null)
     {
         Kind = kind; SourceId = sourceId; Direction = direction; SpeedRange = speedRange;
         SourceName = sourceName; SourceClass = sourceClass;
@@ -42,6 +48,9 @@ public sealed class AmbientActorPath
         _cumulative = new double[_points.Length];
         for (var i = 1; i < _points.Length; i++)
             _cumulative[i] = _cumulative[i - 1] + Vector3.Distance(_points[i - 1], _points[i]);
+        LoopStartDistanceMeters = loopStartDistanceMeters is { } loopStart && double.IsFinite(loopStart)
+            && loopStart >= 0 && loopStart < LengthMeters ? loopStart : null;
+        RouteConnectionDistanceMeters = routeConnectionDistanceMeters;
     }
 
     public bool IsUsable => _points.Length >= 2 && double.IsFinite(LengthMeters) && LengthMeters > 0.01;
@@ -97,26 +106,97 @@ public static class AmbientActorMath
             0, MaximumLaneOffsetMeters);
     }
 
-    public static IReadOnlyList<AmbientActorPath> BuildCarPaths(IEnumerable<AmbientRoadInput> streets)
+    public static IReadOnlyList<AmbientActorPath> BuildCarPaths(IEnumerable<AmbientRoadInput> streets,
+        IReadOnlyList<AmbientRouteSample>? routeSamples = null, double routeLengthMeters = 0)
     {
         var paths = new List<AmbientActorPath>();
         foreach (var street in streets)
         {
             if (!IsEligibleRoad(street.Highway) || street.Points.Count < 2) continue;
             var offset = LeftLaneOffset(street.WidthMeters);
-            var forward = OffsetTravelPath(street.Points, offset);
-            Add(AmbientActorPathDirection.Forward, forward);
-            if (!street.Oneway) Add(AmbientActorPathDirection.Reverse, OffsetTravelPath(street.Points.Reverse().ToArray(), offset));
+            if (!street.Oneway || street.OnewayDirection >= 0)
+                Add(AmbientActorPathDirection.Forward, street.Points.ToArray());
+            if (!street.Oneway || street.OnewayDirection < 0)
+                Add(AmbientActorPathDirection.Reverse, street.Points.Reverse().ToArray());
 
-            void Add(int direction, IReadOnlyList<Vector3> points)
+            void Add(int direction, IReadOnlyList<Vector3> source)
             {
+                var points = OffsetTravelPath(source, offset).ToList();
+                double? loopStart = null;
+                double? routeDistance = null;
+                var sourceEndIndex = direction == AmbientActorPathDirection.Forward ? street.Points.Count - 1 : 0;
+                var routeConnection = street.RouteConnections?.FirstOrDefault(connection => connection.EndIndex == sourceEndIndex);
+                var hasRouteConnection = street.RouteConnections?.Any(connection => connection.EndIndex == sourceEndIndex) == true;
+                if (hasRouteConnection && routeSamples is { Count: >= 2 } && routeLengthMeters > 0
+                    && double.IsFinite(routeLengthMeters))
+                {
+                    var connectedJunction = routeConnection!.Value;
+                    var routeArc = BuildRouteArc(routeSamples, connectedJunction.RouteDistanceMeters,
+                        routeLengthMeters, Math.Min(offset, MaximumLaneOffsetMeters));
+                    if (routeArc.Count >= 3)
+                    {
+                        var branchEndpoint = points[^1];
+                        var routeEntry = routeArc[0];
+                        var incoming = (points[^1] - points[^2]).LengthSquared() > 1e-8f
+                            ? Vector3.Normalize(points[^1] - points[^2]) : Vector3.UnitX;
+                        var outgoing = Vector3.Normalize(routeArc[1] - routeArc[0]);
+                        points.AddRange(BuildTurnConnector(branchEndpoint, routeEntry, incoming, outgoing));
+                        loopStart = PolylineLength(points);
+                        routeDistance = connectedJunction.RouteDistanceMeters;
+                        points.AddRange(routeArc.Skip(1));
+                    }
+                }
                 var path = new AmbientActorPath(AmbientActorKind.Car, street.OsmId, direction,
-                    points, CarSpeedRange(street.Highway), street.Name, street.Highway);
+                    points, CarSpeedRange(street.Highway), street.Name, street.Highway, loopStart, routeDistance);
                 if (path.IsUsable) paths.Add(path);
             }
         }
         return paths;
     }
+
+    private static List<Vector3> BuildRouteArc(IReadOnlyList<AmbientRouteSample> samples, double startDistance,
+        double routeLength, float lateralOffset)
+    {
+        var start = SampleRoute(samples, startDistance, routeLength);
+        var result = new List<Vector3> { LanePosition(start.Position, start.Forward, lateralOffset) };
+        for (var lap = 0; lap <= 1; lap++)
+        foreach (var sample in samples)
+        {
+            var distance = sample.DistanceMeters + lap * routeLength;
+            if (distance <= start.DistanceMeters + .001 || distance >= start.DistanceMeters + routeLength - .001) continue;
+            result.Add(LanePosition(sample.Position, sample.Forward, lateralOffset));
+        }
+        result.Add(result[0]);
+        return result;
+    }
+
+    private static IReadOnlyList<Vector3> BuildTurnConnector(Vector3 start, Vector3 end, Vector3 incoming, Vector3 outgoing)
+    {
+        var gap = Vector3.Distance(start, end);
+        var handle = Math.Clamp(gap * .65f + 1.5f, 1.5f, 5f);
+        var controlA = start + incoming * handle;
+        var controlB = end - outgoing * handle;
+        var points = new Vector3[6];
+        for (var i = 0; i < points.Length; i++)
+        {
+            var t = (i + 1f) / points.Length;
+            var u = 1 - t;
+            points[i] = start * (u * u * u) + controlA * (3 * u * u * t)
+                + controlB * (3 * u * t * t) + end * (t * t * t);
+        }
+        points[^1] = end;
+        return points;
+    }
+
+    private static double PolylineLength(IReadOnlyList<Vector3> points)
+    {
+        double length = 0;
+        for (var i = 1; i < points.Count; i++) length += Vector3.Distance(points[i - 1], points[i]);
+        return length;
+    }
+
+    private static Vector3 LanePosition(Vector3 position, Vector3 forward, float offset) =>
+        position + LocalLeft(forward) * offset;
 
     public static IReadOnlyList<AmbientActorPath> BuildFootpathPaths(IReadOnlyList<AmbientRouteSample> samples,
         double routeLengthMeters, double lateralOffsetMeters = PedestrianFootpathOffsetMeters,
@@ -204,12 +284,29 @@ public static class AmbientActorMath
     public static AmbientActorState Advance(AmbientActorState state, AmbientActorPath path,
         double distanceAlongPathMeters, double deltaSeconds, bool paused)
     {
-        if (!state.Active || !path.IsUsable || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return state;
-        var nextDistance = distanceAlongPathMeters + state.SpeedMetersPerSecond * deltaSeconds;
-        if (!double.IsFinite(nextDistance) || nextDistance >= path.LengthMeters)
+        if (!state.Active || !path.IsUsable) return state;
+        var nextDistance = AdvancePathDistance(path, distanceAlongPathMeters, state.SpeedMetersPerSecond, deltaSeconds, paused);
+        if (nextDistance == distanceAlongPathMeters) return state;
+        if (!double.IsFinite(nextDistance))
             return state with { Active = false };
+        if (path.LoopStartDistanceMeters is null && nextDistance >= path.LengthMeters) return state with { Active = false };
         var (position, heading) = path.Sample(nextDistance);
         return state with { WorldPosition = position, Heading = heading };
+    }
+
+    public static double AdvancePathDistance(AmbientActorPath path, double distanceAlongPathMeters,
+        float speedMetersPerSecond, double deltaSeconds, bool paused)
+    {
+        if (!path.IsUsable || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0
+            || !float.IsFinite(speedMetersPerSecond) || speedMetersPerSecond <= 0) return distanceAlongPathMeters;
+        var nextDistance = distanceAlongPathMeters + speedMetersPerSecond * deltaSeconds;
+        if (!double.IsFinite(nextDistance)) return double.NaN;
+        if (path.LoopStartDistanceMeters is { } loopStart && nextDistance >= path.LengthMeters)
+        {
+            var loopLength = path.LengthMeters - loopStart;
+            return loopStart + ((nextDistance - path.LengthMeters) % loopLength);
+        }
+        return nextDistance;
     }
 
     public static bool IsVisible(Vector3 actorPosition, Vector3 riderPosition, float radiusMeters) =>

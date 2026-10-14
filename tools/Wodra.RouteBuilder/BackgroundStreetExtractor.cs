@@ -7,7 +7,10 @@ namespace Wodra.RouteBuilder;
 public sealed record BackgroundStreetPoint(double Latitude, double Longitude, double ElevationMeters);
 public sealed record BackgroundStreet(long OsmId, string? Name, string? Ref, string Highway, bool Oneway,
     double WidthMeters, string WidthSource, IReadOnlyList<BackgroundStreetPoint> Points,
-    double DistanceFromRouteMeters, double NearestRouteDistanceMeters);
+    double DistanceFromRouteMeters, double NearestRouteDistanceMeters)
+{
+    public int OnewayDirection { get; init; } = 1;
+}
 public sealed record BackgroundStreetExtractionResult(int WaysConsidered, int WaysIncluded,
     IReadOnlyDictionary<string, int> HighwayClassCounts, IReadOnlyDictionary<string, int> WidthSourceCounts,
     int NamedStreetCount, double TotalLengthMeters, double SuppressedOverlapMeters,
@@ -142,7 +145,7 @@ public static class BackgroundStreetExtractor
                 var points=part.Select(p=>new BackgroundStreetPoint(p.Latitude,p.Longitude,0)).ToArray();
                 selected.Add(new BackgroundStreet(candidate.Id,candidate.Tags.GetValueOrDefault("name"),candidate.Tags.GetValueOrDefault("ref"),
                     candidate.Tags["highway"], IsOneway(candidate.Tags), width.WidthMeters,width.Source, points,distance.Distance,
-                    distance.Chainage));
+                    distance.Chainage) { OnewayDirection = OnewayDirection(candidate.Tags) });
             }
             if (parts.Count>0) { includedWays.Add(candidate.Id);if(!string.IsNullOrWhiteSpace(candidate.Tags.GetValueOrDefault("name")))namedWays.Add(candidate.Id);
                 classCounts[candidate.Tags["highway"]]=classCounts.GetValueOrDefault(candidate.Tags["highway"])+1;
@@ -155,6 +158,8 @@ public static class BackgroundStreetExtractor
     }
 
     public static bool IsOneway(IReadOnlyDictionary<string,string> tags) => tags.GetValueOrDefault("oneway") is "yes" or "1" or "true" or "-1";
+    public static int OnewayDirection(IReadOnlyDictionary<string, string> tags) =>
+        tags.GetValueOrDefault("oneway") == "-1" ? -1 : 1;
     private static bool IsRouteAligned((double X,double Y) a, (double X,double Y) b,
         (double X,double Y)[] route)
     {

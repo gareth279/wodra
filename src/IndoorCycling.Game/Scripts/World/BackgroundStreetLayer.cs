@@ -54,12 +54,14 @@ public partial class BackgroundStreetLayer : Node3D
                 if(BackgroundStreetGeometry.OverlapsRoute(q,route.Samples,(float)street.WidthMeters,spatialIndex:spatialIndex))continue;
                 var center=(q.StartLeft+q.EndLeft+q.StartRight+q.EndRight)*.25f;
                 var chunk=ChunkAt(BackgroundStreetGeometry.NearestRouteDistanceMeters(center,route.Samples,spatialIndex));
-                var a=ProceduralRoad.ToGodot(q.StartLeft+offset);var b=ProceduralRoad.ToGodot(q.EndLeft+offset);
-                var c=ProceduralRoad.ToGodot(q.StartRight+offset);var d=ProceduralRoad.ToGodot(q.EndRight+offset);
-                if((b-a).Cross(c-a).LengthSquared()<1e-8f||(c-b).Cross(d-b).LengthSquared()<1e-8f)continue;
+                var faces=BackgroundStreetGeometry.BuildTopFaceTriangles(q);
+                var first=faces.First;var second=faces.Second;
+                var a=ProceduralRoad.ToGodot(first.A+offset);var b=ProceduralRoad.ToGodot(first.B+offset);var c=ProceduralRoad.ToGodot(first.C+offset);
+                var secondA=ProceduralRoad.ToGodot(second.A+offset);var secondB=ProceduralRoad.ToGodot(second.B+offset);var secondC=ProceduralRoad.ToGodot(second.C+offset);
+                if((b-a).Cross(c-a).LengthSquared()<1e-8f||(secondB-secondA).Cross(secondC-secondA).LengthSquared()<1e-8f)continue;
                 var bucket=SurfaceFor(chunk,color);
-                bucket.Surface.AddVertex(a);bucket.Surface.AddVertex(c);bucket.Surface.AddVertex(b);
-                bucket.Surface.AddVertex(c);bucket.Surface.AddVertex(d);bucket.Surface.AddVertex(b);
+                AddTopFace(bucket.Surface,a,b,c);
+                AddTopFace(bucket.Surface,secondA,secondB,secondC);
                 bucket.TriangleCount+=2;
             }
             foreach(var connection in connected.Connections)
@@ -87,7 +89,6 @@ public partial class BackgroundStreetLayer : Node3D
             var nodes=new List<MeshInstance3D>();
             foreach(var pair in group.OrderBy(pair=>pair.Key.Material.R).ThenBy(pair=>pair.Key.Material.G).ThenBy(pair=>pair.Key.Material.B))
             {
-                pair.Value.Surface.GenerateNormals();
                 var instance=new MeshInstance3D{Name="BackgroundStreetMesh",Mesh=pair.Value.Surface.Commit(),
                     MaterialOverride=new StandardMaterial3D{AlbedoColor=pair.Key.Material,Roughness=1}};
                 AddChild(instance);nodes.Add(instance);TriangleCount+=pair.Value.TriangleCount;
@@ -115,4 +116,13 @@ public partial class BackgroundStreetLayer : Node3D
         "motorway"=>new Color(.20f,.21f,.23f),"trunk"=>new Color(.24f,.25f,.27f),"primary"=>new Color(.28f,.29f,.31f),"secondary"=>new Color(.31f,.32f,.34f),
         "path"=>new Color(.46f,.47f,.43f),"pedestrian"=>new Color(.43f,.44f,.41f),"cycleway"=>new Color(.33f,.35f,.34f),_=>new Color(.35f,.36f,.38f)
     };
+
+    private static void AddTopFace(SurfaceTool surface,Vector3 a,Vector3 b,Vector3 c)
+    {
+        var normal=(b-a).Cross(c-a).Normalized();
+        if(normal.Y<0)normal=-normal;
+        surface.SetNormal(normal);surface.AddVertex(a);
+        surface.SetNormal(normal);surface.AddVertex(b);
+        surface.SetNormal(normal);surface.AddVertex(c);
+    }
 }

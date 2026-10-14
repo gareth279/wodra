@@ -46,6 +46,7 @@ public partial class AmbientActorManager : Node3D
     public int EligiblePedestrianSections => PedestrianPathCount / 4;
     public int InvalidOrShortPedestrianPaths { get; private set; }
     public int InvalidOrShortCarPaths { get; private set; }
+    public int CarPathsContinuingOntoRoute { get; private set; }
     public AmbientActorState? FirstCarState => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.State;
     public AmbientActorState? FirstPedestrianState => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Pedestrian)?.State;
     public string? FirstCarRoadClass => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.Path.SourceClass;
@@ -61,16 +62,34 @@ public partial class AmbientActorManager : Node3D
         _configured = true;
         _random = new Random(RandomSeed);
         TotalStreetPolylines = streetData.Streets.Count;
-        var roadInputs = streetData.Streets.Select(street => new AmbientRoadInput(street.OsmId,
-            street.Highway, street.Oneway, street.WidthMeters,
-            BackgroundStreetGeometry.ConvertPoints(route, street.Points)
-                .Select(point => ToNumerics(ToGlobal(ProceduralRoad.ToGodot(point)))).ToArray(), street.Name)).ToArray();
+        var routeSamples = route.Samples.Select(sample => new AmbientRouteSample(sample.DistanceMeters,
+            ToNumerics(ToGlobal(ProceduralRoad.ToGodot(sample.Position))), sample.Forward)).ToArray();
+        var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(route.Samples);
+        var roadInputs = streetData.Streets.Select(street =>
+        {
+            var connected = BackgroundStreetGeometry.ConnectRouteEnds(
+                BackgroundStreetGeometry.ConvertPoints(route, street.Points), route.Samples, spatialIndex: routeIndex);
+            var routeConnections = connected.Connections.Select(connection => new AmbientRoadRouteConnection(
+                connection.EndIndex, connection.RouteDistanceMeters,
+                ToNumerics(ToGlobal(ProceduralRoad.ToGodot(connection.Position))))).ToArray();
+            return new AmbientRoadInput(street.OsmId, street.Highway, street.Oneway, street.WidthMeters,
+                connected.Points.Select(point => ToNumerics(ToGlobal(ProceduralRoad.ToGodot(point)))).ToArray(),
+                street.Name, routeConnections, street.OnewayDirection);
+        }).ToArray();
         EligibleStreetPolylines = roadInputs.Count(input => AmbientActorMath.IsEligibleRoad(input.Highway));
         CarIllegalOnewayDirections = streetData.Streets.Count(street => street.Oneway
             && AmbientActorMath.IsEligibleRoad(street.Highway));
-        _carPaths.AddRange(AmbientActorMath.BuildCarPaths(roadInputs));
-        var routeSamples = route.Samples.Select(sample => new AmbientRouteSample(sample.DistanceMeters,
-            ToNumerics(ToGlobal(ProceduralRoad.ToGodot(sample.Position))), sample.Forward)).ToArray();
+        _carPaths.AddRange(AmbientActorMath.BuildCarPaths(roadInputs, routeSamples, route.LengthMeters));
+        CarPathsContinuingOntoRoute = _carPaths.Count(path => path.ContinuesAroundRoute);
+        GameLogger.Log("ambient_car_paths_configured", new
+        {
+            routeId = streetData.Id,
+            sourcePolylines = streetData.Streets.Count,
+            carPaths = _carPaths.Count,
+            pathsContinuingOntoRoute = CarPathsContinuingOntoRoute,
+            routeLengthMeters = route.LengthMeters,
+            oneWayPolylines = CarIllegalOnewayDirections
+        });
         PedestrianSeamOrEndSamplesExcluded = AmbientActorMath.CountFootpathSamplesExcludedNearSeams(
             routeSamples, route.LengthMeters, ProceduralRoad.NonAsphaltJoinExclusionMeters);
         _pedestrianPaths.AddRange(AmbientActorMath.BuildFootpathPaths(routeSamples, route.LengthMeters,
@@ -96,11 +115,31 @@ public partial class AmbientActorManager : Node3D
         for (var i = actors.Count - 1; i >= 0; i--)
         {
             var actor = actors[i];
-            var nextDistance = actor.DistanceAlongPath + actor.State.SpeedMetersPerSecond * Math.Max(0, deltaSeconds);
+            var nextDistance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
+                actor.State.SpeedMetersPerSecond, deltaSeconds, paused: false);
             var nextState = AmbientActorMath.Advance(actor.State, actor.Path, actor.DistanceAlongPath, deltaSeconds, paused: false);
-            if (!nextState.Active || !AmbientActorMath.IsVisible(ToNumerics(nextState.WorldPosition), riderPosition,
-                    actor.State.Kind == AmbientActorKind.Car ? AmbientActorTuning.CarDespawnRadiusMeters : AmbientActorTuning.PedestrianDespawnRadiusMeters))
+            var visible = AmbientActorMath.IsVisible(ToNumerics(nextState.WorldPosition), riderPosition,
+                actor.State.Kind == AmbientActorKind.Car ? AmbientActorTuning.CarDespawnRadiusMeters : AmbientActorTuning.PedestrianDespawnRadiusMeters);
+            if (actor.Path.LoopStartDistanceMeters is { } loopStart && actor.DistanceAlongPath < loopStart && nextDistance >= loopStart)
+                GameLogger.Log("ambient_car_junction_transition", new
+                {
+                    actorId = actor.State.ActorId, sourceOsmId = actor.Path.SourceId, sourceName = actor.Path.SourceName,
+                    roadClass = actor.Path.SourceClass, direction = actor.Path.Direction,
+                    routeDistanceMeters = actor.Path.RouteConnectionDistanceMeters,
+                    transition = "side-street-to-route", pathDistanceMeters = nextDistance
+                });
+            if (!nextState.Active || !visible)
             {
+                var distanceToRider = NVector3.Distance(ToNumerics(nextState.WorldPosition), riderPosition);
+                GameLogger.Log("ambient_actor_despawned", new
+                {
+                    actorId = actor.State.ActorId, kind = actor.State.Kind.ToString(), sourceOsmId = actor.Path.SourceId,
+                    sourceName = actor.Path.SourceName, roadClass = actor.Path.SourceClass, direction = actor.Path.Direction,
+                    pathDistanceMeters = nextDistance, pathLengthMeters = actor.Path.LengthMeters,
+                    routeLoopContinuation = actor.Path.ContinuesAroundRoute, routeDistanceMeters = actor.Path.RouteConnectionDistanceMeters,
+                    riderDistanceMeters = distanceToRider,
+                    reason = !nextState.Active ? "path-endpoint" : "outside-rider-visibility-radius"
+                });
                 actor.Visual.QueueFree(); actors.RemoveAt(i); continue;
             }
             actor.DistanceAlongPath = nextDistance;
@@ -145,6 +184,17 @@ public partial class AmbientActorManager : Node3D
             AddChild(visual);
             var actor = new ActiveActor { State = state, Path = path, DistanceAlongPath = selected.DistanceMeters, Visual = visual };
             _active.Add(actor); ApplyPose(actor); activeCount++;
+            GameLogger.Log("ambient_actor_spawned", new
+            {
+                actorId = state.ActorId, kind = kind.ToString(), sourceOsmId = path.SourceId,
+                sourceName = path.SourceName, roadClass = path.SourceClass, direction = path.Direction,
+                spawnPathDistanceMeters = selected.DistanceMeters, pathLengthMeters = path.LengthMeters,
+                pathStart = path.Points[0], pathEnd = path.Points[^1],
+                routeLoopContinuation = path.ContinuesAroundRoute,
+                routeDistanceMeters = path.RouteConnectionDistanceMeters,
+                remainingToEndpointMeters = path.LengthMeters - selected.DistanceMeters,
+                spawnPosition = state.WorldPosition
+            });
         }
     }
 

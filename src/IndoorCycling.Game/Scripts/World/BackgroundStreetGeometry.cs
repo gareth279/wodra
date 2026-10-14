@@ -215,6 +215,13 @@ public static class BackgroundStreetGeometry
             &&TriangleAreaSquared(q.StartLeft,q.EndLeft,q.StartRight)>1e-8f
             &&TriangleAreaSquared(q.EndLeft,q.EndRight,q.StartRight)>1e-8f).ToArray();
     }
+    public readonly record struct SurfaceTriangle(Vector3 A, Vector3 B, Vector3 C);
+
+    /// <summary>Returns top-facing triangles with upward normals in Wodra's +Y-up world.</summary>
+    public static (SurfaceTriangle First, SurfaceTriangle Second) BuildTopFaceTriangles(RoadRibbonQuad quad) =>
+        (new SurfaceTriangle(quad.StartLeft, quad.EndLeft, quad.StartRight),
+         new SurfaceTriangle(quad.StartRight, quad.EndLeft, quad.EndRight));
+
     private static bool Finite(Vector3 p)=>float.IsFinite(p.X)&&float.IsFinite(p.Y)&&float.IsFinite(p.Z);
     private static float TriangleAreaSquared(Vector3 a,Vector3 b,Vector3 c)=>Vector3.Cross(b-a,c-a).LengthSquared();
 }
