@@ -42,8 +42,9 @@ jobs:
           if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '7c530d4b45d9f7aadd788b85a4d9dbdb5f2a239a72999afd7d29fda506fbedb6') { throw 'Godot 4.6.2 mono archive checksum mismatch.' }
           New-Item -ItemType Directory -Path $root -Force | Out-Null
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
-          $godot = Join-Path $root 'Godot_v4.6.2-stable_mono_win64_console.exe'
-          if (-not (Test-Path $godot)) { throw 'Godot .NET console editor is missing.' }
+          $matches = @(Get-ChildItem -LiteralPath $root -Filter 'Godot_v4.6.2-stable_mono_win64_console.exe' -File -Recurse)
+          if ($matches.Count -ne 1) { throw "Expected exactly one Godot .NET console editor in the verified archive; found $($matches.Count)." }
+          $godot = $matches[0].FullName
           "GODOT_PATH=$godot" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Verify pinned toolchain
         shell: pwsh
