@@ -15,6 +15,8 @@ public partial class RideHistoryPanelController : Control
     private PanelContainer _panel = null!;
     private Label _title = null!;
     private Label _detail = null!;
+    private VBoxContainer _detailColumn = null!;
+    private VBoxContainer _stravaUploads = null!;
     private Label _summaryEssentials = null!;
     private ScrollContainer _detailScroll = null!;
     private ItemList _list = null!;
@@ -45,7 +47,11 @@ public partial class RideHistoryPanelController : Control
         _list.ItemSelected += OnItemSelected; body.AddChild(_list);
         _detailScroll = new ScrollContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         _detail = new Label { Text = "Select a ride to see details.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
-        _detailScroll.AddChild(_detail); body.AddChild(_detailScroll); column.AddChild(body);
+        _detailColumn = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _detailColumn.AddChild(_detail);
+        _stravaUploads = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Visible = false };
+        _detailColumn.AddChild(_stravaUploads);
+        _detailScroll.AddChild(_detailColumn); body.AddChild(_detailScroll); column.AddChild(body);
         var buttons = new HBoxContainer();
         _viewButton = new Button { Text = "View selected ride" }; _viewButton.Pressed += ShowSelectedSummary; buttons.AddChild(_viewButton);
         _ghostButton = new Button { Text = "Ride against ghost", Visible = false }; _ghostButton.Pressed += StartAgainstGhost; buttons.AddChild(_ghostButton);
@@ -72,7 +78,7 @@ public partial class RideHistoryPanelController : Control
     public async void ShowHistory()
     {
         _summaryMode = false; _returnToRouteSelection = false; _selected = null; _list.Visible = true; _summaryEssentials.Visible = false; _detailScroll.Visible = true; _list.Clear(); _title.Text = "Ride History";
-        _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false;
+        _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false; _stravaUploads.Visible = false;
         _startPanel?.Hide(); Show(); MoveToFront();
         try
         {
@@ -112,6 +118,7 @@ public partial class RideHistoryPanelController : Control
             media = _hud.CapturedScreenshots.Where(s => s.ActivityId == currentId).Select(s => new RideActivityMedia(
                 Guid.NewGuid(), currentId, s.ImagePath, s.SidecarPath, s.CapturedAt.ToUniversalTime(), s.Mode.ToString(), s.MarkerNumber)).ToArray();
         _detail.Text = FormatSummaryDetails(draft, fit, media);
+        BuildStravaUploadControls(draft.Id, draft.RiderProfileId, draft.FitFilePath);
         _detailScroll.ScrollVertical = 0;
         _doneButton.CallDeferred(Control.MethodName.GrabFocus);
     }
@@ -122,6 +129,7 @@ public partial class RideHistoryPanelController : Control
         _selected = _activities[(int)index]; _viewButton.Visible = true;
         _ghostButton.Visible = CanOfferGhost(_selected);
         _summaryEssentials.Visible = false;
+        _stravaUploads.Visible = false;
         _detail.Text = FormatHistoryDetail(_selected);
     }
 
@@ -178,6 +186,7 @@ public partial class RideHistoryPanelController : Control
         var fit = a.FitFilePath is null ? "FIT: not saved" : $"FIT: {a.FitFilePath}";
         _summaryEssentials.Text = FormatSummaryEssentials(draft);
         _detail.Text = FormatSummaryDetails(draft, fit, media);
+        BuildStravaUploadControls(a.Id, a.RiderProfileId, a.FitFilePath);
         _detailScroll.ScrollVertical = 0;
         _doneButton.CallDeferred(Control.MethodName.GrabFocus);
     }
@@ -187,6 +196,102 @@ public partial class RideHistoryPanelController : Control
         Hide();
         if (_summaryMode && _returnToRouteSelection) _routeSelection?.ShowRouteSelection();
         else _startPanel?.Show();
+    }
+
+    private void BuildStravaUploadControls(Guid activityId, Guid profileId, string? fitPath)
+    {
+        foreach (var child in _stravaUploads.GetChildren()) { _stravaUploads.RemoveChild(child); child.QueueFree(); }
+        _stravaUploads.Visible = true;
+        _stravaUploads.AddChild(new HSeparator());
+        _stravaUploads.AddChild(new Label { Text = "Strava uploads" });
+        var linked = StravaIntegrationClient.Shared.GetLink(profileId);
+        var segments = StravaIntegrationClient.GetFitSegments(activityId, fitPath);
+        var unavailableReason = StravaPolicies.UploadUnavailableReason(linked is not null, segments.Any(segment => segment.IsValid));
+        if (unavailableReason.Length > 0)
+        {
+            AddDisabledUploadRow(unavailableReason);
+            foreach (var segment in segments)
+                _stravaUploads.AddChild(new Label { Text = $"Segment {segment.Index + 1}: {segment.DisplayName}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+            return;
+        }
+        if (linked is null) return;
+        _stravaUploads.AddChild(new Label { Text = $"Uploading to {linked.AthleteName} · {segments.Count} saved FIT segment{(segments.Count == 1 ? "" : "s")}." });
+        foreach (var segment in segments)
+        {
+            if (!segment.IsValid)
+            {
+                AddDisabledUploadRow($"Segment {segment.Index + 1} · {segment.DisplayName}: saved FIT is missing or invalid.");
+                continue;
+            }
+            var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var status = new Label { Text = $"Segment {segment.Index + 1} · {segment.DisplayName}: ready", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+            var existing = StravaIntegrationClient.Shared.GetUpload(profileId, activityId, segment.Index, segment.Path);
+            var text = existing?.Status switch
+            {
+                StravaUploadStatus.Complete => "Uploaded",
+                StravaUploadStatus.Processing => "Check Status",
+                StravaUploadStatus.Failed => "Retry upload",
+                StravaUploadStatus.Submitting or StravaUploadStatus.Unknown => "Submission pending",
+                _ => "Upload to Strava"
+            };
+            var button = new Button { Text = text, Disabled = existing?.Status is StravaUploadStatus.Complete or StravaUploadStatus.Submitting or StravaUploadStatus.Unknown };
+            if (existing?.Status == StravaUploadStatus.Processing) status.Text = $"Segment {segment.Index + 1}: Strava is processing this saved upload.";
+            if (existing?.Status == StravaUploadStatus.Complete) status.Text = $"Segment {segment.Index + 1}: uploaded";
+            if (existing?.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting)
+            {
+                status.Text = $"Segment {segment.Index + 1}: submission outcome is unknown. Do not retry without resolving it; that could duplicate the activity.";
+                var checkStrava = new Button { Text = "Check Strava" };
+                checkStrava.Pressed += () => OS.ShellOpen("https://www.strava.com/athlete/training");
+                row.AddChild(checkStrava);
+            }
+            if (existing?.Status == StravaUploadStatus.Failed) status.Text = $"Segment {segment.Index + 1}: upload failed. The saved FIT file is available to retry.";
+            if (existing?.Status == StravaUploadStatus.Complete && !string.IsNullOrWhiteSpace(existing.ActivityUrl))
+            {
+                var open = new Button { Text = "Open activity" };
+                open.Pressed += () => OS.ShellOpen(existing.ActivityUrl);
+                row.AddChild(open);
+            }
+            button.Pressed += async () =>
+            {
+                button.Disabled = true; button.Text = "Working…";
+                try
+                {
+                    var result = await StravaIntegrationClient.Shared.UploadAsync(profileId, activityId, segment.Index, segment.Path,
+                        message => status.Text = $"Segment {segment.Index + 1}: {message}");
+                    status.Text = $"Segment {segment.Index + 1}: {result.Message}";
+                    button.Text = result.Status == StravaUploadStatus.Processing ? "Check Status" : "Uploaded";
+                    if (result.ActivityUrl is not null)
+                    {
+                        var open = new Button { Text = "Open activity" };
+                        open.Pressed += () => OS.ShellOpen(result.ActivityUrl);
+                        row.AddChild(open);
+                    }
+                    button.Disabled = result.Status == StravaUploadStatus.Complete;
+                }
+                catch (Exception ex)
+                {
+                    status.Text = $"Segment {segment.Index + 1}: {ex.Message}";
+                    var latest = StravaIntegrationClient.Shared.GetUpload(profileId, activityId, segment.Index, segment.Path);
+                    button.Text = latest?.Status switch
+                    {
+                        StravaUploadStatus.Processing => "Check Status",
+                        StravaUploadStatus.Failed => "Retry upload",
+                        StravaUploadStatus.Unknown or StravaUploadStatus.Submitting => "Submission pending",
+                        _ => "Retry upload"
+                    };
+                    button.Disabled = latest?.Status is StravaUploadStatus.Unknown or StravaUploadStatus.Submitting;
+                }
+            };
+            row.AddChild(status); row.AddChild(button); _stravaUploads.AddChild(row);
+        }
+    }
+
+    private void AddDisabledUploadRow(string explanation)
+    {
+        var row = new HBoxContainer();
+        row.AddChild(new Button { Text = "Upload to Strava", Disabled = true });
+        row.AddChild(new Label { Text = explanation, AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        _stravaUploads.AddChild(row);
     }
 
     private static string FormatSummaryEssentials(RideActivityDraft a) =>

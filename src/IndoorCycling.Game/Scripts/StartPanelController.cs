@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
 
@@ -37,6 +38,11 @@ public partial class StartPanelController : Control
 	private Label? _profileTrainerDifficultyValue;
 	private CheckButton? _profileTest;
 	private OptionButton? _profileEditPicker;
+	private Label? _stravaProfileStatus;
+	private Button? _stravaLinkButton;
+	private Button? _stravaDisconnectButton;
+	private Button? _stravaCancelButton;
+	private CancellationTokenSource? _stravaLinkCancellation;
 	private List<RiderProfileRecord> _profiles = [];
 	private Guid? _editingProfileId;
 	private VelopackUpdatePanel? _updatePanel;
@@ -198,7 +204,7 @@ public partial class StartPanelController : Control
 
 	private void BuildProfileEditor()
 	{
-		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(460, 410), Exclusive = true };
+		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(480, 500), MinSize = new Vector2I(440, 450), Exclusive = true };
 		var root = new VBoxContainer(); root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		var margin = new MarginContainer(); margin.AddThemeConstantOverride("margin_left", 16); margin.AddThemeConstantOverride("margin_right", 16); margin.AddThemeConstantOverride("margin_top", 16); margin.AddThemeConstantOverride("margin_bottom", 16);
 		var body = new VBoxContainer(); margin.AddChild(body); root.AddChild(margin); _profileWindow.AddChild(root); AddChild(_profileWindow);
@@ -214,6 +220,13 @@ public partial class StartPanelController : Control
 		difficultyRow.AddChild(new Label { Text = "Trainer difficulty", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 		difficultyRow.AddChild(_profileTrainerDifficulty); difficultyRow.AddChild(_profileTrainerDifficultyValue); body.AddChild(difficultyRow);
 		_profileTest = new CheckButton { Text = "Test profile" }; body.AddChild(_profileTest);
+		_stravaProfileStatus = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		body.AddChild(_stravaProfileStatus);
+		var stravaActions = new HBoxContainer();
+		_stravaLinkButton = new Button { Text = "Link Strava" }; _stravaLinkButton.Pressed += OnLinkStravaPressed; stravaActions.AddChild(_stravaLinkButton);
+		_stravaDisconnectButton = new Button { Text = "Disconnect Strava" }; _stravaDisconnectButton.Pressed += OnDisconnectStravaPressed; stravaActions.AddChild(_stravaDisconnectButton);
+		_stravaCancelButton = new Button { Text = "Cancel linking", Visible = false }; _stravaCancelButton.Pressed += () => _stravaLinkCancellation?.Cancel(); stravaActions.AddChild(_stravaCancelButton);
+		body.AddChild(stravaActions);
 		var buttons = new HBoxContainer();
 		var save = new Button { Text = "Save" }; save.Pressed += SaveEditedProfile; buttons.AddChild(save);
 		var cancel = new Button { Text = "Cancel" }; cancel.Pressed += () => _profileWindow.Hide(); buttons.AddChild(cancel); body.AddChild(buttons);
@@ -230,8 +243,62 @@ public partial class StartPanelController : Control
 		_profileWindow?.PopupCentered();
 	}
 	private void OnEditProfileSelected(long index) { if (index >= 0 && index < _profiles.Count) LoadProfileEditor(_profiles[(int)index]); }
-	private void LoadProfileEditor(RiderProfileRecord profile) { _editingProfileId = profile.Id; _profileName!.Text = profile.Name; _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; _profileTrainerDifficulty!.Value = profile.TrainerDifficultyPercent; _profileTrainerDifficultyValue!.Text = $"{profile.TrainerDifficultyPercent}%"; }
-	private void StartNewProfile() { _editingProfileId = null; _profileName!.Text = ""; _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileTrainerDifficulty!.Value = TrainerDifficultyPolicy.DefaultPercent; _profileTrainerDifficultyValue!.Text = $"{TrainerDifficultyPolicy.DefaultPercent}%"; _profileName.GrabFocus(); }
+	private void LoadProfileEditor(RiderProfileRecord profile) { _stravaLinkCancellation?.Cancel(); _editingProfileId = profile.Id; _profileName!.Text = profile.Name; _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; _profileTrainerDifficulty!.Value = profile.TrainerDifficultyPercent; _profileTrainerDifficultyValue!.Text = $"{profile.TrainerDifficultyPercent}%"; RefreshStravaProfileUi(); }
+	private void StartNewProfile() { _stravaLinkCancellation?.Cancel(); _editingProfileId = null; _profileName!.Text = ""; _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileTrainerDifficulty!.Value = TrainerDifficultyPolicy.DefaultPercent; _profileTrainerDifficultyValue!.Text = $"{TrainerDifficultyPolicy.DefaultPercent}%"; RefreshStravaProfileUi(); _profileName.GrabFocus(); }
+	private void RefreshStravaProfileUi(bool refreshStatus = true)
+	{
+		if (_stravaProfileStatus is null) return;
+		var link = _editingProfileId is { } id ? StravaIntegrationClient.Shared.GetLink(id) : null;
+		if (refreshStatus)
+			_stravaProfileStatus.Text = link is null
+				? _editingProfileId is null ? "Save this profile before linking Strava." : "No Strava account linked to this profile."
+				: $"Linked to Strava: {link.AthleteName} (athlete {link.AthleteId}). Uploads from this profile go to this account.";
+		if (_stravaLinkButton is not null) _stravaLinkButton.Visible = link is null;
+		if (_stravaDisconnectButton is not null) _stravaDisconnectButton.Visible = link is not null;
+		if (_stravaLinkButton is not null) _stravaLinkButton.Disabled = _editingProfileId is null || _stravaLinkCancellation is not null;
+	}
+	private async void OnLinkStravaPressed()
+	{
+		if (_editingProfileId is not { } profileId || _stravaLinkCancellation is not null) return;
+		_stravaLinkCancellation = new CancellationTokenSource();
+		if (_stravaLinkButton is not null) _stravaLinkButton.Disabled = true;
+		if (_stravaCancelButton is not null) _stravaCancelButton.Visible = true;
+		if (_stravaProfileStatus is not null) _stravaProfileStatus.Text = "Opening Strava authorization in your browser…";
+		try
+		{
+			var linked = await StravaIntegrationClient.Shared.LinkAsync(profileId, _stravaLinkCancellation.Token);
+			if (_stravaProfileStatus is not null) _stravaProfileStatus.Text = $"Linked to Strava: {linked.AthleteName} (athlete {linked.AthleteId}).";
+		}
+		catch (OperationCanceledException)
+		{
+			if (_stravaProfileStatus is not null) _stravaProfileStatus.Text = "Strava linking was cancelled. This profile remains unlinked.";
+		}
+		catch (Exception ex)
+		{
+			if (_stravaProfileStatus is not null) _stravaProfileStatus.Text = ex.Message;
+		}
+		finally
+		{
+			_stravaLinkCancellation.Dispose(); _stravaLinkCancellation = null;
+			if (_stravaCancelButton is not null) _stravaCancelButton.Visible = false;
+			RefreshStravaProfileUi(refreshStatus: false);
+		}
+	}
+	private async void OnDisconnectStravaPressed()
+	{
+		if (_editingProfileId is not { } profileId) return;
+		if (_stravaDisconnectButton is not null) _stravaDisconnectButton.Disabled = true;
+		var revokedRemotely = true;
+		try { revokedRemotely = await StravaIntegrationClient.Shared.DisconnectAsync(profileId); }
+		catch (Exception ex) { if (_stravaProfileStatus is not null) _stravaProfileStatus.Text = ex.Message; }
+		finally
+		{
+			if (_stravaDisconnectButton is not null) _stravaDisconnectButton.Disabled = false;
+			RefreshStravaProfileUi();
+			if (!revokedRemotely && _stravaProfileStatus is not null)
+				_stravaProfileStatus.Text = "Disconnected on this PC. Wodra could not reach Strava to revoke access; remove Wodra in Strava's Connected Apps if you want to revoke it now.";
+		}
+	}
 	private async void SaveEditedProfile()
 	{
 		try

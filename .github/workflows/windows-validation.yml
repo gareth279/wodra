@@ -73,6 +73,17 @@ jobs:
           if ($startupOutput -match 'Main scene''s path could not be resolved|Cannot instantiate C# script|SCRIPT ERROR:') {
             throw 'Godot headless startup reported project or C# script-loading errors.'
           }
+      - name: Install PHP runtime for Strava broker checks
+        if: matrix.configuration == 'Release'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, json, openssl
+          coverage: none
+      - name: Check Strava PHP broker
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: php hosting/wodra-strava-broker/tests/run.php
       - name: Run regression suites
         if: matrix.configuration == 'Release'
         shell: pwsh
@@ -86,6 +97,7 @@ jobs:
             'tests/Wodra.Multiplayer.Integration.Tests/Wodra.Multiplayer.Integration.Tests.csproj',
             'tests/Wodra.Multiplayer.Protocol.Tests/Wodra.Multiplayer.Protocol.Tests.csproj',
             'tests/Wodra.RouteBuilder.Tests/Wodra.RouteBuilder.Tests.csproj',
+            'tests/Wodra.Strava.Client.Tests/Wodra.Strava.Client.Tests.csproj',
             'tests/Wodra.Strava.Broker.Tests/Wodra.Strava.Broker.Tests.csproj'
           )
           foreach ($project in $projects) {

@@ -10,6 +10,7 @@ public sealed class AppSettings
 {
 	public RiderSettings Rider { get; set; } = new();
 	public RecordingSettings Recording { get; set; } = new();
+	public StravaClientSettings StravaClient { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
 	public bool OnlineRidingEnabled { get; set; }
 	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
@@ -77,6 +78,7 @@ public sealed class AppSettings
 						.Any(property => string.Equals(property.Name, "Strava", StringComparison.OrdinalIgnoreCase));
 			}
 			settings.Display ??= new RideDisplayPreferences();
+			settings.StravaClient ??= new StravaClientSettings();
 
 			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
 				settings.Recording.OutputFolder,
@@ -141,6 +143,13 @@ public sealed class RiderSettings
 public sealed class RecordingSettings
 {
 	public string OutputFolder { get; set; } = ProductFilePaths.DefaultFitOutputFolderSetting;
+}
+
+/// <summary>Public Strava client configuration only. The confidential client secret is never stored here.</summary>
+public sealed class StravaClientSettings
+{
+	public string BrokerBaseUrl { get; set; } = "https://api.g5.co.nz/wodra/strava/";
+	public string ClientId { get; set; } = "234943";
 }
 
 public sealed class DummyTrainerSettings

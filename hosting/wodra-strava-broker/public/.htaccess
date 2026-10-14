@@ -1,0 +1,10 @@
+Options -Indexes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# Replace the value with the absolute path to the private folder, outside this document root.
+# If your cPanel PHP-FPM setup does not pass Apache SetEnv values, configure this variable
+# in the domain's PHP-FPM environment instead.
+SetEnv WODRA_STRAVA_PRIVATE_DIR /home/CPANEL_USER/wodra-strava-private
