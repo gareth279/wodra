@@ -19,6 +19,8 @@ public sealed record RouteTerrainData(string Id, string SourceDataset, string So
     public double NearRadiusMeters { get; init; }
     public double TransitionOverlapMeters { get; init; }
     public double FarVerticalBiasMeters { get; init; }
+    public int ElevationSamplerVersion { get; init; }
+    public string ElevationSamplingMethod { get; init; } = "";
     public RouteTerrainChunkData[] FarChunks { get; init; } = [];
 }
 

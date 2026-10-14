@@ -184,6 +184,7 @@ public static class BuildOutputs
                 id = config.Id, routeName = config.Name, source = "OpenStreetMap",
                 sourcePbfFilename = Path.GetFileName(pbfPath), attribution = "© OpenStreetMap contributors, ODbL 1.0",
                 searchRadiusMeters = config.StreetFurniture?.SearchRadiusMeters ?? StreetFurnitureExtractor.DefaultSearchRadiusMeters,
+                elevationSamplerVersion = StreetFurnitureElevationSampler.SamplerVersion,
                 statistics = ToStreetFurnitureReport(streetFurniture, pbfPath, result.RawDistanceMeters),
                 items = streetFurniture.Items
             };

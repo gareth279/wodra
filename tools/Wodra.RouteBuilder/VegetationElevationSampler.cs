@@ -47,7 +47,8 @@ public static class VegetationElevationSampler
                     var samples = item.Samples.Select(value => value!.Value).ToArray();
                     var variation = samples.Max() - samples.Min();
                     return item.Area with { BaseElevationMeters = samples.Average(), ElevationVariationMeters = variation,
-                        RenderGround = variation <= 3, ElevationSampleCount = samples.Length };
+                        RenderGround = VegetationGroundPolicy.ShouldRenderGround(
+                            item.Area.DistanceFromRouteMeters, variation), ElevationSampleCount = samples.Length };
                 }).ToArray();
             var resultTrees = input.Trees.Select((tree, index) => (Tree:tree, Elevation:treeValues[index]))
                 .Where(item => item.Elevation.HasValue)
@@ -63,4 +64,16 @@ public static class VegetationElevationSampler
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
+}
+
+/// <summary>Retains route clearance when DEM sampling decides whether a flat area overlay is safe.</summary>
+public static class VegetationGroundPolicy
+{
+    public const double MinimumRouteClearanceMeters = 5;
+    public const double MaximumFlatElevationVariationMeters = 3;
+
+    public static bool ShouldRenderGround(double distanceFromRouteMeters, double elevationVariationMeters) =>
+        double.IsFinite(distanceFromRouteMeters) && double.IsFinite(elevationVariationMeters)
+        && distanceFromRouteMeters >= MinimumRouteClearanceMeters
+        && elevationVariationMeters <= MaximumFlatElevationVariationMeters;
 }

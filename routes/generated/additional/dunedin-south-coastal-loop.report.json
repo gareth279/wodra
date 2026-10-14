@@ -2210,7 +2210,9 @@
     "sceneNodeCount": 88,
     "generationSeconds": 39.997132799999996,
     "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-    "elevationSkippedCount": 0
+    "elevationSkippedCount": 0,
+    "elevationSamplerVersion": 2,
+    "elevationRasterCount": 1
   },
   "actualOsmDistanceMeters": 8265.940001188557,
   "finalPointCount": 631,
@@ -2253,14 +2255,14 @@
         ]
       },
       {
-        "name": "Toitū Te Whenua Land Information New Zealand",
+        "name": "Toit\u016b Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -2305,8 +2307,8 @@
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
-    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0403.tiff"
@@ -2356,10 +2358,10 @@
     "roadClearanceAdjustedVertices": 433,
     "visualDownwardBiasMeters": 0.08,
     "bundleFile": "dunedin-south-coastal-loop.terrain.json",
-    "bundleBytes": 1229644,
-    "generationSeconds": 3.5614776999573223,
+    "bundleBytes": 1229761,
+    "generationSeconds": 4.021725400001742,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
   "totalAscentMeters": 74.10833335462289,
-  "sourceAttribution": "© OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0"
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

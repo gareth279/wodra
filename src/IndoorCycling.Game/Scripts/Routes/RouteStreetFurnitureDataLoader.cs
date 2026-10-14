@@ -9,11 +9,15 @@ public sealed record RouteStreetFurnitureItemData(string OsmType, long OsmId, st
     double Latitude, double Longitude, double? ElevationMeters, double? DirectionDegrees,
     double RouteTangentDegrees, double DistanceFromRouteMeters, double NearestRouteDistanceMeters,
     string? Name, Dictionary<string, string> Tags);
-public sealed record RouteStreetFurnitureData(string Id, IReadOnlyList<RouteStreetFurnitureItemData> Items);
+public sealed record RouteStreetFurnitureData(string Id, IReadOnlyList<RouteStreetFurnitureItemData> Items)
+{
+    public int ElevationSamplerVersion { get; init; }
+}
 
 public static class RouteStreetFurnitureDataLoader
 {
-    private sealed record FurnitureFile(string? Id, IReadOnlyList<RouteStreetFurnitureItemData>? Items);
+    private sealed record FurnitureFile(string? Id, IReadOnlyList<RouteStreetFurnitureItemData>? Items,
+        int ElevationSamplerVersion = 0);
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
     public static RouteStreetFurnitureData LoadEmbedded(Assembly assembly, string resourceName, string routeId)
@@ -30,6 +34,9 @@ public static class RouteStreetFurnitureDataLoader
             || item.ElevationMeters is not { } elevation || !double.IsFinite(elevation)
             || !double.IsFinite(item.NearestRouteDistanceMeters) || !double.IsFinite(item.DistanceFromRouteMeters)))
             throw new InvalidDataException($"Embedded street-furniture resource '{resourceName}' contains invalid feature data.");
-        return new RouteStreetFurnitureData(routeId, file.Items);
+        return new RouteStreetFurnitureData(routeId, file.Items)
+        {
+            ElevationSamplerVersion = file.ElevationSamplerVersion
+        };
     }
 }

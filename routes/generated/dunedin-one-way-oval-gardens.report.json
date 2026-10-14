@@ -5138,7 +5138,9 @@
     "renderedPrimitiveInstances": 765,
     "sceneNodeCount": 129,
     "generationSeconds": 38.728071699999994,
-    "sourcePbfFilename": "new-zealand-261005.osm.pbf"
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "elevationSamplerVersion": 2,
+    "elevationRasterCount": 2
   },
   "actualOsmDistanceMeters": 5495.2928190676985,
   "finalPointCount": 334,
@@ -5179,14 +5181,14 @@
         ]
       },
       {
-        "name": "Toitū Te Whenua Land Information New Zealand",
+        "name": "Toit\u016b Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -5238,8 +5240,8 @@
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
-    "sourceDataset": "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toitū Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0303.tiff",
@@ -5290,8 +5292,8 @@
     "roadClearanceAdjustedVertices": 398,
     "visualDownwardBiasMeters": 0.08,
     "bundleFile": "dunedin-one-way-oval-gardens.terrain.json",
-    "bundleBytes": 1004106,
-    "generationSeconds": 1.9398529999998573,
+    "bundleBytes": 1004223,
+    "generationSeconds": 2.045243200031109,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   }
 }

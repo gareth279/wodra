@@ -5,6 +5,8 @@ namespace Wodra.RouteBuilder;
 
 public static class StreetFurnitureElevationSampler
 {
+    public const int SamplerVersion = 2;
+
     private sealed record TreeOutput(int Index, double? ElevationMeters);
     private sealed record SamplerOutput(IReadOnlyList<TreeOutput> TreeElevations, int CacheHits);
     private static readonly JsonSerializerOptions Options = new()

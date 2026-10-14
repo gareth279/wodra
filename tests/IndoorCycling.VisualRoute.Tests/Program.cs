@@ -5,6 +5,11 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("legacy grass apron is limited to routes without sampled terrain", () =>
+    {
+        Equal(true, RouteGroundFallbackPolicy.ShouldAddLegacyApron(false));
+        Equal(false, RouteGroundFallbackPolicy.ShouldAddLegacyApron(true));
+    }),
     ("tree canopies overlap their trunks for both rendered proxy types", () =>
     {
         foreach (var (scale, meshHeight) in new[] { (.43f, 1.6f), (.32f, 1.5f) })
@@ -110,6 +115,20 @@ var tests = new (string Name, Action Run)[]
 
             var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "vegetation.json", id);
+            var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+                resource + "street-furniture.json", id);
+            if (furniture.ElevationSamplerVersion != 2)
+                throw new Exception($"{id} roadside object elevations use sampler version {furniture.ElevationSamplerVersion}, " +
+                    "expected 2; refresh the packaged sidecar.");
+            if (id == "dunedin-south-coastal-loop")
+            {
+                var markerFurniture = furniture.Items.OrderBy(item =>
+                    Math.Abs(item.NearestRouteDistanceMeters - 4177.125)).First();
+                var routeElevation = route.GetSampleAt(markerFurniture.NearestRouteDistanceMeters).ElevationMeters!.Value;
+                if (Math.Abs(markerFurniture.ElevationMeters!.Value - routeElevation) > 4)
+                    throw new Exception($"South Coastal roadside object OSM {markerFurniture.OsmId} at marker 004 " +
+                        $"is {markerFurniture.ElevationMeters.Value - routeElevation:F1} m from route elevation after resampling.");
+            }
             if (vegetation.Trees.Count == 0) throw new Exception($"{id} has no installed vegetation tree data.");
             var routeVisual = new VisualRoute(route);
             var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
@@ -126,6 +145,9 @@ var tests = new (string Name, Action Run)[]
             Console.WriteLine($"CHECK {id} trees={vegetation.Trees.Count}");
             foreach (var area in vegetation.Areas.Where(item => item.RenderGround))
             {
+                if (area.DistanceFromRouteMeters < 5)
+                    throw new Exception($"{id} vegetation area OSM {area.OsmId} renders inside route clearance " +
+                        $"at {area.DistanceFromRouteMeters:F1} m.");
                 if (area.ElevationVariationMeters > 3.01)
                     throw new Exception($"{id} vegetation area OSM {area.OsmId} at route {area.NearestRouteDistanceMeters:F1} m " +
                         $"renders flat across {area.ElevationVariationMeters:F1} m of sampled elevation variation.");
@@ -155,9 +177,17 @@ var tests = new (string Name, Action Run)[]
             }
             var terrainData = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "terrain.json", id) ?? throw new Exception($"{id} has no installed terrain sidecar data.");
+            if (terrainData.ElevationSamplerVersion != 2)
+                throw new Exception($"{id} terrain uses sampler version {terrainData.ElevationSamplerVersion}, expected 2.");
             var terrainRoads = BackgroundStreetGeometry.BuildTerrainCorridors(routeVisual, streets, routeIndex);
             var terrainMesh = TerrainMeshGeometry.Build(terrainData, routeVisual.Samples, terrainRoads);
             Console.WriteLine($"CHECK {id} terrain triangles={terrainMesh.TriangleCount}");
+            var restoredStreetEnds = streets.Streets.Sum(street =>
+                BackgroundStreetGeometry.ConnectRouteEnds(BackgroundStreetGeometry.ConvertPoints(routeVisual, street.Points),
+                    routeVisual.Samples, spatialIndex: routeIndex).Connections.Count);
+            if (restoredStreetEnds == 0)
+                throw new Exception($"{id} has no source-defined side-street ends connected to the route.");
+            Console.WriteLine($"CHECK {id} connected side-street ends={restoredStreetEnds}");
             var roadHalfWidth = RoadRibbonMath.RoadWidthMeters * .5f;
             var terrainIntrusions = 0;
             (double Distance, double Gap) worstTerrainIntrusion = (0, 0);
@@ -247,8 +277,10 @@ var tests = new (string Name, Action Run)[]
         var visual = new VisualRoute(route);
         var originElevation = route.Points![0].ElevationMeters;
         var captures = new[] { 34.053, 651.842, 1752.402, 4107.330, 5566.583, 6126.386,
-            6146.929, 6440.070, 6596.511, 7450.041, 7654.369, 244.649, 484.838,
-            1175.562, 1187.371, 1212.937, 1250.323 };
+            6146.929, 6440.070, 6596.511, 7450.041, 7654.369,
+            246.94079076054004, 262.309734296731, 280.16981823264723, 484.838,
+            1166.2590291361066, 1172.272201363272, 1175.562, 1187.371,
+            1209.1773585594365, 1212.937, 1250.323 };
         foreach (var distance in captures)
         {
             var firstLapPose = visual.GetPoseAtDistance(distance);

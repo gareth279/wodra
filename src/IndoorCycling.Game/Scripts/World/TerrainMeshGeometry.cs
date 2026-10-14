@@ -9,6 +9,11 @@ public sealed record TerrainRoadCorridor(IReadOnlyList<Vector3> Points, float Wi
 public sealed record TerrainMeshBuildResult(TerrainChunkMeshData[] Chunks, int AdjustedForRoadClearanceVertices,
     int TriangleCount, int UniqueVertexCount, int RoadCutoutCellCount = 0);
 
+public static class RouteGroundFallbackPolicy
+{
+    public static bool ShouldAddLegacyApron(bool sampledTerrainAvailable) => !sampledTerrainAvailable;
+}
+
 /// <summary>Godot-independent terrain mesh builder used by runtime and focused geometry tests.</summary>
 public static class TerrainMeshGeometry
 {

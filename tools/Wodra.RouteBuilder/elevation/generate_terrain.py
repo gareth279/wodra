@@ -11,9 +11,17 @@ import numpy as np
 import rasterio
 from pyproj import Transformer
 from rasterio.windows import Window, from_bounds
+from raster_priority import prefer_highest_resolution
 
 EARTH_RADIUS_METERS = 6371000.0
 SOURCE_NAME = "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)"
+ELEVATION_SAMPLER_VERSION = 2
+
+
+def order_samplers(samplers):
+    """Use the shared finest-valid raster order, with coarser tiles only as fallback."""
+    return [sampler for _, sampler in prefer_highest_resolution(
+        [(sampler.dataset, sampler) for sampler in samplers])]
 
 
 class Sampler:
@@ -143,7 +151,7 @@ def generate(args):
         files = sorted(cache.glob("*.tiff"))
     if not files:
         raise FileNotFoundError(f"No cached source LINZ DEM tiles in {cache}; terrain authoring is offline and will not download data.")
-    samplers = [Sampler(path) for path in files]
+    samplers = order_samplers([Sampler(path) for path in files])
 
     spacing, chunk_size = float(args.spacing), float(args.chunk_size)
     radius = float(args.near_radius)
@@ -322,6 +330,8 @@ def generate(args):
     if not chunks or not valid_elevations:
         raise ValueError("No usable terrain cells were covered by cached LINZ DEM data.")
     terrain = {"id": route_file["id"], "sourceDataset": SOURCE_NAME,
+               "elevationSamplerVersion": ELEVATION_SAMPLER_VERSION,
+               "elevationSamplingMethod": "finest-valid LINZ DEM raster; bilinear pixel-centred samples",
                "sourceCrs": samplers[0].dataset.crs.to_string(),
                "spacingMeters": spacing, "corridorRadiusMeters": radius,
                "chunkSizeMeters": chunk_size, "routeStartElevationMeters": start_elevation,

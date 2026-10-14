@@ -3,6 +3,14 @@ using Wodra.RouteBuilder;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("vegetation DEM pass retains the generated route clearance", () =>
+    {
+        Equal(false, VegetationGroundPolicy.ShouldRenderGround(0, 0));
+        Equal(false, VegetationGroundPolicy.ShouldRenderGround(4.99, 0));
+        Equal(true, VegetationGroundPolicy.ShouldRenderGround(5, 0));
+        Equal(false, VegetationGroundPolicy.ShouldRenderGround(20, 3.01));
+        Equal(false, VegetationGroundPolicy.ShouldRenderGround(double.NaN, .2));
+    }),
     ("out-and-back authoring requires a mirrored path and explicit mapped turnaround", () =>
     {
         var anchors = new List<RouteAnchor>

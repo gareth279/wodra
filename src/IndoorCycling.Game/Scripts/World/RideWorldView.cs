@@ -749,11 +749,6 @@ public partial class RideWorldView : Node3D
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
-        // Older routes without terrain data use a shallow grass apron to mask the
-        // plain ground plane. Dunedin has sampled terrain and mapped green areas;
-        // laying a 60 m flat ribbon over those surfaces creates an artificial strip.
-        if (route.Id != "dunedin-one-way-oval-gardens")
-            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f, WodraWorldStyle.Grass.Darkened(0.08f)));
         var asphalt = WodraWorldStyle.Asphalt;
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
         var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
@@ -818,6 +813,13 @@ public partial class RideWorldView : Node3D
                 _routeRoot.AddChild(terrain);
                 _terrainLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
+            // Keep the old-route fallback only when a sampled terrain sidecar is
+            // unavailable. A 60 m ribbon at route elevation is a false ground
+            // surface on routes that already have real DEM terrain: it can cut
+            // across hills, mapped streets, cars, and roadside object bases.
+            if (RouteGroundFallbackPolicy.ShouldAddLegacyApron(_terrainLayer is not null))
+                _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f,
+                    WodraWorldStyle.Grass.Darkened(0.08f)));
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
             IReadOnlyList<RouteBuildingData> buildings = [];
             var buildingResource = resourcePrefix + "buildings.json";
