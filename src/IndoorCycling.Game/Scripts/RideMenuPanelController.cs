@@ -19,6 +19,7 @@ public partial class RideMenuPanelController : Control
 	private Button? _endRideButton;
 	private bool _endingRide;
 	private MenuView _view;
+	private int _layoutRevision;
 	private Label? _multiplayerStatusLabel;
 	private Label? _multiplayerRidersLabel;
 	private Label? _routePresenceLabel;
@@ -55,7 +56,10 @@ public partial class RideMenuPanelController : Control
 		menuMargin.RemoveChild(_content);
 		_menuScroll = new ScrollContainer { Name = "MenuScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
 		menuMargin.AddChild(_menuScroll);
+		_content.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		_content.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
 		_menuScroll.AddChild(_content);
+		_menuPanel.CustomMinimumSize = Vector2.Zero;
 		Hide();
 	}
 
@@ -77,10 +81,8 @@ public partial class RideMenuPanelController : Control
 	public override void _Notification(int what)
 	{
 		if (what == NotificationResized && _view != MenuView.Closed && IsInsideTree())
-			CallDeferred(nameof(ResizeCurrentMenuPanel));
+			ScheduleMenuPanelResize(_view);
 	}
-
-	private void ResizeCurrentMenuPanel() => ResizeMenuPanel(_view);
 
 	public void ShowInRideMenu()
 	{
@@ -114,7 +116,9 @@ public partial class RideMenuPanelController : Control
 	{
 		if (_content is null) return;
 		_view = view;
-		_menuPanel!.CustomMinimumSize = new Vector2(320, 150);
+		_menuPanel!.CustomMinimumSize = Vector2.Zero;
+		_menuScroll!.CustomMinimumSize = Vector2.Zero;
+		_content.CustomMinimumSize = Vector2.Zero;
 		foreach (var child in _content.GetChildren())
 		{
 			_content.RemoveChild(child);
@@ -198,9 +202,10 @@ public partial class RideMenuPanelController : Control
 			case MenuView.Confirmation:
 				_content.AddChild(new Label
 				{
-					Text = "Your ride will be saved automatically as a FIT file.",
+					Text = EndRideExplanation(),
 					HorizontalAlignment = HorizontalAlignment.Center,
-					AutowrapMode = TextServer.AutowrapMode.WordSmart
+					AutowrapMode = TextServer.AutowrapMode.WordSmart,
+					CustomMinimumSize = new Vector2(344, 0)
 				});
 				var actions = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 				actions.AddThemeConstantOverride("separation", 12);
@@ -215,7 +220,7 @@ public partial class RideMenuPanelController : Control
 		}
 		Show();
 		MoveToFront();
-		ResizeMenuPanel(view);
+		ScheduleMenuPanelResize(view);
 		var firstAction = _content.GetChildren().OfType<Control>().FirstOrDefault(child => child is Button or CheckButton or OptionButton or LineEdit);
 		firstAction?.CallDeferred(Control.MethodName.GrabFocus);
 		if (view == MenuView.Confirmation) _keepRidingButton?.CallDeferred(Control.MethodName.GrabFocus);
@@ -243,6 +248,36 @@ public partial class RideMenuPanelController : Control
 		_menuPanel.OffsetTop = -height / 2;
 		_menuPanel.OffsetBottom = height / 2;
 	}
+
+	private void ScheduleMenuPanelResize(MenuView view)
+	{
+		var revision = ++_layoutRevision;
+		if (_content is null || _menuScroll is null) return;
+		_content.QueueSort();
+		_menuScroll.QueueSort();
+		ResizeMenuPanelAfterLayoutAsync(view, revision);
+	}
+
+	private async void ResizeMenuPanelAfterLayoutAsync(MenuView view, int revision)
+	{
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		if (!IsInsideTree() || revision != _layoutRevision || view != _view) return;
+		ResizeMenuPanel(view);
+		_menuPanel?.QueueSort();
+	}
+
+	private string EndRideExplanation()
+	{
+		return RideMenuLayoutPolicy.EndRideConfirmationText(
+			_rideSessionNode?.HasRideRecording == true,
+			_rideSessionNode?.SavedRideSegmentCount ?? 0);
+	}
+
+#if DEBUG
+	public void ShowMainMenuForLayoutTest() => ShowView(MenuView.Main);
+	public void ShowEndRideConfirmationForLayoutTest() => ShowView(MenuView.Confirmation);
+#endif
 
 	private string CatchUpTitle()
 	{
@@ -327,7 +362,7 @@ public partial class RideMenuPanelController : Control
 		_advancedMultiplayerToggle.Toggled += expanded =>
 		{
 			_advancedMultiplayerContainer.Visible = expanded;
-			ResizeMenuPanel(MenuView.Multiplayer);
+			ScheduleMenuPanelResize(MenuView.Multiplayer);
 		};
 		UpdateMultiplayerView();
 	}

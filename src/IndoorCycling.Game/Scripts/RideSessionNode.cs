@@ -43,6 +43,7 @@ public partial class RideSessionNode : Node
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
 	public bool HasRideRecording => _rideRecorder is not null;
+	public int SavedRideSegmentCount => _fitSegments.Count;
 	public double ActiveRiderBodyWeightKg => CurrentRiderProfile.WeightKg;
 	public string ActiveRiderDisplayName => CurrentRiderProfile.DisplayName;
 	private double _elapsedSeconds;

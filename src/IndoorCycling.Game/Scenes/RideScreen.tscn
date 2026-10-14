@@ -772,7 +772,6 @@ mouse_filter = 0
 color = Color(0.015, 0.022, 0.028, 0.62)
 
 [node name="PanelContainer" type="PanelContainer" parent="RideMenuPanel" unique_id=1049868500]
-custom_minimum_size = Vector2(540, 560)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

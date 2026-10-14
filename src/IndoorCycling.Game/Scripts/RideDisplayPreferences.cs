@@ -10,6 +10,15 @@ public sealed class RideDisplayPreferences
 public static class RideMenuLayoutPolicy
 {
 	public const float ViewportMargin = 24;
+	public static string EndRideConfirmationText(bool hasActiveRecording, int savedSegmentCount)
+	{
+		if (hasActiveRecording)
+			return "The active FIT recording will be finalized when you end this ride.";
+		if (savedSegmentCount > 0)
+			return $"No FIT recording is active. Your {savedSegmentCount} saved FIT {(savedSegmentCount == 1 ? "segment" : "segments")} will be kept.";
+		return "FIT recording is off. Ending this ride will not create a FIT file.";
+	}
+
 	public static (float Width, float Height) PanelSize(float viewportWidth, float viewportHeight,
 		float contentWidth, float contentHeight)
 	{
