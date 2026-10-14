@@ -43,6 +43,27 @@ final class FileSessionStore
     }
 }
 
+final class DeploymentConfigPolicy
+{
+    public static function validBasePath(mixed $basePath): bool
+    {
+        return is_string($basePath) && strlen($basePath) <= 200 &&
+            preg_match('~^(?:/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*)?$~D', $basePath) === 1 &&
+            !str_contains($basePath, '..');
+    }
+
+    public static function routePath(string $requestUri, string $basePath): ?string
+    {
+        if (!self::validBasePath($basePath)) return null;
+        $path = parse_url($requestUri, PHP_URL_PATH);
+        if (!is_string($path)) return null;
+        if ($basePath === '') return $path;
+        if ($path === $basePath || $path === $basePath . '/') return '/';
+        if (!str_starts_with($path, $basePath . '/')) return null;
+        return substr($path, strlen($basePath));
+    }
+}
+
 final class StravaHttpClient
 {
     private const TOKEN_URL = 'https://www.strava.com/oauth/token';
@@ -90,7 +111,8 @@ final class StravaHttpClient
         ]);
         $ok = curl_exec($curl);
         $status = (int)curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-        curl_close($curl);
+        // curl_close() becomes a deprecated no-op in PHP 8.5; release CurlHandle normally there.
+        if (PHP_VERSION_ID < 80500) curl_close($curl);
         if ($ok === false || $status < 200 || $status >= 300) throw new UpstreamFailure($status);
         if ($url === self::REVOKE_URL) return ['_http_status' => $status];
         $decoded = json_decode($responseBody, true);
@@ -158,19 +180,26 @@ final class LinkSessionRepository
 final class App
 {
     private const MAX_BODY = 16384;
+    private static bool $configurationFailureLogged = false;
 
     public function __construct(private readonly array $config, private readonly FileSessionStore $sessions,
-        private readonly StravaHttpClient $strava) {}
+        private readonly StravaHttpClient $strava, private readonly string $urlBasePath = '') {}
 
     public function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
         try {
-            $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-            $scriptDirectory = str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/')));
-            if ($scriptDirectory !== '/' && str_starts_with((string)$path, $scriptDirectory . '/'))
-                $path = substr((string)$path, strlen($scriptDirectory));
-            if (!$this->validConfig()) { $this->respond(503, ['error' => 'service_not_configured']); return; }
+            $path = DeploymentConfigPolicy::routePath((string)($_SERVER['REQUEST_URI'] ?? '/'), $this->urlBasePath);
+            $failures = self::configurationFailureCodes($this->config, (string)($_SERVER['DOCUMENT_ROOT'] ?? ''),
+                $this->urlBasePath);
+            if ($failures !== []) {
+                if (!self::$configurationFailureLogged) {
+                    error_log('[Wodra Strava] configuration check failed: ' . implode(',', $failures));
+                    self::$configurationFailureLogged = true;
+                }
+                $this->respond(503, ['error' => 'service_not_configured']); return;
+            }
+            if ($path === null) { $this->respond(404, ['error' => 'not_found']); return; }
             if (!$this->isSecureRequest()) { $this->respond(400, ['error' => 'https_required']); return; }
             if (!$this->rateLimit()) { $this->respond(429, ['error' => 'try_again_later']); return; }
             if ($path === '/health' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
@@ -243,21 +272,29 @@ final class App
         $this->respond(200, ['status' => 'revoked']);
     }
 
-    private function validConfig(): bool
+    /** @return list<string> Safe check identifiers only; never includes configured values. */
+    public static function configurationFailureCodes(array $config, string $documentRoot, string $urlBasePath): array
     {
-        return isset($this->config['client_id'], $this->config['client_secret'], $this->config['private_storage'], $this->config['rate_limit_directory'], $this->config['link_session_ttl_seconds']) &&
-            preg_match('/^[0-9]{1,20}$/', (string)$this->config['client_id']) === 1 &&
-            is_string($this->config['client_secret']) && strlen($this->config['client_secret']) >= 20 &&
-            is_string($this->config['private_storage']) && is_string($this->config['rate_limit_directory']) &&
-            is_int($this->config['link_session_ttl_seconds']) && $this->config['link_session_ttl_seconds'] >= 60 &&
-            $this->config['link_session_ttl_seconds'] <= 900 &&
-            $this->isPrivatePath($this->config['private_storage']) && $this->isPrivatePath($this->config['rate_limit_directory']);
+        $failures = [];
+        if (!DeploymentConfigPolicy::validBasePath($urlBasePath)) $failures[] = 'url_base_path_invalid';
+        if (!isset($config['client_id']) || preg_match('/^[0-9]{1,20}$/', (string)$config['client_id']) !== 1) $failures[] = 'client_id_invalid';
+        if (!isset($config['client_secret']) || !is_string($config['client_secret']) || strlen($config['client_secret']) < 20 || str_starts_with($config['client_secret'], 'REPLACE_')) $failures[] = 'client_secret_missing_or_placeholder';
+        if (!isset($config['link_session_ttl_seconds']) || !is_int($config['link_session_ttl_seconds']) || $config['link_session_ttl_seconds'] < 60 || $config['link_session_ttl_seconds'] > 900) $failures[] = 'link_session_ttl_invalid';
+        foreach (['private_storage' => 'private_storage_path_invalid', 'rate_limit_directory' => 'rate_limit_path_invalid'] as $key => $failure) {
+            if (!isset($config[$key]) || !is_string($config[$key]) || !self::isPrivatePath($config[$key], $documentRoot)) $failures[] = $failure;
+        }
+        foreach (['curl' => 'php_curl_missing', 'json' => 'php_json_missing', 'openssl' => 'php_openssl_missing'] as $extension => $failure) {
+            if (!extension_loaded($extension)) $failures[] = $failure;
+        }
+        if (PHP_VERSION_ID < 80100) $failures[] = 'php_version_unsupported';
+        if (!function_exists('random_bytes')) $failures[] = 'php_random_bytes_missing';
+        return $failures;
     }
 
-    private function isPrivatePath(string $path): bool
+    public static function isPrivatePath(string $path, string $documentRoot): bool
     {
         if ($path === '' || $path[0] !== '/' || preg_match('~(?:^|/)\.\.(?:/|$)~', $path) === 1) return false;
-        $root = realpath((string)($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        $root = realpath($documentRoot);
         if (!is_string($root)) return false;
         $candidate = $path;
         while (!file_exists($candidate)) {
@@ -273,14 +310,26 @@ final class App
 
     private function healthReady(): bool
     {
-        if (!extension_loaded('curl') || !extension_loaded('json') || !extension_loaded('openssl') || !function_exists('random_bytes')) return false;
-        foreach ([(string)$this->config['private_storage'], (string)$this->config['rate_limit_directory']] as $directory) {
-            if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) return false;
+        foreach (['private_storage' => 'storage', 'rate_limit_directory' => 'rate_limit'] as $key => $label) {
+            $directory = (string)$this->config[$key];
+            if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {
+                error_log('[Wodra Strava] configuration check failed: ' . $label . '_directory_create_failed');
+                return false;
+            }
+            if (!is_writable($directory) || !@chmod($directory, 0700)) {
+                error_log('[Wodra Strava] configuration check failed: ' . $label . '_directory_permissions');
+                return false;
+            }
             $probe = $directory . '/.health-' . bin2hex(random_bytes(8));
-            if (file_put_contents($probe, 'ok', LOCK_EX) !== 2) return false;
+            if (file_put_contents($probe, 'ok', LOCK_EX) !== 2) {
+                error_log('[Wodra Strava] configuration check failed: ' . $label . '_directory_write_failed');
+                return false;
+            }
             @chmod($probe, 0600);
-            if (!unlink($probe)) return false;
-            @chmod($directory, 0700);
+            if (!unlink($probe)) {
+                error_log('[Wodra Strava] configuration check failed: ' . $label . '_directory_cleanup_failed');
+                return false;
+            }
         }
         return true;
     }

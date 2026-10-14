@@ -155,7 +155,7 @@ public sealed class StravaIntegrationClient
                     journal.Uploads[key] = entry with { Status = StravaUploadStatus.Failed, UpdatedAtUtc = DateTimeOffset.UtcNow };
                     WriteJournal(journal);
                     if (ex.StatusCode == 401) throw new StravaAuthorizationException();
-                    throw new InvalidOperationException($"Strava rejected this FIT file (HTTP {ex.StatusCode}). Check the saved segment, then choose Retry.");
+                    throw new InvalidOperationException(ex.Diagnostic.UserMessage);
                 }
                 catch
                 {
@@ -181,7 +181,16 @@ public sealed class StravaIntegrationClient
                 {
                     journal.Uploads[key] = entry with { Status = StravaUploadStatus.Failed, UpdatedAtUtc = DateTimeOffset.UtcNow };
                     WriteJournal(journal);
-                    throw new InvalidOperationException("Strava could not process this FIT file. The saved segment is unchanged; choose Retry after checking the file.");
+                    var diagnostic = StravaUploadDiagnostic.ParseProcessingError(status.Error);
+                    GameLogger.Log("strava_upload_processing_failure", new
+                    {
+                        diagnostic.HttpStatus,
+                        category = diagnostic.Kind.ToString(),
+                        diagnostic.Resource,
+                        diagnostic.Field,
+                        diagnostic.Code
+                    });
+                    throw new InvalidOperationException(diagnostic.UserMessage);
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
@@ -212,9 +221,10 @@ public sealed class StravaIntegrationClient
         using var request = new HttpRequestMessage(HttpMethod.Post, StravaApi + "uploads") { Content = form };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        var payload = await ReadSafeBodyAsync(response, ct);
-        if (!response.IsSuccessStatusCode) throw new StravaHttpException((int)response.StatusCode);
-        return JsonSerializer.Deserialize<UploadReceipt>(payload, Json) ?? throw new InvalidOperationException("Strava returned an unreadable upload receipt.");
+        if (!response.IsSuccessStatusCode) throw await CreateUploadHttpExceptionAsync(response, "submit", ct);
+        var payload = await ReadBoundedBodyAsync(response.Content, 65536, ct);
+        if (payload.Truncated) throw new InvalidOperationException("Strava returned an unexpectedly large upload receipt.");
+        return JsonSerializer.Deserialize<UploadReceipt>(payload.Body, Json) ?? throw new InvalidOperationException("Strava returned an unreadable upload receipt.");
     }
 
     private async Task<UploadStatusResponse> GetUploadStatusAsync(string accessToken, long uploadId, CancellationToken ct)
@@ -222,9 +232,28 @@ public sealed class StravaIntegrationClient
         using var request = new HttpRequestMessage(HttpMethod.Get, StravaApi + "uploads/" + uploadId);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        var payload = await ReadSafeBodyAsync(response, ct);
-        if (!response.IsSuccessStatusCode) throw new StravaHttpException((int)response.StatusCode);
-        return JsonSerializer.Deserialize<UploadStatusResponse>(payload, Json) ?? new(null, null, null);
+        if (!response.IsSuccessStatusCode) throw await CreateUploadHttpExceptionAsync(response, "status", ct);
+        var payload = await ReadBoundedBodyAsync(response.Content, 65536, ct);
+        if (payload.Truncated) throw new InvalidOperationException("Strava returned an unexpectedly large upload status.");
+        return JsonSerializer.Deserialize<UploadStatusResponse>(payload.Body, Json) ?? new(null, null, null);
+    }
+
+    private static async Task<StravaHttpException> CreateUploadHttpExceptionAsync(HttpResponseMessage response, string operation, CancellationToken ct)
+    {
+        const int errorBodyLimit = 8192;
+        var responseBody = await ReadBoundedBodyAsync(response.Content, errorBodyLimit, ct);
+        var diagnostic = StravaUploadDiagnostic.Parse((int)response.StatusCode, responseBody.Body, responseBody.Truncated);
+        GameLogger.Log("strava_upload_http_failure", new
+        {
+            operation,
+            diagnostic.HttpStatus,
+            category = diagnostic.Kind.ToString(),
+            diagnostic.Resource,
+            diagnostic.Field,
+            diagnostic.Code,
+            responseBodyTruncated = responseBody.Truncated
+        });
+        return new StravaHttpException(diagnostic);
     }
 
     private async Task<T> PostJsonAsync<T>(string endpoint, object body, CancellationToken ct)
@@ -248,8 +277,25 @@ public sealed class StravaIntegrationClient
 
     private static async Task<string> ReadSafeBodyAsync(HttpResponseMessage response, CancellationToken ct)
     {
-        var body = await response.Content.ReadAsStringAsync(ct);
-        return body.Length <= 65536 ? body : throw new InvalidOperationException("The Strava response was unexpectedly large.");
+        var body = await ReadBoundedBodyAsync(response.Content, 65536, ct);
+        return body.Truncated ? throw new InvalidOperationException("The Strava response was unexpectedly large.") : body.Body;
+    }
+
+    private static async Task<(string Body, bool Truncated)> ReadBoundedBodyAsync(HttpContent content, int limit, CancellationToken ct)
+    {
+        await using var stream = await content.ReadAsStreamAsync(ct);
+        using var buffer = new MemoryStream(Math.Min(limit, 8192));
+        var chunk = new byte[8192];
+        while (buffer.Length < limit)
+        {
+            var count = (int)Math.Min(chunk.Length, limit - buffer.Length);
+            var read = await stream.ReadAsync(chunk.AsMemory(0, count), ct);
+            if (read == 0) return (Encoding.UTF8.GetString(buffer.ToArray()), false);
+            buffer.Write(chunk, 0, read);
+        }
+        var probe = new byte[1];
+        var truncated = await stream.ReadAsync(probe.AsMemory(), ct) != 0;
+        return (Encoding.UTF8.GetString(buffer.ToArray()), truncated);
     }
 
     private async Task<OAuthCallback> AcceptCallbackAsync(TcpListener listener, CancellationToken ct)
@@ -343,7 +389,11 @@ public sealed class StravaIntegrationClient
     private sealed record UploadStatusResponse([property: System.Text.Json.Serialization.JsonPropertyName("activity_id")] long? ActivityId,
         [property: System.Text.Json.Serialization.JsonPropertyName("status")] string? Status,
         [property: System.Text.Json.Serialization.JsonPropertyName("error")] string? Error);
-    private sealed class StravaHttpException(int statusCode) : Exception { public int StatusCode { get; } = statusCode; }
+    private sealed class StravaHttpException(StravaUploadDiagnostic diagnostic) : Exception
+    {
+        public StravaUploadDiagnostic Diagnostic { get; } = diagnostic;
+        public int StatusCode => Diagnostic.HttpStatus;
+    }
     private sealed class StravaAuthorizationException : Exception { }
 
     private StravaUploadJournal ReadUploadJournal() => ReadJournal();

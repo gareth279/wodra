@@ -1,5 +1,5 @@
 <?php
-// Copy this file to config.php OUTSIDE public_html and set owner-only permissions.
+// Copy this file to config.php OUTSIDE the document root; use mode 0600.
 return [
     'client_id' => '234943',
     'client_secret' => 'REPLACE_WITH_STRAVA_CLIENT_SECRET',

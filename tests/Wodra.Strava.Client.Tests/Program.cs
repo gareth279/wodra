@@ -23,6 +23,20 @@ Check(!StravaPolicies.MaySubmitAgain(StravaUploadStatus.Submitting) && !StravaPo
 Check(!StravaPolicies.MaySubmitAgain(StravaUploadStatus.Processing) && !StravaPolicies.MaySubmitAgain(StravaUploadStatus.Complete), "pending and complete upload must not resubmit");
 Check(StravaPolicies.JournalKey(riderA, Guid.NewGuid(), 0, "abc") != StravaPolicies.JournalKey(riderB, Guid.NewGuid(), 0, "abc"), "upload journal keys must include profile identity");
 
+var forbidden = StravaUploadDiagnostic.Parse(403, "{\"message\":\"This application has been deactivated\",\"errors\":[{\"resource\":\"Application\",\"field\":\"access\",\"code\":\"not_authorized\"}]}");
+Check(forbidden.Kind == StravaUploadFailureKind.ApplicationAccessRestricted, "recognized app access restriction should be classified");
+Check(forbidden.Resource == "Application" && forbidden.Field == "access" && forbidden.Code == "not_authorized", "recognized Strava diagnostic fields should be retained");
+var scope = StravaUploadDiagnostic.Parse(403, "{\"errors\":[{\"resource\":\"Athlete\",\"field\":\"activity:write\",\"code\":\"missing\"}]}");
+Check(scope.Kind == StravaUploadFailureKind.MissingActivityWriteScope, "missing activity:write should be classified");
+Check(StravaUploadDiagnostic.Parse(401, "{}").Kind == StravaUploadFailureKind.ExpiredAuthorization, "401 should identify expired authorization");
+Check(StravaUploadDiagnostic.Parse(429, "{}").Kind == StravaUploadFailureKind.RateLimited, "429 should identify rate limiting");
+Check(StravaUploadDiagnostic.Parse(400, "{\"errors\":[{\"resource\":\"Upload\",\"field\":\"file\",\"code\":\"duplicate\"}]}").Kind == StravaUploadFailureKind.DuplicateOrFileProcessing, "duplicate/file errors should be classified");
+Check(StravaUploadDiagnostic.ParseProcessingError("This activity is a duplicate of an existing activity").Kind == StravaUploadFailureKind.DuplicateOrFileProcessing, "asynchronous duplicate processing errors should be classified");
+var unknown = StravaUploadDiagnostic.Parse(403, "{\"message\":\"secret Bearer should-not-appear\",\"errors\":[{\"resource\":\"HiddenValue\",\"field\":\"password\",\"code\":\"unknown_secret\"}]}");
+Check(unknown.Kind == StravaUploadFailureKind.Unknown && unknown.Resource is null && unknown.Field is null && unknown.Code is null, "unknown error values must not be retained");
+Check(!unknown.UserMessage.Contains("should-not-appear", StringComparison.Ordinal), "raw Strava response text must not be shown to the rider");
+Check(StravaUploadDiagnostic.Parse(403, "{\"errors\":[", truncated: true).Kind == StravaUploadFailureKind.Unknown, "truncated response should produce a safe unknown diagnosis");
+
 var temp = Path.Combine(Path.GetTempPath(), "wodra-fit-segments-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(temp);
 try

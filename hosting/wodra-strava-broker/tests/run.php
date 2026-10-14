@@ -4,6 +4,8 @@ declare(strict_types=1);
 use Wodra\StravaBroker\FileSessionStore;
 use Wodra\StravaBroker\LinkSessionRepository;
 use Wodra\StravaBroker\LoopbackRedirectPolicy;
+use Wodra\StravaBroker\DeploymentConfigPolicy;
+use Wodra\StravaBroker\App;
 require __DIR__ . '/../private/Broker.php';
 
 $checks = 0;
@@ -23,6 +25,34 @@ foreach ([
     'http://127.0.0.1:49152/other',
     'http://127.0.0.1:49152/strava/callback#fragment',
 ] as $invalid) $assert(!LoopbackRedirectPolicy::accepts($invalid), 'unsafe callback accepted: ' . $invalid);
+
+$assert(DeploymentConfigPolicy::validBasePath('/wodra/strava'), 'explicit nested base path should be accepted');
+$assert(DeploymentConfigPolicy::validBasePath(''), 'root deployment path should be accepted');
+$assert(!DeploymentConfigPolicy::validBasePath('/wodra/../private'), 'path traversal in base path must be rejected');
+foreach ([
+    ['/wodra/strava/health?check=1', '/wodra/strava', '/health'],
+    ['/wodra/strava/', '/wodra/strava', '/'],
+    ['/health', '', '/health'],
+] as [$uri, $base, $expected]) $assert(DeploymentConfigPolicy::routePath($uri, $base) === $expected, 'request URI should route from explicit URL base path');
+$assert(DeploymentConfigPolicy::routePath('/wrong/health', '/wodra/strava') === null, 'unrelated URL prefix must not match configured base path');
+$assert(DeploymentConfigPolicy::routePath('/wodra/strava/health', '/wodra/stravaevil') === null, 'base path prefix must be segment exact');
+foreach (['/index.php', '/wodra/strava/index.php', '/php-handler/index.php'] as $scriptName) {
+    $_SERVER['SCRIPT_NAME'] = $scriptName;
+    $assert(DeploymentConfigPolicy::routePath('/wodra/strava/health', '/wodra/strava') === '/health', 'routing must ignore cPanel SCRIPT_NAME value ' . $scriptName);
+}
+
+$configExample = file_get_contents(__DIR__ . '/../private/config.example.php');
+$deploymentExample = file_get_contents(__DIR__ . '/../public/deployment.example.php');
+$assert(is_string($configExample) && str_contains($configExample, 'REPLACE_WITH_STRAVA_CLIENT_SECRET'), 'private example must use a secret placeholder');
+$assert(is_string($deploymentExample) && str_contains($deploymentExample, 'CPANEL_USER') && !str_contains($deploymentExample, 'client_secret'), 'deployment example must use path placeholders and contain no secret setting');
+$failureCodes = App::configurationFailureCodes([
+    'client_id' => '234943', 'client_secret' => 'REPLACE_WITH_STRAVA_CLIENT_SECRET',
+    'private_storage' => '/tmp/wodra-private', 'rate_limit_directory' => '/tmp/wodra-private/rate',
+    'link_session_ttl_seconds' => 600,
+], sys_get_temp_dir(), '/bad/../path');
+$assert(in_array('url_base_path_invalid', $failureCodes, true), 'configuration diagnostics must identify invalid URL base path');
+$assert(in_array('client_secret_missing_or_placeholder', $failureCodes, true), 'configuration diagnostics must identify placeholder secret without exposing it');
+$assert(!str_contains(implode(',', $failureCodes), 'REPLACE_WITH'), 'configuration diagnostic identifiers must never contain configured values');
 
 $directory = sys_get_temp_dir() . '/wodra-strava-test-' . bin2hex(random_bytes(8));
 try {

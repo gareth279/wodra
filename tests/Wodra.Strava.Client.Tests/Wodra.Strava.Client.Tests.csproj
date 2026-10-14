@@ -8,5 +8,6 @@
   <ItemGroup>
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Strava/StravaPolicies.cs" Link="StravaPolicies.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Strava/StravaFitSegmentReader.cs" Link="StravaFitSegmentReader.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Strava/StravaUploadDiagnostics.cs" Link="StravaUploadDiagnostics.cs" />
   </ItemGroup>
 </Project>
