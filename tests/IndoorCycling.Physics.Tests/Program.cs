@@ -1,6 +1,7 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
+using System.Globalization;
 using System.Text.Json;
 
 var tests = new (string Name, Action Run)[]
@@ -617,20 +618,21 @@ static void DebugMarkerNumbers()
 static void ScreenshotNames()
 {
     var timestamp = new DateTimeOffset(2026, 10, 8, 14, 23, 15, TimeSpan.FromHours(13));
+    var localTimestamp = timestamp.ToLocalTime().ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
     var calls = 0;
     var stem = ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.DebugMarker, 3,
         path => ++calls <= 2); // First stem's PNG and JSON exist.
-    if (!stem.Contains("20261008-142315-marker-003-002", StringComparison.Ordinal))
+    if (!stem.Contains($"{localTimestamp}-marker-003-002", StringComparison.Ordinal))
         throw new Exception($"Unexpected collision-safe marker stem: {stem}");
     if (Path.GetFileNameWithoutExtension(stem + ".png") != Path.GetFileNameWithoutExtension(stem + ".json")
         || !stem.Contains("marker-003", StringComparison.Ordinal))
         throw new Exception("Marker PNG/JSON names did not remain associated.");
     if (ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.Clean, null, _ => false)
-        != "wodra-20261008-142315-clean") throw new Exception("Clean filename format changed unexpectedly.");
+        != $"wodra-{localTimestamp}-clean") throw new Exception("Clean filename format changed unexpectedly.");
     if (ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.Hud, null, _ => false)
-        != "wodra-20261008-142315-hud"
+        != $"wodra-{localTimestamp}-hud"
         || ScreenshotCaptureFileStore.CreateUniqueStem(timestamp, ScreenshotCaptureMode.DebugMarker, 3, _ => false)
-        != "wodra-20261008-142315-marker-003")
+        != $"wodra-{localTimestamp}-marker-003")
         throw new Exception("HUD or marker screenshot filename did not use Wodra naming.");
 }
 
