@@ -147,7 +147,7 @@ public sealed class StravaIntegrationClient
                     ex is HttpRequestException or TaskCanceledException or StravaTransientException);
                 if (!transient)
                 {
-                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, SafeMessage = SafeAutomaticError(ex), UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, SafeMessage = SafeAutomaticError(ex, retrying: false), UpdatedAtUtc = DateTimeOffset.UtcNow });
                     continue;
                 }
                 var attempts = current.RetryCount + 1;
@@ -156,20 +156,20 @@ public sealed class StravaIntegrationClient
                 else
                     UpdateJournalEntry(current with { Status = StravaUploadStatus.Queued, RetryCount = attempts,
                         NextAttemptAtUtc = DateTimeOffset.UtcNow + StravaPolicies.AutomaticRetryDelay(attempts),
-                        SafeMessage = SafeAutomaticError(ex), UpdatedAtUtc = DateTimeOffset.UtcNow });
+                        SafeMessage = SafeAutomaticError(ex, retrying: true), UpdatedAtUtc = DateTimeOffset.UtcNow });
             }
             await Task.Delay(100);
         }
     }
 
-    private static string SafeAutomaticError(Exception exception) => exception switch
+    private static string SafeAutomaticError(Exception exception, bool retrying) => exception switch
     {
         StravaHttpException http => http.Diagnostic.UserMessage,
         StravaAuthorizationException => "Strava authorization expired. Relink this rider profile.",
         StravaTransientException temporary => temporary.Message,
-        InvalidOperationException invalid when invalid.Message.Contains("upload access", StringComparison.OrdinalIgnoreCase) => invalid.Message,
-        InvalidOperationException invalid when invalid.Message.Contains("Strava authorization expired", StringComparison.OrdinalIgnoreCase) => invalid.Message,
-        _ => "The upload could not be completed. Wodra will retry when the connection is available."
+        InvalidOperationException invalid => invalid.Message,
+        _ when retrying => "The upload could not be completed. Wodra will retry when the connection is available.",
+        _ => "Automatic upload stopped. The saved segment remains available for manual retry."
     };
 
     private void UpdateJournalEntry(StravaUploadEntry entry)
