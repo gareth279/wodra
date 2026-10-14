@@ -83,7 +83,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.5019608)
 
 [node name="PanelContainer" type="PanelContainer" parent="StartPanel" unique_id=252191979]
-custom_minimum_size = Vector2(480, 640)
+custom_minimum_size = Vector2(480, 600)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -104,46 +104,53 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="StartPanel/PanelContainer/MarginContainer" unique_id=700183179]
+[node name="StartupScroll" type="ScrollContainer" parent="StartPanel/PanelContainer/MarginContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
-[node name="TitleLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1236452577]
+[node name="VBoxContainer" type="VBoxContainer" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll" unique_id=700183179]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=1236452577]
 layout_mode = 2
 text = "Wodra"
 
-[node name="StatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=342786995]
+[node name="StatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=342786995]
 layout_mode = 2
 text = "Choose how you want to start"
 
-[node name="DebugModeCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="DebugModeCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
 text = "Debug mode"
 
-[node name="OnlineRidingCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="OnlineRidingCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
 text = "Online Riding"
 
-[node name="OnlineStatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="OnlineStatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
 text = "Offline · local rides are always available"
 
-[node name="ConnectTrainerButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1036208023]
+[node name="ConnectTrainerButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=1036208023]
 layout_mode = 2
 text = "Connect Trainer"
 
-[node name="Test with Fake Trainer" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1278357050]
+[node name="Test with Fake Trainer" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=1278357050]
 layout_mode = 2
 text = "Test with Dummy Trainer"
 
-[node name="LoadFitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=449877992]
+[node name="LoadFitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=449877992]
 layout_mode = 2
 text = "Load Fit File"
 
-[node name="HistoryButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="HistoryButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
 text = "Ride History"
 
-[node name="QuitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=847293783]
+[node name="QuitButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=847293783]
 layout_mode = 2
 text = "Quit"
 
@@ -828,8 +835,15 @@ layout_mode = 2
 layout_mode = 2
 text = "Route Selection"
 
-[node name="RouteButtonsContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1044305618]
+[node name="RoutesScroll" type="ScrollContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="RouteButtonsContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer/RoutesScroll" unique_id=1044305618]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1373868971]
 layout_mode = 2

@@ -5,6 +5,28 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("ride summary stays viewport bounded with empty, long, and large screenshot lists", () =>
+    {
+        // Includes representative physical sizes and effective client coordinates at 125%/150% scaling.
+        foreach (var (width, height) in new[] { (1280, 720), (1366, 768), (1920, 1080), (1093, 614), (1280, 720), (853, 480) })
+        {
+            var size = RideSummaryLayoutPolicy.PanelSize(width, height);
+            if (size.Width > width - RideSummaryLayoutPolicy.ViewportMargin || size.Height > height - RideSummaryLayoutPolicy.ViewportMargin)
+                throw new Exception($"Summary panel {size} exceeds viewport {width}x{height}.");
+            if (RideSummaryLayoutPolicy.DetailsViewportHeight(size.Height) <= 0)
+                throw new Exception($"Summary details have no scroll area at {width}x{height}.");
+        }
+        foreach (var screenshotCount in new[] { 0, 25, 500 })
+        {
+            var paths = Enumerable.Range(0, screenshotCount).Select(index => $"C:/Long FIT folder/{new string('x', 260)}-{index}.png").ToArray();
+            var listing = RideSummaryLayoutPolicy.ScreenshotList(paths);
+            var panel = RideSummaryLayoutPolicy.PanelSize(1280, 720);
+            if (listing.Split('\n').Length != screenshotCount + 1 || panel != RideSummaryLayoutPolicy.PanelSize(1280, 720))
+                throw new Exception("Screenshot details changed the fixed panel bounds.");
+            if (screenshotCount == 25 && listing.Split('\n').Length != 26 || screenshotCount == 500 && !listing.Contains(new string('x', 260)))
+                throw new Exception("Long screenshot details were lost while measuring the scroll content.");
+        }
+    }),
     ("legacy grass apron is limited to routes without sampled terrain", () =>
     {
         Equal(true, RouteGroundFallbackPolicy.ShouldAddLegacyApron(false));

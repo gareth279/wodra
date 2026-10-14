@@ -50,6 +50,11 @@ public partial class RideMenuPanelController : Control
 		// VBoxContainer is nested under MarginContainer in RideScreen.tscn. Looking it up
 		// as a direct child left the content outside the PanelContainer's layout slot.
 		_content = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
+		var menuMargin = GetNode<MarginContainer>("PanelContainer/MarginContainer");
+		menuMargin.RemoveChild(_content);
+		var menuScroll = new ScrollContainer { Name = "MenuScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+		menuMargin.AddChild(menuScroll);
+		menuScroll.AddChild(_content);
 		Hide();
 	}
 
@@ -156,6 +161,8 @@ public partial class RideMenuPanelController : Control
 				BuildCatchUpConfirmation();
 				break;
 			case MenuView.Display:
+				_content.AddChild(new Label { Text = "F11 or Alt+Enter toggles fullscreen. Window size is remembered.", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center });
+				AddAction(GameBootstrap.Settings.Fullscreen ? "Return to windowed mode" : "Enter fullscreen", GameBootstrap.ToggleFullscreen);
 				var showHud = new CheckButton { Text = "Show riding HUD", ButtonPressed = _hudController?.HudDisplayEnabled ?? true };
 				showHud.Toggled += enabled => _hudController?.SetHudDisplayEnabled(enabled);
 				_content.AddChild(showHud);

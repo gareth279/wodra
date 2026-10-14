@@ -40,28 +40,32 @@ public partial class StartPanelController : Control
 	private List<RiderProfileRecord> _profiles = [];
 	private Guid? _editingProfileId;
 	private VelopackUpdatePanel? _updatePanel;
+	private PanelContainer? _startupPanel;
 
 	public override void _Ready()
 	{
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_fileDialog = GetNodeOrNull<FileDialog>("FileDialog");
-		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/StatusLabel");
+		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/StatusLabel");
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_typedHudController = _hudController as HudController;
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
 		BuildLocalSettingsUi();
+		_startupPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
+		Resized += FitStartupPanel;
+		FitStartupPanel();
 		_ = RefreshProfilesAsync(openCreateProfileWhenEmpty: true);
-		_debugModeCheckButton = GetNode<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/DebugModeCheckButton");
+		_debugModeCheckButton = GetNode<CheckButton>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/DebugModeCheckButton");
 		_debugModeCheckButton.ButtonPressed = GameBootstrap.DebugModeEnabled;
 		_debugModeCheckButton.Toggled += OnDebugModeToggled;
 		_typedHudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
-		_onlineRidingCheckButton = GetNodeOrNull<CheckButton>("PanelContainer/MarginContainer/VBoxContainer/OnlineRidingCheckButton");
-		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/VBoxContainer/OnlineStatusLabel");
+		_onlineRidingCheckButton = GetNodeOrNull<CheckButton>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/OnlineRidingCheckButton");
+		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/OnlineStatusLabel");
 		ConfigureStartupStatusLabel(_statusLabel);
 		ConfigureStartupStatusLabel(_onlineStatusLabel);
-		var startupColumn = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
+		var startupColumn = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer");
 		if (startupColumn is not null)
 		{
 			_updatePanel = new VelopackUpdatePanel();
@@ -81,16 +85,27 @@ public partial class StartPanelController : Control
 				_ = _rideSessionNode.SetOnlineRidingEnabledAsync(true);
 		}
 		_hudController?.Hide();
-		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
-		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
-		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
-		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/HistoryButton").Pressed += () => _rideHistoryPanel?.ShowHistory();
-		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/QuitButton").Pressed += OnQuitPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/HistoryButton").Pressed += () => _rideHistoryPanel?.ShowHistory();
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/QuitButton").Pressed += OnQuitPressed;
 
 		if (_fileDialog is not null)
 		{
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
+	}
+
+	private void FitStartupPanel()
+	{
+		if (_startupPanel is null || !IsInsideTree()) return;
+		var viewport = GetViewportRect().Size;
+		var width = Math.Min(480, Math.Max(360, viewport.X - 32));
+		var height = Math.Min(600, Math.Max(420, viewport.Y - 32));
+		_startupPanel.CustomMinimumSize = new Vector2(width, height);
+		_startupPanel.OffsetLeft = -width / 2; _startupPanel.OffsetRight = width / 2;
+		_startupPanel.OffsetTop = -height / 2; _startupPanel.OffsetBottom = height / 2;
 	}
 
 	public override void _Notification(int what)
@@ -123,7 +138,7 @@ public partial class StartPanelController : Control
 
 	private void BuildLocalSettingsUi()
 	{
-		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
+		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer");
 		if (column is null) return;
 		var profileRow = new HBoxContainer(); profileRow.AddChild(new Label { Text = "Profile:" });
 		_profilePicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };

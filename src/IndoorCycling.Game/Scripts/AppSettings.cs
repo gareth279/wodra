@@ -18,6 +18,9 @@ public sealed class AppSettings
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
 	/// <summary>Last successfully used Bluetooth trainer address; reserved for protocol-neutral preference storage.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
+	public int WindowedWidth { get; set; } = 1152;
+	public int WindowedHeight { get; set; } = 648;
+	public bool Fullscreen { get; set; }
 
 	public static string SettingsPath
 	{

@@ -13,6 +13,7 @@ public partial class RouteSelectionPanelController : Control
 	private Control? _startPanel;
 
 	private VBoxContainer? _routeButtonsContainer;
+	private PanelContainer? _selectionPanel;
 	private Button? _backButton;
 	private CheckButton? _onlineRidingToggle;
 	private Label? _onlineStatusLabel;
@@ -28,7 +29,10 @@ public partial class RouteSelectionPanelController : Control
 		_deviceConnectionPanel = GetNodeOrNull<Control>("../DeviceConnectionPanel");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 
-		_routeButtonsContainer = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/RouteButtonsContainer");
+		_routeButtonsContainer = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/RoutesScroll/RouteButtonsContainer");
+		_selectionPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
+		Resized += FitSelectionPanel;
+		FitSelectionPanel();
 		_backButton = GetNodeOrNull<Button>("PanelContainer/MarginContainer/VBoxContainer/BackButton");
 		BuildOnlineControls();
 
@@ -38,6 +42,17 @@ public partial class RouteSelectionPanelController : Control
 		BuildRouteButtons();
 
 		Hide();
+	}
+
+	private void FitSelectionPanel()
+	{
+		if (_selectionPanel is null || !IsInsideTree()) return;
+		var viewport = GetViewportRect().Size;
+		var width = Math.Min(1100, Math.Max(320, viewport.X - 32));
+		var height = Math.Min(620, Math.Max(280, viewport.Y - 32));
+		_selectionPanel.CustomMinimumSize = new Vector2(width, height);
+		_selectionPanel.OffsetLeft = -width / 2; _selectionPanel.OffsetRight = width / 2;
+		_selectionPanel.OffsetTop = -height / 2; _selectionPanel.OffsetBottom = height / 2;
 	}
 
 	public void ShowRouteSelection()

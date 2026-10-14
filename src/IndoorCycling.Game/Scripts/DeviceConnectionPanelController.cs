@@ -22,6 +22,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _powerStatusLabel;
 	private Label? _cadenceStatusLabel;
 	private Label? _diagnosticsLabel;
+	private PanelContainer? _connectionPanel;
 	private OptionButton? _trainerPicker;
 	private Button? _connectButton;
 	private Button? _cancelButton;
@@ -47,6 +48,7 @@ public partial class DeviceConnectionPanelController : Control
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
+		_connectionPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
 		_overallStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/OverallStatusLabel");
 		_trainerNameLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/TrainerNameLabel");
 		_protocolStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/ProtocolStatusLabel");
@@ -61,6 +63,9 @@ public partial class DeviceConnectionPanelController : Control
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/BackButton").Pressed += OnBackPressed;
 		_continueButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/ContinueButton");
 		_diagnosticsButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/DiagnosticsButton");
+		MakeConnectionDetailsScrollable();
+		Resized += FitConnectionPanel;
+		FitConnectionPanel();
 		_connectButton.Pressed += OnConnectPressed;
 		_cancelButton.Pressed += OnCancelPressed;
 		_disconnectButton.Pressed += () => _ = DisconnectTrainerAsync();
@@ -71,6 +76,32 @@ public partial class DeviceConnectionPanelController : Control
 		_trainerPicker.Hide();
 		Hide();
 		ResetUi();
+	}
+
+	private void MakeConnectionDetailsScrollable()
+	{
+		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
+		if (column is null || column.GetChildCount() < 3) return;
+		var detailNodes = column.GetChildren().Take(column.GetChildCount() - 2).ToArray();
+		var scroll = new ScrollContainer { Name = "ConnectionDetailsScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+		var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		foreach (var child in detailNodes) { column.RemoveChild(child); details.AddChild(child); }
+		column.AddChild(scroll);
+		column.MoveChild(scroll, 0);
+		scroll.AddChild(details);
+	}
+
+	private void FitConnectionPanel()
+	{
+		if (_connectionPanel is null || !IsInsideTree()) return;
+		var viewport = GetViewportRect().Size;
+		var width = Math.Min(1120, Math.Max(320, viewport.X - 32));
+		var height = Math.Min(650, Math.Max(280, viewport.Y - 32));
+		_connectionPanel.CustomMinimumSize = new Vector2(width, height);
+		_connectionPanel.AnchorLeft = .5f; _connectionPanel.AnchorRight = .5f;
+		_connectionPanel.AnchorTop = .5f; _connectionPanel.AnchorBottom = .5f;
+		_connectionPanel.OffsetLeft = -width / 2; _connectionPanel.OffsetRight = width / 2;
+		_connectionPanel.OffsetTop = -height / 2; _connectionPanel.OffsetBottom = height / 2;
 	}
 
 	public override void _Process(double delta)

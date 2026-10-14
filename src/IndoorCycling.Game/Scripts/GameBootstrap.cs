@@ -31,6 +31,7 @@ public partial class GameBootstrap : Node
 	public static int TrainerDifficultyPercent => TrainerDifficultyPolicy.Normalize(
 		_persistentRider?.TrainerDifficultyPercent ?? TrainerDifficultyPolicy.DefaultPercent);
 	private static RiderProfileRecord? _persistentRider;
+	private static Window? _mainWindow;
 	private static Task<RiderProfileRecord>? _persistentRiderTask;
 	private static Task? _pendingProfileSelectionTask;
 
@@ -62,6 +63,7 @@ public partial class GameBootstrap : Node
 		GameLogger.Init();
 
 		Settings = AppSettings.LoadOrCreate();
+		ConfigureMainWindow();
 		Settings.DummyTrainer ??= new DummyTrainerSettings();
 		Settings.DummyTrainer.Validate();
 		var historyPath = Path.Combine(ProjectSettings.GlobalizePath("user://data"), "wodra.db");
@@ -93,6 +95,58 @@ public partial class GameBootstrap : Node
 		GD.Print("GameBootstrap initialised.");
 	}
 
+	private void ConfigureMainWindow()
+	{
+		var window = GetWindow();
+		_mainWindow = window;
+		window.MinSize = new Vector2I(960, 540);
+		var usable = DisplayServer.ScreenGetUsableRect();
+		var width = Math.Clamp(Settings.WindowedWidth, 960, Math.Max(960, usable.Size.X));
+		var height = Math.Clamp(Settings.WindowedHeight, 540, Math.Max(540, usable.Size.Y));
+		window.Size = new Vector2I(width, height);
+		window.Position = usable.Position + new Vector2I((usable.Size.X - width) / 2, (usable.Size.Y - height) / 2);
+		window.Mode = Settings.Fullscreen ? Window.ModeEnum.Fullscreen : Window.ModeEnum.Windowed;
+		window.SizeChanged += () =>
+		{
+			if (window.Mode == Window.ModeEnum.Windowed)
+			{
+				Settings.WindowedWidth = window.Size.X;
+				Settings.WindowedHeight = window.Size.Y;
+			}
+		};
+	}
+
+	public override void _Input(InputEvent @event)
+	{
+		if (@event is not InputEventKey key || !key.Pressed || key.Echo ||
+			!(key.Keycode == Key.F11 || (key.Keycode == Key.Enter && key.AltPressed))) return;
+		ToggleFullscreen();
+		GetViewport().SetInputAsHandled();
+	}
+
+	public static void ToggleFullscreen()
+	{
+		if (Settings is null) return;
+		var window = _mainWindow;
+		if (window is null) return;
+		if (window.Mode == Window.ModeEnum.Windowed)
+		{
+			Settings.WindowedWidth = window.Size.X;
+			Settings.WindowedHeight = window.Size.Y;
+			Settings.Fullscreen = true;
+			window.Mode = Window.ModeEnum.Fullscreen;
+		}
+		else
+		{
+			Settings.Fullscreen = false;
+			window.Mode = Window.ModeEnum.Windowed;
+			var usable = DisplayServer.ScreenGetUsableRect();
+			window.Size = new Vector2I(Math.Min(Settings.WindowedWidth, usable.Size.X), Math.Min(Settings.WindowedHeight, usable.Size.Y));
+			window.Position = usable.Position + (usable.Size - window.Size) / 2;
+		}
+		Settings.Save();
+	}
+
 	public override void _Process(double delta)
 	{
 		EpicOnlineServicesMultiplayerProvider.TickPlatform(delta);
@@ -100,6 +154,16 @@ public partial class GameBootstrap : Node
 
 	public override void _ExitTree()
 	{
+		if (Settings is not null)
+		{
+			Settings.Fullscreen = GetWindow().Mode != Window.ModeEnum.Windowed;
+			if (!Settings.Fullscreen)
+			{
+				Settings.WindowedWidth = GetWindow().Size.X;
+				Settings.WindowedHeight = GetWindow().Size.Y;
+			}
+			Settings.Save();
+		}
 		EpicOnlineServicesMultiplayerProvider.ShutdownPlatform();
 	}
 
