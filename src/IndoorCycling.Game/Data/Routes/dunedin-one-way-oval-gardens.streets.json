@@ -3,7 +3,7 @@
   "routeName": "Dunedin One-way: Oval to Gardens Loop",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
     "waysConsidered": 397,
@@ -319,7 +319,8 @@
         }
       ],
       "distanceFromRouteMeters": 177.1405021068641,
-      "nearestRouteDistanceMeters": 4638.080647336149
+      "nearestRouteDistanceMeters": 4638.080647336149,
+      "onewayDirection": 1
     },
     {
       "osmId": 17945024,
@@ -387,7 +388,8 @@
         }
       ],
       "distanceFromRouteMeters": 144.04854692780495,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 17949940,
@@ -419,7 +421,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 608.6245494341047
+      "nearestRouteDistanceMeters": 608.6245494341047,
+      "onewayDirection": 1
     },
     {
       "osmId": 17950665,
@@ -491,7 +494,8 @@
         }
       ],
       "distanceFromRouteMeters": 14.807356257479336,
-      "nearestRouteDistanceMeters": 3251.9195425810453
+      "nearestRouteDistanceMeters": 3251.9195425810453,
+      "onewayDirection": 1
     },
     {
       "osmId": 18215481,
@@ -568,7 +572,8 @@
         }
       ],
       "distanceFromRouteMeters": 27.594810480879275,
-      "nearestRouteDistanceMeters": 853.3640042756188
+      "nearestRouteDistanceMeters": 853.3640042756188,
+      "onewayDirection": 1
     },
     {
       "osmId": 19781983,
@@ -609,7 +614,8 @@
         }
       ],
       "distanceFromRouteMeters": 155.8590023297363,
-      "nearestRouteDistanceMeters": 5053.166998304309
+      "nearestRouteDistanceMeters": 5053.166998304309,
+      "onewayDirection": 1
     },
     {
       "osmId": 19782029,
@@ -651,7 +657,8 @@
         }
       ],
       "distanceFromRouteMeters": 193.32420240984533,
-      "nearestRouteDistanceMeters": 4007.321655812484
+      "nearestRouteDistanceMeters": 4007.321655812484,
+      "onewayDirection": 1
     },
     {
       "osmId": 19783192,
@@ -773,7 +780,8 @@
         }
       ],
       "distanceFromRouteMeters": 44.228012900768995,
-      "nearestRouteDistanceMeters": 4863.543272721084
+      "nearestRouteDistanceMeters": 4863.543272721084,
+      "onewayDirection": 1
     },
     {
       "osmId": 19792244,
@@ -840,7 +848,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5021.915945557388
+      "nearestRouteDistanceMeters": 5021.915945557388,
+      "onewayDirection": 1
     },
     {
       "osmId": 19805261,
@@ -932,7 +941,8 @@
         }
       ],
       "distanceFromRouteMeters": 46.348584583903325,
-      "nearestRouteDistanceMeters": 2410.099032599005
+      "nearestRouteDistanceMeters": 2410.099032599005,
+      "onewayDirection": 1
     },
     {
       "osmId": 19805263,
@@ -1014,7 +1024,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 19867970,
@@ -1176,7 +1187,8 @@
         }
       ],
       "distanceFromRouteMeters": 126.8684368627789,
-      "nearestRouteDistanceMeters": 2620.0200190395412
+      "nearestRouteDistanceMeters": 2620.0200190395412,
+      "onewayDirection": 1
     },
     {
       "osmId": 19869344,
@@ -1233,7 +1245,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5132.553033758048
+      "nearestRouteDistanceMeters": 5132.553033758048,
+      "onewayDirection": 1
     },
     {
       "osmId": 19960715,
@@ -1390,7 +1403,8 @@
         }
       ],
       "distanceFromRouteMeters": 143.52805803193965,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 20361764,
@@ -1532,7 +1546,8 @@
         }
       ],
       "distanceFromRouteMeters": 116.98378989614386,
-      "nearestRouteDistanceMeters": 166.23867604240004
+      "nearestRouteDistanceMeters": 166.23867604240004,
+      "onewayDirection": 1
     },
     {
       "osmId": 21436162,
@@ -1614,7 +1629,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.912764208112584,
-      "nearestRouteDistanceMeters": 4230.8714947849585
+      "nearestRouteDistanceMeters": 4230.8714947849585,
+      "onewayDirection": 1
     },
     {
       "osmId": 27505307,
@@ -1656,7 +1672,8 @@
         }
       ],
       "distanceFromRouteMeters": 145.05899593074534,
-      "nearestRouteDistanceMeters": 817.8909304633497
+      "nearestRouteDistanceMeters": 817.8909304633497,
+      "onewayDirection": 1
     },
     {
       "osmId": 27695753,
@@ -1678,7 +1695,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 513.2343995174112
+      "nearestRouteDistanceMeters": 513.2343995174112,
+      "onewayDirection": 1
     },
     {
       "osmId": 48330237,
@@ -1870,7 +1888,8 @@
         }
       ],
       "distanceFromRouteMeters": 132.74805097984293,
-      "nearestRouteDistanceMeters": 196.11498968931218
+      "nearestRouteDistanceMeters": 196.11498968931218,
+      "onewayDirection": 1
     },
     {
       "osmId": 48330911,
@@ -1897,7 +1916,8 @@
         }
       ],
       "distanceFromRouteMeters": 148.9109337171504,
-      "nearestRouteDistanceMeters": 4882.7786803889485
+      "nearestRouteDistanceMeters": 4882.7786803889485,
+      "onewayDirection": 1
     },
     {
       "osmId": 48330915,
@@ -1974,7 +1994,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.103388592407132,
-      "nearestRouteDistanceMeters": 4375.8913872484
+      "nearestRouteDistanceMeters": 4375.8913872484,
+      "onewayDirection": 1
     },
     {
       "osmId": 48330916,
@@ -2016,7 +2037,8 @@
         }
       ],
       "distanceFromRouteMeters": 117.9458183025389,
-      "nearestRouteDistanceMeters": 891.5488356289849
+      "nearestRouteDistanceMeters": 891.5488356289849,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331413,
@@ -2048,7 +2070,8 @@
         }
       ],
       "distanceFromRouteMeters": 52.957713592747865,
-      "nearestRouteDistanceMeters": 3252.23840258867
+      "nearestRouteDistanceMeters": 3252.23840258867,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331414,
@@ -2125,7 +2148,8 @@
         }
       ],
       "distanceFromRouteMeters": 22.559548192757006,
-      "nearestRouteDistanceMeters": 3385.268775478535
+      "nearestRouteDistanceMeters": 3385.268775478535,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331415,
@@ -2287,7 +2311,8 @@
         }
       ],
       "distanceFromRouteMeters": 191.24587519011487,
-      "nearestRouteDistanceMeters": 3667.547160026112
+      "nearestRouteDistanceMeters": 3667.547160026112,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331416,
@@ -2374,7 +2399,8 @@
         }
       ],
       "distanceFromRouteMeters": 60.85727210582943,
-      "nearestRouteDistanceMeters": 3455.955681996289
+      "nearestRouteDistanceMeters": 3455.955681996289,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331431,
@@ -2471,7 +2497,8 @@
         }
       ],
       "distanceFromRouteMeters": 138.67216799920158,
-      "nearestRouteDistanceMeters": 1230.6682326143186
+      "nearestRouteDistanceMeters": 1230.6682326143186,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331486,
@@ -2678,7 +2705,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.6322158029145,
-      "nearestRouteDistanceMeters": 3455.966274998836
+      "nearestRouteDistanceMeters": 3455.966274998836,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331487,
@@ -2740,7 +2768,8 @@
         }
       ],
       "distanceFromRouteMeters": 122.1777521562737,
-      "nearestRouteDistanceMeters": 3505.934221824499
+      "nearestRouteDistanceMeters": 3505.934221824499,
+      "onewayDirection": 1
     },
     {
       "osmId": 48331489,
@@ -2802,7 +2831,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3962.559473309071
+      "nearestRouteDistanceMeters": 3962.559473309071,
+      "onewayDirection": 1
     },
     {
       "osmId": 48473118,
@@ -3059,7 +3089,8 @@
         }
       ],
       "distanceFromRouteMeters": 117.90625706290443,
-      "nearestRouteDistanceMeters": 4526.066523447642
+      "nearestRouteDistanceMeters": 4526.066523447642,
+      "onewayDirection": 1
     },
     {
       "osmId": 48473230,
@@ -3141,7 +3172,8 @@
         }
       ],
       "distanceFromRouteMeters": 105.82769794777498,
-      "nearestRouteDistanceMeters": 4288.707340424035
+      "nearestRouteDistanceMeters": 4288.707340424035,
+      "onewayDirection": 1
     },
     {
       "osmId": 48482484,
@@ -3183,7 +3215,8 @@
         }
       ],
       "distanceFromRouteMeters": 172.4192466620224,
-      "nearestRouteDistanceMeters": 2196.695071912611
+      "nearestRouteDistanceMeters": 2196.695071912611,
+      "onewayDirection": 1
     },
     {
       "osmId": 48482488,
@@ -3265,7 +3298,8 @@
         }
       ],
       "distanceFromRouteMeters": 124.47220552898925,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 48565456,
@@ -3361,7 +3395,8 @@
         }
       ],
       "distanceFromRouteMeters": 105.89722044339526,
-      "nearestRouteDistanceMeters": 4864.471737714226
+      "nearestRouteDistanceMeters": 4864.471737714226,
+      "onewayDirection": 1
     },
     {
       "osmId": 60197777,
@@ -3408,7 +3443,8 @@
         }
       ],
       "distanceFromRouteMeters": 168.33354632247543,
-      "nearestRouteDistanceMeters": 2752.5525846676387
+      "nearestRouteDistanceMeters": 2752.5525846676387,
+      "onewayDirection": 1
     },
     {
       "osmId": 60197783,
@@ -3525,7 +3561,8 @@
         }
       ],
       "distanceFromRouteMeters": 122.73393634539133,
-      "nearestRouteDistanceMeters": 2752.2288522514036
+      "nearestRouteDistanceMeters": 2752.2288522514036,
+      "onewayDirection": 1
     },
     {
       "osmId": 60197784,
@@ -3622,7 +3659,8 @@
         }
       ],
       "distanceFromRouteMeters": 186.44418495709655,
-      "nearestRouteDistanceMeters": 2752.2288522514036
+      "nearestRouteDistanceMeters": 2752.2288522514036,
+      "onewayDirection": 1
     },
     {
       "osmId": 73533101,
@@ -3669,7 +3707,8 @@
         }
       ],
       "distanceFromRouteMeters": 17.500952008410778,
-      "nearestRouteDistanceMeters": 2102.1579367925406
+      "nearestRouteDistanceMeters": 2102.1579367925406,
+      "onewayDirection": 1
     },
     {
       "osmId": 76328862,
@@ -3726,7 +3765,8 @@
         }
       ],
       "distanceFromRouteMeters": 129.23468780028543,
-      "nearestRouteDistanceMeters": 696.7425342980886
+      "nearestRouteDistanceMeters": 696.7425342980886,
+      "onewayDirection": 1
     },
     {
       "osmId": 77332455,
@@ -3763,7 +3803,8 @@
         }
       ],
       "distanceFromRouteMeters": 28.125554527656146,
-      "nearestRouteDistanceMeters": 4121.748869524491
+      "nearestRouteDistanceMeters": 4121.748869524491,
+      "onewayDirection": 1
     },
     {
       "osmId": 87888214,
@@ -3805,7 +3846,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2972.0923387074877
+      "nearestRouteDistanceMeters": 2972.0923387074877,
+      "onewayDirection": 1
     },
     {
       "osmId": 88477643,
@@ -3967,7 +4009,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.84091338694364,
-      "nearestRouteDistanceMeters": 1586.7434552546208
+      "nearestRouteDistanceMeters": 1586.7434552546208,
+      "onewayDirection": 1
     },
     {
       "osmId": 88477644,
@@ -4109,7 +4152,8 @@
         }
       ],
       "distanceFromRouteMeters": 47.17123271160473,
-      "nearestRouteDistanceMeters": 3455.955681996289
+      "nearestRouteDistanceMeters": 3455.955681996289,
+      "onewayDirection": 1
     },
     {
       "osmId": 88477645,
@@ -4211,7 +4255,8 @@
         }
       ],
       "distanceFromRouteMeters": 22.76704783070813,
-      "nearestRouteDistanceMeters": 2134.1461187104287
+      "nearestRouteDistanceMeters": 2134.1461187104287,
+      "onewayDirection": 1
     },
     {
       "osmId": 88482313,
@@ -4259,7 +4304,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1481.275478946014
+      "nearestRouteDistanceMeters": 1481.275478946014,
+      "onewayDirection": 1
     },
     {
       "osmId": 88484118,
@@ -4301,7 +4347,8 @@
         }
       ],
       "distanceFromRouteMeters": 76.02481801022995,
-      "nearestRouteDistanceMeters": 1702.4700715841802
+      "nearestRouteDistanceMeters": 1702.4700715841802,
+      "onewayDirection": 1
     },
     {
       "osmId": 88623668,
@@ -4338,7 +4385,8 @@
         }
       ],
       "distanceFromRouteMeters": 167.2898936147646,
-      "nearestRouteDistanceMeters": 1185.2022817903865
+      "nearestRouteDistanceMeters": 1185.2022817903865,
+      "onewayDirection": 1
     },
     {
       "osmId": 88774362,
@@ -4380,7 +4428,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 748.476363995492
+      "nearestRouteDistanceMeters": 748.476363995492,
+      "onewayDirection": 1
     },
     {
       "osmId": 106733488,
@@ -4537,7 +4586,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.2961455238146,
-      "nearestRouteDistanceMeters": 2563.527029896409
+      "nearestRouteDistanceMeters": 2563.527029896409,
+      "onewayDirection": 1
     },
     {
       "osmId": 106733489,
@@ -4625,7 +4675,8 @@
         }
       ],
       "distanceFromRouteMeters": 28.544122254531334,
-      "nearestRouteDistanceMeters": 2752.2288522514036
+      "nearestRouteDistanceMeters": 2752.2288522514036,
+      "onewayDirection": 1
     },
     {
       "osmId": 106733496,
@@ -4722,7 +4773,8 @@
         }
       ],
       "distanceFromRouteMeters": 124.19635084515438,
-      "nearestRouteDistanceMeters": 2188.2475976746373
+      "nearestRouteDistanceMeters": 2188.2475976746373,
+      "onewayDirection": 1
     },
     {
       "osmId": 106733497,
@@ -4809,7 +4861,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.62855906225049,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 106733504,
@@ -4951,7 +5004,8 @@
         }
       ],
       "distanceFromRouteMeters": 59.85550677186754,
-      "nearestRouteDistanceMeters": 3198.3869572027024
+      "nearestRouteDistanceMeters": 3198.3869572027024,
+      "onewayDirection": 1
     },
     {
       "osmId": 106844038,
@@ -5003,7 +5057,8 @@
         }
       ],
       "distanceFromRouteMeters": 127.84287701589594,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216144,
@@ -5040,7 +5095,8 @@
         }
       ],
       "distanceFromRouteMeters": 36.4574542948534,
-      "nearestRouteDistanceMeters": 2191.072169884945
+      "nearestRouteDistanceMeters": 2191.072169884945,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216146,
@@ -5147,7 +5203,8 @@
         }
       ],
       "distanceFromRouteMeters": 183.1263735160457,
-      "nearestRouteDistanceMeters": 3770.0166266249817
+      "nearestRouteDistanceMeters": 3770.0166266249817,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216148,
@@ -5229,7 +5286,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.48384457158672,
-      "nearestRouteDistanceMeters": 582.4347362920734
+      "nearestRouteDistanceMeters": 582.4347362920734,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216150,
@@ -5271,7 +5329,8 @@
         }
       ],
       "distanceFromRouteMeters": 32.133745933060865,
-      "nearestRouteDistanceMeters": 2178.6437186119206
+      "nearestRouteDistanceMeters": 2178.6437186119206,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216155,
@@ -5398,7 +5457,8 @@
         }
       ],
       "distanceFromRouteMeters": 171.85680572636505,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 114216157,
@@ -5615,7 +5675,8 @@
         }
       ],
       "distanceFromRouteMeters": 125.80173382730229,
-      "nearestRouteDistanceMeters": 195.61901855790063
+      "nearestRouteDistanceMeters": 195.61901855790063,
+      "onewayDirection": 1
     },
     {
       "osmId": 114495303,
@@ -5727,7 +5788,8 @@
         }
       ],
       "distanceFromRouteMeters": 38.248764913074645,
-      "nearestRouteDistanceMeters": 3677.4223358147487
+      "nearestRouteDistanceMeters": 3677.4223358147487,
+      "onewayDirection": 1
     },
     {
       "osmId": 114495305,
@@ -5769,7 +5831,8 @@
         }
       ],
       "distanceFromRouteMeters": 32.031947833592405,
-      "nearestRouteDistanceMeters": 1183.1402981851454
+      "nearestRouteDistanceMeters": 1183.1402981851454,
+      "onewayDirection": 1
     },
     {
       "osmId": 116455610,
@@ -5985,7 +6048,8 @@
         }
       ],
       "distanceFromRouteMeters": 150.81007284347592,
-      "nearestRouteDistanceMeters": 4152.2032913541125
+      "nearestRouteDistanceMeters": 4152.2032913541125,
+      "onewayDirection": 1
     },
     {
       "osmId": 116455613,
@@ -6172,7 +6236,8 @@
         }
       ],
       "distanceFromRouteMeters": 100.5118739186684,
-      "nearestRouteDistanceMeters": 4271.074668190135
+      "nearestRouteDistanceMeters": 4271.074668190135,
+      "onewayDirection": 1
     },
     {
       "osmId": 116455617,
@@ -6409,7 +6474,8 @@
         }
       ],
       "distanceFromRouteMeters": 105.82769794777498,
-      "nearestRouteDistanceMeters": 4288.707340424035
+      "nearestRouteDistanceMeters": 4288.707340424035,
+      "onewayDirection": 1
     },
     {
       "osmId": 116455627,
@@ -6451,7 +6517,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.21193698555497,
-      "nearestRouteDistanceMeters": 4628.926602038823
+      "nearestRouteDistanceMeters": 4628.926602038823,
+      "onewayDirection": 1
     },
     {
       "osmId": 116455647,
@@ -6698,7 +6765,8 @@
         }
       ],
       "distanceFromRouteMeters": 149.35711439508978,
-      "nearestRouteDistanceMeters": 5031.574206824647
+      "nearestRouteDistanceMeters": 5031.574206824647,
+      "onewayDirection": 1
     },
     {
       "osmId": 116533502,
@@ -6900,7 +6968,8 @@
         }
       ],
       "distanceFromRouteMeters": 176.10333785559013,
-      "nearestRouteDistanceMeters": 4147.156121174268
+      "nearestRouteDistanceMeters": 4147.156121174268,
+      "onewayDirection": 1
     },
     {
       "osmId": 116549665,
@@ -7002,7 +7071,8 @@
         }
       ],
       "distanceFromRouteMeters": 181.534658047499,
-      "nearestRouteDistanceMeters": 3455.955681996289
+      "nearestRouteDistanceMeters": 3455.955681996289,
+      "onewayDirection": 1
     },
     {
       "osmId": 116726397,
@@ -7045,7 +7115,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4730.147497138564
+      "nearestRouteDistanceMeters": 4730.147497138564,
+      "onewayDirection": 1
     },
     {
       "osmId": 117322519,
@@ -7226,7 +7297,8 @@
         }
       ],
       "distanceFromRouteMeters": 145.10929143858593,
-      "nearestRouteDistanceMeters": 5474.0732201064575
+      "nearestRouteDistanceMeters": 5474.0732201064575,
+      "onewayDirection": 1
     },
     {
       "osmId": 117353998,
@@ -7289,7 +7361,8 @@
         }
       ],
       "distanceFromRouteMeters": 198.73268515745826,
-      "nearestRouteDistanceMeters": 3789.8646347133154
+      "nearestRouteDistanceMeters": 3789.8646347133154,
+      "onewayDirection": 1
     },
     {
       "osmId": 118892272,
@@ -7357,7 +7430,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 119005989,
@@ -7399,7 +7473,8 @@
         }
       ],
       "distanceFromRouteMeters": 151.51847938667825,
-      "nearestRouteDistanceMeters": 3902.4854951422963
+      "nearestRouteDistanceMeters": 3902.4854951422963,
+      "onewayDirection": 1
     },
     {
       "osmId": 119006048,
@@ -7436,7 +7511,8 @@
         }
       ],
       "distanceFromRouteMeters": 48.567992929355576,
-      "nearestRouteDistanceMeters": 1184.534049514427
+      "nearestRouteDistanceMeters": 1184.534049514427,
+      "onewayDirection": 1
     },
     {
       "osmId": 125594119,
@@ -7493,7 +7569,8 @@
         }
       ],
       "distanceFromRouteMeters": 154.50628797521946,
-      "nearestRouteDistanceMeters": 1929.5124364782057
+      "nearestRouteDistanceMeters": 1929.5124364782057,
+      "onewayDirection": 1
     },
     {
       "osmId": 135350902,
@@ -7539,7 +7616,8 @@
         }
       ],
       "distanceFromRouteMeters": 146.2386401890081,
-      "nearestRouteDistanceMeters": 4681.886458129146
+      "nearestRouteDistanceMeters": 4681.886458129146,
+      "onewayDirection": 1
     },
     {
       "osmId": 135350903,
@@ -7585,7 +7663,8 @@
         }
       ],
       "distanceFromRouteMeters": 133.77897127040112,
-      "nearestRouteDistanceMeters": 4673.275703800096
+      "nearestRouteDistanceMeters": 4673.275703800096,
+      "onewayDirection": 1
     },
     {
       "osmId": 135723023,
@@ -7657,7 +7736,8 @@
         }
       ],
       "distanceFromRouteMeters": 79.33066126467408,
-      "nearestRouteDistanceMeters": 1243.6146912553932
+      "nearestRouteDistanceMeters": 1243.6146912553932,
+      "onewayDirection": 1
     },
     {
       "osmId": 152382701,
@@ -7708,7 +7788,8 @@
         }
       ],
       "distanceFromRouteMeters": 22.45066434046927,
-      "nearestRouteDistanceMeters": 799.7981592372273
+      "nearestRouteDistanceMeters": 799.7981592372273,
+      "onewayDirection": 1
     },
     {
       "osmId": 178288507,
@@ -7755,7 +7836,8 @@
         }
       ],
       "distanceFromRouteMeters": 188.4380361427046,
-      "nearestRouteDistanceMeters": 4288.707340424035
+      "nearestRouteDistanceMeters": 4288.707340424035,
+      "onewayDirection": 1
     },
     {
       "osmId": 225051539,
@@ -7817,7 +7899,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3324.982666921114
+      "nearestRouteDistanceMeters": 3324.982666921114,
+      "onewayDirection": 1
     },
     {
       "osmId": 225051723,
@@ -7918,7 +8001,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3094.655242926426
+      "nearestRouteDistanceMeters": 3094.655242926426,
+      "onewayDirection": 1
     },
     {
       "osmId": 226829508,
@@ -7999,7 +8083,8 @@
         }
       ],
       "distanceFromRouteMeters": 194.22297487830565,
-      "nearestRouteDistanceMeters": 2759.591596663286
+      "nearestRouteDistanceMeters": 2759.591596663286,
+      "onewayDirection": 1
     },
     {
       "osmId": 227417701,
@@ -8030,7 +8115,8 @@
         }
       ],
       "distanceFromRouteMeters": 143.69126754511024,
-      "nearestRouteDistanceMeters": 3312.3869531714195
+      "nearestRouteDistanceMeters": 3312.3869531714195,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628906,
@@ -8087,7 +8173,8 @@
         }
       ],
       "distanceFromRouteMeters": 29.53182747747232,
-      "nearestRouteDistanceMeters": 646.9253671628196
+      "nearestRouteDistanceMeters": 646.9253671628196,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628907,
@@ -8124,7 +8211,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 629.0552713904027
+      "nearestRouteDistanceMeters": 629.0552713904027,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628909,
@@ -8161,7 +8249,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 672.9704468863204
+      "nearestRouteDistanceMeters": 672.9704468863204,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628911,
@@ -8208,7 +8297,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4634.540491841219
+      "nearestRouteDistanceMeters": 4634.540491841219,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628915,
@@ -8245,7 +8335,8 @@
         }
       ],
       "distanceFromRouteMeters": 76.43797621863253,
-      "nearestRouteDistanceMeters": 746.994331228088
+      "nearestRouteDistanceMeters": 746.994331228088,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628917,
@@ -8271,7 +8362,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 560.5106455123065
+      "nearestRouteDistanceMeters": 560.5106455123065,
+      "onewayDirection": 1
     },
     {
       "osmId": 227628918,
@@ -8343,7 +8435,8 @@
         }
       ],
       "distanceFromRouteMeters": 22.05503425434584,
-      "nearestRouteDistanceMeters": 585.5897437955879
+      "nearestRouteDistanceMeters": 585.5897437955879,
+      "onewayDirection": 1
     },
     {
       "osmId": 259144677,
@@ -8450,7 +8543,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.3216265868031,
-      "nearestRouteDistanceMeters": 1447.6424512935753
+      "nearestRouteDistanceMeters": 1447.6424512935753,
+      "onewayDirection": 1
     },
     {
       "osmId": 259284145,
@@ -8522,7 +8616,8 @@
         }
       ],
       "distanceFromRouteMeters": 131.80127496209698,
-      "nearestRouteDistanceMeters": 742.9771352919354
+      "nearestRouteDistanceMeters": 742.9771352919354,
+      "onewayDirection": 1
     },
     {
       "osmId": 260576704,
@@ -8585,7 +8680,8 @@
         }
       ],
       "distanceFromRouteMeters": 70.80860875311299,
-      "nearestRouteDistanceMeters": 5377.553965372314
+      "nearestRouteDistanceMeters": 5377.553965372314,
+      "onewayDirection": 1
     },
     {
       "osmId": 265886941,
@@ -8692,7 +8788,8 @@
         }
       ],
       "distanceFromRouteMeters": 60.558307242155585,
-      "nearestRouteDistanceMeters": 3668.051438360678
+      "nearestRouteDistanceMeters": 3668.051438360678,
+      "onewayDirection": 1
     },
     {
       "osmId": 268130613,
@@ -8764,7 +8861,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4730.147497138564
+      "nearestRouteDistanceMeters": 4730.147497138564,
+      "onewayDirection": 1
     },
     {
       "osmId": 273392939,
@@ -8811,7 +8909,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2972.0923387074877
+      "nearestRouteDistanceMeters": 2972.0923387074877,
+      "onewayDirection": 1
     },
     {
       "osmId": 372554472,
@@ -8912,7 +9011,8 @@
         }
       ],
       "distanceFromRouteMeters": 54.42556173075422,
-      "nearestRouteDistanceMeters": 1008.5657344346056
+      "nearestRouteDistanceMeters": 1008.5657344346056,
+      "onewayDirection": 1
     },
     {
       "osmId": 376305727,
@@ -8955,7 +9055,8 @@
         }
       ],
       "distanceFromRouteMeters": 128.21031250979917,
-      "nearestRouteDistanceMeters": 3900.332382110684
+      "nearestRouteDistanceMeters": 3900.332382110684,
+      "onewayDirection": 1
     },
     {
       "osmId": 381871577,
@@ -9007,7 +9108,8 @@
         }
       ],
       "distanceFromRouteMeters": 122.78160115478609,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 381871578,
@@ -9079,7 +9181,8 @@
         }
       ],
       "distanceFromRouteMeters": 128.21464214478993,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 381871579,
@@ -9201,7 +9304,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5426.570725749748
+      "nearestRouteDistanceMeters": 5426.570725749748,
+      "onewayDirection": 1
     },
     {
       "osmId": 381871579,
@@ -9263,7 +9367,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5426.570725749748
+      "nearestRouteDistanceMeters": 5426.570725749748,
+      "onewayDirection": 1
     },
     {
       "osmId": 442694815,
@@ -9305,7 +9410,8 @@
         }
       ],
       "distanceFromRouteMeters": 198.11453769093183,
-      "nearestRouteDistanceMeters": 3933.1403841526635
+      "nearestRouteDistanceMeters": 3933.1403841526635,
+      "onewayDirection": 1
     },
     {
       "osmId": 506378344,
@@ -9457,7 +9563,8 @@
         }
       ],
       "distanceFromRouteMeters": 51.08274523589089,
-      "nearestRouteDistanceMeters": 156.87512727615845
+      "nearestRouteDistanceMeters": 156.87512727615845,
+      "onewayDirection": 1
     },
     {
       "osmId": 506378347,
@@ -9589,7 +9696,8 @@
         }
       ],
       "distanceFromRouteMeters": 45.6905225592854,
-      "nearestRouteDistanceMeters": 4873.706038692495
+      "nearestRouteDistanceMeters": 4873.706038692495,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089734,
@@ -9656,7 +9764,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 154.10892496132976
+      "nearestRouteDistanceMeters": 154.10892496132976,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089744,
@@ -9743,7 +9852,8 @@
         }
       ],
       "distanceFromRouteMeters": 190.75296624696932,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089746,
@@ -9780,7 +9890,8 @@
         }
       ],
       "distanceFromRouteMeters": 148.5994417263558,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089750,
@@ -9802,7 +9913,8 @@
         }
       ],
       "distanceFromRouteMeters": 195.9554411823583,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089754,
@@ -9839,7 +9951,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 372.12375262699817
+      "nearestRouteDistanceMeters": 372.12375262699817,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089755,
@@ -9906,7 +10019,8 @@
         }
       ],
       "distanceFromRouteMeters": 19.4792502442084,
-      "nearestRouteDistanceMeters": 356.0500106600446
+      "nearestRouteDistanceMeters": 356.0500106600446,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089756,
@@ -9948,7 +10062,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 307.1692526395001
+      "nearestRouteDistanceMeters": 307.1692526395001,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089759,
@@ -9995,7 +10110,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 91.96144056808444
+      "nearestRouteDistanceMeters": 91.96144056808444,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089762,
@@ -10087,7 +10203,8 @@
         }
       ],
       "distanceFromRouteMeters": 117.10972862722521,
-      "nearestRouteDistanceMeters": 148.35170977658098
+      "nearestRouteDistanceMeters": 148.35170977658098,
+      "onewayDirection": 1
     },
     {
       "osmId": 508089763,
@@ -10164,7 +10281,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 154.10892496132976
+      "nearestRouteDistanceMeters": 154.10892496132976,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099143,
@@ -10251,7 +10369,8 @@
         }
       ],
       "distanceFromRouteMeters": 129.23468780028543,
-      "nearestRouteDistanceMeters": 696.7425342980886
+      "nearestRouteDistanceMeters": 696.7425342980886,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099145,
@@ -10288,7 +10407,8 @@
         }
       ],
       "distanceFromRouteMeters": 187.93709865681757,
-      "nearestRouteDistanceMeters": 581.1617285077157
+      "nearestRouteDistanceMeters": 581.1617285077157,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099157,
@@ -10440,7 +10560,8 @@
         }
       ],
       "distanceFromRouteMeters": 116.87395728948101,
-      "nearestRouteDistanceMeters": 195.66696947020912
+      "nearestRouteDistanceMeters": 195.66696947020912,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099159,
@@ -10472,7 +10593,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.39945245826821,
-      "nearestRouteDistanceMeters": 512.2221948711147
+      "nearestRouteDistanceMeters": 512.2221948711147,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099161,
@@ -10534,7 +10656,8 @@
         }
       ],
       "distanceFromRouteMeters": 127.84536829242997,
-      "nearestRouteDistanceMeters": 517.3388045553329
+      "nearestRouteDistanceMeters": 517.3388045553329,
+      "onewayDirection": 1
     },
     {
       "osmId": 508099163,
@@ -10571,7 +10694,8 @@
         }
       ],
       "distanceFromRouteMeters": 127.84536829242997,
-      "nearestRouteDistanceMeters": 517.3388045553329
+      "nearestRouteDistanceMeters": 517.3388045553329,
+      "onewayDirection": 1
     },
     {
       "osmId": 511211289,
@@ -10614,7 +10738,8 @@
         }
       ],
       "distanceFromRouteMeters": 100.03398679173166,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 511223397,
@@ -10726,7 +10851,8 @@
         }
       ],
       "distanceFromRouteMeters": 79.54293755790205,
-      "nearestRouteDistanceMeters": 1128.0301695733433
+      "nearestRouteDistanceMeters": 1128.0301695733433,
+      "onewayDirection": 1
     },
     {
       "osmId": 539360515,
@@ -10873,7 +10999,8 @@
         }
       ],
       "distanceFromRouteMeters": 45.6905225592854,
-      "nearestRouteDistanceMeters": 4873.706038692495
+      "nearestRouteDistanceMeters": 4873.706038692495,
+      "onewayDirection": 1
     },
     {
       "osmId": 539367037,
@@ -10915,7 +11042,8 @@
         }
       ],
       "distanceFromRouteMeters": 177.8050206083646,
-      "nearestRouteDistanceMeters": 722.7855500752119
+      "nearestRouteDistanceMeters": 722.7855500752119,
+      "onewayDirection": 1
     },
     {
       "osmId": 565347648,
@@ -10946,7 +11074,8 @@
         }
       ],
       "distanceFromRouteMeters": 105.1030836418216,
-      "nearestRouteDistanceMeters": 1046.4187369152748
+      "nearestRouteDistanceMeters": 1046.4187369152748,
+      "onewayDirection": 1
     },
     {
       "osmId": 576938053,
@@ -10977,7 +11106,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2843.873603928354
+      "nearestRouteDistanceMeters": 2843.873603928354,
+      "onewayDirection": 1
     },
     {
       "osmId": 592337543,
@@ -11013,7 +11143,8 @@
         }
       ],
       "distanceFromRouteMeters": 77.87052905414545,
-      "nearestRouteDistanceMeters": 1776.2202149102013
+      "nearestRouteDistanceMeters": 1776.2202149102013,
+      "onewayDirection": 1
     },
     {
       "osmId": 592337546,
@@ -11079,7 +11210,8 @@
         }
       ],
       "distanceFromRouteMeters": 48.90638426938729,
-      "nearestRouteDistanceMeters": 1815.646691107279
+      "nearestRouteDistanceMeters": 1815.646691107279,
+      "onewayDirection": 1
     },
     {
       "osmId": 592911859,
@@ -11130,7 +11262,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.27056353739562,
-      "nearestRouteDistanceMeters": 4920.887237582945
+      "nearestRouteDistanceMeters": 4920.887237582945,
+      "onewayDirection": 1
     },
     {
       "osmId": 592911860,
@@ -11166,7 +11299,8 @@
         }
       ],
       "distanceFromRouteMeters": 36.209286669445966,
-      "nearestRouteDistanceMeters": 4847.737349217904
+      "nearestRouteDistanceMeters": 4847.737349217904,
+      "onewayDirection": 1
     },
     {
       "osmId": 611495094,
@@ -11198,7 +11332,8 @@
         }
       ],
       "distanceFromRouteMeters": 11.05972660161035,
-      "nearestRouteDistanceMeters": 514.6386098427374
+      "nearestRouteDistanceMeters": 514.6386098427374,
+      "onewayDirection": 1
     },
     {
       "osmId": 611495094,
@@ -11255,7 +11390,8 @@
         }
       ],
       "distanceFromRouteMeters": 11.05972660161035,
-      "nearestRouteDistanceMeters": 514.6386098427374
+      "nearestRouteDistanceMeters": 514.6386098427374,
+      "onewayDirection": 1
     },
     {
       "osmId": 625232919,
@@ -11316,7 +11452,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1797.1314342699343
+      "nearestRouteDistanceMeters": 1797.1314342699343,
+      "onewayDirection": 1
     },
     {
       "osmId": 625232923,
@@ -11342,7 +11479,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3615.767974734237
+      "nearestRouteDistanceMeters": 3615.767974734237,
+      "onewayDirection": 1
     },
     {
       "osmId": 629154770,
@@ -11409,7 +11547,8 @@
         }
       ],
       "distanceFromRouteMeters": 76.32226200087398,
-      "nearestRouteDistanceMeters": 4081.8887115024395
+      "nearestRouteDistanceMeters": 4081.8887115024395,
+      "onewayDirection": 1
     },
     {
       "osmId": 689021070,
@@ -11656,7 +11795,8 @@
         }
       ],
       "distanceFromRouteMeters": 115.40874167861804,
-      "nearestRouteDistanceMeters": 4343.0872614682585
+      "nearestRouteDistanceMeters": 4343.0872614682585,
+      "onewayDirection": 1
     },
     {
       "osmId": 772999267,
@@ -11728,7 +11868,8 @@
         }
       ],
       "distanceFromRouteMeters": 194.38606727707926,
-      "nearestRouteDistanceMeters": 1185.4003641652548
+      "nearestRouteDistanceMeters": 1185.4003641652548,
+      "onewayDirection": 1
     },
     {
       "osmId": 772999268,
@@ -11780,7 +11921,8 @@
         }
       ],
       "distanceFromRouteMeters": 194.38606727707926,
-      "nearestRouteDistanceMeters": 1185.4003641652548
+      "nearestRouteDistanceMeters": 1185.4003641652548,
+      "onewayDirection": 1
     },
     {
       "osmId": 772999269,
@@ -11807,7 +11949,8 @@
         }
       ],
       "distanceFromRouteMeters": 139.31517643879363,
-      "nearestRouteDistanceMeters": 1184.988388734426
+      "nearestRouteDistanceMeters": 1184.988388734426,
+      "onewayDirection": 1
     },
     {
       "osmId": 817050458,
@@ -11829,7 +11972,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 513.2343995174112
+      "nearestRouteDistanceMeters": 513.2343995174112,
+      "onewayDirection": 1
     },
     {
       "osmId": 817050459,
@@ -11856,7 +12000,8 @@
         }
       ],
       "distanceFromRouteMeters": 36.9286503069796,
-      "nearestRouteDistanceMeters": 510.858265831073
+      "nearestRouteDistanceMeters": 510.858265831073,
+      "onewayDirection": 1
     },
     {
       "osmId": 817050460,
@@ -11883,7 +12028,8 @@
         }
       ],
       "distanceFromRouteMeters": 19.8874342726802,
-      "nearestRouteDistanceMeters": 510.978687818606
+      "nearestRouteDistanceMeters": 510.978687818606,
+      "onewayDirection": 1
     },
     {
       "osmId": 819465425,
@@ -11934,7 +12080,8 @@
         }
       ],
       "distanceFromRouteMeters": 9.501814179446257,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 819729877,
@@ -12105,7 +12252,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2467.1413158676587
+      "nearestRouteDistanceMeters": 2467.1413158676587,
+      "onewayDirection": 1
     },
     {
       "osmId": 819729878,
@@ -12136,7 +12284,8 @@
         }
       ],
       "distanceFromRouteMeters": 40.60893927222878,
-      "nearestRouteDistanceMeters": 2904.34329464044
+      "nearestRouteDistanceMeters": 2904.34329464044,
+      "onewayDirection": 1
     },
     {
       "osmId": 820874663,
@@ -12257,7 +12406,8 @@
         }
       ],
       "distanceFromRouteMeters": 35.40821350381279,
-      "nearestRouteDistanceMeters": 4667.071567399315
+      "nearestRouteDistanceMeters": 4667.071567399315,
+      "onewayDirection": 1
     },
     {
       "osmId": 835828842,
@@ -12294,7 +12444,8 @@
         }
       ],
       "distanceFromRouteMeters": 197.45698984456672,
-      "nearestRouteDistanceMeters": 1702.03282844751
+      "nearestRouteDistanceMeters": 1702.03282844751,
+      "onewayDirection": 1
     },
     {
       "osmId": 837610231,
@@ -12326,7 +12477,8 @@
         }
       ],
       "distanceFromRouteMeters": 194.1680016728649,
-      "nearestRouteDistanceMeters": 626.3956080514414
+      "nearestRouteDistanceMeters": 626.3956080514414,
+      "onewayDirection": 1
     },
     {
       "osmId": 854395515,
@@ -12377,7 +12529,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.27056353739562,
-      "nearestRouteDistanceMeters": 4920.887237582945
+      "nearestRouteDistanceMeters": 4920.887237582945,
+      "onewayDirection": 1
     },
     {
       "osmId": 854395516,
@@ -12543,7 +12696,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5195.177285527443
+      "nearestRouteDistanceMeters": 5195.177285527443,
+      "onewayDirection": 1
     },
     {
       "osmId": 854395519,
@@ -12579,7 +12733,8 @@
         }
       ],
       "distanceFromRouteMeters": 194.53808382420343,
-      "nearestRouteDistanceMeters": 4853.647378868323
+      "nearestRouteDistanceMeters": 4853.647378868323,
+      "onewayDirection": 1
     },
     {
       "osmId": 854395520,
@@ -12690,7 +12845,8 @@
         }
       ],
       "distanceFromRouteMeters": 186.06614913596712,
-      "nearestRouteDistanceMeters": 4846.591426400891
+      "nearestRouteDistanceMeters": 4846.591426400891,
+      "onewayDirection": 1
     },
     {
       "osmId": 910285682,
@@ -12822,7 +12978,8 @@
         }
       ],
       "distanceFromRouteMeters": 145.05899593074534,
-      "nearestRouteDistanceMeters": 817.8909304633497
+      "nearestRouteDistanceMeters": 817.8909304633497,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814187,
@@ -12864,7 +13021,8 @@
         }
       ],
       "distanceFromRouteMeters": 73.7437893199278,
-      "nearestRouteDistanceMeters": 1481.729148716633
+      "nearestRouteDistanceMeters": 1481.729148716633,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814188,
@@ -12906,7 +13064,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.04339830233063,
-      "nearestRouteDistanceMeters": 1482.0056675327226
+      "nearestRouteDistanceMeters": 1482.0056675327226,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814189,
@@ -12968,7 +13127,8 @@
         }
       ],
       "distanceFromRouteMeters": 128.22977098887534,
-      "nearestRouteDistanceMeters": 1300.2438024873368
+      "nearestRouteDistanceMeters": 1300.2438024873368,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814190,
@@ -13000,7 +13160,8 @@
         }
       ],
       "distanceFromRouteMeters": 168.09570752585174,
-      "nearestRouteDistanceMeters": 829.169053811481
+      "nearestRouteDistanceMeters": 829.169053811481,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814191,
@@ -13037,7 +13198,8 @@
         }
       ],
       "distanceFromRouteMeters": 122.78160115478609,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 910814192,
@@ -13094,7 +13256,8 @@
         }
       ],
       "distanceFromRouteMeters": 128.20368216536377,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 911433136,
@@ -13126,7 +13289,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3195.48941664683
+      "nearestRouteDistanceMeters": 3195.48941664683,
+      "onewayDirection": 1
     },
     {
       "osmId": 925018290,
@@ -13169,7 +13333,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.98740037942427,
-      "nearestRouteDistanceMeters": 3899.573045469164
+      "nearestRouteDistanceMeters": 3899.573045469164,
+      "onewayDirection": 1
     },
     {
       "osmId": 925021930,
@@ -13216,7 +13381,8 @@
         }
       ],
       "distanceFromRouteMeters": 62.28245888917428,
-      "nearestRouteDistanceMeters": 4108.748010032137
+      "nearestRouteDistanceMeters": 4108.748010032137,
+      "onewayDirection": 1
     },
     {
       "osmId": 967152133,
@@ -13254,7 +13420,8 @@
         }
       ],
       "distanceFromRouteMeters": 176.17753117545374,
-      "nearestRouteDistanceMeters": 3842.6621235409375
+      "nearestRouteDistanceMeters": 3842.6621235409375,
+      "onewayDirection": 1
     },
     {
       "osmId": 975638198,
@@ -13291,7 +13458,8 @@
         }
       ],
       "distanceFromRouteMeters": 7.083136250204524,
-      "nearestRouteDistanceMeters": 873.6846850714737
+      "nearestRouteDistanceMeters": 873.6846850714737,
+      "onewayDirection": 1
     },
     {
       "osmId": 975638201,
@@ -13313,7 +13481,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 892.7723320697455
+      "nearestRouteDistanceMeters": 892.7723320697455,
+      "onewayDirection": 1
     },
     {
       "osmId": 975638220,
@@ -13355,7 +13524,8 @@
         }
       ],
       "distanceFromRouteMeters": 6.808466720724701,
-      "nearestRouteDistanceMeters": 852.8265055475389
+      "nearestRouteDistanceMeters": 852.8265055475389,
+      "onewayDirection": 1
     },
     {
       "osmId": 981246463,
@@ -13392,7 +13562,8 @@
         }
       ],
       "distanceFromRouteMeters": 35.404446901643226,
-      "nearestRouteDistanceMeters": 1926.1202179566596
+      "nearestRouteDistanceMeters": 1926.1202179566596,
+      "onewayDirection": 1
     },
     {
       "osmId": 996522799,
@@ -13423,7 +13594,8 @@
         }
       ],
       "distanceFromRouteMeters": 197.41100375718347,
-      "nearestRouteDistanceMeters": 1736.578920021757
+      "nearestRouteDistanceMeters": 1736.578920021757,
+      "onewayDirection": 1
     },
     {
       "osmId": 996522804,
@@ -13464,7 +13636,8 @@
         }
       ],
       "distanceFromRouteMeters": 188.862308209092,
-      "nearestRouteDistanceMeters": 1772.7807858549043
+      "nearestRouteDistanceMeters": 1772.7807858549043,
+      "onewayDirection": 1
     },
     {
       "osmId": 1001701828,
@@ -13571,7 +13744,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.6322158029145,
-      "nearestRouteDistanceMeters": 3455.966274998836
+      "nearestRouteDistanceMeters": 3455.966274998836,
+      "onewayDirection": 1
     },
     {
       "osmId": 1075896520,
@@ -13593,7 +13767,8 @@
         }
       ],
       "distanceFromRouteMeters": 133.77897127040112,
-      "nearestRouteDistanceMeters": 4673.275703800096
+      "nearestRouteDistanceMeters": 4673.275703800096,
+      "onewayDirection": 1
     },
     {
       "osmId": 1075901299,
@@ -13640,7 +13815,8 @@
         }
       ],
       "distanceFromRouteMeters": 165.50872017811687,
-      "nearestRouteDistanceMeters": 4885.3497908498875
+      "nearestRouteDistanceMeters": 4885.3497908498875,
+      "onewayDirection": 1
     },
     {
       "osmId": 1085542918,
@@ -13692,7 +13868,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.29684274635154,
-      "nearestRouteDistanceMeters": 4226.186479560441
+      "nearestRouteDistanceMeters": 4226.186479560441,
+      "onewayDirection": 1
     },
     {
       "osmId": 1085542919,
@@ -13759,7 +13936,8 @@
         }
       ],
       "distanceFromRouteMeters": 152.9183421868508,
-      "nearestRouteDistanceMeters": 4122.866076473109
+      "nearestRouteDistanceMeters": 4122.866076473109,
+      "onewayDirection": 1
     },
     {
       "osmId": 1115400377,
@@ -13795,7 +13973,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3535.068224257539
+      "nearestRouteDistanceMeters": 3535.068224257539,
+      "onewayDirection": 1
     },
     {
       "osmId": 1130563799,
@@ -13832,7 +14011,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4110.777205050625
+      "nearestRouteDistanceMeters": 4110.777205050625,
+      "onewayDirection": 1
     },
     {
       "osmId": 1227418299,
@@ -13888,7 +14068,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2925.50594942373
+      "nearestRouteDistanceMeters": 2925.50594942373,
+      "onewayDirection": 1
     },
     {
       "osmId": 1230034792,
@@ -13919,7 +14100,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.88677966346509,
-      "nearestRouteDistanceMeters": 1670.7361817450399
+      "nearestRouteDistanceMeters": 1670.7361817450399,
+      "onewayDirection": 1
     },
     {
       "osmId": 1232297896,
@@ -14111,7 +14293,8 @@
         }
       ],
       "distanceFromRouteMeters": 111.48517794851479,
-      "nearestRouteDistanceMeters": 4629.644780175478
+      "nearestRouteDistanceMeters": 4629.644780175478,
+      "onewayDirection": 1
     },
     {
       "osmId": 1255450325,
@@ -14133,7 +14316,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4383.967402239627
+      "nearestRouteDistanceMeters": 4383.967402239627,
+      "onewayDirection": 1
     },
     {
       "osmId": 1255450326,
@@ -14160,7 +14344,8 @@
         }
       ],
       "distanceFromRouteMeters": 12.336171487543561,
-      "nearestRouteDistanceMeters": 4380.0422012824565
+      "nearestRouteDistanceMeters": 4380.0422012824565,
+      "onewayDirection": 1
     },
     {
       "osmId": 1271889477,
@@ -14187,7 +14372,8 @@
         }
       ],
       "distanceFromRouteMeters": 116.87395728948101,
-      "nearestRouteDistanceMeters": 195.66696947020912
+      "nearestRouteDistanceMeters": 195.66696947020912,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272470612,
@@ -14225,7 +14411,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2752.2288522514036
+      "nearestRouteDistanceMeters": 2752.2288522514036,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272611614,
@@ -14257,7 +14444,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4196.383242975953
+      "nearestRouteDistanceMeters": 4196.383242975953,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272971626,
@@ -14314,7 +14502,8 @@
         }
       ],
       "distanceFromRouteMeters": 197.4774397155243,
-      "nearestRouteDistanceMeters": 5140.47112986089
+      "nearestRouteDistanceMeters": 5140.47112986089,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272971675,
@@ -14341,7 +14530,8 @@
         }
       ],
       "distanceFromRouteMeters": 178.1395850742492,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272971676,
@@ -14378,7 +14568,8 @@
         }
       ],
       "distanceFromRouteMeters": 142.40673803877266,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272971679,
@@ -14470,7 +14661,8 @@
         }
       ],
       "distanceFromRouteMeters": 136.80864724191133,
-      "nearestRouteDistanceMeters": 5426.41823590861
+      "nearestRouteDistanceMeters": 5426.41823590861,
+      "onewayDirection": 1
     },
     {
       "osmId": 1272971680,
@@ -14492,7 +14684,8 @@
         }
       ],
       "distanceFromRouteMeters": 50.06137420209609,
-      "nearestRouteDistanceMeters": 5166.259431457856
+      "nearestRouteDistanceMeters": 5166.259431457856,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137556,
@@ -14514,7 +14707,8 @@
         }
       ],
       "distanceFromRouteMeters": 141.25378279490454,
-      "nearestRouteDistanceMeters": 4672.843587464395
+      "nearestRouteDistanceMeters": 4672.843587464395,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137557,
@@ -14546,7 +14740,8 @@
         }
       ],
       "distanceFromRouteMeters": 137.53036455898678,
-      "nearestRouteDistanceMeters": 4666.073268928514
+      "nearestRouteDistanceMeters": 4666.073268928514,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137558,
@@ -14583,7 +14778,8 @@
         }
       ],
       "distanceFromRouteMeters": 141.25378279490454,
-      "nearestRouteDistanceMeters": 4672.843587464395
+      "nearestRouteDistanceMeters": 4672.843587464395,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137559,
@@ -14965,7 +15161,8 @@
         }
       ],
       "distanceFromRouteMeters": 146.2386401890081,
-      "nearestRouteDistanceMeters": 4681.886458129146
+      "nearestRouteDistanceMeters": 4681.886458129146,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137560,
@@ -14987,7 +15184,8 @@
         }
       ],
       "distanceFromRouteMeters": 133.77897127040112,
-      "nearestRouteDistanceMeters": 4673.275703800096
+      "nearestRouteDistanceMeters": 4673.275703800096,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137561,
@@ -15038,7 +15236,8 @@
         }
       ],
       "distanceFromRouteMeters": 111.89893376590115,
-      "nearestRouteDistanceMeters": 4619.327071679822
+      "nearestRouteDistanceMeters": 4619.327071679822,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137562,
@@ -15060,7 +15259,8 @@
         }
       ],
       "distanceFromRouteMeters": 137.53036455898678,
-      "nearestRouteDistanceMeters": 4666.073268928514
+      "nearestRouteDistanceMeters": 4666.073268928514,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137563,
@@ -15087,7 +15287,8 @@
         }
       ],
       "distanceFromRouteMeters": 158.85391369342082,
-      "nearestRouteDistanceMeters": 4659.452841344869
+      "nearestRouteDistanceMeters": 4659.452841344869,
+      "onewayDirection": 1
     },
     {
       "osmId": 1328137564,
@@ -15119,7 +15320,8 @@
         }
       ],
       "distanceFromRouteMeters": 152.30249104038623,
-      "nearestRouteDistanceMeters": 4652.338898872767
+      "nearestRouteDistanceMeters": 4652.338898872767,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334459227,
@@ -15156,7 +15358,8 @@
         }
       ],
       "distanceFromRouteMeters": 153.48583826275404,
-      "nearestRouteDistanceMeters": 1481.7814877921385
+      "nearestRouteDistanceMeters": 1481.7814877921385,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334459230,
@@ -15208,7 +15411,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.04566685447831,
-      "nearestRouteDistanceMeters": 1702.2082141809703
+      "nearestRouteDistanceMeters": 1702.2082141809703,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334459232,
@@ -15240,7 +15444,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1183.5820971175604
+      "nearestRouteDistanceMeters": 1183.5820971175604,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334596461,
@@ -15282,7 +15487,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1481.275478946014
+      "nearestRouteDistanceMeters": 1481.275478946014,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334596462,
@@ -15309,7 +15515,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1702.7786195509743
+      "nearestRouteDistanceMeters": 1702.7786195509743,
+      "onewayDirection": 1
     },
     {
       "osmId": 1334596463,
@@ -15376,7 +15583,8 @@
         }
       ],
       "distanceFromRouteMeters": 11.220832900016267,
-      "nearestRouteDistanceMeters": 887.6314074958542
+      "nearestRouteDistanceMeters": 887.6314074958542,
+      "onewayDirection": 1
     },
     {
       "osmId": 1339799747,
@@ -15423,7 +15631,8 @@
         }
       ],
       "distanceFromRouteMeters": 187.55284096214712,
-      "nearestRouteDistanceMeters": 5126.4183356052245
+      "nearestRouteDistanceMeters": 5126.4183356052245,
+      "onewayDirection": 1
     },
     {
       "osmId": 1343576626,
@@ -15450,7 +15659,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4129.714258214484
+      "nearestRouteDistanceMeters": 4129.714258214484,
+      "onewayDirection": 1
     },
     {
       "osmId": 1343576901,
@@ -15486,7 +15696,8 @@
         }
       ],
       "distanceFromRouteMeters": 158.03346993289833,
-      "nearestRouteDistanceMeters": 5021.536516003965
+      "nearestRouteDistanceMeters": 5021.536516003965,
+      "onewayDirection": 1
     },
     {
       "osmId": 1354295530,
@@ -15533,7 +15744,8 @@
         }
       ],
       "distanceFromRouteMeters": 87.17763716173722,
-      "nearestRouteDistanceMeters": 2194.651444228811
+      "nearestRouteDistanceMeters": 2194.651444228811,
+      "onewayDirection": 1
     },
     {
       "osmId": 1354295531,
@@ -15575,7 +15787,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.78327697906745,
-      "nearestRouteDistanceMeters": 2214.59477129927
+      "nearestRouteDistanceMeters": 2214.59477129927,
+      "onewayDirection": 1
     },
     {
       "osmId": 1354295532,
@@ -15597,7 +15810,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.7407237236545,
-      "nearestRouteDistanceMeters": 2227.8792819022988
+      "nearestRouteDistanceMeters": 2227.8792819022988,
+      "onewayDirection": 1
     },
     {
       "osmId": 1354360469,
@@ -15675,7 +15889,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 1379197189,
@@ -15751,7 +15966,8 @@
         }
       ],
       "distanceFromRouteMeters": 115.4528486460329,
-      "nearestRouteDistanceMeters": 2619.1899277935577
+      "nearestRouteDistanceMeters": 2619.1899277935577,
+      "onewayDirection": 1
     },
     {
       "osmId": 1379197192,
@@ -15778,7 +15994,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.38671164699623,
-      "nearestRouteDistanceMeters": 2603.645899463644
+      "nearestRouteDistanceMeters": 2603.645899463644,
+      "onewayDirection": 1
     },
     {
       "osmId": 1379197194,
@@ -15805,7 +16022,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.39759673156716,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 1379197196,
@@ -15891,7 +16109,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.0493228154289,
-      "nearestRouteDistanceMeters": 2610.398002187407
+      "nearestRouteDistanceMeters": 2610.398002187407,
+      "onewayDirection": 1
     },
     {
       "osmId": 1431801297,
@@ -15913,7 +16132,8 @@
         }
       ],
       "distanceFromRouteMeters": 169.6518621169133,
-      "nearestRouteDistanceMeters": 4646.835289292576
+      "nearestRouteDistanceMeters": 4646.835289292576,
+      "onewayDirection": 1
     },
     {
       "osmId": 1431801298,
@@ -15965,7 +16185,8 @@
         }
       ],
       "distanceFromRouteMeters": 171.31073304925513,
-      "nearestRouteDistanceMeters": 4163.254399587847
+      "nearestRouteDistanceMeters": 4163.254399587847,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214075,
@@ -16002,7 +16223,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4236.031823846933
+      "nearestRouteDistanceMeters": 4236.031823846933,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214076,
@@ -16039,7 +16261,8 @@
         }
       ],
       "distanceFromRouteMeters": 79.67876493244722,
-      "nearestRouteDistanceMeters": 1219.1567304160903
+      "nearestRouteDistanceMeters": 1219.1567304160903,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214077,
@@ -16081,7 +16304,8 @@
         }
       ],
       "distanceFromRouteMeters": 79.71803047533409,
-      "nearestRouteDistanceMeters": 1144.370461006872
+      "nearestRouteDistanceMeters": 1144.370461006872,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214078,
@@ -16108,7 +16332,8 @@
         }
       ],
       "distanceFromRouteMeters": 109.98614516061826,
-      "nearestRouteDistanceMeters": 1184.7530624331962
+      "nearestRouteDistanceMeters": 1184.7530624331962,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214079,
@@ -16145,7 +16370,8 @@
         }
       ],
       "distanceFromRouteMeters": 80.26084226075389,
-      "nearestRouteDistanceMeters": 1184.8868766269293
+      "nearestRouteDistanceMeters": 1184.8868766269293,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214080,
@@ -16172,7 +16398,8 @@
         }
       ],
       "distanceFromRouteMeters": 31.215258379315177,
-      "nearestRouteDistanceMeters": 1184.1806068315855
+      "nearestRouteDistanceMeters": 1184.1806068315855,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214081,
@@ -16209,7 +16436,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1183.5820971175604
+      "nearestRouteDistanceMeters": 1183.5820971175604,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214087,
@@ -16266,7 +16494,8 @@
         }
       ],
       "distanceFromRouteMeters": 54.31393799994081,
-      "nearestRouteDistanceMeters": 654.7093269603478
+      "nearestRouteDistanceMeters": 654.7093269603478,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214088,
@@ -16328,7 +16557,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.925052942994995,
-      "nearestRouteDistanceMeters": 584.2872102343448
+      "nearestRouteDistanceMeters": 584.2872102343448,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214089,
@@ -16370,7 +16600,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.52051798078052,
-      "nearestRouteDistanceMeters": 530.5435663158383
+      "nearestRouteDistanceMeters": 530.5435663158383,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214090,
@@ -16397,7 +16628,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.52051798078052,
-      "nearestRouteDistanceMeters": 530.5435663158383
+      "nearestRouteDistanceMeters": 530.5435663158383,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214091,
@@ -16434,7 +16666,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.06656724893455,
-      "nearestRouteDistanceMeters": 487.62152638209164
+      "nearestRouteDistanceMeters": 487.62152638209164,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214092,
@@ -16461,7 +16694,8 @@
         }
       ],
       "distanceFromRouteMeters": 49.724883437653176,
-      "nearestRouteDistanceMeters": 507.77292925057776
+      "nearestRouteDistanceMeters": 507.77292925057776,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214093,
@@ -16503,7 +16737,8 @@
         }
       ],
       "distanceFromRouteMeters": 68.31685236344468,
-      "nearestRouteDistanceMeters": 510.2365618557777
+      "nearestRouteDistanceMeters": 510.2365618557777,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214094,
@@ -16540,7 +16775,8 @@
         }
       ],
       "distanceFromRouteMeters": 46.55275440878442,
-      "nearestRouteDistanceMeters": 513.9124366915285
+      "nearestRouteDistanceMeters": 513.9124366915285,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214095,
@@ -16567,7 +16803,8 @@
         }
       ],
       "distanceFromRouteMeters": 57.24913952727015,
-      "nearestRouteDistanceMeters": 513.7857806954361
+      "nearestRouteDistanceMeters": 513.7857806954361,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214096,
@@ -16594,7 +16831,8 @@
         }
       ],
       "distanceFromRouteMeters": 36.9286503069796,
-      "nearestRouteDistanceMeters": 510.858265831073
+      "nearestRouteDistanceMeters": 510.858265831073,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214097,
@@ -16616,7 +16854,8 @@
         }
       ],
       "distanceFromRouteMeters": 46.55275440878442,
-      "nearestRouteDistanceMeters": 513.9124366915285
+      "nearestRouteDistanceMeters": 513.9124366915285,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214098,
@@ -16643,7 +16882,8 @@
         }
       ],
       "distanceFromRouteMeters": 59.730610622620915,
-      "nearestRouteDistanceMeters": 507.425322432874
+      "nearestRouteDistanceMeters": 507.425322432874,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214099,
@@ -16665,7 +16905,8 @@
         }
       ],
       "distanceFromRouteMeters": 49.724883437653176,
-      "nearestRouteDistanceMeters": 507.77292925057776
+      "nearestRouteDistanceMeters": 507.77292925057776,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214101,
@@ -16692,7 +16933,8 @@
         }
       ],
       "distanceFromRouteMeters": 14.961989177843586,
-      "nearestRouteDistanceMeters": 511.0965275347627
+      "nearestRouteDistanceMeters": 511.0965275347627,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214102,
@@ -16729,7 +16971,8 @@
         }
       ],
       "distanceFromRouteMeters": 137.19777041855193,
-      "nearestRouteDistanceMeters": 510.90297452330725
+      "nearestRouteDistanceMeters": 510.90297452330725,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214103,
@@ -16756,7 +16999,8 @@
         }
       ],
       "distanceFromRouteMeters": 167.81848710305908,
-      "nearestRouteDistanceMeters": 561.3910896912087
+      "nearestRouteDistanceMeters": 561.3910896912087,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214104,
@@ -16783,7 +17027,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.71558055338522,
-      "nearestRouteDistanceMeters": 576.1034350630091
+      "nearestRouteDistanceMeters": 576.1034350630091,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214105,
@@ -16810,7 +17055,8 @@
         }
       ],
       "distanceFromRouteMeters": 127.84536829242997,
-      "nearestRouteDistanceMeters": 517.3388045553329
+      "nearestRouteDistanceMeters": 517.3388045553329,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214106,
@@ -16847,7 +17093,8 @@
         }
       ],
       "distanceFromRouteMeters": 129.56871567394026,
-      "nearestRouteDistanceMeters": 535.168592067649
+      "nearestRouteDistanceMeters": 535.168592067649,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497214107,
@@ -16889,7 +17136,8 @@
         }
       ],
       "distanceFromRouteMeters": 126.48544764783003,
-      "nearestRouteDistanceMeters": 469.0267923485085
+      "nearestRouteDistanceMeters": 469.0267923485085,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216960,
@@ -16961,7 +17209,8 @@
         }
       ],
       "distanceFromRouteMeters": 19.68052114714215,
-      "nearestRouteDistanceMeters": 740.0425431270208
+      "nearestRouteDistanceMeters": 740.0425431270208,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216961,
@@ -16988,7 +17237,8 @@
         }
       ],
       "distanceFromRouteMeters": 7.275364613411432,
-      "nearestRouteDistanceMeters": 740.3165326046019
+      "nearestRouteDistanceMeters": 740.3165326046019,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216967,
@@ -17020,7 +17270,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 740.3922260147092
+      "nearestRouteDistanceMeters": 740.3922260147092,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216968,
@@ -17072,7 +17323,8 @@
         }
       ],
       "distanceFromRouteMeters": 7.45651630587669,
-      "nearestRouteDistanceMeters": 748.3242112456583
+      "nearestRouteDistanceMeters": 748.3242112456583,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216969,
@@ -17104,7 +17356,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4634.540491841219
+      "nearestRouteDistanceMeters": 4634.540491841219,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216975,
@@ -17126,7 +17379,8 @@
         }
       ],
       "distanceFromRouteMeters": 185.87813499018065,
-      "nearestRouteDistanceMeters": 868.7602521124219
+      "nearestRouteDistanceMeters": 868.7602521124219,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216976,
@@ -17163,7 +17417,8 @@
         }
       ],
       "distanceFromRouteMeters": 189.52699754661575,
-      "nearestRouteDistanceMeters": 865.17362991715
+      "nearestRouteDistanceMeters": 865.17362991715,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216977,
@@ -17205,7 +17460,8 @@
         }
       ],
       "distanceFromRouteMeters": 189.15151866590583,
-      "nearestRouteDistanceMeters": 834.7448957137503
+      "nearestRouteDistanceMeters": 834.7448957137503,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216979,
@@ -17232,7 +17488,8 @@
         }
       ],
       "distanceFromRouteMeters": 175.05484629571123,
-      "nearestRouteDistanceMeters": 878.9510849970823
+      "nearestRouteDistanceMeters": 878.9510849970823,
+      "onewayDirection": 1
     },
     {
       "osmId": 1497216980,
@@ -17264,7 +17521,8 @@
         }
       ],
       "distanceFromRouteMeters": 163.83194645948694,
-      "nearestRouteDistanceMeters": 892.503726496534
+      "nearestRouteDistanceMeters": 892.503726496534,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754500,
@@ -17306,7 +17564,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.04339830233063,
-      "nearestRouteDistanceMeters": 1482.0056675327226
+      "nearestRouteDistanceMeters": 1482.0056675327226,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754502,
@@ -17348,7 +17607,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.04339830233063,
-      "nearestRouteDistanceMeters": 1482.0056675327226
+      "nearestRouteDistanceMeters": 1482.0056675327226,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754504,
@@ -17375,7 +17635,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.80645485124607,
-      "nearestRouteDistanceMeters": 1518.101495749815
+      "nearestRouteDistanceMeters": 1518.101495749815,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754505,
@@ -17402,7 +17663,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.18524824958624,
-      "nearestRouteDistanceMeters": 1536.3952356111856
+      "nearestRouteDistanceMeters": 1536.3952356111856,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754507,
@@ -17429,7 +17691,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.35206619989347,
-      "nearestRouteDistanceMeters": 1551.625500205113
+      "nearestRouteDistanceMeters": 1551.625500205113,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754508,
@@ -17466,7 +17729,8 @@
         }
       ],
       "distanceFromRouteMeters": 117.18095071512867,
-      "nearestRouteDistanceMeters": 1556.8864502978531
+      "nearestRouteDistanceMeters": 1556.8864502978531,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754509,
@@ -17493,7 +17757,8 @@
         }
       ],
       "distanceFromRouteMeters": 119.84091338694364,
-      "nearestRouteDistanceMeters": 1586.7434552546208
+      "nearestRouteDistanceMeters": 1586.7434552546208,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754510,
@@ -17530,7 +17795,8 @@
         }
       ],
       "distanceFromRouteMeters": 53.242274642867166,
-      "nearestRouteDistanceMeters": 1481.5973155217982
+      "nearestRouteDistanceMeters": 1481.5973155217982,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754514,
@@ -17573,7 +17839,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3898.998616914699
+      "nearestRouteDistanceMeters": 3898.998616914699,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754515,
@@ -17596,7 +17863,8 @@
         }
       ],
       "distanceFromRouteMeters": 51.21336815741371,
-      "nearestRouteDistanceMeters": 3898.874930265681
+      "nearestRouteDistanceMeters": 3898.874930265681,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754518,
@@ -17639,7 +17907,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3898.998616914699
+      "nearestRouteDistanceMeters": 3898.998616914699,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754519,
@@ -17662,7 +17931,8 @@
         }
       ],
       "distanceFromRouteMeters": 122.797183194315,
-      "nearestRouteDistanceMeters": 3900.2507050715717
+      "nearestRouteDistanceMeters": 3900.2507050715717,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754520,
@@ -17699,7 +17969,8 @@
         }
       ],
       "distanceFromRouteMeters": 187.29843046931566,
-      "nearestRouteDistanceMeters": 3923.204032871913
+      "nearestRouteDistanceMeters": 3923.204032871913,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754521,
@@ -17721,7 +17992,8 @@
         }
       ],
       "distanceFromRouteMeters": 180.655403606391,
-      "nearestRouteDistanceMeters": 3918.7019766402736
+      "nearestRouteDistanceMeters": 3918.7019766402736,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504754522,
@@ -17768,7 +18040,8 @@
         }
       ],
       "distanceFromRouteMeters": 160.7539936892929,
-      "nearestRouteDistanceMeters": 4087.3557769012386
+      "nearestRouteDistanceMeters": 4087.3557769012386,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755410,
@@ -17820,7 +18093,8 @@
         }
       ],
       "distanceFromRouteMeters": 123.59161808926314,
-      "nearestRouteDistanceMeters": 3964.6858066834357
+      "nearestRouteDistanceMeters": 3964.6858066834357,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755411,
@@ -17873,7 +18147,8 @@
         }
       ],
       "distanceFromRouteMeters": 151.51847938667825,
-      "nearestRouteDistanceMeters": 3902.4854951422963
+      "nearestRouteDistanceMeters": 3902.4854951422963,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755412,
@@ -17915,7 +18190,8 @@
         }
       ],
       "distanceFromRouteMeters": 24.64330037323831,
-      "nearestRouteDistanceMeters": 3678.1844188760824
+      "nearestRouteDistanceMeters": 3678.1844188760824,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755413,
@@ -17947,7 +18223,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3677.530743631319
+      "nearestRouteDistanceMeters": 3677.530743631319,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755414,
@@ -17979,7 +18256,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3677.530743631319
+      "nearestRouteDistanceMeters": 3677.530743631319,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755417,
@@ -18011,7 +18289,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1702.7786195509743
+      "nearestRouteDistanceMeters": 1702.7786195509743,
+      "onewayDirection": 1
     },
     {
       "osmId": 1504755418,
@@ -18043,7 +18322,8 @@
         }
       ],
       "distanceFromRouteMeters": 38.35461532246329,
-      "nearestRouteDistanceMeters": 1702.6255350658867
+      "nearestRouteDistanceMeters": 1702.6255350658867,
+      "onewayDirection": 1
     },
     {
       "osmId": 1547376397,
@@ -18070,7 +18350,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.48176416683224,
-      "nearestRouteDistanceMeters": 3295.0133055580845
+      "nearestRouteDistanceMeters": 3295.0133055580845,
+      "onewayDirection": 1
     },
     {
       "osmId": 1547376547,
@@ -18102,7 +18383,8 @@
         }
       ],
       "distanceFromRouteMeters": 28.07704436436515,
-      "nearestRouteDistanceMeters": 3295.2846710178346
+      "nearestRouteDistanceMeters": 3295.2846710178346,
+      "onewayDirection": 1
     },
     {
       "osmId": 1547376548,
@@ -18124,7 +18406,8 @@
         }
       ],
       "distanceFromRouteMeters": 47.492115378523664,
-      "nearestRouteDistanceMeters": 3268.3473231580374
+      "nearestRouteDistanceMeters": 3268.3473231580374,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516833,
@@ -18165,7 +18448,8 @@
         }
       ],
       "distanceFromRouteMeters": 47.24070055657543,
-      "nearestRouteDistanceMeters": 2752.418544599625
+      "nearestRouteDistanceMeters": 2752.418544599625,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516834,
@@ -18191,7 +18475,8 @@
         }
       ],
       "distanceFromRouteMeters": 30.26030246131171,
-      "nearestRouteDistanceMeters": 2752.4374006590406
+      "nearestRouteDistanceMeters": 2752.4374006590406,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516835,
@@ -18228,7 +18513,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2409.9512837382345
+      "nearestRouteDistanceMeters": 2409.9512837382345,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516838,
@@ -18265,7 +18551,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2409.9512837382345
+      "nearestRouteDistanceMeters": 2409.9512837382345,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516842,
@@ -18302,7 +18589,8 @@
         }
       ],
       "distanceFromRouteMeters": 142.3825204624222,
-      "nearestRouteDistanceMeters": 3353.612763778569
+      "nearestRouteDistanceMeters": 3353.612763778569,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516845,
@@ -18359,7 +18647,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1925.1351209464294
+      "nearestRouteDistanceMeters": 1925.1351209464294,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516846,
@@ -18401,7 +18690,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3455.955681996289
+      "nearestRouteDistanceMeters": 3455.955681996289,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516847,
@@ -18438,7 +18728,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3455.955681996289
+      "nearestRouteDistanceMeters": 3455.955681996289,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516848,
@@ -18480,7 +18771,8 @@
         }
       ],
       "distanceFromRouteMeters": 86.1508475206214,
-      "nearestRouteDistanceMeters": 1927.5680339755284
+      "nearestRouteDistanceMeters": 1927.5680339755284,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516849,
@@ -18517,7 +18809,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1925.1351209464294
+      "nearestRouteDistanceMeters": 1925.1351209464294,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516850,
@@ -18559,7 +18852,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.4166549205948,
-      "nearestRouteDistanceMeters": 1928.5794630983896
+      "nearestRouteDistanceMeters": 1928.5794630983896,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516851,
@@ -18601,7 +18895,8 @@
         }
       ],
       "distanceFromRouteMeters": 121.4166549205948,
-      "nearestRouteDistanceMeters": 1928.5794630983896
+      "nearestRouteDistanceMeters": 1928.5794630983896,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516854,
@@ -18633,7 +18928,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3248.794431354695
+      "nearestRouteDistanceMeters": 3248.794431354695,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516855,
@@ -18665,7 +18961,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2007.9504030174223
+      "nearestRouteDistanceMeters": 2007.9504030174223,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516860,
@@ -18692,7 +18989,8 @@
         }
       ],
       "distanceFromRouteMeters": 38.683210518861905,
-      "nearestRouteDistanceMeters": 3197.2975075020368
+      "nearestRouteDistanceMeters": 3197.2975075020368,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516861,
@@ -18724,7 +19022,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3195.48941664683
+      "nearestRouteDistanceMeters": 3195.48941664683,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516863,
@@ -18756,7 +19055,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2188.2475976746373
+      "nearestRouteDistanceMeters": 2188.2475976746373,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516864,
@@ -18788,7 +19088,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2188.2475976746373
+      "nearestRouteDistanceMeters": 2188.2475976746373,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516865,
@@ -18820,7 +19121,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2100.5688708220205
+      "nearestRouteDistanceMeters": 2100.5688708220205,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516871,
@@ -18858,7 +19160,8 @@
         }
       ],
       "distanceFromRouteMeters": 186.21502984914665,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548516873,
@@ -18881,7 +19184,8 @@
         }
       ],
       "distanceFromRouteMeters": 176.1956643896091,
-      "nearestRouteDistanceMeters": 2632.0366286984836
+      "nearestRouteDistanceMeters": 2632.0366286984836,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548518280,
@@ -18952,7 +19256,8 @@
         }
       ],
       "distanceFromRouteMeters": 30.166438982182463,
-      "nearestRouteDistanceMeters": 2056.249100334911
+      "nearestRouteDistanceMeters": 2056.249100334911,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548518285,
@@ -18993,7 +19298,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2040.5403607574196
+      "nearestRouteDistanceMeters": 2040.5403607574196,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548518288,
@@ -19035,7 +19341,8 @@
         }
       ],
       "distanceFromRouteMeters": 120.75695587753232,
-      "nearestRouteDistanceMeters": 2196.695071912611
+      "nearestRouteDistanceMeters": 2196.695071912611,
+      "onewayDirection": 1
     },
     {
       "osmId": 1548772673,
@@ -19077,7 +19384,8 @@
         }
       ],
       "distanceFromRouteMeters": 131.80127496209698,
-      "nearestRouteDistanceMeters": 742.9771352919354
+      "nearestRouteDistanceMeters": 742.9771352919354,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556462146,
@@ -19143,7 +19451,8 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3725.704483811217
+      "nearestRouteDistanceMeters": 3725.704483811217,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556462147,
@@ -19224,7 +19533,8 @@
         }
       ],
       "distanceFromRouteMeters": 32.23809321520264,
-      "nearestRouteDistanceMeters": 3725.466201262909
+      "nearestRouteDistanceMeters": 3725.466201262909,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556462157,
@@ -19275,7 +19585,8 @@
         }
       ],
       "distanceFromRouteMeters": 199.90487383312976,
-      "nearestRouteDistanceMeters": 3873.9010139183147
+      "nearestRouteDistanceMeters": 3873.9010139183147,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556464074,
@@ -19316,7 +19627,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.42017799552001,
-      "nearestRouteDistanceMeters": 4957.2015792741595
+      "nearestRouteDistanceMeters": 4957.2015792741595,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556464076,
@@ -19407,7 +19719,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.163077138568802,
-      "nearestRouteDistanceMeters": 5071.374249637228
+      "nearestRouteDistanceMeters": 5071.374249637228,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556464082,
@@ -19448,7 +19761,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.27877940465048,
-      "nearestRouteDistanceMeters": 5004.933938324151
+      "nearestRouteDistanceMeters": 5004.933938324151,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556701811,
@@ -19489,7 +19803,8 @@
         }
       ],
       "distanceFromRouteMeters": 61.83034688836565,
-      "nearestRouteDistanceMeters": 1533.5838785297108
+      "nearestRouteDistanceMeters": 1533.5838785297108,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556701813,
@@ -19530,7 +19845,8 @@
         }
       ],
       "distanceFromRouteMeters": 61.28981665431179,
-      "nearestRouteDistanceMeters": 1519.1727612148004
+      "nearestRouteDistanceMeters": 1519.1727612148004,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556703662,
@@ -19566,7 +19882,8 @@
         }
       ],
       "distanceFromRouteMeters": 21.732553179382087,
-      "nearestRouteDistanceMeters": 5313.35449859182
+      "nearestRouteDistanceMeters": 5313.35449859182,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556703664,
@@ -19602,7 +19919,8 @@
         }
       ],
       "distanceFromRouteMeters": 19.71673218258866,
-      "nearestRouteDistanceMeters": 5426.687408322518
+      "nearestRouteDistanceMeters": 5426.687408322518,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556703666,
@@ -19633,7 +19951,8 @@
         }
       ],
       "distanceFromRouteMeters": 20.716596765473355,
-      "nearestRouteDistanceMeters": 5352.950087702365
+      "nearestRouteDistanceMeters": 5352.950087702365,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556703667,
@@ -19664,7 +19983,8 @@
         }
       ],
       "distanceFromRouteMeters": 24.259219308268463,
-      "nearestRouteDistanceMeters": 5410.392151000659
+      "nearestRouteDistanceMeters": 5410.392151000659,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704193,
@@ -19700,7 +20020,8 @@
         }
       ],
       "distanceFromRouteMeters": 27.29499630253546,
-      "nearestRouteDistanceMeters": 5377.553965372314
+      "nearestRouteDistanceMeters": 5377.553965372314,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704194,
@@ -19726,7 +20047,8 @@
         }
       ],
       "distanceFromRouteMeters": 24.494825243983747,
-      "nearestRouteDistanceMeters": 5369.107887032633
+      "nearestRouteDistanceMeters": 5369.107887032633,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704195,
@@ -19752,7 +20074,8 @@
         }
       ],
       "distanceFromRouteMeters": 40.90196620626584,
-      "nearestRouteDistanceMeters": 5369.193015000841
+      "nearestRouteDistanceMeters": 5369.193015000841,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704196,
@@ -19778,7 +20101,8 @@
         }
       ],
       "distanceFromRouteMeters": 33.320157876927766,
-      "nearestRouteDistanceMeters": 5369.146331381069
+      "nearestRouteDistanceMeters": 5369.146331381069,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704200,
@@ -19824,7 +20148,8 @@
         }
       ],
       "distanceFromRouteMeters": 60.824098371391756,
-      "nearestRouteDistanceMeters": 5377.553965372314
+      "nearestRouteDistanceMeters": 5377.553965372314,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556704201,
@@ -19860,7 +20185,8 @@
         }
       ],
       "distanceFromRouteMeters": 49.04409014195982,
-      "nearestRouteDistanceMeters": 5377.553965372314
+      "nearestRouteDistanceMeters": 5377.553965372314,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556705131,
@@ -19896,7 +20222,8 @@
         }
       ],
       "distanceFromRouteMeters": 5.135346773666825,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 1556705133,
@@ -19957,7 +20284,8 @@
         }
       ],
       "distanceFromRouteMeters": 59.843389793890225,
-      "nearestRouteDistanceMeters": 0
+      "nearestRouteDistanceMeters": 0,
+      "onewayDirection": 1
     },
     {
       "osmId": 1563141319,
@@ -20008,7 +20336,8 @@
         }
       ],
       "distanceFromRouteMeters": 181.793798998418,
-      "nearestRouteDistanceMeters": 3350.524320052053
+      "nearestRouteDistanceMeters": 3350.524320052053,
+      "onewayDirection": 1
     }
   ],
   "elevationSamplerVersion": 2,

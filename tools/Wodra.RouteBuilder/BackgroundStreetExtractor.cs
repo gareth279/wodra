@@ -160,6 +160,18 @@ public static class BackgroundStreetExtractor
     public static bool IsOneway(IReadOnlyDictionary<string,string> tags) => tags.GetValueOrDefault("oneway") is "yes" or "1" or "true" or "-1";
     public static int OnewayDirection(IReadOnlyDictionary<string, string> tags) =>
         tags.GetValueOrDefault("oneway") == "-1" ? -1 : 1;
+    public static HashSet<long> FindReverseOnewayWays(string pbfPath, IReadOnlySet<long> wantedWayIds)
+    {
+        var result = new HashSet<long>();
+        using var input = File.OpenRead(pbfPath);
+        foreach (var element in new PBFOsmStreamSource(input))
+        {
+            if (element is Way way && way.Id is long id && wantedWayIds.Contains(id) && way.Tags is not null
+                && OnewayDirection(OsmPbfGeometry.ToTags(way.Tags)) < 0)
+                result.Add(id);
+        }
+        return result;
+    }
     private static bool IsRouteAligned((double X,double Y) a, (double X,double Y) b,
         (double X,double Y)[] route)
     {

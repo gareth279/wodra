@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Wodra.RouteBuilder;
 
 if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
@@ -24,6 +25,39 @@ try
         refreshConfig.Validate();
         await RoutePackageMetadata.RefreshAsync(refreshOutputDirectory, refreshConfig);
         Console.WriteLine($"Refreshed route package metadata for {refreshConfig.Id}.");
+        return 0;
+    }
+    if (args[0].Equals("refresh-street-directions", StringComparison.OrdinalIgnoreCase))
+    {
+        var directionOptions = ParseOptions(args.Skip(1).ToArray());
+        if (!directionOptions.TryGetValue("--pbf", out var directionPbf)
+            || !directionOptions.TryGetValue("--files", out var directionFiles))
+            throw new ArgumentException("refresh-street-directions requires --pbf and --files (semicolon-separated sidecar paths).");
+        var files = directionFiles.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (files.Length == 0) throw new ArgumentException("At least one street sidecar path is required.");
+        var documents = files.Select(path => (Path: path, Json: JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidDataException($"Could not parse street sidecar '{path}'."))).ToArray();
+        var wantedWayIds = documents.SelectMany(document => document.Json["streets"]?.AsArray()
+                ?? throw new InvalidDataException($"Street array missing in '{document.Path}'."))
+            .Select(street => street?["osmId"]?.GetValue<long>()
+                ?? throw new InvalidDataException("Street record has no OSM way ID."))
+            .ToHashSet();
+        var reverseOnlyWayIds = BackgroundStreetExtractor.FindReverseOnewayWays(directionPbf, wantedWayIds);
+        var directionsJsonOptions = new JsonSerializerOptions { WriteIndented = true };
+        foreach (var document in documents)
+        {
+            if (document.Json["sourcePbfFilename"]?.GetValue<string>() is { } sourcePbf
+                && !string.Equals(sourcePbf, Path.GetFileName(directionPbf), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException($"Street sidecar '{document.Path}' was generated from '{sourcePbf}', not '{Path.GetFileName(directionPbf)}'.");
+            foreach (var street in document.Json["streets"]!.AsArray())
+            {
+                var id = street!["osmId"]!.GetValue<long>();
+                street["onewayDirection"] = JsonValue.Create(reverseOnlyWayIds.Contains(id) ? -1 : 1);
+            }
+            await File.WriteAllTextAsync(document.Path, document.Json.ToJsonString(directionsJsonOptions));
+        }
+        Console.WriteLine($"Updated one-way direction metadata for {wantedWayIds.Count} street ways ({reverseOnlyWayIds.Count} reverse-only) across {files.Length} sidecars.");
         return 0;
     }
     if (args[0].Equals("refresh-elevation", StringComparison.OrdinalIgnoreCase))
