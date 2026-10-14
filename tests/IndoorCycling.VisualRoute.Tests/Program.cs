@@ -69,8 +69,10 @@ var tests = new (string Name, Action Run)[]
             RideMenuLayoutPolicy.EndRideConfirmationText(false, 0));
         Equal("No FIT recording is active. Your 2 saved FIT segments will be kept.",
             RideMenuLayoutPolicy.EndRideConfirmationText(false, 2));
-        Equal("The active FIT recording will be finalized when you end this ride.",
+        Equal("The active FIT recording will be finalized. Your 2 saved FIT segments will be kept.",
             RideMenuLayoutPolicy.EndRideConfirmationText(true, 2));
+        Equal("The active FIT recording will be finalized when you end this ride.",
+            RideMenuLayoutPolicy.EndRideConfirmationText(true, 0));
         foreach (var (width, height) in new[] { (960f, 540f), (1152f, 648f), (1366f, 768f),
                      (1920f, 1080f), (1093f, 614f), (853f, 480f) })
         {

@@ -13,7 +13,11 @@ public static class RideMenuLayoutPolicy
 	public static string EndRideConfirmationText(bool hasActiveRecording, int savedSegmentCount)
 	{
 		if (hasActiveRecording)
+		{
+			if (savedSegmentCount > 0)
+				return $"The active FIT recording will be finalized. Your {savedSegmentCount} saved FIT {(savedSegmentCount == 1 ? "segment" : "segments")} will be kept.";
 			return "The active FIT recording will be finalized when you end this ride.";
+		}
 		if (savedSegmentCount > 0)
 			return $"No FIT recording is active. Your {savedSegmentCount} saved FIT {(savedSegmentCount == 1 ? "segment" : "segments")} will be kept.";
 		return "FIT recording is off. Ending this ride will not create a FIT file.";
