@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Godot;
 using IndoorCycling.Core.Persistence;
@@ -9,7 +10,6 @@ public sealed class AppSettings
 {
 	public RiderSettings Rider { get; set; } = new();
 	public RecordingSettings Recording { get; set; } = new();
-	public StravaSettings Strava { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
 	public bool OnlineRidingEnabled { get; set; }
 	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
@@ -67,12 +67,23 @@ public sealed class AppSettings
 				defaults.Save();
 				return defaults;
 			}
+			// Older development builds briefly exposed a global Strava settings object.
+			// Remove those unsupported fields from settings.json without logging their values.
+			var removeLegacyStravaSettings = false;
+			using (var document = JsonDocument.Parse(json))
+			{
+				if (document.RootElement.ValueKind == JsonValueKind.Object)
+					removeLegacyStravaSettings = document.RootElement.EnumerateObject()
+						.Any(property => string.Equals(property.Name, "Strava", StringComparison.OrdinalIgnoreCase));
+			}
 			settings.Display ??= new RideDisplayPreferences();
 
 			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
 				settings.Recording.OutputFolder,
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
+			if (removeLegacyStravaSettings)
+				settings.Save();
 
 			GameLogger.Log("settings_loaded", new
 			{
@@ -146,13 +157,4 @@ public sealed class DummyTrainerSettings
 		TargetWatts = Math.Clamp(TargetWatts, 0, 1500);
 		CadenceRpm = Math.Clamp(CadenceRpm, 0, 160);
 	}
-}
-
-public sealed class StravaSettings
-{
-	public string ClientId { get; set; } = "";
-	public string ClientSecret { get; set; } = "";
-	public string RefreshToken { get; set; } = "";
-	public string AccessToken { get; set; } = "";
-	public long ExpiresAtUnix { get; set; } = 0;
 }

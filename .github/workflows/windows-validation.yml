@@ -85,7 +85,8 @@ jobs:
             'tests/IndoorCycling.VisualRoute.Tests/IndoorCycling.VisualRoute.Tests.csproj',
             'tests/Wodra.Multiplayer.Integration.Tests/Wodra.Multiplayer.Integration.Tests.csproj',
             'tests/Wodra.Multiplayer.Protocol.Tests/Wodra.Multiplayer.Protocol.Tests.csproj',
-            'tests/Wodra.RouteBuilder.Tests/Wodra.RouteBuilder.Tests.csproj'
+            'tests/Wodra.RouteBuilder.Tests/Wodra.RouteBuilder.Tests.csproj',
+            'tests/Wodra.Strava.Broker.Tests/Wodra.Strava.Broker.Tests.csproj'
           )
           foreach ($project in $projects) {
             dotnet run --project $project -c Release -p:EnableEpicOnlineServices=false -p:NuGetAudit=false

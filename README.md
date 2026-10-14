@@ -12,6 +12,7 @@ Phase 3 automatic opt-in online riding, route presence and reconnection are docu
 EOS Phase 4 integration, external SDK setup, Portal configuration, and remaining live validation requirements are documented in [docs/epic-online-services-phase4.md](docs/epic-online-services-phase4.md).
 Windows x64 alpha packaging, archive validation, EOS credential staging, and GitHub draft release steps are documented in [docs/windows-alpha-release.md](docs/windows-alpha-release.md).
 Bluetooth FTMS trainer discovery, connection-screen status, recovery lifecycle, and ANT+ integration points are documented in [docs/trainer-connectivity.md](docs/trainer-connectivity.md).
+Strava OAuth/token-broker requirements and issue #12 release prerequisites are documented in [docs/strava-integration.md](docs/strava-integration.md).
 
 ## Developer commands
 
