@@ -6,6 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="../../routes/generated/additional/dunedin-south-coastal-loop.*.json"
+          Link="Routes/dunedin-south-coastal-loop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../routes/generated/additional/dunedin-signal-hill-climbing-loop.*.json"
+          Link="Routes/dunedin-signal-hill-climbing-loop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../routes/generated/additional/dunedin-rolling-loop.*.json"
+          Link="Routes/dunedin-rolling-loop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
     <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />
@@ -18,6 +24,7 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadRibbonMath.cs" Link="RoadRibbonMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BackgroundStreetGeometry.cs" Link="BackgroundStreetGeometry.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VegetationGroundGeometry.cs" Link="VegetationGroundGeometry.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/TreeCanopyPlacement.cs" Link="TreeCanopyPlacement.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RouteWorldLoadAttempt.cs" Link="RouteWorldLoadAttempt.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RiderLaneMath.cs" Link="RiderLaneMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RiderVisualInputMath.cs" Link="RiderVisualInputMath.cs" />

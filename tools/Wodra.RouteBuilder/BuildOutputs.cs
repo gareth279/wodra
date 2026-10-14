@@ -192,6 +192,8 @@ public static class BuildOutputs
         if (result.IsValid && backgroundStreets is not null)
         {
             var streetData = new { id=config.Id, routeName=config.Name, source="OpenStreetMap", sourcePbfFilename=Path.GetFileName(pbfPath),
+                elevationSamplerVersion=BackgroundStreetElevationSampler.SamplerVersion,
+                elevationSamplingMethod=BackgroundStreetElevationSampler.SamplingMethod,
                 attribution="© OpenStreetMap contributors, ODbL 1.0", sampleSpacingMeters=config.BackgroundStreets?.SampleSpacingMeters,
                 statistics=new { waysConsidered=backgroundStreets.WaysConsidered, waysIncluded=backgroundStreets.WaysIncluded,
                     highwayClassCounts=backgroundStreets.HighwayClassCounts, widthSourceCounts=backgroundStreets.WidthSourceCounts,

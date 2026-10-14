@@ -5,6 +5,8 @@ namespace Wodra.RouteBuilder;
 
 public static class BackgroundStreetElevationSampler
 {
+    public const int SamplerVersion = 2;
+    public const string SamplingMethod = "finest-valid LINZ DEM raster; bilinear pixel-centred samples";
     private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
     public static async Task<BackgroundStreetExtractionResult> SampleAsync(BackgroundStreetExtractionResult input, string cacheDirectory)
     {

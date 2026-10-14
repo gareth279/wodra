@@ -41,6 +41,16 @@ Set `streetFurniture.enabled` to extract only explicit OSM street lamps, signals
 
 Set `terrain.enabled` to generate near and far terrain from the same cached LINZ DEM tiles after route elevation has been authored. The near zone defaults to 10 m spacing within 250 m; the far zone defaults to 25 m spacing out to 750 m with a 10 m downward-biased overlap. Near/far radii, spacings, chunk sizes, overlap, downward bias, and near-road clearance are configurable. This step is fully offline and fails if the selected DEM tiles are not cached. It writes `<route-id>.terrain.json` plus per-zone and combined area, vertex, triangle, chunk, NoData, elevation-range, clearance, byte-size, and timing statistics in the report. Review and copy the bundle into `src/IndoorCycling.Game/Data/Routes/` to embed it. Routes without an embedded terrain bundle retain the generic fallback ground.
 
+Background street point elevations use the finest valid cached LINZ raster and bilinear pixel-centred sampling, matching the vegetation and building samplers. Street sidecars record `elevationSamplerVersion` so packaging can reject stale elevation data. To resample an existing street sidecar without re-reading the OSM PBF, run:
+
+```powershell
+python tools/Wodra.RouteBuilder/elevation/sample_streets.py --bundle `
+  routes/generated/additional/dunedin-south-coastal-loop.streets.json `
+  routes/cache/elevation/rasters
+```
+
+This preserves extracted geometry while updating its DEM elevations and sampler version. Repackage the updated sidecar with its matching route package before publishing.
+
 To regenerate and install the three additional Dunedin route packages from a configurable local extract, run from the repository root:
 
 ```powershell

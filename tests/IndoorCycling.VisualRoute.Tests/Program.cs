@@ -5,6 +5,18 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("tree canopies overlap their trunks for both rendered proxy types", () =>
+    {
+        foreach (var (scale, meshHeight) in new[] { (.43f, 1.6f), (.32f, 1.5f) })
+        foreach (var height in new[] { 4d, 8d, 12d })
+        {
+            var bounds = TreeCanopyPlacement.CanopyBounds(height, (float)(height * scale), meshHeight);
+            if (bounds.Bottom > height * TreeCanopyPlacement.TrunkTopHeightFraction + 1e-5)
+                throw new Exception($"Tree canopy starts at {bounds.Bottom:F3} m above trunk top {height * TreeCanopyPlacement.TrunkTopHeightFraction:F3} m.");
+            if (bounds.Top <= bounds.Bottom || bounds.Top > height * 1.05)
+                throw new Exception($"Tree canopy bounds are invalid for a {height:F1} m tree: {bounds}.");
+        }
+    }),
     ("vegetation ground polygons do not cover mapped road asphalt", () =>
     {
         var area = new[]
@@ -132,6 +144,8 @@ var tests = new (string Name, Action Run)[]
                 resource + "streets.json", id);
             if (streets is null || streets.Streets.Count == 0)
                 throw new Exception($"{id} has no installed background-street sidecar data.");
+            if (streets.ElevationSamplerVersion != 2)
+                throw new Exception($"{id} background-street elevations use sampler version {streets.ElevationSamplerVersion}, expected 2.");
             if (id == "dunedin-south-coastal-loop")
             {
                 var mappedRoadsAtFiveKm = streets.Streets.Where(item => item.Highway is not ("footway" or "path")
@@ -225,6 +239,46 @@ var tests = new (string Name, Action Run)[]
         var road350 = rolling.GetSampleAt(near350.NearestRouteDistanceMeters).ElevationMeters!.Value;
         if (Math.Abs(near350.BaseElevationMeters!.Value - road350) > 1.0)
             throw new Exception($"Rolling near-road building {near350.OsmId} is vertically displaced by {near350.BaseElevationMeters - road350:F2} m.");
+    }),
+    ("South Coastal capture markers share lap-stable route and rider elevations", () =>
+    {
+        const string id = "dunedin-south-coastal-loop";
+        var route = RouteCatalog.GetById(id) ?? throw new Exception($"Missing route {id}.");
+        var visual = new VisualRoute(route);
+        var originElevation = route.Points![0].ElevationMeters;
+        var captures = new[] { 34.053, 651.842, 1752.402, 4107.330, 5566.583, 6126.386,
+            6146.929, 6440.070, 6596.511, 7450.041, 7654.369, 244.649, 484.838,
+            1175.562, 1187.371, 1212.937, 1250.323 };
+        foreach (var distance in captures)
+        {
+            var firstLapPose = visual.GetPoseAtDistance(distance);
+            var nextLapPose = visual.GetPoseAtDistance(distance + route.DistanceMeters);
+            if (Vector3.Distance(firstLapPose.Position, nextLapPose.Position) > .001f)
+                throw new Exception($"Route geometry changed after one lap at wrapped distance {distance:F3} m.");
+            var elevation = route.GetSampleAt(distance).ElevationMeters!.Value;
+            Near((float)(elevation - originElevation), firstLapPose.Position.Y, .05f);
+        }
+
+        var streets = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            $"Wodra.GameData.Routes.{id}.streets.json", id);
+        var knownGroundRoads = new[]
+        {
+            (OsmId: 1236235844L, Distance: 651.842),
+            (OsmId: 556601560L, Distance: 4107.330),
+            (OsmId: 116700873L, Distance: 1250.323)
+        };
+        foreach (var probe in knownGroundRoads)
+        {
+            var point = visual.GetPoseAtDistance(probe.Distance).Position;
+            var closest = streets.Streets.Where(street => street.OsmId == probe.OsmId)
+                .SelectMany(street => street.Points.Select(sample => visual.GetPositionForCoordinate(
+                    sample.Latitude, sample.Longitude, sample.ElevationMeters)))
+                .OrderBy(sample => Vector2.DistanceSquared(new Vector2(point.X, point.Z),
+                    new Vector2(sample.X, sample.Z))).First();
+            var horizontal = Vector2.Distance(new Vector2(point.X, point.Z), new Vector2(closest.X, closest.Z));
+            if (horizontal > 12 || Math.Abs(closest.Y - point.Y) > 1.5)
+                throw new Exception($"OSM {probe.OsmId} street ground at capture {probe.Distance:F1} m is {horizontal:F1} m away and {closest.Y-point.Y:F1} m vertically from the selected route.");
+        }
     }),
     ("dummy W/kg uses body weight and simulation mass adds bike weight", () =>
     {

@@ -117,7 +117,8 @@ public partial class VegetationLayer : Node3D
                 {
                     var tree = item.Tree; var radius = (float)tree.CanopyRadiusMeters;
                     var canopyHeight = type == "conifer" ? (float)(tree.HeightMeters * .43) : (float)(tree.HeightMeters * .32);
-                    var centerY = (float)(tree.HeightMeters * (type == "conifer" ? .70 : .72));
+                    var centerY = TreeCanopyPlacement.CenterY(tree.HeightMeters, canopyHeight,
+                        type == "conifer" ? 1.6f : 1.5f);
                     return ScaledTransform(item.Position + Vector3.Up * centerY,
                         new Vector3(radius, canopyHeight, radius));
                 }).ToArray();
