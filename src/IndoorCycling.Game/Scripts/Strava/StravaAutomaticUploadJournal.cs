@@ -23,6 +23,10 @@ public static class StravaAutomaticUploadJournal
 
     public static bool CanRetryAfterHttpFailure(int statusCode) => statusCode == 429;
 
+    public static bool CanApplyRetryUpdate(StravaUploadStatus currentStatus, DateTimeOffset currentUpdatedAtUtc,
+        StravaUploadStatus expectedStatus, DateTimeOffset expectedUpdatedAtUtc) =>
+        currentStatus == expectedStatus && currentUpdatedAtUtc == expectedUpdatedAtUtc;
+
     public static bool IsTransientFailure(StravaUploadStatus journalStatus, int? httpStatus, bool networkFailure) =>
         (journalStatus is StravaUploadStatus.Queued or StravaUploadStatus.Processing ||
             journalStatus == StravaUploadStatus.Failed && httpStatus == 429) &&

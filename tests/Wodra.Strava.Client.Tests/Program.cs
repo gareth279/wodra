@@ -47,6 +47,10 @@ Check(StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Queued,
     StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Processing, 503, false), "safe pre-submission network and known-upload failures can retry");
 Check(!StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Queued, 403, false) &&
     !StravaAutomaticUploadJournal.IsTransientFailure(StravaUploadStatus.Unknown, 503, false), "access failures and ambiguous submissions never auto retry");
+Check(StravaAutomaticUploadJournal.CanApplyRetryUpdate(StravaUploadStatus.Failed, now, StravaUploadStatus.Failed, now) &&
+    !StravaAutomaticUploadJournal.CanApplyRetryUpdate(StravaUploadStatus.Submitting, now.AddTicks(1), StravaUploadStatus.Failed, now) &&
+    !StravaAutomaticUploadJournal.CanApplyRetryUpdate(StravaUploadStatus.Complete, now.AddTicks(1), StravaUploadStatus.Failed, now),
+    "background retry updates cannot overwrite a manual claim or completed upload");
 var queued = new StravaUploadEntry("key", riderA, Guid.NewGuid(), 0, "hash", "external", StravaUploadStatus.Queued,
     null, null, null, null, now, 42, true, "ride.fit", 2, now.AddMinutes(5));
 var restoredQueue = System.Text.Json.JsonSerializer.Deserialize<StravaUploadEntry>(System.Text.Json.JsonSerializer.Serialize(queued))!;

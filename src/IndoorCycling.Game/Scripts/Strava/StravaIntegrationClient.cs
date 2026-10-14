@@ -147,16 +147,16 @@ public sealed class StravaIntegrationClient
                     ex is HttpRequestException or TaskCanceledException or StravaTransientException);
                 if (!transient)
                 {
-                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, SafeMessage = SafeAutomaticError(ex, retrying: false), UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    await UpdateJournalEntryAsync(current with { Status = StravaUploadStatus.Failed, SafeMessage = SafeAutomaticError(ex, retrying: false), UpdatedAtUtc = DateTimeOffset.UtcNow }, current);
                     continue;
                 }
                 var attempts = current.RetryCount + 1;
                 if (attempts > 5)
-                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Failed, RetryCount = attempts, SafeMessage = "Automatic retries were exhausted. The saved segment remains available for manual retry.", UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    await UpdateJournalEntryAsync(current with { Status = StravaUploadStatus.Failed, RetryCount = attempts, SafeMessage = "Automatic retries were exhausted. The saved segment remains available for manual retry.", UpdatedAtUtc = DateTimeOffset.UtcNow }, current);
                 else
-                    UpdateJournalEntry(current with { Status = StravaUploadStatus.Queued, RetryCount = attempts,
+                    await UpdateJournalEntryAsync(current with { Status = StravaUploadStatus.Queued, RetryCount = attempts,
                         NextAttemptAtUtc = DateTimeOffset.UtcNow + StravaPolicies.AutomaticRetryDelay(attempts),
-                        SafeMessage = SafeAutomaticError(ex, retrying: true), UpdatedAtUtc = DateTimeOffset.UtcNow });
+                        SafeMessage = SafeAutomaticError(ex, retrying: true), UpdatedAtUtc = DateTimeOffset.UtcNow }, current);
             }
             await Task.Delay(100);
         }
@@ -172,11 +172,18 @@ public sealed class StravaIntegrationClient
         _ => "Automatic upload stopped. The saved segment remains available for manual retry."
     };
 
-    private void UpdateJournalEntry(StravaUploadEntry entry)
+    private async Task UpdateJournalEntryAsync(StravaUploadEntry entry, StravaUploadEntry expected)
     {
-        var journal = ReadJournal();
-        journal.Uploads[entry.Key] = entry;
-        WriteJournal(journal);
+        await UploadLock.WaitAsync();
+        try
+        {
+            var journal = ReadJournal();
+            if (!journal.Uploads.TryGetValue(entry.Key, out var latest) ||
+                !StravaAutomaticUploadJournal.CanApplyRetryUpdate(latest.Status, latest.UpdatedAtUtc, expected.Status, expected.UpdatedAtUtc)) return;
+            journal.Uploads[entry.Key] = entry;
+            WriteJournal(journal);
+        }
+        finally { UploadLock.Release(); }
     }
 
     public async Task<StravaProfileLink> LinkAsync(Guid profileId, CancellationToken cancellationToken)
@@ -302,7 +309,11 @@ public sealed class StravaIntegrationClient
                     throw new InvalidOperationException("This upload is already pending or its submission result is unknown. Check Strava before resolving it; resubmitting could create a duplicate.");
                 if (automaticSubmission && (GetLink(profileId) is not { AutomaticUploadEnabled: true } currentLink || currentLink.AthleteId != entry?.AthleteId))
                 {
-                    if (entry is not null) UpdateJournalEntry(entry with { Status = StravaUploadStatus.Cancelled, UpdatedAtUtc = DateTimeOffset.UtcNow });
+                    if (entry is not null)
+                    {
+                        journal.Uploads[key] = entry with { Status = StravaUploadStatus.Cancelled, UpdatedAtUtc = DateTimeOffset.UtcNow };
+                        WriteJournal(journal);
+                    }
                     throw new InvalidOperationException("Automatic upload was disabled or this profile's linked athlete changed before submission.");
                 }
                 entry = (entry ?? new StravaUploadEntry(key, profileId, activityId, segmentIndex, hash, externalId,
