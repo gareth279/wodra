@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.Multiplayer.Protocol.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wodra.Update.Tests", "tests\Wodra.Update.Tests\Wodra.Update.Tests.csproj", "{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IndoorCycling.Trainer.Recovery.Tests", "tests\IndoorCycling.Trainer.Recovery.Tests\IndoorCycling.Trainer.Recovery.Tests.csproj", "{E77FE9D9-918C-4009-863A-7E446BA76F3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -243,6 +245,18 @@ Global
 		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x64.Build.0 = Release|Any CPU
 		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x86.ActiveCfg = Release|Any CPU
 		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901}.Release|x86.Build.0 = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|x64.Build.0 = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Debug|x86.Build.0 = Debug|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|x64.ActiveCfg = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|x64.Build.0 = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|x86.ActiveCfg = Release|Any CPU
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -264,6 +278,7 @@ Global
 		{B77AC15C-D5F5-4F05-8B58-3D8B5EEF279D} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{A91EB136-DB9C-40E2-A145-CCDC4C44DD94} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{AF2A0646-C5DC-4365-AE98-0A4FDC1CB901} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{E77FE9D9-918C-4009-863A-7E446BA76F3C} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9B4DDF9E-AAEC-4638-89A4-64D030C1F24F}

@@ -51,6 +51,9 @@ public partial class HudController : Control
 	private Label? _catchUpOfferText;
 	private string _catchUpOfferRiderId = "";
 	private Label? _cameraInspectionLabel;
+	private PanelContainer? _trainerRecoveryPanel;
+	private Label? _trainerRecoveryMessage;
+	private Button? _trainerRecoveryRetryButton;
 	private Control? _debugJumpConfirmation;
 	private double _cameraInspectionLabelSeconds;
 	private int _screenshotToastSequence;
@@ -134,6 +137,7 @@ public partial class HudController : Control
 		};
 		AddChild(_screenshotToast);
 		BuildCatchUpOffer();
+		BuildTrainerRecoveryAction();
 		_cameraInspectionLabel = new Label
 		{
 			Name = "CameraInspectionLabel",
@@ -160,6 +164,49 @@ public partial class HudController : Control
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
 	}
+
+	private void BuildTrainerRecoveryAction()
+	{
+		_trainerRecoveryPanel = new PanelContainer
+		{
+			Name = "TrainerRecoveryAction",
+			Visible = false,
+			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -260, OffsetRight = 260, OffsetTop = 116, OffsetBottom = 196,
+			MouseFilter = Control.MouseFilterEnum.Stop
+		};
+		var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_trainerRecoveryMessage = new Label
+		{
+			Name = "TrainerRecoveryMessage",
+			Text = "Trainer connection was lost.",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			VerticalAlignment = VerticalAlignment.Center
+		};
+		row.AddChild(_trainerRecoveryMessage);
+		_trainerRecoveryRetryButton = new Button { Name = "TrainerRecoveryRetryButton", Text = "Retry", Visible = false };
+		row.AddChild(_trainerRecoveryRetryButton);
+		_trainerRecoveryPanel.AddChild(row);
+		AddChild(_trainerRecoveryPanel);
+	}
+
+	/// <summary>Shows a retry action over the active ride after automatic trainer recovery expires.</summary>
+	public void SetTrainerRecoveryAction(string? message, Action? retry)
+	{
+		if (_trainerRecoveryPanel is null) return;
+		_trainerRecoveryPanel.Visible = !string.IsNullOrWhiteSpace(message) && _rideSessionNode?.IsRideActive == true;
+		if (_trainerRecoveryMessage is not null) _trainerRecoveryMessage.Text = message ?? string.Empty;
+		if (_trainerRecoveryRetryButton is null) return;
+		_trainerRecoveryRetryButton.Visible = retry is not null;
+		_trainerRecoveryRetryButton.Disabled = retry is null;
+		_trainerRecoveryRetryButton.Pressed -= OnTrainerRecoveryRetry;
+		_trainerRecoveryRetryButton.Pressed += OnTrainerRecoveryRetry;
+		_trainerRecoveryRetry = retry;
+	}
+
+	private Action? _trainerRecoveryRetry;
+	private void OnTrainerRecoveryRetry() => _trainerRecoveryRetry?.Invoke();
 
 	private void BuildCatchUpOffer()
 	{

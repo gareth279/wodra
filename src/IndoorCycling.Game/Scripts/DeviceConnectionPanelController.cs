@@ -30,6 +30,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Button? _continueButton;
 	private Button? _diagnosticsButton;
 	private BleDiscoveredDevice[] _discovered = [];
+	private BleDiscoveredDevice? _selectedTrainer;
 	private CancellationTokenSource? _attemptCancellation;
 	private Task? _attemptTask;
 	private CancellationTokenSource? _recoveryCancellation;
@@ -247,6 +248,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	private async Task ConnectSelectedAsync(BleDiscoveredDevice device, long attemptId, CancellationToken cancellationToken)
 	{
+		_selectedTrainer = device;
 		var operationCancellation = _attemptCancellation;
 		var client = _realTrainerClient ?? new WindowsBleTrainerClient();
 		_realTrainerClient = client;
@@ -265,6 +267,7 @@ public partial class DeviceConnectionPanelController : Control
 			await ConfigureClientAsync(client, device.BluetoothAddress, attemptId, cancellationToken);
 			if (!_connectionState.IsCurrent(attemptId)) { await ReleaseClientAsync(client); return; }
 			client.MarkReady();
+			_selectedTrainer = device with { Name = string.IsNullOrWhiteSpace(device.Name) ? client.ConnectedDeviceName ?? device.Name : device.Name };
 			try
 			{
 				GameBootstrap.Settings.LastTrainerBluetoothAddress = device.BluetoothAddress;
@@ -315,15 +318,20 @@ public partial class DeviceConnectionPanelController : Control
 
 	private async Task ConfigureClientAsync(WindowsBleTrainerClient client, ulong address, long attemptId, CancellationToken cancellationToken, bool markReady = true)
 	{
+		client.SetOperationStage("ble_device_creation_and_ftms_gatt_discovery");
 		await client.ConnectToDeviceAsync(address, cancellationToken);
 		if (!client.IsConnected) throw new InvalidOperationException("The trainer did not establish a Bluetooth connection.");
 		_connectionState.SetPhase(attemptId, TrainerConnectionPhase.SettingUp);
 		_overallStatusLabel!.Text = "Bluetooth is connected. Setting up trainer control and live measurements…";
 		_protocolStatusLabel!.Text = "Bluetooth FTMS · Configuring";
+		client.SetOperationStage("ftms_control_point_subscription");
 		await client.SubscribeControlPointAsync(cancellationToken);
+		client.SetOperationStage("ftms_control_request_acknowledgement");
 		await client.RequestControlAsync(cancellationToken);
+		client.SetOperationStage("ftms_telemetry_subscription");
 		await client.SubscribeFtmsTelemetryAsync(cancellationToken);
 		if (!client.IsConnected) throw new InvalidOperationException("The trainer disconnected during setup.");
+		client.SetOperationStage("trainer_ready");
 		if (markReady) client.MarkReady();
 	}
 
@@ -373,6 +381,8 @@ public partial class DeviceConnectionPanelController : Control
 	private void HandleTrainerDisconnected(long attemptId)
 	{
 		if (_intentionalDisconnect || !_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Disconnected, "Trainer connection was lost.")) return;
+		if (_realTrainerClient is { } lostClient && _selectedTrainer is null && lostClient.ConnectedBluetoothAddress is { } address)
+			_selectedTrainer = new BleDiscoveredDevice(address, lostClient.ConnectedDeviceName ?? "Trainer", [], 0);
 		_continueButton!.Disabled = true;
 		_connectButton!.Text = "Retry";
 		_connectButton.Disabled = true;
@@ -382,56 +392,151 @@ public partial class DeviceConnectionPanelController : Control
 		_cadenceStatusLabel!.Text = "Connection lost · reconnecting";
 		_overallStatusLabel!.Text = "Trainer connection lost. Trying to reconnect; you can retry manually if needed.";
 		(_hudController as HudController)?.SetStatus("Trainer connection lost. Rider input is paused while reconnecting.");
+		(_hudController as HudController)?.SetTrainerRecoveryAction("Trainer connection lost. Searching for your trainer…", null);
 		if (_recoveryTask is null)
 		{
 			_recoveryCancellation?.Dispose();
 			_recoveryCancellation = new CancellationTokenSource();
-			_recoveryTask = RecoverTrainerAsync(attemptId, _recoveryCancellation.Token);
+			_recoveryTask = RecoverTrainerAsync(attemptId, _recoveryCancellation.Token, manual: false);
 		}
-		GameLogger.Log("trainer_connection_lost", new { attemptId });
+		GameLogger.Log("trainer_connection_lost", new { attemptId, selectedAddress = _selectedTrainer?.BluetoothAddress.ToString("X12"), selectedName = _selectedTrainer?.Name, recoveryStartedAt = DateTimeOffset.UtcNow });
 	}
 
-	private async Task RecoverTrainerAsync(long attemptId, CancellationToken cancellationToken)
+	private async Task RecoverTrainerAsync(long attemptId, CancellationToken cancellationToken, bool manual)
 	{
 		var client = _realTrainerClient;
-		var address = client?.ConnectedBluetoothAddress ?? GameBootstrap.Settings.LastTrainerBluetoothAddress;
-		if (client is null || address is null) { CompleteRecovery(); return; }
-		for (var attempt = 1; TrainerRecoveryPolicy.ShouldRetry(attempt - 1, _intentionalDisconnect) && _connectionState.IsCurrent(attemptId); attempt++)
+		var recoveryStartedAt = DateTimeOffset.UtcNow;
+		if (client is null || _selectedTrainer is null)
 		{
-			_overallStatusLabel!.Text = $"Reconnecting to {client.ConnectedDeviceName ?? "trainer"} ({attempt}/{MaximumAutomaticReconnects})…";
-			_protocolStatusLabel!.Text = $"Bluetooth FTMS · Reconnecting ({attempt}/{MaximumAutomaticReconnects})";
-			try
-			{
-				await Task.Delay(TrainerRecoveryPolicy.DelayBeforeAttempt(attempt), cancellationToken);
-				if (!_connectionState.IsCurrent(attemptId) || _intentionalDisconnect) { CompleteRecovery(); return; }
-				await ConfigureClientAsync(client, address.Value, attemptId, cancellationToken, markReady: false);
-				if (!_connectionState.IsCurrent(attemptId) || _intentionalDisconnect) { CompleteRecovery(); return; }
-				if (_rideSessionNode is not null) await _rideSessionNode.ReapplyCurrentTrainerSettingsAsync();
-				client.MarkReady();
-				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Ready);
-				ShowReadyUi();
-				(_hudController as HudController)?.SetStatus("Trainer reconnected. Current ride settings were restored.");
-				GameLogger.Log("trainer_reconnected", new { attemptId, retry = attempt });
 				CompleteRecovery();
 				return;
-			}
-			catch (OperationCanceledException) { CompleteRecovery(); return; }
-			catch (Exception ex)
-			{
-				GameLogger.Log("trainer_reconnect_attempt_failed", new { attemptId, retry = attempt, message = ex.Message });
-				try { await client.DisconnectAsync(); } catch { }
-			}
 		}
-		if (_connectionState.IsCurrent(attemptId))
+
+		var scheduledDelay = TimeSpan.Zero;
+		var result = await TrainerRecoveryLoop.RunAsync(
+			async (attempt, token) =>
+			{
+				var attemptStartedAt = DateTimeOffset.UtcNow;
+				var elapsedMs = (attemptStartedAt - recoveryStartedAt).TotalMilliseconds;
+				var target = _selectedTrainer;
+				if (target is null || _intentionalDisconnect || !_connectionState.IsCurrent(attemptId)) return false;
+				var identity = new { address = target.BluetoothAddress.ToString("X12"), name = target.Name };
+				var stage = "dispose_stale_ble_gatt_resources";
+				_overallStatusLabel!.Text = $"Looking for {target.Name} again ({attempt}/{MaximumAutomaticReconnects})…";
+				_protocolStatusLabel!.Text = $"Bluetooth FTMS · Rediscovering ({attempt}/{MaximumAutomaticReconnects})";
+				GameLogger.Log("trainer_recovery_attempt_started", new { attemptId, attempt, manual, attemptStartedAt, elapsedMs, selectedDevice = identity });
+				try
+				{
+					// Do not reuse the disconnected BluetoothLEDevice or any GATT service/characteristic handles.
+					client.SetOperationStage(stage);
+					await client.DisconnectAsync(token);
+					stage = "trainer_advertisement_discovery";
+					client.SetOperationStage(stage);
+					var discovered = await client.ScanForDevicesAsync(TrainerRecoveryPolicy.DiscoveryDuration, token);
+					var returning = TrainerRecoveryPolicy.SelectReturningTrainer(discovered,
+						target.BluetoothAddress, target.Name);
+					GameLogger.Log("trainer_recovery_discovery", new
+					{
+						attemptId, attempt, selectedDevice = identity,
+						compatibleCount = discovered.Count,
+						candidates = discovered.Select(device => new { address = device.BluetoothAddress.ToString("X12"), device.Name, device.Rssi }).ToArray(),
+						selected = returning is null ? null : new { address = returning.BluetoothAddress.ToString("X12"), returning.Name, returning.Rssi },
+						discoveryCompletedAt = DateTimeOffset.UtcNow
+					});
+					if (returning is null)
+					{
+						_overallStatusLabel.Text = $"Waiting for {target.Name} to power on and advertise…";
+						GameLogger.Log("trainer_recovery_attempt_failed", new
+						{
+							attemptId, attempt, manual, failedAt = DateTimeOffset.UtcNow,
+							elapsedMs = (DateTimeOffset.UtcNow - recoveryStartedAt).TotalMilliseconds,
+							stage = stage, reason = "selected_trainer_not_advertising", selectedDevice = identity
+						});
+						return false;
+					}
+
+					stage = "fresh_ble_device_and_ftms_gatt_setup";
+					await ConfigureClientAsync(client, returning.BluetoothAddress, attemptId, token, markReady: false);
+					if (!_connectionState.IsCurrent(attemptId) || _intentionalDisconnect) return false;
+					stage = "reapply_current_ride_settings";
+					if (_rideSessionNode is not null) await _rideSessionNode.ReapplyCurrentTrainerSettingsAsync();
+					if (!_connectionState.IsCurrent(attemptId) || _intentionalDisconnect) return false;
+
+					client.MarkReady();
+					_selectedTrainer = returning with { Name = string.IsNullOrWhiteSpace(returning.Name) ? client.ConnectedDeviceName ?? returning.Name : returning.Name };
+					try
+					{
+						GameBootstrap.Settings.LastTrainerBluetoothAddress = returning.BluetoothAddress;
+						GameBootstrap.Settings.Save();
+					}
+					catch (Exception settingsError) { GameLogger.Log("trainer_preference_save_failed", new { message = settingsError.Message }); }
+					_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Ready);
+					ShowReadyUi();
+					(_hudController as HudController)?.SetStatus("Trainer reconnected. Current ride settings were restored.");
+					(_hudController as HudController)?.SetTrainerRecoveryAction(null, null);
+					GameLogger.Log("trainer_recovery_restored", new
+					{
+						attemptId, attempt, manual, startedAt = attemptStartedAt,
+						restoredAt = DateTimeOffset.UtcNow,
+						elapsedMs = (DateTimeOffset.UtcNow - recoveryStartedAt).TotalMilliseconds,
+						selectedDevice = identity, address = returning.BluetoothAddress.ToString("X12"), name = _selectedTrainer.Name
+					});
+					return true;
+				}
+				catch (OperationCanceledException) { throw; }
+				catch (Exception ex)
+				{
+					GameLogger.Log("trainer_recovery_attempt_failed", new
+					{
+						attemptId, attempt, manual, failedAt = DateTimeOffset.UtcNow,
+						elapsedMs = (DateTimeOffset.UtcNow - recoveryStartedAt).TotalMilliseconds,
+						stage = client.LastConnectionFailureStage ?? client.CurrentOperationStage ?? stage,
+						selectedDevice = identity, message = ex.Message, exceptionType = ex.GetType().FullName
+					});
+					try { await client.DisconnectAsync(CancellationToken.None); }
+					catch (Exception cleanupError) { GameLogger.Log("trainer_recovery_cleanup_failed", new { attemptId, attempt, message = cleanupError.Message }); }
+					return false;
+				}
+			},
+			TrainerRecoveryPolicy.MaximumAutomaticAttempts,
+			TrainerRecoveryPolicy.AutomaticRecoveryWindow,
+			attempt =>
+			{
+				scheduledDelay = TrainerRecoveryPolicy.DelayBeforeAttempt(attempt);
+				GameLogger.Log("trainer_recovery_attempt_scheduled", new { attemptId, attempt, manual, scheduledAt = DateTimeOffset.UtcNow, delayMs = scheduledDelay.TotalMilliseconds, selectedAddress = _selectedTrainer?.BluetoothAddress.ToString("X12"), selectedName = _selectedTrainer?.Name });
+				return scheduledDelay;
+			},
+			cancellationToken,
+			shouldContinue: () => !_intentionalDisconnect && _connectionState.IsCurrent(attemptId));
+
+		if (result.Outcome == TrainerRecoveryOutcome.Expired && _connectionState.IsCurrent(attemptId) && !_intentionalDisconnect)
 		{
 			_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, "Automatic reconnect attempts were exhausted.");
-			_overallStatusLabel!.Text = "Could not reconnect. Check trainer power and select Retry to scan again.";
+			_overallStatusLabel!.Text = "Could not reconnect yet. Check trainer power, then Retry to keep searching while your ride continues.";
 			_protocolStatusLabel!.Text = "Bluetooth FTMS · Not connected";
 			_connectButton!.Text = "Retry";
 			_connectButton.Disabled = false;
 			_changeTrainerButton!.Disabled = false;
+			(_hudController as HudController)?.SetStatus("Trainer disconnected. Ride and recording continue; trainer input is paused.");
+			(_hudController as HudController)?.SetTrainerRecoveryAction(
+				"Trainer not found yet. Check its power and retry without ending the ride.",
+				StartManualRecoveryFromRide);
 		}
+		else if (result.Outcome == TrainerRecoveryOutcome.Cancelled && !_intentionalDisconnect && _connectionState.IsCurrent(attemptId))
+			GameLogger.Log("trainer_recovery_cancelled", new { attemptId, manual, attempts = result.Attempts, completedAt = DateTimeOffset.UtcNow });
 		CompleteRecovery();
+		GameLogger.Log("trainer_recovery_window_finished", new { attemptId, manual, outcome = result.Outcome.ToString(), attempts = result.Attempts, lastFailure = result.LastFailure, startedAt = recoveryStartedAt, completedAt = DateTimeOffset.UtcNow });
+	}
+
+	private void StartManualRecoveryFromRide()
+	{
+		if (_intentionalDisconnect || _recoveryTask is not null || _realTrainerClient is null || _selectedTrainer is null) return;
+		var attemptId = _connectionState.AttemptId;
+		_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Disconnected, "Rider requested trainer recovery.");
+		_recoveryCancellation?.Dispose();
+		_recoveryCancellation = new CancellationTokenSource();
+		(_hudController as HudController)?.SetTrainerRecoveryAction("Retrying trainer discovery…", null);
+		_recoveryTask = RecoverTrainerAsync(attemptId, _recoveryCancellation.Token, manual: true);
 	}
 
 	private void CompleteRecovery()
@@ -456,6 +561,7 @@ public partial class DeviceConnectionPanelController : Control
 	private async Task ChangeTrainerAsync()
 	{
 		if (_attemptInProgress) { OnCancelPressed(); return; }
+		(_hudController as HudController)?.SetTrainerRecoveryAction(null, null);
 		_intentionalDisconnect = true;
 		_connectionState.Invalidate();
 		_attemptCancellation?.Cancel();
@@ -476,6 +582,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	private async Task DisconnectTrainerAsync()
 	{
+		(_hudController as HudController)?.SetTrainerRecoveryAction(null, null);
 		if (_attemptInProgress) _attemptCancellation?.Cancel();
 		_intentionalDisconnect = true;
 		_connectionState.Invalidate();
@@ -504,6 +611,7 @@ public partial class DeviceConnectionPanelController : Control
 	/// <summary>Called by ride shutdown so the panel owner can suppress recovery and release its client.</summary>
 	public async Task DisconnectForMainMenuAsync(WindowsBleTrainerClient client)
 	{
+		(_hudController as HudController)?.SetTrainerRecoveryAction(null, null);
 		_intentionalDisconnect = true;
 		_connectionState.Invalidate();
 		_attemptCancellation?.Cancel();

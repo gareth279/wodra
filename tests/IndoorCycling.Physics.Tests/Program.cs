@@ -375,11 +375,13 @@ static void StaleTelemetryIsNotRiderInput()
 
 static void TrainerRecoveryIsBounded()
 {
-    if (!TrainerRecoveryPolicy.ShouldRetry(0, false) || !TrainerRecoveryPolicy.ShouldRetry(2, false) ||
-        TrainerRecoveryPolicy.ShouldRetry(3, false) || TrainerRecoveryPolicy.ShouldRetry(0, true))
+    if (!TrainerRecoveryPolicy.ShouldRetry(0, false) || !TrainerRecoveryPolicy.ShouldRetry(7, false) ||
+        TrainerRecoveryPolicy.ShouldRetry(8, false) || TrainerRecoveryPolicy.ShouldRetry(0, true))
         throw new Exception("Trainer recovery did not enforce its bounded, non-intentional policy.");
-    if (TrainerRecoveryPolicy.DelayBeforeAttempt(1) != TimeSpan.FromMilliseconds(600) ||
-        TrainerRecoveryPolicy.DelayBeforeAttempt(3) != TimeSpan.FromMilliseconds(1800))
+    if (TrainerRecoveryPolicy.DelayBeforeAttempt(1) != TimeSpan.Zero ||
+        TrainerRecoveryPolicy.DelayBeforeAttempt(3) != TimeSpan.FromSeconds(2) ||
+        TrainerRecoveryPolicy.DelayBeforeAttempt(8) != TimeSpan.FromSeconds(7) ||
+        TrainerRecoveryPolicy.AutomaticRecoveryWindow != TimeSpan.FromSeconds(90))
         throw new Exception("Recovery backoff was not deterministic.");
 }
 

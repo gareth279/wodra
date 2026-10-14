@@ -33,6 +33,15 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
     public string ActiveProtocol => "Bluetooth FTMS";
     private string? _deviceName;
     public ulong? ConnectedBluetoothAddress { get; private set; }
+    public string? LastConnectionFailureStage { get; private set; }
+    private string _operationStage = "idle";
+    public string CurrentOperationStage => _operationStage;
+
+    public void SetOperationStage(string stage)
+    {
+        _operationStage = stage;
+        LastConnectionFailureStage = stage;
+    }
 
     public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
     public bool IsReady { get; private set; }
@@ -86,6 +95,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _supportedInclinationRangePercent = null;
         LastRequestedSimulationGradePercent = null;
         LastAppliedSimulationGradePercent = null;
+        LastConnectionFailureStage = null;
+        _operationStage = "idle";
         _pendingControlPointResponse?.TrySetCanceled(cancellationToken);
         _pendingControlPointResponse = null;
 
@@ -339,6 +350,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         _lastSeenAddress = bluetoothAddress;
 
         var stage = "ble_device_creation";
+        _operationStage = stage;
+        LastConnectionFailureStage = null;
         EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress) });
         try
         {
@@ -360,6 +373,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             // object is created. Uncached GATT discovery is the operation that
             // initiates the connection, so do that before requiring Connected.
             stage = "ftms_gatt_service_discovery";
+            _operationStage = stage;
             EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress), connectionStatus = device.ConnectionStatus.ToString() });
             await ResolveFtmsCharacteristicsAsync(cancellationToken);
             EnsureConnected();
@@ -368,7 +382,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         }
         catch (Exception ex)
         {
-            EmitDebug("trainer_connection_stage_failed", new { stage, reason = ex.Message, exceptionType = ex.GetType().FullName, connectionStatus = _device?.ConnectionStatus.ToString() });
+            LastConnectionFailureStage = _operationStage;
+            EmitDebug("trainer_connection_stage_failed", new { stage = _operationStage, reason = ex.Message, exceptionType = ex.GetType().FullName, connectionStatus = _device?.ConnectionStatus.ToString() });
             if (_device is not null)
             {
                 ReleaseDevice();
@@ -426,6 +441,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         var supportedInclinationRangeUuid = Guid.Parse("00002ad5-0000-1000-8000-00805f9b34fb");
 
         GattDeviceServicesResult servicesResult;
+        _operationStage = "ftms_gatt_service_discovery";
         try
         {
             servicesResult = await GattConnectionSequence.DiscoverAndWaitForConnectionAsync(
@@ -461,6 +477,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         Console.WriteLine("FTMS service found.");
         EmitDebug("ftms_service_found", new { serviceUuid = ftmsUuid });
 
+        _operationStage = "ftms_gatt_characteristic_discovery";
         EmitDebug("gatt_discovery_started", new { stage = "ftms_characteristics", serviceUuid = ftmsUuid, cacheMode = "Uncached" });
         var charsResult = await ftmsService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached)
             .AsTask(cancellationToken)
@@ -530,6 +547,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
     {
+        _operationStage = "ftms_telemetry_subscription";
         EnsureConnected();
         if (_ftmsIndoorBikeDataCharacteristic is null)
         {
@@ -554,6 +572,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
     {
+        _operationStage = "ftms_control_point_subscription";
         EnsureConnected();
         if (_ftmsControlPointCharacteristic is null)
         {
@@ -578,6 +597,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     public async Task RequestControlAsync(CancellationToken cancellationToken = default)
     {
+        _operationStage = "ftms_control_request_acknowledgement";
         EnsureConnected();
         var response = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingControlPointResponse = response;
