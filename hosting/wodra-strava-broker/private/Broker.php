@@ -48,7 +48,7 @@ final class DeploymentConfigPolicy
     public static function validBasePath(mixed $basePath): bool
     {
         return is_string($basePath) && strlen($basePath) <= 200 &&
-            preg_match('~^(?:/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*)?$~D', $basePath) === 1 &&
+            preg_match('#^(?:/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*)?$#D', $basePath) === 1 &&
             !str_contains($basePath, '..');
     }
 
