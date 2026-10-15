@@ -6,6 +6,7 @@ param(
     [string]$VisualStudioRoot,
     [string]$GodotPath,
     [string]$EosClientConfigPath,
+    [string]$AntPlusNetworkKeyPath,
     [string]$ReleaseNotesPath,
     [switch]$SkipOfflineSmokeTest,
     [switch]$CreateGitHubDraft,
@@ -14,6 +15,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
+$repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
 $Solution = Join-Path $RepoDir 'wodra.sln'
 $Godot = if ([string]::IsNullOrWhiteSpace($GodotPath)) {
@@ -26,6 +28,7 @@ $EosSdkRuntime = Join-Path $EosSdkRoot 'SDK\Bin\EOSSDK-Win64-Shipping.dll'
 $EosSdkNotices = Join-Path $EosSdkRoot 'ThirdPartyNotices\ThirdPartySoftwareNotice.txt'
 $vcRuntimeNames = @('MSVCP140.dll', 'VCRUNTIME140.dll', 'VCRUNTIME140_1.dll')
 $ConfigPath = [string]$EosClientConfigPath
+$AntKeyPath = [string]$AntPlusNetworkKeyPath
 $mutex = [System.Threading.Mutex]::new($false, 'Local\WodraWindowsReleasePublisher')
 $hasMutex = $false
 $phaseClock = [System.Diagnostics.Stopwatch]::StartNew()
@@ -198,12 +201,38 @@ try {
         throw "Version '$Version' is invalid. Alpha package versions must use MAJOR.MINOR.PATCH-alpha.N (for example 0.2.0-alpha.1)."
     }
     $PackageVersion = $Version
+    if ([string]::IsNullOrWhiteSpace($AntKeyPath)) { $AntKeyPath = [string]$env:WODRA_ANTPLUS_NETWORK_KEY_PATH }
+    if ([string]::IsNullOrWhiteSpace($AntKeyPath)) {
+        throw 'ANT+ runtime configuration is missing. Set WODRA_ANTPLUS_NETWORK_KEY_PATH or pass -AntPlusNetworkKeyPath with the private network-key material.'
+    }
+    $AntKeyPath = [System.IO.Path]::GetFullPath($AntKeyPath)
+    if ($AntKeyPath.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $AntKeyPath.Equals($RepoDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'ANT+ runtime configuration must be outside the Git checkout.'
+    }
+    if (-not (Test-Path -LiteralPath $AntKeyPath -PathType Leaf)) {
+        throw 'Configured ANT+ runtime material was not found. Set WODRA_ANTPLUS_NETWORK_KEY_PATH to the private key material file.'
+    }
+    $antKeyMaterial = [IO.File]::ReadAllBytes($AntKeyPath)
+    try {
+        if ($antKeyMaterial.Length -ne 8) {
+            if ($antKeyMaterial.Length -lt 1 -or $antKeyMaterial.Length -gt 128) {
+                throw 'ANT+ runtime configuration must contain an eight-byte key or its 16-digit hexadecimal form.'
+            }
+            try { $antKeyText = [Text.UTF8Encoding]::new($false, $true).GetString($antKeyMaterial).Trim() }
+            catch { throw 'ANT+ runtime configuration must contain an eight-byte key or its 16-digit hexadecimal form.' }
+            $antKeyDigits = [regex]::Replace($antKeyText, '(?i)0x|[\s,:-]', '')
+            if ($antKeyDigits -notmatch '^(?:[0-9a-fA-F]{2}){8}$') {
+                throw 'ANT+ runtime configuration must contain an eight-byte key or its 16-digit hexadecimal form.'
+            }
+            Remove-Variable antKeyText, antKeyDigits
+        }
+    } finally { [Array]::Clear($antKeyMaterial, 0, $antKeyMaterial.Length) }
     if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
         if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) { throw 'LOCALAPPDATA is unavailable; supply -EosClientConfigPath.' }
         $ConfigPath = Join-Path $env:LOCALAPPDATA 'Wodra\eos-client.json'
     }
     $ConfigPath = [System.IO.Path]::GetFullPath($ConfigPath)
-    $repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
     if ($ConfigPath.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
         $ConfigPath.Equals($RepoDir, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw 'EOS client config source must be outside the Git checkout.'
@@ -325,7 +354,8 @@ try {
         -TimeoutSeconds 300 -Label 'Pinned release tool restore')
     [void](Invoke-TrackedProcess -FilePath ((Get-Command dotnet -ErrorAction Stop).Source) `
         -ArgumentList @('build', $Solution, '-c', $Configuration, '-m:1', '-p:EnableEpicOnlineServices=true',
-            "-p:EosSdkRoot=$EosSdkRoot", "-p:Version=$PackageVersion", "-p:InformationalVersion=$PackageVersion", '-p:NuGetAudit=false') `
+            "-p:EosSdkRoot=$EosSdkRoot", "-p:AntPlusNetworkKeyPath=$AntKeyPath", '-p:RequireAntPlusNetworkKey=true',
+            "-p:Version=$PackageVersion", "-p:InformationalVersion=$PackageVersion", '-p:NuGetAudit=false') `
         -WorkingDirectory $RepoDir -LogPath $buildLog -TimeoutSeconds 900 -Label 'Release solution build')
     Complete-Phase
 
@@ -374,6 +404,7 @@ try {
     [void](Invoke-TrackedProcess -FilePath ((Get-Command dotnet -ErrorAction Stop).Source) `
         -ArgumentList @('publish', $GameProject, '-c', 'ExportRelease', '-r', 'win-x64', '--self-contained', 'true',
             '-p:GodotTargetPlatform=Windows', '-p:EnableEpicOnlineServices=true', "-p:EosSdkRoot=$EosSdkRoot",
+            "-p:AntPlusNetworkKeyPath=$AntKeyPath", '-p:RequireAntPlusNetworkKey=true',
             "-p:Version=$PackageVersion", "-p:InformationalVersion=$PackageVersion", '-p:NuGetAudit=false',
             '-p:DebugSymbols=false', '-p:IncludeSymbols=false', '-o', $ManagedDataDir) `
         -WorkingDirectory $RepoDir -LogPath $managedPublishLog -TimeoutSeconds 900 -Label 'Fresh self-contained managed publish')
@@ -386,6 +417,21 @@ try {
     if ($missingManaged.Count -gt 0) {
         throw "Fresh managed publish is missing required runtime files: $($missingManaged -join ', ')"
     }
+    $trainerAssemblyPath = Join-Path $ManagedDataDir 'IndoorCycling.Trainer.Windows.dll'
+    try {
+        $trainerAssembly = [System.Reflection.Assembly]::LoadFrom($trainerAssemblyPath)
+        $embeddedKey = $trainerAssembly.GetManifestResourceStream('Wodra.AntPlusNetworkKey')
+        if ($null -eq $embeddedKey) { throw 'ANT+ runtime key resource was not embedded in the Windows trainer assembly.' }
+        try {
+            if ($embeddedKey.Length -lt 1 -or $embeddedKey.Length -gt 128) {
+                throw 'Embedded ANT+ runtime configuration has an invalid size.'
+            }
+        } finally { $embeddedKey.Dispose() }
+    } catch {
+        if ($_.Exception.Message -match 'ANT\+ runtime|ANT\+.*embedded') { throw }
+        throw 'Fresh managed publish could not verify the embedded ANT+ runtime configuration.'
+    }
+    finally { Remove-Variable embeddedKey, trainerAssembly -ErrorAction SilentlyContinue }
     Complete-Phase
 
     # The standalone EOS runtime and its supplied third-party legal notices are

@@ -1,5 +1,6 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
+using System.Text;
 using System.Text.Json;
 
 static void Check(bool condition, string message)
@@ -69,6 +70,32 @@ Check(intentional.Outcome == TrainerRecoveryOutcome.Cancelled && intentionalAtte
     "intentional disconnect suppresses recovery");
 
 var fecPower = new AntFeCPowerAccumulator();
+var rawAntKey = new byte[] { 1, 35, 69, 103, 137, 171, 205, 239 };
+Check(AntNetworkKeyMaterial.Parse(rawAntKey).SequenceEqual(rawAntKey),
+    "private ANT+ build configuration accepts an eight-byte binary key");
+var textAntKey = Encoding.UTF8.GetBytes("0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef");
+Check(AntNetworkKeyMaterial.Parse(textAntKey).SequenceEqual(rawAntKey),
+    "private ANT+ build configuration parses formatted hexadecimal key material");
+Check(AntNetworkKeyMaterial.Parse(Encoding.UTF8.GetBytes("0123456789abcdef")).SequenceEqual(rawAntKey),
+    "private ANT+ build configuration parses compact hexadecimal key material");
+try
+{
+    _ = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntNetworkKeyMaterial).Assembly);
+    throw new InvalidOperationException("A build without ANT+ runtime configuration was accepted.");
+}
+catch (InvalidOperationException error) when (error.Message.Contains("ANT+ FE-C runtime configuration is missing", StringComparison.Ordinal))
+{
+    Check(true, "ANT+ runtime initialization reports a missing private build configuration clearly");
+}
+try
+{
+    _ = AntNetworkKeyMaterial.Parse(Encoding.UTF8.GetBytes("not-a-network-key"));
+    throw new InvalidOperationException("Invalid ANT+ build configuration was accepted.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "invalid ANT+ build configuration is rejected without including its value in the error");
+}
 Check(fecPower.Observe(254, 65530, 200) == 200, "FE-C uses instantaneous power for the first sample");
 Check(fecPower.Observe(1, 4, 210) == 3, "FE-C event and accumulated-power counters handle rollover");
 Check(fecPower.Observe(1, 4, 0x0FFF) is null, "FE-C invalid instantaneous power stays unavailable when no new event arrives");

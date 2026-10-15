@@ -56,6 +56,8 @@ appsettings.local.json
 appsettings.Development.json
 eos-client.json
 *.secrets.json
+antplus-network-key.bin
+antplus-network-key.txt
 .env
 .env.*
 secrets/

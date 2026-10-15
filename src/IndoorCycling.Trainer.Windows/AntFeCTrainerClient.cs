@@ -64,7 +64,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     /// <summary>Uses ANT continuous receive scan mode to discover distinct FE-C broadcast identities.</summary>
     public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(CancellationToken cancellationToken = default)
     {
-        var key = LoadNetworkKey(NetworkKeyPath);
+        var key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly);
         try
         {
             using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken).ConfigureAwait(false);
@@ -119,9 +119,6 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         }
     }
 
-    public static string NetworkKeyPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Wodra", "antplus-network-key.bin");
-
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         if (_session is not null) await DisconnectAsync(cancellationToken).ConfigureAwait(false);
@@ -144,7 +141,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             channel.channelResponse += OnChannelResponse;
             if (!device.enableRxExtendedMessages(true, 1000))
                 throw new IOException("The ANT device could not enable source-identification messages.");
-            var key = LoadNetworkKey(NetworkKeyPath);
+            var key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly);
             try
             {
                 if (!device.setNetworkKey(NetworkNumber, key, 1000))
@@ -352,19 +349,6 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 HasPowerMeasurement = false, HasCadenceMeasurement = false, HasSpeedMeasurement = false };
         }
         if (wasConnected) Disconnected?.Invoke();
-    }
-
-    private static byte[] LoadNetworkKey(string path)
-    {
-        if (!File.Exists(path))
-            throw new FileNotFoundException("ANT+ FE-C requires an 8-byte private network-key file. See docs/trainer-connectivity.md.", path);
-        var key = File.ReadAllBytes(path);
-        if (key.Length != 8)
-        {
-            Array.Clear(key, 0, key.Length);
-            throw new InvalidDataException("The private ANT+ network-key file must contain exactly 8 bytes.");
-        }
-        return key;
     }
 
     private void EnsureReady()
