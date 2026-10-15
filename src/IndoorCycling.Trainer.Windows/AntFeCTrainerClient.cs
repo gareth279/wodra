@@ -492,7 +492,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     }
 
     private async Task<ANT_ReferenceLibrary.MessagingReturnCode> SendAcknowledgedPageAsync(
-        ANT_Channel channel, byte[] page, string stage, int timeoutMilliseconds,
+        ANT_Channel channel, byte[] page, string stage, uint timeoutMilliseconds,
         CancellationToken cancellationToken)
     {
         var timer = Stopwatch.StartNew();
