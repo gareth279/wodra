@@ -527,15 +527,28 @@ public partial class DeviceConnectionPanelController : Control
 			_overallStatusLabel!.Text = "Scanning nearby ANT+ FE-C trainers…";
 			_trainerNameLabel!.Text = "Searching nearby";
 			_protocolStatusLabel!.Text = "ANT+ FE-C · Scanning";
+			var trainerDataReceivedWithoutIdentity = false;
 			var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(
-				cancellationToken, diagnostic => GameLogger.Log("ant_diagnostic", diagnostic)));
+				cancellationToken, diagnostic =>
+				{
+					if (diagnostic.Operation == "scan_window_completed" &&
+						diagnostic.Outcome == "trainer_data_received_identification_failed")
+						trainerDataReceivedWithoutIdentity = true;
+					GameLogger.Log("ant_diagnostic", diagnostic);
+				}));
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.None)
 			{
-				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.NoTrainer, "No compatible ANT+ FE-C trainer was found.");
-				_overallStatusLabel.Text = "No ANT+ FE-C trainer found. Wake the trainer, keep it nearby, then retry.";
-				_trainerNameLabel.Text = "No trainer found";
-				_protocolStatusLabel.Text = "ANT+ FE-C · No device detected";
+				var failureMessage = trainerDataReceivedWithoutIdentity
+					? "ANT+ FE-C trainer data arrived, but its identity could not be resolved. Retry the scan."
+					: "No compatible ANT+ FE-C trainer was found.";
+				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.NoTrainer, failureMessage);
+				_overallStatusLabel.Text = trainerDataReceivedWithoutIdentity
+					? "ANT+ FE-C data received; trainer identification failed. Retry the scan."
+					: "No ANT+ FE-C trainer found. Wake the trainer, keep it nearby, then retry.";
+				_trainerNameLabel.Text = trainerDataReceivedWithoutIdentity ? "Trainer identity unavailable" : "No trainer found";
+				_protocolStatusLabel.Text = trainerDataReceivedWithoutIdentity
+					? "ANT+ FE-C · Identification failed" : "ANT+ FE-C · No device detected";
 				_connectButton!.Text = "Retry scan";
 				_connectButton.Disabled = false;
 				return;

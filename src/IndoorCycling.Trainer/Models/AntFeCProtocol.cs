@@ -66,6 +66,126 @@ public static class AntFeCScanFrameParser
     }
 }
 
+/// <summary>Coordinates wildcard FE-C telemetry and the ANT channel-ID request response for one scan attempt.</summary>
+public sealed class AntFeCDiscoveryCoordinator(byte expectedChannel = 0)
+{
+    public const int MaximumIdentityRequests = 3;
+    private const int MaximumPendingFrames = 32;
+    private readonly object _gate = new();
+    private readonly HashSet<AntFeCDeviceIdentity> _candidates = [];
+    private readonly List<(byte MessageId, byte[] MessageContents)> _pendingFrames = [];
+    private AntFeCDeviceIdentity? _identity;
+    private bool _active = true;
+    private bool _identityRequestNeeded;
+    private int _identityRequestAttempts;
+
+    public bool HasTrainerDataReceived { get { lock (_gate) return _pendingFrames.Count > 0 || _candidates.Count > 0; } }
+    public bool HasResolvedIdentity { get { lock (_gate) return _identity.HasValue; } }
+    public AntFeCDeviceIdentity? ResolvedIdentity { get { lock (_gate) return _identity; } }
+    public int IdentityRequestAttempts { get { lock (_gate) return _identityRequestAttempts; } }
+    public int BufferedTelemetryFrameCount { get { lock (_gate) return _pendingFrames.Count; } }
+    public IReadOnlyList<AntFeCDeviceIdentity> Candidates
+    {
+        get { lock (_gate) return _candidates.OrderBy(x => x.DeviceNumber).ThenBy(x => x.TransmissionType).ToArray(); }
+    }
+
+    public bool RequestIdentity()
+    {
+        lock (_gate)
+        {
+            if (!_active || _identity.HasValue || _identityRequestAttempts >= MaximumIdentityRequests) return false;
+            _identityRequestNeeded = true;
+            return true;
+        }
+    }
+
+    public bool TryBeginIdentityRequest(out int attempt)
+    {
+        lock (_gate)
+        {
+            if (!_active || _identity.HasValue || !_identityRequestNeeded || _identityRequestAttempts >= MaximumIdentityRequests)
+            {
+                attempt = _identityRequestAttempts;
+                return false;
+            }
+            _identityRequestNeeded = false;
+            attempt = ++_identityRequestAttempts;
+            return true;
+        }
+    }
+
+    /// <summary>Marks a request attempt as timed out or failed, allowing a bounded retry.</summary>
+    public bool MarkIdentityRequestIncomplete(int attempt)
+    {
+        lock (_gate)
+        {
+            if (!_active || _identity.HasValue || attempt != _identityRequestAttempts) return false;
+            if (_identityRequestAttempts < MaximumIdentityRequests) _identityRequestNeeded = true;
+            return _identityRequestNeeded;
+        }
+    }
+
+    /// <summary>Consumes one ANT SDK channel callback. Only the active scan's configured channel can resolve identity.</summary>
+    public AntFeCDiscoveryObservation Observe(byte messageId, byte channelNumber, ReadOnlySpan<byte> messageContents)
+    {
+        lock (_gate)
+        {
+            if (!_active) return new("stale_attempt", null, false, false);
+            if (messageId == 0x51)
+            {
+                if (channelNumber != expectedChannel || messageContents.Length == 0 || messageContents[0] != expectedChannel)
+                    return new("wrong_channel", null, false, false);
+                if (_identityRequestAttempts == 0)
+                    return new("identity_response_without_request", null, false, false);
+                var identity = AntFeCScanFrameParser.ParseChannelIdentity(messageId, messageContents);
+                if (identity is null)
+                    return new("unresolved_wildcard_identity", null, false, false);
+                if (identity.Value.DeviceType != AntFeCProtocol.DeviceType)
+                    return new("device_type_mismatch", identity, false, false);
+                _identity = identity;
+                foreach (var pending in _pendingFrames)
+                {
+                    var replayed = AntFeCScanFrameParser.Parse(pending.MessageId, pending.MessageContents, identity);
+                    if (replayed.RejectionReason is null && replayed.Source == identity) _candidates.Add(identity.Value);
+                }
+                var pendingCount = _pendingFrames.Count;
+                _pendingFrames.Clear();
+                return new("identity_resolved", identity, _candidates.Contains(identity.Value) && pendingCount > 0, false);
+            }
+
+            var frame = AntFeCScanFrameParser.Parse(messageId, messageContents, _identity);
+            if (frame.RejectionReason == "source_id_missing" && frame.DataPage is { } page &&
+                page is AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities)
+            {
+                if (_pendingFrames.Count < MaximumPendingFrames)
+                    _pendingFrames.Add((messageId, messageContents.ToArray()));
+                if (_identity.HasValue) _candidates.Add(_identity.Value);
+                else if (_identityRequestAttempts < MaximumIdentityRequests) _identityRequestNeeded = true;
+                return new(_identity.HasValue ? "trainer_page_identified" : "trainer_page_pending_identity",
+                    _identity, _identity.HasValue, !_identity.HasValue && _identityRequestNeeded);
+            }
+            if (frame.RejectionReason is null && frame.Source is { } source)
+            {
+                _candidates.Add(source);
+                return new(frame.IsExtended ? "extended_identity_page" : "trainer_page_identified", source, true, false);
+            }
+            return new(frame.RejectionReason ?? "frame_rejected", frame.Source, false, false);
+        }
+    }
+
+    public void Deactivate()
+    {
+        lock (_gate)
+        {
+            _active = false;
+            _identityRequestNeeded = false;
+        }
+    }
+}
+
+public readonly record struct AntFeCDiscoveryObservation(string Outcome, AntFeCDeviceIdentity? Identity,
+    bool TrainerIdentified, bool IdentityRequestNeeded);
+
 /// <summary>Bounded aggregation for scan callback metadata. Does not retain payload bytes.</summary>
 public sealed class AntReceiveDiagnosticCounts
 {

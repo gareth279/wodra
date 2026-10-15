@@ -181,6 +181,66 @@ Check(channelIdentityResponse == new AntFeCDeviceIdentity(4206, 17, 5) &&
       parsedOrdinaryBroadcast.DataPage == AntFeCProtocol.PageGeneral &&
       parsedOrdinaryBroadcast.Source == channelIdentityResponse && parsedOrdinaryBroadcast.RejectionReason is null,
     "ANT wildcard receive resolves the 0x51 source identity and accepts ordinary 0x4E FE-C frames");
+var discoveryCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+var queuedGeneral = discoveryCoordinator.Observe(0x4E, 0, sdkOrdinaryBroadcast);
+var ordinaryTrainerBroadcast = new byte[] { 0, 25, 0x75, 0x0D, 0xF1, 0x16, 0x1F, 0x60, 0x33 };
+var queuedTrainer = discoveryCoordinator.Observe(0x4E, 0, ordinaryTrainerBroadcast);
+Check(queuedGeneral.Outcome == "trainer_page_pending_identity" &&
+      queuedTrainer.Outcome == "trainer_page_pending_identity" && queuedTrainer.IdentityRequestNeeded &&
+      discoveryCoordinator.HasTrainerDataReceived && discoveryCoordinator.BufferedTelemetryFrameCount == 2,
+    "ordinary FE-C pages 16 and 25 arriving through channelResponse are retained until channel identity resolves");
+Check(discoveryCoordinator.TryBeginIdentityRequest(out var identityAttempt) && identityAttempt == 1,
+    "ordinary FE-C telemetry schedules the first bounded channel-ID request");
+var syntheticResolvedIdentity = new byte[] { 0, 0x34, 0x12, 17, 5 };
+var resolvedAfterTelemetry = discoveryCoordinator.Observe(0x51, 0, syntheticResolvedIdentity);
+Check(resolvedAfterTelemetry.Outcome == "identity_resolved" && resolvedAfterTelemetry.TrainerIdentified &&
+      discoveryCoordinator.BufferedTelemetryFrameCount == 0 &&
+      discoveryCoordinator.Candidates.SequenceEqual([new AntFeCDeviceIdentity(0x1234, 17, 5)]),
+    "deviceResponse channel-ID reply resolves buffered ordinary pages into an eligible trainer");
+
+var identityFirstCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+identityFirstCoordinator.RequestIdentity();
+Check(identityFirstCoordinator.TryBeginIdentityRequest(out var identityFirstAttempt) && identityFirstAttempt == 1,
+    "identity-first integration fixture sends a channel-ID request before telemetry");
+var identityFirstResponse = identityFirstCoordinator.Observe(0x51, 0, syntheticResolvedIdentity);
+var identityFirstPage = identityFirstCoordinator.Observe(0x4E, 0, sdkOrdinaryBroadcast);
+Check(identityFirstResponse.Outcome == "identity_resolved" &&
+      identityFirstPage.Outcome == "trainer_page_identified" &&
+      identityFirstCoordinator.Candidates.Single() == new AntFeCDeviceIdentity(0x1234, 17, 5),
+    "resolved identity is retained when the response arrives before ordinary telemetry");
+
+var boundedIdentityCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+boundedIdentityCoordinator.Observe(0x4E, 0, sdkOrdinaryBroadcast);
+for (var retry = 1; retry <= AntFeCDiscoveryCoordinator.MaximumIdentityRequests; retry++)
+{
+    Check(boundedIdentityCoordinator.TryBeginIdentityRequest(out var currentAttempt) && currentAttempt == retry,
+        $"missing channel identity schedules bounded request {retry}");
+    var shouldRetry = boundedIdentityCoordinator.MarkIdentityRequestIncomplete(currentAttempt);
+    Check(shouldRetry == (retry < AntFeCDiscoveryCoordinator.MaximumIdentityRequests),
+        $"channel identity retry {retry} remains bounded");
+}
+Check(!boundedIdentityCoordinator.TryBeginIdentityRequest(out _) && boundedIdentityCoordinator.Candidates.Count == 0 &&
+      boundedIdentityCoordinator.HasTrainerDataReceived,
+    "missing identity preserves the distinction between received telemetry and an identified trainer");
+var boundedPendingCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+for (var i = 0; i < 40; i++) boundedPendingCoordinator.Observe(0x4E, 0, sdkOrdinaryBroadcast);
+Check(boundedPendingCoordinator.BufferedTelemetryFrameCount == 32,
+    "wildcard discovery retains at most 32 pending FE-C frames while identity is unresolved");
+
+var guardedIdentityCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+guardedIdentityCoordinator.RequestIdentity();
+guardedIdentityCoordinator.TryBeginIdentityRequest(out var guardedAttempt);
+Check(guardedIdentityCoordinator.Observe(0x51, 1, [1, 0x34, 0x12, 17, 5]).Outcome == "wrong_channel" &&
+      guardedIdentityCoordinator.Observe(0x51, 0, [0, 0, 0, 17, 0]).Outcome == "unresolved_wildcard_identity" &&
+      guardedIdentityCoordinator.MarkIdentityRequestIncomplete(guardedAttempt),
+    "wrong-channel and zero wildcard identity responses are rejected and permit a bounded retry");
+var staleIdentityCoordinator = new AntFeCDiscoveryCoordinator(expectedChannel: 0);
+staleIdentityCoordinator.RequestIdentity();
+staleIdentityCoordinator.TryBeginIdentityRequest(out _);
+staleIdentityCoordinator.Deactivate();
+Check(staleIdentityCoordinator.Observe(0x51, 0, syntheticResolvedIdentity).Outcome == "stale_attempt" &&
+      staleIdentityCoordinator.Candidates.Count == 0,
+    "late channel-ID callbacks from a completed scan attempt cannot affect a later attempt");
 var wrongTrainerType = new byte[] { 0, 1, 0, 18, 1, 25, 0, 0, 0, 0, 0, 0, 0 };
 Check(AntFeCScanFrameParser.Parse(0x5D, wrongTrainerType).RejectionReason == "device_type_mismatch",
     "ANT SDK source device type is masked and mismatches are diagnosed explicitly");

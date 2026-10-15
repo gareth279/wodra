@@ -22,4 +22,5 @@ public sealed record AntFeCDiagnosticEvent(
     bool? IsExtended = null,
     int? PayloadLength = null,
     string? RejectionReason = null,
-    int? Count = null);
+    int? Count = null,
+    string? AttemptId = null);
