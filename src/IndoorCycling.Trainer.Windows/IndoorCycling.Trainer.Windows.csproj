@@ -4,20 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWinRT>true</UseWinRT>
-    <AntPlusNetworkKeyPath Condition="'$(AntPlusNetworkKeyPath)' == '' and '$(WODRA_ANTPLUS_NETWORK_KEY_PATH)' != ''">$(WODRA_ANTPLUS_NETWORK_KEY_PATH)</AntPlusNetworkKeyPath>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(AntPlusNetworkKeyPath)' != '' and Exists('$(AntPlusNetworkKeyPath)')">
-    <EmbeddedResource Include="$(AntPlusNetworkKeyPath)" LogicalName="Wodra.AntPlusNetworkKey" />
-  </ItemGroup>
-
-  <Target Name="ValidateRequiredAntPlusNetworkKey" BeforeTargets="PrepareForBuild"
-          Condition="'$(RequireAntPlusNetworkKey)' == 'true'">
-    <Error Condition="'$(AntPlusNetworkKeyPath)' == ''"
-           Text="ANT+ release build requires AntPlusNetworkKeyPath or WODRA_ANTPLUS_NETWORK_KEY_PATH outside the repository." />
-    <Error Condition="'$(AntPlusNetworkKeyPath)' != '' and !Exists('$(AntPlusNetworkKeyPath)')"
-           Text="Configured ANT+ network-key material was not found. Supply the private ANT+ build configuration file." />
-  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />

@@ -109,9 +109,12 @@ public partial class DeviceConnectionPanelController : Control
 		_protocolStatusLabel!.Text = $"{ProtocolPreferenceLabel(selected)} · Not connected";
 		if (selected == TrainerProtocolPreference.AntFeC)
 		{
-			_overallStatusLabel!.Text = "ANT+ FE-C selected. Connect the ANTUSB-m and wake your trainer before scanning.";
+			var configured = AntNetworkKeyMaterial.GetStatus() == "Configured";
+			_overallStatusLabel!.Text = configured
+				? "ANT+ FE-C selected. Connect the ANTUSB-m and wake your trainer before scanning."
+				: "ANT+ needs setup before connecting. Choose Set up ANT+ to enter the Garmin network key.";
 			_trainerNameLabel!.Text = "ANT+ trainer not connected";
-			_connectButton!.Text = "Connect trainer";
+			_connectButton!.Text = configured ? "Connect trainer" : "Set up ANT+";
 			_connectionState.SetPhase(_connectionState.AttemptId, TrainerConnectionPhase.Idle);
 			_connectButton.Disabled = false;
 		}
@@ -333,12 +336,15 @@ public partial class DeviceConnectionPanelController : Control
 		{
 			if (_connectionState.IsCurrent(attemptId))
 			{
+				var antNeedsSetup = _attemptUsingAnt && AntNetworkKeyMaterial.GetStatus() != "Configured";
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, ex.Message);
-				_overallStatusLabel.Text = $"Trainer scan failed: {ex.Message} You can retry.";
+				_overallStatusLabel.Text = antNeedsSetup
+					? "ANT+ needs setup before connecting. Choose Set up ANT+ to enter the Garmin network key."
+					: $"Trainer scan failed: {ex.Message} You can retry.";
 				_trainerNameLabel.Text = "Connection unavailable";
 				_protocolStatusLabel.Text = _attemptUsingAnt
 					? "ANT+ FE-C · Connection failed" : "Bluetooth FTMS · Scan failed";
-				_connectButton.Text = "Retry";
+				_connectButton.Text = antNeedsSetup ? "Set up ANT+" : "Retry";
 			}
 			GameLogger.Log("trainer_scan_failed", new { attemptId, ex.Message });
 		}
@@ -360,6 +366,12 @@ public partial class DeviceConnectionPanelController : Control
 	private void OnConnectPressed()
 	{
 		if (_attemptInProgress) return;
+		if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
+			AntNetworkKeyMaterial.GetStatus() != "Configured")
+		{
+			_startPanel?.Call("FocusAntSetup");
+			return;
+		}
 		if (_awaitingAntDeviceChoice && _antDiscovered.Length > 1)
 		{
 			var index = (int)_trainerPicker!.Selected;
@@ -404,8 +416,8 @@ public partial class DeviceConnectionPanelController : Control
 			_overallStatusLabel!.Text = "Scanning nearby ANT+ FE-C trainers…";
 			_trainerNameLabel!.Text = "Searching nearby";
 			_protocolStatusLabel!.Text = "ANT+ FE-C · Scanning";
-            var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(
-                cancellationToken, diagnostic => GameLogger.Log("ant_diagnostic", diagnostic)));
+			var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(
+				cancellationToken, diagnostic => GameLogger.Log("ant_diagnostic", diagnostic)));
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.None)
 			{
@@ -438,8 +450,8 @@ public partial class DeviceConnectionPanelController : Control
 			}
 			selectedDevice = discovery.Selected;
 		}
-        var client = new AntFeCTrainerClient(GameBootstrap.Settings.Trainer, selectedDevice,
-            diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
+		var client = new AntFeCTrainerClient(GameBootstrap.Settings.Trainer, selectedDevice,
+			diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
 		_antTrainerClient = client;
 		if (_antDisconnectedHandler is not null) client.Disconnected -= _antDisconnectedHandler;
 		_antDisconnectedHandler = () => Callable.From(() => HandleAntTrainerDisconnected(attemptId)).CallDeferred();

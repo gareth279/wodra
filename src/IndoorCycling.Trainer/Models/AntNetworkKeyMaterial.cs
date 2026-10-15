@@ -1,96 +1,86 @@
-using System.Reflection;
+using System.Security;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace IndoorCycling.Trainer.Models;
 
-/// <summary>Loads ANT+ network material embedded by the private Windows release build.</summary>
-public static class AntNetworkKeyMaterial
+/// <summary>Per-Windows-account ANT+ network key configuration stored outside the install directory.</summary>
+public static partial class AntNetworkKeyMaterial
 {
-    public const string EmbeddedResourceName = "Wodra.AntPlusNetworkKey";
+    public const string GarminNetworkKeysUrl = "https://developer.garmin.com/ant-program/ant-ant-plus/network-keys/";
+    public static string ConfigurationPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Wodra", "ant-config.json");
 
-    public static byte[] LoadEmbedded(Assembly assembly)
+    public static string GetStatus(string? path = null)
     {
-        ArgumentNullException.ThrowIfNull(assembly);
-        using var resource = assembly.GetManifestResourceStream(EmbeddedResourceName)
-            ?? throw new InvalidOperationException(
-                "ANT+ FE-C runtime configuration is missing from this build. Rebuild with the private ANT+ network-key configuration.");
-        using var buffer = new MemoryStream();
-        resource.CopyTo(buffer);
-        var material = buffer.ToArray();
-        try { return Parse(material); }
-        finally { Array.Clear(material, 0, material.Length); }
+        path ??= ConfigurationPath;
+        try { var key = Load(path); Array.Clear(key, 0, key.Length); return "Configured"; }
+        catch (InvalidOperationException ex) when (ex.Message.StartsWith("ANT+ is not configured", StringComparison.Ordinal)) { return "Not configured"; }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return "Not configured"; }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException)
+        { return "Cannot read ANT+ setup file. Check access to Local AppData."; }
+        catch (Exception ex) when (ex is IOException)
+        { return "Cannot read ANT+ setup file. Check access to Local AppData."; }
+        catch (Exception ex) when (ex is JsonException or InvalidDataException or InvalidOperationException)
+        { return "ANT+ setup file is invalid. Clear it and save the key again."; }
     }
 
-    /// <summary>Accepts the raw eight-byte key or the 16 hexadecimal digits supplied by ANT materials.</summary>
-    public static byte[] Parse(ReadOnlySpan<byte> material)
+    public static byte[] Load(string? path = null)
     {
-        if (material.Length == 8) return material.ToArray();
-        if (material.Length is < 1 or > 128)
-            throw new InvalidDataException("ANT+ FE-C runtime configuration must contain an eight-byte key.");
-
-        var source = material;
-        if (source.Length >= 3 && source[0] == 0xEF && source[1] == 0xBB && source[2] == 0xBF)
-            source = source[3..];
-        var key = new byte[8];
-        if (source.Length == 16)
+        path ??= ConfigurationPath;
+        try
         {
-            var contiguousHex = true;
-            for (var index = 0; index < source.Length; index++)
-                contiguousHex &= HexValue(source[index]) >= 0;
-            if (contiguousHex)
-            {
-                for (var index = 0; index < key.Length; index++)
-                    key[index] = (byte)((HexValue(source[index * 2]) << 4) | HexValue(source[(index * 2) + 1]));
-                return key;
-            }
+            using var stream = File.OpenRead(path);
+            using var document = JsonDocument.Parse(stream, new JsonDocumentOptions { MaxDepth = 4 });
+            if (!document.RootElement.TryGetProperty("networkKey", out var property) || property.ValueKind != JsonValueKind.String)
+                throw new InvalidDataException("ANT+ setup file must contain a 16-digit networkKey.");
+            return Parse(property.GetString() ?? string.Empty);
         }
-        var position = 0;
-        for (var index = 0; index < key.Length; index++)
-        {
-            SkipSeparators(source, ref position);
-            if (position + 1 < source.Length && source[position] == '0' &&
-                source[position + 1] is (byte)'x' or (byte)'X') position += 2;
-            if (position + 1 >= source.Length)
-            {
-                Array.Clear(key, 0, key.Length);
-                throw new InvalidDataException("ANT+ FE-C runtime configuration must contain an eight-byte key.");
-            }
-            var high = HexValue(source[position]);
-            var low = HexValue(source[position + 1]);
-            if (high < 0 || low < 0)
-            {
-                Array.Clear(key, 0, key.Length);
-                throw new InvalidDataException("ANT+ FE-C runtime configuration must contain an eight-byte key.");
-            }
-            key[index] = (byte)((high << 4) | low);
-            position += 2;
-            if (position < source.Length && !IsSeparator(source[position]))
-            {
-                Array.Clear(key, 0, key.Length);
-                throw new InvalidDataException("ANT+ FE-C runtime configuration must contain an eight-byte key.");
-            }
-        }
-        SkipSeparators(source, ref position);
-        if (position != source.Length)
-        {
-            Array.Clear(key, 0, key.Length);
-            throw new InvalidDataException("ANT+ FE-C runtime configuration must contain an eight-byte key.");
-        }
-        return key;
+        catch (FileNotFoundException) { throw new InvalidOperationException("ANT+ is not configured. Open Settings and choose Set up ANT+."); }
+        catch (DirectoryNotFoundException) { throw new InvalidOperationException("ANT+ is not configured. Open Settings and choose Set up ANT+."); }
+        catch (JsonException) { throw new InvalidDataException("ANT+ setup file is invalid. Open Settings and save the key again."); }
+        catch (UnauthorizedAccessException) { throw new InvalidOperationException("ANT+ setup file cannot be read. Check access to Local AppData."); }
+        catch (SecurityException) { throw new InvalidOperationException("ANT+ setup file cannot be read. Check access to Local AppData."); }
     }
 
-    private static int HexValue(byte value) => value switch
+    public static void Save(string value, string? path = null)
     {
-        >= (byte)'0' and <= (byte)'9' => value - '0',
-        >= (byte)'a' and <= (byte)'f' => value - 'a' + 10,
-        >= (byte)'A' and <= (byte)'F' => value - 'A' + 10,
-        _ => -1
-    };
-
-    private static bool IsSeparator(byte value) => value is (byte)' ' or (byte)'\t' or (byte)'\r' or
-        (byte)'\n' or (byte)',' or (byte)':' or (byte)'-';
-
-    private static void SkipSeparators(ReadOnlySpan<byte> source, ref int position)
-    {
-        while (position < source.Length && IsSeparator(source[position])) position++;
+        var normalized = (value ?? string.Empty).Trim();
+        if (!NetworkKeyPattern().IsMatch(normalized))
+            throw new InvalidDataException("Enter the ANT+ network key as exactly 16 hexadecimal digits.");
+        path ??= ConfigurationPath;
+        var directory = Path.GetDirectoryName(Path.GetFullPath(path))!;
+        Directory.CreateDirectory(directory);
+        var temporary = Path.Combine(directory, $".ant-config-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(new { networkKey = normalized });
+            try
+            {
+                using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+                { stream.Write(bytes); stream.Flush(true); }
+            }
+            finally { Array.Clear(bytes, 0, bytes.Length); }
+            if (File.Exists(path)) File.Move(temporary, path, true); else File.Move(temporary, path);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
+
+    public static void Clear(string? path = null)
+    {
+        path ??= ConfigurationPath;
+        try { File.Delete(path); }
+        catch (UnauthorizedAccessException) { throw new InvalidOperationException("ANT+ setup file cannot be cleared. Check access to Local AppData."); }
+        catch (SecurityException) { throw new InvalidOperationException("ANT+ setup file cannot be cleared. Check access to Local AppData."); }
+    }
+
+    public static byte[] Parse(string value)
+    {
+        var normalized = (value ?? string.Empty).Trim();
+        if (!NetworkKeyPattern().IsMatch(normalized)) throw new InvalidDataException("ANT+ network key must contain exactly 16 hexadecimal digits.");
+        return Convert.FromHexString(normalized);
+    }
+
+    [GeneratedRegex("^[0-9a-fA-F]{16}$", RegexOptions.CultureInvariant)]
+    private static partial Regex NetworkKeyPattern();
 }

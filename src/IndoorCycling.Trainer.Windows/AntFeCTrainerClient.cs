@@ -73,17 +73,17 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null)
     {
         var discoveryTimer = Stopwatch.StartNew();
-        Emit(diagnostic, new("embedded_configuration", "load_network_key", 0, Outcome: "started"));
+        Emit(diagnostic, new("user_configuration", "load_network_key", 0, Outcome: "started"));
         byte[] key;
-        try { key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly); }
+        try { key = AntNetworkKeyMaterial.Load(); }
         catch (Exception ex)
         {
-            Emit(diagnostic, new("embedded_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
+            Emit(diagnostic, new("user_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
                 Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
             throw;
         }
-        Emit(diagnostic, new("embedded_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
-            Outcome: "loaded_8_bytes"));
+        Emit(diagnostic, new("user_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
+            Outcome: "loaded_configured_key"));
         try
         {
             using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, diagnostic).ConfigureAwait(false);
@@ -203,15 +203,15 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 () => device.enableRxExtendedMessages(true, 1000));
             var keyLoadTimer = Stopwatch.StartNew();
             byte[] key;
-            try { key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly); }
+            try { key = AntNetworkKeyMaterial.Load(); }
             catch (Exception ex)
             {
-                Emit(_diagnostic, new("embedded_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
+                Emit(_diagnostic, new("user_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
                     Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
                 throw;
             }
-            Emit(_diagnostic, new("embedded_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
-                Outcome: "loaded_8_bytes"));
+            Emit(_diagnostic, new("user_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
+                Outcome: "loaded_configured_key"));
             try
             {
                 RunCommand(_diagnostic, "network_configuration", "NETWORK_KEY_0x46",

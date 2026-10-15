@@ -71,25 +71,38 @@ Check(intentional.Outcome == TrainerRecoveryOutcome.Cancelled && intentionalAtte
 
 var fecPower = new AntFeCPowerAccumulator();
 var rawAntKey = new byte[] { 1, 35, 69, 103, 137, 171, 205, 239 };
-Check(AntNetworkKeyMaterial.Parse(rawAntKey).SequenceEqual(rawAntKey),
-    "private ANT+ build configuration accepts an eight-byte binary key");
-var textAntKey = Encoding.UTF8.GetBytes("0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef");
-Check(AntNetworkKeyMaterial.Parse(textAntKey).SequenceEqual(rawAntKey),
-    "private ANT+ build configuration parses formatted hexadecimal key material");
-Check(AntNetworkKeyMaterial.Parse(Encoding.UTF8.GetBytes("0123456789abcdef")).SequenceEqual(rawAntKey),
-    "private ANT+ build configuration parses compact hexadecimal key material");
+Check(AntNetworkKeyMaterial.Parse(" 0123456789abcdef ").SequenceEqual(rawAntKey),
+    "ANT+ setup trims whitespace and parses exactly 16 hexadecimal digits");
+var antConfigDirectory = Path.Combine(Path.GetTempPath(), $"WodraAntConfigTests-{Guid.NewGuid():N}");
+var antConfigPath = Path.Combine(antConfigDirectory, "ant-config.json");
 try
 {
-    _ = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntNetworkKeyMaterial).Assembly);
-    throw new InvalidOperationException("A build without ANT+ runtime configuration was accepted.");
+    Check(AntNetworkKeyMaterial.GetStatus(antConfigPath) == "Not configured",
+        "missing ANT+ configuration is reported without throwing");
+    try { _ = AntNetworkKeyMaterial.Load(antConfigPath); throw new InvalidOperationException("Missing ANT config loaded."); }
+    catch (InvalidOperationException error) when (error.Message.Contains("ANT+ is not configured", StringComparison.Ordinal))
+    { Check(true, "ANT initialization gives an actionable missing configuration error"); }
+    AntNetworkKeyMaterial.Save(" 0123456789abcdef ", antConfigPath);
+    Check(AntNetworkKeyMaterial.GetStatus(antConfigPath) == "Configured" &&
+          AntNetworkKeyMaterial.Load(antConfigPath).SequenceEqual(rawAntKey),
+        "ANT+ key persists atomically and runtime initialization loads the configured value");
+    Check(File.ReadAllText(antConfigPath).Contains("\"networkKey\":\"0123456789abcdef\"", StringComparison.Ordinal),
+        "ANT+ configuration uses the documented JSON shape");
+    try { AntNetworkKeyMaterial.Save("not-a-network-key", antConfigPath); throw new InvalidOperationException("Invalid ANT config saved."); }
+    catch (InvalidDataException error) when (!error.Message.Contains("not-a-network-key", StringComparison.Ordinal))
+    { Check(true, "invalid ANT+ input is rejected without echoing the entered value"); }
+    File.WriteAllText(antConfigPath, "{broken");
+    Check(AntNetworkKeyMaterial.GetStatus(antConfigPath).Contains("invalid", StringComparison.OrdinalIgnoreCase),
+        "corrupt ANT+ configuration is reported safely");
+    AntNetworkKeyMaterial.Save("0123456789ABCDEF", antConfigPath);
+    AntNetworkKeyMaterial.Clear(antConfigPath);
+    Check(AntNetworkKeyMaterial.GetStatus(antConfigPath) == "Not configured",
+        "clearing ANT+ setup removes the configuration");
 }
-catch (InvalidOperationException error) when (error.Message.Contains("ANT+ FE-C runtime configuration is missing", StringComparison.Ordinal))
-{
-    Check(true, "ANT+ runtime initialization reports a missing private build configuration clearly");
-}
+finally { if (Directory.Exists(antConfigDirectory)) Directory.Delete(antConfigDirectory, true); }
 try
 {
-    _ = AntNetworkKeyMaterial.Parse(Encoding.UTF8.GetBytes("not-a-network-key"));
+    _ = AntNetworkKeyMaterial.Parse("not-a-network-key");
     throw new InvalidOperationException("Invalid ANT+ build configuration was accepted.");
 }
 catch (InvalidDataException)

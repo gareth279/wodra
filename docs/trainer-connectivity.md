@@ -22,7 +22,22 @@ The SDK's shipped DLLs are 32-bit. Its own readme says those binaries require x8
 
 The official PC SDK is an older vendor SDK. The [AntPlus .NET library](https://github.com/StephenHidem/AntPlus) is a maintained alternative for application-level device profiles, but its USB stick project still depends on the ANT PC SDK. Other community USB integrations require replacing the driver, which is not suitable here. The selected implementation uses the official PC SDK binaries and profile definitions, with their redistribution notices.
 
-The owner downloaded Fitness Equipment Device Profile revision 5.0 under `C:\\Tools`; it remains outside the repository. The profile is marked deprecated and unsupported, so compatibility needs to be verified against the actual Flux 2. Private release builds receive ANT+ network-key material through `WODRA_ANTPLUS_NETWORK_KEY_PATH` or `-AntPlusNetworkKeyPath`. The publisher accepts eight binary bytes or formatted hexadecimal material, validates it without printing it, and embeds it in the Windows trainer runtime. A release package fails before building if the private input is absent or malformed. Installed clients initialize ANT+ without a separate account, SDK download, key file, script, or rider entry step. Since the compiled runtime contains the key material, treat the resulting binary as containing it. The official Windows USB driver remains a separate prerequisite; it is not bundled or installed by Wodra.
+The Fitness Equipment device profile is used for FE-C compatibility. The official Windows USB driver remains a separate prerequisite; it is not bundled or installed by Wodra.
+
+### ANT+ first-time setup
+
+1. Install the supported USB driver if Windows needs it.
+2. Open Wodra and use **ANT+ Setup** on the startup screen.
+3. Open Garmin’s [ANT+ Network Keys page](https://developer.garmin.com/ant-program/ant-ant-plus/network-keys/), copy the ANT+ network key, paste it into Wodra, and choose **Save**.
+4. Select ANT+ FE-C and connect the trainer.
+
+The key is stored in `%LOCALAPPDATA%\Wodra\ant-config.json`, once per Windows account on each PC. It remains available through Wodra updates. Disconnect ANT+ before changing or clearing setup. Wodra validates the 16 hexadecimal digits and never writes the key to application logs.
+
+Advanced troubleshooting example (leave the value empty until configured in Wodra):
+
+```json
+{"networkKey":""}
+```
 
 `AntSdkDeviceSession` owns the SDK USB handle. Initial discovery uses ANT continuous receive scan mode for five seconds, filters source IDs to FE-C pages, deduplicates candidates, and connects directly when one trainer is found. Multiple matches use the existing trainer picker. A selected or remembered trainer is then paired by its exact device number, type, and transmission type. The client waits for general data, trainer data, and the requested capability page before reporting ready, and sends acknowledged simulation/basic-resistance controls followed by command-status checks. The shared FE-C decoder handles invalid values and rolling power counters. These code paths have not yet been exercised against the Flux 2. If the ANTUSB-m/driver does not support continuous scan mode, multiple-trainer discovery will report that limitation rather than silently selecting an arbitrary trainer.
 
