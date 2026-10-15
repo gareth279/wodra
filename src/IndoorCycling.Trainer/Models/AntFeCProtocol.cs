@@ -44,6 +44,13 @@ public static class AntFeCProtocol
     public const byte PageCapabilities = 54;
     public const byte PageCommandStatus = 71;
     public const byte PageRequest = 70;
+    public const int MaximumCapabilityRequestAttempts = 3;
+
+    public static bool IsReady(bool hasGeneralPage, bool hasTrainerPage, bool hasCapabilities) =>
+        hasGeneralPage && hasTrainerPage && hasCapabilities;
+
+    public static bool ShouldRetryCapabilityRequest(bool hasCapabilities, int attempts) =>
+        !hasCapabilities && attempts < MaximumCapabilityRequestAttempts;
 
     public static byte[] BuildPageRequest(byte requestedPage) =>
         [PageRequest, 0xFF, 0x01, 0x01, 0xFF, 0xFF, requestedPage, 0x01];

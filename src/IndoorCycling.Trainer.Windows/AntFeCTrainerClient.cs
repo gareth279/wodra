@@ -1,5 +1,6 @@
 using ANT_Managed_Library;
 using ANT_ReferenceLibrary = ANT_Managed_Library.ANT_ReferenceLibrary;
+using System.Diagnostics;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Abstractions;
 using IndoorCycling.Trainer.Models;
@@ -26,8 +27,12 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private TrainerTelemetry? _trainerPage;
     private byte? _capabilities;
     private bool _pageRequestSent;
+    private int _capabilityRequestAttempts;
     private bool _userConfigSent;
     private bool _isReady;
+    private readonly Action<AntFeCDiagnosticEvent>? _diagnostic;
+    private readonly HashSet<byte> _reportedPages = [];
+    private readonly Stopwatch _connectionTimer = new();
     private double? _lastRequestedGrade;
     private double? _lastAppliedGrade;
 
@@ -55,33 +60,50 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public double? LastAppliedSimulationGradePercent => _lastAppliedGrade;
     public event Action? Disconnected;
 
-    public AntFeCTrainerClient(TrainerSettings? settings = null, AntFeCDeviceIdentity? targetDevice = null)
+    public AntFeCTrainerClient(TrainerSettings? settings = null, AntFeCDeviceIdentity? targetDevice = null,
+        Action<AntFeCDiagnosticEvent>? diagnostic = null)
     {
         _settings = settings;
         _targetDevice = targetDevice;
+        _diagnostic = diagnostic;
     }
 
     /// <summary>Uses ANT continuous receive scan mode to discover distinct FE-C broadcast identities.</summary>
-    public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(CancellationToken cancellationToken = default)
+    public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(
+        CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null)
     {
-        var key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly);
+        var discoveryTimer = Stopwatch.StartNew();
+        Emit(diagnostic, new("embedded_configuration", "load_network_key", 0, Outcome: "started"));
+        byte[] key;
+        try { key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly); }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new("embedded_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
+                Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            throw;
+        }
+        Emit(diagnostic, new("embedded_configuration", "load_network_key", discoveryTimer.Elapsed.TotalMilliseconds,
+            Outcome: "loaded_8_bytes"));
         try
         {
-            using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken).ConfigureAwait(false);
+            using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, diagnostic).ConfigureAwait(false);
             var device = session.Device;
-            if (!device.enableRxExtendedMessages(true, 1000))
-                throw new IOException("The ANT device could not enable source-identification messages needed to list trainers.");
-            if (!device.setNetworkKey(NetworkNumber, key, 1000))
-                throw new IOException("ANT rejected network configuration. Verify the private ANT+ network key file.");
+            RunCommand(diagnostic, "extended_source_id", "RX_EXT_MESGS_ENABLE_0x66", () => device.enableRxExtendedMessages(true, 1000));
+            RunCommand(diagnostic, "network_configuration", "NETWORK_KEY_0x46",
+                () => device.setNetworkKey(NetworkNumber, key, 1000));
             var channel = device.getChannel(0);
-            if (!channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000) ||
-                !channel.setChannelID(0, true, AntFeCProtocol.DeviceType, 0, 1000) ||
-                !channel.setChannelPeriod(AntFeCProtocol.ChannelPeriod, 1000) ||
-                !channel.setChannelFreq(AntFeCProtocol.RadioFrequency, 1000))
-                throw new IOException("ANT could not configure the FE-C trainer discovery scan.");
+            RunCommand(diagnostic, "channel_configuration", "ASSIGN_CHANNEL_0x42",
+                () => channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000));
+            RunCommand(diagnostic, "channel_configuration", "CHANNEL_ID_0x51",
+                () => channel.setChannelID(0, true, AntFeCProtocol.DeviceType, 0, 1000));
+            RunCommand(diagnostic, "channel_configuration", "CHANNEL_MESG_PERIOD_0x43",
+                () => channel.setChannelPeriod(AntFeCProtocol.ChannelPeriod, 1000));
+            RunCommand(diagnostic, "channel_configuration", "CHANNEL_RADIO_FREQ_0x45",
+                () => channel.setChannelFreq(AntFeCProtocol.RadioFrequency, 1000));
 
             var gate = new object();
             var found = new HashSet<AntFeCDeviceIdentity>();
+            var reportedTrainerPages = new HashSet<(AntFeCDeviceIdentity Identity, byte Page)>();
             void OnDeviceResponse(ANT_Response response)
             {
                 try
@@ -92,7 +114,19 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                     if (payload.Length != 8 || payload[0] is not (AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities)) return;
                     var source = response.getDeviceIDfromExt();
                     if (source.deviceTypeID != AntFeCProtocol.DeviceType || source.deviceNumber == 0) return;
-                    lock (gate) found.Add(new(source.deviceNumber, source.deviceTypeID, source.transmissionTypeID));
+                    var identity = new AntFeCDeviceIdentity(source.deviceNumber, source.deviceTypeID, source.transmissionTypeID);
+                    bool firstPage;
+                    lock (gate)
+                    {
+                        found.Add(identity);
+                        firstPage = reportedTrainerPages.Add((identity, payload[0]));
+                    }
+                    if (firstPage)
+                        Emit(diagnostic, new("fe_c_discovery", "trainer_page_received",
+                            discoveryTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                            DataPage: payload[0], Outcome: "matching_fe_c_page",
+                            DeviceNumber: identity.DeviceNumber, DeviceType: identity.DeviceType,
+                            TransmissionType: identity.TransmissionType));
                 }
                 catch
                 {
@@ -103,15 +137,26 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             device.deviceResponse += OnDeviceResponse;
             try
             {
-                if (!device.openRxScanMode(1000))
-                    throw new NotSupportedException("This ANTUSB-m or driver does not support continuous scan mode required to list multiple FE-C trainers.");
+                RunCommand(diagnostic, "fe_c_discovery", "OPEN_RX_SCAN_0x5B", () => device.openRxScanMode(1000));
+                Emit(diagnostic, new("fe_c_discovery", "scan_window_started", discoveryTimer.Elapsed.TotalMilliseconds,
+                    Outcome: "listening"));
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
             }
             finally
             {
                 device.deviceResponse -= OnDeviceResponse;
             }
-            lock (gate) return found.OrderBy(item => item.DeviceNumber).ThenBy(item => item.TransmissionType).ToArray();
+            AntFeCDeviceIdentity[] result;
+            lock (gate) result = found.OrderBy(item => item.DeviceNumber).ThenBy(item => item.TransmissionType).ToArray();
+            Emit(diagnostic, new("fe_c_discovery", "scan_window_completed", discoveryTimer.Elapsed.TotalMilliseconds,
+                Outcome: result.Length == 0 ? "no_trainer_pages" : "trainer_found", TrainerCount: result.Length));
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new("ant_discovery", "failed", discoveryTimer.Elapsed.TotalMilliseconds,
+                Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            throw;
         }
         finally
         {
@@ -128,10 +173,14 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _generalPage = _trainerPage = null;
         _capabilities = null;
         _pageRequestSent = false;
+        _capabilityRequestAttempts = 0;
+        _reportedPages.Clear();
+        _connectionTimer.Restart();
         _userConfigSent = false;
         _isReady = false;
 
-        var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken).ConfigureAwait(false);
+        Emit(_diagnostic, new("fe_c_search", "connect_started", 0, Outcome: "started"));
+        var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, _diagnostic).ConfigureAwait(false);
         _session = session;
         try
         {
@@ -139,13 +188,23 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var channel = device.getChannel(0);
             _channel = channel;
             channel.channelResponse += OnChannelResponse;
-            if (!device.enableRxExtendedMessages(true, 1000))
-                throw new IOException("The ANT device could not enable source-identification messages.");
-            var key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly);
+            RunCommand(_diagnostic, "extended_source_id", "RX_EXT_MESGS_ENABLE_0x66",
+                () => device.enableRxExtendedMessages(true, 1000));
+            var keyLoadTimer = Stopwatch.StartNew();
+            byte[] key;
+            try { key = AntNetworkKeyMaterial.LoadEmbedded(typeof(AntFeCTrainerClient).Assembly); }
+            catch (Exception ex)
+            {
+                Emit(_diagnostic, new("embedded_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
+                    Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+                throw;
+            }
+            Emit(_diagnostic, new("embedded_configuration", "load_network_key", keyLoadTimer.Elapsed.TotalMilliseconds,
+                Outcome: "loaded_8_bytes"));
             try
             {
-                if (!device.setNetworkKey(NetworkNumber, key, 1000))
-                    throw new IOException("ANT rejected network configuration. Verify the private ANT+ network key file.");
+                RunCommand(_diagnostic, "network_configuration", "NETWORK_KEY_0x46",
+                    () => device.setNetworkKey(NetworkNumber, key, 1000));
             }
             finally { Array.Clear(key, 0, key.Length); }
             var knownNumber = _targetDevice?.DeviceNumber ?? _settings?.LastAntDeviceNumber;
@@ -155,25 +214,36 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var pairingEnabled = !knownNumber.HasValue;
             var targetType = knownType ?? AntFeCProtocol.DeviceType;
             var targetTransmission = knownTransmission ?? (byte)0;
-            if (!channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000) ||
-                !channel.setChannelID(targetNumber, pairingEnabled, targetType, targetTransmission, 1000) ||
-                !channel.setChannelPeriod(AntFeCProtocol.ChannelPeriod, 1000) ||
-                !channel.setChannelFreq(AntFeCProtocol.RadioFrequency, 1000) ||
-                !channel.setChannelSearchTimeout(12, 1000))
-                throw new IOException("ANT could not configure an FE-C search channel.");
-            if (!channel.openChannel(1000))
-                throw new IOException("ANT could not open the FE-C search channel.");
+            RunCommand(_diagnostic, "channel_configuration", "ASSIGN_CHANNEL_0x42",
+                () => channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000));
+            RunCommand(_diagnostic, "channel_configuration", "CHANNEL_ID_0x51",
+                () => channel.setChannelID(targetNumber, pairingEnabled, targetType, targetTransmission, 1000));
+            RunCommand(_diagnostic, "channel_configuration", "CHANNEL_MESG_PERIOD_0x43",
+                () => channel.setChannelPeriod(AntFeCProtocol.ChannelPeriod, 1000));
+            RunCommand(_diagnostic, "channel_configuration", "CHANNEL_RADIO_FREQ_0x45",
+                () => channel.setChannelFreq(AntFeCProtocol.RadioFrequency, 1000));
+            RunCommand(_diagnostic, "channel_configuration", "CHANNEL_SEARCH_TIMEOUT_0x44",
+                () => channel.setChannelSearchTimeout(12, 1000));
+            RunCommand(_diagnostic, "fe_c_search", "OPEN_CHANNEL_0x4B", () => channel.openChannel(1000));
+            Emit(_diagnostic, new("fe_c_search", "search_started", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: "listening"));
 
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(40));
             try { await _ready.Task.WaitAsync(timeout.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException("No FE-C trainer supplied general, trainer, and capability data. Wake the trainer and retry.");
+                Emit(_diagnostic, new("fe_c_readiness", "timed_out", _connectionTimer.Elapsed.TotalMilliseconds,
+                    Outcome: $"general={_generalPage is not null};trainer={_trainerPage is not null};capabilities={_capabilities.HasValue}"));
+                throw new TimeoutException("FE-C readiness timed out. Check ANT diagnostics for trainer pages, capabilities requests, and channel events.");
             }
+            Emit(_diagnostic, new("fe_c_readiness", "ready", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: "telemetry_and_capabilities_received"));
         }
         catch
         {
+            Emit(_diagnostic, new("ant_connect", "failed", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: "failed"));
             await DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
             throw;
         }
@@ -236,17 +306,20 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var channel = _channel ?? throw new IOException("The FE-C channel is closed.");
             if (preamble is not null && !_userConfigSent)
             {
-                var configResult = await Task.Run(() => channel.sendAcknowledgedData(preamble, 3000), cancellationToken).ConfigureAwait(false);
+                var configResult = await SendAcknowledgedPageAsync(channel, preamble,
+                    "trainer_configuration", 3000, cancellationToken).ConfigureAwait(false);
                 if (configResult != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
                     throw new IOException("The FE-C trainer did not acknowledge rider and bicycle weight configuration.");
                 _userConfigSent = true;
             }
             _commandStatus = NewSignal<AntFeCCommandStatus>();
-            var result = await Task.Run(() => channel.sendAcknowledgedData(page, 3000), cancellationToken).ConfigureAwait(false);
+            var result = await SendAcknowledgedPageAsync(channel, page,
+                "trainer_control", 3000, cancellationToken).ConfigureAwait(false);
             if (result != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
                 throw new IOException($"FE-C acknowledged control failed ({result}).");
             var statusRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCommandStatus);
-            var requestResult = await Task.Run(() => channel.sendAcknowledgedData(statusRequest, 2000), cancellationToken).ConfigureAwait(false);
+            var requestResult = await SendAcknowledgedPageAsync(channel, statusRequest,
+                "control_acknowledgement", 2000, cancellationToken).ConfigureAwait(false);
             if (requestResult != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
                 throw new IOException("The trainer accepted the control packet but did not acknowledge a status request.");
             var status = await _commandStatus.Task.WaitAsync(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false);
@@ -264,6 +337,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 response.messageContents.Length >= 3)
             {
                 var eventCode = response.getChannelEventCode();
+                Emit(_diagnostic, new("channel_event", "response_event", _connectionTimer.Elapsed.TotalMilliseconds,
+                    ResponseId: response.responseID, EventCode: (byte)eventCode,
+                    Outcome: $"message_id_{(byte)response.getMessageID():X2}"));
                 if (eventCode is ANT_ReferenceLibrary.ANTEventID.EVENT_RX_SEARCH_TIMEOUT_0x01 or
                     ANT_ReferenceLibrary.ANTEventID.EVENT_CHANNEL_CLOSED_0x07 or
                     ANT_ReferenceLibrary.ANTEventID.EVENT_RX_FAIL_GO_TO_SEARCH_0x08)
@@ -278,6 +354,10 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 ConnectedDeviceType = response.messageContents[3];
                 ConnectedTransmissionType = response.messageContents[4];
                 IsConnected = true;
+                Emit(_diagnostic, new("trainer_identification", "channel_id_received",
+                    _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                    Outcome: "identified", DeviceNumber: ConnectedDeviceNumber,
+                    DeviceType: ConnectedDeviceType, TransmissionType: ConnectedTransmissionType));
                 return;
             }
             var messageId = (ANT_ReferenceLibrary.ANTMessageID)response.responseID;
@@ -289,6 +369,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 messageId != ANT_ReferenceLibrary.ANTMessageID.EXT_BURST_DATA_0x5F) return;
             var page = response.getDataPayload();
             if (page.Length != 8) return;
+            if (_reportedPages.Add(page[0]))
+                Emit(_diagnostic, new("fe_c_pages", "data_page_received", _connectionTimer.Elapsed.TotalMilliseconds,
+                    ResponseId: response.responseID, DataPage: page[0], Outcome: "first_page"));
             if (response.isExtended())
             {
                 var id = response.getDeviceIDfromExt();
@@ -307,7 +390,12 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 else if (page[0] == AntFeCProtocol.PageCapabilities)
                     _capabilities = page[7];
                 else if (AntFeCCommandStatus.TryParse(page) is { } status)
+                {
+                    Emit(_diagnostic, new("control_acknowledgement", "command_status_received",
+                        _connectionTimer.Elapsed.TotalMilliseconds, DataPage: page[0],
+                        Outcome: $"command_{status.CommandId:X2};status_{status.Status:X2}"));
                     _commandStatus.TrySetResult(status);
+                }
 
                 if (_generalPage is not null || _trainerPage is not null)
                 {
@@ -317,7 +405,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                         g?.HeartRateBpm, t?.HasPowerMeasurement == true, t?.HasCadenceMeasurement == true,
                         true, g?.HasSpeedMeasurement == true);
                 }
-                if (_generalPage is not null && _trainerPage is not null && _capabilities.HasValue)
+                if (AntFeCProtocol.IsReady(_generalPage is not null, _trainerPage is not null, _capabilities.HasValue))
                 {
                     _isReady = true;
                     _ready.TrySetResult();
@@ -326,8 +414,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 {
                     _pageRequestSent = true;
                     var channel = _channel;
-                    if (channel is not null) _ = Task.Run(() => channel.sendAcknowledgedData(
-                        AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities), 1000));
+                    if (channel is not null) _ = RequestCapabilitiesAsync(channel);
                 }
             }
         }
@@ -354,6 +441,85 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private void EnsureReady()
     {
         if (!_isReady || _channel is null) throw new InvalidOperationException("The FE-C trainer is not connected and ready.");
+    }
+
+    private async Task RequestCapabilitiesAsync(ANT_Channel channel)
+    {
+        var request = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
+        while (AntFeCProtocol.ShouldRetryCapabilityRequest(_capabilities.HasValue, _capabilityRequestAttempts) && IsConnected)
+        {
+            var attempt = ++_capabilityRequestAttempts;
+            var timer = Stopwatch.StartNew();
+            try
+            {
+                var result = await SendAcknowledgedPageAsync(channel, request,
+                    "capability_request", 1500, CancellationToken.None).ConfigureAwait(false);
+                Emit(_diagnostic, new("capability_request", "attempt_completed", timer.Elapsed.TotalMilliseconds,
+                    Outcome: $"attempt_{attempt}_request_page_{AntFeCProtocol.PageCapabilities}_{result}"));
+            }
+            catch (Exception ex)
+            {
+                Emit(_diagnostic, new("capability_request", "request_page_54", timer.Elapsed.TotalMilliseconds,
+                    CommandId: "ACKNOWLEDGED_DATA_0x4F", DataPage: AntFeCProtocol.PageRequest,
+                    Outcome: $"attempt_{attempt}_failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            }
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        }
+        if (!_capabilities.HasValue)
+            Emit(_diagnostic, new("capability_request", "retries_exhausted", _connectionTimer.Elapsed.TotalMilliseconds,
+                DataPage: AntFeCProtocol.PageCapabilities, Outcome: "capabilities_not_received"));
+    }
+
+    private static bool RunCommand(Action<AntFeCDiagnosticEvent>? diagnostic, string stage,
+        string commandId, Func<bool> command)
+    {
+        var timer = Stopwatch.StartNew();
+        try
+        {
+            var succeeded = command();
+            Emit(diagnostic, new(stage, "command_completed", timer.Elapsed.TotalMilliseconds,
+                CommandId: commandId, Outcome: succeeded ? "accepted" : "rejected"));
+            if (!succeeded) throw new IOException($"ANT command {commandId} was rejected.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new(stage, "command_failed", timer.Elapsed.TotalMilliseconds,
+                CommandId: commandId, Outcome: "failed", ErrorType: ex.GetType().Name,
+                ErrorMessage: ex.Message));
+            throw;
+        }
+    }
+
+    private async Task<ANT_ReferenceLibrary.MessagingReturnCode> SendAcknowledgedPageAsync(
+        ANT_Channel channel, byte[] page, string stage, int timeoutMilliseconds,
+        CancellationToken cancellationToken)
+    {
+        var timer = Stopwatch.StartNew();
+        try
+        {
+            var result = await Task.Run(() => channel.sendAcknowledgedData(page, timeoutMilliseconds),
+                cancellationToken).ConfigureAwait(false);
+            Emit(_diagnostic, new(stage, "acknowledged_data_sent", timer.Elapsed.TotalMilliseconds,
+                CommandId: "ACKNOWLEDGED_DATA_0x4F", DataPage: page.Length > 0 ? page[0] : null,
+                RequestedPage: page.Length > 6 && page[0] == AntFeCProtocol.PageRequest ? page[6] : null,
+                Outcome: result.ToString()));
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Emit(_diagnostic, new(stage, "acknowledged_data_failed", timer.Elapsed.TotalMilliseconds,
+                CommandId: "ACKNOWLEDGED_DATA_0x4F", DataPage: page.Length > 0 ? page[0] : null,
+                RequestedPage: page.Length > 6 && page[0] == AntFeCProtocol.PageRequest ? page[6] : null,
+                Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            throw;
+        }
+    }
+
+    private static void Emit(Action<AntFeCDiagnosticEvent>? diagnostic, AntFeCDiagnosticEvent entry)
+    {
+        try { diagnostic?.Invoke(entry); }
+        catch { /* Diagnostics must not change ANT discovery or ride behavior. */ }
     }
 
     private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);

@@ -206,7 +206,7 @@ text = "Trainer connection"
 
 [node name="SubtitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1042406415]
 layout_mode = 2
-text = "Choose Auto, Bluetooth FTMS, or ANT+ FE-C. ANT+ requires an ANTUSB-m driver and private network key."
+text = "Choose Auto, Bluetooth FTMS, or ANT+ FE-C. ANT+ requires an ANTUSB-m driver and an awake FE-C trainer."
 
 [node name="OverallStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995716997]
 layout_mode = 2

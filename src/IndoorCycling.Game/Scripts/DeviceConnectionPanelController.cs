@@ -404,7 +404,8 @@ public partial class DeviceConnectionPanelController : Control
 			_overallStatusLabel!.Text = "Scanning nearby ANT+ FE-C trainers…";
 			_trainerNameLabel!.Text = "Searching nearby";
 			_protocolStatusLabel!.Text = "ANT+ FE-C · Scanning";
-			var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(cancellationToken));
+            var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(
+                cancellationToken, diagnostic => GameLogger.Log("ant_diagnostic", diagnostic)));
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.None)
 			{
@@ -437,7 +438,8 @@ public partial class DeviceConnectionPanelController : Control
 			}
 			selectedDevice = discovery.Selected;
 		}
-		var client = new AntFeCTrainerClient(GameBootstrap.Settings.Trainer, selectedDevice);
+        var client = new AntFeCTrainerClient(GameBootstrap.Settings.Trainer, selectedDevice,
+            diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
 		_antTrainerClient = client;
 		if (_antDisconnectedHandler is not null) client.Disconnected -= _antDisconnectedHandler;
 		_antDisconnectedHandler = () => Callable.From(() => HandleAntTrainerDisconnected(attemptId)).CallDeferred();

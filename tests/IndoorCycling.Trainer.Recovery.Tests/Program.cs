@@ -118,6 +118,21 @@ Check(fecSimulation[0] == 51 && fecSimulation[5] == 0xF2 && fecSimulation[6] == 
 var fecRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
 Check(fecRequest.Length == 8 && fecRequest[0] == 70 && fecRequest[6] == 54,
     "FE-C on-demand request targets the capabilities page");
+Check(AntFeCProtocol.ShouldRetryCapabilityRequest(false, 0) &&
+      AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts - 1) &&
+      !AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts) &&
+      !AntFeCProtocol.ShouldRetryCapabilityRequest(true, 0),
+    "FE-C capability requests retry only while the page is missing and attempts remain");
+Check(!AntFeCProtocol.IsReady(true, true, false) && AntFeCProtocol.IsReady(true, true, true) &&
+      !AntFeCProtocol.IsReady(true, false, true),
+    "FE-C readiness requires telemetry pages and capabilities returned by its request");
+var antDiagnostic = System.Text.Json.JsonSerializer.Serialize(new AntFeCDiagnosticEvent(
+    "channel_configuration", "command_completed", 12.5, "CHANNEL_ID_0x51",
+    ResponseId: 0x40, EventCode: 0x15, DataPage: AntFeCProtocol.PageCapabilities));
+Check(antDiagnostic.Contains("CHANNEL_ID_0x51", StringComparison.Ordinal) &&
+      antDiagnostic.Contains("21", StringComparison.Ordinal) &&
+      !antDiagnostic.Contains("NetworkKey", StringComparison.OrdinalIgnoreCase),
+    "ANT stage diagnostics retain command, response, event, and page identifiers without key fields");
 var fecConfig = AntFeCProtocol.BuildUserConfiguration(75, 10);
 Check(fecConfig[0] == 55 && fecConfig[1] == 0x4C && fecConfig[2] == 0x1D &&
       fecConfig[4] == 0x8F && fecConfig[5] == 0x0C,
