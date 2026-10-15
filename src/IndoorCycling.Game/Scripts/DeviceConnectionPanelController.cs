@@ -561,7 +561,8 @@ public partial class DeviceConnectionPanelController : Control
 
 	private void ShowReadyUi()
 	{
-		IndoorCycling.Trainer.Abstractions.ITrainerClient? client = _antTrainerClient ?? _realTrainerClient;
+		IndoorCycling.Trainer.Abstractions.ITrainerClient? client = _antTrainerClient is not null
+			? _antTrainerClient : _realTrainerClient;
 		if (client?.IsReady != true || _connectionState.Phase != TrainerConnectionPhase.Ready) return;
 		_trainerNameLabel!.Text = client is AntFeCTrainerClient ant
 			? ant.ConnectedDeviceName ?? "ANT+ fitness equipment"
@@ -582,7 +583,8 @@ public partial class DeviceConnectionPanelController : Control
 
 	private void RefreshTelemetryUi()
 	{
-		IndoorCycling.Trainer.Abstractions.ITrainerClient? client = _antTrainerClient ?? _realTrainerClient;
+		IndoorCycling.Trainer.Abstractions.ITrainerClient? client = _antTrainerClient is not null
+			? _antTrainerClient : _realTrainerClient;
 		if (client is not { IsReady: true })
 		{
 			if (_connectionState.Phase == TrainerConnectionPhase.Ready)
