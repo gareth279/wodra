@@ -68,7 +68,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _diagnostic = diagnostic;
     }
 
-    /// <summary>Uses ANT continuous receive scan mode to discover distinct FE-C broadcast identities.</summary>
+    /// <summary>Uses a wildcard slave receive channel to discover FE-C broadcasts, matching the ANTware receive path.</summary>
     public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(
         CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null)
     {
@@ -88,66 +88,106 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         {
             using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, diagnostic).ConfigureAwait(false);
             var device = session.Device;
-            RunCommand(diagnostic, "extended_source_id", "RX_EXT_MESGS_ENABLE_0x66", () => device.enableRxExtendedMessages(true, 1000));
             RunCommand(diagnostic, "network_configuration", "NETWORK_KEY_0x46",
                 () => device.setNetworkKey(NetworkNumber, key, 1000));
             var channel = device.getChannel(0);
+            var discoveryChannel = AntFeCProtocol.DiscoveryChannel;
             RunCommand(diagnostic, "channel_configuration", "ASSIGN_CHANNEL_0x42",
                 () => channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000));
+            // ANT_Channel.setChannelID sets bit 7 of device type when pairingEnabled is true.
+            // ANTware's proven wildcard receive config is 0/17/0 with that bit clear.
             RunCommand(diagnostic, "channel_configuration", "CHANNEL_ID_0x51",
-                () => channel.setChannelID(0, true, AntFeCProtocol.DeviceType, 0, 1000));
+                () => channel.setChannelID(discoveryChannel.DeviceNumber, discoveryChannel.PairingEnabled,
+                    discoveryChannel.DeviceType, discoveryChannel.TransmissionType, 1000));
             RunCommand(diagnostic, "channel_configuration", "CHANNEL_MESG_PERIOD_0x43",
-                () => channel.setChannelPeriod(AntFeCProtocol.ChannelPeriod, 1000));
+                () => channel.setChannelPeriod(discoveryChannel.Period, 1000));
             RunCommand(diagnostic, "channel_configuration", "CHANNEL_RADIO_FREQ_0x45",
-                () => channel.setChannelFreq(AntFeCProtocol.RadioFrequency, 1000));
+                () => channel.setChannelFreq(discoveryChannel.RadioFrequency, 1000));
+            Emit(diagnostic, new("channel_configuration", "effective_settings", discoveryTimer.Elapsed.TotalMilliseconds,
+                Outcome: $"normal_slave_receive;network={NetworkNumber};device_number={discoveryChannel.DeviceNumber};pairing=off;device_type={discoveryChannel.DeviceType};transmission_type={discoveryChannel.TransmissionType};period={discoveryChannel.Period};frequency={discoveryChannel.RadioFrequency}"));
 
             var gate = new object();
             var found = new HashSet<AntFeCDeviceIdentity>();
             var reportedTrainerPages = new HashSet<(AntFeCDeviceIdentity Identity, byte Page)>();
             var receiveCounts = new AntReceiveDiagnosticCounts();
+            AntFeCDeviceIdentity? channelIdentity = null;
+            var receivedRadioFrames = 0;
             void OnScanChannelResponse(ANT_Response response)
             {
+                const string callbackSource = "channelResponse";
                 try
                 {
-                    var frame = AntFeCScanFrameParser.Parse(response.responseID, response.messageContents);
-                    var callbackSource = "channelResponse";
+                    if (response.responseID is 0x4E or 0x4F or 0x50 or 0x5D or 0x5E or 0x5F)
+                        lock (gate) receivedRadioFrames++;
+                    var receivedIdentity = AntFeCScanFrameParser.ParseChannelIdentity(response.responseID, response.messageContents);
+                    if (receivedIdentity is { } identity)
+                    {
+                        lock (gate)
+                        {
+                            channelIdentity = identity;
+                            receiveCounts.Add(response.responseID, callbackSource,
+                                response.messageContents?.Length >= 13,
+                                Math.Max(0, (response.messageContents?.Length ?? 0) - 1), null,
+                                "channel_identity_response");
+                        }
+                        Emit(diagnostic, new("fe_c_discovery", "channel_identity_received",
+                            discoveryTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                            Outcome: identity.DeviceType == AntFeCProtocol.DeviceType ? "eligible_source" : "device_type_mismatch",
+                            CallbackSource: callbackSource, DeviceNumber: identity.DeviceNumber,
+                            DeviceType: identity.DeviceType, TransmissionType: identity.TransmissionType));
+                        return;
+                    }
+                    AntFeCDeviceIdentity? currentIdentity;
+                    lock (gate) currentIdentity = channelIdentity;
+                    var frame = AntFeCScanFrameParser.Parse(response.responseID, response.messageContents, currentIdentity);
                     var rejection = frame.RejectionReason ?? "accepted_fe_c_page";
                     lock (gate) receiveCounts.Add(frame.MessageId, callbackSource, frame.IsExtended, frame.PayloadLength, frame.DataPage, rejection);
-                    if (frame.RejectionReason is not null || frame.DataPage is not { } page || frame.Source is not { } identity) return;
+                    if (frame.RejectionReason is not null || frame.DataPage is not { } page || frame.Source is not { } sourceIdentity) return;
                     bool firstPage;
                     lock (gate)
                     {
-                        found.Add(identity);
-                        firstPage = reportedTrainerPages.Add((identity, page));
+                        found.Add(sourceIdentity);
+                        firstPage = reportedTrainerPages.Add((sourceIdentity, page));
                     }
                     if (firstPage)
                         Emit(diagnostic, new("fe_c_discovery", "trainer_page_received",
                             discoveryTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
                             DataPage: page, Outcome: "matching_fe_c_page", CallbackSource: callbackSource,
                             IsExtended: frame.IsExtended, PayloadLength: frame.PayloadLength,
-                            DeviceNumber: identity.DeviceNumber, DeviceType: identity.DeviceType,
-                            TransmissionType: identity.TransmissionType));
+                            DeviceNumber: sourceIdentity.DeviceNumber, DeviceType: sourceIdentity.DeviceType,
+                            TransmissionType: sourceIdentity.TransmissionType));
                 }
                 catch (Exception ex)
                 {
                     lock (gate) receiveCounts.Add(response.responseID, "channelResponse", response.messageContents?.Length >= 13,
                         Math.Max(0, (response.messageContents?.Length ?? 0) - 1), null, $"callback_exception_{ex.GetType().Name}");
+                    Emit(diagnostic, new("fe_c_discovery", "receive_callback_failed",
+                        discoveryTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                        Outcome: "callback_exception", CallbackSource: callbackSource,
+                        ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
                 }
             }
 
-            // The ANT PC SDK dispatches all channel transmission messages (0x4E/0x5D etc.)
-            // to ANT_Channel.channelResponse. deviceResponse is reserved for protocol/device messages.
             channel.channelResponse += OnScanChannelResponse;
+            var opened = false;
             try
             {
-                RunCommand(diagnostic, "fe_c_discovery", "OPEN_RX_SCAN_0x5B", () => device.openRxScanMode(1000));
+                RunCommand(diagnostic, "fe_c_discovery", "OPEN_CHANNEL_0x4B", () => channel.openChannel(1000));
+                opened = true;
                 Emit(diagnostic, new("fe_c_discovery", "scan_window_started", discoveryTimer.Elapsed.TotalMilliseconds,
-                    Outcome: "listening"));
+                    Outcome: "wildcard_receive_listening"));
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
             }
             finally
             {
                 channel.channelResponse -= OnScanChannelResponse;
+                if (opened)
+                {
+                    try { channel.closeChannel(1000); }
+                    catch (Exception ex) { Emit(diagnostic, new("fe_c_discovery", "close_channel_failed", discoveryTimer.Elapsed.TotalMilliseconds, Outcome: "failed", ErrorType: ex.GetType().Name)); }
+                }
+                try { channel.unassignChannel(1000); }
+                catch (Exception ex) { Emit(diagnostic, new("fe_c_discovery", "unassign_channel_failed", discoveryTimer.Elapsed.TotalMilliseconds, Outcome: "failed", ErrorType: ex.GetType().Name)); }
             }
             lock (gate)
             {
@@ -156,6 +196,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                         ResponseId: item.MessageId, Outcome: "bounded_receive_count", CallbackSource: item.CallbackSource,
                         IsExtended: item.Extended, PayloadLength: item.PayloadLength, DataPage: item.DataPage,
                         RejectionReason: item.RejectionReason, Count: item.Count));
+                Emit(diagnostic, new("fe_c_receive", "radio_frame_summary", discoveryTimer.Elapsed.TotalMilliseconds,
+                    Outcome: receivedRadioFrames == 0 ? "no_radio_frames_received" : "radio_frames_received",
+                    CallbackSource: "channelResponse", Count: receivedRadioFrames));
             }
             AntFeCDeviceIdentity[] result;
             lock (gate) result = found.OrderBy(item => item.DeviceNumber).ThenBy(item => item.TransmissionType).ToArray();

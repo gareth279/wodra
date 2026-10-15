@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using Godot;
-using IndoorCycling.Trainer.Windows;
 
 public partial class RideMenuPanelController : Control
 {
@@ -168,7 +167,6 @@ public partial class RideMenuPanelController : Control
 				AddTrainerDifficultyControl();
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
-				AddAntSetupControls();
 				AddAction("Back", () => ShowView(MenuView.Main));
 				break;
 			case MenuView.Multiplayer:
@@ -233,41 +231,6 @@ public partial class RideMenuPanelController : Control
 			if (_content.GetChild(_content.GetChildCount() - 1).GetChild(0) is Control cancelButton)
 				cancelButton.CallDeferred(Control.MethodName.GrabFocus);
 		}
-	}
-
-	private void AddAntSetupControls()
-	{
-		_content!.AddChild(new HSeparator());
-		_content.AddChild(new Label { Text = "ANT+ Setup", HorizontalAlignment = HorizontalAlignment.Center });
-		_content.AddChild(new Label
-		{
-			Text = "ANT+ requires a network key published by Garmin. Wodra does not include it. Open Garmin’s page, copy the ANT+ network key and paste it here. You only need to do this once on this Windows account.",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart
-		});
-		var status = new Label { Text = IndoorCycling.Trainer.Models.AntNetworkKeyMaterial.GetStatus() };
-		_content.AddChild(status);
-		var key = new LineEdit { PlaceholderText = "16 hexadecimal digits", Secret = true, SecretCharacter = "•", ClearButtonEnabled = true };
-		_content.AddChild(key);
-		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var save = new Button { Text = "Save" };
-		var clear = new Button { Text = "Clear" };
-		var open = new Button { Text = "Open Garmin key page" };
-		save.Pressed += () =>
-		{
-			if (GameBootstrap.TrainerClient is AntFeCTrainerClient { IsConnected: true })
-			{ status.Text = "Disconnect ANT+ before changing its setup."; return; }
-			try { IndoorCycling.Trainer.Models.AntNetworkKeyMaterial.Save(key.Text); key.Clear(); status.Text = "Configured"; }
-			catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException) { status.Text = ex.Message; }
-		};
-		clear.Pressed += () =>
-		{
-			if (GameBootstrap.TrainerClient is AntFeCTrainerClient { IsConnected: true })
-			{ status.Text = "Disconnect ANT+ before changing its setup."; return; }
-			try { IndoorCycling.Trainer.Models.AntNetworkKeyMaterial.Clear(); key.Clear(); status.Text = "Not configured"; }
-			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException) { status.Text = ex.Message; }
-		};
-		open.Pressed += () => OS.ShellOpen(IndoorCycling.Trainer.Models.AntNetworkKeyMaterial.GarminNetworkKeysUrl);
-		actions.AddChild(save); actions.AddChild(clear); actions.AddChild(open); _content.AddChild(actions);
 	}
 
 	private void ResizeMenuPanel(MenuView view)

@@ -7,6 +7,9 @@ public readonly record struct AntFeCDeviceIdentity(ushort DeviceNumber, byte Dev
     public string DisplayName => $"ANT+ FE-C trainer {DeviceNumber}";
 }
 
+public readonly record struct AntFeCReceiveChannelSettings(ushort DeviceNumber, bool PairingEnabled,
+    byte DeviceType, byte TransmissionType, ushort Period, byte RadioFrequency);
+
 /// <summary>Decoded ANT PC SDK receive callback frame metadata, with no raw payload retention.</summary>
 public readonly record struct AntReceiveFrame(byte MessageId, bool IsExtended, int PayloadLength,
     byte? DataPage, AntFeCDeviceIdentity? Source, string? RejectionReason);
@@ -14,7 +17,8 @@ public readonly record struct AntReceiveFrame(byte MessageId, bool IsExtended, i
 /// <summary>Parses the messageContents layout used by ANT PC SDK ANT_Response.</summary>
 public static class AntFeCScanFrameParser
 {
-    public static AntReceiveFrame Parse(byte messageId, ReadOnlySpan<byte> messageContents)
+    public static AntReceiveFrame Parse(byte messageId, ReadOnlySpan<byte> messageContents,
+        AntFeCDeviceIdentity? channelIdentity = null)
     {
         var isExtended = messageContents.Length >= 13;
         var isLegacyData = messageId is 0x4E or 0x4F or 0x50;
@@ -43,11 +47,22 @@ public static class AntFeCScanFrameParser
         if (payloadLength != 8) return new(messageId, isExtended, payloadLength, page, source, "payload_length_not_8");
         if (page is not (AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities))
             return new(messageId, isExtended, payloadLength, page, source, "unsupported_page");
+        source ??= channelIdentity;
         if (source is not null && source.Value.DeviceType != AntFeCProtocol.DeviceType)
             return new(messageId, isExtended, payloadLength, page, source, "device_type_mismatch");
         if (source is { DeviceNumber: 0 })
             return new(messageId, isExtended, payloadLength, page, source, "device_number_zero");
         return new(messageId, isExtended, payloadLength, page, source, source is null ? "source_id_missing" : null);
+    }
+
+    /// <summary>Reads the source identity reported by ANT for a wildcard receive channel.</summary>
+    public static AntFeCDeviceIdentity? ParseChannelIdentity(byte messageId, ReadOnlySpan<byte> messageContents)
+    {
+        if (messageId != 0x51 || messageContents.Length < 5) return null;
+        var number = (ushort)(messageContents[1] | messageContents[2] << 8);
+        var type = (byte)(messageContents[3] & 0x7F);
+        var transmission = messageContents[4];
+        return number == 0 ? null : new(number, type, transmission);
     }
 }
 
@@ -112,6 +127,9 @@ public static class AntFeCProtocol
     public const byte PageCommandStatus = 71;
     public const byte PageRequest = 70;
     public const int MaximumCapabilityRequestAttempts = 3;
+    public static AntFeCReceiveChannelSettings DiscoveryChannel => new(
+        DeviceNumber: 0, PairingEnabled: false, DeviceType: DeviceType, TransmissionType: 0,
+        Period: ChannelPeriod, RadioFrequency: RadioFrequency);
 
     public static bool IsReady(bool hasGeneralPage, bool hasTrainerPage, bool hasCapabilities) =>
         hasGeneralPage && hasTrainerPage && hasCapabilities;

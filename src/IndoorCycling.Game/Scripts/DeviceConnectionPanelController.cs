@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
@@ -24,6 +25,12 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _powerStatusLabel;
 	private Label? _cadenceStatusLabel;
 	private Label? _diagnosticsLabel;
+	private VBoxContainer? _connectionDetails;
+	private VBoxContainer? _antSetupSection;
+	private Label? _antSetupStatus;
+	private LineEdit? _antKeyInput;
+	private Button? _antSaveButton;
+	private Button? _antClearButton;
 	private PanelContainer? _connectionPanel;
 	private OptionButton? _trainerPicker;
 	private OptionButton? _protocolPreferenceOption;
@@ -78,6 +85,7 @@ public partial class DeviceConnectionPanelController : Control
 		_continueButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/ContinueButton");
 		_diagnosticsButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/DiagnosticsButton");
 		MakeConnectionDetailsScrollable();
+		BuildAntSetupSection();
 		Resized += FitConnectionPanel;
 		FitConnectionPanel();
 		_connectButton.Pressed += OnConnectPressed;
@@ -112,9 +120,9 @@ public partial class DeviceConnectionPanelController : Control
 			var configured = AntNetworkKeyMaterial.GetStatus() == "Configured";
 			_overallStatusLabel!.Text = configured
 				? "ANT+ FE-C selected. Connect the ANTUSB-m and wake your trainer before scanning."
-				: "ANT+ needs setup before connecting. Choose Set up ANT+ to enter the Garmin network key.";
+				: "ANT+ needs its 64-bit network key. Enter it in ANT+ Setup below.";
 			_trainerNameLabel!.Text = "ANT+ trainer not connected";
-			_connectButton!.Text = configured ? "Connect trainer" : "Set up ANT+";
+			_connectButton!.Text = "Connect trainer";
 			_connectionState.SetPhase(_connectionState.AttemptId, TrainerConnectionPhase.Idle);
 			_connectButton.Disabled = false;
 		}
@@ -128,6 +136,7 @@ public partial class DeviceConnectionPanelController : Control
 			_connectButton!.Text = "Connect trainer";
 			_connectButton.Disabled = false;
 		}
+		RefreshAntSetupUi();
 	}
 
 	private static string ProtocolPreferenceLabel(TrainerProtocolPreference preference) => preference switch
@@ -145,10 +154,108 @@ public partial class DeviceConnectionPanelController : Control
 		var detailNodes = column.GetChildren().Take(column.GetChildCount() - 2).ToArray();
 		var scroll = new ScrollContainer { Name = "ConnectionDetailsScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
 		var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_connectionDetails = details;
 		foreach (var child in detailNodes) { column.RemoveChild(child); details.AddChild(child); }
 		column.AddChild(scroll);
 		column.MoveChild(scroll, 0);
 		scroll.AddChild(details);
+	}
+
+	private void BuildAntSetupSection()
+	{
+		if (_connectionDetails is null) return;
+		_antSetupSection = new VBoxContainer
+		{
+			Name = "AntSetupSection",
+			Visible = false,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		_antSetupSection.AddChild(new HSeparator());
+		_antSetupSection.AddChild(new Label { Text = "ANT+ Setup", HorizontalAlignment = HorizontalAlignment.Center });
+		_antSetupSection.AddChild(new Label
+		{
+			Text = "Paste the ANT+ 64-bit entry from Garmin’s network key page. Wodra stores it for this Windows account.",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		});
+		_antSetupStatus = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_antSetupSection.AddChild(_antSetupStatus);
+		_antKeyInput = new LineEdit
+		{
+			PlaceholderText = "16 hexadecimal digits or eight byte values",
+			ClearButtonEnabled = true,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		_antSetupSection.AddChild(_antKeyInput);
+		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_antSaveButton = new Button { Text = "Save key" };
+		_antClearButton = new Button { Text = "Clear key" };
+		var open = new Button { Text = "Open Garmin key page" };
+		_antSaveButton.Pressed += SaveAntSetup;
+		_antClearButton.Pressed += ClearAntSetup;
+		open.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
+		actions.AddChild(_antSaveButton);
+		actions.AddChild(_antClearButton);
+		actions.AddChild(open);
+		_antSetupSection.AddChild(actions);
+		_connectionDetails.AddChild(_antSetupSection);
+		RefreshAntSetupUi();
+	}
+
+	private bool IsAntConfigurationInUse() =>
+		(_attemptInProgress && _attemptUsingAnt) || _antTrainerClient?.IsConnected == true;
+
+	private void RefreshAntSetupUi()
+	{
+		if (_antSetupSection is null) return;
+		var status = AntNetworkKeyMaterial.GetStatus();
+		_antSetupSection.Visible = GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC || status != "Configured";
+		if (_antSetupStatus is not null)
+			_antSetupStatus.Text = IsAntConfigurationInUse()
+				? "Disconnect ANT+ before changing or clearing this configuration."
+				: status;
+		var disabled = IsAntConfigurationInUse();
+		if (_antSaveButton is not null) _antSaveButton.Disabled = disabled;
+		if (_antClearButton is not null) _antClearButton.Disabled = disabled;
+	}
+
+	private void SaveAntSetup()
+	{
+		if (IsAntConfigurationInUse())
+		{
+			if (_antSetupStatus is not null) _antSetupStatus.Text = "Disconnect ANT+ before changing its setup.";
+			return;
+		}
+		try
+		{
+			AntNetworkKeyMaterial.Save(_antKeyInput?.Text ?? string.Empty);
+			_antKeyInput?.Clear();
+			RefreshAntSetupUi();
+			if (_antSetupStatus is not null) _antSetupStatus.Text = "ANT+ key saved for this Windows account.";
+		}
+		catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Security.SecurityException)
+		{
+			if (_antSetupStatus is not null) _antSetupStatus.Text = ex.Message;
+		}
+	}
+
+	private void ClearAntSetup()
+	{
+		if (IsAntConfigurationInUse())
+		{
+			if (_antSetupStatus is not null) _antSetupStatus.Text = "Disconnect ANT+ before clearing its setup.";
+			return;
+		}
+		try
+		{
+			AntNetworkKeyMaterial.Clear();
+			_antKeyInput?.Clear();
+			RefreshAntSetupUi();
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException)
+		{
+			if (_antSetupStatus is not null) _antSetupStatus.Text = ex.Message;
+		}
 	}
 
 	private void FitConnectionPanel()
@@ -199,11 +306,6 @@ public partial class DeviceConnectionPanelController : Control
 		_attemptTask = StartDiscoveryAsync();
 	}
 
-	public void HideForAntSetup()
-	{
-		if (!_attemptInProgress) Hide();
-	}
-
 	private void ResetUi()
 	{
 		_overallStatusLabel!.Text = GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC
@@ -223,6 +325,7 @@ public partial class DeviceConnectionPanelController : Control
 		_disconnectButton!.Disabled = true;
 		_changeTrainerButton!.Disabled = false;
 		_continueButton!.Disabled = true;
+		RefreshAntSetupUi();
 	}
 
 	private async Task StartDiscoveryAsync(AntFeCDeviceIdentity? selectedAntDevice = null)
@@ -332,9 +435,9 @@ public partial class DeviceConnectionPanelController : Control
 			if (_connectionState.IsCurrent(attemptId))
 			{
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Idle);
-				_overallStatusLabel.Text = "Scanning cancelled. Connect when your trainer is ready.";
-				_trainerNameLabel.Text = "No trainer connected";
-				_connectButton.Text = "Scan again";
+				_overallStatusLabel!.Text = "Scanning cancelled. Connect when your trainer is ready.";
+				_trainerNameLabel!.Text = "No trainer connected";
+				_connectButton!.Text = "Scan again";
 			}
 		}
 		catch (Exception ex)
@@ -343,13 +446,14 @@ public partial class DeviceConnectionPanelController : Control
 			{
 				var antNeedsSetup = _attemptUsingAnt && AntNetworkKeyMaterial.GetStatus() != "Configured";
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, ex.Message);
-				_overallStatusLabel.Text = antNeedsSetup
-					? "ANT+ needs setup before connecting. Choose Set up ANT+ to enter the Garmin network key."
+				_overallStatusLabel!.Text = antNeedsSetup
+					? "ANT+ needs its 64-bit network key. Enter it in ANT+ Setup below, then retry."
 					: $"Trainer scan failed: {ex.Message} You can retry.";
-				_trainerNameLabel.Text = "Connection unavailable";
-				_protocolStatusLabel.Text = _attemptUsingAnt
+				_trainerNameLabel!.Text = "Connection unavailable";
+				_protocolStatusLabel!.Text = _attemptUsingAnt
 					? "ANT+ FE-C · Connection failed" : "Bluetooth FTMS · Scan failed";
-				_connectButton.Text = antNeedsSetup ? "Set up ANT+" : "Retry";
+				_connectButton!.Text = "Retry";
+				RefreshAntSetupUi();
 			}
 			GameLogger.Log("trainer_scan_failed", new { attemptId, ex.Message });
 		}
@@ -364,6 +468,7 @@ public partial class DeviceConnectionPanelController : Control
 				_connectButton.Disabled = _connectionState.Phase == TrainerConnectionPhase.Ready;
 				_attemptCancellation = null;
 				operationCancellation.Dispose();
+				RefreshAntSetupUi();
 			}
 		}
 	}
@@ -374,7 +479,8 @@ public partial class DeviceConnectionPanelController : Control
 		if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
 			AntNetworkKeyMaterial.GetStatus() != "Configured")
 		{
-			_startPanel?.Call("FocusAntSetup");
+			_overallStatusLabel!.Text = "Enter the ANT+ 64-bit network key in ANT+ Setup below, then connect.";
+			_antKeyInput?.CallDeferred(Control.MethodName.GrabFocus);
 			return;
 		}
 		if (_awaitingAntDeviceChoice && _antDiscovered.Length > 1)
@@ -555,6 +661,7 @@ public partial class DeviceConnectionPanelController : Control
 				_connectButton!.Disabled = _connectionState.Phase == TrainerConnectionPhase.Ready;
 				_attemptCancellation = null;
 				operationCancellation.Dispose();
+				RefreshAntSetupUi();
 			}
 		}
 	}

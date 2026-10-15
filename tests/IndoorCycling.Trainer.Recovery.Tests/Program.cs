@@ -73,6 +73,27 @@ var fecPower = new AntFeCPowerAccumulator();
 var rawAntKey = new byte[] { 1, 35, 69, 103, 137, 171, 205, 239 };
 Check(AntNetworkKeyMaterial.Parse(" 0123456789abcdef ").SequenceEqual(rawAntKey),
     "ANT+ setup trims whitespace and parses exactly 16 hexadecimal digits");
+var acceptedKeyFormats = new[]
+{
+    "0123456789abcdef",
+    "0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF",
+    "01 23\r\n45\t67 89 ab cd ef",
+    "01:23:45:67:89:ab:cd:ef",
+    "01-23-45-67-89-AB-CD-EF"
+};
+Check(acceptedKeyFormats.All(format => AntNetworkKeyMaterial.Parse(format).SequenceEqual(rawAntKey)),
+    "ANT+ 64-bit key accepts compact, Garmin comma-byte, whitespace, colon, and hyphen formats");
+var invalidKeyFormats = new[]
+{
+    "0123456789abcde", "00112233445566778899aabbccddeeff", "0x01,0x23,0x45,0x67,0x89,0xAB,0xCD",
+    "01 23 45 67 89 AB CD EF 10", "0x01 0x23 0x45 0x67 0x89 0xAB 0xCD 0xEF",
+    "01:23-45:67:89:AB:CD:EF", "01:23:45:67:89:AG:CD:EF", "key=0123456789abcdef"
+};
+Check(invalidKeyFormats.All(format =>
+{
+    try { _ = AntNetworkKeyMaterial.Parse(format); return false; }
+    catch (InvalidDataException) { return true; }
+}), "ANT+ key parser rejects malformed, mixed-separator, and oversized input");
 var antConfigDirectory = Path.Combine(Path.GetTempPath(), $"WodraAntConfigTests-{Guid.NewGuid():N}");
 var antConfigPath = Path.Combine(antConfigDirectory, "ant-config.json");
 try
@@ -136,6 +157,11 @@ Check(AntFeCProtocol.ShouldRetryCapabilityRequest(false, 0) &&
       !AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts) &&
       !AntFeCProtocol.ShouldRetryCapabilityRequest(true, 0),
     "FE-C capability requests retry only while the page is missing and attempts remain");
+var discoveryChannelSettings = AntFeCProtocol.DiscoveryChannel;
+Check(discoveryChannelSettings.DeviceNumber == 0 && !discoveryChannelSettings.PairingEnabled &&
+      discoveryChannelSettings.DeviceType == 17 && discoveryChannelSettings.TransmissionType == 0 &&
+      discoveryChannelSettings.Period == 8192 && discoveryChannelSettings.RadioFrequency == 57,
+    "FE-C discovery uses the proven wildcard slave-receive settings with pairing disabled");
 var sdkExtendedScanFrame = new byte[] { 0, 0x34, 0x12, 0x91, 0x01, 16, 0, 0, 0, 0, 0, 0, 0 };
 var parsedExtendedScan = AntFeCScanFrameParser.Parse(0x5D, sdkExtendedScanFrame);
 Check(parsedExtendedScan.IsExtended && parsedExtendedScan.PayloadLength == 8 &&
@@ -148,6 +174,13 @@ var parsedFlagExtended = AntFeCScanFrameParser.Parse(0x4E, sdkFlagExtendedBroadc
 Check(parsedFlagExtended.IsExtended && parsedFlagExtended.PayloadLength == 8 &&
       parsedFlagExtended.Source == new AntFeCDeviceIdentity(0x5678, AntFeCProtocol.DeviceType, 2),
     "ANT SDK ordinary broadcast frames with extended channel-ID flag are parsed");
+var channelIdentityResponse = AntFeCScanFrameParser.ParseChannelIdentity(0x51, new byte[] { 0, 0x6E, 0x10, 17, 5 });
+var sdkOrdinaryBroadcast = new byte[] { 0, 16, 0x1F, 0x60, 0x33, 0x29, 0x06, 0xFF, 0x34 };
+var parsedOrdinaryBroadcast = AntFeCScanFrameParser.Parse(0x4E, sdkOrdinaryBroadcast, channelIdentityResponse);
+Check(channelIdentityResponse == new AntFeCDeviceIdentity(4206, 17, 5) &&
+      parsedOrdinaryBroadcast.DataPage == AntFeCProtocol.PageGeneral &&
+      parsedOrdinaryBroadcast.Source == channelIdentityResponse && parsedOrdinaryBroadcast.RejectionReason is null,
+    "ANT wildcard receive resolves the 0x51 source identity and accepts ordinary 0x4E FE-C frames");
 var wrongTrainerType = new byte[] { 0, 1, 0, 18, 1, 25, 0, 0, 0, 0, 0, 0, 0 };
 Check(AntFeCScanFrameParser.Parse(0x5D, wrongTrainerType).RejectionReason == "device_type_mismatch",
     "ANT SDK source device type is masked and mismatches are diagnosed explicitly");

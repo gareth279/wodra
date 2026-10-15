@@ -26,12 +26,12 @@ The Fitness Equipment device profile is used for FE-C compatibility. The officia
 
 ### ANT+ first-time setup
 
-1. Install the supported USB driver if Windows needs it.
-2. Open Wodra and use **ANT+ Setup** on the startup screen.
-3. Open Garmin’s [ANT+ Network Keys page](https://developer.garmin.com/ant-program/ant-ant-plus/network-keys/), copy the ANT+ network key, paste it into Wodra, and choose **Save**.
-4. Select ANT+ FE-C and connect the trainer.
+1. Open **Connect Trainer** and select **ANT+ FE-C**. The compact ANT+ Setup section appears on that screen.
+2. Open Garmin’s [ANT+ Network Keys page](https://developer.garmin.com/ant-program/ant-ant-plus/network-keys/) and copy the **ANT+ 64-bit entry**.
+3. Paste it into the visible key field and choose **Save key**. The field accepts 16 compact hexadecimal digits, eight comma-separated `0xNN` bytes, eight whitespace-separated bytes, or eight colon- or hyphen-separated bytes.
+4. Wake the trainer, close ANTware if it is open, then choose **Connect trainer**.
 
-The key is stored in `%LOCALAPPDATA%\Wodra\ant-config.json`, once per Windows account on each PC. It remains available through Wodra updates. Disconnect ANT+ before changing or clearing setup. Wodra validates the 16 hexadecimal digits and never writes the key to application logs.
+The key is stored in `%LOCALAPPDATA%\Wodra\ant-config.json`, once per Windows account on each PC. It remains available through Wodra updates. Disconnect ANT+ before changing or clearing setup. Wodra validates the full input, stores the existing compact format, and never writes the key to application logs.
 
 Advanced troubleshooting example (leave the value empty until configured in Wodra):
 
@@ -39,6 +39,8 @@ Advanced troubleshooting example (leave the value empty until configured in Wodr
 {"networkKey":""}
 ```
 
-`AntSdkDeviceSession` owns the SDK USB handle. Initial discovery uses ANT continuous receive scan mode for five seconds, filters source IDs to FE-C pages, deduplicates candidates, and connects directly when one trainer is found. Multiple matches use the existing trainer picker. A selected or remembered trainer is then paired by its exact device number, type, and transmission type. The client waits for general data, trainer data, and the requested capability page before reporting ready, and sends acknowledged simulation/basic-resistance controls followed by command-status checks. The shared FE-C decoder handles invalid values and rolling power counters. These code paths have not yet been exercised against the Flux 2. If the ANTUSB-m/driver does not support continuous scan mode, multiple-trainer discovery will report that limitation rather than silently selecting an arbitrary trainer.
+`AntSdkDeviceSession` owns the SDK USB handle. Initial discovery opens a regular slave receive channel with wildcard ID `0/17/0`, pairing off, period 8192, and frequency 57. The ANT PC SDK source confirms that its `channelResponse` event dispatches channel messages, including ordinary `0x4E` broadcasts. The matching `0x51` channel-ID response supplies the source identity for those ordinary pages; extended source IDs are also parsed when present. Discovery listens for five seconds, filters to FE-C pages, deduplicates candidates, and connects directly when one trainer is found. Multiple matches use the existing trainer picker. A selected or remembered trainer then connects by its exact device number, type, and transmission type. The client waits for general data, trainer data, and the requested capability page before reporting ready, and sends acknowledged simulation/basic-resistance controls followed by command-status checks. The shared FE-C decoder handles invalid values and rolling power counters.
 
-Before live acceptance, install the official ANTUSB-m driver package if Windows does not show the dongle as started, use the key helper above, and close ANTware or any other application using the dongle. Keep the ANTUSB-m connected. Wake the Flux 2 by powering it and pedaling; then select **ANT+ FE-C** and **Connect trainer**. No trainer was awakened or controlled during this implementation session.
+The supplied ANTware capture on the cycling PC records 112 ordinary broadcast frames after a normal wildcard receive-channel setup: 54 general page `0x10` frames and 52 trainer page `0x19` frames. The channel-ID response identifies device 4206, type 17, transmission 5. In contrast, Wodra alpha.22 used continuous receive scan and set the wildcard pairing bit, which the SDK implements by setting bit 7 of the device type. The updated path matches the successful ANTware receive setup. This is source and capture evidence for the corrected discovery path, not yet Wodra-to-Flux hardware acceptance.
+
+For live acceptance, keep the ANTUSB-m connected, close ANTware or any other application using it, and wake the Flux 2 by powering it and pedaling. Then select **ANT+ FE-C** and **Connect trainer**. ANT telemetry, resistance control, and recovery still require owner hardware acceptance.

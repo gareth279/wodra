@@ -1,6 +1,5 @@
 using System.Security;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace IndoorCycling.Trainer.Models;
 
@@ -45,9 +44,9 @@ public static partial class AntNetworkKeyMaterial
 
     public static void Save(string value, string? path = null)
     {
-        var normalized = (value ?? string.Empty).Trim();
-        if (!NetworkKeyPattern().IsMatch(normalized))
-            throw new InvalidDataException("Enter the ANT+ network key as exactly 16 hexadecimal digits.");
+        var parsed = Parse(value);
+        var normalized = Convert.ToHexString(parsed).ToLowerInvariant();
+        Array.Clear(parsed, 0, parsed.Length);
         path ??= ConfigurationPath;
         var directory = Path.GetDirectoryName(Path.GetFullPath(path))!;
         Directory.CreateDirectory(directory);
@@ -77,10 +76,39 @@ public static partial class AntNetworkKeyMaterial
     public static byte[] Parse(string value)
     {
         var normalized = (value ?? string.Empty).Trim();
-        if (!NetworkKeyPattern().IsMatch(normalized)) throw new InvalidDataException("ANT+ network key must contain exactly 16 hexadecimal digits.");
-        return Convert.FromHexString(normalized);
+        if (normalized.Length == 16 && normalized.All(Uri.IsHexDigit))
+            return Convert.FromHexString(normalized);
+
+        string[] parts;
+        if (normalized.Contains(','))
+        {
+            parts = normalized.Split(',');
+            if (parts.Length != 8 || parts.Any(part => !System.Text.RegularExpressions.Regex.IsMatch(
+                    part.Trim(), "^0[xX][0-9a-fA-F]{2}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant)))
+                throw InvalidNetworkKey();
+            return parts.Select(part => Convert.ToByte(part.Trim()[2..], 16)).ToArray();
+        }
+
+        if (normalized.Contains(':') || normalized.Contains('-'))
+        {
+            var separator = normalized.Contains(':') ? ':' : '-';
+            if (normalized.Contains(separator == ':' ? '-' : ':')) throw InvalidNetworkKey();
+            parts = normalized.Split(separator);
+        }
+        else
+        {
+            // Whitespace is accepted between byte tokens, including newlines copied from a page.
+            parts = normalized.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1 && parts[0].Length == 16)
+                return Convert.FromHexString(parts[0]);
+        }
+
+        if (parts.Length != 8 || parts.Any(part => !System.Text.RegularExpressions.Regex.IsMatch(
+                part.Trim(), "^[0-9a-fA-F]{2}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant)))
+            throw InvalidNetworkKey();
+        return parts.Select(part => Convert.ToByte(part.Trim(), 16)).ToArray();
     }
 
-    [GeneratedRegex("^[0-9a-fA-F]{16}$", RegexOptions.CultureInvariant)]
-    private static partial Regex NetworkKeyPattern();
+    private static InvalidDataException InvalidNetworkKey() =>
+        new("Enter the ANT+ 64-bit key as 16 hexadecimal digits or eight two-digit hexadecimal bytes.");
 }
