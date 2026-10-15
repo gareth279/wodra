@@ -207,7 +207,9 @@ public partial class StartPanelController : Control
 
 	public void FocusAntSetup()
 	{
+		_deviceConnectionPanel?.HideForAntSetup();
 		Show();
+		MoveToFront();
 		_antKeyInput?.CallDeferred(Control.MethodName.GrabFocus);
 	}
 

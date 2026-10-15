@@ -199,6 +199,11 @@ public partial class DeviceConnectionPanelController : Control
 		_attemptTask = StartDiscoveryAsync();
 	}
 
+	public void HideForAntSetup()
+	{
+		if (!_attemptInProgress) Hide();
+	}
+
 	private void ResetUi()
 	{
 		_overallStatusLabel!.Text = GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC
