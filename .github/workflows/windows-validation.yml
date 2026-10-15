@@ -93,6 +93,7 @@ jobs:
             'tests/IndoorCycling.Physics.Tests/IndoorCycling.Physics.Tests.csproj',
             'tests/IndoorCycling.Persistence.Tests/IndoorCycling.Persistence.Tests.csproj',
             'tests/IndoorCycling.Recording.Tests/IndoorCycling.Recording.Tests.csproj',
+            'tests/IndoorCycling.Trainer.Recovery.Tests/IndoorCycling.Trainer.Recovery.Tests.csproj',
             'tests/IndoorCycling.VisualRoute.Tests/IndoorCycling.VisualRoute.Tests.csproj',
             'tests/Wodra.Multiplayer.Integration.Tests/Wodra.Multiplayer.Integration.Tests.csproj',
             'tests/Wodra.Multiplayer.Protocol.Tests/Wodra.Multiplayer.Protocol.Tests.csproj',

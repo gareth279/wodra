@@ -24,6 +24,8 @@
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />    
     <ProjectReference Include="..\IndoorCycling.Trainer.Windows\IndoorCycling.Trainer.Windows.csproj" />
+    <Content Include="..\IndoorCycling.Trainer.Windows\AntSdk\ANT_WrappedLib.dll" Link="ANT_WrappedLib.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\IndoorCycling.Trainer.Windows\AntSdk\ANT-SDK-License.txt" Link="ANT-SDK-License.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <ProjectReference Include="..\Wodra.Multiplayer.Protocol\Wodra.Multiplayer.Protocol.csproj" />
 </ItemGroup>
 

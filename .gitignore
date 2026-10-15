@@ -21,6 +21,8 @@ artifacts/
 *.pck
 *.exe
 *.dll
+!src/IndoorCycling.Trainer.Windows/AntSdk/ANT_NET.dll
+!src/IndoorCycling.Trainer.Windows/AntSdk/ANT_WrappedLib.dll
 *.so
 *.dylib
 *.apk

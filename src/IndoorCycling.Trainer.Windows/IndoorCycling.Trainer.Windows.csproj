@@ -10,4 +10,13 @@
     <ProjectReference Include="..\IndoorCycling.Core\IndoorCycling.Core.csproj" />
     <ProjectReference Include="..\IndoorCycling.Trainer\IndoorCycling.Trainer.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ANT_NET">
+      <HintPath>AntSdk\ANT_NET.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <None Update="AntSdk\ANT_WrappedLib.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="AntSdk\ANT-SDK-License.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

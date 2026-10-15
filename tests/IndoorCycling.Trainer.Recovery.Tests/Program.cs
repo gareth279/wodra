@@ -1,5 +1,6 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
+using System.Text.Json;
 
 static void Check(bool condition, string message)
 {
@@ -67,6 +68,37 @@ var intentional = await TrainerRecoveryLoop.RunAsync(
 Check(intentional.Outcome == TrainerRecoveryOutcome.Cancelled && intentionalAttempts == 0,
     "intentional disconnect suppresses recovery");
 
+var fecPower = new AntFeCPowerAccumulator();
+Check(fecPower.Observe(254, 65530, 200) == 200, "FE-C uses instantaneous power for the first sample");
+Check(fecPower.Observe(1, 4, 210) == 3, "FE-C event and accumulated-power counters handle rollover");
+Check(fecPower.Observe(1, 4, 0x0FFF) is null, "FE-C invalid instantaneous power stays unavailable when no new event arrives");
+var invalidRecoveryPower = new AntFeCPowerAccumulator();
+invalidRecoveryPower.Observe(20, 500, 220);
+Check(invalidRecoveryPower.Observe(21, 900, 0x0FFF) is null &&
+      invalidRecoveryPower.Observe(22, 920, 160) == 160,
+    "FE-C invalid power resets accumulated counters instead of fabricating a recovery value");
+var fecTrainerPage = new byte[] { 25, 3, 88, 0x10, 0x00, 150, 0x00, 0x00 };
+var fecTrainer = AntFeCProtocol.DecodeTelemetry(fecTrainerPage, DateTimeOffset.UtcNow, new AntFeCPowerAccumulator());
+Check(fecTrainer.CadenceRpm == 88 && fecTrainer.HasCadenceMeasurement && fecTrainer.HasReceivedMeasurement,
+    "FE-C trainer page decodes cadence and reports a real measurement");
+var fecGeneralPage = new byte[] { 16, 25, 0, 0, 0x40, 0x1F, 0xFF, 0x00 };
+var fecGeneral = AntFeCProtocol.DecodeTelemetry(fecGeneralPage, DateTimeOffset.UtcNow, new AntFeCPowerAccumulator());
+Check(Math.Abs(fecGeneral.SpeedKph - 28.8) < 0.001 && !fecGeneral.HasPowerMeasurement,
+    "FE-C general page converts speed without inventing power");
+var fecSimulation = AntFeCProtocol.BuildTrackResistance(12.34);
+Check(fecSimulation[0] == 51 && fecSimulation[5] == 0xF2 && fecSimulation[6] == 0x52,
+    "FE-C simulation command encodes grade using the profile offset");
+var fecRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
+Check(fecRequest.Length == 8 && fecRequest[0] == 70 && fecRequest[6] == 54,
+    "FE-C on-demand request targets the capabilities page");
+var fecConfig = AntFeCProtocol.BuildUserConfiguration(75, 10);
+Check(fecConfig[0] == 55 && fecConfig[1] == 0x4C && fecConfig[2] == 0x1D &&
+      fecConfig[4] == 0x8F && fecConfig[5] == 0x0C,
+    "FE-C simulation sends rider and bicycle weights in user configuration");
+var fecStatus = AntFeCCommandStatus.TryParse(new byte[] { 71, 51, 4, 0, 0, 0, 0, 0 });
+Check(fecStatus is { IsSuccessful: true, CommandId: 51, Sequence: 4 },
+    "FE-C command status confirms the control page");
+
 var connectionState = new TrainerConnectionState();
 var staleAttemptId = connectionState.BeginAttempt();
 var currentAttemptId = connectionState.BeginAttempt();
@@ -99,3 +131,47 @@ Check(TrainerRecoveryPolicy.MaximumAutomaticAttempts == 8 &&
       TrainerRecoveryPolicy.DelayBeforeAttempt(1) == TimeSpan.Zero &&
       TrainerRecoveryPolicy.DelayBeforeAttempt(8) >= TimeSpan.FromSeconds(7),
     "retry schedule provides time for trainer reboot and advertising restart");
+
+var newTrainerSettings = new TrainerSettings();
+Check(newTrainerSettings.ProtocolPreference == TrainerProtocolPreference.Auto,
+    "new settings default to deterministic Auto protocol selection");
+var legacyTrainerSettings = new TrainerSettings();
+Check(TrainerProtocolPreferencePolicy.MigrateLegacyPreference("{\"Rider\":{}}", legacyTrainerSettings) &&
+      legacyTrainerSettings.ProtocolPreference == TrainerProtocolPreference.BluetoothFtms,
+    "legacy installations retain their Bluetooth FTMS behavior");
+var savedTrainerSettings = new TrainerSettings { ProtocolPreference = TrainerProtocolPreference.AntFeC };
+Check(!TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
+          "{\"Trainer\":{\"ProtocolPreference\":\"AntFeC\"}}", savedTrainerSettings) &&
+      savedTrainerSettings.ProtocolPreference == TrainerProtocolPreference.AntFeC,
+    "an explicit saved protocol choice survives settings migration");
+var serializedTrainerSettings = JsonSerializer.Serialize(new TrainerSettings
+{
+    ProtocolPreference = TrainerProtocolPreference.AntFeC,
+    LastAntDeviceNumber = 42,
+    LastAntDeviceType = 17,
+    LastAntTransmissionType = 5
+});
+var restoredTrainerSettings = JsonSerializer.Deserialize<TrainerSettings>(serializedTrainerSettings)!;
+Check(restoredTrainerSettings.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
+      restoredTrainerSettings.LastAntDeviceNumber == 42 && restoredTrainerSettings.LastAntDeviceType == 17 &&
+      restoredTrainerSettings.LastAntTransmissionType == 5,
+    "protocol preference and ANT identity persist independently of the Bluetooth address");
+var autoBoth = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, true, true);
+var autoAntOnly = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, false, true);
+var explicitUnavailable = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.AntFeC, true, false);
+Check(autoBoth.Protocol == TrainerProtocol.BluetoothFtms && autoAntOnly.Protocol == TrainerProtocol.AntFeC,
+    "Auto deterministically prefers Bluetooth and uses ANT only when it is the available provider");
+Check(!explicitUnavailable.IsAvailable && explicitUnavailable.UnavailableReason is not null,
+    "an unavailable explicit protocol is reported instead of silently switching providers");
+var antCandidates = AntFeCDiscoveryPolicy.Select([
+    new AntFeCDeviceIdentity(44, 17, 1),
+    new AntFeCDeviceIdentity(22, 17, 2),
+    new AntFeCDeviceIdentity(44, 17, 1),
+    new AntFeCDeviceIdentity(99, 120, 1)
+]);
+Check(antCandidates.Outcome == AntFeCDiscoveryOutcome.Choose && antCandidates.Candidates.Count == 2 &&
+      antCandidates.Candidates[0].DeviceNumber == 22 && antCandidates.Candidates[1].DeviceNumber == 44,
+    "ANT discovery deduplicates FE-C identities and exposes a stable multiple-trainer choice");
+Check(AntFeCDiscoveryPolicy.Select([new AntFeCDeviceIdentity(12, 17, 1)]).Selected?.DeviceNumber == 12 &&
+      AntFeCDiscoveryPolicy.Select([]).Outcome == AntFeCDiscoveryOutcome.None,
+    "ANT discovery auto-selects one FE-C trainer and rejects empty scans");

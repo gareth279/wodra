@@ -206,7 +206,7 @@ text = "Trainer connection"
 
 [node name="SubtitleLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1042406415]
 layout_mode = 2
-text = "Bluetooth FTMS is supported. ANT+ is not available yet."
+text = "Choose Auto, Bluetooth FTMS, or ANT+ FE-C. ANT+ requires an ANTUSB-m driver and private network key."
 
 [node name="OverallStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1995716997]
 layout_mode = 2
@@ -221,6 +221,18 @@ theme_override_font_sizes/font_size = 24
 [node name="ProtocolStatusLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Bluetooth FTMS · Not connected"
+
+[node name="CapabilitiesLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Trainer capabilities · not connected"
+
+[node name="ProtocolPreferenceLabel" type="Label" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Trainer protocol preference"
+
+[node name="ProtocolPreferenceOption" type="OptionButton" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="ReadingsRow" type="HBoxContainer" parent="DeviceConnectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2

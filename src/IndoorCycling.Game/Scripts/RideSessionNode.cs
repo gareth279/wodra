@@ -421,6 +421,8 @@ public partial class RideSessionNode : Node
 				{
 					if (GameBootstrap.TrainerClient is WindowsBleTrainerClient ble && _deviceConnectionPanel is not null)
 						await _deviceConnectionPanel.DisconnectForMainMenuAsync(ble);
+					else if (GameBootstrap.TrainerClient is AntFeCTrainerClient ant && _deviceConnectionPanel is not null)
+						await _deviceConnectionPanel.DisconnectForMainMenuAsync(ant);
 					else
 						await GameBootstrap.TrainerClient.DisconnectAsync();
 					if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_disconnected", new { mode = DebugTrainerMode });

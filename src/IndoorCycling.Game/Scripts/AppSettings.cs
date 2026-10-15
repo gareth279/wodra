@@ -5,6 +5,7 @@ using System.Text.Json;
 using Godot;
 using IndoorCycling.Core.Persistence;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Trainer.Models;
 
 public sealed class AppSettings
 {
@@ -17,8 +18,9 @@ public sealed class AppSettings
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
+	public TrainerSettings Trainer { get; set; } = new();
 	public RideDisplayPreferences Display { get; set; } = new();
-	/// <summary>Last successfully used Bluetooth trainer address; reserved for protocol-neutral preference storage.</summary>
+	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
 	public int WindowedHeight { get; set; } = 648;
@@ -74,17 +76,23 @@ public sealed class AppSettings
 			using (var document = JsonDocument.Parse(json))
 			{
 				if (document.RootElement.ValueKind == JsonValueKind.Object)
+				{
 					removeLegacyStravaSettings = document.RootElement.EnumerateObject()
 						.Any(property => string.Equals(property.Name, "Strava", StringComparison.OrdinalIgnoreCase));
+				}
 			}
 			settings.Display ??= new RideDisplayPreferences();
 			settings.StravaClient ??= new StravaClientSettings();
+			settings.Trainer ??= new TrainerSettings();
+			var migratedTrainerPreference = TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
+				json, settings.Trainer);
+			TrainerProtocolPreferencePolicy.Normalize(settings.Trainer);
 
 			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
 				settings.Recording.OutputFolder,
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
-			if (removeLegacyStravaSettings)
+			if (removeLegacyStravaSettings || migratedTrainerPreference)
 				settings.Save();
 
 			GameLogger.Log("settings_loaded", new
