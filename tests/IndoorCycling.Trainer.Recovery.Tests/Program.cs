@@ -123,6 +123,34 @@ Check(AntFeCProtocol.ShouldRetryCapabilityRequest(false, 0) &&
       !AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts) &&
       !AntFeCProtocol.ShouldRetryCapabilityRequest(true, 0),
     "FE-C capability requests retry only while the page is missing and attempts remain");
+var sdkExtendedScanFrame = new byte[] { 0, 0x34, 0x12, 0x91, 0x01, 16, 0, 0, 0, 0, 0, 0, 0 };
+var parsedExtendedScan = AntFeCScanFrameParser.Parse(0x5D, sdkExtendedScanFrame);
+Check(parsedExtendedScan.IsExtended && parsedExtendedScan.PayloadLength == 8 &&
+      parsedExtendedScan.DataPage == AntFeCProtocol.PageGeneral &&
+      parsedExtendedScan.Source == new AntFeCDeviceIdentity(0x1234, AntFeCProtocol.DeviceType, 1) &&
+      parsedExtendedScan.RejectionReason is null,
+    "ANT SDK extended broadcast frames from channelResponse identify FE-C source and page");
+var sdkFlagExtendedBroadcast = new byte[] { 0, 25, 0, 0, 0, 0, 0, 0, 0, 0x80, 0x78, 0x56, 0x91, 0x02 };
+var parsedFlagExtended = AntFeCScanFrameParser.Parse(0x4E, sdkFlagExtendedBroadcast);
+Check(parsedFlagExtended.IsExtended && parsedFlagExtended.PayloadLength == 8 &&
+      parsedFlagExtended.Source == new AntFeCDeviceIdentity(0x5678, AntFeCProtocol.DeviceType, 2),
+    "ANT SDK ordinary broadcast frames with extended channel-ID flag are parsed");
+var wrongTrainerType = new byte[] { 0, 1, 0, 18, 1, 25, 0, 0, 0, 0, 0, 0, 0 };
+Check(AntFeCScanFrameParser.Parse(0x5D, wrongTrainerType).RejectionReason == "device_type_mismatch",
+    "ANT SDK source device type is masked and mismatches are diagnosed explicitly");
+var receiveCounts = new AntReceiveDiagnosticCounts();
+receiveCounts.Add(0x4E, "channelResponse", true, 8, AntFeCProtocol.PageGeneral, "accepted_fe_c_page");
+receiveCounts.Add(0x4E, "channelResponse", true, 8, AntFeCProtocol.PageGeneral, "accepted_fe_c_page");
+var receiveCount = receiveCounts.Snapshot().Single();
+Check(receiveCount.MessageId == 0x4E && receiveCount.CallbackSource == "channelResponse" &&
+      receiveCount.Extended && receiveCount.PayloadLength == 8 && receiveCount.DataPage == AntFeCProtocol.PageGeneral &&
+      receiveCount.Count == 2,
+    "ANT receive diagnostics aggregate bounded message, source, extension, length, and outcome counts");
+var boundedCounts = new AntReceiveDiagnosticCounts();
+for (var i = 0; i < 70; i++) boundedCounts.Add((byte)i, "channelResponse", false, i, null, "unsupported_message_id");
+Check(boundedCounts.Snapshot().Count() == 65 &&
+      boundedCounts.Snapshot().Last().RejectionReason == "diagnostic_bucket_limit",
+    "ANT receive diagnostics cap unique frame buckets and aggregate excess observations");
 Check(!AntFeCProtocol.IsReady(true, true, false) && AntFeCProtocol.IsReady(true, true, true) &&
       !AntFeCProtocol.IsReady(true, false, true),
     "FE-C readiness requires telemetry pages and capabilities returned by its request");

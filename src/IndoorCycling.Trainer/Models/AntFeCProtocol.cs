@@ -7,6 +7,73 @@ public readonly record struct AntFeCDeviceIdentity(ushort DeviceNumber, byte Dev
     public string DisplayName => $"ANT+ FE-C trainer {DeviceNumber}";
 }
 
+/// <summary>Decoded ANT PC SDK receive callback frame metadata, with no raw payload retention.</summary>
+public readonly record struct AntReceiveFrame(byte MessageId, bool IsExtended, int PayloadLength,
+    byte? DataPage, AntFeCDeviceIdentity? Source, string? RejectionReason);
+
+/// <summary>Parses the messageContents layout used by ANT PC SDK ANT_Response.</summary>
+public static class AntFeCScanFrameParser
+{
+    public static AntReceiveFrame Parse(byte messageId, ReadOnlySpan<byte> messageContents)
+    {
+        var isExtended = messageContents.Length >= 13;
+        var isLegacyData = messageId is 0x4E or 0x4F or 0x50;
+        var isExtendedData = messageId is 0x5D or 0x5E or 0x5F;
+        if (!isLegacyData && !isExtendedData)
+            return new(messageId, isExtended, 0, null, null, "unsupported_message_id");
+
+        var payloadOffset = isExtendedData ? 5 : 1;
+        var hasExtendedId = isExtendedData && isExtended || isLegacyData && isExtended &&
+            messageContents.Length >= 14 && (messageContents[9] & 0x80) != 0;
+        if (messageContents.Length < payloadOffset + 8)
+            return new(messageId, isExtended, Math.Max(0, messageContents.Length - payloadOffset), null, null, "payload_too_short");
+
+        var sourceOffset = isExtendedData ? 1 : 10;
+        AntFeCDeviceIdentity? source = null;
+        if (hasExtendedId && messageContents.Length >= sourceOffset + 4)
+        {
+            source = new((ushort)(messageContents[sourceOffset] | messageContents[sourceOffset + 1] << 8),
+                (byte)(messageContents[sourceOffset + 2] & 0x7F), messageContents[sourceOffset + 3]);
+        }
+        else if (isExtendedData)
+            return new(messageId, isExtended, 8, messageContents[payloadOffset], null, "extended_source_id_missing");
+
+        var page = messageContents[payloadOffset];
+        var payloadLength = Math.Min(8, messageContents.Length - payloadOffset);
+        if (payloadLength != 8) return new(messageId, isExtended, payloadLength, page, source, "payload_length_not_8");
+        if (page is not (AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities))
+            return new(messageId, isExtended, payloadLength, page, source, "unsupported_page");
+        if (source is not null && source.Value.DeviceType != AntFeCProtocol.DeviceType)
+            return new(messageId, isExtended, payloadLength, page, source, "device_type_mismatch");
+        if (source is { DeviceNumber: 0 })
+            return new(messageId, isExtended, payloadLength, page, source, "device_number_zero");
+        return new(messageId, isExtended, payloadLength, page, source, source is null ? "source_id_missing" : null);
+    }
+}
+
+/// <summary>Bounded aggregation for scan callback metadata. Does not retain payload bytes.</summary>
+public sealed class AntReceiveDiagnosticCounts
+{
+    private const int MaximumBuckets = 64;
+    private readonly Dictionary<(byte MessageId, string Source, bool Extended, int Length, byte? Page, string Reason), int> _counts = [];
+    private int _overflow;
+
+    public void Add(byte messageId, string callbackSource, bool extended, int payloadLength, byte? dataPage, string rejectionReason)
+    {
+        var key = (messageId, callbackSource, extended, payloadLength, dataPage, rejectionReason);
+        if (_counts.TryGetValue(key, out var count)) _counts[key] = count + 1;
+        else if (_counts.Count < MaximumBuckets) _counts.Add(key, 1);
+        else _overflow++;
+    }
+
+    public IEnumerable<(byte MessageId, string CallbackSource, bool Extended, int PayloadLength, byte? DataPage, string RejectionReason, int Count)> Snapshot()
+    {
+        foreach (var (key, count) in _counts)
+            yield return (key.MessageId, key.Source, key.Extended, key.Length, key.Page, key.Reason, count);
+        if (_overflow > 0) yield return (0, "multiple", false, 0, null, "diagnostic_bucket_limit", _overflow);
+    }
+}
+
 public enum AntFeCDiscoveryOutcome
 {
     None,

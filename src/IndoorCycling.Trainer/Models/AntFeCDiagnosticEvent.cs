@@ -17,4 +17,9 @@ public sealed record AntFeCDiagnosticEvent(
     int? TrainerCount = null,
     ushort? DeviceNumber = null,
     byte? DeviceType = null,
-    byte? TransmissionType = null);
+    byte? TransmissionType = null,
+    string? CallbackSource = null,
+    bool? IsExtended = null,
+    int? PayloadLength = null,
+    string? RejectionReason = null,
+    int? Count = null);

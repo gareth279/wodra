@@ -12,6 +12,7 @@ public sealed class AntSdkDeviceSession : IDisposable
     private readonly Action<AntFeCDiagnosticEvent>? _diagnostic;
     private readonly ANT_Device.dDeviceResponseHandler? _responseHandler;
     private readonly ConcurrentDictionary<string, byte> _reportedResponses = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte> _reportedCallbackErrors = new(StringComparer.Ordinal);
     private readonly Stopwatch _sessionTimer = Stopwatch.StartNew();
 
     private AntSdkDeviceSession(ANT_Device device, int deviceIndex,
@@ -179,9 +180,13 @@ public sealed class AntSdkDeviceSession : IDisposable
                 DeviceNumber: deviceNumber, DeviceType: deviceType,
                 TransmissionType: transmissionType));
         }
-        catch
+        catch (Exception ex)
         {
-            // Diagnostic callbacks must never interrupt ANT SDK message delivery.
+            var type = ex.GetType().Name;
+            if (_reportedCallbackErrors.TryAdd(type, 0))
+                Emit(_diagnostic, new("ant_response", "device_response_callback_exception",
+                    _sessionTimer.Elapsed.TotalMilliseconds, Outcome: "callback_exception",
+                    ErrorType: type));
         }
     }
 
