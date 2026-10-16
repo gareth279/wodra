@@ -535,7 +535,13 @@ public partial class DeviceConnectionPanelController : Control
 						diagnostic.Outcome == "trainer_data_received_identification_failed")
 						trainerDataReceivedWithoutIdentity = true;
 					GameLogger.Log("ant_diagnostic", diagnostic);
-				}));
+				}, elapsed => Callable.From(() =>
+				{
+					if (!_connectionState.IsCurrent(attemptId) || cancellationToken.IsCancellationRequested) return;
+					var elapsedText = elapsed.ToString(@"m\:ss");
+					_overallStatusLabel!.Text = $"Searching for ANT+ FE-C trainers… {elapsedText} elapsed. Keep the trainer awake nearby.";
+					_trainerNameLabel!.Text = $"Searching · {elapsedText}";
+				}).CallDeferred()));
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.None)
 			{
@@ -575,7 +581,20 @@ public partial class DeviceConnectionPanelController : Control
 			selectedDevice = discovery.Selected;
 		}
 		var client = new AntFeCTrainerClient(GameBootstrap.Settings.Trainer, selectedDevice,
-			diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
+			diagnostic =>
+			{
+				GameLogger.Log("ant_diagnostic", diagnostic);
+				if (diagnostic.Operation == "target_search_progress")
+				{
+					var elapsed = TimeSpan.FromMilliseconds(diagnostic.ElapsedMilliseconds).ToString(@"m\:ss");
+					Callable.From(() =>
+					{
+						if (!_connectionState.IsCurrent(attemptId) || !_attemptInProgress && _recoveryTask is null) return;
+						_overallStatusLabel!.Text = $"Waiting for the selected ANT+ trainer… {elapsed} elapsed. Keep it awake nearby.";
+						_trainerNameLabel!.Text = $"Connecting · {elapsed}";
+					}).CallDeferred();
+				}
+			});
 		_antTrainerClient = client;
 		if (_antDisconnectedHandler is not null) client.Disconnected -= _antDisconnectedHandler;
 		_antDisconnectedHandler = () => Callable.From(() => HandleAntTrainerDisconnected(attemptId)).CallDeferred();

@@ -69,6 +69,79 @@ var intentional = await TrainerRecoveryLoop.RunAsync(
 Check(intentional.Outcome == TrainerRecoveryOutcome.Cancelled && intentionalAttempts == 0,
     "intentional disconnect suppresses recovery");
 
+var freshnessNow = DateTimeOffset.UtcNow;
+Check(!TrainerTelemetryFreshnessPolicy.HasExpired(freshnessNow, freshnessNow + TimeSpan.FromSeconds(5),
+          TrainerRecoveryPolicy.AntTelemetryLossTimeout) &&
+      TrainerTelemetryFreshnessPolicy.HasExpired(freshnessNow, freshnessNow + TimeSpan.FromSeconds(6),
+          TrainerRecoveryPolicy.AntTelemetryLossTimeout) &&
+      TrainerTelemetryFreshnessPolicy.HasExpired(DateTimeOffset.MinValue, freshnessNow,
+          TrainerRecoveryPolicy.AntTelemetryLossTimeout),
+    "ANT telemetry loss is based on the last fresh trainer page and has a bounded timeout");
+var freshStationaryZero = new TrainerTelemetry(freshnessNow, 0, 0, 0, HasPowerMeasurement: true,
+    HasCadenceMeasurement: true, HasReceivedMeasurement: true, HasSpeedMeasurement: true);
+Check(TrainerTelemetryFreshnessPolicy.IsFresh(freshStationaryZero, freshnessNow + TimeSpan.FromSeconds(1),
+          TrainerRecoveryPolicy.AntTelemetryLossTimeout) && freshStationaryZero.PowerWatts == 0 &&
+      freshStationaryZero.CadenceRpm == 0,
+    "valid stationary zero power and cadence remain fresh rather than triggering recovery");
+var staleFitSample = freshStationaryZero with { Timestamp = freshnessNow - TimeSpan.FromSeconds(10),
+    PowerWatts = 240, CadenceRpm = 90, SpeedKph = 25, HeartRateBpm = 150 };
+var sanitizedFitSample = staleFitSample.ForRecording(freshnessNow);
+Check(sanitizedFitSample.HasReceivedMeasurement && !sanitizedFitSample.HasPowerMeasurement &&
+      !sanitizedFitSample.HasCadenceMeasurement && sanitizedFitSample.PowerWatts == 0 &&
+      sanitizedFitSample.CadenceRpm == 0 && sanitizedFitSample.SpeedKph == 0 &&
+      sanitizedFitSample.HeartRateBpm is null,
+    "stale ANT measurements are cleared before a recording sample is written");
+Check(TrainerRecoveryPolicy.AntDiscoveryWindow >= TimeSpan.FromSeconds(20),
+    "ANT wildcard discovery stays open long enough for delayed acquisition instead of cycling five-second scans");
+Check(!AntFeCConnectionAttemptPolicy.IsCurrent(41, 42) &&
+      AntFeCConnectionAttemptPolicy.IsCurrent(42, 42),
+    "queued controls and receive callbacks cannot cross ANT reconnect generations");
+
+// Exercise the production recovery loop with a simulated trainer transport. Its selected identity
+// cannot change, stale telemetry is cleared on loss, and only current ride settings are restored.
+var simulatedIdentity = new AntFeCDeviceIdentity(100, AntFeCProtocol.DeviceType, 1);
+var simulatedConnected = true;
+var simulatedTelemetry = freshStationaryZero;
+var simulatedRecoveryElapsed = TimeSpan.Zero;
+var currentRideGrade = -2.25;
+var currentRiderWeight = 82.0;
+var restoredGrade = double.NaN;
+var restoredWeight = double.NaN;
+var staleGeneration = 41L;
+var recoveryGeneration = 42L;
+var staleCallbackAccepted = false;
+simulatedConnected = false;
+simulatedTelemetry = simulatedTelemetry with { Timestamp = DateTimeOffset.MinValue,
+    HasReceivedMeasurement = false, HasPowerMeasurement = false, HasCadenceMeasurement = false };
+var simulatedRecovery = await TrainerRecoveryLoop.RunAsync(
+    (attempt, _) =>
+    {
+        if (simulatedRecoveryElapsed < TimeSpan.FromSeconds(15)) return Task.FromResult(false);
+        simulatedConnected = true;
+        simulatedTelemetry = freshStationaryZero with { Timestamp = freshnessNow + simulatedRecoveryElapsed };
+        restoredGrade = currentRideGrade;
+        restoredWeight = currentRiderWeight;
+        // A callback from the previous connection generation is ignored after reconnect.
+        staleCallbackAccepted = AntFeCConnectionAttemptPolicy.IsCurrent(staleGeneration, recoveryGeneration);
+        if (staleCallbackAccepted) throw new InvalidOperationException("A stale connection callback changed the active generation.");
+        return Task.FromResult(true);
+    }, maximumAttempts: 8, recoveryWindow: TimeSpan.FromSeconds(30),
+    _ => TimeSpan.FromSeconds(5), CancellationToken.None,
+    delayAsync: (delay, _) => { simulatedRecoveryElapsed += delay; return Task.CompletedTask; });
+Check(simulatedRecovery.Outcome == TrainerRecoveryOutcome.Recovered && simulatedConnected &&
+      simulatedRecoveryElapsed >= TimeSpan.FromSeconds(15) && simulatedIdentity.DeviceNumber == 100 &&
+      simulatedTelemetry.HasReceivedMeasurement,
+    "simulated ANT transport recovers the same trainer after a 15-second power-cycle delay with fresh telemetry");
+Check(restoredGrade == currentRideGrade && restoredWeight == currentRiderWeight && !staleCallbackAccepted,
+    "recovery restores current control settings and rejects callbacks from the previous connection generation");
+var simulatedExpiry = await TrainerRecoveryLoop.RunAsync((_, _) => Task.FromResult(false),
+    maximumAttempts: 2, recoveryWindow: TimeSpan.FromSeconds(5), _ => TimeSpan.Zero, CancellationToken.None);
+var simulatedManualRetry = await TrainerRecoveryLoop.RunAsync((_, _) => Task.FromResult(true),
+    maximumAttempts: 2, recoveryWindow: TimeSpan.FromSeconds(5), _ => TimeSpan.Zero, CancellationToken.None);
+Check(simulatedExpiry.Outcome == TrainerRecoveryOutcome.Expired &&
+      simulatedManualRetry.Outcome == TrainerRecoveryOutcome.Recovered,
+    "expired ANT recovery can be restarted manually without ending the ride");
+
 var fecPower = new AntFeCPowerAccumulator();
 var rawAntKey = new byte[] { 1, 35, 69, 103, 137, 171, 205, 239 };
 Check(AntNetworkKeyMaterial.Parse(" 0123456789abcdef ").SequenceEqual(rawAntKey),

@@ -41,6 +41,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private readonly Stopwatch _connectionTimer = new();
     private double? _lastRequestedGrade;
     private double? _lastTransportAcknowledgedGrade;
+    private CancellationTokenSource? _telemetryWatchdogCancellation;
 
     public bool IsConnected { get; private set; }
     public bool IsReady => _isReady;
@@ -84,7 +85,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     /// <summary>Uses a wildcard slave receive channel to discover FE-C broadcasts, matching the ANTware receive path.</summary>
     public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(
-        CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null)
+        CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null,
+        Action<TimeSpan>? progress = null)
     {
         var discoveryTimer = Stopwatch.StartNew();
         Emit(diagnostic, new("user_configuration", "load_network_key", 0, Outcome: "started"));
@@ -256,7 +258,22 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 opened = true;
                 Emit(diagnostic, new("fe_c_discovery", "scan_window_started", discoveryTimer.Elapsed.TotalMilliseconds,
                     Outcome: "wildcard_receive_listening", AttemptId: scanAttemptId));
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
+                var nextProgress = TimeSpan.Zero;
+                while (discoveryTimer.Elapsed < TrainerRecoveryPolicy.AntDiscoveryWindow)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var remaining = TrainerRecoveryPolicy.AntDiscoveryWindow - discoveryTimer.Elapsed;
+                    var slice = remaining < TimeSpan.FromSeconds(1) ? remaining : TimeSpan.FromSeconds(1);
+                    await Task.Delay(slice, cancellationToken).ConfigureAwait(false);
+                    if (discoveryTimer.Elapsed >= nextProgress + TimeSpan.FromSeconds(1))
+                    {
+                        nextProgress = TimeSpan.FromSeconds((int)discoveryTimer.Elapsed.TotalSeconds);
+                        progress?.Invoke(discoveryTimer.Elapsed);
+                        Emit(diagnostic, new("fe_c_discovery", "search_progress",
+                            discoveryTimer.Elapsed.TotalMilliseconds, Outcome: "listening_for_fe_c_broadcasts",
+                            AttemptId: scanAttemptId));
+                    }
+                }
             }
             finally
             {
@@ -383,6 +400,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(40));
+            var progressTask = ReportSearchProgressAsync(connectionAttemptId, timeout.Token);
             try { await _ready.Task.WaitAsync(timeout.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
@@ -390,8 +408,18 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 Outcome: $"general={_generalPage is not null};trainer={_trainerPage is not null};capabilities={_capabilities.HasValue}"));
                 throw new TimeoutException("FE-C readiness timed out. Check ANT diagnostics for trainer pages, capabilities requests, and channel events.");
             }
+            finally
+            {
+                timeout.Cancel();
+                try { await progressTask.ConfigureAwait(false); }
+                catch (OperationCanceledException) when (timeout.IsCancellationRequested) { }
+            }
             Emit(_diagnostic, new("fe_c_readiness", "ready", _connectionTimer.Elapsed.TotalMilliseconds,
                 Outcome: _capabilities.HasValue ? "telemetry_ready_capabilities_known" : "telemetry_ready_capabilities_unknown_compatibility"));
+            _telemetryWatchdogCancellation?.Cancel();
+            _telemetryWatchdogCancellation?.Dispose();
+            _telemetryWatchdogCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            _ = MonitorTelemetryFreshnessAsync(connectionAttemptId, _telemetryWatchdogCancellation.Token);
         }
         catch
         {
@@ -405,6 +433,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
         Interlocked.Increment(ref _connectionAttemptId);
+        _telemetryWatchdogCancellation?.Cancel();
+        _telemetryWatchdogCancellation?.Dispose();
+        _telemetryWatchdogCancellation = null;
         _isReady = false;
         var channel = Interlocked.Exchange(ref _channel, null);
         if (channel is not null)
@@ -466,14 +497,19 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     private async Task SendControlAsync(byte[] page, CancellationToken cancellationToken, byte[]? preamble = null)
     {
+        var commandAttemptId = Volatile.Read(ref _connectionAttemptId);
         await _commandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (!AntFeCConnectionAttemptPolicy.IsCurrent(commandAttemptId, Volatile.Read(ref _connectionAttemptId)) || !_isReady)
+                throw new OperationCanceledException("The queued FE-C command belonged to a previous connection attempt.");
             var channel = _channel ?? throw new IOException("The FE-C channel is closed.");
             _commandStatus = NewSignal<AntFeCCommandStatus>();
             await _state.SendControlAsync(page, preamble is not null && !_userConfigSent ? preamble : null,
                 async (outgoing, token) =>
                 {
+                    if (!AntFeCConnectionAttemptPolicy.IsCurrent(commandAttemptId, Volatile.Read(ref _connectionAttemptId)) || !_isReady)
+                        throw new OperationCanceledException("The FE-C command was cancelled after its connection was lost.");
                     var configuration = outgoing.Length > 0 && outgoing[0] == 55;
                     var result = await SendAcknowledgedPageAsync(channel, outgoing,
                         configuration ? "trainer_configuration" : "trainer_control",
@@ -504,7 +540,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     {
         try
         {
-            if (connectionAttemptId != Volatile.Read(ref _connectionAttemptId)) return;
+            if (!AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId))) return;
             if (response.responseID == (byte)ANT_ReferenceLibrary.ANTMessageID.RESPONSE_EVENT_0x40 &&
                 response.messageContents.Length >= 3)
             {
@@ -582,13 +618,17 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                     if (_state.ObserveCommandStatus(status)) _commandStatus.TrySetResult(status);
                 }
 
-                if (_generalPage is not null || _trainerPage is not null)
+                if ((page[0] is AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer) &&
+                    (_generalPage is not null || _trainerPage is not null))
                 {
                     var g = _generalPage;
                     var t = _trainerPage;
-                    _latest = new(now, t?.PowerWatts ?? 0, t?.CadenceRpm ?? 0, g?.SpeedKph ?? 0,
+                    // FE-C page 25 carries the live trainer power/cadence. Page 16 can continue
+                    // arriving while page 25 is lost, so it must not refresh trainer freshness.
+                    _latest = new(t?.Timestamp ?? DateTimeOffset.MinValue, t?.PowerWatts ?? 0,
+                        t?.CadenceRpm ?? 0, g?.SpeedKph ?? 0,
                         g?.HeartRateBpm, t?.HasPowerMeasurement == true, t?.HasCadenceMeasurement == true,
-                        true, g?.HasSpeedMeasurement == true);
+                        t is not null, g?.HasSpeedMeasurement == true);
                 }
                 if (page[0] is AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer)
                     _state.ObserveTelemetryPage(page[0]);
@@ -601,7 +641,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 {
                     _pageRequestSent = true;
                     var channel = _channel;
-                    if (channel is not null) _ = RequestCapabilitiesAsync(channel);
+                    if (channel is not null) _ = RequestCapabilitiesAsync(channel, connectionAttemptId);
                 }
             }
         }
@@ -613,7 +653,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     private void OnDeviceResponse(ANT_Response response, long connectionAttemptId)
     {
-        if (connectionAttemptId != Volatile.Read(ref _connectionAttemptId)) return;
+        if (!AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId))) return;
         if (response.responseID != (byte)ANT_ReferenceLibrary.ANTMessageID.CHANNEL_ID_0x51) return;
         try
         {
@@ -673,6 +713,53 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         if (wasConnected) Disconnected?.Invoke();
     }
 
+    private async Task MonitorTelemetryFreshnessAsync(long connectionAttemptId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested &&
+                   AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId)))
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                if (!IsConnected) continue;
+                DateTimeOffset lastFresh;
+                lock (_gate) lastFresh = _trainerPage?.Timestamp ?? DateTimeOffset.MinValue;
+                var now = DateTimeOffset.UtcNow;
+                var age = now - lastFresh;
+                if (!TrainerTelemetryFreshnessPolicy.HasExpired(lastFresh, now,
+                        TrainerRecoveryPolicy.AntTelemetryLossTimeout)) continue;
+                Emit(_diagnostic, new("telemetry_watchdog", "freshness_expired", _connectionTimer.Elapsed.TotalMilliseconds,
+                    Outcome: $"telemetry_missing_or_stale;last_fresh_age_ms={(long)age.TotalMilliseconds}",
+                    AttemptId: connectionAttemptId.ToString()));
+                MarkDisconnected();
+                return;
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception ex)
+        {
+            Emit(_diagnostic, new("telemetry_watchdog", "failed", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: "watchdog_failed", ErrorType: ex.GetType().Name));
+        }
+    }
+
+    private async Task ReportSearchProgressAsync(long connectionAttemptId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested &&
+                   AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId)) && !_ready.Task.IsCompleted)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
+                if (_ready.Task.IsCompleted) return;
+                Emit(_diagnostic, new("fe_c_search", "target_search_progress", _connectionTimer.Elapsed.TotalMilliseconds,
+                    Outcome: "waiting_for_selected_trainer_telemetry", DeviceNumber: _configuredDeviceIdentity?.DeviceNumber,
+                    AttemptId: connectionAttemptId.ToString()));
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
     private void EnsureReady()
     {
         if (!_isReady || _channel is null) throw new InvalidOperationException("The FE-C trainer is not connected and ready.");
@@ -688,10 +775,11 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _ => "unknown"
     };
 
-    private async Task RequestCapabilitiesAsync(ANT_Channel channel)
+    private async Task RequestCapabilitiesAsync(ANT_Channel channel, long connectionAttemptId)
     {
         var request = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
-        while (AntFeCProtocol.ShouldRetryCapabilityRequest(_capabilities.HasValue, _capabilityRequestAttempts) && IsConnected)
+        while (AntFeCProtocol.ShouldRetryCapabilityRequest(_capabilities.HasValue, _capabilityRequestAttempts) && IsConnected &&
+               AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId)))
         {
             var attempt = ++_capabilityRequestAttempts;
             var timer = Stopwatch.StartNew();
@@ -701,7 +789,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 ANT_ReferenceLibrary.MessagingReturnCode result;
                 try
                 {
-                    if (!IsConnected) break;
+                    if (!IsConnected || !AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId,
+                            Volatile.Read(ref _connectionAttemptId))) break;
                     result = await SendAcknowledgedPageAsync(channel, request,
                         "capability_request", 1500, CancellationToken.None).ConfigureAwait(false);
                 }

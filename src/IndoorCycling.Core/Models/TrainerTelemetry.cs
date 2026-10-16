@@ -28,4 +28,17 @@ public sealed record TrainerTelemetry(
 			CadenceRpm = HasCadenceMeasurement ? CadenceRpm : 0
 		};
 	}
+
+	/// <summary>Prevents stale sensor values from being written as fresh FIT samples.</summary>
+	public TrainerTelemetry ForRecording(DateTimeOffset now, TimeSpan? maximumAge = null)
+		=> IsFreshAt(now, maximumAge) ? this : this with
+		{
+			PowerWatts = 0,
+			CadenceRpm = 0,
+			SpeedKph = 0,
+			HeartRateBpm = null,
+			HasPowerMeasurement = false,
+			HasCadenceMeasurement = false,
+			HasSpeedMeasurement = false
+		};
 }

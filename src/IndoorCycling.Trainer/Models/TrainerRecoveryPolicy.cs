@@ -6,6 +6,8 @@ public static class TrainerRecoveryPolicy
     public const int MaximumAutomaticAttempts = 8;
     public static readonly TimeSpan AutomaticRecoveryWindow = TimeSpan.FromSeconds(90);
     public static readonly TimeSpan DiscoveryDuration = TimeSpan.FromSeconds(6);
+    public static readonly TimeSpan AntDiscoveryWindow = TimeSpan.FromSeconds(20);
+    public static readonly TimeSpan AntTelemetryLossTimeout = TimeSpan.FromSeconds(6);
 
     /// <summary>Spreads attempts over the normal trainer power-cycle and advertising restart window.</summary>
     public static TimeSpan DelayBeforeAttempt(int attemptNumber)

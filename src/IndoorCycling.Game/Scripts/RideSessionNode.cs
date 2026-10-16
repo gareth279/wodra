@@ -490,7 +490,7 @@ public partial class RideSessionNode : Node
 		if (_rideRecorder?.IsRecording != true) return;
 		var trainer = _trainerSessionActive ? GameBootstrap.TrainerClient : _fitReplayClient;
 		if (trainer is null) return;
-		_rideRecorder.RecordSample(_rideState, trainer.GetLatestTelemetry(),
+		_rideRecorder.RecordSample(_rideState, trainer.GetLatestTelemetry().ForRecording(DateTimeOffset.UtcNow),
 			GetCurrentGradient(), _currentRoute?.GetSampleAt(_rideState.DistanceMeters));
 	}
 
@@ -1095,7 +1095,7 @@ public partial class RideSessionNode : Node
 
 		var routeSample = _currentRoute?.GetSampleAt(_rideState.DistanceMeters);
 
-		_rideRecorder.RecordSample(_rideState, telemetry, gradient, routeSample);
+		_rideRecorder.RecordSample(_rideState, telemetry.ForRecording(DateTimeOffset.UtcNow), gradient, routeSample);
 	}
 
 	public override void _Process(double delta)
@@ -1677,9 +1677,25 @@ public partial class RideSessionNode : Node
 		{
 			_trainerGradeTransition.Cancel();
 			_trainerCommandDirty = true;
+			var staleTelemetry = GameBootstrap.TrainerClient?.GetLatestTelemetry() ?? new TrainerTelemetry(
+				DateTimeOffset.MinValue, 0, 0, 0, HasPowerMeasurement: false,
+				HasCadenceMeasurement: false, HasReceivedMeasurement: false, HasSpeedMeasurement: false);
+			_lastTelemetry = staleTelemetry;
 			_hudController?.SetStatus(GameBootstrap.TrainerClient is null
 				? "No trainer is configured. Return to trainer connections to reconnect."
-				: "Trainer reconnecting. The ride is paused until fresh measurements and control are restored.");
+				: "Trainer disconnected. The ride and recording continue while fresh telemetry and control recover.");
+			var reconnectGradient = GetCurrentGradient();
+			var before = _rideState.DistanceMeters;
+			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
+				new SimulationTickInput(staleTelemetry.ForRiderInput(DateTimeOffset.UtcNow), reconnectGradient,
+					_pauseGate.IsPaused ? 0 : delta, CurrentRiderProfile, CurrentBikeProfile));
+			if (!_pauseGate.IsPaused)
+			{
+				_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - before);
+				LogLapWraps(before, _rideState.DistanceMeters);
+				RecordRideSampleIfNeeded(delta, staleTelemetry, reconnectGradient);
+			}
+			UpdateRouteHud();
 			_hudController?.UpdateFromRideState(_rideState, _lastTelemetry, _elapsedSeconds);
 			return;
 		}
