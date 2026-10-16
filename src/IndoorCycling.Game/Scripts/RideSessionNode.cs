@@ -251,9 +251,10 @@ public partial class RideSessionNode : Node
 			GradePercent: gradient,
 			RiderWeightKg: CurrentRiderProfile.WeightKg,
 			BikeWeightKg: CurrentBikeProfile.WeightKg));
-		_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient.LastAppliedSimulationGradePercent ?? gradient;
+		_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient.LastTransportAcknowledgedSimulationGradePercent ?? gradient;
 		_trainerCommandDirty = false;
-		GameLogger.Log("trainer_current_settings_restored", new { gradientPercent = gradient });
+		GameLogger.Log("trainer_current_settings_transport_acknowledged", new { gradientPercent = gradient,
+			physicalResistanceVerified = false });
 	}
 
 	private void UpdateRouteHud()
@@ -653,7 +654,7 @@ public partial class RideSessionNode : Node
 
 	private double GetEffectiveTrainerGrade() => _trainerGradeTransition.IsActive
 		? _trainerGradeTransition.CurrentPercent
-		: GameBootstrap.TrainerClient?.LastAppliedSimulationGradePercent ??
+		: GameBootstrap.TrainerClient?.LastTransportAcknowledgedSimulationGradePercent ??
 			_lastSentTrainerGradientPercent ?? GetTrainerGradeTarget(GetCurrentGradient());
 
 	private double GetRouteGradient()
@@ -781,7 +782,7 @@ public partial class RideSessionNode : Node
 			trainerDifficultyPercent = GameBootstrap.TrainerDifficultyPercent,
 			trainerGradeTargetPercent = trainerTargetGrade,
 			trainerGradeCommandedPercent = trainer?.IsConnected == true
-				? trainer.LastAppliedSimulationGradePercent ?? _lastSentTrainerGradientPercent : null,
+				? trainer.LastTransportAcknowledgedSimulationGradePercent ?? _lastSentTrainerGradientPercent : null,
 			trainerGradeTransitionActive = _trainerGradeTransition.IsActive,
 			manualGradientOffsetPercent = _manualGradientOffsetPercent,
 			routeId = route?.Id,
@@ -1748,8 +1749,9 @@ public partial class RideSessionNode : Node
 				)
 			);
 
-			_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient!.LastAppliedSimulationGradePercent ?? gradient;
-			if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_simulation_command_succeeded", new { gradientPercent = gradient });
+			_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient!.LastTransportAcknowledgedSimulationGradePercent ?? gradient;
+			if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_simulation_transport_acknowledged", new { gradientPercent = gradient,
+				physicalResistanceVerified = false });
 		}
 		catch (Exception ex)
 		{

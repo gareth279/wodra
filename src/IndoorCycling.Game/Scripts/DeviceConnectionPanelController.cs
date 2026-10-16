@@ -706,17 +706,23 @@ public partial class DeviceConnectionPanelController : Control
 		_trainerNameLabel!.Text = client is AntFeCTrainerClient ant
 			? ant.ConnectedDeviceName ?? "ANT+ fitness equipment"
 			: (_realTrainerClient?.ConnectedDeviceName ?? "Bluetooth trainer");
-		_protocolStatusLabel!.Text = $"{(_antTrainerClient is not null ? "ANT+ FE-C" : "Bluetooth FTMS")} · Connected and ready";
+		_protocolStatusLabel!.Text = _antTrainerClient is not null
+			? "ANT+ FE-C · Telemetry connected"
+			: "Bluetooth FTMS · Connected and ready";
 		_capabilitiesLabel!.Text = client is AntFeCTrainerClient antTrainer
-			? $"FE-C modes: {antTrainer.CapabilitiesDescription}"
+			? $"FE-C modes: {antTrainer.CapabilitiesDescription}\n{antTrainer.ControlEvidenceDescription}"
 			: "Trainer capabilities: FTMS control";
-		_overallStatusLabel!.Text = "Trainer ready. Pedal to check live power and cadence; stationary zero readings are normal.";
+		_overallStatusLabel!.Text = _antTrainerClient is not null
+			? "Trainer telemetry is connected. Capability metadata may be unavailable; control is checked during the ride. Resistance change must be verified on the trainer."
+			: "Trainer ready. Pedal to check live power and cadence; stationary zero readings are normal.";
 		_connectButton!.Text = "Connected";
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = false;
 		_changeTrainerButton!.Disabled = false;
 		_protocolPreferenceOption!.Disabled = true;
-		_continueButton!.Disabled = false;
+		_continueButton!.Disabled = _antTrainerClient is { CanStartControlledRide: false };
+		if (_antTrainerClient is { CanStartControlledRide: false })
+			_overallStatusLabel!.Text = "Telemetry works, but this trainer reports that simulation control is unsupported. Wodra cannot start a controlled ride.";
 		RefreshTelemetryUi();
 	}
 
@@ -741,8 +747,19 @@ public partial class DeviceConnectionPanelController : Control
 		var stationary = telemetry.HasSpeedMeasurement && telemetry.SpeedKph < 0.3 && cadence.State == TelemetryReadingState.Fresh && cadence.Value == 0;
 		_powerStatusLabel!.Text = FormatReading(power, "W", stationary);
 		_cadenceStatusLabel!.Text = FormatReading(cadence, "rpm", stationary);
+		if (client is AntFeCTrainerClient ant)
+		{
+			_capabilitiesLabel!.Text = $"FE-C modes: {ant.CapabilitiesDescription}\n{ant.ControlEvidenceDescription}";
+			_continueButton!.Disabled = !ant.CanStartControlledRide;
+			if (_connectionState.Phase == TrainerConnectionPhase.Ready && !ant.CanStartControlledRide)
+				_overallStatusLabel!.Text = "Telemetry works, but this trainer reports that simulation control is unsupported. Wodra cannot start a controlled ride.";
+			else if (_connectionState.Phase == TrainerConnectionPhase.Ready)
+				_overallStatusLabel!.Text = ant.CapabilityFlags is null
+					? "Telemetry connected; FE-C capability response was not received. Wodra will use a compatibility control attempt during the ride. Verify resistance on the trainer."
+					: "Trainer telemetry is connected. Control status is reported separately; verify resistance on the trainer.";
+		}
 		if (_diagnosticsLabel?.Visible == true)
-			_diagnosticsLabel.Text = $"Device: {(client is AntFeCTrainerClient ant ? ant.ConnectedDeviceName : _realTrainerClient?.ConnectedDeviceName) ?? "unknown"}\nProtocol: {protocolName}\nCapabilities: {(client is AntFeCTrainerClient antFeC ? antFeC.CapabilitiesDescription : "FTMS control")}\nLink: {(client.IsConnected ? "connected" : "disconnected")}\nLast telemetry: {(telemetry.HasReceivedMeasurement ? telemetry.Timestamp.ToLocalTime().ToString("T") : "not received")}\nControl ready: {_connectionState.Phase == TrainerConnectionPhase.Ready}";
+			_diagnosticsLabel.Text = $"Device: {(client is AntFeCTrainerClient antForDiagnostics ? antForDiagnostics.ConnectedDeviceName : _realTrainerClient?.ConnectedDeviceName) ?? "unknown"}\nProtocol: {protocolName}\nCapabilities: {(client is AntFeCTrainerClient antFeC ? antFeC.CapabilitiesDescription : "FTMS control")}\nLink: {(client.IsConnected ? "connected" : "disconnected")}\nLast telemetry: {(telemetry.HasReceivedMeasurement ? telemetry.Timestamp.ToLocalTime().ToString("T") : "not received")}\nControl ready: {_connectionState.Phase == TrainerConnectionPhase.Ready}";
 	}
 
 	private static string FormatReading(TelemetryReading reading, string unit, bool stationary) => reading.State switch
@@ -1120,6 +1137,12 @@ public partial class DeviceConnectionPanelController : Control
 			_continueButton!.Disabled = true;
 			_overallStatusLabel!.Text = "Trainer is not ready. Select Retry to reconnect before continuing.";
 			_connectButton!.Disabled = false;
+			return;
+		}
+		if (_antTrainerClient is { CanStartControlledRide: false })
+		{
+			_continueButton!.Disabled = true;
+			_overallStatusLabel!.Text = "This trainer reports that simulation control is unsupported, so a controlled ride cannot start.";
 			return;
 		}
 		if (_routeSelectionPanel is null) { _overallStatusLabel!.Text = "Route selection is unavailable."; return; }

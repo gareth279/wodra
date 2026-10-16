@@ -267,8 +267,11 @@ public static class AntFeCProtocol
         DeviceNumber: 0, PairingEnabled: false, DeviceType: DeviceType, TransmissionType: 0,
         Period: ChannelPeriod, RadioFrequency: RadioFrequency);
 
+    // FE-C page 54 is required by the profile on request, but some otherwise
+    // interoperable trainers do not provide it. Telemetry readiness must not
+    // depend on this metadata; callers retain Unknown and use compatibility mode.
     public static bool IsReady(bool hasGeneralPage, bool hasTrainerPage, bool hasCapabilities) =>
-        hasGeneralPage && hasTrainerPage && hasCapabilities;
+        hasGeneralPage && hasTrainerPage;
 
     public static bool ShouldRetryCapabilityRequest(bool hasCapabilities, int attempts) =>
         !hasCapabilities && attempts < MaximumCapabilityRequestAttempts;

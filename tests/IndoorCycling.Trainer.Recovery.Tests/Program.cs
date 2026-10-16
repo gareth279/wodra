@@ -155,8 +155,8 @@ Check(fecRequest.SequenceEqual(new byte[] { 0x46, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 
 var capabilityResponses = new AntFeCCapabilityResponseTracker(expectedChannel: 0, attemptId: 42);
 var transportAcknowledged = true; // EVENT_TRANSFER_TX_COMPLETED confirms only the request transfer.
 Check(transportAcknowledged && !capabilityResponses.HasCapabilities &&
-      !AntFeCProtocol.IsReady(true, true, capabilityResponses.HasCapabilities),
-    "ANT transport acknowledgement alone does not establish FE-C capabilities or readiness");
+      AntFeCProtocol.IsReady(true, true, capabilityResponses.HasCapabilities),
+    "ANT request acknowledgement does not establish capability knowledge while telemetry can still be ready");
 var fecCapabilityResponse = new byte[] { 0x36, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x07 };
 await Task.Delay(10); // A capability page may arrive on a later receive callback.
 Check(capabilityResponses.Observe(42, 0, fecCapabilityResponse) == "capabilities_received" &&
@@ -282,9 +282,77 @@ for (var i = 0; i < 70; i++) boundedCounts.Add((byte)i, "channelResponse", false
 Check(boundedCounts.Snapshot().Count() == 65 &&
       boundedCounts.Snapshot().Last().RejectionReason == "diagnostic_bucket_limit",
     "ANT receive diagnostics cap unique frame buckets and aggregate excess observations");
-Check(!AntFeCProtocol.IsReady(true, true, false) && AntFeCProtocol.IsReady(true, true, true) &&
+Check(AntFeCProtocol.IsReady(true, true, false) && AntFeCProtocol.IsReady(true, true, true) &&
       !AntFeCProtocol.IsReady(true, false, true),
-    "FE-C readiness requires telemetry pages and capabilities returned by its request");
+    "FE-C telemetry readiness requires general and trainer pages but not capability metadata");
+
+var liveSession = new AntFeCSessionState();
+liveSession.ObserveTelemetryPage(16);
+Check(!liveSession.IsTelemetryReady && liveSession.SimulationSupport == AntFeCCapabilitySupport.Unknown,
+    "one telemetry page does not establish a ready link and missing capabilities remain unknown");
+liveSession.ObserveTelemetryPage(25);
+Check(liveSession.IsTelemetryReady && liveSession.SimulationSupport == AntFeCCapabilitySupport.Unknown,
+    "identified general and trainer telemetry establish connection without inventing capability flags");
+Check(liveSession.ObserveCapabilities(fecCapabilityResponse) && liveSession.SimulationSupport == AntFeCCapabilitySupport.Supported,
+    "a late valid page 54 updates capability support on the active session");
+var unsupportedSession = new AntFeCSessionState();
+unsupportedSession.ObserveTelemetryPage(16);
+unsupportedSession.ObserveTelemetryPage(25);
+Check(unsupportedSession.ObserveCapabilities(new byte[] { 54, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0x03 }) &&
+      unsupportedSession.SimulationSupport == AntFeCCapabilitySupport.Unsupported,
+    "valid page 54 with the simulation bit clear explicitly disables simulation control");
+
+var simulatedSession = new AntFeCSessionState();
+simulatedSession.ObserveTelemetryPage(16);
+simulatedSession.ObserveTelemetryPage(25);
+var sentPages = new List<byte>();
+await simulatedSession.SendControlAsync(AntFeCProtocol.BuildTrackResistance(2.5),
+    AntFeCProtocol.BuildUserConfiguration(75, 10), (packet, _) =>
+    {
+        sentPages.Add(packet[0]);
+        return Task.FromResult(true);
+    }, () => { });
+Check(sentPages.SequenceEqual(new byte[] { 55, 51 }) &&
+      simulatedSession.TransportState == AntFeCTransportState.Acknowledged &&
+      simulatedSession.TrainerCommandState == AntFeCTrainerCommandState.Unknown &&
+      !simulatedSession.PhysicalResistanceVerified,
+    "simulated transport sends user configuration before track control and does not equate transport acknowledgement with trainer status or physical resistance");
+Check(simulatedSession.ObserveCommandStatus(new AntFeCCommandStatus(51, 9, 0)) &&
+      simulatedSession.TrainerCommandState == AntFeCTrainerCommandState.Accepted &&
+      !simulatedSession.PhysicalResistanceVerified,
+    "a matching late page 71 adds trainer-reported acceptance without claiming physical resistance");
+Check(simulatedSession.ObserveCommandStatus(new AntFeCCommandStatus(51, 10, 1)) &&
+      simulatedSession.TrainerCommandState == AntFeCTrainerCommandState.Failed,
+    "a trainer-reported negative command status remains a definite failure");
+
+var failedTransportSession = new AntFeCSessionState();
+var rejectedControl = false;
+try
+{
+    await failedTransportSession.SendControlAsync(AntFeCProtocol.BuildTrackResistance(1), null,
+        (_, _) => Task.FromResult(false));
+}
+catch (IOException) { rejectedControl = true; }
+Check(rejectedControl && failedTransportSession.TransportState == AntFeCTransportState.Failed,
+    "a definite ANT transport rejection fails control instead of being treated as success");
+var cancelledSession = new AntFeCSessionState();
+using (var cancelledSend = new CancellationTokenSource())
+{
+    cancelledSend.Cancel();
+    var cancelled = false;
+    try
+    {
+        await cancelledSession.SendControlAsync(AntFeCProtocol.BuildTrackResistance(0), null,
+            (_, token) => Task.FromCanceled<bool>(token), cancellationToken: cancelledSend.Token);
+    }
+    catch (OperationCanceledException) { cancelled = true; }
+    Check(cancelled, "control sends preserve cancellation through simulated transport");
+}
+simulatedSession.Reset();
+Check(!simulatedSession.IsTelemetryReady && simulatedSession.CapabilityFlags is null &&
+      simulatedSession.TransportState == AntFeCTransportState.NotAttempted &&
+      simulatedSession.TrainerCommandState == AntFeCTrainerCommandState.Unknown,
+    "disconnect/reconnect resets telemetry, capabilities and control evidence instead of retaining stale state");
 var antDiagnostic = System.Text.Json.JsonSerializer.Serialize(new AntFeCDiagnosticEvent(
     "channel_configuration", "command_completed", 12.5, "CHANNEL_ID_0x51",
     ResponseId: 0x40, EventCode: 0x15, DataPage: AntFeCProtocol.PageCapabilities));

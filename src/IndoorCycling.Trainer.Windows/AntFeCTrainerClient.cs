@@ -24,6 +24,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private TaskCompletionSource _ready = NewSignal();
     private TaskCompletionSource<AntFeCCommandStatus> _commandStatus = NewSignal<AntFeCCommandStatus>();
     private readonly AntFeCPowerAccumulator _power = new();
+    private readonly AntFeCSessionState _state = new();
     private TrainerTelemetry _latest = new(DateTimeOffset.MinValue, 0, 0, 0,
         HasPowerMeasurement: false, HasCadenceMeasurement: false,
         HasReceivedMeasurement: false, HasSpeedMeasurement: false);
@@ -39,7 +40,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private readonly HashSet<byte> _reportedPages = [];
     private readonly Stopwatch _connectionTimer = new();
     private double? _lastRequestedGrade;
-    private double? _lastAppliedGrade;
+    private double? _lastTransportAcknowledgedGrade;
 
     public bool IsConnected { get; private set; }
     public bool IsReady => _isReady;
@@ -49,11 +50,12 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public byte? ConnectedDeviceType { get; private set; }
     public byte? ConnectedTransmissionType { get; private set; }
     public byte? CapabilityFlags => _capabilities;
+    public bool CanStartControlledRide => _state.SimulationSupport != AntFeCCapabilitySupport.Unsupported;
     public string CapabilitiesDescription
     {
         get
         {
-            if (_capabilities is not { } flags) return "Waiting for capabilities";
+            if (_capabilities is not { } flags) return "unknown · compatibility mode";
             var modes = new List<string>();
             if ((flags & 0x04) != 0) modes.Add("simulation");
             if ((flags & 0x02) != 0) modes.Add("target power");
@@ -61,8 +63,15 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             return modes.Count == 0 ? "no control modes reported" : string.Join(", ", modes);
         }
     }
+    public string ControlEvidenceDescription => _state.TransportState switch
+    {
+        AntFeCTransportState.NotAttempted => "Control not yet attempted; physical resistance unverified",
+        AntFeCTransportState.Failed => "Control transport failed; physical resistance unverified",
+        _ => $"Control transport acknowledged; trainer status {FormatTrainerStatus(_state.TrainerCommandState)}; physical resistance unverified"
+    };
     public double? LastRequestedSimulationGradePercent => _lastRequestedGrade;
-    public double? LastAppliedSimulationGradePercent => _lastAppliedGrade;
+    public double? LastAppliedSimulationGradePercent => _lastTransportAcknowledgedGrade;
+    public double? LastTransportAcknowledgedSimulationGradePercent => _lastTransportAcknowledgedGrade;
     public event Action? Disconnected;
 
     public AntFeCTrainerClient(TrainerSettings? settings = null, AntFeCDeviceIdentity? targetDevice = null,
@@ -308,6 +317,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _power.Reset();
         _generalPage = _trainerPage = null;
         _capabilities = null;
+        _state.Reset();
         _capabilityResponses = new(expectedChannel: 0, attemptId: connectionAttemptId);
         _pageRequestSent = false;
         _capabilityRequestAttempts = 0;
@@ -377,11 +387,11 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 Emit(_diagnostic, new("fe_c_readiness", "timed_out", _connectionTimer.Elapsed.TotalMilliseconds,
-                    Outcome: $"general={_generalPage is not null};trainer={_trainerPage is not null};capabilities={_capabilities.HasValue}"));
+                Outcome: $"general={_generalPage is not null};trainer={_trainerPage is not null};capabilities={_capabilities.HasValue}"));
                 throw new TimeoutException("FE-C readiness timed out. Check ANT diagnostics for trainer pages, capabilities requests, and channel events.");
             }
             Emit(_diagnostic, new("fe_c_readiness", "ready", _connectionTimer.Elapsed.TotalMilliseconds,
-                Outcome: "telemetry_and_capabilities_received"));
+                Outcome: _capabilities.HasValue ? "telemetry_ready_capabilities_known" : "telemetry_ready_capabilities_unknown_compatibility"));
         }
         catch
         {
@@ -419,6 +429,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _configuredDeviceIdentity = null;
         _generalPage = _trainerPage = null;
         _capabilities = null;
+        _state.Reset();
         _latest = _latest with { Timestamp = DateTimeOffset.MinValue, HasReceivedMeasurement = false,
             HasPowerMeasurement = false, HasCadenceMeasurement = false, HasSpeedMeasurement = false };
         _ready.TrySetCanceled();
@@ -428,19 +439,22 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public async Task SetSimulationAsync(SimulationCommand command, CancellationToken cancellationToken = default)
     {
         EnsureReady();
-        if ((_capabilities.GetValueOrDefault() & 0x04) == 0)
-            throw new NotSupportedException("This FE-C trainer does not report simulation-mode support.");
+        if (_state.SimulationSupport == AntFeCCapabilitySupport.Unsupported)
+            throw new NotSupportedException("This FE-C trainer reports that simulation mode is unsupported.");
+        if (_state.SimulationSupport == AntFeCCapabilitySupport.Unknown)
+            Emit(_diagnostic, new("trainer_control", "capability_unknown_compatibility_attempt",
+                _connectionTimer.Elapsed.TotalMilliseconds, DataPage: 51, Outcome: "simulation_control_will_be_attempted"));
         _lastRequestedGrade = command.GradePercent;
         await SendControlAsync(AntFeCProtocol.BuildTrackResistance(command.GradePercent), cancellationToken,
             AntFeCProtocol.BuildUserConfiguration(command.RiderWeightKg, command.BikeWeightKg)).ConfigureAwait(false);
-        _lastAppliedGrade = Math.Clamp(command.GradePercent, -200, 200);
+        _lastTransportAcknowledgedGrade = Math.Clamp(command.GradePercent, -200, 200);
     }
 
     public async Task SetResistanceAsync(ResistanceCommand command, CancellationToken cancellationToken = default)
     {
         EnsureReady();
-        if ((_capabilities.GetValueOrDefault() & 0x01) == 0)
-            throw new NotSupportedException("This FE-C trainer does not report basic-resistance support.");
+        if (_state.BasicResistanceSupport == AntFeCCapabilitySupport.Unsupported)
+            throw new NotSupportedException("This FE-C trainer reports that basic resistance is unsupported.");
         var level = (byte)Math.Clamp((int)Math.Round(Math.Clamp(command.ResistanceLevel, 0, 100) * 2), 0, 200);
         await SendControlAsync([48, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, level], cancellationToken).ConfigureAwait(false);
     }
@@ -456,27 +470,32 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         try
         {
             var channel = _channel ?? throw new IOException("The FE-C channel is closed.");
-            if (preamble is not null && !_userConfigSent)
-            {
-                var configResult = await SendAcknowledgedPageAsync(channel, preamble,
-                    "trainer_configuration", 3000, cancellationToken).ConfigureAwait(false);
-                if (configResult != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
-                    throw new IOException("The FE-C trainer did not acknowledge rider and bicycle weight configuration.");
-                _userConfigSent = true;
-            }
             _commandStatus = NewSignal<AntFeCCommandStatus>();
-            var result = await SendAcknowledgedPageAsync(channel, page,
-                "trainer_control", 3000, cancellationToken).ConfigureAwait(false);
-            if (result != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
-                throw new IOException($"FE-C acknowledged control failed ({result}).");
-            var statusRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCommandStatus);
-            var requestResult = await SendAcknowledgedPageAsync(channel, statusRequest,
-                "control_acknowledgement", 2000, cancellationToken).ConfigureAwait(false);
-            if (requestResult != ANT_ReferenceLibrary.MessagingReturnCode.Pass)
-                throw new IOException("The trainer accepted the control packet but did not acknowledge a status request.");
-            var status = await _commandStatus.Task.WaitAsync(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false);
-            if (status.CommandId != page[0] || !status.IsSuccessful)
-                throw new IOException($"The trainer reported FE-C command status {status.Status} for page {status.CommandId}.");
+            await _state.SendControlAsync(page, preamble is not null && !_userConfigSent ? preamble : null,
+                async (outgoing, token) =>
+                {
+                    var configuration = outgoing.Length > 0 && outgoing[0] == 55;
+                    var result = await SendAcknowledgedPageAsync(channel, outgoing,
+                        configuration ? "trainer_configuration" : "trainer_control",
+                        3000, token).ConfigureAwait(false);
+                    if (configuration && result == ANT_ReferenceLibrary.MessagingReturnCode.Pass)
+                        Emit(_diagnostic, new("trainer_configuration", "transport_acknowledged",
+                            _connectionTimer.Elapsed.TotalMilliseconds, DataPage: outgoing[0],
+                            Outcome: "user_configuration_delivered_to_trainer"));
+                    return result == ANT_ReferenceLibrary.MessagingReturnCode.Pass;
+                },
+                () => _userConfigSent = true,
+                cancellationToken).ConfigureAwait(false);
+            Emit(_diagnostic, new("trainer_control", "transport_acknowledged", _connectionTimer.Elapsed.TotalMilliseconds,
+                DataPage: page[0], Outcome: "ANT acknowledged-data accepted; physical resistance remains unverified"));
+            // Page 71 can provide richer trainer-side evidence, but requesting and waiting for
+            // it is optional and caused otherwise successful FE-C controls to time out.
+            if (_commandStatus.Task.IsCompletedSuccessfully)
+            {
+                var status = _commandStatus.Task.Result;
+                if (status.CommandId == page[0] && !status.IsSuccessful)
+                    throw new IOException($"The trainer reported FE-C command status {status.Status} for page {status.CommandId}.");
+            }
         }
         finally { _commandLock.Release(); }
     }
@@ -539,13 +558,16 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 {
                     var receiveChannel = response.messageContents.Length > 0 ? response.messageContents[0] : byte.MaxValue;
                     var outcome = _capabilityResponses?.Observe(connectionAttemptId, receiveChannel, page) ?? "stale_attempt";
-                    if (outcome == "capabilities_received")
+                    if (outcome == "capabilities_received" && _state.ObserveCapabilities(page))
                     {
                         _capabilities = _capabilityResponses!.CapabilityFlags;
                         Emit(_diagnostic, new("fe_c_capabilities", "response_accepted",
                             _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
                             DataPage: page[0], Outcome: "valid_capability_flags",
                             Count: _capabilities.GetValueOrDefault()));
+                        Emit(_diagnostic, new("fe_c_capabilities", "support_updated",
+                            _connectionTimer.Elapsed.TotalMilliseconds, DataPage: page[0],
+                            Outcome: _state.SimulationSupport.ToString().ToLowerInvariant()));
                     }
                     else
                         Emit(_diagnostic, new("fe_c_capabilities", "response_rejected",
@@ -557,7 +579,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                     Emit(_diagnostic, new("control_acknowledgement", "command_status_received",
                         _connectionTimer.Elapsed.TotalMilliseconds, DataPage: page[0],
                         Outcome: $"command_{status.CommandId:X2};status_{status.Status:X2}"));
-                    _commandStatus.TrySetResult(status);
+                    if (_state.ObserveCommandStatus(status)) _commandStatus.TrySetResult(status);
                 }
 
                 if (_generalPage is not null || _trainerPage is not null)
@@ -568,7 +590,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                         g?.HeartRateBpm, t?.HasPowerMeasurement == true, t?.HasCadenceMeasurement == true,
                         true, g?.HasSpeedMeasurement == true);
                 }
-                if (AntFeCProtocol.IsReady(_generalPage is not null, _trainerPage is not null, _capabilities.HasValue))
+                if (page[0] is AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer)
+                    _state.ObserveTelemetryPage(page[0]);
+                if (_state.IsTelemetryReady)
                 {
                     _isReady = true;
                     _ready.TrySetResult();
@@ -638,6 +662,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         var wasConnected = IsConnected || _isReady;
         _isReady = false;
         IsConnected = false;
+        _state.Reset();
+        _capabilities = null;
         lock (_gate)
         {
             _generalPage = _trainerPage = null;
@@ -652,6 +678,16 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         if (!_isReady || _channel is null) throw new InvalidOperationException("The FE-C trainer is not connected and ready.");
     }
 
+    private static string FormatTrainerStatus(AntFeCTrainerCommandState status) => status switch
+    {
+        AntFeCTrainerCommandState.Accepted => "accepted (reported)",
+        AntFeCTrainerCommandState.Failed => "failed (reported)",
+        AntFeCTrainerCommandState.Rejected => "rejected (reported)",
+        AntFeCTrainerCommandState.Pending => "pending (reported)",
+        AntFeCTrainerCommandState.Uninitialized => "uninitialized (reported)",
+        _ => "unknown"
+    };
+
     private async Task RequestCapabilitiesAsync(ANT_Channel channel)
     {
         var request = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
@@ -661,8 +697,15 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var timer = Stopwatch.StartNew();
             try
             {
-                var result = await SendAcknowledgedPageAsync(channel, request,
-                    "capability_request", 1500, CancellationToken.None).ConfigureAwait(false);
+                await _commandLock.WaitAsync().ConfigureAwait(false);
+                ANT_ReferenceLibrary.MessagingReturnCode result;
+                try
+                {
+                    if (!IsConnected) break;
+                    result = await SendAcknowledgedPageAsync(channel, request,
+                        "capability_request", 1500, CancellationToken.None).ConfigureAwait(false);
+                }
+                finally { _commandLock.Release(); }
                 Emit(_diagnostic, new("capability_request", "attempt_completed", timer.Elapsed.TotalMilliseconds,
                     Outcome: $"attempt_{attempt}_request_page_{AntFeCProtocol.PageCapabilities}_{result}"));
             }

@@ -9,6 +9,7 @@ public interface ITrainerClient
     bool IsReady => IsConnected;
     double? LastRequestedSimulationGradePercent => null;
     double? LastAppliedSimulationGradePercent => null;
+    double? LastTransportAcknowledgedSimulationGradePercent => LastAppliedSimulationGradePercent;
 
     Task ConnectAsync(CancellationToken cancellationToken = default);
     Task DisconnectAsync(CancellationToken cancellationToken = default);
