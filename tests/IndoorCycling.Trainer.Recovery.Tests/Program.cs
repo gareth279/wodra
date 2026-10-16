@@ -9,6 +9,31 @@ static void Check(bool condition, string message)
     Console.WriteLine($"PASS {message}");
 }
 
+var commandWarningPolicy = new TrainerCommandWarningPolicy();
+var warningSession = commandWarningPolicy.BeginSession();
+Check(commandWarningPolicy.ObserveFailure(warningSession) == TrainerCommandWarningTransition.None &&
+      commandWarningPolicy.ObserveTransportAcknowledgement(warningSession) == TrainerCommandWarningTransition.None &&
+      !commandWarningPolicy.IsWarningVisible(warningSession),
+    "an isolated gradient command failure is retained for diagnostics but does not leave a rider-facing warning");
+Check(commandWarningPolicy.ObserveFailure(warningSession) == TrainerCommandWarningTransition.None &&
+      commandWarningPolicy.ObserveFailure(warningSession) == TrainerCommandWarningTransition.None &&
+      commandWarningPolicy.ObserveFailure(warningSession) == TrainerCommandWarningTransition.Show &&
+      commandWarningPolicy.IsWarningVisible(warningSession),
+    "three consecutive gradient command failures show a persistent warning");
+Check(commandWarningPolicy.IsWarningVisible(warningSession),
+    "fresh trainer telemetry alone does not clear a command warning");
+Check(commandWarningPolicy.ObserveTransportAcknowledgement(warningSession) == TrainerCommandWarningTransition.Clear &&
+      !commandWarningPolicy.IsWarningVisible(warningSession),
+    "a later transport acknowledgement clears the current gradient command warning");
+var staleWarningSession = warningSession;
+commandWarningPolicy.EndSession(warningSession);
+var nextWarningSession = commandWarningPolicy.BeginSession();
+Check(commandWarningPolicy.ObserveFailure(staleWarningSession) == TrainerCommandWarningTransition.None &&
+      commandWarningPolicy.ObserveTransportAcknowledgement(staleWarningSession) == TrainerCommandWarningTransition.None &&
+      !commandWarningPolicy.IsCurrentSession(staleWarningSession) &&
+      commandWarningPolicy.GetConsecutiveFailureCount(nextWarningSession) == 0,
+    "stale command callbacks from a previous ride cannot change current warning state");
+
 var attemptCount = 0;
 var delayedReturn = await TrainerRecoveryLoop.RunAsync(
     (attempt, _) => Task.FromResult(++attemptCount >= 3),

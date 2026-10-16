@@ -95,6 +95,9 @@ public partial class RideSessionNode : Node
 	private double _trainerCommandElapsedSeconds;
 	private double? _lastSentTrainerGradientPercent;
 	private bool _trainerCommandDirty = true;
+	private readonly TrainerCommandWarningPolicy _trainerCommandWarningPolicy = new();
+	private long _trainerCommandWarningSessionId;
+	private string? _trainerCommandWarningText;
 	private IMultiplayerProvider? _multiplayerProvider;
 	private CancellationTokenSource? _onlineLifetime;
 	private CancellationTokenSource? _automaticJoinCts;
@@ -213,6 +216,8 @@ public partial class RideSessionNode : Node
 		LastCompletedActivityDraft = null;
 		_sessionStarted = true;
 		_trainerSessionActive = true;
+		_trainerCommandWarningSessionId = _trainerCommandWarningPolicy.BeginSession();
+		_trainerCommandWarningText = null;
 		_fitReplaySessionActive = false;
 		_rideState = RideState.Initial;
 		_catchUpResumeSpeedKph = null;
@@ -243,8 +248,10 @@ public partial class RideSessionNode : Node
 	{
 		if (!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
 			return;
+		var commandSessionId = _trainerCommandWarningSessionId;
 		await _trainerCommandTask;
-		if (!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
+		if (!_trainerCommandWarningPolicy.IsCurrentSession(commandSessionId) ||
+			!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
 			return;
 		var gradient = GetTrainerGradeTarget(GetCurrentGradient());
 		await GameBootstrap.TrainerClient.SetSimulationAsync(new SimulationCommand(
@@ -253,6 +260,7 @@ public partial class RideSessionNode : Node
 			BikeWeightKg: CurrentBikeProfile.WeightKg));
 		_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient.LastTransportAcknowledgedSimulationGradePercent ?? gradient;
 		_trainerCommandDirty = false;
+		HandleTrainerCommandAcknowledged(commandSessionId, gradient);
 		GameLogger.Log("trainer_current_settings_transport_acknowledged", new { gradientPercent = gradient,
 			physicalResistanceVerified = false });
 	}
@@ -360,6 +368,7 @@ public partial class RideSessionNode : Node
 	{
 		var wasActiveTrainerRide = _sessionStarted && _trainerSessionActive;
 		_sessionStarted = false;
+		_trainerCommandWarningPolicy.EndSession(_trainerCommandWarningSessionId);
 		string? fitPath = null;
 		try
 		{
@@ -1755,6 +1764,7 @@ public partial class RideSessionNode : Node
 
 	private async Task SendTrainerSimulationCommandAsync(double gradient)
 	{
+		var commandSessionId = _trainerCommandWarningSessionId;
 		_trainerCommandDirty = false;
 		_lastRequestedTrainerGradientPercent = gradient;
 		_lastTrainerCommandAtUtc = DateTimeOffset.UtcNow;
@@ -1777,28 +1787,65 @@ public partial class RideSessionNode : Node
 				)
 			);
 
+			if (!_trainerCommandWarningPolicy.IsCurrentSession(commandSessionId))
+			{
+				GameLogger.Log("trainer_simulation_command_stale_completion", new { commandSessionId, outcome = "acknowledged" });
+				return;
+			}
 			_lastSentTrainerGradientPercent = GameBootstrap.TrainerClient!.LastTransportAcknowledgedSimulationGradePercent ?? gradient;
+			HandleTrainerCommandAcknowledged(commandSessionId, gradient);
 			if (_debugDiagnostics.Enabled) GameLogger.Log("trainer_simulation_transport_acknowledged", new { gradientPercent = gradient,
 				physicalResistanceVerified = false });
 		}
 		catch (Exception ex)
 		{
+			var currentSession = _trainerCommandWarningPolicy.IsCurrentSession(commandSessionId);
+			var warningTransition = currentSession
+				? _trainerCommandWarningPolicy.ObserveFailure(commandSessionId)
+				: TrainerCommandWarningTransition.None;
 			GameLogger.Log("trainer_simulation_command_failed", new
 			{
 				gradientPercent = gradient,
 				message = ex.Message,
-				exceptionType = ex.GetType().FullName
+				exceptionType = ex.GetType().FullName,
+				commandSessionId,
+				staleSession = !currentSession,
+				consecutiveFailures = _trainerCommandWarningPolicy.GetConsecutiveFailureCount(commandSessionId),
+				persistentWarning = warningTransition == TrainerCommandWarningTransition.Show ||
+					_trainerCommandWarningPolicy.IsWarningVisible(commandSessionId)
 			});
+			if (!currentSession) return;
 
-			_hudController?.SetStatus($"Trainer command failed: {ex.Message}");
+			if (warningTransition == TrainerCommandWarningTransition.Show)
+			{
+				_trainerCommandWarningText = $"Trainer control has missed acknowledgements for {TrainerCommandWarningPolicy.ConsecutiveFailureWarningThreshold} consecutive gradient commands.";
+				_hudController?.SetStatus(_trainerCommandWarningText);
+			}
 
 			// Keep dirty=true so it retries later, but not every frame.
 			_trainerCommandDirty = true;
 		}
 		finally
 		{
-			_trainerCommandElapsedSeconds = 0;
+			if (_trainerCommandWarningPolicy.IsCurrentSession(commandSessionId))
+				_trainerCommandElapsedSeconds = 0;
 		}
+	}
+
+	private void HandleTrainerCommandAcknowledged(long commandSessionId, double gradient)
+	{
+		var transition = _trainerCommandWarningPolicy.ObserveTransportAcknowledgement(commandSessionId);
+		if (transition != TrainerCommandWarningTransition.Clear) return;
+		var warning = _trainerCommandWarningText;
+		var statusCleared = warning is not null && _hudController?.ClearStatusIfMatches(warning) == true;
+		_trainerCommandWarningText = null;
+		GameLogger.Log("trainer_simulation_warning_cleared", new
+		{
+			commandSessionId,
+			gradientPercent = gradient,
+			statusCleared,
+			physicalResistanceVerified = false
+		});
 	}
 
 	private void ProcessFitReplayMode(double delta)

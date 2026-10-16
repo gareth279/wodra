@@ -665,6 +665,14 @@ public partial class HudController : Control
 		_statusLabel.Text = status;
 	}
 
+	public bool ClearStatusIfMatches(string expectedStatus)
+	{
+		if (_statusLabel is null || !string.Equals(_statusLabel.Text, expectedStatus, StringComparison.Ordinal))
+			return false;
+		_statusLabel.Text = string.Empty;
+		return true;
+	}
+
 	public void ResetHud()
 	{
 		UpdateHudVisibility();
