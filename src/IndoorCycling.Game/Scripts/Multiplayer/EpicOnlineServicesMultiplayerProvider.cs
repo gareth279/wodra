@@ -52,6 +52,12 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     private string _riderId = "";
     private bool _disposed;
     private volatile bool _p2pFailed;
+#if WODRA_EOS_SDK
+    private Task? _authRecoveryTask;
+    private CancellationTokenSource? _authRecoveryCancellation;
+    private int _sessionGeneration;
+    private volatile bool _authRecoveryDegraded;
+#endif
 
     private static EosClientConfiguration LoadConfiguration()
     {
@@ -91,6 +97,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     private static P2PInterface? _p2p;
     private static ProductUserId? _localUser;
     private static Task<ProductUserId>? _loginTask;
+    private static Task<ProductUserId>? _authenticationRenewalTask;
     private static string? _expectedProductUserId;
     private static bool _shutdown;
     private readonly SocketId _socketId = new() { SocketName = SocketName };
@@ -127,6 +134,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
 #if WODRA_EOS_SDK
             if (_joined)
             {
+                if (_authRecoveryDegraded) return _status;
                 var riderCount = _members.Count + 1;
                 var now = System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
                 var activeStatePeers = _lastAcceptedStateAt.Count(item =>
@@ -191,6 +199,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             _status = "Connecting…";
             _ = EosNativeLibraryLoader.EnsureLoaded();
             _ = await EnsureAuthenticatedAsync(_displayName, cancellationToken);
+            RegisterAuthExpirationNotification();
             _status = "EOS authenticated";
             return true;
         }
@@ -257,6 +266,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     {
 #if WODRA_EOS_SDK
         if (_joined) await LeaveSessionAsync();
+        _sessionGeneration++;
         if (string.IsNullOrWhiteSpace(routeId) || routeFingerprint is not { Length: 64 } || !routeFingerprint.All(Uri.IsHexDigit))
             throw new InvalidOperationException("EOS lobby join requires a valid route ID and SHA-256 route fingerprint.");
         _displayName = RiderDisplayName.Resolve(displayName);
@@ -272,7 +282,8 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             var lobbyId = await FindOrCreateLobbyAsync(user, routeId, _routeFingerprint, cancellationToken);
             _lobbyId = lobbyId;
             RegisterNotifications(user);
-            PopulateLobbyMembers(user, lobbyId);
+            if (!PopulateLobbyMembers(user, lobbyId, announceSelf: true))
+                throw new InvalidOperationException("EOS reported a joined lobby without listing the local rider as a member.");
             _joined = true;
             _status = "EOS lobby joined";
             GameLogger.Log("eos_lobby_joined", new { routeId, lobbyId, members = _members.Count + 1, otherMembers = _members.Count });
@@ -335,6 +346,11 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
     public async Task LeaveSessionAsync()
     {
 #if WODRA_EOS_SDK
+        _sessionGeneration++;
+        _authRecoveryCancellation?.Cancel();
+        _authRecoveryCancellation?.Dispose();
+        _authRecoveryCancellation = null;
+        _authRecoveryDegraded = false;
         var user = _localUser;
         if (_lobby is not null && user?.IsValid() == true && !string.IsNullOrEmpty(_lobbyId))
         {
@@ -377,9 +393,16 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
         Task<ProductUserId> task;
         lock (RuntimeLock)
         {
-            if (_localUser?.IsValid() == true && _connect?.GetLoginStatus(_localUser) == LoginStatus.LoggedIn)
-                return _localUser;
-            task = _loginTask ??= AuthenticateCoreAsync(displayName);
+            if (_authenticationRenewalTask is { IsCompleted: false } renewal)
+            {
+                task = renewal;
+            }
+            else
+            {
+                if (_localUser?.IsValid() == true && _connect?.GetLoginStatus(_localUser) == LoginStatus.LoggedIn)
+                    return _localUser;
+                task = _loginTask ??= AuthenticateCoreAsync(displayName);
+            }
         }
         using var registration = cancellationToken.Register(() => { });
         return await task.WaitAsync(cancellationToken);
@@ -507,24 +530,25 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             else
                 throw new InvalidOperationException("EOS Connect Device ID login failed: " + login.ResultCode);
 
-            if (user?.IsValid() != true) throw new InvalidOperationException("EOS returned an invalid Product User ID.");
+            var authenticatedUser = user ?? throw new InvalidOperationException("EOS returned no Product User ID.");
+            if (!authenticatedUser.IsValid()) throw new InvalidOperationException("EOS returned an invalid Product User ID.");
             lock (RuntimeLock)
             {
-                var id = user.ToString();
+                var id = authenticatedUser.ToString();
                 if (_expectedProductUserId is not null && !string.Equals(_expectedProductUserId, id, StringComparison.Ordinal))
                     throw new InvalidOperationException("EOS Device ID resolved to a different Product User ID. Reauthentication was stopped to avoid changing rider identity.");
                 _expectedProductUserId ??= id;
-                _localUser = user;
+                _localUser = authenticatedUser;
             }
-            GameLogger.Log("eos_authentication_succeeded", new { productUserIdValid = user?.IsValid() == true });
+            GameLogger.Log("eos_authentication_succeeded", new { productUserIdValid = authenticatedUser.IsValid() });
 #if DEBUG
             GameLogger.Log("eos_debug_local_identity", new
             {
-                productUserIdHash = EosIdentityDiagnostics.HashProductUserId(user.ToString()),
+                productUserIdHash = EosIdentityDiagnostics.HashProductUserId(authenticatedUser.ToString()),
                 processId = Environment.ProcessId
             });
 #endif
-            return user;
+            return authenticatedUser;
         }
         catch (Exception ex)
         {
@@ -586,6 +610,22 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                     var joinResult = await AwaitResultAsync<JoinLobbyCallbackInfo>(callback => _lobby!.JoinLobby(ref join, this,
                         (ref JoinLobbyCallbackInfo info) => callback(ref info)), (ref JoinLobbyCallbackInfo info) => info.ResultCode);
                     GameLogger.Log("eos_lobby_join_result", new { routeId, lobbyId = selected.Info.LobbyId.ToString(), result = joinResult.ToString() });
+                    if (joinResult == Result.LobbyLobbyAlreadyExists)
+                    {
+                        var existingMembership = InspectLobbyMembership(user, selected.Info.LobbyId.ToString());
+                        if (existingMembership.HandleAvailable && existingMembership.LocalUserListed)
+                        {
+                            var retainedId = selected.Info.LobbyId.ToString();
+                            GameLogger.Log("eos_lobby_already_member_reconciled", new { routeId, localMembershipConfirmed = true });
+                            return retainedId;
+                        }
+                        GameLogger.Log("eos_lobby_already_exists_unconfirmed", new
+                        {
+                            routeId,
+                            lobbyHandleAvailable = existingMembership.HandleAvailable,
+                            localUserListed = existingMembership.LocalUserListed
+                        });
+                    }
                     EnsureSuccess(joinResult, "join discovered lobby");
                     var lobbyId = selected.Info.LobbyId.ToString();
                     GameLogger.Log("eos_lobby_reused", new { routeId, lobbyId, existingMembers = selected.Info.MaxMembers - selected.Info.AvailableSlots });
@@ -763,47 +803,238 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
 
     private void RegisterNotifications(ProductUserId user)
     {
+        RegisterAuthExpirationNotification();
         var lobby = _lobby ?? throw new InvalidOperationException("EOS Lobby interface is unavailable.");
+        if (_lobbyStatusNotification == 0)
+        {
+            var lobbyOptions = new AddNotifyLobbyMemberStatusReceivedOptions();
+            _lobbyStatusNotification = lobby.AddNotifyLobbyMemberStatusReceived(ref lobbyOptions, this, OnLobbyMemberStatus);
+        }
+        var p2p = _p2p ?? throw new InvalidOperationException("EOS P2P interface is unavailable.");
+        if (_peerRequestNotification == 0)
+        {
+            var requestOptions = new AddNotifyPeerConnectionRequestOptions { LocalUserId = user, SocketId = _socketId };
+            _peerRequestNotification = p2p.AddNotifyPeerConnectionRequest(ref requestOptions, this, OnPeerConnectionRequest);
+        }
+        if (_peerClosedNotification == 0)
+        {
+            var peerOptions = new AddNotifyPeerConnectionClosedOptions { LocalUserId = user };
+            _peerClosedNotification = p2p.AddNotifyPeerConnectionClosed(ref peerOptions, this, OnPeerClosed);
+        }
+        if (_peerInterruptedNotification == 0)
+        {
+            var interruptedOptions = new AddNotifyPeerConnectionInterruptedOptions { LocalUserId = user };
+            _peerInterruptedNotification = p2p.AddNotifyPeerConnectionInterrupted(ref interruptedOptions, this, OnPeerInterrupted);
+        }
+        if (_peerEstablishedNotification == 0)
+        {
+            var establishedOptions = new AddNotifyPeerConnectionEstablishedOptions { LocalUserId = user };
+            _peerEstablishedNotification = p2p.AddNotifyPeerConnectionEstablished(ref establishedOptions, this, OnPeerEstablished);
+        }
+    }
+
+    private void RegisterAuthExpirationNotification()
+    {
+        if (_authExpirationNotification != 0) return;
         var connect = _connect ?? throw new InvalidOperationException("EOS Connect interface is unavailable.");
         var authOptions = new AddNotifyAuthExpirationOptions();
         _authExpirationNotification = connect.AddNotifyAuthExpiration(ref authOptions, this, OnAuthExpired);
-        var lobbyOptions = new AddNotifyLobbyMemberStatusReceivedOptions();
-        _lobbyStatusNotification = lobby.AddNotifyLobbyMemberStatusReceived(ref lobbyOptions, this, OnLobbyMemberStatus);
-        var p2p = _p2p ?? throw new InvalidOperationException("EOS P2P interface is unavailable.");
-        var requestOptions = new AddNotifyPeerConnectionRequestOptions { LocalUserId = user, SocketId = _socketId };
-        _peerRequestNotification = p2p.AddNotifyPeerConnectionRequest(ref requestOptions, this, OnPeerConnectionRequest);
-        var peerOptions = new AddNotifyPeerConnectionClosedOptions { LocalUserId = user };
-        _peerClosedNotification = p2p.AddNotifyPeerConnectionClosed(ref peerOptions, this, OnPeerClosed);
-        var interruptedOptions = new AddNotifyPeerConnectionInterruptedOptions { LocalUserId = user };
-        _peerInterruptedNotification = p2p.AddNotifyPeerConnectionInterrupted(ref interruptedOptions, this, OnPeerInterrupted);
-        var establishedOptions = new AddNotifyPeerConnectionEstablishedOptions { LocalUserId = user };
-        _peerEstablishedNotification = p2p.AddNotifyPeerConnectionEstablished(ref establishedOptions, this, OnPeerEstablished);
     }
 
     private void OnAuthExpired(ref AuthExpirationCallbackInfo info)
     {
-        if (info.LocalUserId?.IsValid() != true || !string.Equals(info.LocalUserId.ToString(), _riderId, StringComparison.Ordinal)) return;
-        _joined = false;
-        _status = "EOS authentication expired; reconnecting";
-        foreach (var member in _members.Keys)
-            _events.Enqueue(new RiderLeftMessage { RiderId = member, Reason = "authentication expired" });
-        _members.Clear();
-        _sequenceGate.Clear();
+        if (info.LocalUserId?.IsValid() != true) return;
+        var expiringUserId = info.LocalUserId.ToString();
+        if (!string.IsNullOrEmpty(_riderId) && !string.Equals(expiringUserId, _riderId, StringComparison.Ordinal)) return;
         lock (RuntimeLock)
-        {
-            _localUser = null;
-            _loginTask = null;
-        }
+            if (_localUser?.IsValid() == true && !string.Equals(_localUser.ToString(), expiringUserId, StringComparison.Ordinal)) return;
+        if (_authRecoveryTask is { IsCompleted: false }) return;
+
+        var generation = _sessionGeneration;
+        var lobbyId = _lobbyId;
+        var routeId = _routeId;
+        var expectedRiderId = string.IsNullOrEmpty(_riderId) ? expiringUserId : _riderId;
+        var hasLobby = _joined && !string.IsNullOrEmpty(lobbyId);
+        _authRecoveryCancellation?.Dispose();
+        _authRecoveryCancellation = new CancellationTokenSource();
+        _status = hasLobby ? "Refreshing EOS authentication · keeping lobby session" : "Refreshing EOS authentication";
+        _authRecoveryDegraded = true;
+        _authRecoveryTask = RecoverAuthenticationAsync(generation, lobbyId, routeId, expectedRiderId, hasLobby,
+            _authRecoveryCancellation.Token);
         GameLogger.Log("eos_auth_expired", new
         {
 #if DEBUG
             productUserIdHash = EosIdentityDiagnostics.HashProductUserId(_riderId),
 #endif
-            expired = true
+            expired = true,
+            lobbyRetained = _joined,
+            recovery = "reauthenticate_then_reconcile_membership"
         });
     }
 
-    private void PopulateLobbyMembers(ProductUserId user, string lobbyId)
+    private async Task RecoverAuthenticationAsync(int generation, string lobbyId, string routeId,
+        string expectedRiderId, bool hasLobby, CancellationToken cancellationToken)
+    {
+        const int maximumAttempts = 3;
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            if (!IsCurrentRecovery(generation, lobbyId, routeId, cancellationToken)) return;
+            try
+            {
+                GameLogger.Log("eos_auth_recovery_attempt", new { attempt, maximumAttempts, routeId, stage = "reauthenticate" });
+                Task<ProductUserId> loginTask;
+                lock (RuntimeLock)
+                {
+                    loginTask = _authenticationRenewalTask is { IsCompleted: false }
+                        ? _authenticationRenewalTask
+                        : _authenticationRenewalTask = _loginTask = AuthenticateCoreAsync(_displayName);
+                }
+                var user = await loginTask.WaitAsync(cancellationToken);
+                if (!IsCurrentRecovery(generation, lobbyId, routeId, cancellationToken)) return;
+
+                if (!string.Equals(user.ToString(), expectedRiderId, StringComparison.Ordinal))
+                    throw new InvalidOperationException("EOS reauthentication resolved to a different rider identity; recovery stopped to prevent duplicate riders.");
+                if (!hasLobby)
+                {
+                    _authRecoveryDegraded = false;
+                    _status = "EOS authenticated";
+                    GameLogger.Log("eos_auth_recovery_succeeded", new { attempt, routeId, membership = "not_in_lobby", notificationsRegistered = _authExpirationNotification != 0 });
+                    return;
+                }
+
+                var membership = InspectLobbyMembership(user, lobbyId);
+                var decision = EosSessionRecoveryPolicy.DecideMembership(
+                    identityMatches: string.Equals(user.ToString(), expectedRiderId, StringComparison.Ordinal),
+                    lobbyHandleAvailable: membership.HandleAvailable,
+                    localUserListed: membership.LocalUserListed);
+                if (decision == EosMembershipRecovery.MembershipRetained)
+                {
+                    RegisterNotifications(user);
+                    if (!PopulateLobbyMembers(user, lobbyId, announceSelf: false))
+                        throw new InvalidOperationException("EOS lobby membership changed during recovery reconciliation.");
+                    _joined = true;
+                    _status = "Connected · EOS lobby membership restored";
+                    _authRecoveryDegraded = false;
+                    GameLogger.Log("eos_auth_recovery_succeeded", new
+                    {
+                        attempt, routeId, membership = "retained", lobbyIdPresent = true,
+                        members = _members.Count + 1, notificationsRegistered = NotificationsRegistered
+                    });
+                    return;
+                }
+
+                GameLogger.Log("eos_auth_recovery_membership_lost", new
+                {
+                    attempt, routeId, lobbyHandleAvailable = membership.HandleAvailable,
+                    localUserListed = membership.LocalUserListed
+                });
+                await LeaveLobbyHandleAsync(user, lobbyId);
+                ResetLobbyMembers("lobby membership lost during authentication recovery");
+                _joined = false;
+                var recoveredLobbyId = await FindOrCreateLobbyAsync(user, routeId, _routeFingerprint, cancellationToken);
+                if (!IsCurrentRecovery(generation, lobbyId, routeId, cancellationToken))
+                {
+                    await LeaveLobbyHandleAsync(user, recoveredLobbyId);
+                    return;
+                }
+                RegisterNotifications(user);
+                if (!PopulateLobbyMembers(user, recoveredLobbyId, announceSelf: true))
+                    throw new InvalidOperationException("EOS rejoined lobby did not list the local rider as a member.");
+                _lobbyId = recoveredLobbyId;
+                _joined = true;
+                _status = "Connected · EOS lobby membership restored";
+                _authRecoveryDegraded = false;
+                GameLogger.Log("eos_auth_recovery_succeeded", new
+                {
+                    attempt, routeId, membership = "rejoined", lobbyIdPresent = true,
+                    members = _members.Count + 1, notificationsRegistered = NotificationsRegistered
+                });
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (Exception ex)
+            {
+                if (!IsCurrentRecovery(generation, lobbyId, routeId, cancellationToken)) return;
+                _status = $"EOS reconnecting · attempt {attempt}/{maximumAttempts}";
+                GameLogger.Log("eos_auth_recovery_failed", new
+                {
+                    attempt, maximumAttempts, routeId,
+                    exceptionType = ex.GetType().Name,
+                    message = ex.Message
+                });
+                if (!EosSessionRecoveryPolicy.ShouldRetryAuthentication(attempt, maximumAttempts))
+                {
+                    _status = "EOS reconnect unavailable · retry on next online check";
+                    return;
+                }
+                try { await Task.Delay(EosSessionRecoveryPolicy.RetryDelay(attempt), cancellationToken); }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            }
+        }
+    }
+
+    private bool IsCurrentRecovery(int generation, string lobbyId, string routeId, CancellationToken token) =>
+        !token.IsCancellationRequested && !_disposed && generation == _sessionGeneration &&
+        string.Equals(lobbyId, _lobbyId, StringComparison.Ordinal) &&
+        string.Equals(routeId, _routeId, StringComparison.Ordinal);
+
+    private bool NotificationsRegistered => _lobbyStatusNotification != 0 && _peerRequestNotification != 0 &&
+        _peerClosedNotification != 0 && _peerInterruptedNotification != 0 && _peerEstablishedNotification != 0 &&
+        _authExpirationNotification != 0;
+
+    private (bool HandleAvailable, bool LocalUserListed) InspectLobbyMembership(ProductUserId user, string lobbyId)
+    {
+        if (_lobby is null || user?.IsValid() != true || string.IsNullOrWhiteSpace(lobbyId)) return (false, false);
+        var options = new CopyLobbyDetailsHandleOptions { LocalUserId = user, LobbyId = lobbyId };
+        var result = _lobby.CopyLobbyDetailsHandle(ref options, out var details);
+        if (result != Result.Success || details is null) return (false, false);
+        try
+        {
+            var countOptions = new LobbyDetailsGetMemberCountOptions();
+            var count = details.GetMemberCount(ref countOptions);
+            for (uint i = 0; i < count; i++)
+            {
+                var memberOptions = new LobbyDetailsGetMemberByIndexOptions { MemberIndex = i };
+                var member = details.GetMemberByIndex(ref memberOptions);
+                if (member?.IsValid() == true && string.Equals(member.ToString(), user.ToString(), StringComparison.Ordinal))
+                    return (true, true);
+            }
+            return (true, false);
+        }
+        finally { details.Release(); }
+    }
+
+    private async Task LeaveLobbyHandleAsync(ProductUserId user, string lobbyId)
+    {
+        if (_lobby is null || user?.IsValid() != true || string.IsNullOrWhiteSpace(lobbyId)) return;
+        try
+        {
+            var options = new LeaveLobbyOptions { LocalUserId = user, LobbyId = lobbyId };
+            var result = await AwaitResultAsync<LeaveLobbyCallbackInfo>(callback => _lobby.LeaveLobby(ref options, this,
+                (ref LeaveLobbyCallbackInfo info) => callback(ref info)), (ref LeaveLobbyCallbackInfo info) => info.ResultCode);
+            GameLogger.Log("eos_lobby_leave_recovery", new { result = result.ToString() });
+        }
+        catch (Exception ex)
+        {
+            GameLogger.Log("eos_lobby_leave_recovery_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+        }
+    }
+
+    private void ResetLobbyMembers(string reason)
+    {
+        foreach (var member in _members.Keys)
+            _events.Enqueue(new RiderLeftMessage { RiderId = member, Reason = reason });
+        ClosePeerConnections(_localUser);
+        _members.Clear();
+        _peerMembershipGate.Clear();
+        _connectedPeers.Clear();
+        _pendingEstablishedPeers.Clear();
+        _pendingPeerRequests.Clear();
+        _lastAcceptedStateAt.Clear();
+        _sequenceGate.Clear();
+    }
+
+    private bool PopulateLobbyMembers(ProductUserId user, string lobbyId, bool announceSelf)
     {
         var options = new CopyLobbyDetailsHandleOptions { LocalUserId = user, LobbyId = lobbyId };
         var copyResult = _lobby!.CopyLobbyDetailsHandle(ref options, out var details);
@@ -815,13 +1046,15 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             success = copyResult == Result.Success
         });
 #endif
-        EnsureSuccess(copyResult, "copy joined lobby details");
+        if (copyResult != Result.Success || details is null) return false;
         try
         {
+            var previousMembers = _members.Keys.ToHashSet(StringComparer.Ordinal);
             _members.Clear();
             var memberCountOptions = new LobbyDetailsGetMemberCountOptions();
             var count = details.GetMemberCount(ref memberCountOptions);
             var distinctMemberIds = new HashSet<string>(StringComparer.Ordinal);
+            var localIdentityListed = false;
             for (uint i = 0; i < count; i++)
             {
                 var memberOptions = new LobbyDetailsGetMemberByIndexOptions { MemberIndex = i };
@@ -829,7 +1062,7 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                 var memberId = member?.ToString();
                 if (member is null || string.IsNullOrEmpty(memberId)) continue;
                 distinctMemberIds.Add(memberId);
-                if (memberId == user.ToString()) continue;
+                if (memberId == user.ToString()) { localIdentityListed = true; continue; }
                 _members.TryAdd(memberId, 0);
                 var acceptDeferredRequest = _peerMembershipGate.AddMember(memberId);
                 if (_pendingEstablishedPeers.TryRemove(memberId, out _))
@@ -849,7 +1082,10 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                     var pendingUser = ProductUserId.FromString(memberId);
                     if (pendingUser?.IsValid() == true) AcceptPeerConnection(pendingUser, pendingSocket);
                 }
-                SendProtocol(member, new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = _riderId, DisplayName = _displayName } }, PacketReliability.ReliableOrdered, 1);
+                if (announceSelf)
+                    SendProtocol(member, new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = _riderId, DisplayName = _displayName } }, PacketReliability.ReliableOrdered, 1);
+                if (!previousMembers.Contains(memberId))
+                    _events.Enqueue(new RiderJoinedMessage { Rider = new RiderDescriptor { RiderId = memberId, DisplayName = "Rider" } });
             }
 #if DEBUG
             var ownerOptions = new LobbyDetailsGetLobbyOwnerOptions();
@@ -864,9 +1100,10 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
                 distinctMemberCount = distinctMemberIds.Count,
                 distinctMemberIdentityHashes = distinctMemberIds.Select(EosIdentityDiagnostics.HashProductUserId).OrderBy(x => x, StringComparer.Ordinal).ToArray(),
                 otherMemberCount = _members.Count,
-                localIdentityListed = distinctMemberIds.Contains(user.ToString())
+                localIdentityListed
             });
 #endif
+            return localIdentityListed;
         }
         finally { details.Release(); }
     }
@@ -1319,6 +1556,8 @@ public sealed class EpicOnlineServicesMultiplayerProvider : IMultiplayerProvider
             _lobby = null;
             _p2p = null;
             _localUser = null;
+            _loginTask = null;
+            _authenticationRenewalTask = null;
             try
             {
                 var result = PlatformInterface.Shutdown();
