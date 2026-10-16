@@ -7,6 +7,13 @@ public readonly record struct AntFeCDeviceIdentity(ushort DeviceNumber, byte Dev
     public string DisplayName => $"ANT+ FE-C trainer {DeviceNumber}";
 }
 
+/// <summary>Prevents queued ANT commands and callbacks from crossing reconnect generations.</summary>
+public static class AntFeCConnectionAttemptPolicy
+{
+    public static bool IsCurrent(long operationAttemptId, long activeAttemptId)
+        => operationAttemptId == activeAttemptId;
+}
+
 public readonly record struct AntFeCReceiveChannelSettings(ushort DeviceNumber, bool PairingEnabled,
     byte DeviceType, byte TransmissionType, ushort Period, byte RadioFrequency);
 
