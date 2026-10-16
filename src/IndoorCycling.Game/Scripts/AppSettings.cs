@@ -19,6 +19,7 @@ public sealed class AppSettings
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
 	public TrainerSettings Trainer { get; set; } = new();
+	public OptionalDeviceProtocolPreferences OptionalDeviceProtocols { get; set; } = new();
 	public RideDisplayPreferences Display { get; set; } = new();
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
@@ -84,9 +85,12 @@ public sealed class AppSettings
 			settings.Display ??= new RideDisplayPreferences();
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
+			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();
 			var migratedTrainerPreference = TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
 				json, settings.Trainer);
 			TrainerProtocolPreferencePolicy.Normalize(settings.Trainer);
+			settings.OptionalDeviceProtocols.Set(DeviceProtocolCategory.HeartRate, settings.OptionalDeviceProtocols.HeartRate);
+			settings.OptionalDeviceProtocols.Set(DeviceProtocolCategory.Steering, settings.OptionalDeviceProtocols.Steering);
 
 			settings.Recording.OutputFolder = ProductFilePaths.UpgradeLegacyFitOutputFolder(
 				settings.Recording.OutputFolder,

@@ -11,6 +11,7 @@ public enum TrainerProtocolPreference
     AntFeC
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TrainerProtocol
 {
     BluetoothFtms,
@@ -20,6 +21,7 @@ public enum TrainerProtocol
 public sealed class TrainerSettings
 {
     public TrainerProtocolPreference ProtocolPreference { get; set; } = TrainerProtocolPreference.Auto;
+    public TrainerProtocol? LastSuccessfulProtocol { get; set; }
     public ushort? LastAntDeviceNumber { get; set; }
     public byte? LastAntDeviceType { get; set; }
     public byte? LastAntTransmissionType { get; set; }
@@ -65,10 +67,13 @@ public static class TrainerProtocolPreferencePolicy
     public static TrainerProtocolSelection Select(
         TrainerProtocolPreference preference,
         bool bluetoothAvailable,
-        bool antFeCAvailable)
+        bool antFeCAvailable,
+        TrainerProtocol? lastSuccessfulProtocol = null)
     {
         return preference switch
         {
+            TrainerProtocolPreference.Auto when lastSuccessfulProtocol == TrainerProtocol.BluetoothFtms && bluetoothAvailable => new(TrainerProtocol.BluetoothFtms, null),
+            TrainerProtocolPreference.Auto when lastSuccessfulProtocol == TrainerProtocol.AntFeC && antFeCAvailable => new(TrainerProtocol.AntFeC, null),
             TrainerProtocolPreference.Auto when bluetoothAvailable => new(TrainerProtocol.BluetoothFtms, null),
             TrainerProtocolPreference.Auto when antFeCAvailable => new(TrainerProtocol.AntFeC, null),
             TrainerProtocolPreference.Auto => new(null, "No supported trainer protocol is available."),

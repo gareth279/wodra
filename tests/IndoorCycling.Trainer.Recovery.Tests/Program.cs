@@ -517,22 +517,62 @@ Check(!TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
 var serializedTrainerSettings = JsonSerializer.Serialize(new TrainerSettings
 {
     ProtocolPreference = TrainerProtocolPreference.AntFeC,
+    LastSuccessfulProtocol = TrainerProtocol.AntFeC,
     LastAntDeviceNumber = 42,
     LastAntDeviceType = 17,
     LastAntTransmissionType = 5
 });
 var restoredTrainerSettings = JsonSerializer.Deserialize<TrainerSettings>(serializedTrainerSettings)!;
 Check(restoredTrainerSettings.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
+      restoredTrainerSettings.LastSuccessfulProtocol == TrainerProtocol.AntFeC &&
       restoredTrainerSettings.LastAntDeviceNumber == 42 && restoredTrainerSettings.LastAntDeviceType == 17 &&
       restoredTrainerSettings.LastAntTransmissionType == 5,
     "protocol preference and ANT identity persist independently of the Bluetooth address");
 var autoBoth = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, true, true);
+var autoRememberedAnt = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, true, true, TrainerProtocol.AntFeC);
+var autoRememberedBluetooth = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, true, true, TrainerProtocol.BluetoothFtms);
 var autoAntOnly = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.Auto, false, true);
 var explicitUnavailable = TrainerProtocolPreferencePolicy.Select(TrainerProtocolPreference.AntFeC, true, false);
 Check(autoBoth.Protocol == TrainerProtocol.BluetoothFtms && autoAntOnly.Protocol == TrainerProtocol.AntFeC,
     "Auto deterministically prefers Bluetooth and uses ANT only when it is the available provider");
+Check(autoRememberedAnt.Protocol == TrainerProtocol.AntFeC && autoRememberedBluetooth.Protocol == TrainerProtocol.BluetoothFtms,
+    "Auto reuses the last successful trainer protocol when it remains available");
 Check(!explicitUnavailable.IsAvailable && explicitUnavailable.UnavailableReason is not null,
     "an unavailable explicit protocol is reported instead of silently switching providers");
+Check(DeviceProtocolPreferencePolicy.IsSupported(DeviceProtocolPreference.Bluetooth, DeviceProtocolCategory.Steering) &&
+      !DeviceProtocolPreferencePolicy.IsSupported(DeviceProtocolPreference.AntPlus, DeviceProtocolCategory.HeartRate) &&
+      !DeviceProtocolPreferencePolicy.IsSupported(DeviceProtocolPreference.AntPlus, DeviceProtocolCategory.Steering) &&
+      DeviceProtocolPreferencePolicy.Normalize(DeviceProtocolPreference.AntPlus, DeviceProtocolCategory.Steering) == DeviceProtocolPreference.Auto,
+    "unsupported ANT+ peripheral preferences are disabled and normalize safely");
+var optionalProtocols = new OptionalDeviceProtocolPreferences
+{
+    HeartRate = DeviceProtocolPreference.Bluetooth,
+    Steering = DeviceProtocolPreference.Auto
+};
+var restoredOptionalProtocols = JsonSerializer.Deserialize<OptionalDeviceProtocolPreferences>(
+    JsonSerializer.Serialize(optionalProtocols))!;
+restoredOptionalProtocols.Set(DeviceProtocolCategory.Steering, DeviceProtocolPreference.Bluetooth);
+Check(restoredOptionalProtocols.HeartRate == DeviceProtocolPreference.Bluetooth &&
+      restoredOptionalProtocols.Steering == DeviceProtocolPreference.Bluetooth,
+    "heart-rate and steering protocol preferences persist independently and changing one leaves the other intact");
+Check(DeviceProtocolPreferencePolicy.MigrateTrainer(TrainerProtocolPreference.AntFeC) == DeviceProtocolPreference.AntPlus &&
+      DeviceProtocolPreferencePolicy.MigrateTrainer(TrainerProtocolPreference.BluetoothFtms) == DeviceProtocolPreference.Bluetooth,
+    "existing trainer protocol choices map to the new category selector without changing identity fields");
+
+var littleEndianAngle = BitConverter.GetBytes(-12.5f);
+var challengeFrame = new byte[] { 0x03, 0x10, 0x12, 0x34 };
+Check(SterzoSmartProtocol.ParseAngle(littleEndianAngle) == -12.5f &&
+      SterzoSmartProtocol.ParseAngle([0, 0, 0]) is null &&
+      SterzoSmartProtocol.ParseAngle(BitConverter.GetBytes(float.NaN)) is null,
+    "Sterzo Smart angles decode as bounded finite little-endian float inputs");
+var responseTable = new byte[131072];
+responseTable[0x1234 * 2] = 0xA5;
+responseTable[0x1234 * 2 + 1] = 0x5A;
+Check(SterzoSmartProtocol.ParseChallenge(challengeFrame) == 0x1234 &&
+      SterzoSmartProtocol.TryGetChallengeResponse(responseTable, 0x1234, out var responseFirst, out var responseSecond) &&
+      responseFirst == 0xA5 && responseSecond == 0x5A &&
+      !SterzoSmartProtocol.TryGetChallengeResponse(responseTable.AsSpan(0, 8), 0x1234, out _, out _),
+    "Sterzo Smart big-endian challenges select the corresponding two-byte response table entry");
 var antCandidates = AntFeCDiscoveryPolicy.Select([
     new AntFeCDeviceIdentity(44, 17, 1),
     new AntFeCDeviceIdentity(22, 17, 2),

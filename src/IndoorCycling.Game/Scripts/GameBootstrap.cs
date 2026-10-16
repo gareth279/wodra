@@ -65,7 +65,8 @@ public partial class GameBootstrap : Node
 		GameLogger.Init();
 
 		Settings = AppSettings.LoadOrCreate();
-		StravaIntegrationClient.Shared.ResumePendingAutomaticUploads();
+		if (!OS.GetCmdlineUserArgs().Contains("--layout-smoke-test"))
+			StravaIntegrationClient.Shared.ResumePendingAutomaticUploads();
 		ConfigureMainWindow();
 		Settings.DummyTrainer ??= new DummyTrainerSettings();
 		Settings.DummyTrainer.Validate();

@@ -6,6 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" />
+    <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" SkipGetTargetFrameworkProperties="true" />
   </ItemGroup>
 </Project>

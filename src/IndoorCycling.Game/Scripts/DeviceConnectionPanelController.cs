@@ -39,10 +39,24 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _steeringName;
 	private Label? _steeringStatus;
 	private Button? _steeringAction;
+	private OptionButton? _heartRateProtocolOption;
+	private OptionButton? _steeringProtocolOption;
+	private OptionButton? _steeringPicker;
+	private Button? _steeringCenterAction;
 	private WindowsBleHeartRateClient? _heartRateClient;
+	private EliteSterzoSmartClient? _steeringClient;
 	private BleDiscoveredDevice[] _heartRateDiscovered = [];
+	private BleDiscoveredDevice[] _steeringDiscovered = [];
+	private BleDiscoveredDevice? _selectedSteeringDevice;
 	private CancellationTokenSource? _heartRateScanCancellation;
+	private CancellationTokenSource? _steeringScanCancellation;
 	private bool _heartRateScanInProgress;
+	private bool _steeringScanInProgress;
+	private Task? _steeringReconnectTask;
+	private CancellationTokenSource? _steeringReconnectCancellation;
+	private bool _intentionalSteeringDisconnect;
+	private float _steeringCenterOffset;
+	private bool _steeringStaleReconnectAttempted;
 	private PanelContainer? _connectionPanel;
 	private OptionButton? _trainerPicker;
 	private OptionButton? _protocolPreferenceOption;
@@ -77,6 +91,11 @@ public partial class DeviceConnectionPanelController : Control
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_connectionPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
+		var backdrop = GetNode<ColorRect>("ColorRect");
+		backdrop.AnchorLeft = 0; backdrop.AnchorTop = 0; backdrop.AnchorRight = 1; backdrop.AnchorBottom = 1;
+		backdrop.OffsetLeft = 0; backdrop.OffsetTop = 0; backdrop.OffsetRight = 0; backdrop.OffsetBottom = 0;
+		backdrop.Color = new Color(0, 0, 0, 0.48f);
+		backdrop.MouseFilter = Control.MouseFilterEnum.Stop;
 		_overallStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/OverallStatusLabel");
 		_trainerNameLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/TrainerNameLabel");
 		_protocolStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/ProtocolStatusLabel");
@@ -85,9 +104,9 @@ public partial class DeviceConnectionPanelController : Control
 		_cadenceStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/ReadingsRow/CadenceCard/MarginContainer/CadenceVBox/CadenceStatusLabel");
 		_trainerPicker = GetNode<OptionButton>("PanelContainer/MarginContainer/VBoxContainer/TrainerPicker");
 		_protocolPreferenceOption = GetNode<OptionButton>("PanelContainer/MarginContainer/VBoxContainer/ProtocolPreferenceOption");
-		_protocolPreferenceOption.AddItem("Auto · Bluetooth FTMS first", (int)TrainerProtocolPreference.Auto);
-		_protocolPreferenceOption.AddItem("Bluetooth FTMS", (int)TrainerProtocolPreference.BluetoothFtms);
-		_protocolPreferenceOption.AddItem("ANT+ FE-C", (int)TrainerProtocolPreference.AntFeC);
+		_protocolPreferenceOption.AddItem("Auto", (int)TrainerProtocolPreference.Auto);
+		_protocolPreferenceOption.AddItem("Bluetooth", (int)TrainerProtocolPreference.BluetoothFtms);
+		_protocolPreferenceOption.AddItem("ANT+", (int)TrainerProtocolPreference.AntFeC);
 		_protocolPreferenceOption.Select((int)GameBootstrap.Settings.Trainer.ProtocolPreference);
 		_protocolPreferenceOption.ItemSelected += OnProtocolPreferenceSelected;
 		_diagnosticsLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/DiagnosticsLabel");
@@ -110,8 +129,8 @@ public partial class DeviceConnectionPanelController : Control
 		_steeringStatus = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/StatusLabel");
 		_steeringAction = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
 		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Trainer";
-		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Heart rate · optional";
 		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Steering / controller";
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Heart rate";
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton").Hide();
 		foreach (var cardLabel in new[] { _trainerCardName, _trainerCardStatus, _heartRateName, _heartRateStatus, _steeringName, _steeringStatus })
 			if (cardLabel is not null) cardLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -124,10 +143,61 @@ public partial class DeviceConnectionPanelController : Control
 		_capabilitiesLabel.Hide();
 		_heartRateAction.Text = "Find monitor";
 		_heartRateAction.Pressed += OnHeartRateActionPressed;
-		_steeringName.Text = "Not connected";
-		_steeringStatus.Text = "Compatibility depends on the exact model and Bluetooth protocol.";
-		_steeringAction.Text = "Not available";
-		_steeringAction.Disabled = true;
+		_heartRateProtocolOption = CreatePeripheralPreference("HeartRateProtocolPreference",
+			GameBootstrap.Settings.OptionalDeviceProtocols.HeartRate, DeviceProtocolCategory.HeartRate, OnHeartRateProtocolSelected);
+		_steeringProtocolOption = CreatePeripheralPreference("SteeringProtocolPreference",
+			GameBootstrap.Settings.OptionalDeviceProtocols.Steering, DeviceProtocolCategory.Steering, OnSteeringProtocolSelected);
+		var trainerCard = GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard");
+		var trainerContents = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer");
+		var heartRateContents = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer");
+		var steeringContents = GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer");
+		trainerContents.AddChild(new Label { Text = "Protocol preference" });
+		GetNode("PanelContainer/MarginContainer/VBoxContainer/ProtocolPreferenceOption").Reparent(trainerContents);
+		GetNode("PanelContainer/MarginContainer/VBoxContainer/TrainerPicker").Reparent(trainerContents);
+		var trainerActions = new HBoxContainer { Name = "TrainerActions" };
+		trainerContents.AddChild(trainerActions);
+		foreach (var button in new[] { _connectButton, _cancelButton, _disconnectButton, _changeTrainerButton })
+			button!.Reparent(trainerActions);
+		heartRateContents.AddChild(new Label { Text = "Protocol preference" });
+		heartRateContents.AddChild(_heartRateProtocolOption);
+		steeringContents.AddChild(new Label { Text = "Protocol preference" });
+		steeringContents.AddChild(_steeringProtocolOption);
+		_steeringPicker = new OptionButton { Name = "SteeringDevicePicker", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Visible = false };
+		steeringContents.AddChild(_steeringPicker);
+		_steeringCenterAction = new Button { Name = "SteeringCenterButton", Text = "Set current position as centre", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Visible = false };
+		_steeringCenterAction.Pressed += () =>
+		{
+			if (_steeringClient?.LatestAngle is { } current) { _steeringCenterOffset = current; _steeringStatus!.Text = "Centre set · move the steering unit to test"; }
+		};
+		steeringContents.AddChild(_steeringCenterAction);
+		_steeringAction.Pressed += OnSteeringActionPressed;
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard").CustomMinimumSize = new Vector2(250, 190);
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard").CustomMinimumSize = new Vector2(250, 190);
+		trainerCard.CustomMinimumSize = new Vector2(250, 230);
+		foreach (var card in new[] { trainerCard, GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard"), GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard") })
+		{
+			card.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+			card.AddThemeConstantOverride("h_separation", 10);
+			card.AddThemeConstantOverride("v_separation", 10);
+			if (card.GetNodeOrNull<MarginContainer>("MarginContainer") is { } margins)
+			{
+				margins.AddThemeConstantOverride("margin_left", 16);
+				margins.AddThemeConstantOverride("margin_right", 16);
+				margins.AddThemeConstantOverride("margin_top", 14);
+				margins.AddThemeConstantOverride("margin_bottom", 14);
+			}
+			foreach (var control in card.FindChildren("*", "Control", true, false).OfType<Control>())
+				control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		}
+		_peripheralCards.MoveChild(GetNode("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard"), 1);
+		_peripheralCards.MoveChild(GetNode("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard"), 2);
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/SubtitleLabel").Hide();
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/ProtocolPreferenceLabel").Hide();
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/HBoxContainer").Hide();
+		_steeringName.Text = "Elite Sterzo Smart";
+		_steeringStatus.Text = "Optional · Bluetooth LE";
+		_steeringAction.Text = "Find steering device";
+		_steeringAction.Disabled = false;
 		MakeConnectionDetailsScrollable();
 		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Open Settings → Devices → Advanced ANT+ setup", Visible = false };
 		_antSetupButton.Pressed += () => _rideMenuPanel?.ShowAdvancedAntSetup();
@@ -176,7 +246,7 @@ public partial class DeviceConnectionPanelController : Control
 		{
 			_connectionState.SetPhase(_connectionState.AttemptId, TrainerConnectionPhase.Idle);
 			_overallStatusLabel!.Text = selected == TrainerProtocolPreference.Auto
-				? "Auto prefers Bluetooth FTMS, then uses ANT+ FE-C when Bluetooth is unavailable."
+				? "Auto uses the last working protocol, then checks Bluetooth before ANT+."
 				: "Bluetooth FTMS selected. Connect when your trainer is ready.";
 			_trainerNameLabel!.Text = "No trainer connected";
 			_connectButton!.Text = "Connect trainer";
@@ -199,7 +269,7 @@ public partial class DeviceConnectionPanelController : Control
 		if (column is null || column.GetChildCount() < 3) return;
 		var detailNodes = column.GetChildren().Take(column.GetChildCount() - 2).ToArray();
 		var scroll = new ScrollContainer { Name = "ConnectionDetailsScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-		var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var details = new VBoxContainer { Name = "ConnectionDetails", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		_connectionDetails = details;
 		foreach (var child in detailNodes) { column.RemoveChild(child); details.AddChild(child); }
 		column.AddChild(scroll);
@@ -226,18 +296,27 @@ public partial class DeviceConnectionPanelController : Control
 		_connectionPanel.CustomMinimumSize = new Vector2(width, height);
 		_connectionPanel.AnchorLeft = .5f; _connectionPanel.AnchorRight = .5f;
 		_connectionPanel.AnchorTop = .5f; _connectionPanel.AnchorBottom = .5f;
-		_connectionPanel.OffsetLeft = -width / 2; _connectionPanel.OffsetRight = width / 2;
-		_connectionPanel.OffsetTop = -height / 2; _connectionPanel.OffsetBottom = height / 2;
-		if (_peripheralCards is not null) _peripheralCards.Columns = viewport.X < 760 ? 1 : 3;
+		_connectionPanel.OffsetLeft = -width / 2 - Position.X; _connectionPanel.OffsetRight = width / 2 - Position.X;
+		_connectionPanel.OffsetTop = -height / 2 - Position.Y; _connectionPanel.OffsetBottom = height / 2 - Position.Y;
+		UpdateCardColumns();
 	}
 
 	public override void _Process(double delta)
 	{
+		UpdateCardColumns();
 		UpdateHeartRateUi();
+		UpdateSteeringUi();
 		_telemetryRefreshSeconds += delta;
 		if (_telemetryRefreshSeconds < 0.15) return;
 		_telemetryRefreshSeconds = 0;
 		RefreshTelemetryUi();
+	}
+
+	private void UpdateCardColumns()
+	{
+		if (_peripheralCards is null) return;
+		var columns = DisplayServer.WindowGetSize().X < 1024 ? 1 : 3;
+		if (_peripheralCards.Columns != columns) _peripheralCards.Columns = columns;
 	}
 
 	/// <summary>Clicking Connect Trainer on the launch screen starts Bluetooth discovery immediately.</summary>
@@ -269,9 +348,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	private void ResetUi()
 	{
-		_overallStatusLabel!.Text = GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC
-			? "Connect your ANT+ FE-C trainer. Wake it and keep it nearby."
-			: "Connect your Bluetooth smart trainer. Auto uses Bluetooth FTMS first.";
+		_overallStatusLabel!.Text = "Connect your trainer to begin.";
 		_trainerNameLabel!.Text = "No trainer connected";
 		_trainerCardName!.Text = "No trainer connected";
 		_trainerCardStatus!.Text = "Not connected";
@@ -284,10 +361,13 @@ public partial class DeviceConnectionPanelController : Control
 		_trainerPicker!.Clear();
 		_trainerPicker.Hide();
 		_connectButton!.Text = "Connect trainer";
+		_connectButton.Show();
 		_connectButton.Disabled = false;
 		_protocolPreferenceOption!.Disabled = false;
 		_cancelButton!.Hide();
 		_disconnectButton!.Disabled = true;
+		_disconnectButton.Hide();
+		_changeTrainerButton!.Hide();
 		_changeTrainerButton!.Disabled = false;
 		_continueButton!.Disabled = true;
 		RefreshAntSetupUi();
@@ -313,14 +393,18 @@ public partial class DeviceConnectionPanelController : Control
 		if (_heartRateClient?.IsConnected != true) _ = ScanForHeartRateAsync(autoConnect: true);
 		_protocolPreferenceOption!.Disabled = true;
 		_cancelButton!.Show();
+		_disconnectButton!.Hide();
+		_changeTrainerButton!.Hide();
 		_connectButton!.Text = "Scanning…";
+		_connectButton.Show();
 		_connectButton.Disabled = true;
 		_changeTrainerButton!.Disabled = true;
 		_continueButton!.Disabled = true;
 		var protocolSelection = TrainerProtocolPreferencePolicy.Select(
 			GameBootstrap.Settings.Trainer.ProtocolPreference,
 			bluetoothAvailable: true,
-			antFeCAvailable: true);
+			antFeCAvailable: true,
+			lastSuccessfulProtocol: GameBootstrap.Settings.Trainer.LastSuccessfulProtocol);
 		SetPhase(attemptId, TrainerConnectionPhase.Scanning);
 		try
 		{
@@ -608,6 +692,223 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateStatus!.Text = bpm.HasValue ? $"{bpm.Value} bpm · live" : "Connected · no fresh reading";
 	}
 
+	private OptionButton CreatePeripheralPreference(string name, DeviceProtocolPreference value,
+		DeviceProtocolCategory category, Action<long> handler)
+	{
+		var option = new OptionButton { Name = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		option.AddItem("Auto", (int)DeviceProtocolPreference.Auto);
+		option.AddItem("Bluetooth", (int)DeviceProtocolPreference.Bluetooth);
+		option.AddItem("ANT+ · unavailable", (int)DeviceProtocolPreference.AntPlus);
+		option.SetItemDisabled(2, !DeviceProtocolPreferencePolicy.IsSupported(DeviceProtocolPreference.AntPlus, category));
+		var normalized = DeviceProtocolPreferencePolicy.Normalize(value, category);
+		option.Select((int)normalized);
+		option.ItemSelected += index => handler(index);
+		return option;
+	}
+
+	private void OnHeartRateProtocolSelected(long itemIndex)
+	{
+		var selected = (DeviceProtocolPreference)_heartRateProtocolOption!.GetItemId((int)itemIndex);
+		if (!DeviceProtocolPreferencePolicy.IsSupported(selected, DeviceProtocolCategory.HeartRate)) return;
+		GameBootstrap.Settings.OptionalDeviceProtocols.Set(DeviceProtocolCategory.HeartRate, selected);
+		SavePeripheralPreference("heart_rate", selected);
+		// Preference changes apply to the next action; an active monitor remains connected.
+	}
+
+	private void OnSteeringProtocolSelected(long itemIndex)
+	{
+		var selected = (DeviceProtocolPreference)_steeringProtocolOption!.GetItemId((int)itemIndex);
+		if (!DeviceProtocolPreferencePolicy.IsSupported(selected, DeviceProtocolCategory.Steering)) return;
+		GameBootstrap.Settings.OptionalDeviceProtocols.Set(DeviceProtocolCategory.Steering, selected);
+		SavePeripheralPreference("steering", selected);
+	}
+
+	private static void SavePeripheralPreference(string category, DeviceProtocolPreference selected)
+	{
+		try { GameBootstrap.Settings.Save(); }
+		catch (Exception ex) { GameLogger.Log("device_protocol_preference_save_failed", new { category, exceptionType = ex.GetType().Name }); }
+	}
+
+	private void OnSteeringActionPressed()
+	{
+		if (_steeringScanInProgress) { _steeringScanCancellation?.Cancel(); return; }
+		if (_steeringClient?.IsConnected == true && !_steeringStaleReconnectAttempted && _steeringAction!.Text == "Disconnect") { _ = DisconnectSteeringAsync(); return; }
+		if (_selectedSteeringDevice is not null && _steeringAction!.Text.Contains("Retry", StringComparison.OrdinalIgnoreCase))
+		{
+			if (_steeringReconnectTask is null) _steeringReconnectTask = ReconnectSteeringAsync();
+			return;
+		}
+		if (_steeringDiscovered.Length > 1 && _steeringPicker?.Selected >= 0)
+		{
+			var index = (int)_steeringPicker.Selected;
+			if (index < _steeringDiscovered.Length) _ = ConnectSteeringAsync(_steeringDiscovered[index]);
+			return;
+		}
+		_ = ScanForSteeringAsync();
+	}
+
+	private async Task ScanForSteeringAsync()
+	{
+		if (_steeringScanInProgress) return;
+		_steeringScanInProgress = true;
+		_steeringAction!.Text = "Cancel search";
+		_steeringStatus!.Text = "Searching for Elite Sterzo Smart…";
+		var cancellation = new CancellationTokenSource();
+		_steeringScanCancellation?.Dispose();
+		_steeringScanCancellation = cancellation;
+		try
+		{
+			var client = _steeringClient ??= new EliteSterzoSmartClient();
+			var found = await client.ScanAsync(TimeSpan.FromSeconds(7), cancellation.Token);
+			if (cancellation.IsCancellationRequested) return;
+			_steeringDiscovered = found.ToArray();
+			if (_steeringDiscovered.Length == 0)
+			{
+				_steeringName!.Text = "Elite Sterzo Smart";
+				_steeringStatus!.Text = "Not found · move the steering plate to wake it";
+				_steeringAction!.Text = "Find steering device";
+				return;
+			}
+			if (_steeringDiscovered.Length == 1) await ConnectSteeringAsync(_steeringDiscovered[0]);
+			else
+			{
+				_steeringPicker!.Clear();
+				foreach (var device in _steeringDiscovered) _steeringPicker.AddItem($"{device.Name} · {device.Rssi} dBm");
+				_steeringPicker.Select(0);
+				_steeringPicker.Show();
+				_steeringName!.Text = "Choose a Sterzo Smart";
+				_steeringStatus!.Text = $"{_steeringDiscovered.Length} devices found";
+				_steeringAction!.Text = "Connect selected";
+			}
+		}
+		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+		{
+			_steeringStatus!.Text = "Search cancelled · optional";
+			_steeringAction!.Text = "Find steering device";
+		}
+		catch (Exception ex)
+		{
+			_steeringStatus!.Text = "Could not search for Sterzo Smart. Trainer connection is unaffected.";
+			_steeringAction!.Text = "Retry search";
+			GameLogger.Log("steering_scan_failed", new { exceptionType = ex.GetType().Name });
+		}
+		finally
+		{
+			if (ReferenceEquals(_steeringScanCancellation, cancellation))
+			{
+				_steeringScanInProgress = false;
+				_steeringScanCancellation = null;
+				cancellation.Dispose();
+			}
+		}
+	}
+
+	private async Task ConnectSteeringAsync(BleDiscoveredDevice device)
+	{
+		_steeringAction!.Disabled = true;
+		_steeringName!.Text = device.Name;
+		_steeringStatus!.Text = "Connecting to Sterzo Smart…";
+		var client = _steeringClient ??= new EliteSterzoSmartClient();
+		try
+		{
+			await client.ConnectAsync(device);
+			_selectedSteeringDevice = device;
+			client.Disconnected -= OnSteeringDisconnected;
+			client.Disconnected += OnSteeringDisconnected;
+			_steeringPicker!.Hide();
+			_steeringCenterAction!.Show();
+			_steeringStaleReconnectAttempted = false;
+			_steeringStatus!.Text = "Connected · waiting for steering input";
+			_steeringAction!.Text = "Disconnect";
+			GameLogger.Log("steering_device_connected", new { model = "Elite Sterzo Smart", protocol = "Bluetooth LE" });
+		}
+		catch (Exception ex)
+		{
+			await client.DisconnectAsync();
+			_steeringStatus!.Text = "Connection failed · wake the unit and retry";
+			_steeringAction!.Text = "Retry";
+			GameLogger.Log("steering_device_connection_failed", new { exceptionType = ex.GetType().Name });
+		}
+		finally { _steeringAction!.Disabled = false; }
+	}
+
+	private async Task DisconnectSteeringAsync()
+	{
+		_intentionalSteeringDisconnect = true;
+		_steeringReconnectCancellation?.Cancel();
+		if (_steeringClient is not null)
+		{
+			_steeringClient.Disconnected -= OnSteeringDisconnected;
+			await _steeringClient.DisconnectAsync();
+		}
+		_steeringCenterAction!.Hide();
+		_steeringStatus!.Text = "Disconnected · optional";
+		_steeringAction!.Text = "Find steering device";
+		_intentionalSteeringDisconnect = false;
+	}
+
+	private void OnSteeringDisconnected()
+	{
+		Callable.From(() =>
+		{
+			if (_intentionalSteeringDisconnect) return;
+			_steeringStatus!.Text = "Connection lost · reconnecting";
+			_steeringAction!.Text = "Retry connection";
+			if (_steeringReconnectTask is null) _steeringReconnectTask = ReconnectSteeringAsync();
+		}).CallDeferred();
+	}
+
+	private async Task ReconnectSteeringAsync()
+	{
+		var cancellation = new CancellationTokenSource();
+		_steeringReconnectCancellation?.Cancel();
+		_steeringReconnectCancellation?.Dispose();
+		_steeringReconnectCancellation = cancellation;
+		try
+		{
+			for (var attempt = 1; attempt <= 3 && _selectedSteeringDevice is not null; attempt++)
+			{
+				await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellation.Token);
+				_steeringStatus!.Text = $"Reconnecting · attempt {attempt} of 3";
+				try { await ConnectSteeringAsync(_selectedSteeringDevice); if (_steeringClient?.IsConnected == true) return; }
+				catch (Exception ex) { GameLogger.Log("steering_reconnect_attempt_failed", new { attempt, exceptionType = ex.GetType().Name }); }
+			}
+			_steeringStatus!.Text = "Connection lost · select Retry to reconnect";
+			_steeringAction!.Text = "Retry connection";
+		}
+		catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+		finally
+		{
+			if (ReferenceEquals(_steeringReconnectCancellation, cancellation)) { _steeringReconnectCancellation = null; cancellation.Dispose(); }
+			_steeringReconnectTask = null;
+		}
+	}
+
+	private void UpdateSteeringUi()
+	{
+		if (_steeringClient?.IsConnected != true) return;
+		if (_steeringClient.LatestAngle is not { } angle || _steeringClient.LastInputAt is not { } timestamp)
+		{
+			_steeringStatus!.Text = "Connected · waiting for steering input";
+			return;
+		}
+		if (DateTimeOffset.UtcNow - timestamp > TimeSpan.FromSeconds(3))
+		{
+			_steeringStatus!.Text = "Steering input is stale · reconnecting";
+			_steeringAction!.Text = "Retry connection";
+			if (!_steeringStaleReconnectAttempted && _steeringReconnectTask is null)
+			{
+				_steeringStaleReconnectAttempted = true;
+				_steeringReconnectTask = ReconnectSteeringAsync();
+			}
+			return;
+		}
+		_steeringStaleReconnectAttempted = false;
+		var normalized = Math.Clamp((angle - _steeringCenterOffset) / 34f, -1f, 1f);
+		var direction = normalized < -0.08f ? "Left" : normalized > 0.08f ? "Right" : "Centre";
+		_steeringStatus!.Text = $"{direction} · normalized input {normalized:+0.00;-0.00;0.00}";
+	}
+
 	private async Task ConnectAntFeCAsync(long attemptId, CancellationToken cancellationToken, AntFeCDeviceIdentity? selectedDevice = null, bool forceFreshDiscovery = false)
 	{
 		_attemptUsingAnt = true;
@@ -761,6 +1062,9 @@ public partial class DeviceConnectionPanelController : Control
 			});
 		}
 		GameBootstrap.ConfigureRealTrainerMode(client);
+		GameBootstrap.Settings.Trainer.LastSuccessfulProtocol = TrainerProtocol.AntFeC;
+		try { GameBootstrap.Settings.Save(); }
+		catch (Exception ex) { GameLogger.Log("trainer_preference_save_failed", new { exceptionType = ex.GetType().Name }); }
 		_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Ready);
 		ShowReadyUi();
 		GameLogger.Log("trainer_ready", new
@@ -797,6 +1101,7 @@ public partial class DeviceConnectionPanelController : Control
 			try
 			{
 				GameBootstrap.Settings.LastTrainerBluetoothAddress = device.BluetoothAddress;
+				GameBootstrap.Settings.Trainer.LastSuccessfulProtocol = TrainerProtocol.BluetoothFtms;
 				GameBootstrap.Settings.Save();
 			}
 			catch (Exception settingsError) { GameLogger.Log("trainer_preference_save_failed", new { message = settingsError.Message }); }
@@ -883,9 +1188,14 @@ public partial class DeviceConnectionPanelController : Control
 		_trainerCardStatus!.Text = _protocolStatusLabel.Text;
 		_connectButton!.Text = "Connected";
 		_connectButton.Disabled = true;
+		_connectButton.Show();
+		_connectButton.Hide();
+		_cancelButton!.Hide();
+		_disconnectButton!.Show();
 		_disconnectButton!.Disabled = false;
+		_changeTrainerButton!.Show();
 		_changeTrainerButton!.Disabled = false;
-		if (_antTrainerClient is not null) _changeTrainerButton.Text = "Find another trainer";
+		if (_antTrainerClient is not null) _changeTrainerButton.Text = "Change";
 		_protocolPreferenceOption!.Disabled = true;
 		_continueButton!.Disabled = _antTrainerClient is { CanStartControlledRide: false };
 		if (_antTrainerClient is { CanStartControlledRide: false })
@@ -950,6 +1260,9 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton!.Text = "Retry";
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = true;
+		_connectButton.Show();
+		_disconnectButton.Hide();
+		_changeTrainerButton!.Hide();
 		_protocolStatusLabel!.Text = "Bluetooth FTMS · Connection lost";
 		_trainerCardStatus!.Text = "Connection lost · reconnecting";
 		_powerStatusLabel!.Text = "Connection lost · reconnecting";
@@ -974,6 +1287,9 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton!.Text = "Retry";
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = true;
+		_connectButton.Show();
+		_disconnectButton.Hide();
+		_changeTrainerButton!.Hide();
 		_protocolStatusLabel!.Text = "ANT+ FE-C · Connection lost";
 		_trainerCardStatus!.Text = "Connection lost · recovering selected trainer";
 		_capabilitiesLabel!.Text = "Trainer capabilities · connection lost";
