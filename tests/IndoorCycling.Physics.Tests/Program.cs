@@ -59,6 +59,8 @@ var tests = new (string Name, Action Run)[]
     ,("EOS client configuration loads file values and environment overrides", EosConfigurationPrecedence)
     ,("EOS client configuration reports missing and malformed sources safely", EosConfigurationValidation)
     ,("Packaged route directory resolves relative to the exported application", PackagedRouteDirectoryResolution)
+    ,("Controller preference defaults to auto-detect and round-trips in settings JSON", ControllerDevicePreferencePersists)
+    ,("Settings returns to its connection caller only before an active ride", SettingsReturnRespectsEntryContext)
 };
 
 var failed = 0;
@@ -68,6 +70,28 @@ foreach (var test in tests)
     catch (Exception ex) { failed++; Console.Error.WriteLine($"FAIL: {test.Name}: {ex.Message}"); }
 }
 return failed == 0 ? 0 : 1;
+
+static void ControllerDevicePreferencePersists()
+{
+    var settings = new TestControllerPreference();
+    Assert(settings.DeviceType == ControllerDeviceTypePreference.AutoDetect, "Auto-detect must be the default.");
+    settings.DeviceType = ControllerDeviceTypePreference.EliteSterzoSmart;
+    var restored = JsonSerializer.Deserialize<TestControllerPreference>(JsonSerializer.Serialize(settings));
+    Assert(restored?.DeviceType == ControllerDeviceTypePreference.EliteSterzoSmart,
+        "The explicit existing Sterzo adapter selection must survive settings serialization.");
+}
+
+static void SettingsReturnRespectsEntryContext()
+{
+    Assert(SettingsReturnPolicy.ShouldReturnToConnection(true, false), "Pre-ride Settings should return to the connection screen.");
+    Assert(!SettingsReturnPolicy.ShouldReturnToConnection(true, true), "An active ride must retain the ride-menu path.");
+    Assert(!SettingsReturnPolicy.ShouldReturnToConnection(false, false), "Other callers must not be redirected to the connection screen.");
+}
+
+static void Assert(bool condition, string message)
+{
+    if (!condition) throw new InvalidOperationException(message);
+}
 
 static RideState Tick(RideState state, int power, double grade, double dt = 0.1, double trainerSpeedKph = 30,
     RiderProfile? rider = null, BikeProfile? bike = null, SimulationPhysicsParameters? physics = null)
@@ -904,4 +928,9 @@ static void PackagedRouteDirectoryResolution()
     var fallback = RoutePackageFiles.ResolvePackagedPackagesDirectory(null, Path.Combine(exportRoot, "managed"));
     if (!string.Equals(fallback, Path.Combine(exportRoot, "managed", "Routes"), StringComparison.OrdinalIgnoreCase))
         throw new Exception("The application base directory should be used when no executable path is available.");
+}
+
+sealed class TestControllerPreference
+{
+    public ControllerDeviceTypePreference DeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 }

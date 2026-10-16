@@ -21,8 +21,10 @@ public partial class RideMenuPanelController : Control
 	private Button? _keepRidingButton;
 	private Button? _endRideButton;
 	private bool _endingRide;
+	private bool _settingsReturnToConnection;
 	private MenuView _view;
 	private int _layoutRevision;
+	private int _viewRevision;
 	private Label? _multiplayerStatusLabel;
 	private Label? _multiplayerRidersLabel;
 	private Label? _routePresenceLabel;
@@ -69,10 +71,14 @@ public partial class RideMenuPanelController : Control
 
 	public override void _Input(InputEvent @event)
 	{
-		if (!IsMenuVisible || @event is not InputEventKey key ||
-			!key.Pressed || key.Echo || key.Keycode != Key.Escape) return;
+		var cancel = @event is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == Key.Escape ||
+			@event is InputEventAction action && action.Pressed && action.Action == "ui_cancel";
+		if (!IsMenuVisible || !cancel) return;
 		if (_view == MenuView.CatchUpConfirmation) CancelCatchUpConfirmation();
 		else if (_view == MenuView.Main) CloseMenu();
+		else if (_view == MenuView.AntSetup) ShowView(MenuView.Settings);
+		else if (_view == MenuView.Devices) ReturnToSettings();
+		else if (_view == MenuView.Settings) ReturnFromSettings();
 		else ShowView(MenuView.Main);
 		GetViewport().SetInputAsHandled();
 	}
@@ -94,7 +100,11 @@ public partial class RideMenuPanelController : Control
 		ShowView(MenuView.Main);
 	}
 
-	public void ShowAdvancedAntSetup() => ShowView(MenuView.AntSetup);
+	public void ShowDeviceSettings()
+	{
+		_settingsReturnToConnection = _rideSessionNode?.IsRideActive != true;
+		ShowView(MenuView.Devices);
+	}
 
 	public void ToggleInRideMenu()
 	{
@@ -115,13 +125,29 @@ public partial class RideMenuPanelController : Control
 	{
 		_view = MenuView.Closed;
 		Hide();
-		_hudController?.CallDeferred(Control.MethodName.GrabFocus);
+		_hudController?.FocusRideMenuAction();
+	}
+
+	private void ReturnToSettings() => ShowView(MenuView.Settings);
+
+	private void ReturnFromSettings()
+	{
+		if (SettingsReturnPolicy.ShouldReturnToConnection(_settingsReturnToConnection, _rideSessionNode?.IsRideActive == true))
+		{
+			_settingsReturnToConnection = false;
+			_view = MenuView.Closed;
+			Hide();
+			_deviceConnectionPanel?.OnSettingsReturned();
+			return;
+		}
+		ShowView(MenuView.Main);
 	}
 
 	private void ShowView(MenuView view)
 	{
 		if (_content is null) return;
 		_view = view;
+		var viewRevision = ++_viewRevision;
 		_menuPanel!.CustomMinimumSize = Vector2.Zero;
 		_menuScroll!.CustomMinimumSize = Vector2.Zero;
 		_content.CustomMinimumSize = Vector2.Zero;
@@ -154,7 +180,7 @@ public partial class RideMenuPanelController : Control
 		{
 			case MenuView.Main:
 				AddAction("Continue Riding", CloseMenu);
-				AddAction("Settings", () => ShowView(MenuView.Settings));
+				AddAction("Settings", () => { _settingsReturnToConnection = false; ShowView(MenuView.Settings); });
 				AddAction("HUD & Display", () => ShowView(MenuView.Display));
 				AddAction("Multiplayer", () => ShowView(MenuView.Multiplayer));
 				AddAction("End Ride", ShowEndRideConfirmation);
@@ -175,7 +201,7 @@ public partial class RideMenuPanelController : Control
 				AddAction("Devices", () => ShowView(MenuView.Devices));
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
-				AddAction("Back", () => ShowView(MenuView.Main));
+				AddAction("Back", ReturnFromSettings);
 				break;
 			case MenuView.Multiplayer:
 				BuildMultiplayerView();
@@ -183,11 +209,11 @@ public partial class RideMenuPanelController : Control
 				break;
 			case MenuView.AntSetup:
 				BuildAntSetupView();
-				AddAction("Back to Settings", () => ShowView(MenuView.Settings));
+				AddAction("Back to Settings", ReturnToSettings);
 				break;
 			case MenuView.Devices:
 				AddAction("Advanced ANT+ setup", () => ShowView(MenuView.AntSetup));
-				AddAction("Back to Settings", () => ShowView(MenuView.Settings));
+				AddAction("Back to Settings", ReturnToSettings);
 				break;
 			case MenuView.CatchUpConfirmation:
 				BuildCatchUpConfirmation();
@@ -239,14 +265,22 @@ public partial class RideMenuPanelController : Control
 		MoveToFront();
 		ScheduleMenuPanelResize(view);
 		var firstAction = _content.GetChildren().OfType<Control>().FirstOrDefault(child => child is Button or CheckButton or OptionButton or LineEdit);
-		firstAction?.CallDeferred(Control.MethodName.GrabFocus);
-		if (view == MenuView.Confirmation) _keepRidingButton?.CallDeferred(Control.MethodName.GrabFocus);
+		FocusAfterViewAsync(view == MenuView.Confirmation ? _keepRidingButton : firstAction, viewRevision);
 		if (view == MenuView.CatchUpConfirmation)
 		{
 			GameLogger.Log("multiplayer_catch_up_confirmation_shown", new { riderIdentityHash = EosIdentityDiagnostics.HashProductUserId(_catchUpRiderId) });
 			if (_content.GetChild(_content.GetChildCount() - 1).GetChild(0) is Control cancelButton)
 				cancelButton.CallDeferred(Control.MethodName.GrabFocus);
 		}
+	}
+
+	private async void FocusAfterViewAsync(Control? control, int viewRevision)
+	{
+		if (control is null) return;
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		if (!IsInsideTree() || viewRevision != _viewRevision || !GodotObject.IsInstanceValid(control) ||
+			!control.IsInsideTree() || !control.IsVisibleInTree()) return;
+		control.GrabFocus();
 	}
 
 	private void ResizeMenuPanel(MenuView view)
@@ -293,6 +327,7 @@ public partial class RideMenuPanelController : Control
 
 #if DEBUG
 	public void ShowMainMenuForLayoutTest() => ShowView(MenuView.Main);
+	public void ShowMainSettingsForLayoutTest() { _settingsReturnToConnection = false; ShowView(MenuView.Main); ShowView(MenuView.Settings); }
 	public void ShowEndRideConfirmationForLayoutTest() => ShowView(MenuView.Confirmation);
 #endif
 

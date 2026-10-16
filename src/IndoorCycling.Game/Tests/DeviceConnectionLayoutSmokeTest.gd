@@ -23,10 +23,27 @@ func _run() -> void:
 	var trainer_status: Label = grid.get_node("PowerCard/MarginContainer/VBoxContainer/StatusLabel")
 	var hr_status: Label = grid.get_node("HeartRateCard/MarginContainer/VBoxContainer/StatusLabel")
 	var steering_status: Label = grid.get_node("SteeringCard/MarginContainer/VBoxContainer/StatusLabel")
+	var controller_status: Label = steering_status
+	var controller_name: Label = grid.get_node("SteeringCard/MarginContainer/VBoxContainer/DeviceLabel")
+	var controller_action: Button = grid.get_node("SteeringCard/MarginContainer/VBoxContainer/ActionButton")
+	var controller_centre: Button = grid.get_node("SteeringCard/MarginContainer/VBoxContainer/SteeringCenterButton")
+	var controller_type: OptionButton = grid.get_node("SteeringCard/MarginContainer/VBoxContainer/ControllerDeviceType")
 	var overall: Label = details.get_node("OverallStatusLabel")
 	var picker: OptionButton = grid.get_node("PowerCard/MarginContainer/VBoxContainer/TrainerPicker")
 	var scroll: ScrollContainer = panel.get_node("PanelContainer/MarginContainer/VBoxContainer/ConnectionDetailsScroll")
 	var footer: HBoxContainer = panel.get_node("PanelContainer/MarginContainer/VBoxContainer/ActionsRow")
+	_check(controller_type.item_count == 2, "controller dropdown exposes only the supported auto and Sterzo choices")
+	_check(controller_type.get_item_text(0) == "Auto-detect supported devices" and
+		controller_type.get_item_text(1) == "Elite Sterzo Smart", "controller choice labels are clear and supported")
+	_check(controller_action.text == "Connect" and not controller_centre.visible,
+		"disconnected controller exposes Connect and hides Centre")
+	for preference_index in [1, 0]:
+		controller_type.select(preference_index)
+		controller_type.emit_signal("item_selected", preference_index)
+		await process_frame
+		var saved_settings: Variant = JSON.parse_string(FileAccess.get_file_as_string(OS.get_user_data_dir() + "/settings/settings.json"))
+		_check(saved_settings is Dictionary and saved_settings.get("ControllerDeviceType", -1) == preference_index,
+			"controller device choice %s is persisted in application settings" % preference_index)
 
 	for viewport_size in [Vector2i(1138, 675), DisplayServer.screen_get_size()]:
 		if viewport_size.x <= 0 or viewport_size.y <= 0:
@@ -65,6 +82,16 @@ func _run() -> void:
 	trainer_name.text = "No trainer connected"
 	trainer_status.text = "Not connected"
 	overall.text = "Connect your trainer to begin."
+	controller_name.text = "Elite Sterzo Smart"
+	controller_status.text = "Left · −8.5°"
+	controller_action.text = "Disconnect"
+	controller_centre.show()
+	_check(controller_status.text.contains("°") and controller_action.text == "Disconnect" and controller_centre.visible,
+		"live controller state presents angle, Centre and Disconnect")
+	await _capture("device-connection-controller-live.png")
+	controller_status.text = "Disconnected · optional"
+	controller_action.text = "Connect"
+	controller_centre.hide()
 	_check_state(grid, overall, hr_status, steering_status, "Connect your trainer to begin.", "Disconnected")
 	await _capture("device-connection-disconnected.png")
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
@@ -96,6 +123,62 @@ func _run() -> void:
 	trainer_status.text = "ANT+ FE-C · connected · fresh power and cadence"
 	await _capture("device-connection-long-name.png")
 
+	# Exercise the actual pre-ride caller path and the active-ride menu route without
+	# starting a ride, scanning a radio, or changing connection state.
+	var menu = ride.get_node("RideMenuPanel")
+	menu.ShowDeviceSettings()
+	await _settle()
+	await _capture("settings-pre-ride-devices.png")
+	_check(menu.visible, "pre-ride device settings opens the shared settings overlay")
+	var menu_content: VBoxContainer = menu.get_node("PanelContainer/MarginContainer/MenuScroll/VBoxContainer")
+	var advanced = _button_with_text(menu_content, "Advanced ANT+ setup")
+	_check(advanced != null, "Devices page offers Advanced ANT+ setup")
+	if advanced != null:
+		advanced.emit_signal("pressed")
+		await _settle()
+		await _capture("settings-pre-ride-ant-setup.png")
+		_check(menu_content.get_child(0).text == "Devices · Advanced ANT+ setup", "advanced setup opens from Devices")
+		var to_settings = _button_with_text(menu_content, "Back to Settings")
+		if to_settings != null: to_settings.emit_signal("pressed")
+		await _settle()
+		await _capture("settings-pre-ride-settings.png")
+		var back = _button_with_text(menu_content, "Back")
+		if back != null: back.emit_signal("pressed")
+		await _settle()
+		await _capture("settings-return-to-connection.png")
+		_check(not menu.visible and panel.visible, "pre-ride Settings Back returns to connection screen without Ride Menu")
+		_check(root.gui_get_focus_owner() != null, "connection screen regains input focus after Settings closes")
+
+	menu.ShowDeviceSettings()
+	await _settle()
+	var escape = InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	Input.parse_input_event(escape)
+	var escape_up = InputEventKey.new()
+	escape_up.keycode = KEY_ESCAPE
+	escape_up.pressed = false
+	Input.parse_input_event(escape_up)
+	await _settle()
+	_check(menu.visible and menu_content.get_child(0).text == "Settings", "Escape from Devices follows its Back-to-Settings route")
+	Input.parse_input_event(escape)
+	Input.parse_input_event(escape_up)
+	await _settle()
+	_check(not menu.visible and panel.visible, "Escape from pre-ride Settings returns to the connection screen")
+
+	menu.ShowMainSettingsForLayoutTest()
+	await _settle()
+	var ride_back = _button_with_text(menu_content, "Back")
+	if ride_back != null: ride_back.emit_signal("pressed")
+	await _settle()
+	_check(menu.visible and menu_content.get_child(0).text == "Ride Menu" and
+		_button_with_text(menu_content, "Continue Riding") != null,
+		"active-ride Settings retains the Settings-to-Ride-Menu-to-Continue flow")
+	var continue_riding = _button_with_text(menu_content, "Continue Riding")
+	if continue_riding != null: continue_riding.emit_signal("pressed")
+	await _settle()
+	_check(not menu.visible and panel.visible, "Continue Riding closes the ride menu")
+
 	if failures.is_empty():
 		print("[DeviceConnectionLayoutSmoke] PASS: real RideScreen cards fit at minimum, target, and fullscreen sizes.")
 		quit(0)
@@ -118,6 +201,13 @@ func _check_state(grid: GridContainer, overall: Label, hr_status: Label, steerin
 func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+func _button_with_text(root_node: Node, button_text: String) -> Button:
+	for node in root_node.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button != null and button.text == button_text:
+			return button
+	return null
 
 func _capture(name: String) -> void:
 	await process_frame

@@ -635,6 +635,13 @@ public partial class HudController : Control
 		_rideMenuPanel.ShowInRideMenu();
 	}
 
+	public void FocusRideMenuAction()
+	{
+		var target = _menuButton is { Disabled: false } ? _menuButton : _pauseRideButton;
+		if (target is { Disabled: false } && target.IsVisibleInTree())
+			target.CallDeferred(Control.MethodName.GrabFocus);
+	}
+
 	public void SetModeText(string mode)
 	{
 		if (_modeLabel is not null)

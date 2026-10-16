@@ -20,6 +20,7 @@ public sealed class AppSettings
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
 	public TrainerSettings Trainer { get; set; } = new();
 	public OptionalDeviceProtocolPreferences OptionalDeviceProtocols { get; set; } = new();
+	public ControllerDeviceTypePreference ControllerDeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 	public RideDisplayPreferences Display { get; set; } = new();
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
@@ -86,6 +87,7 @@ public sealed class AppSettings
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
 			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();
+			if (!Enum.IsDefined(settings.ControllerDeviceType)) settings.ControllerDeviceType = ControllerDeviceTypePreference.AutoDetect;
 			var migratedTrainerPreference = TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
 				json, settings.Trainer);
 			TrainerProtocolPreferencePolicy.Normalize(settings.Trainer);
