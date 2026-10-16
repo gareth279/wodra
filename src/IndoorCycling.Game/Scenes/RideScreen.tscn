@@ -534,7 +534,7 @@ theme_override_font_sizes/font_size = 11
 
 [node name="PrimaryMetrics" type="GridContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-columns = 3
+columns = 4
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 2
 
@@ -581,6 +581,21 @@ theme_override_font_sizes/font_size = 10
 layout_mode = 2
 text = "0"
 theme_override_colors/font_color = Color(0.78, 0.83, 0.71, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="HeartRateMetric" type="VBoxContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/HeartRateMetric"]
+layout_mode = 2
+text = "HEART RATE · BPM"
+theme_override_colors/font_color = Color(0.76, 0.76, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Value" type="Label" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/HeartRateMetric"]
+layout_mode = 2
+text = "—"
+theme_override_colors/font_color = Color(0.91, 0.61, 0.58, 1)
 theme_override_font_sizes/font_size = 24
 
 [node name="SecondaryMetrics" type="GridContainer" parent="HudController/TopHudPanel/MarginContainer/VBoxContainer"]

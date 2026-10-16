@@ -15,6 +15,7 @@ public partial class HudController : Control
 	private Label? _statusLabel;
 	private Label? _powerLabel;
 	private Label? _cadenceLabel;
+	private Label? _heartRateLabel;
 	private Label? _speedLabel;
 	private Label? _gradientLabel;
 	private Label? _distanceLabel;
@@ -80,6 +81,7 @@ public partial class HudController : Control
 		_statusLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/StatusLabel");
 		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric/Value");
 		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric/Value");
+		_heartRateLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/HeartRateMetric/Value");
 		_speedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/SpeedMetric/Value");
 		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/GradientMetric/Value");
 		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/DistanceMetric/Value");
@@ -707,6 +709,8 @@ public partial class HudController : Control
 			_shownCadence = cadenceText;
 			_cadenceLabel.Text = cadenceText;
 		}
+		if (_heartRateLabel is not null)
+			_heartRateLabel.Text = metrics.HeartRateBpm?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
 		var speed = Math.Round(metrics.SimulatedSpeedKph, 1);
 		if (_speedLabel is not null && _shownSpeed != speed)
 		{

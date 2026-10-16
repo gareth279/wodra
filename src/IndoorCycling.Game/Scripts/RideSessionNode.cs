@@ -1680,6 +1680,7 @@ public partial class RideSessionNode : Node
 			var staleTelemetry = GameBootstrap.TrainerClient?.GetLatestTelemetry() ?? new TrainerTelemetry(
 				DateTimeOffset.MinValue, 0, 0, 0, HasPowerMeasurement: false,
 				HasCadenceMeasurement: false, HasReceivedMeasurement: false, HasSpeedMeasurement: false);
+			staleTelemetry = AddFreshHeartRate(staleTelemetry);
 			_lastTelemetry = staleTelemetry;
 			_hudController?.SetStatus(GameBootstrap.TrainerClient is null
 				? "No trainer is configured. Return to trainer connections to reconnect."
@@ -1700,7 +1701,7 @@ public partial class RideSessionNode : Node
 			return;
 		}
 
-		var telemetry = GameBootstrap.TrainerClient.GetLatestTelemetry();
+		var telemetry = AddFreshHeartRate(GameBootstrap.TrainerClient.GetLatestTelemetry());
 		_lastTelemetry = telemetry;
 		var riderInput = telemetry.ForRiderInput(DateTimeOffset.UtcNow);
 		if (_pauseGate.IsPaused)
@@ -1739,6 +1740,17 @@ public partial class RideSessionNode : Node
 		RecordRideSampleIfNeeded(delta, telemetry, gradient);
 		UpdateRouteHud();
 		_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
+	}
+
+	private static TrainerTelemetry AddFreshHeartRate(TrainerTelemetry telemetry)
+	{
+		var now = DateTimeOffset.UtcNow;
+		var bpm = GameBootstrap.HeartRateClient?.GetFreshBpm(now);
+		return telemetry with
+		{
+			HeartRateBpm = bpm ?? telemetry.HeartRateBpm,
+			HeartRateTimestamp = bpm.HasValue ? GameBootstrap.HeartRateClient?.LastMeasurementAt : telemetry.HeartRateTimestamp
+		};
 	}
 
 	private async Task SendTrainerSimulationCommandAsync(double gradient)

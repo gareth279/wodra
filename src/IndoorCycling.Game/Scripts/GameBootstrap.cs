@@ -6,6 +6,7 @@ using IndoorCycling.Trainer.Implementations;
 using IndoorCycling.Trainer.Models;
 using IndoorCycling.Core.Persistence;
 using IndoorCycling.Persistence.Sqlite;
+using IndoorCycling.Trainer.Windows;
 using System;
 using System.IO;
 using System.Linq;
@@ -21,6 +22,7 @@ public partial class GameBootstrap : Node
 	}
 
 	public static ITrainerClient? TrainerClient { get; private set; }
+	public static WindowsBleHeartRateClient? HeartRateClient { get; set; }
 	public static ISimulationEngine SimulationEngine { get; private set; } = default!;
 	public static RiderProfile RiderProfile { get; private set; } = default!;
 	public static BikeProfile BikeProfile { get; private set; } = default!;

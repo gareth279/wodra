@@ -9,7 +9,8 @@ public sealed record TrainerTelemetry(
 	bool HasPowerMeasurement = true,
 	bool HasCadenceMeasurement = true,
 	bool HasReceivedMeasurement = true,
-	bool HasSpeedMeasurement = true)
+	bool HasSpeedMeasurement = true,
+	DateTimeOffset? HeartRateTimestamp = null)
 {
 	public bool IsFreshAt(DateTimeOffset now, TimeSpan? maximumAge = null)
 	{
@@ -31,14 +32,20 @@ public sealed record TrainerTelemetry(
 
 	/// <summary>Prevents stale sensor values from being written as fresh FIT samples.</summary>
 	public TrainerTelemetry ForRecording(DateTimeOffset now, TimeSpan? maximumAge = null)
-		=> IsFreshAt(now, maximumAge) ? this : this with
-		{
-			PowerWatts = 0,
-			CadenceRpm = 0,
-			SpeedKph = 0,
-			HeartRateBpm = null,
-			HasPowerMeasurement = false,
-			HasCadenceMeasurement = false,
-			HasSpeedMeasurement = false
-		};
+	{
+		var heartRateTime = HeartRateTimestamp ?? Timestamp;
+		var heartRateFresh = HeartRateBpm.HasValue && heartRateTime <= now && now - heartRateTime <= (maximumAge ?? TimeSpan.FromSeconds(5));
+		return IsFreshAt(now, maximumAge)
+			? this with { HeartRateBpm = heartRateFresh ? HeartRateBpm : null }
+			: this with
+			{
+				PowerWatts = 0,
+				CadenceRpm = 0,
+				SpeedKph = 0,
+				HeartRateBpm = heartRateFresh ? HeartRateBpm : null,
+				HasPowerMeasurement = false,
+				HasCadenceMeasurement = false,
+				HasSpeedMeasurement = false
+			};
+	}
 }

@@ -40,6 +40,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private readonly Action<AntFeCDiagnosticEvent>? _diagnostic;
     private readonly HashSet<byte> _reportedPages = [];
     private readonly Stopwatch _connectionTimer = new();
+    private TimeSpan _nextConnectionSearchTimeout = TimeSpan.FromSeconds(40);
     private double? _lastRequestedGrade;
     private double? _lastTransportAcknowledgedGrade;
     private CancellationTokenSource? _telemetryWatchdogCancellation;
@@ -318,10 +319,21 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 Emit(diagnostic, new("fe_c_discovery", "scan_window_started", discoveryTimer.Elapsed.TotalMilliseconds,
                     Outcome: "wildcard_receive_listening", AttemptId: scanAttemptId));
                 var nextProgress = TimeSpan.Zero;
-                while (discoveryTimer.Elapsed < TrainerRecoveryPolicy.AntDiscoveryWindow)
+                TimeSpan? firstCandidateAt = null;
+                var discoveryEndReason = "overall_window_expired";
+                while (discoveryTimer.Elapsed < AntInitialConnectionPolicy.DiscoveryWindow)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var remaining = TrainerRecoveryPolicy.AntDiscoveryWindow - discoveryTimer.Elapsed;
+                    var candidates = coordinator.Candidates;
+                    if (candidates.Count > 0 && firstCandidateAt is null)
+                        firstCandidateAt = discoveryTimer.Elapsed;
+                    if (firstCandidateAt is { } first && AntInitialConnectionPolicy.ShouldCompleteDiscovery(
+                            candidates.Count, discoveryTimer.Elapsed, first))
+                    {
+                        discoveryEndReason = candidates.Count == 1 ? "single_verified_candidate_settled" : "multiple_verified_candidates_settled";
+                        break;
+                    }
+                    var remaining = AntInitialConnectionPolicy.DiscoveryWindow - discoveryTimer.Elapsed;
                     var slice = remaining < TimeSpan.FromSeconds(1) ? remaining : TimeSpan.FromSeconds(1);
                     await Task.Delay(slice, cancellationToken).ConfigureAwait(false);
                     if (discoveryTimer.Elapsed >= nextProgress + TimeSpan.FromSeconds(1))
@@ -333,6 +345,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                             AttemptId: scanAttemptId));
                     }
                 }
+                Emit(diagnostic, new("fe_c_discovery", "selection_window_completed", discoveryTimer.Elapsed.TotalMilliseconds,
+                    Outcome: discoveryEndReason, TrainerCount: coordinator.Candidates.Count, AttemptId: scanAttemptId));
             }
             finally
             {
@@ -405,6 +419,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _isReady = false;
 
         Emit(_diagnostic, new("fe_c_search", "connect_started", 0, Outcome: "started"));
+            Emit(_diagnostic, new("fe_c_search", "search_timeout_policy", 0,
+                Outcome: $"{_nextConnectionSearchTimeout.TotalSeconds:0}s;initial_only_when_requested"));
         var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, _diagnostic).ConfigureAwait(false);
         _session = session;
         try
@@ -466,7 +482,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 Outcome: "listening"));
 
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(TimeSpan.FromSeconds(40));
+            var searchTimeout = _nextConnectionSearchTimeout;
+            _nextConnectionSearchTimeout = TimeSpan.FromSeconds(40);
+            timeout.CancelAfter(searchTimeout);
             var progressTask = ReportSearchProgressAsync(connectionAttemptId, timeout.Token);
             try { await _ready.Task.WaitAsync(timeout.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -495,6 +513,13 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             await DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
             throw;
         }
+    }
+
+    /// <summary>Uses a shorter timeout for the first remembered-target attempt; recovery remains unchanged.</summary>
+    public Task ConnectInitialAsync(CancellationToken cancellationToken = default)
+    {
+        _nextConnectionSearchTimeout = AntInitialConnectionPolicy.RememberedTargetTimeout;
+        return ConnectAsync(cancellationToken);
     }
 
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)

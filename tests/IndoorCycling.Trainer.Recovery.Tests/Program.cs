@@ -474,6 +474,27 @@ Check(TrainerTelemetryPresentation.Power(stationaryZero, now).State == Telemetry
       TrainerTelemetryPresentation.Power(stationaryZero, now).Value == 0 &&
       TrainerTelemetryPresentation.Power(missing, now).State == TelemetryReadingState.Awaiting,
     "stationary zero telemetry remains distinct from missing telemetry");
+Check(HeartRateMeasurementParser.Parse([0x00, 72]) == 72 &&
+      HeartRateMeasurementParser.Parse([0x01, 0x2c, 0x01]) == 300 &&
+      HeartRateMeasurementParser.Parse([0x01, 0x2c]) is null &&
+      HeartRateMeasurementParser.Parse([0x00, 0x00]) is null,
+    "Bluetooth Heart Rate Measurement parser handles 8/16-bit values and rejects incomplete or invalid samples");
+var hrA = new BleDiscoveredDevice(101, "Pulse", [HeartRateDiscoveryPolicy.ServiceUuid], -40);
+var hrB = new BleDiscoveredDevice(102, "Chest strap", [HeartRateDiscoveryPolicy.ServiceUuid], -50);
+var nonHr = new BleDiscoveredDevice(103, "Controller", [TrainerDiscoveryPolicy.FtmsServiceUuid], -20);
+Check(HeartRateDiscoveryPolicy.Select([]).Outcome == HeartRateDiscoveryOutcome.None &&
+      HeartRateDiscoveryPolicy.Select([hrA]).Selected == hrA &&
+      HeartRateDiscoveryPolicy.Select([hrA, hrB]).Outcome == HeartRateDiscoveryOutcome.Choose &&
+      HeartRateDiscoveryPolicy.Select([nonHr]).Outcome == HeartRateDiscoveryOutcome.None,
+    "optional heart-rate discovery auto-selects one compatible monitor, asks when several exist, and ignores other services");
+var freshOptionalHr = new TrainerTelemetry(now - TimeSpan.FromSeconds(30), 0, 0, 0,
+    HeartRateBpm: 147, HasPowerMeasurement: false, HasCadenceMeasurement: false,
+    HasReceivedMeasurement: false, HasSpeedMeasurement: false, HeartRateTimestamp: now);
+var staleOptionalHr = freshOptionalHr with { HeartRateTimestamp = now - TimeSpan.FromSeconds(10) };
+Check(!freshOptionalHr.ForRecording(now).HasPowerMeasurement &&
+      freshOptionalHr.ForRecording(now).HeartRateBpm == 147 &&
+      staleOptionalHr.ForRecording(now).HeartRateBpm is null,
+    "fresh optional heart rate survives stale trainer telemetry for FIT while stale BPM is removed");
 
 Check(TrainerRecoveryPolicy.MaximumAutomaticAttempts == 8 &&
       TrainerRecoveryPolicy.AutomaticRecoveryWindow >= TimeSpan.FromSeconds(26) &&
@@ -539,6 +560,14 @@ Check(AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(0, cancelle
       !AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(2, cancelled: false) &&
       !AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(0, cancelled: true),
     "multi-source scanning falls back to the proven normal receiver only when it found no eligible source and was not cancelled");
+Check(AntInitialConnectionPolicy.RememberedTargetTimeout < TimeSpan.FromSeconds(40) &&
+      AntInitialConnectionPolicy.RememberedTargetTimeout > TimeSpan.FromSeconds(20) &&
+      AntInitialConnectionPolicy.DiscoveryWindow == TimeSpan.FromSeconds(20) &&
+      AntInitialConnectionPolicy.ShouldCompleteDiscovery(1, TimeSpan.FromSeconds(3), TimeSpan.Zero) &&
+      AntInitialConnectionPolicy.ShouldCompleteDiscovery(2, TimeSpan.FromSeconds(3), TimeSpan.Zero) &&
+      !AntInitialConnectionPolicy.ShouldCompleteDiscovery(0, TimeSpan.FromSeconds(20), TimeSpan.Zero) &&
+      !AntInitialConnectionPolicy.ShouldCompleteDiscovery(1, TimeSpan.FromSeconds(2.9), TimeSpan.Zero),
+    "initial ANT discovery settles after verified candidates but retains the full no-candidate window");
 Check(AntFeCInitialConnectionPolicy.CanPersistIdentity(rememberedAnt, rememberedAnt) &&
       !AntFeCInitialConnectionPolicy.CanPersistIdentity(null, rememberedAnt) &&
       !AntFeCInitialConnectionPolicy.CanPersistIdentity(new AntFeCDeviceIdentity(22, 17, 2), rememberedAnt) &&

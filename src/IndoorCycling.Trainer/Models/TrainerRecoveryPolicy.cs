@@ -48,6 +48,17 @@ public static class TrainerRecoveryPolicy
     }
 }
 
+/// <summary>Timing for an initial connection only. In-ride recovery keeps its independent longer policy.</summary>
+public static class AntInitialConnectionPolicy
+{
+    public static readonly TimeSpan RememberedTargetTimeout = TimeSpan.FromSeconds(26);
+    public static readonly TimeSpan DiscoveryWindow = TimeSpan.FromSeconds(20);
+    public static readonly TimeSpan CandidateSettlingPeriod = TimeSpan.FromSeconds(3);
+
+    public static bool ShouldCompleteDiscovery(int eligibleCandidates, TimeSpan elapsed, TimeSpan firstCandidateAt)
+        => eligibleCandidates > 0 && elapsed - firstCandidateAt >= CandidateSettlingPeriod;
+}
+
 public enum TrainerRecoveryOutcome { Recovered, Expired, Cancelled }
 
 public sealed record TrainerRecoveryResult(

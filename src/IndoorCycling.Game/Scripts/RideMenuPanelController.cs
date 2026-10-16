@@ -3,10 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using Godot;
+using IndoorCycling.Trainer.Models;
 
 public partial class RideMenuPanelController : Control
 {
-	private enum MenuView { Closed, Main, Settings, Display, Multiplayer, CatchUpConfirmation, Confirmation }
+	private enum MenuView { Closed, Main, Settings, Devices, AntSetup, Display, Multiplayer, CatchUpConfirmation, Confirmation }
 
 	private RideSessionNode? _rideSessionNode;
 	private HudController? _hudController;
@@ -14,6 +15,7 @@ public partial class RideMenuPanelController : Control
 	private Control? _startPanel;
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private RideHistoryPanelController? _rideHistoryPanel;
+	private DeviceConnectionPanelController? _deviceConnectionPanel;
 	private VBoxContainer? _content;
 	private PanelContainer? _menuPanel;
 	private Button? _keepRidingButton;
@@ -49,6 +51,7 @@ public partial class RideMenuPanelController : Control
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
+		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
 		_menuPanel = GetNode<PanelContainer>("PanelContainer");
 		// VBoxContainer is nested under MarginContainer in RideScreen.tscn. Looking it up
 		// as a direct child left the content outside the PanelContainer's layout slot.
@@ -91,6 +94,8 @@ public partial class RideMenuPanelController : Control
 		ShowView(MenuView.Main);
 	}
 
+	public void ShowAdvancedAntSetup() => ShowView(MenuView.AntSetup);
+
 	public void ToggleInRideMenu()
 	{
 		if (_view == MenuView.Closed) ShowInRideMenu();
@@ -132,6 +137,8 @@ public partial class RideMenuPanelController : Control
 			{
 				MenuView.Main => "Ride Menu",
 				MenuView.Settings => "Settings",
+				MenuView.Devices => "Devices",
+				MenuView.AntSetup => "Devices · Advanced ANT+ setup",
 				MenuView.Display => "HUD & Display",
 				MenuView.Multiplayer => "Multiplayer",
 				MenuView.CatchUpConfirmation => CatchUpTitle(),
@@ -165,6 +172,7 @@ public partial class RideMenuPanelController : Control
 				_content.AddChild(debugMode);
 				#endif
 				AddTrainerDifficultyControl();
+				AddAction("Devices", () => ShowView(MenuView.Devices));
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
 				AddAction("Back", () => ShowView(MenuView.Main));
@@ -172,6 +180,14 @@ public partial class RideMenuPanelController : Control
 			case MenuView.Multiplayer:
 				BuildMultiplayerView();
 				AddAction("Back", () => ShowView(MenuView.Main));
+				break;
+			case MenuView.AntSetup:
+				BuildAntSetupView();
+				AddAction("Back to Settings", () => ShowView(MenuView.Settings));
+				break;
+			case MenuView.Devices:
+				AddAction("Advanced ANT+ setup", () => ShowView(MenuView.AntSetup));
+				AddAction("Back to Settings", () => ShowView(MenuView.Settings));
 				break;
 			case MenuView.CatchUpConfirmation:
 				BuildCatchUpConfirmation();
@@ -590,6 +606,52 @@ public partial class RideMenuPanelController : Control
 			_ = ApplyTrainerDifficultyAsync((int)value);
 		};
 		row.AddChild(slider); row.AddChild(valueLabel); _content.AddChild(row);
+	}
+
+	private void BuildAntSetupView()
+	{
+		_content!.AddChild(new Label
+		{
+			Text = "Enter the ANT+ network key as 16 hexadecimal digits or eight byte values. It stays in this Windows account's private app-data storage.",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center
+		});
+		var status = new Label { Text = AntNetworkKeyMaterial.GetStatus(), AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_content.AddChild(status);
+		var keyInput = new LineEdit
+		{
+			PlaceholderText = "16 hexadecimal digits or eight byte values",
+			ClearButtonEnabled = true,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			Secret = true
+		};
+		_content.AddChild(keyInput);
+		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var save = new Button { Text = "Save key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var clear = new Button { Text = "Clear key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var help = new Button { Text = "Garmin key page", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		bool InUse() => _deviceConnectionPanel?.IsAntConfigurationInUse() == true;
+		save.Pressed += () =>
+		{
+			if (InUse()) { status.Text = "Disconnect ANT+ before changing its setup."; return; }
+			try
+			{
+				AntNetworkKeyMaterial.Save(keyInput.Text);
+				keyInput.Clear();
+				status.Text = "ANT+ key saved for this Windows account.";
+			}
+			catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Security.SecurityException)
+			{ status.Text = ex.Message; }
+		};
+		clear.Pressed += () =>
+		{
+			if (InUse()) { status.Text = "Disconnect ANT+ before clearing its setup."; return; }
+			try { AntNetworkKeyMaterial.Clear(); keyInput.Clear(); status.Text = AntNetworkKeyMaterial.GetStatus(); }
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException)
+			{ status.Text = ex.Message; }
+		};
+		help.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
+		actions.AddChild(save); actions.AddChild(clear); actions.AddChild(help); _content.AddChild(actions);
 	}
 
 	private async Task ApplyTrainerDifficultyAsync(int percent)

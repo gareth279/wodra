@@ -27,11 +27,22 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _cadenceStatusLabel;
 	private Label? _diagnosticsLabel;
 	private VBoxContainer? _connectionDetails;
-	private VBoxContainer? _antSetupSection;
-	private Label? _antSetupStatus;
-	private LineEdit? _antKeyInput;
-	private Button? _antSaveButton;
-	private Button? _antClearButton;
+	private Button? _antSetupButton;
+	private RideMenuPanelController? _rideMenuPanel;
+	private GridContainer? _peripheralCards;
+	private Label? _trainerCardName;
+	private Label? _trainerCardStatus;
+	private Label? _heartRateName;
+	private Label? _heartRateStatus;
+	private Button? _heartRateAction;
+	private OptionButton? _heartRatePicker;
+	private Label? _steeringName;
+	private Label? _steeringStatus;
+	private Button? _steeringAction;
+	private WindowsBleHeartRateClient? _heartRateClient;
+	private BleDiscoveredDevice[] _heartRateDiscovered = [];
+	private CancellationTokenSource? _heartRateScanCancellation;
+	private bool _heartRateScanInProgress;
 	private PanelContainer? _connectionPanel;
 	private OptionButton? _trainerPicker;
 	private OptionButton? _protocolPreferenceOption;
@@ -64,6 +75,7 @@ public partial class DeviceConnectionPanelController : Control
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
+		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_connectionPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
 		_overallStatusLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/OverallStatusLabel");
 		_trainerNameLabel = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/TrainerNameLabel");
@@ -86,8 +98,40 @@ public partial class DeviceConnectionPanelController : Control
 		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/BackButton").Pressed += OnBackPressed;
 		_continueButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/ContinueButton");
 		_diagnosticsButton = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/DiagnosticsButton");
+		_peripheralCards = GetNode<GridContainer>("PanelContainer/MarginContainer/VBoxContainer/GridContainer");
+		_trainerCardName = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/DeviceLabel");
+		_trainerCardStatus = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/StatusLabel");
+		_heartRateName = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/DeviceLabel");
+		_heartRateStatus = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/StatusLabel");
+		_heartRateAction = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/ActionButton");
+		_heartRatePicker = new OptionButton { Name = "HeartRatePicker", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Visible = false };
+		GetNode<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer").AddChild(_heartRatePicker);
+		_steeringName = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/DeviceLabel");
+		_steeringStatus = GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/StatusLabel");
+		_steeringAction = GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Trainer";
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Heart rate · optional";
+		GetNode<Label>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/TitleLabel").Text = "Steering / controller";
+		GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/PowerCard/MarginContainer/VBoxContainer/ActionButton").Hide();
+		foreach (var cardLabel in new[] { _trainerCardName, _trainerCardStatus, _heartRateName, _heartRateStatus, _steeringName, _steeringStatus })
+			if (cardLabel is not null) cardLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+		_peripheralCards.Visible = true;
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/CadenceCard").Hide();
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/ControlCard").Hide();
+		GetNode<Control>("PanelContainer/MarginContainer/VBoxContainer/ReadingsRow").Hide();
+		_trainerNameLabel.Hide();
+		_protocolStatusLabel.Hide();
+		_capabilitiesLabel.Hide();
+		_heartRateAction.Text = "Find monitor";
+		_heartRateAction.Pressed += OnHeartRateActionPressed;
+		_steeringName.Text = "Not connected";
+		_steeringStatus.Text = "Compatibility depends on the exact model and Bluetooth protocol.";
+		_steeringAction.Text = "Not available";
+		_steeringAction.Disabled = true;
 		MakeConnectionDetailsScrollable();
-		BuildAntSetupSection();
+		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Open Settings → Devices → Advanced ANT+ setup", Visible = false };
+		_antSetupButton.Pressed += () => _rideMenuPanel?.ShowAdvancedAntSetup();
+		_connectionDetails?.AddChild(_antSetupButton);
 		Resized += FitConnectionPanel;
 		FitConnectionPanel();
 		_connectButton.Pressed += OnConnectPressed;
@@ -122,7 +166,7 @@ public partial class DeviceConnectionPanelController : Control
 			var configured = AntNetworkKeyMaterial.GetStatus() == "Configured";
 			_overallStatusLabel!.Text = configured
 				? "ANT+ FE-C selected. Connect the ANTUSB-m and wake your trainer before scanning."
-				: "ANT+ needs its 64-bit network key. Enter it in ANT+ Setup below.";
+				: "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup.";
 			_trainerNameLabel!.Text = "ANT+ trainer not connected";
 			_connectButton!.Text = "Connect trainer";
 			_connectionState.SetPhase(_connectionState.AttemptId, TrainerConnectionPhase.Idle);
@@ -163,101 +207,14 @@ public partial class DeviceConnectionPanelController : Control
 		scroll.AddChild(details);
 	}
 
-	private void BuildAntSetupSection()
-	{
-		if (_connectionDetails is null) return;
-		_antSetupSection = new VBoxContainer
-		{
-			Name = "AntSetupSection",
-			Visible = false,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-		};
-		_antSetupSection.AddChild(new HSeparator());
-		_antSetupSection.AddChild(new Label { Text = "ANT+ Setup", HorizontalAlignment = HorizontalAlignment.Center });
-		_antSetupSection.AddChild(new Label
-		{
-			Text = "Paste the ANT+ 64-bit entry from Garmin’s network key page. Wodra stores it for this Windows account.",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-		});
-		_antSetupStatus = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-		_antSetupSection.AddChild(_antSetupStatus);
-		_antKeyInput = new LineEdit
-		{
-			PlaceholderText = "16 hexadecimal digits or eight byte values",
-			ClearButtonEnabled = true,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-		};
-		_antSetupSection.AddChild(_antKeyInput);
-		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		_antSaveButton = new Button { Text = "Save key" };
-		_antClearButton = new Button { Text = "Clear key" };
-		var open = new Button { Text = "Open Garmin key page" };
-		_antSaveButton.Pressed += SaveAntSetup;
-		_antClearButton.Pressed += ClearAntSetup;
-		open.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
-		actions.AddChild(_antSaveButton);
-		actions.AddChild(_antClearButton);
-		actions.AddChild(open);
-		_antSetupSection.AddChild(actions);
-		_connectionDetails.AddChild(_antSetupSection);
-		RefreshAntSetupUi();
-	}
-
-	private bool IsAntConfigurationInUse() =>
+	public bool IsAntConfigurationInUse() =>
 		(_attemptInProgress && _attemptUsingAnt) || _antTrainerClient?.IsConnected == true;
 
 	private void RefreshAntSetupUi()
 	{
-		if (_antSetupSection is null) return;
-		var status = AntNetworkKeyMaterial.GetStatus();
-		_antSetupSection.Visible = GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC || status != "Configured";
-		if (_antSetupStatus is not null)
-			_antSetupStatus.Text = IsAntConfigurationInUse()
-				? "Disconnect ANT+ before changing or clearing this configuration."
-				: status;
-		var disabled = IsAntConfigurationInUse();
-		if (_antSaveButton is not null) _antSaveButton.Disabled = disabled;
-		if (_antClearButton is not null) _antClearButton.Disabled = disabled;
-	}
-
-	private void SaveAntSetup()
-	{
-		if (IsAntConfigurationInUse())
-		{
-			if (_antSetupStatus is not null) _antSetupStatus.Text = "Disconnect ANT+ before changing its setup.";
-			return;
-		}
-		try
-		{
-			AntNetworkKeyMaterial.Save(_antKeyInput?.Text ?? string.Empty);
-			_antKeyInput?.Clear();
-			RefreshAntSetupUi();
-			if (_antSetupStatus is not null) _antSetupStatus.Text = "ANT+ key saved for this Windows account.";
-		}
-		catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Security.SecurityException)
-		{
-			if (_antSetupStatus is not null) _antSetupStatus.Text = ex.Message;
-		}
-	}
-
-	private void ClearAntSetup()
-	{
-		if (IsAntConfigurationInUse())
-		{
-			if (_antSetupStatus is not null) _antSetupStatus.Text = "Disconnect ANT+ before clearing its setup.";
-			return;
-		}
-		try
-		{
-			AntNetworkKeyMaterial.Clear();
-			_antKeyInput?.Clear();
-			RefreshAntSetupUi();
-		}
-		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException)
-		{
-			if (_antSetupStatus is not null) _antSetupStatus.Text = ex.Message;
-		}
+		if (_antSetupButton is null) return;
+		var missing = AntNetworkKeyMaterial.GetStatus() != "Configured";
+		_antSetupButton.Visible = missing;
 	}
 
 	private void FitConnectionPanel()
@@ -271,10 +228,12 @@ public partial class DeviceConnectionPanelController : Control
 		_connectionPanel.AnchorTop = .5f; _connectionPanel.AnchorBottom = .5f;
 		_connectionPanel.OffsetLeft = -width / 2; _connectionPanel.OffsetRight = width / 2;
 		_connectionPanel.OffsetTop = -height / 2; _connectionPanel.OffsetBottom = height / 2;
+		if (_peripheralCards is not null) _peripheralCards.Columns = viewport.X < 760 ? 1 : 3;
 	}
 
 	public override void _Process(double delta)
 	{
+		UpdateHeartRateUi();
 		_telemetryRefreshSeconds += delta;
 		if (_telemetryRefreshSeconds < 0.15) return;
 		_telemetryRefreshSeconds = 0;
@@ -314,6 +273,10 @@ public partial class DeviceConnectionPanelController : Control
 			? "Connect your ANT+ FE-C trainer. Wake it and keep it nearby."
 			: "Connect your Bluetooth smart trainer. Auto uses Bluetooth FTMS first.";
 		_trainerNameLabel!.Text = "No trainer connected";
+		_trainerCardName!.Text = "No trainer connected";
+		_trainerCardStatus!.Text = "Not connected";
+		_heartRateName!.Text = "No monitor selected";
+		_heartRateStatus!.Text = "Optional · does not affect trainer readiness";
 		_protocolStatusLabel!.Text = $"{ProtocolPreferenceLabel(GameBootstrap.Settings.Trainer.ProtocolPreference)} · Not connected";
 		_capabilitiesLabel!.Text = "Trainer capabilities · not connected";
 		_powerStatusLabel!.Text = "Waiting for connection";
@@ -347,6 +310,7 @@ public partial class DeviceConnectionPanelController : Control
 		_attemptCancellation = operationCancellation;
 		var cancellationToken = operationCancellation.Token;
 		var attemptId = _connectionState.BeginAttempt();
+		if (_heartRateClient?.IsConnected != true) _ = ScanForHeartRateAsync(autoConnect: true);
 		_protocolPreferenceOption!.Disabled = true;
 		_cancelButton!.Show();
 		_connectButton!.Text = "Scanning…";
@@ -449,7 +413,7 @@ public partial class DeviceConnectionPanelController : Control
 				var antNeedsSetup = _attemptUsingAnt && AntNetworkKeyMaterial.GetStatus() != "Configured";
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, ex.Message);
 				_overallStatusLabel!.Text = antNeedsSetup
-					? "ANT+ needs its 64-bit network key. Enter it in ANT+ Setup below, then retry."
+					? "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup, then retry."
 					: $"Trainer scan failed: {ex.Message} You can retry.";
 				_trainerNameLabel!.Text = "Connection unavailable";
 				_protocolStatusLabel!.Text = _attemptUsingAnt
@@ -481,8 +445,8 @@ public partial class DeviceConnectionPanelController : Control
 		if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
 			AntNetworkKeyMaterial.GetStatus() != "Configured")
 		{
-			_overallStatusLabel!.Text = "Enter the ANT+ 64-bit network key in ANT+ Setup below, then connect.";
-			_antKeyInput?.CallDeferred(Control.MethodName.GrabFocus);
+			_overallStatusLabel!.Text = "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup.";
+			_antSetupButton?.Show();
 			return;
 		}
 		if (_awaitingAntDeviceChoice && _antDiscovered.Length > 1)
@@ -513,6 +477,135 @@ public partial class DeviceConnectionPanelController : Control
 			return;
 		}
 		_attemptTask = StartDiscoveryAsync();
+	}
+
+	private void OnHeartRateActionPressed()
+	{
+		if (_heartRateScanInProgress) { _heartRateScanCancellation?.Cancel(); return; }
+		if (_heartRateClient?.IsConnected == true) { _ = DisconnectHeartRateAsync(); return; }
+		var selectedIndex = _heartRatePicker?.Selected ?? -1;
+		if (_heartRateDiscovered.Length > 1 && selectedIndex >= 0 && selectedIndex < _heartRateDiscovered.Length)
+			_ = ConnectHeartRateAsync(_heartRateDiscovered[selectedIndex]);
+		else _ = ScanForHeartRateAsync(autoConnect: false);
+	}
+
+	private async Task ScanForHeartRateAsync(bool autoConnect)
+	{
+		if (_heartRateScanInProgress || _heartRateClient?.IsConnected == true) return;
+		_heartRateScanInProgress = true;
+		_heartRatePicker!.Hide();
+		_heartRateAction!.Text = "Cancel search";
+		_heartRateStatus!.Text = "Searching for Bluetooth heart-rate monitors…";
+		_heartRateScanCancellation?.Dispose();
+		var cancellation = new CancellationTokenSource();
+		_heartRateScanCancellation = cancellation;
+		try
+		{
+			var scanner = _heartRateClient ??= new WindowsBleHeartRateClient();
+			var found = await scanner.ScanAsync(TimeSpan.FromSeconds(5), cancellation.Token);
+			if (cancellation.IsCancellationRequested) return;
+			var selection = HeartRateDiscoveryPolicy.Select(found);
+			_heartRateDiscovered = selection.Candidates.ToArray();
+			if (selection.Outcome == HeartRateDiscoveryOutcome.None)
+			{
+				_heartRateName!.Text = "No monitor selected";
+				_heartRateStatus!.Text = "No monitor found · optional";
+				_heartRateAction!.Text = "Find monitor";
+				return;
+			}
+			if (selection.Outcome == HeartRateDiscoveryOutcome.ConnectAutomatically)
+			{
+				await ConnectHeartRateAsync(selection.Selected!);
+				return;
+			}
+			_heartRatePicker!.Clear();
+			foreach (var device in selection.Candidates) _heartRatePicker.AddItem($"{device.Name} · {device.Rssi} dBm");
+			_heartRatePicker.Select(0);
+			_heartRatePicker.Show();
+			_heartRateName!.Text = "Choose a heart-rate monitor";
+			_heartRateStatus!.Text = $"{selection.Candidates.Count} compatible monitors found";
+			_heartRateAction!.Text = "Connect selected";
+		}
+		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+		{
+			_heartRateStatus!.Text = "Search cancelled · optional";
+			_heartRateAction!.Text = "Find monitor";
+		}
+		catch (Exception ex)
+		{
+			_heartRateStatus!.Text = "Could not search for a heart-rate monitor. Trainer connection is unaffected.";
+			_heartRateAction!.Text = "Retry search";
+			GameLogger.Log("heart_rate_scan_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+		}
+		finally
+		{
+			if (ReferenceEquals(_heartRateScanCancellation, cancellation))
+			{
+				_heartRateScanInProgress = false;
+				_heartRateScanCancellation = null;
+				cancellation.Dispose();
+			}
+		}
+	}
+
+	private async Task ConnectHeartRateAsync(BleDiscoveredDevice device)
+	{
+		_heartRateAction!.Disabled = true;
+		_heartRateStatus!.Text = $"Connecting to {device.Name}…";
+		var client = _heartRateClient ??= new WindowsBleHeartRateClient();
+		try
+		{
+			await client.ConnectAsync(device);
+			_heartRateClient = client;
+			GameBootstrap.HeartRateClient = client;
+			client.Disconnected -= OnHeartRateDisconnected;
+			client.Disconnected += OnHeartRateDisconnected;
+			_heartRateName!.Text = client.ConnectedDeviceName ?? device.Name;
+			_heartRateStatus!.Text = "Connected · waiting for a fresh reading";
+			_heartRateAction!.Text = "Disconnect";
+			_heartRatePicker!.Hide();
+			GameLogger.Log("heart_rate_connected", new { service = "Bluetooth SIG Heart Rate", deviceName = client.ConnectedDeviceName ?? device.Name });
+		}
+		catch (Exception ex)
+		{
+			await client.DisconnectAsync();
+			_heartRateName!.Text = device.Name;
+			_heartRateStatus!.Text = "Connection failed. Retry or choose another monitor.";
+			_heartRateAction!.Text = "Retry";
+			GameLogger.Log("heart_rate_connection_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+		}
+		finally { _heartRateAction!.Disabled = false; }
+	}
+
+	private async Task DisconnectHeartRateAsync()
+	{
+		var client = _heartRateClient;
+		if (client is not null)
+		{
+			client.Disconnected -= OnHeartRateDisconnected;
+			await client.DisconnectAsync();
+		}
+		GameBootstrap.HeartRateClient = null;
+		_heartRateName!.Text = "No monitor selected";
+		_heartRateStatus!.Text = "Disconnected · optional";
+		_heartRateAction!.Text = "Find monitor";
+	}
+
+	private void OnHeartRateDisconnected()
+	{
+		Callable.From(() =>
+		{
+			GameBootstrap.HeartRateClient = null;
+			if (_heartRateStatus is not null) _heartRateStatus.Text = "Disconnected · no fresh heart-rate data";
+			if (_heartRateAction is not null) _heartRateAction.Text = "Reconnect";
+		}).CallDeferred();
+	}
+
+	private void UpdateHeartRateUi()
+	{
+		if (_heartRateClient?.IsConnected != true) return;
+		var bpm = _heartRateClient.GetFreshBpm(DateTimeOffset.UtcNow);
+		_heartRateStatus!.Text = bpm.HasValue ? $"{bpm.Value} bpm · live" : "Connected · no fresh reading";
 	}
 
 	private async Task ConnectAntFeCAsync(long attemptId, CancellationToken cancellationToken, AntFeCDeviceIdentity? selectedDevice = null, bool forceFreshDiscovery = false)
@@ -620,7 +713,10 @@ public partial class DeviceConnectionPanelController : Control
 		SetPhase(attemptId, TrainerConnectionPhase.Connecting);
 		try
 		{
-			await client.ConnectAsync(cancellationToken);
+			if (selectedDevice is null && rememberedNumber.HasValue && !forceFreshDiscovery)
+				await client.ConnectInitialAsync(cancellationToken);
+			else
+				await client.ConnectAsync(cancellationToken);
 		}
 		catch (TimeoutException) when (selectedDevice is null && !forceFreshDiscovery &&
 			AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(rememberedNumber.HasValue, isRecovery: false,
@@ -783,6 +879,8 @@ public partial class DeviceConnectionPanelController : Control
 		_overallStatusLabel!.Text = _antTrainerClient is not null
 			? "Trainer telemetry is connected. Capability metadata may be unavailable; control is checked during the ride. Resistance change must be verified on the trainer."
 			: "Trainer ready. Pedal to check live power and cadence; stationary zero readings are normal.";
+		_trainerCardName!.Text = _trainerNameLabel.Text;
+		_trainerCardStatus!.Text = _protocolStatusLabel.Text;
 		_connectButton!.Text = "Connected";
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = false;
@@ -797,6 +895,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	private void RefreshTelemetryUi()
 	{
+		UpdateHeartRateUi();
 		IndoorCycling.Trainer.Abstractions.ITrainerClient? client = _antTrainerClient is not null
 			? _antTrainerClient : _realTrainerClient;
 		if (client is not { IsReady: true })
@@ -816,6 +915,8 @@ public partial class DeviceConnectionPanelController : Control
 		var stationary = telemetry.HasSpeedMeasurement && telemetry.SpeedKph < 0.3 && cadence.State == TelemetryReadingState.Fresh && cadence.Value == 0;
 		_powerStatusLabel!.Text = FormatReading(power, "W", stationary);
 		_cadenceStatusLabel!.Text = FormatReading(cadence, "rpm", stationary);
+		_trainerCardStatus!.Text = $"{protocolName} · {FormatReading(power, "W", stationary)} / {FormatReading(cadence, "rpm", stationary)}";
+		UpdateHeartRateUi();
 		if (client is AntFeCTrainerClient ant)
 		{
 			_capabilitiesLabel!.Text = $"FE-C modes: {ant.CapabilitiesDescription}\n{ant.ControlEvidenceDescription}";
@@ -850,6 +951,7 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = true;
 		_protocolStatusLabel!.Text = "Bluetooth FTMS · Connection lost";
+		_trainerCardStatus!.Text = "Connection lost · reconnecting";
 		_powerStatusLabel!.Text = "Connection lost · reconnecting";
 		_cadenceStatusLabel!.Text = "Connection lost · reconnecting";
 		_overallStatusLabel!.Text = "Trainer connection lost. Trying to reconnect; you can retry manually if needed.";
@@ -873,6 +975,7 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = true;
 		_protocolStatusLabel!.Text = "ANT+ FE-C · Connection lost";
+		_trainerCardStatus!.Text = "Connection lost · recovering selected trainer";
 		_capabilitiesLabel!.Text = "Trainer capabilities · connection lost";
 		_powerStatusLabel!.Text = "Connection lost · reconnecting";
 		_cadenceStatusLabel!.Text = "Connection lost · reconnecting";
@@ -1240,6 +1343,12 @@ public partial class DeviceConnectionPanelController : Control
 	}
 
 	private bool SetPhase(long attemptId, TrainerConnectionPhase phase) => _connectionState.SetPhase(attemptId, phase);
+	public override void _ExitTree()
+	{
+		_heartRateScanCancellation?.Cancel();
+		_heartRateClient?.Dispose();
+		if (ReferenceEquals(GameBootstrap.HeartRateClient, _heartRateClient)) GameBootstrap.HeartRateClient = null;
+	}
 	private static string DisplayName(BleDiscoveredDevice device) => string.IsNullOrWhiteSpace(device.Name) ? "Bluetooth trainer" : device.Name;
 
 	private string AntDeviceDisplayName(AntFeCDeviceIdentity device)
