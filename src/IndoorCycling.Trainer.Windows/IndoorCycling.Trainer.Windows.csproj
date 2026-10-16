@@ -18,5 +18,6 @@
     </Reference>
     <None Update="AntSdk\ANT_WrappedLib.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="AntSdk\ANT-SDK-License.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Data\sterzo-challenge-codes.dat.b64" />
   </ItemGroup>
 </Project>
