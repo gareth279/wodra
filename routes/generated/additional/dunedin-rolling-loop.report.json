@@ -7,7 +7,7 @@
   "routeType": "loop",
   "difficulty": "Moderate",
   "routeDataVersion": 1,
-  "geometryFingerprint": "b2c68af8ba3fced78fe3544120c2105e4252793d601b84dc02d893c6810ed8f1",
+  "geometryFingerprint": "3506b94f8d935d41d11cb3a4ce15f6478e92041414521a536119cb2aa7317457",
   "preferredRefs": [],
   "boundingBox": {
     "minLatitude": -45.94,
@@ -5556,7 +5556,7 @@
     "cacheHit": true,
     "cacheBuildSeconds": 68.7749962
   },
-  "generatedAtUtc": "2026-10-11T08:34:07.7691503+00:00",
+  "generatedAtUtc": "2026-10-11T08:34:07.7691503\u002B00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -5575,14 +5575,14 @@
         ]
       },
       {
-        "name": "Toit\u016b Te Whenua Land Information New Zealand",
+        "name": "Toit\u016B Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -5601,7 +5601,7 @@
           ]
         },
         {
-          "name": "Toit\u016b Te Whenua Land Information New Zealand",
+          "name": "Toit\u016B Te Whenua Land Information New Zealand",
           "roles": [
             "host",
             "licensor",
@@ -5663,11 +5663,11 @@
     "minimumElevationMeters": 0.6278146576831533,
     "maximumElevationMeters": 105.30476812615318,
     "startElevationMeters": 15.857753274053422,
-    "totalAscentMeters": 218.8749151286524,
-    "totalDescentMeters": 218.87491512865245,
-    "minimumGradientPercent": -20.963721426892068,
+    "totalAscentMeters": 219.06195035876482,
+    "totalDescentMeters": 219.06195035876482,
+    "minimumGradientPercent": -21.000070475654134,
     "maximumGradientPercent": 21.99148335844507,
-    "averageGradientPercent": -0.20045700603269645,
+    "averageGradientPercent": -0.2022917309229794,
     "gradientReviewThresholdPercent": 15.0,
     "suspiciousGradientDistancesMeters": [
       1732.1306784935575,
@@ -5687,7 +5687,6 @@
       3660.993533917428,
       3664.9542931765777,
       3668.6614177517126,
-      3687.345480367845,
       5494.754739901916,
       5504.810571304592,
       5520.781672974152
@@ -5702,12 +5701,12 @@
         "rawElevationBeforeMeters": 36.05764663653923,
         "rawElevationAfterMeters": 43.50357001394342,
         "rawStepMeters": 7.445923377404185,
-        "calibratedElevationBeforeMeters": 36.05764663653923,
-        "calibratedElevationAfterMeters": 36.434173295523664,
-        "calibratedStepMeters": 0.3765266589844316,
-        "smoothedElevationBeforeMeters": 36.30311172986927,
-        "smoothedElevationAfterMeters": 36.98169086523689,
-        "smoothedStepMeters": 0.6785791353676203
+        "calibratedElevationBeforeMeters": 35.918663202457886,
+        "calibratedElevationAfterMeters": 36.285518539434726,
+        "calibratedStepMeters": 0.36685533697684036,
+        "smoothedElevationBeforeMeters": 36.16410847663563,
+        "smoothedElevationAfterMeters": 36.826733842645396,
+        "smoothedStepMeters": 0.6626253660097632
       },
       {
         "distanceMeters": 3694.722116687109,
@@ -5718,12 +5717,12 @@
         "rawElevationBeforeMeters": 42.91343552546456,
         "rawElevationAfterMeters": 35.77967976837654,
         "rawStepMeters": -7.133755757088018,
-        "calibratedElevationBeforeMeters": 36.13686378334579,
-        "calibratedElevationAfterMeters": 35.77967976837654,
-        "calibratedStepMeters": -0.3571840149692491,
-        "smoothedElevationBeforeMeters": 36.639412575547055,
-        "smoothedElevationAfterMeters": 35.99078557327942,
-        "smoothedStepMeters": -0.6486270022676379
+        "calibratedElevationBeforeMeters": 36.285518539434726,
+        "calibratedElevationAfterMeters": 35.918663202457886,
+        "calibratedStepMeters": -0.36685533697684036,
+        "smoothedElevationBeforeMeters": 36.826733842645396,
+        "smoothedElevationAfterMeters": 36.16410847663563,
+        "smoothedStepMeters": -0.6626253660097632
       }
     ],
     "sourceCalibrations": [
@@ -5740,20 +5739,75 @@
         "method": "linear source-bias correction anchored to median adjacent 1m DEM slopes over 40m on both sides"
       }
     ],
+    "sharedRoadElevation": {
+      "segments": [
+        {
+          "samplePairs": 55,
+          "firstDistanceMeters": 3234.7567110914206,
+          "lastDistanceMeters": 3574.7311413143207,
+          "secondTraversalFirstDistanceMeters": 3954.7025633281505,
+          "secondTraversalLastDistanceMeters": 3619.7277570791166,
+          "matchedSpanMeters": 334.9748062490339,
+          "maximumElevationDifferenceBeforeMeters": 0.6538235258074607,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        },
+        {
+          "samplePairs": 85,
+          "firstDistanceMeters": 10819.18627944642,
+          "lastDistanceMeters": 11349.146420676236,
+          "secondTraversalFirstDistanceMeters": 11924.103177670846,
+          "secondTraversalLastDistanceMeters": 11394.143036441032,
+          "matchedSpanMeters": 529.9601412298143,
+          "maximumElevationDifferenceBeforeMeters": 0.22886281155571808,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        }
+      ],
+      "smoothedSegments": [
+        {
+          "samplePairs": 55,
+          "firstDistanceMeters": 3234.7567110914206,
+          "lastDistanceMeters": 3574.7311413143207,
+          "secondTraversalFirstDistanceMeters": 3954.7025633281505,
+          "secondTraversalLastDistanceMeters": 3619.7277570791166,
+          "matchedSpanMeters": 334.9748062490339,
+          "maximumElevationDifferenceBeforeMeters": 0.5186001637391939,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        },
+        {
+          "samplePairs": 85,
+          "firstDistanceMeters": 10819.18627944642,
+          "lastDistanceMeters": 11349.146420676236,
+          "secondTraversalFirstDistanceMeters": 11924.103177670846,
+          "secondTraversalLastDistanceMeters": 11394.143036441032,
+          "matchedSpanMeters": 529.9601412298143,
+          "maximumElevationDifferenceBeforeMeters": 0.21859238693000194,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        }
+      ],
+      "description": "Repeated route traversals with sustained reciprocal spatial matches share canonical DEM-derived elevation before gradient calculation."
+    },
     "isolatedRawDemOutliers": [
       {
         "startSampleIndex": 618,
         "endSampleIndex": 618,
         "rawElevationsMeters": [
-          22.85000038146973
+          22.84117244314242
         ],
         "filteredElevationsMeters": [
-          29.00242967532824
+          28.99360173700093
         ],
-        "maximumResidualMeters": 6.147729858708136,
+        "maximumResidualMeters": 6.147729858708132,
         "maximumCorrectionMeters": 6.152429293858511,
         "resolutionMeters": 1,
-        "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
         "startDistanceMeters": 3089.767615849301,
         "endDistanceMeters": 3089.767615849301,
         "latitude": -45.85487029789954,
@@ -5775,7 +5829,7 @@
         "maximumResidualMeters": 4.106866197760155,
         "maximumCorrectionMeters": 3.906161808721423,
         "resolutionMeters": 1,
-        "method": "linear interpolation across <=15m primary DEM outlier run, anchored by adjacent 1m samples",
+        "method": "linear interpolation across \u003C=15m primary DEM outlier run, anchored by adjacent 1m samples",
         "startDistanceMeters": 5039.620965657113,
         "endDistanceMeters": 5049.620213604845,
         "latitude": -45.86218854367047,
@@ -5785,12 +5839,12 @@
     "sampleCsv": "dunedin-rolling-loop.elevation-samples.csv",
     "bridgeTunnelSections": [],
     "profileCsv": "dunedin-rolling-loop.elevation.csv",
-    "elapsedSeconds": 16.734190999995917,
+    "elapsedSeconds": 16.213025000004563,
     "method": "centered distance-based moving average and centered gradient on regular samples"
   },
   "terrain": {
     "sourceDataset": "Otago \u2013 Dunedin and Mosgiel LiDAR 1 m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0303.tiff",
@@ -5847,6 +5901,6 @@
     "generationSeconds": 26.07351919997018,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
-  "totalAscentMeters": 218.8749151286524,
-  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0"
+  "totalAscentMeters": 219.06195035876482,
+  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
 }

@@ -25,6 +25,7 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingVisualStyle.cs" Link="BuildingVisualStyle.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/CyclistAnimationMath.cs" Link="CyclistAnimationMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadRibbonMath.cs" Link="RoadRibbonMath.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RepeatedRouteSurfacePolicy.cs" Link="RepeatedRouteSurfacePolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BackgroundStreetGeometry.cs" Link="BackgroundStreetGeometry.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VegetationGroundGeometry.cs" Link="VegetationGroundGeometry.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/TreeCanopyPlacement.cs" Link="TreeCanopyPlacement.cs" />

@@ -102,6 +102,162 @@ def source_labels_at_distances(distances, sources, interval, length):
     return [sources[int(round((distance % length) / interval)) % len(sources)] for distance in distances]
 
 
+def canonicalize_repeated_elevation_samples(distances, latitudes, longitudes, raw_elevations,
+                                            elevations, maximum_lateral_match_meters=0.75,
+                                            maximum_along_track_match_meters=4.5,
+                                            maximum_raw_difference_meters=0.75,
+                                            minimum_repeated_span_meters=25.0,
+                                            boundary_blend_meters=300.0):
+    """Share elevations across long, closely retraced route segments.
+
+    Route-order DEM calibration can drift between two visits to the same physical
+    road. Only reciprocal near-coincident samples with matching source heights,
+    opposing travel tangents, and a sustained monotonic reverse match are merged.
+    A single crossing, bridge overlap, or nearby parallel carriageway is not enough.
+    """
+    count = len(distances)
+    if not (count == len(latitudes) == len(longitudes) == len(raw_elevations) == len(elevations)):
+        raise ValueError('Repeated-elevation inputs must have matching lengths.')
+    if count < 8:
+        return np.asarray(elevations, dtype=float).copy(), []
+
+    latitude_scale = 111_195.0
+    mean_latitude = float(np.mean(latitudes)) * math.pi / 180
+    x = np.asarray(longitudes, dtype=float) * latitude_scale * math.cos(mean_latitude)
+    y = np.asarray(latitudes, dtype=float) * latitude_scale
+    raw = np.asarray(raw_elevations, dtype=float)
+    chainage = np.asarray(distances, dtype=float)
+    dx = np.zeros(count, dtype=float)
+    dy = np.zeros(count, dtype=float)
+    dx[1:-1] = x[2:] - x[:-2]
+    dy[1:-1] = y[2:] - y[:-2]
+    dx[0], dy[0] = x[1] - x[0], y[1] - y[0]
+    dx[-1], dy[-1] = x[-1] - x[-2], y[-1] - y[-2]
+    tangent_length = np.hypot(dx, dy)
+    valid_tangent = tangent_length > 1e-6
+    dx[valid_tangent] /= tangent_length[valid_tangent]
+    dy[valid_tangent] /= tangent_length[valid_tangent]
+
+    cell_size = maximum_along_track_match_meters
+    buckets = {}
+    for index, (px, py) in enumerate(zip(x, y)):
+        buckets.setdefault((math.floor(px / cell_size), math.floor(py / cell_size)), []).append(index)
+
+    nearest_forward = {}
+    nearest_reverse = {}
+    minimum_chainage_separation = max(40.0, minimum_repeated_span_meters * 1.5)
+    for index in range(count):
+        if not valid_tangent[index]:
+            continue
+        cell_x, cell_y = math.floor(x[index] / cell_size), math.floor(y[index] / cell_size)
+        candidates = []
+        for offset_x in (-1, 0, 1):
+            for offset_y in (-1, 0, 1):
+                for other in buckets.get((cell_x + offset_x, cell_y + offset_y), ()):
+                    if other == index or abs(chainage[other] - chainage[index]) < minimum_chainage_separation:
+                        continue
+                    delta_x, delta_y = x[other] - x[index], y[other] - y[index]
+                    along_distance = abs(delta_x * dx[index] + delta_y * dy[index])
+                    lateral_distance = abs(delta_x * dy[index] - delta_y * dx[index])
+                    if lateral_distance > maximum_lateral_match_meters or along_distance > maximum_along_track_match_meters \
+                            or abs(raw[index] - raw[other]) > maximum_raw_difference_meters:
+                        continue
+                    if abs(dx[index] * dx[other] + dy[index] * dy[other]) < 0.80:
+                        continue
+                    candidates.append((lateral_distance, along_distance, abs(raw[index] - raw[other]), other))
+        if candidates:
+            _, _, _, other = min(candidates)
+            nearest_forward[index] = other
+            reverse_choice = nearest_reverse.get(other)
+            if reverse_choice is None or (math.hypot(x[index] - x[other], y[index] - y[other]), index) < reverse_choice[0]:
+                nearest_reverse[other] = ((math.hypot(x[index] - x[other], y[index] - y[other]), index), index)
+
+    pairs = sorted((index, other, 1 if dx[index] * dx[other] + dy[index] * dy[other] >= 0 else -1)
+                   for index, other in nearest_forward.items()
+                   if index < other and other in nearest_reverse and nearest_reverse[other][1] == index)
+    if not pairs:
+        return np.asarray(elevations, dtype=float).copy(), []
+
+    steps = np.diff(chainage)
+    typical_step = float(np.median(steps[steps > 0])) if np.any(steps > 0) else 1.0
+    allowed_gap = max(typical_step * 2.5, minimum_repeated_span_meters / 8)
+    runs = []
+    current = []
+    for pair in pairs:
+        if current:
+            previous = current[-1]
+            forward_gap = chainage[pair[0]] - chainage[previous[0]]
+            paired_gap = chainage[pair[1]] - chainage[previous[1]]
+            oriented_gap = paired_gap if pair[2] > 0 else -paired_gap
+            if pair[2] != previous[2] or not (0 < forward_gap <= allowed_gap and 0 < oriented_gap <= allowed_gap):
+                if current: runs.append(current)
+                current = []
+        current.append(pair)
+    if current:
+        runs.append(current)
+
+    result = np.asarray(elevations, dtype=float).copy()
+    original = result.copy()
+    summaries = []
+    valid_runs = []
+    matched_indexes = set()
+    boundary_adjustments = np.zeros(count, dtype=float)
+    boundary_weights = np.zeros(count, dtype=float)
+    for run in runs:
+        first, last = run[0], run[-1]
+        forward_span = chainage[last[0]] - chainage[first[0]]
+        reverse_span = chainage[last[1]] - chainage[first[1]] if first[2] > 0 else chainage[first[1]] - chainage[last[1]]
+        if len(run) < 5 or min(forward_span, reverse_span) < minimum_repeated_span_meters:
+            continue
+        valid_runs.append(run)
+        matched_indexes.update(index for left, right, _ in run for index in (left, right))
+
+    for run in valid_runs:
+        first, last = run[0], run[-1]
+        forward_span = chainage[last[0]] - chainage[first[0]]
+        reverse_span = chainage[last[1]] - chainage[first[1]] if first[2] > 0 else chainage[first[1]] - chainage[last[1]]
+        before = [abs(result[left] - result[right]) for left, right, _ in run]
+        for left, right, _ in run:
+            shared = (result[left] + result[right]) / 2
+            result[left] = result[right] = shared
+        orientation = first[2]
+        endpoints = (
+            (first[0], -1, result[first[0]] - original[first[0]]),
+            (first[1], 1 if orientation < 0 else -1, result[first[1]] - original[first[1]]),
+            (last[0], 1, result[last[0]] - original[last[0]]),
+            (last[1], -1 if orientation < 0 else 1, result[last[1]] - original[last[1]])
+        )
+        for anchor, step_direction, delta in endpoints:
+            if abs(delta) < 1e-9:
+                continue
+            index = anchor + step_direction
+            while 0 <= index < count:
+                distance = abs(chainage[index] - chainage[anchor])
+                if distance > boundary_blend_meters:
+                    break
+                if index not in matched_indexes:
+                    weight = 0.5 * (1 + math.cos(math.pi * distance / boundary_blend_meters))
+                    boundary_adjustments[index] += delta * weight
+                    boundary_weights[index] += weight
+                index += step_direction
+        summaries.append({
+            'samplePairs': len(run),
+            'firstDistanceMeters': float(chainage[first[0]]),
+            'lastDistanceMeters': float(chainage[last[0]]),
+            'secondTraversalFirstDistanceMeters': float(chainage[first[1]]),
+            'secondTraversalLastDistanceMeters': float(chainage[last[1]]),
+            'matchedSpanMeters': float(min(forward_span, reverse_span)),
+            'maximumElevationDifferenceBeforeMeters': float(max(before)),
+            'maximumElevationDifferenceAfterMeters': 0.0,
+            'boundaryBlendMeters': boundary_blend_meters,
+            'method': 'reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal'
+        })
+    for index in range(count):
+        if boundary_weights[index] > 0:
+            result[index] = original[index] + boundary_adjustments[index] / boundary_weights[index]
+    return result, summaries
+
+
 def calibrate_fallback_spans(raw, sources, interval):
     """Remove local vertical offsets in fallback spans without flattening their grade."""
     values = np.asarray(raw, dtype=float).copy()
@@ -244,9 +400,13 @@ def generate(args):
         raw.append(value); sources.append(source)
     raw_grid = np.asarray(raw)
     calibrated_grid, source_calibrations = calibrate_fallback_spans(raw_grid, sources, interval)
+    calibrated_grid, repeated_segments = canonicalize_repeated_elevation_samples(
+        grid, route_lat, route_lon, raw_grid, calibrated_grid)
     filtered_grid, raw_outlier_runs = remove_isolated_primary_outliers(calibrated_grid, sources, interval)
     profile_grid = filtered_grid.copy()
     smooth_grid = circular_average(profile_grid, interval, args.smooth)
+    smooth_grid, smoothed_repeated_segments = canonicalize_repeated_elevation_samples(
+        grid, route_lat, route_lon, raw_grid, smooth_grid)
     gradient_grid = circular_gradient(smooth_grid, interval, args.gradient)
     point_raw = np.asarray([periodic_interp(raw_grid, interval, d) for d in dist])
     point_calibrated = np.asarray([periodic_interp(calibrated_grid, interval, d) for d in dist])
@@ -271,6 +431,8 @@ def generate(args):
                 if start <= d <= end:
                     t = (d - start) / max(span, 1e-6); profile_grid[i] = left + (right-left)*t
             smooth_grid = circular_average(profile_grid, interval, args.smooth)
+            smooth_grid, smoothed_repeated_segments = canonicalize_repeated_elevation_samples(
+                grid, route_lat, route_lon, raw_grid, smooth_grid)
             gradient_grid = circular_gradient(smooth_grid, interval, args.gradient)
             smooth = np.asarray([periodic_interp(smooth_grid, interval, d) for d in dist])
             gradient = np.asarray([periodic_interp(gradient_grid, interval, d) for d in dist])
@@ -326,6 +488,11 @@ def generate(args):
         'minimumGradientPercent':float(np.min(gradient)), 'maximumGradientPercent':float(np.max(gradient)), 'averageGradientPercent':float(np.mean(gradient)),
         'gradientReviewThresholdPercent':args.review_gradient, 'suspiciousGradientDistancesMeters':suspicious,
         'sourceTransitions': source_transitions, 'sourceCalibrations': source_calibrations,
+        'sharedRoadElevation': {
+            'segments': repeated_segments,
+            'smoothedSegments': smoothed_repeated_segments,
+            'description': 'Repeated route traversals with sustained reciprocal spatial matches share canonical DEM-derived elevation before gradient calculation.'
+        },
         'isolatedRawDemOutliers': [{**run, 'startDistanceMeters': float(grid[run['startSampleIndex']]),
             'endDistanceMeters': float(grid[run['endSampleIndex']]),
             'latitude': float(route_lat[run['startSampleIndex']:run['endSampleIndex']+1].mean()),

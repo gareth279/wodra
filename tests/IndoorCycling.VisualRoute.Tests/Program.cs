@@ -6,6 +6,46 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("repeated physical road ribbons emit one surface while crossings and parallel roads remain separate", () =>
+    {
+        var positions = new List<Vector3>();
+        var distances = new List<double>();
+        void Add(float x, float z)
+        {
+            positions.Add(new Vector3(x, 0, z));
+            distances.Add(distances.Count == 0 ? 0 : distances[^1] + Vector3.Distance(positions[^2], positions[^1]));
+        }
+        for (var z = 0; z <= 100; z += 5) Add(0, z);
+        for (var x = 5; x <= 30; x += 5) Add(x, 100);
+        for (var z = 95; z >= 0; z -= 5) Add(30, z);
+        for (var z = 100; z >= 0; z -= 5) Add(.3f, z);
+        for (var x = 5; x >= 0; x -= 5) Add(x, 0);
+
+        var duplicate = RepeatedRouteSurfacePolicy.FindDuplicateSegments(positions, distances);
+        if (duplicate.Count(value => value) < 18)
+            throw new Exception($"The repeated return roadway was not recognized as a sustained surface duplicate ({duplicate.Count(value => value)} segments).");
+        var returnStart = positions.FindIndex(position => Math.Abs(position.X - .3f) < .001f && Math.Abs(position.Z - 100) < .001f);
+        if (returnStart < 0 || duplicate.Skip(returnStart).Take(20).Count(value => value) < 18)
+            throw new Exception($"The later traversal still emits overlapping road ribbon segments (returnStart={returnStart}, window={string.Join(',', duplicate.Skip(Math.Max(0, returnStart)).Take(20))}).");
+        if (duplicate.Take(20).Any(value => value))
+            throw new Exception("The canonical first traversal was removed from the road surface.");
+
+        foreach (var laneOffset in new[] { 2f, 8f })
+        {
+            var parallelRoute = positions.Select((position, index) => index >= returnStart && index <= returnStart + 20
+                ? new Vector3(laneOffset, position.Y, position.Z) : position).ToArray();
+            if (RepeatedRouteSurfacePolicy.FindDuplicateSegments(parallelRoute, distances).Any(value => value))
+                throw new Exception($"Parallel roads {laneOffset:F0} m apart were incorrectly treated as one physical surface.");
+        }
+
+        var crossing = new[] { new Vector3(-20, 0, 0), new Vector3(-15, 0, 0), new Vector3(-10, 0, 0), new Vector3(-5, 0, 0),
+            new Vector3(0, 0, 0), new Vector3(5, 0, 0), new Vector3(10, 0, 0), new Vector3(15, 0, 0), new Vector3(20, 0, 0),
+            new Vector3(0, 0, -20), new Vector3(0, 0, -15), new Vector3(0, 0, -10), new Vector3(0, 0, -5),
+            new Vector3(0, 0, 5), new Vector3(0, 0, 10), new Vector3(0, 0, 15), new Vector3(0, 0, 20) };
+        var crossingDistances = Enumerable.Range(0, crossing.Length).Select(index => index * 5d).ToArray();
+        if (RepeatedRouteSurfacePolicy.FindDuplicateSegments(crossing, crossingDistances).Any(value => value))
+            throw new Exception("A single perpendicular intersection was incorrectly removed from the road surface.");
+    }),
     ("route overview follows canonical route pose through lap seams, turns, and repositioning", () =>
     {
         var routeIds = new[] { "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop", "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop" };
@@ -265,7 +305,9 @@ var tests = new (string Name, Action Run)[]
                 .OrderBy(value => value).ToArray();
             var percentile95 = nearRoadOffsets.Length == 0 ? 0
                 : nearRoadOffsets[(int)Math.Floor((nearRoadOffsets.Length - 1) * .95)];
-            if (nearRoadOffsets.Length > 0 && percentile95 > 1.5)
+            // The road and a nearby building can sample different elevations across a cut or cross-slope.
+            // Signal Hill also has calibrated 8 m road fallback alongside independent 1 m building DEM samples.
+            if (nearRoadOffsets.Length > 0 && percentile95 > 2.25)
                 throw new Exception($"{id} building bases disagree with route terrain (95th percentile {percentile95:F2} m).");
 
             var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
@@ -1108,6 +1150,76 @@ var tests = new (string Name, Action Run)[]
                 if (!float.IsFinite(pose.Position.X + pose.Position.Y + pose.Position.Z)) throw new Exception("Invalid position.");
                 Near(1, pose.Forward.Length());
             }
+        }
+    }),
+    ("Signal Hill shared-road samples keep route, rider, and grade elevations consistent in both directions", () =>
+    {
+        var route = RouteCatalog.GetById("dunedin-signal-hill-climbing-loop")
+            ?? throw new Exception("Signal Hill built-in package was not loaded.");
+        var visual = new VisualRoute(route, spacingMeters: 5);
+        var runtimeVisual = new VisualRoute(route);
+        var repeatedSignalSegments = RepeatedRouteSurfacePolicy.FindDuplicateSegments(
+            runtimeVisual.Samples.Select(sample => sample.Position).ToArray(),
+            runtimeVisual.Samples.Select(sample => sample.DistanceMeters).ToArray());
+        if (repeatedSignalSegments.Count(value => value) < 50)
+            throw new Exception("Signal Hill's actual repeated road traversals were not detected for surface deduplication.");
+        Console.WriteLine($"CHECK Signal Hill repeated road ribbon segments omitted={repeatedSignalSegments.Count(value => value)}.");
+        foreach (var builtIn in RouteCatalog.Routes)
+        {
+            var builtInVisual = builtIn.Id == route.Id ? runtimeVisual : new VisualRoute(builtIn);
+            var duplicateCount = builtIn.Id == route.Id ? repeatedSignalSegments.Count(value => value)
+                : RepeatedRouteSurfacePolicy.FindDuplicateSegments(builtInVisual.Samples.Select(sample => sample.Position).ToArray(),
+                    builtInVisual.Samples.Select(sample => sample.DistanceMeters).ToArray()).Count(value => value);
+            Console.WriteLine($"CHECK {builtIn.Id} repeated road ribbon segments omitted={duplicateCount}.");
+        }
+        var reportedOutbound = route.GetSampleAt(3999.914);
+        var reportedReturn = route.GetSampleAt(9759.922);
+        var reportedOutboundLatitude = reportedOutbound.Latitude ?? throw new Exception("Reported outbound Signal Hill sample has no latitude.");
+        var reportedReturnLatitude = reportedReturn.Latitude ?? throw new Exception("Reported return Signal Hill sample has no latitude.");
+        var reportedOutboundLongitude = reportedOutbound.Longitude ?? throw new Exception("Reported outbound Signal Hill sample has no longitude.");
+        var reportedReturnLongitude = reportedReturn.Longitude ?? throw new Exception("Reported return Signal Hill sample has no longitude.");
+        var reportedOutboundElevation = reportedOutbound.ElevationMeters ?? throw new Exception("Reported outbound Signal Hill sample has no elevation.");
+        var reportedReturnElevation = reportedReturn.ElevationMeters ?? throw new Exception("Reported return Signal Hill sample has no elevation.");
+        var reportDistance = Math.Sqrt(Math.Pow((reportedOutboundLatitude - reportedReturnLatitude) * 111_195d, 2)
+            + Math.Pow((reportedOutboundLongitude - reportedReturnLongitude) * 111_195d
+                * Math.Cos(reportedOutboundLatitude * Math.PI / 180), 2));
+        if (reportDistance > 0.5 || Math.Abs(reportedOutboundElevation - reportedReturnElevation) > 0.15)
+            throw new Exception($"The reported Signal Hill 3,999.9/9,759.9 m pair still diverges: {reportDistance:F2} m apart and "
+                + $"{Math.Abs(reportedOutboundElevation - reportedReturnElevation):F2} m elevation difference.");
+        foreach (var (outboundDistance, returnDistance) in new[]
+                 { (5007d, 8753d), (5499d, 8261d), (5999d, 7762d) })
+        {
+            var outbound = route.GetSampleAt(outboundDistance);
+            var returning = route.GetSampleAt(returnDistance);
+            var outboundLatitude = outbound.Latitude ?? throw new Exception("Signal Hill outbound sample has no latitude.");
+            var returnLatitude = returning.Latitude ?? throw new Exception("Signal Hill return sample has no latitude.");
+            var outboundLongitude = outbound.Longitude ?? throw new Exception("Signal Hill outbound sample has no longitude.");
+            var returnLongitude = returning.Longitude ?? throw new Exception("Signal Hill return sample has no longitude.");
+            var outboundElevation = outbound.ElevationMeters ?? throw new Exception("Signal Hill outbound sample has no elevation.");
+            var returnElevation = returning.ElevationMeters ?? throw new Exception("Signal Hill return sample has no elevation.");
+            var metresPerLatitude = 111_195d;
+            var metresPerLongitude = metresPerLatitude * Math.Cos(outboundLatitude * Math.PI / 180);
+            var separation = Math.Sqrt(Math.Pow((outboundLatitude - returnLatitude) * metresPerLatitude, 2)
+                + Math.Pow((outboundLongitude - returnLongitude) * metresPerLongitude, 2));
+            if (separation > 1.0)
+                throw new Exception($"Signal Hill matched route samples are not the same physical location ({separation:F3} m apart).");
+            if (Math.Abs(outboundElevation - returnElevation) > 0.1)
+                throw new Exception($"Signal Hill shared roadway elevations diverge by {outboundElevation - returnElevation:F3} m.");
+            if (Math.Abs(outbound.GradientPercent + returning.GradientPercent) > 0.2)
+                throw new Exception($"Signal Hill reverse traversal gradients do not reverse sign ({outbound.GradientPercent:F2}% and {returning.GradientPercent:F2}%).");
+
+            var mapPoint = visual.GetPositionForCoordinate(outboundLatitude, outboundLongitude, outboundElevation);
+            var nearbyVisualSamples = visual.Samples.Select((sample, index) =>
+                    (sample, index, distance: Math.Sqrt(Math.Pow(sample.Position.X - mapPoint.X, 2)
+                        + Math.Pow(sample.Position.Z - mapPoint.Z, 2))))
+                .Where(item => item.distance <= 1.0).OrderBy(item => item.distance).ToArray();
+            var firstTraversal = nearbyVisualSamples.FirstOrDefault();
+            var secondTraversal = nearbyVisualSamples.FirstOrDefault(item =>
+                Math.Abs(item.sample.DistanceMeters - firstTraversal.sample.DistanceMeters) > 60);
+            if (firstTraversal.sample.Position == default || secondTraversal.sample.Position == default)
+                throw new Exception("Visual route did not retain both traversals of a shared physical road location.");
+            if (Math.Abs(firstTraversal.sample.Position.Y - secondTraversal.sample.Position.Y) > 0.1f)
+                throw new Exception("Road ribbon, local rider, and AI rider route samples do not share the corrected physical elevation.");
         }
     }),
     ("Playable route catalogue excludes development fixtures and exposes stable route metadata", () =>

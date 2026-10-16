@@ -11,6 +11,106 @@ import route_quality_report as quality
 
 
 class ElevationQualityTests(unittest.TestCase):
+    @staticmethod
+    def projected_path(points, lat=-45.0):
+        metres_per_longitude = 111_195 * np.cos(np.deg2rad(lat))
+        return (np.full(len(points), lat), np.asarray(points, dtype=float) / metres_per_longitude)
+
+    def test_shared_out_and_back_road_uses_one_canonical_elevation_before_and_after_smoothing(self):
+        forward_x = np.arange(0.0, 101.0, 5.0)
+        second_x = np.arange(100.0, -1.0, -5.0) + 0.2
+        lat_a, lon_a = self.projected_path(forward_x)
+        lat_b, lon_b = self.projected_path(second_x)
+        distances = np.r_[forward_x, 200 + np.arange(len(second_x)) * 5.0]
+        latitudes, longitudes = np.r_[lat_a, lat_b], np.r_[lon_a, lon_b]
+        physical = np.r_[forward_x, 100 - np.arange(len(second_x)) * 5.0]
+        raw = 80 + physical * .02
+        drift = np.r_[np.linspace(3.5, 0, len(forward_x)), np.linspace(0, -3.5, len(second_x))]
+        calibrated = raw + drift
+
+        result, segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, latitudes, longitudes, raw, calibrated)
+
+        self.assertEqual(1, len(segments))
+        self.assertGreater(segments[0]['maximumElevationDifferenceBeforeMeters'], 5)
+        self.assertEqual(0, segments[0]['maximumElevationDifferenceAfterMeters'])
+        self.assertGreaterEqual(segments[0]['matchedSpanMeters'], 25)
+        for left, right in zip(range(len(forward_x)), reversed(range(len(forward_x), len(distances)))):
+            self.assertAlmostEqual(result[left], result[right], places=9)
+
+        smoothed, smooth_segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, latitudes, longitudes, raw, result + drift)
+        self.assertEqual(1, len(smooth_segments))
+        for left, right in zip(range(len(forward_x)), reversed(range(len(forward_x), len(distances)))):
+            self.assertAlmostEqual(smoothed[left], smoothed[right], places=9)
+        for index in range(1, len(forward_x) - 1):
+            outbound_grade = (result[index + 1] - result[index - 1]) / 10
+            return_index = len(forward_x) + (len(forward_x) - 1 - index)
+            return_grade = (result[return_index + 1] - result[return_index - 1]) / 10
+            self.assertAlmostEqual(outbound_grade, -return_grade, places=9)
+
+    def test_same_direction_repeated_loop_segment_is_canonicalized_once(self):
+        segment = np.arange(0.0, 101.0, 5.0)
+        first_lat, first_lon = self.projected_path(segment)
+        second_lat, second_lon = self.projected_path(segment + .1)
+        distances = np.arange(2 * len(segment), dtype=float) * 5
+        latitudes, longitudes = np.r_[first_lat, second_lat], np.r_[first_lon, second_lon]
+        raw = 70 + np.r_[segment, segment] * .01
+        heights = raw + np.r_[np.full(len(segment), 2.0), np.full(len(segment), -2.0)]
+        result, segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, latitudes, longitudes, raw, heights)
+        self.assertEqual(1, len(segments))
+        for left, right in zip(range(1, len(segment) - 1), range(len(segment) + 1, len(distances) - 1)):
+            self.assertAlmostEqual(result[left], result[right], places=9)
+
+    def test_shared_segment_with_different_sampling_density_is_matched(self):
+        first_x = np.arange(0.0, 101.0, 5.0)
+        second_x = np.arange(100.0, -1.0, -7.0) + .15
+        lat_a, lon_a = self.projected_path(first_x)
+        lat_b, lon_b = self.projected_path(second_x)
+        distances = np.r_[np.cumsum(np.r_[0, np.diff(first_x)]),
+                          200 + np.cumsum(np.r_[0, np.abs(np.diff(second_x))])]
+        latitudes, longitudes = np.r_[lat_a, lat_b], np.r_[lon_a, lon_b]
+        raw = 60 + np.r_[first_x, second_x] * .01
+        shifted = raw + np.r_[np.linspace(2, 0, len(first_x)), np.linspace(0, -2, len(second_x))]
+        result, segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, latitudes, longitudes, raw, shifted)
+        self.assertEqual(1, len(segments))
+        self.assertGreaterEqual(segments[0]['matchedSpanMeters'], 25)
+        self.assertEqual(0, segments[0]['maximumElevationDifferenceAfterMeters'])
+
+    def test_parallel_roads_and_crossings_are_not_deduplicated(self):
+        forward = np.arange(0.0, 101.0, 5.0)
+        parallel = np.arange(100.0, -1.0, -5.0)
+        lat_a, lon_a = self.projected_path(forward)
+        lat_b, lon_b = self.projected_path(parallel, lat=-45 + 5 / 111_195)
+        distances = np.r_[forward, 200 + np.arange(len(parallel)) * 5.0]
+        raw = np.r_[80 + forward * .01, 80 + (100 - np.arange(len(parallel)) * 5) * .01]
+        shifted = raw + np.r_[np.full(len(forward), 4.0), np.full(len(parallel), -4.0)]
+        _, segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, np.r_[lat_a, lat_b], np.r_[lon_a, lon_b], raw, shifted)
+        self.assertEqual([], segments)
+
+        close_lat, close_lon = self.projected_path(parallel, lat=-45 + 2 / 111_195)
+        _, close_parallel_segments = elevation.canonicalize_repeated_elevation_samples(
+            distances, np.r_[lat_a, close_lat], np.r_[lon_a, close_lon], raw, shifted)
+        self.assertEqual([], close_parallel_segments)
+
+        crossing_lat, crossing_lon = self.projected_path(np.zeros(21))
+        crossing_lat = np.linspace(-45.0005, -44.9995, 21)
+        _, crossing_segments = elevation.canonicalize_repeated_elevation_samples(
+            np.r_[np.arange(0, 101, 5), 200 + np.arange(0, 101, 5)],
+            np.r_[lat_a[:21], crossing_lat], np.r_[lon_a[:21], crossing_lon],
+            np.r_[np.full(42, 80.0)], np.r_[np.full(21, 82.0), np.full(21, 82.0)])
+        self.assertEqual([], crossing_segments)
+
+        bridge_heights = np.r_[np.full(21, 80.0), np.full(21, 88.0)]
+        _, bridge_segments = elevation.canonicalize_repeated_elevation_samples(
+            np.r_[np.arange(0, 101, 5), 200 + np.arange(0, 101, 5)],
+            np.r_[lat_a[:21], crossing_lat], np.r_[lon_a[:21], crossing_lon],
+            bridge_heights, bridge_heights)
+        self.assertEqual([], bridge_segments)
+
     def test_route_point_source_labels_follow_distance_not_point_index(self):
         sources = ["1m"] * 3 + ["8m"] * 5 + ["1m"] * 4
         labels = elevation.source_labels_at_distances([0, 20, 40, 55, 60], sources, 5, 60)

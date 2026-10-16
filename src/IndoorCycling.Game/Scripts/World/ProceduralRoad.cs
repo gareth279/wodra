@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Godot;
 
 public static class ProceduralRoad
 {
+    private static readonly ConditionalWeakTable<VisualRoute, bool[]> DuplicateSurfaceSegments = new();
     public const float WidthMeters = RoadRibbonMath.RoadWidthMeters;
     public const double NonAsphaltJoinExclusionMeters = 6;
 
@@ -20,8 +22,12 @@ public static class ProceduralRoad
         surface.Begin(Mesh.PrimitiveType.Triangles);
         var positions = route.Samples.Select(sample => sample.Position).ToArray();
         var quads = RoadRibbonMath.BuildQuads(positions, width, offset);
+        var duplicatedSegments = DuplicateSurfaceSegments.GetValue(route, _ =>
+            RepeatedRouteSurfacePolicy.FindDuplicateSegments(positions,
+                route.Samples.Select(sample => sample.DistanceMeters).ToArray()));
         for (var i = 0; i < quads.Count; i++)
         {
+            if (duplicatedSegments[i]) continue;
             var quad = quads[i];
             var up = Vector3.Up * height;
             AddQuad(surface, ToGodot(quad.StartLeft) + up, ToGodot(quad.EndLeft) + up,
