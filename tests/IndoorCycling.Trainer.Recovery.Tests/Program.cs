@@ -267,6 +267,13 @@ Check(parsedExtendedScan.IsExtended && parsedExtendedScan.PayloadLength == 8 &&
       parsedExtendedScan.Source == new AntFeCDeviceIdentity(0x1234, AntFeCProtocol.DeviceType, 1) &&
       parsedExtendedScan.RejectionReason is null,
     "ANT SDK extended broadcast frames from channelResponse identify FE-C source and page");
+var manufacturerFrame = new byte[] { 0, 0x34, 0x12, 17, 1, 80, 0x22, 0x01, 0xAA, 0xBB, 0, 0, 0 };
+var productFrame = new byte[] { 0, 0x34, 0x12, 17, 1, 81, 1, 0, 0x78, 0x56, 0, 0, 0 };
+var manufacturerInfo = AntFeCScanFrameParser.Parse(0x5D, manufacturerFrame);
+var productInfo = AntFeCScanFrameParser.Parse(0x5D, productFrame);
+Check(manufacturerInfo.ManufacturerId == 0x0122 && productInfo.ProductId == 0x5678 &&
+      new AntFeCDiscoveryCoordinator().Observe(0x5D, 0, manufacturerFrame).Outcome == "device_info_page",
+    "FE-C manufacturer and product info pages are decoded for labels without becoming trainer candidates on their own");
 var sdkFlagExtendedBroadcast = new byte[] { 0, 25, 0, 0, 0, 0, 0, 0, 0, 0x80, 0x78, 0x56, 0x91, 0x02 };
 var parsedFlagExtended = AntFeCScanFrameParser.Parse(0x4E, sdkFlagExtendedBroadcast);
 Check(parsedFlagExtended.IsExtended && parsedFlagExtended.PayloadLength == 8 &&
@@ -517,3 +524,23 @@ Check(antCandidates.Outcome == AntFeCDiscoveryOutcome.Choose && antCandidates.Ca
 Check(AntFeCDiscoveryPolicy.Select([new AntFeCDeviceIdentity(12, 17, 1)]).Selected?.DeviceNumber == 12 &&
       AntFeCDiscoveryPolicy.Select([]).Outcome == AntFeCDiscoveryOutcome.None,
     "ANT discovery auto-selects one FE-C trainer and rejects empty scans");
+var rememberedAnt = new AntFeCDeviceIdentity(44, 17, 1);
+var rememberedFirst = AntFeCDiscoveryPolicy.Select([
+    new AntFeCDeviceIdentity(22, 17, 2), rememberedAnt, new AntFeCDeviceIdentity(91, 120, 1)], rememberedAnt);
+Check(rememberedFirst.Outcome == AntFeCDiscoveryOutcome.Choose && rememberedFirst.Candidates.Count == 2 &&
+      rememberedFirst.Candidates[0] == rememberedAnt && rememberedFirst.Candidates[1].DisplayName.Contains("/17/", StringComparison.Ordinal),
+    "multi-device selection excludes non-FE-C peripherals, prefers a verified remembered identity, and labels its full ANT identity");
+Check(AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(true, isRecovery: false, cancelled: false) &&
+      !AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(true, isRecovery: true, cancelled: false) &&
+      !AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(true, isRecovery: false, cancelled: true) &&
+      !AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(false, isRecovery: false, cancelled: false),
+    "a stale saved target falls back to discovery only for a non-cancelled initial connection, never during pinned recovery");
+Check(AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(0, cancelled: false) &&
+      !AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(2, cancelled: false) &&
+      !AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(0, cancelled: true),
+    "multi-source scanning falls back to the proven normal receiver only when it found no eligible source and was not cancelled");
+Check(AntFeCInitialConnectionPolicy.CanPersistIdentity(rememberedAnt, rememberedAnt) &&
+      !AntFeCInitialConnectionPolicy.CanPersistIdentity(null, rememberedAnt) &&
+      !AntFeCInitialConnectionPolicy.CanPersistIdentity(new AntFeCDeviceIdentity(22, 17, 2), rememberedAnt) &&
+      !AntFeCInitialConnectionPolicy.CanPersistIdentity(new AntFeCDeviceIdentity(44, 120, 1), null),
+    "only a resolved eligible source matching its configured target can become the persisted ANT identity");

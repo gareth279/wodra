@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Threading;
@@ -42,6 +43,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Button? _diagnosticsButton;
 	private BleDiscoveredDevice[] _discovered = [];
 	private AntFeCDeviceIdentity[] _antDiscovered = [];
+	private readonly Dictionary<AntFeCDeviceIdentity, (ushort? ManufacturerId, ushort? ProductId)> _antDeviceInfo = [];
 	private BleDiscoveredDevice? _selectedTrainer;
 	private CancellationTokenSource? _attemptCancellation;
 	private Task? _attemptTask;
@@ -513,7 +515,7 @@ public partial class DeviceConnectionPanelController : Control
 		_attemptTask = StartDiscoveryAsync();
 	}
 
-	private async Task ConnectAntFeCAsync(long attemptId, CancellationToken cancellationToken, AntFeCDeviceIdentity? selectedDevice = null)
+	private async Task ConnectAntFeCAsync(long attemptId, CancellationToken cancellationToken, AntFeCDeviceIdentity? selectedDevice = null, bool forceFreshDiscovery = false)
 	{
 		_attemptUsingAnt = true;
 		_selectedTrainer = null;
@@ -522,15 +524,29 @@ public partial class DeviceConnectionPanelController : Control
 			if (_antDisconnectedHandler is not null) _antTrainerClient.Disconnected -= _antDisconnectedHandler;
 			await _antTrainerClient.DisconnectAsync();
 		}
-		if (selectedDevice is null && !GameBootstrap.Settings.Trainer.LastAntDeviceNumber.HasValue)
+		var rememberedNumber = GameBootstrap.Settings.Trainer.LastAntDeviceNumber;
+		if (selectedDevice is null && (!rememberedNumber.HasValue || forceFreshDiscovery))
 		{
+			_antDeviceInfo.Clear();
 			_overallStatusLabel!.Text = "Scanning nearby ANT+ FE-C trainers…";
 			_trainerNameLabel!.Text = "Searching nearby";
 			_protocolStatusLabel!.Text = "ANT+ FE-C · Scanning";
 			var trainerDataReceivedWithoutIdentity = false;
-			var discovery = AntFeCDiscoveryPolicy.Select(await AntFeCTrainerClient.DiscoverAsync(
+			var savedDeviceIdentity = GameBootstrap.Settings.Trainer is { LastAntDeviceNumber: { } savedNumber,
+				LastAntDeviceType: { } savedType, LastAntTransmissionType: { } savedTransmission }
+				? new AntFeCDeviceIdentity(savedNumber, savedType, savedTransmission) : (AntFeCDeviceIdentity?)null;
+			var discoveredDevices = await AntFeCTrainerClient.DiscoverAsync(
 				cancellationToken, diagnostic =>
 				{
+					if (diagnostic.Operation == "device_info_received" && diagnostic.DeviceNumber is { } number &&
+						diagnostic.DeviceType is { } type && diagnostic.TransmissionType is { } transmission)
+					{
+						var identity = new AntFeCDeviceIdentity(number, type, transmission);
+						var previous = _antDeviceInfo.GetValueOrDefault(identity);
+						_antDeviceInfo[identity] = (
+							diagnostic.ManufacturerId ?? previous.ManufacturerId,
+							diagnostic.ProductId ?? previous.ProductId);
+					}
 					if (diagnostic.Operation == "scan_window_completed" &&
 						diagnostic.Outcome == "trainer_data_received_identification_failed")
 						trainerDataReceivedWithoutIdentity = true;
@@ -541,7 +557,8 @@ public partial class DeviceConnectionPanelController : Control
 					var elapsedText = elapsed.ToString(@"m\:ss");
 					_overallStatusLabel!.Text = $"Searching for ANT+ FE-C trainers… {elapsedText} elapsed. Keep the trainer awake nearby.";
 					_trainerNameLabel!.Text = $"Searching · {elapsedText}";
-				}).CallDeferred()));
+				}).CallDeferred());
+			var discovery = AntFeCDiscoveryPolicy.Select(discoveredDevices, savedDeviceIdentity);
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.None)
 			{
@@ -563,11 +580,8 @@ public partial class DeviceConnectionPanelController : Control
 			{
 				_antDiscovered = discovery.Candidates.ToArray();
 				_trainerPicker!.Clear();
-				foreach (var device in _antDiscovered) _trainerPicker.AddItem(device.DisplayName);
-				var remembered = GameBootstrap.Settings.Trainer.LastAntDeviceNumber;
-				var preferredIndex = remembered.HasValue
-					? Array.FindIndex(_antDiscovered, item => item.DeviceNumber == remembered.Value) : -1;
-				_trainerPicker.Select(Math.Max(0, preferredIndex));
+				foreach (var device in _antDiscovered) _trainerPicker.AddItem(AntDeviceDisplayName(device));
+				_trainerPicker.Select(0);
 				_trainerPicker.Show();
 				_awaitingAntDeviceChoice = true;
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Idle);
@@ -604,17 +618,52 @@ public partial class DeviceConnectionPanelController : Control
 		_protocolStatusLabel!.Text = "ANT+ FE-C · Scanning";
 		_connectButton!.Text = "Searching…";
 		SetPhase(attemptId, TrainerConnectionPhase.Connecting);
-		await client.ConnectAsync(cancellationToken);
+		try
+		{
+			await client.ConnectAsync(cancellationToken);
+		}
+		catch (TimeoutException) when (selectedDevice is null && !forceFreshDiscovery &&
+			AntFeCInitialConnectionPolicy.ShouldFallbackToDiscovery(rememberedNumber.HasValue, isRecovery: false,
+				cancelled: cancellationToken.IsCancellationRequested))
+		{
+			GameLogger.Log("ant_initial_target_fallback", new
+			{
+				attemptId,
+				savedTarget = new { deviceNumber = rememberedNumber, deviceType = GameBootstrap.Settings.Trainer.LastAntDeviceType,
+					transmissionType = GameBootstrap.Settings.Trainer.LastAntTransmissionType },
+				outcome = "remembered_target_timed_out_starting_fresh_discovery"
+			});
+			if (_antDisconnectedHandler is not null) client.Disconnected -= _antDisconnectedHandler;
+			await client.DisconnectAsync(CancellationToken.None);
+			if (ReferenceEquals(_antTrainerClient, client)) _antTrainerClient = null;
+			await ConnectAntFeCAsync(attemptId, cancellationToken, selectedDevice: null, forceFreshDiscovery: true);
+			return;
+		}
 		if (!_connectionState.IsCurrent(attemptId))
 		{
 			await client.DisconnectAsync();
 			return;
 		}
-		GameBootstrap.Settings.Trainer.LastAntDeviceNumber = client.ConnectedDeviceNumber;
-		GameBootstrap.Settings.Trainer.LastAntDeviceType = client.ConnectedDeviceType;
-		GameBootstrap.Settings.Trainer.LastAntTransmissionType = client.ConnectedTransmissionType;
-		try { GameBootstrap.Settings.Save(); }
-		catch (Exception ex) { GameLogger.Log("trainer_preference_save_failed", new { message = ex.Message }); }
+		var configuredTarget = client.ConfiguredDeviceIdentity;
+		if (AntFeCInitialConnectionPolicy.CanPersistIdentity(client.VerifiedDeviceIdentity, configuredTarget))
+		{
+			var verified = client.VerifiedDeviceIdentity!.Value;
+			GameBootstrap.Settings.Trainer.LastAntDeviceNumber = verified.DeviceNumber;
+			GameBootstrap.Settings.Trainer.LastAntDeviceType = verified.DeviceType;
+			GameBootstrap.Settings.Trainer.LastAntTransmissionType = verified.TransmissionType;
+			try { GameBootstrap.Settings.Save(); }
+			catch (Exception ex) { GameLogger.Log("trainer_preference_save_failed", new { message = ex.Message }); }
+			GameLogger.Log("ant_trainer_identity_persisted", new { source = selectedDevice is null ? "resolved_channel_or_extended_source" : "verified_discovery_candidate",
+				deviceNumber = verified.DeviceNumber, deviceType = verified.DeviceType, transmissionType = verified.TransmissionType });
+		}
+		else
+		{
+			GameLogger.Log("ant_trainer_identity_not_persisted", new
+			{
+				source = client.VerifiedDeviceIdentity is null ? "no_verified_source_identity" : "verified_identity_did_not_match_configured_target",
+				configuredTarget = configuredTarget is { } target ? new { target.DeviceNumber, target.DeviceType, target.TransmissionType } : null
+			});
+		}
 		GameBootstrap.ConfigureRealTrainerMode(client);
 		_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Ready);
 		ShowReadyUi();
@@ -738,6 +787,7 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton.Disabled = true;
 		_disconnectButton!.Disabled = false;
 		_changeTrainerButton!.Disabled = false;
+		if (_antTrainerClient is not null) _changeTrainerButton.Text = "Find another trainer";
 		_protocolPreferenceOption!.Disabled = true;
 		_continueButton!.Disabled = _antTrainerClient is { CanStartControlledRide: false };
 		if (_antTrainerClient is { CanStartControlledRide: false })
@@ -1053,15 +1103,17 @@ public partial class DeviceConnectionPanelController : Control
 			if (ReferenceEquals(GameBootstrap.TrainerClient, _realTrainerClient)) GameBootstrap.ResetSession();
 			_realTrainerClient = null;
 		}
+		if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC)
+		{
+			GameBootstrap.Settings.Trainer.LastAntDeviceNumber = null;
+			GameBootstrap.Settings.Trainer.LastAntDeviceType = null;
+			GameBootstrap.Settings.Trainer.LastAntTransmissionType = null;
+			try { GameBootstrap.Settings.Save(); }
+			catch (Exception ex) { GameLogger.Log("trainer_preference_save_failed", new { message = ex.Message }); }
+			GameLogger.Log("ant_remembered_identity_cleared", new { reason = "rider_requested_find_another_trainer" });
+		}
 		if (_antTrainerClient is { } antClient)
 		{
-			if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC)
-			{
-				GameBootstrap.Settings.Trainer.LastAntDeviceNumber = null;
-				GameBootstrap.Settings.Trainer.LastAntDeviceType = null;
-				GameBootstrap.Settings.Trainer.LastAntTransmissionType = null;
-				GameBootstrap.Settings.Save();
-			}
 			if (_antDisconnectedHandler is not null) antClient.Disconnected -= _antDisconnectedHandler;
 			await antClient.DisconnectAsync();
 			if (ReferenceEquals(GameBootstrap.TrainerClient, antClient)) GameBootstrap.ResetSession();
@@ -1189,4 +1241,13 @@ public partial class DeviceConnectionPanelController : Control
 
 	private bool SetPhase(long attemptId, TrainerConnectionPhase phase) => _connectionState.SetPhase(attemptId, phase);
 	private static string DisplayName(BleDiscoveredDevice device) => string.IsNullOrWhiteSpace(device.Name) ? "Bluetooth trainer" : device.Name;
+
+	private string AntDeviceDisplayName(AntFeCDeviceIdentity device)
+	{
+		if (!_antDeviceInfo.TryGetValue(device, out var info)) return device.DisplayName;
+		var details = new System.Collections.Generic.List<string>();
+		if (info.ManufacturerId is > 0 and < ushort.MaxValue) details.Add($"manufacturer {info.ManufacturerId}");
+		if (info.ProductId is > 0 and < ushort.MaxValue) details.Add($"product {info.ProductId}");
+		return details.Count == 0 ? device.DisplayName : $"{string.Join(", ", details)} · {device.DisplayName}";
+	}
 }

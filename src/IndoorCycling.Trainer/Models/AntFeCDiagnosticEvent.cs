@@ -23,4 +23,6 @@ public sealed record AntFeCDiagnosticEvent(
     int? PayloadLength = null,
     string? RejectionReason = null,
     int? Count = null,
-    string? AttemptId = null);
+    string? AttemptId = null,
+    ushort? ManufacturerId = null,
+    ushort? ProductId = null);

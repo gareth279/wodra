@@ -4,7 +4,7 @@ namespace IndoorCycling.Trainer.Models;
 
 public readonly record struct AntFeCDeviceIdentity(ushort DeviceNumber, byte DeviceType, byte TransmissionType)
 {
-    public string DisplayName => $"ANT+ FE-C trainer {DeviceNumber}";
+    public string DisplayName => $"ANT+ FE-C · {DeviceNumber}/{DeviceType}/{TransmissionType}";
 }
 
 /// <summary>Prevents queued ANT commands and callbacks from crossing reconnect generations.</summary>
@@ -19,7 +19,8 @@ public readonly record struct AntFeCReceiveChannelSettings(ushort DeviceNumber, 
 
 /// <summary>Decoded ANT PC SDK receive callback frame metadata, with no raw payload retention.</summary>
 public readonly record struct AntReceiveFrame(byte MessageId, bool IsExtended, int PayloadLength,
-    byte? DataPage, AntFeCDeviceIdentity? Source, string? RejectionReason);
+    byte? DataPage, AntFeCDeviceIdentity? Source, string? RejectionReason,
+    ushort? ManufacturerId = null, ushort? ProductId = null);
 
 /// <summary>Parses the messageContents layout used by ANT PC SDK ANT_Response.</summary>
 public static class AntFeCScanFrameParser
@@ -52,14 +53,20 @@ public static class AntFeCScanFrameParser
         var page = messageContents[payloadOffset];
         var payloadLength = Math.Min(8, messageContents.Length - payloadOffset);
         if (payloadLength != 8) return new(messageId, isExtended, payloadLength, page, source, "payload_length_not_8");
-        if (page is not (AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities))
+        if (page is not (AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities or
+            AntFeCProtocol.PageManufacturerInfo or AntFeCProtocol.PageProductInfo))
             return new(messageId, isExtended, payloadLength, page, source, "unsupported_page");
+        ushort? manufacturerId = page == AntFeCProtocol.PageManufacturerInfo
+            ? (ushort)(messageContents[payloadOffset + 1] | messageContents[payloadOffset + 2] << 8) : null;
+        ushort? productId = page == AntFeCProtocol.PageProductInfo
+            ? (ushort)(messageContents[payloadOffset + 3] | messageContents[payloadOffset + 4] << 8) : null;
         source ??= channelIdentity;
         if (source is not null && source.Value.DeviceType != AntFeCProtocol.DeviceType)
             return new(messageId, isExtended, payloadLength, page, source, "device_type_mismatch");
         if (source is { DeviceNumber: 0 })
             return new(messageId, isExtended, payloadLength, page, source, "device_number_zero");
-        return new(messageId, isExtended, payloadLength, page, source, source is null ? "source_id_missing" : null);
+        return new(messageId, isExtended, payloadLength, page, source, source is null ? "source_id_missing" : null,
+            manufacturerId, productId);
     }
 
     /// <summary>Reads the source identity reported by ANT for a wildcard receive channel.</summary>
@@ -161,6 +168,8 @@ public sealed class AntFeCDiscoveryCoordinator(byte expectedChannel = 0)
             }
 
             var frame = AntFeCScanFrameParser.Parse(messageId, messageContents, _identity);
+            if (frame.RejectionReason is null && frame.DataPage is AntFeCProtocol.PageManufacturerInfo or AntFeCProtocol.PageProductInfo)
+                return new("device_info_page", frame.Source, false, false);
             if (frame.RejectionReason == "source_id_missing" && frame.DataPage is { } page &&
                 page is AntFeCProtocol.PageGeneral or AntFeCProtocol.PageTrainer or AntFeCProtocol.PageCapabilities)
             {
@@ -244,11 +253,14 @@ public sealed record AntFeCDiscoverySelection(AntFeCDiscoveryOutcome Outcome,
 
 public static class AntFeCDiscoveryPolicy
 {
-    public static AntFeCDiscoverySelection Select(IEnumerable<AntFeCDeviceIdentity> discovered)
+    public static AntFeCDiscoverySelection Select(IEnumerable<AntFeCDeviceIdentity> discovered,
+        AntFeCDeviceIdentity? preferredIdentity = null)
     {
         ArgumentNullException.ThrowIfNull(discovered);
         var candidates = discovered.Where(device => device.DeviceNumber != 0 && device.DeviceType == AntFeCProtocol.DeviceType)
-            .Distinct().OrderBy(device => device.DeviceNumber).ThenBy(device => device.TransmissionType).ToArray();
+            .Distinct()
+            .OrderBy(device => preferredIdentity.HasValue && device == preferredIdentity.Value ? 0 : 1)
+            .ThenBy(device => device.DeviceNumber).ThenBy(device => device.TransmissionType).ToArray();
         return candidates.Length switch
         {
             0 => new(AntFeCDiscoveryOutcome.None, candidates, null),
@@ -256,6 +268,20 @@ public static class AntFeCDiscoveryPolicy
             _ => new(AntFeCDiscoveryOutcome.Choose, candidates, null)
         };
     }
+}
+
+/// <summary>Initial connections may try a saved FE-C identity, but recovery stays pinned to it.</summary>
+public static class AntFeCInitialConnectionPolicy
+{
+    public static bool ShouldFallbackToDiscovery(bool hasRememberedIdentity, bool isRecovery, bool cancelled) =>
+        hasRememberedIdentity && !isRecovery && !cancelled;
+
+    public static bool ShouldFallbackFromContinuousScan(int eligibleCandidateCount, bool cancelled) =>
+        eligibleCandidateCount == 0 && !cancelled;
+
+    public static bool CanPersistIdentity(AntFeCDeviceIdentity? resolvedIdentity, AntFeCDeviceIdentity? configuredTarget) =>
+        resolvedIdentity is { DeviceNumber: > 0, DeviceType: AntFeCProtocol.DeviceType } identity &&
+        (configuredTarget is null || configuredTarget.Value == identity);
 }
 
 /// <summary>FE-C page layouts and conversions from ANT+ Fitness Equipment Profile revision 5.</summary>
@@ -269,6 +295,8 @@ public static class AntFeCProtocol
     public const byte PageCapabilities = 54;
     public const byte PageCommandStatus = 71;
     public const byte PageRequest = 70;
+    public const byte PageManufacturerInfo = 80;
+    public const byte PageProductInfo = 81;
     public const int MaximumCapabilityRequestAttempts = 3;
     public static AntFeCReceiveChannelSettings DiscoveryChannel => new(
         DeviceNumber: 0, PairingEnabled: false, DeviceType: DeviceType, TransmissionType: 0,

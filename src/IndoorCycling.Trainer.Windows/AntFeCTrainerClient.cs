@@ -35,6 +35,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private bool _pageRequestSent;
     private int _capabilityRequestAttempts;
     private bool _userConfigSent;
+    private int _identityRequestSent;
     private bool _isReady;
     private readonly Action<AntFeCDiagnosticEvent>? _diagnostic;
     private readonly HashSet<byte> _reportedPages = [];
@@ -50,6 +51,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public ushort? ConnectedDeviceNumber { get; private set; }
     public byte? ConnectedDeviceType { get; private set; }
     public byte? ConnectedTransmissionType { get; private set; }
+    public AntFeCDeviceIdentity? ConfiguredDeviceIdentity => _configuredDeviceIdentity;
+    /// <summary>Identity observed in discovery, an extended source ID, or a channel-ID reply.</summary>
+    public AntFeCDeviceIdentity? VerifiedDeviceIdentity { get; private set; }
     public byte? CapabilityFlags => _capabilities;
     public bool CanStartControlledRide => _state.SimulationSupport != AntFeCCapabilitySupport.Unsupported;
     public string CapabilitiesDescription
@@ -80,6 +84,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     {
         _settings = settings;
         _targetDevice = targetDevice;
+        VerifiedDeviceIdentity = targetDevice;
         _diagnostic = diagnostic;
     }
 
@@ -87,6 +92,33 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverAsync(
         CancellationToken cancellationToken = default, Action<AntFeCDiagnosticEvent>? diagnostic = null,
         Action<TimeSpan>? progress = null)
+    {
+        IReadOnlyList<AntFeCDeviceIdentity> scanCandidates;
+        try
+        {
+            scanCandidates = await DiscoverPassAsync(continuousScan: true, cancellationToken, diagnostic, progress)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new("fe_c_discovery", "continuous_scan_fallback", 0,
+                Outcome: "scan_mode_unavailable_using_proven_wildcard_receive", ErrorType: ex.GetType().Name,
+                ErrorMessage: ex.Message));
+            return await DiscoverPassAsync(continuousScan: false, cancellationToken, diagnostic, progress)
+                .ConfigureAwait(false);
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!AntFeCInitialConnectionPolicy.ShouldFallbackFromContinuousScan(scanCandidates.Count, cancellationToken.IsCancellationRequested))
+            return scanCandidates;
+        Emit(diagnostic, new("fe_c_discovery", "continuous_scan_fallback", 0,
+            Outcome: "no_eligible_source_seen_using_proven_wildcard_receive"));
+        return await DiscoverPassAsync(continuousScan: false, cancellationToken, diagnostic, progress)
+            .ConfigureAwait(false);
+    }
+
+    private static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverPassAsync(bool continuousScan,
+        CancellationToken cancellationToken, Action<AntFeCDiagnosticEvent>? diagnostic, Action<TimeSpan>? progress)
     {
         var discoveryTimer = Stopwatch.StartNew();
         Emit(diagnostic, new("user_configuration", "load_network_key", 0, Outcome: "started"));
@@ -110,17 +142,26 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var discoveryChannel = AntFeCProtocol.DiscoveryChannel;
             RunCommand(diagnostic, "channel_configuration", "ASSIGN_CHANNEL_0x42",
                 () => channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000));
-            // ANT_Channel.setChannelID sets bit 7 of device type when pairingEnabled is true.
-            // ANTware's proven wildcard receive config is 0/17/0 with that bit clear.
+            // ANT's RX scan channel must be profile-agnostic and uses scan mode rather than
+            // a wildcard FE-C channel. The normal receive path remains the proven fallback.
             RunCommand(diagnostic, "channel_configuration", "CHANNEL_ID_0x51",
-                () => channel.setChannelID(discoveryChannel.DeviceNumber, discoveryChannel.PairingEnabled,
-                    discoveryChannel.DeviceType, discoveryChannel.TransmissionType, 1000));
-            RunCommand(diagnostic, "channel_configuration", "CHANNEL_MESG_PERIOD_0x43",
-                () => channel.setChannelPeriod(discoveryChannel.Period, 1000));
+                () => continuousScan
+                    ? channel.setChannelID(0, false, 0, 0, 1000)
+                    : channel.setChannelID(discoveryChannel.DeviceNumber, discoveryChannel.PairingEnabled,
+                        discoveryChannel.DeviceType, discoveryChannel.TransmissionType, 1000));
+            if (!continuousScan)
+            {
+                RunCommand(diagnostic, "channel_configuration", "CHANNEL_MESG_PERIOD_0x43",
+                    () => channel.setChannelPeriod(discoveryChannel.Period, 1000));
+            }
             RunCommand(diagnostic, "channel_configuration", "CHANNEL_RADIO_FREQ_0x45",
                 () => channel.setChannelFreq(discoveryChannel.RadioFrequency, 1000));
+            if (continuousScan)
+                RunCommand(diagnostic, "extended_source_id", "RX_EXT_MESGS_ENABLE_0x66",
+                    () => device.enableRxExtendedMessages(true, 1000));
             Emit(diagnostic, new("channel_configuration", "effective_settings", discoveryTimer.Elapsed.TotalMilliseconds,
-                Outcome: $"normal_slave_receive;network={NetworkNumber};device_number={discoveryChannel.DeviceNumber};pairing=off;device_type={discoveryChannel.DeviceType};transmission_type={discoveryChannel.TransmissionType};period={discoveryChannel.Period};frequency={discoveryChannel.RadioFrequency}"));
+                Outcome: continuousScan ? "profile_agnostic_rx_scan;network=0;frequency=57" :
+                    $"normal_slave_receive;network={NetworkNumber};device_number={discoveryChannel.DeviceNumber};pairing=off;device_type={discoveryChannel.DeviceType};transmission_type={discoveryChannel.TransmissionType};period={discoveryChannel.Period};frequency={discoveryChannel.RadioFrequency}"));
 
             var gate = new object();
             var coordinator = new AntFeCDiscoveryCoordinator();
@@ -190,7 +231,20 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                             TransmissionType: identity?.TransmissionType, AttemptId: scanAttemptId));
                         return;
                     }
-                    if (observation.IdentityRequestNeeded) StartIdentityRequestLoop();
+                    if (observation.Outcome == "device_info_page" && observation.Identity is { } infoIdentity)
+                    {
+                        var infoFrame = AntFeCScanFrameParser.Parse(response.responseID, response.messageContents,
+                            coordinator.ResolvedIdentity);
+                        Emit(diagnostic, new("fe_c_discovery", "device_info_received",
+                            discoveryTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                            DataPage: infoFrame.DataPage, Outcome: "manufacturer_product_metadata",
+                            CallbackSource: callbackSource, DeviceNumber: infoIdentity.DeviceNumber,
+                            DeviceType: infoIdentity.DeviceType, TransmissionType: infoIdentity.TransmissionType,
+                            ManufacturerId: infoFrame.ManufacturerId, ProductId: infoFrame.ProductId,
+                            AttemptId: scanAttemptId));
+                        return;
+                    }
+                    if (observation.IdentityRequestNeeded && !continuousScan) StartIdentityRequestLoop();
                     if (observation.Outcome is "trainer_page_pending_identity" or "trainer_page_identified")
                     {
                         var pendingFrame = AntFeCScanFrameParser.Parse(response.responseID, response.messageContents,
@@ -244,8 +298,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             void OnScanChannelResponse(ANT_Response response) => ObserveScanResponse(response, "channelResponse");
             void OnScanDeviceResponse(ANT_Response response)
             {
-                // ANT PC SDK 3.5 routes CHANNEL_ID (0x51) to deviceResponse, not channelResponse.
-                if (response.responseID == (byte)ANT_ReferenceLibrary.ANTMessageID.CHANNEL_ID_0x51)
+                // ANT PC SDK routes CHANNEL_ID (0x51) to deviceResponse. Scan adapters may
+                // also route broadcast frames here; accept both callbacks and dedupe identities.
+                if (response.responseID == (byte)ANT_ReferenceLibrary.ANTMessageID.CHANNEL_ID_0x51 || continuousScan)
                     ObserveScanResponse(response, "deviceResponse");
             }
 
@@ -254,7 +309,11 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var opened = false;
             try
             {
-                RunCommand(diagnostic, "fe_c_discovery", "OPEN_CHANNEL_0x4B", () => channel.openChannel(1000));
+                if (continuousScan)
+                {
+                    RunCommand(diagnostic, "fe_c_discovery", "OPEN_RX_SCAN_0x5B", () => device.openRxScanMode(1000));
+                }
+                else RunCommand(diagnostic, "fe_c_discovery", "OPEN_CHANNEL_0x4B", () => channel.openChannel(1000));
                 opened = true;
                 Emit(diagnostic, new("fe_c_discovery", "scan_window_started", discoveryTimer.Elapsed.TotalMilliseconds,
                     Outcome: "wildcard_receive_listening", AttemptId: scanAttemptId));
@@ -308,7 +367,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             }
             var result = coordinator.Candidates.ToArray();
             Emit(diagnostic, new("fe_c_discovery", "scan_window_completed", discoveryTimer.Elapsed.TotalMilliseconds,
-                Outcome: result.Length > 0 ? "trainer_found" : coordinator.HasTrainerDataReceived
+                Outcome: result.Length > 0 ? continuousScan ? "trainer_found_continuous_scan" : "trainer_found" : coordinator.HasTrainerDataReceived
                     ? "trainer_data_received_identification_failed" : "no_trainer_pages",
                 TrainerCount: result.Length, AttemptId: scanAttemptId));
             return result;
@@ -337,6 +396,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         _state.Reset();
         _capabilityResponses = new(expectedChannel: 0, attemptId: connectionAttemptId);
         _pageRequestSent = false;
+        _identityRequestSent = 0;
         _capabilityRequestAttempts = 0;
         _configuredDeviceIdentity = null;
         _reportedPages.Clear();
@@ -384,6 +444,13 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             var targetTransmission = knownTransmission ?? (byte)0;
             _configuredDeviceIdentity = _targetDevice ?? (knownNumber.HasValue
                 ? new AntFeCDeviceIdentity(targetNumber, targetType, targetTransmission) : null);
+            Emit(_diagnostic, new("channel_configuration", "effective_identity", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: knownNumber.HasValue ? "saved_or_selected_exact_target" : "wildcard_pairing_search",
+                DeviceNumber: knownNumber, DeviceType: targetType, TransmissionType: targetTransmission));
+            Emit(_diagnostic, new("trainer_identification", "identity_provenance", _connectionTimer.Elapsed.TotalMilliseconds,
+                Outcome: _targetDevice is not null ? "eligible_identity_from_fresh_discovery" :
+                    knownNumber.HasValue ? "unverified_saved_target_until_source_response" : "wildcard_target_unresolved" ,
+                DeviceNumber: knownNumber, DeviceType: targetType, TransmissionType: targetTransmission));
             RunCommand(_diagnostic, "channel_configuration", "ASSIGN_CHANNEL_0x42",
                 () => channel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, NetworkNumber, 1000));
             RunCommand(_diagnostic, "channel_configuration", "CHANNEL_ID_0x51",
@@ -571,9 +638,21 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             if (response.isExtended())
             {
                 var id = response.getDeviceIDfromExt();
+                var sourceIdentity = new AntFeCDeviceIdentity(id.deviceNumber, id.deviceTypeID, id.transmissionTypeID);
+                if (id.deviceTypeID != AntFeCProtocol.DeviceType ||
+                    _configuredDeviceIdentity is { } expectedSource && expectedSource != sourceIdentity)
+                {
+                    Emit(_diagnostic, new("trainer_identification", "source_identity_rejected",
+                        _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                        Outcome: id.deviceTypeID != AntFeCProtocol.DeviceType ? "ineligible_device_type" : "source_did_not_match_configured_target",
+                        CallbackSource: "extended_source_id", DeviceNumber: id.deviceNumber,
+                        DeviceType: id.deviceTypeID, TransmissionType: id.transmissionTypeID));
+                    return;
+                }
                 ConnectedDeviceNumber = id.deviceNumber;
                 ConnectedDeviceType = id.deviceTypeID;
                 ConnectedTransmissionType = id.transmissionTypeID;
+                if (id.deviceNumber > 0) VerifiedDeviceIdentity = sourceIdentity;
             }
             else if (_configuredDeviceIdentity is { } configuredIdentity)
             {
@@ -583,6 +662,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 ConnectedTransmissionType = configuredIdentity.TransmissionType;
             }
             IsConnected = true;
+            if (_configuredDeviceIdentity is not null && VerifiedDeviceIdentity is null &&
+                Interlocked.Exchange(ref _identityRequestSent, 1) == 0)
+                RequestChannelIdentity(response.antChannel, connectionAttemptId);
             var now = new DateTimeOffset(response.timeReceived.ToUniversalTime());
             lock (_gate)
             {
@@ -682,6 +764,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             ConnectedDeviceNumber = identity.Value.DeviceNumber;
             ConnectedDeviceType = identity.Value.DeviceType;
             ConnectedTransmissionType = identity.Value.TransmissionType;
+            VerifiedDeviceIdentity = identity.Value;
             Emit(_diagnostic, new("trainer_identification", "channel_id_received",
                 _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
                 Outcome: "identified", CallbackSource: "deviceResponse",
@@ -695,6 +778,30 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 Outcome: "callback_exception", CallbackSource: "deviceResponse",
                 ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
         }
+    }
+
+    private void RequestChannelIdentity(byte channelNumber, long connectionAttemptId)
+    {
+        var device = _session?.Device;
+        if (device is null) return;
+        _ = Task.Run(() =>
+        {
+            if (!AntFeCConnectionAttemptPolicy.IsCurrent(connectionAttemptId, Volatile.Read(ref _connectionAttemptId))) return;
+            try
+            {
+                device.requestMessage(channelNumber, ANT_ReferenceLibrary.RequestMessageID.CHANNEL_ID_0x51);
+                Emit(_diagnostic, new("trainer_identification", "channel_id_request_sent",
+                    _connectionTimer.Elapsed.TotalMilliseconds, CommandId: "REQUEST_MESSAGE_0x4D",
+                    ResponseId: 0x51, Outcome: "awaiting_identity_verification", CallbackSource: "deviceResponse"));
+            }
+            catch (Exception ex)
+            {
+                Emit(_diagnostic, new("trainer_identification", "channel_id_request_failed",
+                    _connectionTimer.Elapsed.TotalMilliseconds, CommandId: "REQUEST_MESSAGE_0x4D",
+                    ResponseId: 0x51, Outcome: "identity_remains_unverified", ErrorType: ex.GetType().Name,
+                    ErrorMessage: ex.Message));
+            }
+        });
     }
 
     private void MarkDisconnected()
