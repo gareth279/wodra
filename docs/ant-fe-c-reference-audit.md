@@ -1,0 +1,35 @@
+# ANT+ FE-C reference audit for #65
+
+Audit date: 2026-10-16. Wodra baseline: `a10d11af5398708f87a33c204bde78b2bbcf7be8` (alpha.24). This is a protocol/source audit; source inspection and synthetic regression tests do not establish live Flux 2 compatibility.
+
+## Evidence and cause
+
+The supplied 14:07 and 14:08 sessions report `trainer_found`, resolve a FE-C identity, receive pages 16 and 25, and send three page-70 requests for page 54. Each ANT acknowledged-data send returns `Pass`; no page 54 is logged, and readiness expires. This confirms discovery and basic FE-C telemetry passed in those sessions. It does not show that the trainer accepted the requested page, and transport `Pass` is only the acknowledged transfer result.
+
+Wodra's page builder at the baseline encoded `[46, FF, 01, 01, FF, FF, 36, 01]` (hex). Common Data Pages 3.1 section 6.2 defines bytes 1–2 as an invalid slave serial for command type `01`, bytes 3–4 as invalid descriptors when no subfield is requested, and byte 5 as the response count. Wodra therefore addressed serial `01FF`, set descriptor 1 to `01`, and requested 127 response transmissions (`FF`) instead of one. The valid one-broadcast-response request is `[46, FF, FF, FF, FF, 01, 36, 01]`. This concrete profile violation is consistent with an ANT transport acknowledgement followed by no capabilities response and is corrected by `AntFeCProtocol.BuildPageRequest`.
+
+Page 54 decoding now validates the page number, reserved bytes, and reserved capability bits before the client can count it toward readiness. Supported mode bits remain the profile's bits 0 (basic resistance), 1 (target power), and 2 (simulation). Readiness still requires valid page 54 plus telemetry pages 16 and 25. Tests cover the exact independently specified request vectors for capabilities and command status, transport acknowledgement without a response, successful response decoding/readiness, and malformed pages.
+
+The Wodra logs report identity 100/17/5 and receipt of pages 80 and 81, but log only the page numbers, not manufacturer/product values. The supplied `Device0.txt` ANTware capture reports identity 4206/17/5 and ordinary FE-C pages 16 and 25; it does not provide manufacturer/product pages. Device number alone does not identify a product, so these captures cannot distinguish a second trainer or simulator from a changed transmitter identity. The task named an earlier `Device0(1).txt`; that exact file was absent, and `Device0.txt` is the only ANTware capture available here.
+
+## Reference dependency chain and behavior
+
+Reviewed immutable source commits:
+
+- [`incyclist/devices` `fc33350859f9b4089548c546e3b862a2df668e1f`](https://github.com/incyclist/devices/tree/fc33350859f9b4089548c546e3b862a2df668e1f), package `incyclist-devices` 3.0.42, MIT.
+- [`incyclist/ant-plus` `a77eb3b57d361b78972f26057895d5c531b0b8d4`](https://github.com/incyclist/ant-plus/tree/a77eb3b57d361b78972f26057895d5c531b0b8d4), package `incyclist-ant-plus` 0.3.7, MIT.
+- `devices/package.json` depends on `incyclist-ant-plus` `^0.3.7`; the FE adapter imports `FitnessEquipmentSensor` from that dependency.
+
+| Area | Wodra at alpha.24 | Incyclist source | Assessment |
+|---|---|---|---|
+| USB/init/network | ANT PC SDK `ANT_Device`; explicitly loads user-saved key and sets network key per device session. | `ant-plus/src/ant-device.ts` resets the ANT server, requests capabilities, then sends its default `Messages.setNetworkKey()`; `antserver/Server/antserver.cpp` defines `USER_NETWORK_KEY`. | Both configure the ANT+ network. Incyclist's server source embeds the network key; this is not a dependency that removes the key requirement. Wodra keeps its accepted user configuration. |
+| Discovery/configuration | Wildcard FE-C slave receive, pairing disabled, period 8192/frequency 57; receives channel identity, then opens a device-specific channel. | `devices/src/antv2/fe/adapter.ts` uses `FitnessEquipmentSensor`; `ant-plus/src/sensors/fitness-equipment-sensors.ts` configures receive, type 17, transmission 0, timeout-never, period 8192, frequency 57. | Both use the FE profile/channel timing. Wodra's two-stage identity resolution is explicit; Incyclist tracks source IDs from extended receive fields. |
+| Callback and pages | SDK channel response parses pages 16/25/54 and command status; readiness waits for 16, 25, and 54. | `fitness-equipment-sensors.ts:onMessage` filters source channel/type and decodes ordinary broadcast/acknowledged/burst pages; page 54, page 55 and page 71 state handling are marked unsupported in the sensor state. | Reference sensor code does not provide capability/status decoding. Higher-level FE adapter advertises Control and starts when sensor data is available; it does not establish capability-page reception as part of ready. This permissive behavior is not evidence that FE-C controllers may ignore required profile handling. |
+| Initial control | Wodra sends user config only before simulation control, sends page 70 for page 71 after control, and requires a matching successful command-status page before each control completes. | FE adapter `initControl` sends user configuration and a mode's initial control page; `sendUpdate` serializes track resistance/target power. It treats acknowledged-send completion as the control result and does not decode page 71. | Wodra's status check is stronger and stays in place. Its status-page request shared the malformed page-70 builder and is corrected by the same fix. |
+| Reconnect/cancel/cleanup | Per-session disposal and bounded reconnect remain in Wodra. | FE adapter supports pause/restart/reconnect; ANT sensor waits while restarting and serializes channel message sends. | No reference-source difference explains the missing page 54. Do not port TypeScript transport code into the .NET ANT PC SDK integration. |
+
+Source links: [FE adapter](https://github.com/incyclist/devices/blob/fc33350859f9b4089548c546e3b862a2df668e1f/src/antv2/fe/adapter.ts#L244-L304), [ANT FE sensor](https://github.com/incyclist/ant-plus/blob/a77eb3b57d361b78972f26057895d5c531b0b8d4/src/sensors/fitness-equipment-sensors.ts#L80-L165), [ANT initialization](https://github.com/incyclist/ant-plus/blob/a77eb3b57d361b78972f26057895d5c531b0b8d4/src/ant-device.ts#L280-L295), [server key configuration location](https://github.com/incyclist/ant-plus/blob/a77eb3b57d361b78972f26057895d5c531b0b8d4/antserver/Server/antserver.cpp#L41-L42). No Incyclist code was copied; no additional attribution dependency was introduced.
+
+## Verification boundary
+
+The provided logs establish enumeration/open, network/channel setup, FE-C discovery, identity resolution, pages 16/25, and successful ANT transport acknowledgements for outgoing page-70 packets. They do not establish page 54, readiness, command-status acknowledgement, resistance change, disconnect/reconnect, or power-cycle recovery. No live hardware test was performed for this correction. A rider retest must confirm the trainer identity using manufacturer/product information, valid capabilities/readiness, telemetry, resistance response, and recovery after power cycling.

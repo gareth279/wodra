@@ -186,6 +186,22 @@ public sealed class AntFeCDiscoveryCoordinator(byte expectedChannel = 0)
 public readonly record struct AntFeCDiscoveryObservation(string Outcome, AntFeCDeviceIdentity? Identity,
     bool TrainerIdentified, bool IdentityRequestNeeded);
 
+/// <summary>Accepts FE-C capability pages only from the active attempt and configured receive channel.</summary>
+public sealed class AntFeCCapabilityResponseTracker(byte expectedChannel, long attemptId)
+{
+    public byte? CapabilityFlags { get; private set; }
+    public bool HasCapabilities => CapabilityFlags.HasValue;
+
+    public string Observe(long responseAttemptId, byte channel, ReadOnlySpan<byte> page)
+    {
+        if (responseAttemptId != attemptId) return "stale_attempt";
+        if (channel != expectedChannel) return "wrong_channel";
+        if (!AntFeCProtocol.TryDecodeCapabilities(page, out var flags)) return "malformed_page";
+        CapabilityFlags = flags;
+        return "capabilities_received";
+    }
+}
+
 /// <summary>Bounded aggregation for scan callback metadata. Does not retain payload bytes.</summary>
 public sealed class AntReceiveDiagnosticCounts
 {
@@ -258,7 +274,22 @@ public static class AntFeCProtocol
         !hasCapabilities && attempts < MaximumCapabilityRequestAttempts;
 
     public static byte[] BuildPageRequest(byte requestedPage) =>
-        [PageRequest, 0xFF, 0x01, 0x01, 0xFF, 0xFF, requestedPage, 0x01];
+        // Common Page 70: command type 0x01 is slave-to-master, so bytes 1-2
+        // (the responding slave serial number) must be invalid. Byte 5 asks
+        // for one broadcast response; byte 6 is the requested page.
+        [PageRequest, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, requestedPage, 0x01];
+
+    /// <summary>Validates and decodes FE-C page 54 using profile revision 5.</summary>
+    public static bool TryDecodeCapabilities(ReadOnlySpan<byte> page, out byte flags)
+    {
+        flags = 0;
+        if (page.Length != 8 || page[0] != PageCapabilities ||
+            page[1] != 0xFF || page[2] != 0xFF || page[3] != 0xFF || page[4] != 0xFF ||
+            (page[7] & 0xF8) != 0)
+            return false;
+        flags = page[7];
+        return true;
+    }
 
     public static byte[] BuildTrackResistance(double gradePercent, double rollingResistance = 0.004)
     {

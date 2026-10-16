@@ -150,8 +150,33 @@ var fecSimulation = AntFeCProtocol.BuildTrackResistance(12.34);
 Check(fecSimulation[0] == 51 && fecSimulation[5] == 0xF2 && fecSimulation[6] == 0x52,
     "FE-C simulation command encodes grade using the profile offset");
 var fecRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
-Check(fecRequest.Length == 8 && fecRequest[0] == 70 && fecRequest[6] == 54,
-    "FE-C on-demand request targets the capabilities page");
+Check(fecRequest.SequenceEqual(new byte[] { 0x46, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x36, 0x01 }),
+    "FE-C page 70 matches the profile wire vector for a one-response slave-to-master request");
+var capabilityResponses = new AntFeCCapabilityResponseTracker(expectedChannel: 0, attemptId: 42);
+var transportAcknowledged = true; // EVENT_TRANSFER_TX_COMPLETED confirms only the request transfer.
+Check(transportAcknowledged && !capabilityResponses.HasCapabilities &&
+      !AntFeCProtocol.IsReady(true, true, capabilityResponses.HasCapabilities),
+    "ANT transport acknowledgement alone does not establish FE-C capabilities or readiness");
+var fecCapabilityResponse = new byte[] { 0x36, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x07 };
+await Task.Delay(10); // A capability page may arrive on a later receive callback.
+Check(capabilityResponses.Observe(42, 0, fecCapabilityResponse) == "capabilities_received" &&
+      capabilityResponses.CapabilityFlags == 0x07 && (capabilityResponses.CapabilityFlags.GetValueOrDefault() & 0x04) != 0 &&
+      AntFeCProtocol.IsReady(true, true, capabilityResponses.HasCapabilities),
+    "valid FE-C page 54 response decodes its three supported modes and completes readiness");
+var wrongChannelCapabilities = new AntFeCCapabilityResponseTracker(expectedChannel: 0, attemptId: 42);
+var malformedCapabilities = new AntFeCCapabilityResponseTracker(expectedChannel: 0, attemptId: 42);
+var nextAttemptCapabilities = new AntFeCCapabilityResponseTracker(expectedChannel: 0, attemptId: 43);
+Check(wrongChannelCapabilities.Observe(42, 1, fecCapabilityResponse) == "wrong_channel" &&
+      malformedCapabilities.Observe(42, 0, new byte[] { 0x36, 0xFF, 0xFF, 0xFF, 0x01, 0xFF, 0xFF, 0x01 }) == "malformed_page" &&
+      malformedCapabilities.Observe(42, 0, new byte[] { 0x36, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0x81 }) == "malformed_page" &&
+      malformedCapabilities.Observe(42, 0, new byte[] { 0x37, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01 }) == "malformed_page" &&
+      nextAttemptCapabilities.Observe(42, 0, fecCapabilityResponse) == "stale_attempt" &&
+      !wrongChannelCapabilities.HasCapabilities && !malformedCapabilities.HasCapabilities &&
+      !nextAttemptCapabilities.HasCapabilities,
+    "delayed active pages are accepted while wrong-channel, malformed, reserved-bit, wrong-page, and stale pages are rejected");
+var statusRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCommandStatus);
+Check(statusRequest.SequenceEqual(new byte[] { 0x46, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x47, 0x01 }),
+    "FE-C command-status request uses the same profile-correct common-page encoding");
 Check(AntFeCProtocol.ShouldRetryCapabilityRequest(false, 0) &&
       AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts - 1) &&
       !AntFeCProtocol.ShouldRetryCapabilityRequest(false, AntFeCProtocol.MaximumCapabilityRequestAttempts) &&

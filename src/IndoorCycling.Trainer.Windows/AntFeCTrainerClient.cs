@@ -17,6 +17,10 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private readonly SemaphoreSlim _commandLock = new(1, 1);
     private AntSdkDeviceSession? _session;
     private ANT_Channel? _channel;
+    private ANT_Device.dDeviceResponseHandler? _deviceResponseHandler;
+    private dChannelResponseHandler? _channelResponseHandler;
+    private long _connectionAttemptId;
+    private AntFeCCapabilityResponseTracker? _capabilityResponses;
     private TaskCompletionSource _ready = NewSignal();
     private TaskCompletionSource<AntFeCCommandStatus> _commandStatus = NewSignal<AntFeCCommandStatus>();
     private readonly AntFeCPowerAccumulator _power = new();
@@ -298,11 +302,13 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         if (_session is not null) await DisconnectAsync(cancellationToken).ConfigureAwait(false);
+        var connectionAttemptId = Interlocked.Increment(ref _connectionAttemptId);
         _ready = NewSignal();
         _commandStatus = NewSignal<AntFeCCommandStatus>();
         _power.Reset();
         _generalPage = _trainerPage = null;
         _capabilities = null;
+        _capabilityResponses = new(expectedChannel: 0, attemptId: connectionAttemptId);
         _pageRequestSent = false;
         _capabilityRequestAttempts = 0;
         _configuredDeviceIdentity = null;
@@ -317,10 +323,12 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         try
         {
             var device = session.Device;
-            device.deviceResponse += OnDeviceResponse;
+            _deviceResponseHandler = response => OnDeviceResponse(response, connectionAttemptId);
+            device.deviceResponse += _deviceResponseHandler;
             var channel = device.getChannel(0);
             _channel = channel;
-            channel.channelResponse += OnChannelResponse;
+            _channelResponseHandler = response => OnChannelResponse(response, connectionAttemptId);
+            channel.channelResponse += _channelResponseHandler;
             RunCommand(_diagnostic, "extended_source_id", "RX_EXT_MESGS_ENABLE_0x66",
                 () => device.enableRxExtendedMessages(true, 1000));
             var keyLoadTimer = Stopwatch.StartNew();
@@ -386,20 +394,23 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
+        Interlocked.Increment(ref _connectionAttemptId);
         _isReady = false;
         var channel = Interlocked.Exchange(ref _channel, null);
         if (channel is not null)
         {
-            channel.channelResponse -= OnChannelResponse;
+            if (_channelResponseHandler is { } handler) channel.channelResponse -= handler;
             try { channel.closeChannel(1000); } catch (ANT_Exception) { }
             try { channel.unassignChannel(1000); } catch (ANT_Exception) { }
         }
         var session = Interlocked.Exchange(ref _session, null);
         if (session is not null)
         {
-            try { session.Device.deviceResponse -= OnDeviceResponse; }
+            try { if (_deviceResponseHandler is { } handler) session.Device.deviceResponse -= handler; }
             catch (ObjectDisposedException) { }
         }
+        _channelResponseHandler = null;
+        _deviceResponseHandler = null;
         session?.Dispose();
         IsConnected = false;
         ConnectedDeviceNumber = null;
@@ -470,10 +481,11 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         finally { _commandLock.Release(); }
     }
 
-    private void OnChannelResponse(ANT_Response response)
+    private void OnChannelResponse(ANT_Response response, long connectionAttemptId)
     {
         try
         {
+            if (connectionAttemptId != Volatile.Read(ref _connectionAttemptId)) return;
             if (response.responseID == (byte)ANT_ReferenceLibrary.ANTMessageID.RESPONSE_EVENT_0x40 &&
                 response.messageContents.Length >= 3)
             {
@@ -524,7 +536,22 @@ public sealed class AntFeCTrainerClient : ITrainerClient
                 else if (page[0] == AntFeCProtocol.PageTrainer)
                     _trainerPage = AntFeCProtocol.DecodeTelemetry(page, now, _power);
                 else if (page[0] == AntFeCProtocol.PageCapabilities)
-                    _capabilities = page[7];
+                {
+                    var receiveChannel = response.messageContents.Length > 0 ? response.messageContents[0] : byte.MaxValue;
+                    var outcome = _capabilityResponses?.Observe(connectionAttemptId, receiveChannel, page) ?? "stale_attempt";
+                    if (outcome == "capabilities_received")
+                    {
+                        _capabilities = _capabilityResponses!.CapabilityFlags;
+                        Emit(_diagnostic, new("fe_c_capabilities", "response_accepted",
+                            _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                            DataPage: page[0], Outcome: "valid_capability_flags",
+                            Count: _capabilities.GetValueOrDefault()));
+                    }
+                    else
+                        Emit(_diagnostic, new("fe_c_capabilities", "response_rejected",
+                            _connectionTimer.Elapsed.TotalMilliseconds, ResponseId: response.responseID,
+                            DataPage: page[0], Outcome: outcome));
+                }
                 else if (AntFeCCommandStatus.TryParse(page) is { } status)
                 {
                     Emit(_diagnostic, new("control_acknowledgement", "command_status_received",
@@ -560,8 +587,9 @@ public sealed class AntFeCTrainerClient : ITrainerClient
         }
     }
 
-    private void OnDeviceResponse(ANT_Response response)
+    private void OnDeviceResponse(ANT_Response response, long connectionAttemptId)
     {
+        if (connectionAttemptId != Volatile.Read(ref _connectionAttemptId)) return;
         if (response.responseID != (byte)ANT_ReferenceLibrary.ANTMessageID.CHANNEL_ID_0x51) return;
         try
         {
