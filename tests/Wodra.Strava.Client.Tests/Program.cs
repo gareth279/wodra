@@ -9,6 +9,16 @@ void Check(bool condition, string message)
 
 var riderA = Guid.Parse("a713e6c1-9fc4-4fe1-9f1e-e0e647530813");
 var riderB = Guid.Parse("98e49dfa-8636-4f35-8b51-5eb8a9f87021");
+var defaultUploadMetadata = StravaPolicies.BuildActivityMetadata();
+Check(defaultUploadMetadata.Name == "Wodra Ride" && defaultUploadMetadata.Description.Contains(StravaPolicies.ReleasesUrl),
+    "manual and automatic uploads should use Wodra's default name and releases link");
+var explicitUploadMetadata = StravaPolicies.BuildActivityMetadata("  Hill repeats  ", "Signal Hill · 5 laps");
+Check(explicitUploadMetadata.Name == "Hill repeats" && explicitUploadMetadata.Description.StartsWith("Signal Hill · 5 laps") &&
+    explicitUploadMetadata.Description.Contains(StravaPolicies.ReleasesUrl),
+    "explicit activity names and existing useful description metadata should be preserved");
+var linkedDescription = StravaPolicies.BuildActivityMetadata(null, $"{StravaPolicies.ReleasesUrl} · recorded with Wodra");
+Check(linkedDescription.Description.Split(StravaPolicies.ReleasesUrl).Length == 2,
+    "an existing releases link should not be duplicated");
 Check(StravaPolicies.CredentialTarget(riderA) != StravaPolicies.CredentialTarget(riderB), "profile credentials must have isolated targets");
 Check(StravaPolicies.CredentialTarget(riderA).EndsWith(riderA.ToString("N")), "credential target must use stable profile GUID");
 Check(StravaPolicies.UploadUnavailableReason(false, true).Contains("Manage Profiles"), "unlinked profile must explain how to link");

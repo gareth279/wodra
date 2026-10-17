@@ -24,6 +24,8 @@ $routeFiles = @(
 $required = @(
     'Wodra.exe',
     'Wodra.pck',
+    'Assets/Branding/wodra-icon-512.png',
+    'Assets/Branding/wodra.ico',
     'data_IndoorCycling.Game_windows_x86_64/IndoorCycling.Game.dll',
     'data_IndoorCycling.Game_windows_x86_64/IndoorCycling.Game.deps.json',
     'data_IndoorCycling.Game_windows_x86_64/IndoorCycling.Game.runtimeconfig.json',

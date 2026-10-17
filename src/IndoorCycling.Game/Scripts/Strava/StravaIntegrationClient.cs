@@ -272,8 +272,10 @@ public sealed class StravaIntegrationClient
     }
 
     public async Task<StravaUploadResult> UploadAsync(Guid profileId, Guid activityId, int segmentIndex,
-        string fitPath, Action<string>? progress, CancellationToken cancellationToken = default, bool automaticSubmission = false)
+        string fitPath, Action<string>? progress, CancellationToken cancellationToken = default, bool automaticSubmission = false,
+        string? activityName = null, string? activityDescription = null)
     {
+        var activityMetadata = StravaPolicies.BuildActivityMetadata(activityName, activityDescription);
         await UploadLock.WaitAsync(cancellationToken);
         try
         {
@@ -324,7 +326,8 @@ public sealed class StravaIntegrationClient
                 progress?.Invoke("Uploading saved FIT segment…");
                 try
                 {
-                    var receipt = await SubmitFitAsync(tokens.AccessToken, externalId, fitPath, cancellationToken);
+                    var receipt = await SubmitFitAsync(tokens.AccessToken, externalId, fitPath,
+                        activityMetadata.Name, activityMetadata.Description, cancellationToken);
                     entry = entry with { Status = StravaUploadStatus.Processing, UploadId = receipt.Id, UpdatedAtUtc = DateTimeOffset.UtcNow };
                     journal.Uploads[key] = entry; WriteJournal(journal);
                 }
@@ -391,10 +394,13 @@ public sealed class StravaIntegrationClient
         finally { UploadLock.Release(); }
     }
 
-    private async Task<UploadReceipt> SubmitFitAsync(string accessToken, string externalId, string path, CancellationToken ct)
+    private async Task<UploadReceipt> SubmitFitAsync(string accessToken, string externalId, string path,
+        string activityName, string activityDescription, CancellationToken ct)
     {
         using var form = new MultipartFormDataContent();
         form.Add(new StringContent("fit"), "data_type"); form.Add(new StringContent(externalId), "external_id");
+        form.Add(new StringContent(activityName), "name");
+        form.Add(new StringContent(activityDescription), "description");
         var file = new StreamContent(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read));
         file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         form.Add(file, "file", Path.GetFileName(path));

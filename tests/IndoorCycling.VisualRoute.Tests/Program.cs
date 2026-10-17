@@ -6,6 +6,66 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("north-up inset projection keeps north above, east right, and heading aligned", () =>
+    {
+        var origin = RouteOverviewGeometry.ProjectNorthUp(Vector3.Zero);
+        var north = RouteOverviewGeometry.ProjectNorthUp(new Vector3(0, 0, -12));
+        var east = RouteOverviewGeometry.ProjectNorthUp(new Vector3(12, 0, 0));
+        if (north.Y >= origin.Y || east.X <= origin.X)
+            throw new Exception("North must project to smaller screen Y and east to larger screen X.");
+
+        var route = new RouteDefinition("north-east-fixture", "North East", "projection fixture", 444,
+            [new RouteSegment(0, 444, 0, "fixture")],
+            [new RoutePoint(0, 0, 0, 10), new RoutePoint(111, .001, 0, 20),
+                new RoutePoint(222, .001, .001, 30), new RoutePoint(333, 0, .001, 20),
+                new RoutePoint(444, 0, 0, 10)]);
+        var visual = new VisualRoute(route, spacingMeters: 5);
+        var overview = new RouteOverviewGeometry(route, visual);
+        var map = overview.BuildMapPolyline(new Vector2(280, 92));
+        var northTurn = overview.GetMapPose(90, new Vector2(280, 92));
+        var eastLeg = overview.GetMapPose(180, new Vector2(280, 92));
+        var northWorld = visual.GetPoseAtDistance(90);
+        var eastWorld = visual.GetPoseAtDistance(180);
+        if (northTurn.Position.Y >= map[0].Y || northTurn.Direction.Y >= 0 ||
+            eastLeg.Position.X <= northTurn.Position.X || eastLeg.Direction.X <= 0)
+            throw new Exception("Geographic north/east route points, rider position, and heading must share north-up projection.");
+        if (Vector2.Distance(northTurn.Position,
+                Project(RouteOverviewGeometry.ProjectNorthUp(northWorld.Position), visual.Samples, new Vector2(280, 92))) > .05f ||
+            Vector2.Distance(eastLeg.Position,
+                Project(RouteOverviewGeometry.ProjectNorthUp(eastWorld.Position), visual.Samples, new Vector2(280, 92))) > .05f)
+            throw new Exception("Rider marker must align with the projected route line.");
+
+        static Vector2 Project(Vector2 point, IReadOnlyList<VisualRouteSample> samples, Vector2 size)
+        {
+            var mapped = samples.Select(sample => RouteOverviewGeometry.ProjectNorthUp(sample.Position)).ToArray();
+            var minX = mapped.Min(p => p.X); var minY = mapped.Min(p => p.Y);
+            var spanX = mapped.Max(p => p.X) - minX; var spanY = mapped.Max(p => p.Y) - minY;
+            var scale = Math.Min((size.X - 24) / Math.Max(.001f, spanX), (size.Y - 24) / Math.Max(.001f, spanY));
+            var drawX = spanX * scale; var drawY = spanY * scale;
+            var offset = new Vector2((size.X - drawX) / 2, (size.Y - drawY) / 2);
+            return offset + new Vector2((point.X - minX) * scale, (point.Y - minY) * scale);
+        }
+    }),
+    ("debug overlay bounds reserve bottom controls and separate inset from dummy controls", () =>
+    {
+        foreach (var (width, height) in new[] { (960f, 540f), (1152f, 648f), (1366f, 768f), (1920f, 1080f) })
+        foreach (var insetVisible in new[] { true, false })
+        {
+            var layout = RideHudOverlayLayoutPolicy.ForViewport(width, height, insetVisible);
+            if (layout.DebugPanel.X < 0 || layout.DebugPanel.Y < 0 || layout.DebugPanel.Right > width ||
+                layout.DebugPanel.Bottom > height - RideHudOverlayLayoutPolicy.DummyBottomOffset)
+                throw new Exception($"Debug panel overlaps persistent controls at {width}x{height}.");
+            if (insetVisible && layout.RouteInset.Right > layout.DummyPanel.X &&
+                layout.RouteInset.X < layout.DummyPanel.Right && layout.RouteInset.Bottom > layout.DummyPanel.Y &&
+                layout.RouteInset.Y < layout.DummyPanel.Bottom)
+                throw new Exception($"Dummy controls overlap the route inset at {width}x{height}.");
+            if (layout.DummyPanel.X < layout.DebugPanel.Right && layout.DummyPanel.Right > layout.DebugPanel.X &&
+                layout.DummyPanel.Y < layout.DebugPanel.Bottom && layout.DummyPanel.Bottom > layout.DebugPanel.Y)
+                throw new Exception($"Dummy controls overlap debug details at {width}x{height}.");
+            if (layout.DummyPanel.X < 0 || layout.DummyPanel.Right > width || layout.DummyPanel.Bottom > height - 96)
+                throw new Exception($"Dummy controls escape viewport or obscure the persistent bottom bar at {width}x{height}.");
+        }
+    }),
     ("repeated physical road ribbons emit one surface while crossings and parallel roads remain separate", () =>
     {
         var positions = new List<Vector3>();
@@ -61,7 +121,7 @@ var tests = new (string Name, Action Run)[]
             var mapRatio = (line.Max(point => point.X) - line.Min(point => point.X)) /
                 Math.Max(.001f, line.Max(point => point.Y) - line.Min(point => point.Y));
             var worldRatio = (visual.Samples.Max(sample => sample.Position.X) - visual.Samples.Min(sample => sample.Position.X)) /
-                Math.Max(.001f, visual.Samples.Max(sample => -sample.Position.Z) - visual.Samples.Min(sample => -sample.Position.Z));
+                Math.Max(.001f, visual.Samples.Max(sample => sample.Position.Z) - visual.Samples.Min(sample => sample.Position.Z));
             if (Math.Abs(mapRatio - worldRatio) > .01 * Math.Max(1, worldRatio))
                 throw new Exception($"{id} route overview distorted its map proportions.");
             foreach (var distance in new[] { 0d, route.DistanceMeters * .25, route.DistanceMeters * .5,
@@ -89,14 +149,14 @@ var tests = new (string Name, Action Run)[]
 
         static Vector2 Project(Vector3 position, Vector2[] points, IReadOnlyList<VisualRouteSample> samples)
         {
-            var minX = samples.Min(s => s.Position.X); var minY = samples.Min(s => -s.Position.Z);
+            var minX = samples.Min(s => s.Position.X); var minY = samples.Min(s => s.Position.Z);
             var spanWorldX = samples.Max(s => s.Position.X) - minX;
-            var spanWorldY = samples.Max(s => -s.Position.Z) - minY;
+            var spanWorldY = samples.Max(s => s.Position.Z) - minY;
             var scale = Math.Min(276f / Math.Max(.001f, spanWorldX), 92f / Math.Max(.001f, spanWorldY));
             var spanX = spanWorldX * scale;
             var spanY = spanWorldY * scale;
             var origin = new Vector2((300 - spanX) / 2, (116 - spanY) / 2);
-            return origin + new Vector2((position.X - minX) * scale, (-position.Z - minY) * scale);
+            return origin + new Vector2((position.X - minX) * scale, (position.Z - minY) * scale);
         }
     }),
     ("route inset visibility preference persists and dialogs remain content-sized and bounded", () =>

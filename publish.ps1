@@ -46,6 +46,35 @@ function Complete-Phase {
     Write-Host ("    completed in {0:n1}s" -f $script:phaseStart.Elapsed.TotalSeconds)
 }
 
+function Assert-WodraIconResource([string]$ExecutablePath) {
+    Add-Type -AssemblyName System.Drawing
+    $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($ExecutablePath)
+    if ($null -eq $icon) { throw "No Windows icon resource was found in $ExecutablePath" }
+    $bitmap = $icon.ToBitmap()
+    try {
+        if ($bitmap.Width -lt 16 -or $bitmap.Height -lt 16) {
+            throw "Windows icon resource is too small in $ExecutablePath ($($bitmap.Width)x$($bitmap.Height))."
+        }
+        $bluePixels = 0
+        for ($y = 0; $y -lt $bitmap.Height; $y++) {
+            for ($x = 0; $x -lt $bitmap.Width; $x++) {
+                $pixel = $bitmap.GetPixel($x, $y)
+                if ($pixel.A -gt 0 -and $pixel.B -gt 100 -and $pixel.B -gt ($pixel.R * 1.3) -and $pixel.B -gt ($pixel.G * 1.08)) {
+                    $bluePixels++
+                }
+            }
+        }
+        if ($bluePixels -lt [Math]::Max(8, [int]($bitmap.Width * $bitmap.Height * 0.04))) {
+            throw "The Windows icon resource does not contain the approved cobalt artwork in $ExecutablePath."
+        }
+        Write-Host "Windows icon resource verified: $(Split-Path $ExecutablePath -Leaf) ($($bitmap.Width)x$($bitmap.Height), cobalt artwork present)"
+    }
+    finally {
+        $bitmap.Dispose()
+        $icon.Dispose()
+    }
+}
+
 function Invoke-TrackedProcess {
     param(
         [Parameter(Mandatory = $true)][string]$FilePath,
@@ -286,7 +315,8 @@ try {
             if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Built-in route dependency is missing: $source" }
         }
     }
-    foreach ($asset in @('Scenes\RideScreen.tscn', 'Assets\Models\WodraCyclist.glb')) {
+    foreach ($asset in @('Scenes\RideScreen.tscn', 'Assets\Models\WodraCyclist.glb',
+            'Assets\Branding\wodra-icon-512.png', 'Assets\Branding\wodra.ico')) {
         if (-not (Test-Path -LiteralPath (Join-Path $GodotProjectDir $asset) -PathType Leaf)) {
             throw "Required Godot runtime asset is missing: $asset"
         }
@@ -408,6 +438,12 @@ try {
     New-Item -ItemType Directory -Path $msNotices -Force | Out-Null
     Copy-Item -LiteralPath $vcRedistList -Destination (Join-Path $msNotices 'VisualCpp-Redist.txt')
 
+    $brandingTarget = Join-Path $PublishDirStage 'Assets\Branding'
+    New-Item -ItemType Directory -Path $brandingTarget -Force | Out-Null
+    foreach ($asset in @('wodra-icon-512.png', 'wodra.ico')) {
+        Copy-Item -LiteralPath (Join-Path $GodotProjectDir "Assets\Branding\$asset") -Destination $brandingTarget -Force
+    }
+
     $builtInRoot = Join-Path $PublishDirStage 'Routes'
     foreach ($routeId in $routeSources.Keys) {
         $destination = Join-Path $builtInRoot $routeId
@@ -514,7 +550,8 @@ try {
     $vpkArguments = @('tool', 'run', 'vpk', '--', 'pack', '--packId', 'Wodra', '--packVersion', $PackageVersion,
         '--runtime', 'win-x64',
         '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', 'alpha', '--packTitle', 'Wodra',
-        '--packAuthors', 'Wodra', '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
+        '--packAuthors', 'Wodra', '--icon', (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico'),
+        '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
     [void](Invoke-TrackedProcess -FilePath $dotnet -ArgumentList $vpkArguments -WorkingDirectory $RepoDir `
         -LogPath (Join-Path $workRoot 'velopack-pack.log') -TimeoutSeconds 900 -Label 'Velopack full installer and update feed packaging')
     $setup = Get-ChildItem -LiteralPath $velopackStage -Filter '*Setup.exe' -File | Select-Object -First 1
@@ -525,6 +562,8 @@ try {
         -not (Test-Path -LiteralPath $assetManifest -PathType Leaf)) {
         throw 'Velopack did not produce the installer, full package, alpha release feed and build-asset manifest.'
     }
+    Assert-WodraIconResource (Join-Path $PublishDirStage 'Wodra.exe')
+    Assert-WodraIconResource $setup.FullName
     $fullPackageZip = [System.IO.Compression.ZipFile]::OpenRead($fullPackage.FullName)
     try {
         $packageEntries = @($fullPackageZip.Entries | ForEach-Object { $_.FullName })
@@ -538,6 +577,7 @@ try {
         $packageRid = $packageMetadata.SelectSingleNode('/n:package/n:metadata/n:rid', $namespace).InnerText
         if ($packageRid -ne 'win-x64') { throw "Velopack package must target win-x64; it declares '$packageRid'." }
         foreach ($required in @('Wodra.exe', 'Wodra.pck', 'eos-client.json',
+                'Assets/Branding/wodra-icon-512.png', 'Assets/Branding/wodra.ico',
                 'data_IndoorCycling.Game_windows_x86_64/GodotSharp.dll',
                 'data_IndoorCycling.Game_windows_x86_64/coreclr.dll',
                 'data_IndoorCycling.Game_windows_x86_64/EOSSDK-Win64-Shipping.dll',

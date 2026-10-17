@@ -79,7 +79,8 @@ public partial class RouteGradientInset : Control
 		DrawRect(new Rect2(Vector2.Zero, Size), new Color(.68f, .51f, .31f, .72f), false, 1);
 		var rideState = _session?.CurrentRideState;
 		var currentPose = rideState is null ? default : _overview.GetMapPose(rideState.DistanceMeters, new NVector2(Size.X, 92));
-		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : $"ROUTE · LAP {currentPose.Lap} · {rideState.DistanceMeters / 1000:0.00} km", HorizontalAlignment.Left, Size.X - 24, 11, new Color(.88f, .82f, .69f));
+		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : $"ROUTE · LAP {currentPose.Lap} · {rideState.DistanceMeters / 1000:0.00} km", HorizontalAlignment.Left, Size.X - 64, 11, new Color(.88f, .82f, .69f));
+		DrawString(GetThemeDefaultFont(), new Vector2(Size.X - 12, 18), "N ↑", HorizontalAlignment.Right, -1, 10, new Color(.75f, .82f, .76f));
 		if (_mapLine.Length >= 2) DrawPolyline(_mapLine, new Color(.58f, .65f, .57f), 2.2f, true);
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 141), "ELEVATION · M", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 154), $"{_overview.MaximumElevationMeters:0}", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));

@@ -134,7 +134,7 @@ public partial class HudController : Control
 		{
 			Name = "RouteGradientInset",
 			AnchorLeft = 1, AnchorRight = 1, AnchorTop = 0, AnchorBottom = 0,
-			OffsetLeft = -326, OffsetRight = -12, OffsetTop = 222, OffsetBottom = 452,
+			OffsetLeft = -292, OffsetRight = -12, OffsetTop = 222, OffsetBottom = 452,
 			CustomMinimumSize = new Vector2(280, 210),
 			MouseFilter = Control.MouseFilterEnum.Ignore
 		};
@@ -175,6 +175,12 @@ public partial class HudController : Control
 		SetRecordingState(false, false);
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
+	}
+
+	public override void _Notification(int what)
+	{
+		if (what == NotificationResized && IsInsideTree())
+			CallDeferred(nameof(UpdateDebugOverlayLayout));
 	}
 
 	private void BuildTrainerRecoveryAction()
@@ -382,19 +388,31 @@ public partial class HudController : Control
 			AnchorTop = 0,
 			AnchorBottom = 0,
 			OffsetLeft = 12,
-			OffsetRight = 332,
+			OffsetRight = 312,
 			OffsetTop = 12,
-			OffsetBottom = 550,
+			OffsetBottom = 432,
 			ClipContents = true
 		};
-		var layout = new VBoxContainer();
+		var layout = new VBoxContainer { Name = "DebugLayout" };
 		layout.AddThemeConstantOverride("separation", 5);
+		var details = new ScrollContainer
+		{
+			Name = "DebugDetailsScroll",
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+			HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+			VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+			ClipContents = true
+		};
 		_debugSummaryLabel = new Label
 		{
 			Name = "DebugRideSummary", Text = "DEBUG\nWaiting for ride state…",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			SizeFlagsVertical = Control.SizeFlags.ShrinkBegin
 		};
-		layout.AddChild(_debugSummaryLabel);
+		details.AddChild(_debugSummaryLabel);
+		layout.AddChild(details);
 		var actions = new HBoxContainer();
 		actions.Name = "DebugControls";
 		actions.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -482,9 +500,23 @@ public partial class HudController : Control
 
 	private void UpdateDebugOverlayLayout()
 	{
-		if (_debugOverlay is null) return;
-		_debugOverlay.OffsetRight = 332;
-		_debugOverlay.OffsetBottom = 550;
+		var viewport = GetViewportRect().Size;
+		if (viewport.X <= 0 || viewport.Y <= 0) return;
+		var layout = RideHudOverlayLayoutPolicy.ForViewport(viewport.X, viewport.Y,
+			_routeGradientInset?.Visible == true);
+		SetAnchoredBounds(_debugOverlay, layout.DebugPanel);
+		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
+		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
+	}
+
+	private static void SetAnchoredBounds(Control? control, RideHudOverlayBounds bounds)
+	{
+		if (control is null) return;
+		control.AnchorLeft = control.AnchorRight = control.AnchorTop = control.AnchorBottom = 0;
+		control.OffsetLeft = bounds.X;
+		control.OffsetTop = bounds.Y;
+		control.OffsetRight = bounds.Right;
+		control.OffsetBottom = bounds.Bottom;
 	}
 
 	public void UpdateDebugOverlay(RideDebugSnapshot snapshot)
@@ -516,7 +548,7 @@ public partial class HudController : Control
 		lines.Add($"Riders: AI {snapshot.aiRiderCount} · Nearest {NearestRider(snapshot)}");
 		var humanRiders = snapshot.remoteHumanRiders;
 		lines.Add($"Human riders: {humanRiders.Count}");
-		foreach (var rider in humanRiders.Take(4))
+		foreach (var rider in humanRiders)
 		{
 			if (!rider.hasState)
 			{
@@ -802,6 +834,7 @@ public partial class HudController : Control
 		if (_dummyWkgPowerRow is not null) _dummyWkgPowerRow.Visible = wkgMode;
 		if (_dummyWattsPowerRow is not null) _dummyWattsPowerRow.Visible = !wkgMode;
 		if (_debugOverlay is not null) _debugOverlay.Visible = _debugEnabled;
+		UpdateDebugOverlayLayout();
 		if (_cameraInspectionLabel is not null)
 		{
 			if (!rideIsActive) _cameraInspectionLabelSeconds = 0;

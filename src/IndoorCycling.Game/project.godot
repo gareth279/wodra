@@ -12,6 +12,8 @@ config_version=5
 
 config/name="Wodra"
 run/main_scene="uid://bqhmueagpbut7"
+config/icon="res://Assets/Branding/wodra-icon-512.png"
+config/windows_native_icon="res://Assets/Branding/wodra.ico"
 config/features=PackedStringArray("4.6", "C#")
 
 [display]

@@ -5,9 +5,23 @@ using System.Collections.Generic;
 public enum StravaUploadStatus { Submitting = 0, Unknown = 1, Processing = 2, Complete = 3, Failed = 4, Queued = 5, Cancelled = 6 }
 public enum StravaOAuthOutcome { Authorized, Cancelled, Invalid, Incomplete }
 
+public sealed record StravaActivityMetadata(string Name, string Description);
+
 /// <summary>Small deterministic rules shared by the Strava client and offline regression checks.</summary>
 public static class StravaPolicies
 {
+	public const string DefaultActivityName = "Wodra Ride";
+	public const string ReleasesUrl = "https://github.com/gareth279/wodra/releases";
+	public static StravaActivityMetadata BuildActivityMetadata(string? explicitName = null, string? existingDescription = null)
+	{
+		var name = string.IsNullOrWhiteSpace(explicitName) ? DefaultActivityName : explicitName.Trim();
+		var description = string.IsNullOrWhiteSpace(existingDescription)
+			? "Recorded with Wodra."
+			: existingDescription.Trim();
+		if (!description.Contains(ReleasesUrl, StringComparison.OrdinalIgnoreCase))
+			description = $"{description}\nGet Wodra: {ReleasesUrl}";
+		return new(name, description);
+	}
     public static string CredentialTarget(Guid profileId) => $"Wodra.Strava.Profile.{profileId:N}";
 
     public static StravaOAuthOutcome ClassifyCallback(bool stateMatches, string? error, string? code)

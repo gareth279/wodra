@@ -19,12 +19,15 @@ public sealed class RouteOverviewGeometry
 	public double MaximumElevationMeters => _maxElevation;
 	public IReadOnlyList<(double Distance, double Elevation)> Profile => _profile;
 
+	/// <summary>Projects the visual world's +X east, -Z north axes into north-up screen coordinates.</summary>
+	public static Vector2 ProjectNorthUp(Vector3 worldPosition) => new(worldPosition.X, worldPosition.Z);
+
 	public RouteOverviewGeometry(RouteDefinition route, VisualRoute visualRoute)
 	{
 		_visualRoute = visualRoute ?? throw new ArgumentNullException(nameof(visualRoute));
 		if (route.Points is not { Count: >= 2 } points)
 			throw new ArgumentException("Route overview requires the route's sampled geographic elevation points.", nameof(route));
-		_mapWorldPoints = visualRoute.Samples.Select(sample => new Vector2(sample.Position.X, -sample.Position.Z)).ToArray();
+		_mapWorldPoints = visualRoute.Samples.Select(sample => ProjectNorthUp(sample.Position)).ToArray();
 		_minX = _mapWorldPoints.Min(p => p.X);
 		_minY = _mapWorldPoints.Min(p => p.Y);
 		_spanX = Math.Max(.001f, _mapWorldPoints.Max(p => p.X) - _minX);
@@ -55,8 +58,8 @@ public sealed class RouteOverviewGeometry
 		var spanX = _spanX * scale;
 		var spanY = _spanY * scale;
 		var origin = new Vector2((size.X - spanX) / 2f, (size.Y - spanY) / 2f);
-		var mapPosition = new Vector2(pose.Position.X, -pose.Position.Z);
-		var direction = Vector2.Normalize(new Vector2(pose.Forward.X, -pose.Forward.Z));
+		var mapPosition = ProjectNorthUp(pose.Position);
+		var direction = Vector2.Normalize(ProjectNorthUp(pose.Forward));
 		if (!float.IsFinite(direction.X) || !float.IsFinite(direction.Y)) direction = Vector2.UnitY;
 		return (origin + new Vector2((mapPosition.X - _minX) * scale, (mapPosition.Y - _minY) * scale), direction, distance, lap);
 	}
