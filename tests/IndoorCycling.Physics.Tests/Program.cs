@@ -180,6 +180,18 @@ static void SteeringSettingsPersist()
     var previous = JsonSerializer.Deserialize<SteeringControlSettings>("{\"Sensitivity\":1.2,\"DeadZoneDegrees\":5}");
     Assert(previous?.Sensitivity == 1.2 && previous.DeadZoneDegrees == 5,
         "Preferences saved by earlier alpha builds should migrate without resetting the shared sensitivity or dead zone.");
+
+    var oldDefault = new SteeringControlSettings { Sensitivity = 1.0 };
+    Assert(SteeringSensitivityPreferencePolicy.Migrate("{\"Steering\":{\"Sensitivity\":1.0}}", oldDefault, 0) &&
+        oldDefault.Sensitivity == 1.5,
+        "The serialized alpha.36 default should migrate once to the new default.");
+    var custom = new SteeringControlSettings { Sensitivity = 1.3 };
+    SteeringSensitivityPreferencePolicy.Migrate("{\"Steering\":{\"Sensitivity\":1.3}}", custom, 0);
+    Assert(custom.Sensitivity == 1.3, "A saved custom sensitivity should survive migration.");
+    var explicitBaseline = new SteeringControlSettings { Sensitivity = 1.0 };
+    Assert(!SteeringSensitivityPreferencePolicy.Migrate("{}", explicitBaseline, SteeringSensitivityPreferencePolicy.CurrentVersion) &&
+        explicitBaseline.Sensitivity == 1.0,
+        "A user's explicit 1.0× selection should survive later restarts after the migration marker is saved.");
 }
 
 static void WindowPlacementRestoresSafely()

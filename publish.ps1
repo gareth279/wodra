@@ -841,19 +841,12 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($statusResult.StdOut)) {
             throw 'The GitHub release source tree must be clean. Commit the reviewed release pipeline and assets before publishing.'
         }
-        $previousVpkToken = $env:VPK_TOKEN
-        $env:VPK_TOKEN = $githubToken
-        try {
-            [void](Invoke-TrackedProcess -FilePath $dotnet `
-                -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
-                    '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
-                    '--releaseName', "Wodra $GitHubTag", '--pre') `
-                -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
-                -TimeoutSeconds 600 -Label 'Velopack GitHub draft release upload')
-        } finally {
-            if ($null -eq $previousVpkToken) { Remove-Item Env:VPK_TOKEN -ErrorAction SilentlyContinue }
-            else { $env:VPK_TOKEN = $previousVpkToken }
-        }
+        Invoke-GitHubUploadProcess -FilePath $dotnet `
+            -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
+                '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
+                '--releaseName', "Wodra $GitHubTag", '--pre') `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
+            -TimeoutSeconds 600 -Credential $githubToken
     }
 
     Write-Host ("`nSUCCESS (total {0:n1}s)" -f $phaseClock.Elapsed.TotalSeconds)

@@ -24,6 +24,7 @@ public sealed class AppSettings
 	public ControllerDeviceTypePreference ControllerDeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 	public RideDisplayPreferences Display { get; set; } = new();
 	public SteeringControlSettings Steering { get; set; } = new();
+	public int SteeringSensitivityPreferenceVersion { get; set; }
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
@@ -52,7 +53,10 @@ public sealed class AppSettings
 
 			if (!File.Exists(SettingsPath))
 			{
-				var defaults = new AppSettings();
+				var defaults = new AppSettings
+				{
+					SteeringSensitivityPreferenceVersion = SteeringSensitivityPreferencePolicy.CurrentVersion
+				};
 				defaults.Save();
 
 				GameLogger.Log("settings_created", new
@@ -91,6 +95,9 @@ public sealed class AppSettings
 			}
 			settings.Display ??= new RideDisplayPreferences();
 			settings.Steering ??= new SteeringControlSettings();
+			var migratedSteeringSensitivity = SteeringSensitivityPreferencePolicy.Migrate(
+				json, settings.Steering, settings.SteeringSensitivityPreferenceVersion);
+			settings.SteeringSensitivityPreferenceVersion = SteeringSensitivityPreferencePolicy.CurrentVersion;
 			settings.Steering.Normalize();
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
@@ -106,7 +113,7 @@ public sealed class AppSettings
 				settings.Recording.OutputFolder,
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
-			if (removeLegacyStravaSettings || migratedTrainerPreference)
+			if (removeLegacyStravaSettings || migratedTrainerPreference || migratedSteeringSensitivity)
 				settings.Save();
 
 			GameLogger.Log("settings_loaded", new
