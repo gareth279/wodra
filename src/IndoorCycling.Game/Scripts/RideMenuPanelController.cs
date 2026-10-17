@@ -666,16 +666,16 @@ public partial class RideMenuPanelController : Control
 		});
 		_content.AddChild(new Label
 		{
-			Text = "1.0× is the alpha.36 baseline. Changes apply immediately to both inputs.",
+			Text = "1.0× is the alpha.36 baseline. Range: 1.0–10.0×, applied immediately to both inputs.",
 			AutowrapMode = TextServer.AutowrapMode.WordSmart,
 			HorizontalAlignment = HorizontalAlignment.Center
 		});
 		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		var slider = new HSlider
 		{
-			MinValue = 0.5,
-			MaxValue = 3.0,
-			Step = 0.1,
+			MinValue = 1.0,
+			MaxValue = 10.0,
+			Step = SteeringControlSettings.SensitivityStep,
 			Value = steering.Sensitivity,
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
 		};
