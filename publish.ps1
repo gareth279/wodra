@@ -299,7 +299,8 @@ try {
         if ($GitHubTag -ne "v$PackageVersion") { throw 'For GitHub publishing, GitHubTag must match the alpha package version.' }
 
         $savedCredentialProvider = {
-            $ghExe = (Get-Command gh -ErrorAction Stop).Source
+            try { $ghExe = (Get-Command gh -ErrorAction Stop).Source }
+            catch { throw 'GitHub CLI is unavailable for saved credential reuse.' }
             $ghOutput = @(& $ghExe auth token --hostname github.com 2>&1)
             $ghExitCode = $LASTEXITCODE
             if ($ghExitCode -ne 0) {
@@ -319,6 +320,7 @@ try {
         }
 
         Write-Host "GitHub credential source: $($credential.Source)"
+        $credential = $null
         $gitExe = (Get-Command git -ErrorAction Stop).Source
         $tagResult = Invoke-TrackedProcess -FilePath $gitExe `
             -ArgumentList @('-C', $RepoDir, 'rev-parse', '--verify', "refs/tags/$GitHubTag^{commit}") `
@@ -860,6 +862,8 @@ try {
     Write-Host "SHA256: $finalChecksum"
 }
 finally {
+    $githubToken = $null
+    $credential = $null
     foreach ($temporary in $incomingArtifacts) {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue }
     }
