@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Velopack.Windows;
 
 public partial class GameBootstrap : Node
 {
@@ -67,6 +68,7 @@ public partial class GameBootstrap : Node
 		}
 
 		GameLogger.Init();
+		RefreshInstalledShortcutIcons();
 
 		Settings = AppSettings.LoadOrCreate();
 		if (!OS.GetCmdlineUserArgs().Contains("--layout-smoke-test"))
@@ -101,6 +103,30 @@ public partial class GameBootstrap : Node
 		});
 
 		GD.Print("GameBootstrap initialised.");
+	}
+
+	private static void RefreshInstalledShortcutIcons()
+	{
+		if (!OperatingSystem.IsWindows() || IsWindowPersistenceSuppressed)
+			return;
+
+		try
+		{
+			var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "wodra.ico");
+			if (!File.Exists(iconPath))
+				return;
+
+			// Refresh only shortcuts already owned by this Velopack installation.
+			// The installer creates these on a clean install; this updates their icon
+			// after an app upgrade without recreating deleted links or touching others.
+			new Shortcuts().CreateShortcut("Wodra.exe",
+				ShortcutLocation.StartMenuRoot | ShortcutLocation.Desktop,
+				updateOnly: true, programArguments: null, icon: iconPath);
+		}
+		catch
+		{
+			GD.PushWarning("Wodra could not refresh its installed shortcut icons.");
+		}
 	}
 
 	private void ConfigureMainWindow()
