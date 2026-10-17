@@ -3,8 +3,9 @@ namespace IndoorCycling.Core.Models;
 /// <summary>Persisted tuning for optional route-relative steering controls.</summary>
 public sealed class SteeringControlSettings
 {
-    public const double MinimumSensitivity = 0.5;
-    public const double MaximumSensitivity = 3.0;
+    public const double MinimumSensitivity = 1.0;
+    public const double MaximumSensitivity = 10.0;
+    public const double SensitivityStep = 0.1;
     public const double DefaultSensitivity = 1.5;
 
     /// <summary>Shared multiplier for keyboard and Sterzo steering, persisted as Sensitivity for existing profiles.</summary>
