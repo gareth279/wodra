@@ -54,6 +54,9 @@ jobs:
           if ((dotnet --version).Trim() -ne '10.0.204') { throw 'Unexpected .NET SDK version.' }
           & $env:GODOT_PATH --version
           if ($LASTEXITCODE -ne 0) { throw 'Godot version probe failed.' }
+      - name: Test safe local release credential selection
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/GitHubReleaseAuth.Tests.ps1
       - name: Build solution without proprietary EOS SDK
         shell: pwsh
         run: dotnet build wodra.sln -c ${{ matrix.configuration }} -m:1 -p:EnableEpicOnlineServices=false -p:NuGetAudit=false

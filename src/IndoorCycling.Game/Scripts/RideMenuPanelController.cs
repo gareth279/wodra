@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using Godot;
+using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
 
 public partial class RideMenuPanelController : Control
@@ -198,6 +199,8 @@ public partial class RideMenuPanelController : Control
 				_content.AddChild(debugMode);
 				#endif
 				AddTrainerDifficultyControl();
+				_content.AddChild(new Label { Text = "Steering controls", HorizontalAlignment = HorizontalAlignment.Center });
+				AddSteeringSensitivityControl();
 				AddAction("Devices", () => ShowView(MenuView.Devices));
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
@@ -221,15 +224,6 @@ public partial class RideMenuPanelController : Control
 			case MenuView.Display:
 				_content.AddChild(new Label { Text = "F11 or Alt+Enter toggles fullscreen. Window size is remembered.", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center });
 				_content.AddChild(new Label { Text = "During a ride, hold ← or → to steer across the road. Release to hold position.", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center });
-				_content.AddChild(new Label { Text = "Steering sensitivity", HorizontalAlignment = HorizontalAlignment.Center });
-				var steeringSensitivity = new HSlider { MinValue = 0.25, MaxValue = 2, Step = 0.05,
-					Value = GameBootstrap.Settings.Steering.Sensitivity, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-				steeringSensitivity.ValueChanged += value =>
-				{
-					GameBootstrap.Settings.Steering.Sensitivity = value;
-					GameBootstrap.Settings.Save();
-				};
-				_content.AddChild(steeringSensitivity);
 				_content.AddChild(new Label { Text = "Sterzo dead zone (degrees)", HorizontalAlignment = HorizontalAlignment.Center });
 				var steeringDeadZone = new HSlider { MinValue = 0, MaxValue = 12, Step = 0.5,
 					Value = GameBootstrap.Settings.Steering.DeadZoneDegrees, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -660,6 +654,47 @@ public partial class RideMenuPanelController : Control
 			_ = ApplyTrainerDifficultyAsync((int)value);
 		};
 		row.AddChild(slider); row.AddChild(valueLabel); _content.AddChild(row);
+	}
+
+	private void AddSteeringSensitivityControl()
+	{
+		var steering = GameBootstrap.Settings.Steering;
+		_content!.AddChild(new Label
+		{
+			Text = "Steering sensitivity (keyboard + Sterzo)",
+			HorizontalAlignment = HorizontalAlignment.Center
+		});
+		_content.AddChild(new Label
+		{
+			Text = "1.0× is the alpha.36 baseline. Changes apply immediately to both inputs.",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center
+		});
+		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var slider = new HSlider
+		{
+			MinValue = 0.5,
+			MaxValue = 3.0,
+			Step = 0.1,
+			Value = steering.Sensitivity,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+		};
+		var valueLabel = new Label { CustomMinimumSize = new Vector2(48, 0), HorizontalAlignment = HorizontalAlignment.Center };
+		void UpdateValueLabel(double value) => valueLabel.Text = $"{value:0.0}×";
+		UpdateValueLabel(steering.Sensitivity);
+		slider.ValueChanged += value =>
+		{
+			var normalized = Math.Round(value, 1);
+			steering.Sensitivity = normalized;
+			UpdateValueLabel(normalized);
+			GameBootstrap.Settings.Save();
+		};
+		var reset = new Button { Text = "Reset", CustomMinimumSize = new Vector2(64, 0) };
+		reset.Pressed += () => slider.Value = SteeringControlSettings.DefaultSensitivity;
+		row.AddChild(slider);
+		row.AddChild(valueLabel);
+		row.AddChild(reset);
+		_content.AddChild(row);
 	}
 
 	private void BuildAntSetupView()
