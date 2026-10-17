@@ -7,6 +7,7 @@ public sealed class SteeringLateralController
     public const double FallbackRoadWidthMeters = 5.0;
     public const double RiderMarginMeters = 0.45;
     public const double MaximumLateralSpeedMetersPerSecond = 1.25;
+    public const double KeyboardLateralSpeedMetersPerSecond = MaximumLateralSpeedMetersPerSecond * 1.2;
     public const double DefaultDeadZoneDegrees = 3.0;
     public const double DefaultSensitivity = 1.0;
     private const double MaximumCommandAngleDegrees = 30.0;
@@ -53,7 +54,7 @@ public sealed class SteeringLateralController
         double targetVelocity;
         if (keyboardActive)
         {
-            targetVelocity = keyboardAxis * MaximumLateralSpeedMetersPerSecond * sensitivity;
+            targetVelocity = keyboardAxis * KeyboardLateralSpeedMetersPerSecond * sensitivity;
         }
         else if (_keyboardOwnsSteering)
         {

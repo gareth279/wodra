@@ -28,6 +28,10 @@ public sealed class AppSettings
 	public ulong? LastTrainerBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
 	public int WindowedHeight { get; set; } = 648;
+	public int WindowedX { get; set; } = int.MinValue;
+	public int WindowedY { get; set; } = int.MinValue;
+	public int WindowScreen { get; set; }
+	public bool WindowMaximized { get; set; }
 	public bool Fullscreen { get; set; }
 
 	public static string SettingsPath

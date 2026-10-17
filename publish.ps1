@@ -55,19 +55,20 @@ function Assert-WodraIconResource([string]$ExecutablePath) {
         if ($bitmap.Width -lt 16 -or $bitmap.Height -lt 16) {
             throw "Windows icon resource is too small in $ExecutablePath ($($bitmap.Width)x$($bitmap.Height))."
         }
-        $bluePixels = 0
+        $goldPixels = 0
         for ($y = 0; $y -lt $bitmap.Height; $y++) {
             for ($x = 0; $x -lt $bitmap.Width; $x++) {
                 $pixel = $bitmap.GetPixel($x, $y)
-                if ($pixel.A -gt 0 -and $pixel.B -gt 100 -and $pixel.B -gt ($pixel.R * 1.3) -and $pixel.B -gt ($pixel.G * 1.08)) {
-                    $bluePixels++
+                if ($pixel.A -gt 0 -and $pixel.R -gt 150 -and $pixel.G -gt 90 -and
+                    $pixel.R -gt ($pixel.B * 1.35) -and $pixel.G -gt ($pixel.B * 1.15)) {
+                    $goldPixels++
                 }
             }
         }
-        if ($bluePixels -lt [Math]::Max(8, [int]($bitmap.Width * $bitmap.Height * 0.04))) {
-            throw "The Windows icon resource does not contain the approved cobalt artwork in $ExecutablePath."
+        if ($goldPixels -lt [Math]::Max(8, [int]($bitmap.Width * $bitmap.Height * 0.04))) {
+            throw "The Windows icon resource does not contain the approved golden artwork in $ExecutablePath."
         }
-        Write-Host "Windows icon resource verified: $(Split-Path $ExecutablePath -Leaf) ($($bitmap.Width)x$($bitmap.Height), cobalt artwork present)"
+        Write-Host "Windows icon resource verified: $(Split-Path $ExecutablePath -Leaf) ($($bitmap.Width)x$($bitmap.Height), golden artwork present)"
     }
     finally {
         $bitmap.Dispose()
@@ -513,7 +514,7 @@ try {
             $smokeExe = Join-Path $extractDir 'Wodra.exe'
             $smokeLog = Join-Path $workRoot "offline-smoke-$safeVersion.log"
             [void](Invoke-TrackedProcess -FilePath $smokeExe `
-                -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog) `
+                -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog, '--', '--layout-smoke-test') `
                 -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "smoke-process-$safeVersion.log") `
                 -TimeoutSeconds 45 -Label 'Extracted Wodra offline smoke test' `
                 -RemoveEnvironmentVariables @('WODRA_EOS_PRODUCT_ID', 'WODRA_EOS_SANDBOX_ID',
@@ -551,6 +552,7 @@ try {
         '--runtime', 'win-x64',
         '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', 'alpha', '--packTitle', 'Wodra',
         '--packAuthors', 'Wodra', '--icon', (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico'),
+        '--shortcuts', 'Desktop,StartMenuRoot',
         '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
     [void](Invoke-TrackedProcess -FilePath $dotnet -ArgumentList $vpkArguments -WorkingDirectory $RepoDir `
         -LogPath (Join-Path $workRoot 'velopack-pack.log') -TimeoutSeconds 900 -Label 'Velopack full installer and update feed packaging')

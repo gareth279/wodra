@@ -8,6 +8,7 @@ using IndoorCycling.Core.Persistence;
 using IndoorCycling.Persistence.Sqlite;
 using IndoorCycling.Trainer.Windows;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,6 +37,9 @@ public partial class GameBootstrap : Node
 	private static Window? _mainWindow;
 	private static Task<RiderProfileRecord>? _persistentRiderTask;
 	private static Task? _pendingProfileSelectionTask;
+	private double _windowSaveCountdown = -1;
+	private static bool IsWindowPersistenceSuppressed => OS.GetCmdlineArgs().Contains("--headless")
+		|| OS.GetCmdlineUserArgs().Contains("--layout-smoke-test");
 
 	public static SessionMode Mode { get; private set; } = SessionMode.None;
 	public static string? FitReplayPath { get; private set; }
@@ -103,21 +107,48 @@ public partial class GameBootstrap : Node
 	{
 		var window = GetWindow();
 		_mainWindow = window;
-		window.MinSize = new Vector2I(960, 540);
-		var usable = DisplayServer.ScreenGetUsableRect();
-		var width = Math.Clamp(Settings.WindowedWidth, 960, Math.Max(960, usable.Size.X));
-		var height = Math.Clamp(Settings.WindowedHeight, 540, Math.Max(540, usable.Size.Y));
-		window.Size = new Vector2I(width, height);
-		window.Position = usable.Position + new Vector2I((usable.Size.X - width) / 2, (usable.Size.Y - height) / 2);
-		window.Mode = Settings.Fullscreen ? Window.ModeEnum.Fullscreen : Window.ModeEnum.Windowed;
-		window.SizeChanged += () =>
+		var screens = GetUsableScreens();
+		var requested = new WindowRectangle(Settings.WindowedX, Settings.WindowedY,
+			Math.Max(1, Settings.WindowedWidth), Math.Max(1, Settings.WindowedHeight));
+		var hasSavedPosition = Settings.WindowedX != int.MinValue && Settings.WindowedY != int.MinValue;
+		var screenIndex = hasSavedPosition
+			? WindowPlacementPolicy.SelectScreen(Settings.WindowScreen, requested, screens)
+			: Math.Clamp(Settings.WindowScreen, 0, screens.Count - 1);
+		var usable = screens[screenIndex];
+		var placement = WindowPlacementPolicy.Clamp(requested, usable);
+		if (!hasSavedPosition)
+			placement = placement with { X = usable.X + (usable.Width - placement.Width) / 2,
+				Y = usable.Y + (usable.Height - placement.Height) / 2 };
+		window.Mode = Window.ModeEnum.Windowed;
+		window.MinSize = new Vector2I(Math.Min(960, usable.Width), Math.Min(540, usable.Height));
+		window.CurrentScreen = screenIndex;
+		window.Size = new Vector2I(placement.Width, placement.Height);
+		window.Position = new Vector2I(placement.X, placement.Y);
+		window.SizeChanged += OnMainWindowSizeChanged;
+		window.CloseRequested += OnMainWindowCloseRequested;
+		window.Mode = Settings.Fullscreen ? Window.ModeEnum.Fullscreen
+			: Settings.WindowMaximized ? Window.ModeEnum.Maximized : Window.ModeEnum.Windowed;
+	}
+
+	private static List<WindowRectangle> GetUsableScreens()
+	{
+		var count = Math.Max(1, DisplayServer.GetScreenCount());
+		var screens = new List<WindowRectangle>(count);
+		for (var i = 0; i < count; i++)
 		{
-			if (window.Mode == Window.ModeEnum.Windowed)
-			{
-				Settings.WindowedWidth = window.Size.X;
-				Settings.WindowedHeight = window.Size.Y;
-			}
-		};
+			var rect = DisplayServer.ScreenGetUsableRect(i);
+			screens.Add(new WindowRectangle(rect.Position.X, rect.Position.Y,
+				Math.Max(1, rect.Size.X), Math.Max(1, rect.Size.Y)));
+		}
+		return screens;
+	}
+
+	private void OnMainWindowSizeChanged() => _windowSaveCountdown = Math.Max(_windowSaveCountdown, 0.75);
+
+	private void OnMainWindowCloseRequested()
+	{
+		SaveWindowPlacement();
+		GetTree().Quit();
 	}
 
 	public override void _Input(InputEvent @event)
@@ -133,20 +164,18 @@ public partial class GameBootstrap : Node
 		if (Settings is null) return;
 		var window = _mainWindow;
 		if (window is null) return;
-		if (window.Mode == Window.ModeEnum.Windowed)
+		if (window.Mode != Window.ModeEnum.Fullscreen)
 		{
-			Settings.WindowedWidth = window.Size.X;
-			Settings.WindowedHeight = window.Size.Y;
+			if (window.Mode == Window.ModeEnum.Windowed) CaptureWindowedRectangle(window);
+			Settings.WindowMaximized = window.Mode == Window.ModeEnum.Maximized || Settings.WindowMaximized;
 			Settings.Fullscreen = true;
 			window.Mode = Window.ModeEnum.Fullscreen;
 		}
 		else
 		{
 			Settings.Fullscreen = false;
-			window.Mode = Window.ModeEnum.Windowed;
-			var usable = DisplayServer.ScreenGetUsableRect();
-			window.Size = new Vector2I(Math.Min(Settings.WindowedWidth, usable.Size.X), Math.Min(Settings.WindowedHeight, usable.Size.Y));
-			window.Position = usable.Position + (usable.Size - window.Size) / 2;
+			RestoreWindowedRectangle(window);
+			window.Mode = Settings.WindowMaximized ? Window.ModeEnum.Maximized : Window.ModeEnum.Windowed;
 		}
 		Settings.Save();
 	}
@@ -154,19 +183,82 @@ public partial class GameBootstrap : Node
 	public override void _Process(double delta)
 	{
 		EpicOnlineServicesMultiplayerProvider.TickPlatform(delta);
+		TrackWindowPlacement(delta);
+	}
+
+	private void TrackWindowPlacement(double delta)
+	{
+		if (IsWindowPersistenceSuppressed) return;
+		var window = _mainWindow;
+		if (window is null || Settings is null) return;
+		if (window.Mode == Window.ModeEnum.Windowed)
+		{
+			if (Settings.WindowMaximized) { Settings.WindowMaximized = false; Settings.Save(); }
+			var before = (Settings.WindowedX, Settings.WindowedY, Settings.WindowedWidth,
+				Settings.WindowedHeight, Settings.WindowScreen);
+			CaptureWindowedRectangle(window);
+			if (before != (Settings.WindowedX, Settings.WindowedY, Settings.WindowedWidth,
+				Settings.WindowedHeight, Settings.WindowScreen)) _windowSaveCountdown = 0.75;
+		}
+		else if (window.Mode == Window.ModeEnum.Maximized && !Settings.WindowMaximized)
+		{
+			Settings.WindowMaximized = true;
+			Settings.Save();
+		}
+		if (_windowSaveCountdown >= 0)
+		{
+			_windowSaveCountdown -= delta;
+			if (_windowSaveCountdown < 0) { Settings.Save(); _windowSaveCountdown = -1; }
+		}
+	}
+
+	private static void CaptureWindowedRectangle(Window window)
+	{
+		var screens = GetUsableScreens();
+		var screen = Math.Clamp(window.CurrentScreen, 0, screens.Count - 1);
+		var rect = WindowPlacementPolicy.Clamp(new WindowRectangle(window.Position.X, window.Position.Y,
+			window.Size.X, window.Size.Y), screens[screen]);
+		Settings.WindowedX = rect.X;
+		Settings.WindowedY = rect.Y;
+		Settings.WindowedWidth = rect.Width;
+		Settings.WindowedHeight = rect.Height;
+		Settings.WindowScreen = screen;
+	}
+
+	private static void RestoreWindowedRectangle(Window window)
+	{
+		var screens = GetUsableScreens();
+		var requested = new WindowRectangle(Settings.WindowedX, Settings.WindowedY,
+			Math.Max(1, Settings.WindowedWidth), Math.Max(1, Settings.WindowedHeight));
+		var screen = WindowPlacementPolicy.SelectScreen(Settings.WindowScreen, requested, screens);
+		var rect = WindowPlacementPolicy.Clamp(requested, screens[screen]);
+		window.Mode = Window.ModeEnum.Windowed;
+		window.CurrentScreen = screen;
+		window.Size = new Vector2I(rect.Width, rect.Height);
+		window.Position = new Vector2I(rect.X, rect.Y);
+	}
+
+	private void SaveWindowPlacement()
+	{
+		if (IsWindowPersistenceSuppressed) return;
+		var window = _mainWindow;
+		if (window is null || Settings is null) return;
+		if (window.Mode == Window.ModeEnum.Windowed)
+		{
+			Settings.WindowMaximized = false;
+			CaptureWindowedRectangle(window);
+		}
+		else if (window.Mode == Window.ModeEnum.Maximized) Settings.WindowMaximized = true;
+		Settings.Save();
 	}
 
 	public override void _ExitTree()
 	{
-		if (Settings is not null)
+		SaveWindowPlacement();
+		if (_mainWindow is not null)
 		{
-			Settings.Fullscreen = GetWindow().Mode != Window.ModeEnum.Windowed;
-			if (!Settings.Fullscreen)
-			{
-				Settings.WindowedWidth = GetWindow().Size.X;
-				Settings.WindowedHeight = GetWindow().Size.Y;
-			}
-			Settings.Save();
+			_mainWindow.SizeChanged -= OnMainWindowSizeChanged;
+			_mainWindow.CloseRequested -= OnMainWindowCloseRequested;
 		}
 		EpicOnlineServicesMultiplayerProvider.ShutdownPlatform();
 	}

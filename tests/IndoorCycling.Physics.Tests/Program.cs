@@ -66,6 +66,8 @@ var tests = new (string Name, Action Run)[]
     ,("Stale Sterzo input recentres unless keyboard owns the position", SteeringStaleInputRecovery)
     ,("Steering pauses safely and respects text focus", SteeringPauseAndTextFocus)
     ,("Steering sensitivity and dead zone persist with bounded settings", SteeringSettingsPersist)
+    ,("Window placement is clamped to a visible display and chooses a remaining monitor", WindowPlacementRestoresSafely)
+    ,("Keyboard steering is 20 percent faster while physical steering speed is unchanged", KeyboardSteeringSpeedIsSeparate)
 };
 
 var failed = 0;
@@ -171,6 +173,33 @@ static void SteeringSettingsPersist()
     restored.DeadZoneDegrees = -1;
     restored.Normalize();
     Assert(restored.Sensitivity == 2 && restored.DeadZoneDegrees == 0, "Loaded steering settings must be bounded.");
+}
+
+static void WindowPlacementRestoresSafely()
+{
+    var screens = new[]
+    {
+        new WindowRectangle(0, 0, 1920, 1040),
+        new WindowRectangle(-1600, 0, 1600, 900)
+    };
+    var saved = new WindowRectangle(-1500, 40, 1800, 1000);
+    Assert(WindowPlacementPolicy.SelectScreen(8, saved, screens) == 1,
+        "When the saved monitor index disappears, use the monitor containing the saved window.");
+    var restored = WindowPlacementPolicy.Clamp(saved, screens[1]);
+    Assert(restored == new WindowRectangle(-1600, 0, 1600, 900),
+        "Oversized or partially off-screen bounds should be fitted inside the usable display.");
+    var smallDisplay = WindowPlacementPolicy.Clamp(new WindowRectangle(4000, -3000, 1152, 648),
+        new WindowRectangle(0, 0, 800, 500));
+    Assert(smallDisplay == new WindowRectangle(0, 0, 800, 500),
+        "A smaller available display must take precedence over the usual minimum dimensions.");
+}
+
+static void KeyboardSteeringSpeedIsSeparate()
+{
+    Assert(SteeringLateralController.MaximumLateralSpeedMetersPerSecond == 1.25,
+        "The existing shared speed for controller input and recentering must remain unchanged.");
+    Assert(SteeringLateralController.KeyboardLateralSpeedMetersPerSecond == 1.5,
+        "Keyboard lateral movement should increase by exactly 20 percent.");
 }
 
 static void Assert(bool condition, string message)
