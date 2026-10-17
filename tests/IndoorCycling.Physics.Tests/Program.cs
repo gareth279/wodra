@@ -67,7 +67,7 @@ var tests = new (string Name, Action Run)[]
     ,("Steering pauses safely and respects text focus", SteeringPauseAndTextFocus)
     ,("Steering sensitivity and dead zone persist with bounded settings", SteeringSettingsPersist)
     ,("Window placement is clamped to a visible display and chooses a remaining monitor", WindowPlacementRestoresSafely)
-    ,("Keyboard steering is 20 percent faster while physical steering speed is unchanged", KeyboardSteeringSpeedIsSeparate)
+    ,("Shared steering sensitivity persists and scales keyboard and Sterzo response", SteeringSensitivityIsShared)
 };
 
 var failed = 0;
@@ -165,6 +165,8 @@ static void SteeringPauseAndTextFocus()
 
 static void SteeringSettingsPersist()
 {
+    var defaults = new SteeringControlSettings();
+    Assert(defaults.Sensitivity == 1.5, "New profiles should default to 1.5× shared steering sensitivity.");
     var settings = new SteeringControlSettings { Sensitivity = 1.6, DeadZoneDegrees = 4.5 };
     var restored = JsonSerializer.Deserialize<SteeringControlSettings>(JsonSerializer.Serialize(settings));
     Assert(restored is not null && restored.Sensitivity == 1.6 && restored.DeadZoneDegrees == 4.5,
@@ -172,7 +174,24 @@ static void SteeringSettingsPersist()
     restored!.Sensitivity = 9;
     restored.DeadZoneDegrees = -1;
     restored.Normalize();
-    Assert(restored.Sensitivity == 2 && restored.DeadZoneDegrees == 0, "Loaded steering settings must be bounded.");
+    Assert(restored.Sensitivity == 3 && restored.DeadZoneDegrees == 0, "Loaded steering settings must be bounded to the shared 0.5–3.0 range.");
+
+    // Existing settings.json files use the same Sensitivity property; retain a rider's saved value.
+    var previous = JsonSerializer.Deserialize<SteeringControlSettings>("{\"Sensitivity\":1.2,\"DeadZoneDegrees\":5}");
+    Assert(previous?.Sensitivity == 1.2 && previous.DeadZoneDegrees == 5,
+        "Preferences saved by earlier alpha builds should migrate without resetting the shared sensitivity or dead zone.");
+
+    var oldDefault = new SteeringControlSettings { Sensitivity = 1.0 };
+    Assert(SteeringSensitivityPreferencePolicy.Migrate("{\"Steering\":{\"Sensitivity\":1.0}}", oldDefault, 0) &&
+        oldDefault.Sensitivity == 1.5,
+        "The serialized alpha.36 default should migrate once to the new default.");
+    var custom = new SteeringControlSettings { Sensitivity = 1.3 };
+    SteeringSensitivityPreferencePolicy.Migrate("{\"Steering\":{\"Sensitivity\":1.3}}", custom, 0);
+    Assert(custom.Sensitivity == 1.3, "A saved custom sensitivity should survive migration.");
+    var explicitBaseline = new SteeringControlSettings { Sensitivity = 1.0 };
+    Assert(!SteeringSensitivityPreferencePolicy.Migrate("{}", explicitBaseline, SteeringSensitivityPreferencePolicy.CurrentVersion) &&
+        explicitBaseline.Sensitivity == 1.0,
+        "A user's explicit 1.0× selection should survive later restarts after the migration marker is saved.");
 }
 
 static void WindowPlacementRestoresSafely()
@@ -194,12 +213,61 @@ static void WindowPlacementRestoresSafely()
         "A smaller available display must take precedence over the usual minimum dimensions.");
 }
 
-static void KeyboardSteeringSpeedIsSeparate()
+static void SteeringSensitivityIsShared()
 {
     Assert(SteeringLateralController.MaximumLateralSpeedMetersPerSecond == 1.25,
-        "The existing shared speed for controller input and recentering must remain unchanged.");
+        "The alpha.36 Sterzo baseline and stale-input recentering speed must remain unchanged at 1.0×.");
     Assert(SteeringLateralController.KeyboardLateralSpeedMetersPerSecond == 1.5,
-        "Keyboard lateral movement should increase by exactly 20 percent.");
+        "The alpha.36 keyboard baseline must remain unchanged at 1.0×.");
+    Assert(SteeringLateralController.MinimumSensitivity == 0.5 &&
+        SteeringLateralController.MaximumSensitivity == 3.0 &&
+        SteeringLateralController.DefaultSensitivity == 1.5,
+        "The shared setting should expose 0.5–3.0× in 0.1× steps with a 1.5× default.");
+
+    static double KeyboardMove(double sensitivity)
+    {
+        var steering = new SteeringLateralController();
+        for (var i = 0; i < 20; i++) steering.Update(.05, false, true, null, false, false,
+            sensitivity: sensitivity, roadWidthMeters: 50);
+        return SteeringLateralController.NormalLineMeters - steering.LateralOffsetMeters;
+    }
+    static double SterzoMove(double sensitivity)
+    {
+        var steering = new SteeringLateralController();
+        for (var i = 0; i < 20; i++) steering.Update(.05, false, false, 16.5f, true, false,
+            sensitivity: sensitivity, roadWidthMeters: 50);
+        return steering.LateralOffsetMeters - SteeringLateralController.NormalLineMeters;
+    }
+
+    foreach (var move in new Func<double, double>[] { KeyboardMove, SterzoMove })
+    {
+        var baseline = move(1.0);
+        var defaultMove = move(1.5);
+        var highMove = move(3.0);
+        var lowMove = move(0.5);
+        Assert(Math.Abs(defaultMove / baseline - 1.5) < 1e-9,
+            "The default shared sensitivity should scale each input's alpha.36 baseline by 1.5×.");
+        Assert(Math.Abs(highMove / baseline - 3.0) < 1e-9 && Math.Abs(lowMove / baseline - 0.5) < 1e-9,
+            "Low and high settings should proportionally scale both steering inputs without the former 2.0× cap.");
+    }
+
+    var proportional = new SteeringLateralController();
+    for (var i = 0; i < 20; i++) proportional.Update(.05, false, false, 8f, true, false, sensitivity: 3.0);
+    var smallTurn = Math.Abs(proportional.LateralOffsetMeters - SteeringLateralController.NormalLineMeters);
+    proportional.Reset();
+    for (var i = 0; i < 20; i++) proportional.Update(.05, false, false, 20f, true, false, sensitivity: 3.0);
+    var largerTurn = Math.Abs(proportional.LateralOffsetMeters - SteeringLateralController.NormalLineMeters);
+    Assert(largerTurn > smallTurn, "Controller steering should remain proportional at every shared sensitivity.");
+
+    var deadZone = new SteeringLateralController();
+    for (var i = 0; i < 20; i++) deadZone.Update(.05, false, false, 3f, true, false, sensitivity: 3.0);
+    Near(SteeringLateralController.NormalLineMeters, deadZone.LateralOffsetMeters, 1e-9);
+
+    var maximum = new SteeringLateralController();
+    for (var i = 0; i < 40; i++) maximum.Update(.05, false, true, null, false, false,
+        sensitivity: 99, roadWidthMeters: 100);
+    Assert(maximum.LateralOffsetMeters < SteeringLateralController.NormalLineMeters - 2.0,
+        "A high setting should exceed the former 2.0× cap while remaining bounded by the road edge.");
 }
 
 static void Assert(bool condition, string message)

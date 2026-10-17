@@ -1,3 +1,5 @@
+using IndoorCycling.Core.Models;
+
 namespace IndoorCycling.Core.Simulation;
 
 /// <summary>Converts intentional steering input into a bounded route-relative rider offset.</summary>
@@ -9,7 +11,9 @@ public sealed class SteeringLateralController
     public const double MaximumLateralSpeedMetersPerSecond = 1.25;
     public const double KeyboardLateralSpeedMetersPerSecond = MaximumLateralSpeedMetersPerSecond * 1.2;
     public const double DefaultDeadZoneDegrees = 3.0;
-    public const double DefaultSensitivity = 1.0;
+    public const double DefaultSensitivity = SteeringControlSettings.DefaultSensitivity;
+    public const double MinimumSensitivity = SteeringControlSettings.MinimumSensitivity;
+    public const double MaximumSensitivity = SteeringControlSettings.MaximumSensitivity;
     private const double MaximumCommandAngleDegrees = 30.0;
     private const double VelocitySmoothingSeconds = 0.16;
 
@@ -26,7 +30,7 @@ public sealed class SteeringLateralController
         bool controllerInputIsNew = true)
     {
         if (!double.IsFinite(deltaSeconds) || deltaSeconds < 0) throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
-        sensitivity = double.IsFinite(sensitivity) ? Math.Clamp(sensitivity, 0.25, 2.0) : DefaultSensitivity;
+        sensitivity = double.IsFinite(sensitivity) ? Math.Clamp(sensitivity, MinimumSensitivity, MaximumSensitivity) : DefaultSensitivity;
         deadZoneDegrees = double.IsFinite(deadZoneDegrees) ? Math.Clamp(deadZoneDegrees, 0, 12) : DefaultDeadZoneDegrees;
         var width = roadWidthMeters is { } supplied && double.IsFinite(supplied) && supplied > RiderMarginMeters * 2
             ? supplied : FallbackRoadWidthMeters;

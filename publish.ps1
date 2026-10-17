@@ -14,6 +14,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
+. (Join-Path $RepoDir 'tools\GitHubReleaseAuth.ps1')
+$githubToken = $null
 $repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
 $Solution = Join-Path $RepoDir 'wodra.sln'
@@ -292,6 +294,75 @@ try {
         throw "Version '$Version' is invalid. Alpha package versions must use MAJOR.MINOR.PATCH-alpha.N (for example 0.2.0-alpha.1)."
     }
     $PackageVersion = $Version
+    if ($CreateGitHubDraft) {
+        if ([string]::IsNullOrWhiteSpace($GitHubTag)) { throw 'Pass -GitHubTag with an existing, reviewed Git tag to create a GitHub draft.' }
+        if ($GitHubTag -ne "v$PackageVersion") { throw 'For GitHub publishing, GitHubTag must match the alpha package version.' }
+
+        $savedCredentialProvider = {
+            try { $ghExe = (Get-Command gh -ErrorAction Stop).Source }
+            catch { throw 'GitHub CLI is unavailable for saved credential reuse.' }
+            $ghOutput = @(& $ghExe auth token --hostname github.com 2>&1)
+            $ghExitCode = $LASTEXITCODE
+            if ($ghExitCode -ne 0) {
+                $diagnostic = ($ghOutput | ForEach-Object { [string]$_ }) -join "`n"
+                $failureKind = Get-GitHubReleaseAuthFailureKind $diagnostic
+                throw (Get-GitHubReleaseAuthFailureMessage $failureKind)
+            }
+            (($ghOutput | ForEach-Object { [string]$_ }) -join "`n").Trim()
+        }
+        try {
+            $credential = Resolve-GitHubReleaseCredential -VpkToken $env:VPK_TOKEN -GhToken $env:GH_TOKEN `
+                -SavedCredentialProvider $savedCredentialProvider
+            $githubToken = $credential.Token
+        }
+        catch {
+            throw "GitHub release preflight could not select a credential. $($_.Exception.Message)"
+        }
+
+        Write-Host "GitHub credential source: $($credential.Source)"
+        $credential = $null
+        $gitExe = (Get-Command git -ErrorAction Stop).Source
+        $tagResult = Invoke-TrackedProcess -FilePath $gitExe `
+            -ArgumentList @('-C', $RepoDir, 'rev-parse', '--verify', "refs/tags/$GitHubTag^{commit}") `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'git-release-tag-preflight.log') `
+            -TimeoutSeconds 30 -Label 'GitHub tag preflight'
+        $headResult = Invoke-TrackedProcess -FilePath $gitExe -ArgumentList @('-C', $RepoDir, 'rev-parse', 'HEAD') `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'git-head-preflight.log') `
+            -TimeoutSeconds 30 -Label 'Git commit preflight'
+        if ($tagResult.StdOut.Trim() -ne $headResult.StdOut.Trim()) {
+            throw 'The GitHub release tag must point to the exact commit being packaged.'
+        }
+        $statusResult = Invoke-TrackedProcess -FilePath $gitExe `
+            -ArgumentList @('-C', $RepoDir, 'status', '--porcelain') -WorkingDirectory $RepoDir `
+            -LogPath (Join-Path $workRoot 'git-clean-preflight.log') -TimeoutSeconds 30 `
+            -Label 'Git clean-tree preflight'
+        if (-not [string]::IsNullOrWhiteSpace($statusResult.StdOut)) {
+            throw 'The GitHub release source tree must be clean before packaging.'
+        }
+
+        $headers = @{ Authorization = "Bearer $githubToken"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+        try {
+            $repositoryAccess = Invoke-RestMethod -Method Get -Uri 'https://api.github.com/repos/gareth279/wodra' `
+                -Headers $headers -TimeoutSec 20 -ErrorAction Stop
+            if ($null -eq $repositoryAccess.permissions -or $repositoryAccess.permissions.push -ne $true) {
+                throw (Get-GitHubReleaseAuthFailureMessage 'permission')
+            }
+            Write-Host 'GitHub credential preflight passed (repository write access confirmed).'
+        }
+        catch {
+            $statusCode = 0
+            try { $statusCode = [int]$_.Exception.Response.StatusCode } catch { }
+            $diagnostic = if ($statusCode -eq 401) { 'HTTP 401: invalid credential' }
+                elseif ($statusCode -eq 403 -or $statusCode -eq 404) { 'HTTP 403: insufficient permission' }
+                elseif ($statusCode -ge 500) { 'GitHub server connectivity failure' }
+                else { $_.Exception.Message }
+            $failureKind = Get-GitHubReleaseAuthFailureKind $diagnostic
+            throw (Get-GitHubReleaseAuthFailureMessage $failureKind)
+        }
+        finally {
+            [void]$headers.Remove('Authorization')
+        }
+    }
     if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
         if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) { throw 'LOCALAPPDATA is unavailable; supply -EosClientConfigPath.' }
         $ConfigPath = Join-Path $env:LOCALAPPDATA 'Wodra\eos-client.json'
@@ -752,10 +823,7 @@ try {
     }
 
     if ($CreateGitHubDraft) {
-        if ([string]::IsNullOrWhiteSpace($GitHubTag)) { throw 'Pass -GitHubTag with an existing, reviewed Git tag to create a GitHub draft.' }
-        if ($GitHubTag -ne "v$PackageVersion") { throw 'For GitHub publishing, GitHubTag must be vMAJOR.MINOR.PATCH-alpha.N and match the package version.' }
-        $githubToken = if (-not [string]::IsNullOrWhiteSpace($env:VPK_TOKEN)) { $env:VPK_TOKEN } else { $env:GH_TOKEN }
-        if ([string]::IsNullOrWhiteSpace($githubToken)) { throw 'Set GH_TOKEN or VPK_TOKEN with a least-privilege repository contents:write token to create a draft release.' }
+        if ([string]::IsNullOrWhiteSpace($githubToken)) { throw 'GitHub release credential was not retained in process memory after preflight.' }
         $gitExe = (Get-Command git -ErrorAction Stop).Source
         $tagResult = Invoke-TrackedProcess -FilePath $gitExe `
             -ArgumentList @('-C', $RepoDir, 'rev-parse', '--verify', "refs/tags/$GitHubTag^{commit}") `
@@ -773,19 +841,12 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($statusResult.StdOut)) {
             throw 'The GitHub release source tree must be clean. Commit the reviewed release pipeline and assets before publishing.'
         }
-        $previousVpkToken = $env:VPK_TOKEN
-        $env:VPK_TOKEN = $githubToken
-        try {
-            [void](Invoke-TrackedProcess -FilePath $dotnet `
-                -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
-                    '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
-                    '--releaseName', "Wodra $GitHubTag", '--pre') `
-                -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
-                -TimeoutSeconds 600 -Label 'Velopack GitHub draft release upload')
-        } finally {
-            if ($null -eq $previousVpkToken) { Remove-Item Env:VPK_TOKEN -ErrorAction SilentlyContinue }
-            else { $env:VPK_TOKEN = $previousVpkToken }
-        }
+        Invoke-GitHubUploadProcess -FilePath $dotnet `
+            -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
+                '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
+                '--releaseName', "Wodra $GitHubTag", '--pre') `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
+            -TimeoutSeconds 600 -Credential $githubToken
     }
 
     Write-Host ("`nSUCCESS (total {0:n1}s)" -f $phaseClock.Elapsed.TotalSeconds)
@@ -794,6 +855,8 @@ try {
     Write-Host "SHA256: $finalChecksum"
 }
 finally {
+    $githubToken = $null
+    $credential = $null
     foreach ($temporary in $incomingArtifacts) {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue }
     }
