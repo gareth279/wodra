@@ -76,6 +76,69 @@ function Assert-WodraIconResource([string]$ExecutablePath) {
     }
 }
 
+function Set-WodraExecutableIcon([string]$ExecutablePath, [string]$IconPath) {
+    # Godot's export-pack flow produces a fresh PCK but stages the release
+    # template separately. Apply the approved ICO to that staged PE executable
+    # before Velopack creates the app and Setup packages.
+    $source = @'
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+
+public static class WodraIconResourceWriter {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr BeginUpdateResource(string fileName, bool deleteExistingResources);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool UpdateResource(IntPtr update, IntPtr type, IntPtr name, ushort language, byte[] data, uint size);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool EndUpdateResource(IntPtr update, bool discard);
+
+    private static IntPtr Id(int value) => new IntPtr(value);
+    private static void Check(bool ok, string action) {
+        if (!ok) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), action);
+    }
+
+    public static void Apply(string exe, string ico) {
+        byte[] bytes = File.ReadAllBytes(ico);
+        if (bytes.Length < 6 || bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 1 || bytes[3] != 0)
+            throw new InvalidDataException("The application icon is not a valid ICO file.");
+        int count = bytes[4] | (bytes[5] << 8);
+        if (count < 1 || bytes.Length < 6 + count * 16) throw new InvalidDataException("The ICO directory is incomplete.");
+        IntPtr update = BeginUpdateResource(exe, false);
+        if (update == IntPtr.Zero) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not open the app executable for icon resources.");
+        bool committed = false;
+        try {
+            byte[] group = new byte[6 + count * 14];
+            Buffer.BlockCopy(bytes, 0, group, 0, 6);
+            for (int i = 0; i < count; i++) {
+                int entry = 6 + i * 16;
+                int length = BitConverter.ToInt32(bytes, entry + 8);
+                int offset = BitConverter.ToInt32(bytes, entry + 12);
+                if (length < 1 || offset < 0 || offset > bytes.Length - length) throw new InvalidDataException("An ICO image is outside the file bounds.");
+                byte[] image = new byte[length];
+                Buffer.BlockCopy(bytes, offset, image, 0, length);
+                ushort imageId = checked((ushort)(i + 1));
+                Check(UpdateResource(update, Id(3), Id(imageId), 0, image, (uint)image.Length), "Could not write an application icon image resource.");
+                int groupEntry = 6 + i * 14;
+                Buffer.BlockCopy(bytes, entry, group, groupEntry, 12);
+                Buffer.BlockCopy(BitConverter.GetBytes(imageId), 0, group, groupEntry + 12, 2);
+            }
+            Check(UpdateResource(update, Id(14), Id(1), 0, group, (uint)group.Length), "Could not write the application icon group resource.");
+            Check(EndUpdateResource(update, false), "Could not commit the application icon resources.");
+            committed = true;
+        } finally {
+            if (!committed) EndUpdateResource(update, true);
+        }
+    }
+}
+'@
+    if (-not ('WodraIconResourceWriter' -as [type])) {
+        Add-Type -TypeDefinition $source -Language CSharp
+    }
+    [WodraIconResourceWriter]::Apply($ExecutablePath, $IconPath)
+    Assert-WodraIconResource $ExecutablePath
+}
+
 function Invoke-TrackedProcess {
     param(
         [Parameter(Mandatory = $true)][string]$FilePath,
@@ -388,6 +451,7 @@ try {
     if (-not (Test-Path -LiteralPath $ExePath -PathType Leaf)) {
         throw "Could not stage the matching Godot Windows x64 release template: $GodotReleaseTemplate"
     }
+    Set-WodraExecutableIcon $ExePath (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico')
     Complete-Phase
 
     # Godot 4.6.2 may report the managed export hook as failed after its
