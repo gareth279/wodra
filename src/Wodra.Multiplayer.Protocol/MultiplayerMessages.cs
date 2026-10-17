@@ -66,6 +66,8 @@ public static class MultiplayerProtocol
             return "Invalid rider speed.";
         if (state.CadenceRpm is < 0 or > 250 || state.PowerWatts is < 0 or > 3000)
             return "Invalid rider telemetry.";
+        if (!double.IsFinite(state.LateralOffsetMeters) || state.LateralOffsetMeters is < -3.05 or > 3.05)
+            return "Invalid rider lateral position.";
         return null;
     }
 
@@ -77,7 +79,7 @@ public static class MultiplayerProtocol
         return ValidateState(new RiderStateMessage { ProtocolVersion = state.ProtocolVersion, RiderId = state.RiderId,
             DisplayName = state.DisplayName, DistanceMeters = state.DistanceMeters, SpeedKph = state.SpeedKph,
             CadenceRpm = state.CadenceRpm, PowerWatts = state.PowerWatts, Paused = state.Paused,
-            Sequence = state.Sequence }, assignedRiderId);
+            LateralOffsetMeters = state.LateralOffsetMeters, Sequence = state.Sequence }, assignedRiderId);
     }
 
     private static bool ValidIdentifier(string? value, int min, int max) =>
@@ -138,6 +140,8 @@ public sealed record RiderStateMessage : ProtocolMessage
     public int CadenceRpm { get; init; }
     public int PowerWatts { get; init; }
     public bool Paused { get; init; }
+    /// <summary>Absent values from older peers default to the normal riding line.</summary>
+    public double LateralOffsetMeters { get; init; } = 1.75;
     public long Sequence { get; init; }
 }
 
@@ -153,6 +157,7 @@ public sealed record RiderRepositionedMessage : ProtocolMessage
     public int CadenceRpm { get; init; }
     public int PowerWatts { get; init; }
     public bool Paused { get; init; }
+    public double LateralOffsetMeters { get; init; } = 1.75;
     public long Sequence { get; init; }
 }
 

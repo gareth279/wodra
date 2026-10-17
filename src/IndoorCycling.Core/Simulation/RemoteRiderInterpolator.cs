@@ -55,12 +55,14 @@ public sealed class RemoteRiderInterpolator
         SpeedKph = a.SpeedKph + (b.SpeedKph - a.SpeedKph) * t,
         CadenceRpm = (int)Math.Round(a.CadenceRpm + (b.CadenceRpm - a.CadenceRpm) * t),
         PowerWatts = (int)Math.Round(a.PowerWatts + (b.PowerWatts - a.PowerWatts) * t),
+        LateralOffsetMeters = a.LateralOffsetMeters + (b.LateralOffsetMeters - a.LateralOffsetMeters) * t,
         Paused = t < .5 ? a.Paused : b.Paused
     };
 }
 
 public readonly record struct RemoteRiderSample(string RiderId, string DisplayName, double DistanceMeters,
-    double SpeedKph, int CadenceRpm, int PowerWatts, bool Paused, long Sequence, double ReceivedAtSeconds);
+    double SpeedKph, int CadenceRpm, int PowerWatts, bool Paused, long Sequence, double ReceivedAtSeconds,
+    double LateralOffsetMeters = 1.75);
 
 public static class MultiplayerRoutePosition
 {

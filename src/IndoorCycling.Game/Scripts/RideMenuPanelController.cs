@@ -220,6 +220,25 @@ public partial class RideMenuPanelController : Control
 				break;
 			case MenuView.Display:
 				_content.AddChild(new Label { Text = "F11 or Alt+Enter toggles fullscreen. Window size is remembered.", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center });
+				_content.AddChild(new Label { Text = "During a ride, hold ← or → to steer across the road. Release to hold position.", AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center });
+				_content.AddChild(new Label { Text = "Steering sensitivity", HorizontalAlignment = HorizontalAlignment.Center });
+				var steeringSensitivity = new HSlider { MinValue = 0.25, MaxValue = 2, Step = 0.05,
+					Value = GameBootstrap.Settings.Steering.Sensitivity, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+				steeringSensitivity.ValueChanged += value =>
+				{
+					GameBootstrap.Settings.Steering.Sensitivity = value;
+					GameBootstrap.Settings.Save();
+				};
+				_content.AddChild(steeringSensitivity);
+				_content.AddChild(new Label { Text = "Sterzo dead zone (degrees)", HorizontalAlignment = HorizontalAlignment.Center });
+				var steeringDeadZone = new HSlider { MinValue = 0, MaxValue = 12, Step = 0.5,
+					Value = GameBootstrap.Settings.Steering.DeadZoneDegrees, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+				steeringDeadZone.ValueChanged += value =>
+				{
+					GameBootstrap.Settings.Steering.DeadZoneDegrees = value;
+					GameBootstrap.Settings.Save();
+				};
+				_content.AddChild(steeringDeadZone);
 				AddAction(GameBootstrap.Settings.Fullscreen ? "Return to windowed mode" : "Enter fullscreen", GameBootstrap.ToggleFullscreen);
 				var showHud = new CheckButton { Text = "Show riding HUD", ButtonPressed = _hudController?.HudDisplayEnabled ?? true };
 				showHud.Toggled += enabled => _hudController?.SetHudDisplayEnabled(enabled);

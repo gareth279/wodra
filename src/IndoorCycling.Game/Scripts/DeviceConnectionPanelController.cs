@@ -932,6 +932,23 @@ public partial class DeviceConnectionPanelController : Control
 		_steeringStatus!.Text = $"{direction} · {centeredAngle:+0.0;-0.0;0.0}°";
 	}
 
+	public bool TryGetFreshSteeringAngle(out float centeredAngle)
+		=> TryGetFreshSteeringAngle(out centeredAngle, out _);
+
+	public bool TryGetFreshSteeringAngle(out float centeredAngle, out DateTimeOffset inputAt)
+	{
+		centeredAngle = 0;
+		inputAt = DateTimeOffset.MinValue;
+		if (_steeringClient?.IsConnected != true || _steeringClient.LatestAngle is not { } angle ||
+			_steeringClient.LastInputAt is not { } timestamp || DateTimeOffset.UtcNow - timestamp > TimeSpan.FromSeconds(1))
+			return false;
+		centeredAngle = angle - _steeringCenterOffset;
+		inputAt = timestamp;
+		return float.IsFinite(centeredAngle);
+	}
+
+	public DateTimeOffset? LatestSteeringInputAt => _steeringClient?.LastInputAt;
+
 	public void OnSettingsReturned()
 	{
 		RefreshAntSetupUi();

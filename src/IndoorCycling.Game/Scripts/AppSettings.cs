@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Godot;
+using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Persistence;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
@@ -22,6 +23,7 @@ public sealed class AppSettings
 	public OptionalDeviceProtocolPreferences OptionalDeviceProtocols { get; set; } = new();
 	public ControllerDeviceTypePreference ControllerDeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 	public RideDisplayPreferences Display { get; set; } = new();
+	public SteeringControlSettings Steering { get; set; } = new();
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
@@ -84,6 +86,8 @@ public sealed class AppSettings
 				}
 			}
 			settings.Display ??= new RideDisplayPreferences();
+			settings.Steering ??= new SteeringControlSettings();
+			settings.Steering.Normalize();
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
 			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();

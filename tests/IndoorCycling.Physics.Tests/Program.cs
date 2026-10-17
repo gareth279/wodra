@@ -61,6 +61,11 @@ var tests = new (string Name, Action Run)[]
     ,("Packaged route directory resolves relative to the exported application", PackagedRouteDirectoryResolution)
     ,("Controller preference defaults to auto-detect and round-trips in settings JSON", ControllerDevicePreferencePersists)
     ,("Settings returns to its connection caller only before an active ride", SettingsReturnRespectsEntryContext)
+    ,("Lateral steering applies dead zone and holds on neutral input", SteeringDeadZoneAndNeutralHold)
+    ,("Keyboard steering is bounded, prioritized, and held on release", KeyboardSteeringPriorityAndBounds)
+    ,("Stale Sterzo input recentres unless keyboard owns the position", SteeringStaleInputRecovery)
+    ,("Steering pauses safely and respects text focus", SteeringPauseAndTextFocus)
+    ,("Steering sensitivity and dead zone persist with bounded settings", SteeringSettingsPersist)
 };
 
 var failed = 0;
@@ -86,6 +91,86 @@ static void SettingsReturnRespectsEntryContext()
     Assert(SettingsReturnPolicy.ShouldReturnToConnection(true, false), "Pre-ride Settings should return to the connection screen.");
     Assert(!SettingsReturnPolicy.ShouldReturnToConnection(true, true), "An active ride must retain the ride-menu path.");
     Assert(!SettingsReturnPolicy.ShouldReturnToConnection(false, false), "Other callers must not be redirected to the connection screen.");
+}
+
+static void SteeringDeadZoneAndNeutralHold()
+{
+    var steering = new SteeringLateralController();
+    var start = steering.LateralOffsetMeters;
+    for (var i = 0; i < 20; i++) steering.Update(.05, false, false, 2.9f, true, false);
+    Near(start, steering.LateralOffsetMeters, 1e-9);
+    for (var i = 0; i < 20; i++) steering.Update(.05, false, false, 20f, true, false);
+    var moved = steering.LateralOffsetMeters;
+    if (moved >= start) throw new Exception("Positive Sterzo angle should move right in the route-relative frame.");
+    for (var i = 0; i < 20; i++) steering.Update(.05, false, false, 0f, true, false);
+    Near(moved, steering.LateralOffsetMeters, 1e-9);
+}
+
+static void KeyboardSteeringPriorityAndBounds()
+{
+    var steering = new SteeringLateralController();
+    for (var i = 0; i < 100; i++) steering.Update(.05, false, true, -25f, true, false,
+        roadWidthMeters: 7, controllerInputIsNew: false);
+    if (steering.LateralOffsetMeters >= SteeringLateralController.NormalLineMeters)
+        throw new Exception("Right arrow should move to route-right and override Sterzo.");
+    var held = steering.LateralOffsetMeters;
+    for (var i = 0; i < 100; i++) steering.Update(.05, true, true, -25f, true, false,
+        roadWidthMeters: 7, controllerInputIsNew: false);
+    Near(held, steering.LateralOffsetMeters, 1e-9);
+    for (var i = 0; i < 100; i++) steering.Update(.05, false, false, -25f, true, false,
+        roadWidthMeters: 7, controllerInputIsNew: false);
+    Near(held, steering.LateralOffsetMeters, 1e-9);
+    steering.Update(.05, false, false, -25f, true, false, roadWidthMeters: 7, controllerInputIsNew: true);
+    if (steering.LateralOffsetMeters <= held) throw new Exception("A fresh intentional Sterzo sample should take over after keyboard use.");
+    var edge = new SteeringLateralController();
+    for (var i = 0; i < 300; i++) edge.Update(.1, true, false, null, false, false, roadWidthMeters: 7);
+    if (edge.LateralOffsetMeters > 3.05 || edge.LateralOffsetMeters < -3.05)
+        throw new Exception("Lateral movement crossed the rider-clearance road boundary.");
+    var fallback = new SteeringLateralController();
+    for (var i = 0; i < 300; i++) fallback.Update(.1, true, false, null, false, false, roadWidthMeters: null);
+    if (fallback.LateralOffsetMeters > 2.05) throw new Exception("Unknown-width routes must use conservative bounds.");
+}
+
+static void SteeringStaleInputRecovery()
+{
+    var steering = new SteeringLateralController();
+    for (var i = 0; i < 40; i++) steering.Update(.05, false, false, -25f, true, false, roadWidthMeters: 7);
+    var moved = steering.LateralOffsetMeters;
+    for (var i = 0; i < 100; i++) steering.Update(.05, false, false, null, false, false, roadWidthMeters: 7);
+    if (Math.Abs(steering.LateralOffsetMeters - SteeringLateralController.NormalLineMeters) >= Math.Abs(moved - SteeringLateralController.NormalLineMeters))
+        throw new Exception("Stale/disconnected Sterzo input must smoothly return to the normal line.");
+    var keyboardOwned = new SteeringLateralController();
+    for (var i = 0; i < 30; i++) keyboardOwned.Update(.05, false, true, null, false, false);
+    var keyboardPosition = keyboardOwned.LateralOffsetMeters;
+    for (var i = 0; i < 30; i++) keyboardOwned.Update(.05, false, false, null, false, false);
+    Near(keyboardPosition, keyboardOwned.LateralOffsetMeters, 1e-9);
+}
+
+static void SteeringPauseAndTextFocus()
+{
+    var steering = new SteeringLateralController();
+    var initial = steering.LateralOffsetMeters;
+    steering.Update(.1, true, false, null, false, false, textInputFocused: true);
+    Near(initial, steering.LateralOffsetMeters, 1e-9);
+    steering.Update(.1, true, false, null, false, true);
+    Near(initial, steering.LateralOffsetMeters, 1e-9);
+    for (var i = 0; i < 20; i++) steering.Update(.05, true, false, null, false, false);
+    var moving = steering.LateralOffsetMeters;
+    steering.Update(.1, true, false, null, false, true);
+    for (var i = 0; i < 20; i++) steering.Update(.05, false, false, null, false, false);
+    Near(moving, steering.LateralOffsetMeters, 1e-9);
+}
+
+static void SteeringSettingsPersist()
+{
+    var settings = new SteeringControlSettings { Sensitivity = 1.6, DeadZoneDegrees = 4.5 };
+    var restored = JsonSerializer.Deserialize<SteeringControlSettings>(JsonSerializer.Serialize(settings));
+    Assert(restored is not null && restored.Sensitivity == 1.6 && restored.DeadZoneDegrees == 4.5,
+        "Sensitivity and dead-zone settings must survive settings serialization.");
+    restored!.Sensitivity = 9;
+    restored.DeadZoneDegrees = -1;
+    restored.Normalize();
+    Assert(restored.Sensitivity == 2 && restored.DeadZoneDegrees == 0, "Loaded steering settings must be bounded.");
 }
 
 static void Assert(bool condition, string message)
@@ -135,11 +220,12 @@ static void RemoteRiderInterpolation()
 {
     var track = new RemoteRiderInterpolator();
     track.Add(new RemoteRiderSample("r", "Rider", 1990, 18, 70, 150, false, 1, 10));
-    track.Add(new RemoteRiderSample("r", "Rider", 2010, 22, 90, 250, false, 2, 10.2));
+    track.Add(new RemoteRiderSample("r", "Rider", 2010, 22, 90, 250, false, 2, 10.2, -1.25));
     if (!track.TrySample(10.3, out var sample)) throw new Exception("Expected interpolated remote sample.");
     Near(2000, sample.DistanceMeters, .01);
     Near(20, sample.SpeedKph, .01);
     if (sample.CadenceRpm != 80 || sample.PowerWatts != 200) throw new Exception("Remote telemetry did not interpolate.");
+    Near(0.25, sample.LateralOffsetMeters, .01);
 }
 
 static void RemoteRiderRepositionReset()

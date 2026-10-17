@@ -2341,6 +2341,17 @@ var tests = new (string Name, Action Run)[]
         NearVector(new Vector3(RiderLaneMath.RiderLateralOffsetMeters,0,0),
             RiderLaneMath.OffsetPosition(Vector3.Zero,new Vector3(0,0,1)));
     }),
+    ("route-relative steering direction follows bends return legs and U-turns", () =>
+    {
+        var tangents = new[] { new Vector3(0,0,-1), new Vector3(1,0,0), new Vector3(0,0,1), new Vector3(-1,0,0), new Vector3(0,0,-1) };
+        foreach (var tangent in tangents)
+        {
+            var left = RiderLaneMath.OffsetPosition(Vector3.Zero, tangent, 1);
+            var right = RiderLaneMath.OffsetPosition(Vector3.Zero, tangent, -1);
+            NearVector(Vector3.Normalize(Vector3.Cross(Vector3.UnitY, tangent)), left);
+            NearVector(-left, right);
+        }
+    }),
     ("visual lane offset does not change authoritative route distance", () =>
     {
         var route=new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);

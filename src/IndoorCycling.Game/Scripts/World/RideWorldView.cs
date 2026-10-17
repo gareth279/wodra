@@ -76,6 +76,12 @@ public partial class RideWorldView : Node3D
     private ChaseCamera _camera = default!;
     private RideMenuPanelController? _rideMenuPanel;
     private HudController? _hudController;
+    private DeviceConnectionPanelController? _deviceConnectionPanel;
+    private readonly SteeringLateralController _steering = new();
+    private bool _steerLeftHeld;
+    private bool _steerRightHeld;
+    private DateTimeOffset _lastSteeringSampleAt = DateTimeOffset.MinValue;
+    private DateTimeOffset _keyboardControllerSampleBaseline = DateTimeOffset.MinValue;
     private LandmarkLayer? _landmarkLayer;
     private BuildingLayer? _buildingLayer;
     private VegetationLayer? _vegetationLayer;
@@ -95,12 +101,14 @@ public partial class RideWorldView : Node3D
 #endif
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
+    public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
 
     public override void _Ready()
     {
         _session = GetNode<RideSessionNode>("../RideSessionNode");
         _rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
         _hudController = GetNodeOrNull<HudController>("../HudController");
+        _deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
         SetProcessInput(true);
         _camera = new ChaseCamera { Name = "ChaseCamera" };
         if (UseOriginalGameplayCamera) _camera.SetView(RiderCameraView.GameplayOriginal);
@@ -217,6 +225,24 @@ public partial class RideWorldView : Node3D
     public override void _Input(InputEvent @event)
     {
         if (@event is not InputEventKey key) return;
+        var keyCode = key.PhysicalKeycode != Key.None ? key.PhysicalKeycode : key.Keycode;
+        if (keyCode is Key.Left or Key.Right)
+        {
+            if (!key.Pressed)
+            {
+                if (keyCode == Key.Left) _steerLeftHeld = false;
+                else _steerRightHeld = false;
+                _keyboardControllerSampleBaseline = _deviceConnectionPanel?.LatestSteeringInputAt ?? _lastSteeringSampleAt;
+            }
+            else if (!key.Echo && _session?.IsRideActive == true && _rideMenuPanel?.IsMenuVisible != true && !IsTypingIntoControl())
+            {
+                if (keyCode == Key.Left) _steerLeftHeld = true;
+                else _steerRightHeld = true;
+                _keyboardControllerSampleBaseline = _deviceConnectionPanel?.LatestSteeringInputAt ?? _lastSteeringSampleAt;
+                GetViewport().SetInputAsHandled();
+            }
+            return;
+        }
 #if DEBUG
         if ((key.Keycode == Key.F7 || key.PhysicalKeycode == Key.F7) && key.Pressed && !key.Echo
             && _session?.IsRideActive == true && _rideMenuPanel?.IsMenuVisible != true)
@@ -249,6 +275,22 @@ public partial class RideWorldView : Node3D
         var view = CycleCameraInspectionView();
         _hudController?.ShowCameraInspectionView(view);
         GetViewport().SetInputAsHandled();
+    }
+
+    private bool IsTypingIntoControl()
+    {
+        var focus = GetViewport().GuiGetFocusOwner();
+        return focus is LineEdit or TextEdit or SpinBox;
+    }
+
+    public override void _Notification(int what)
+    {
+        if (what == NotificationApplicationFocusOut)
+        {
+            _steerLeftHeld = false;
+            _steerRightHeld = false;
+            _steering.Update(0, false, false, null, false, paused: true);
+        }
     }
 
 #if DEBUG
@@ -361,7 +403,12 @@ public partial class RideWorldView : Node3D
         {
             Hide();
             _camera.Current = false;
-            if (_wasActive) _routeLoadAttempt.Reset();
+            if (_wasActive)
+            {
+                _routeLoadAttempt.Reset();
+                _steering.Reset();
+                _steerLeftHeld = _steerRightHeld = false;
+            }
             _wasActive = false;
             return;
         }
@@ -426,10 +473,26 @@ public partial class RideWorldView : Node3D
         var pose = _geometry!.GetPoseAtDistance(distance);
         _lastPose = pose;
         var rideState = _session.CurrentRideState;
+        if (_session.IsRidePaused || _rideMenuPanel?.IsMenuVisible == true)
+        {
+            _steerLeftHeld = false;
+            _steerRightHeld = false;
+            _keyboardControllerSampleBaseline = _deviceConnectionPanel?.LatestSteeringInputAt ?? _lastSteeringSampleAt;
+        }
+        var sterzoAngle = 0f;
+        var sterzoTimestamp = DateTimeOffset.MinValue;
+        var hasFreshSterzo = _deviceConnectionPanel is not null && _deviceConnectionPanel.TryGetFreshSteeringAngle(out sterzoAngle, out sterzoTimestamp);
+        var freshSterzoSample = hasFreshSterzo && sterzoTimestamp > _lastSteeringSampleAt;
+        if (freshSterzoSample) _lastSteeringSampleAt = sterzoTimestamp;
+        var lateralOffset = _steering.Update(delta, _steerLeftHeld, _steerRightHeld,
+            hasFreshSterzo ? sterzoAngle : null, hasFreshSterzo, _session.IsRidePaused,
+            IsTypingIntoControl(), GameBootstrap.Settings.Steering.Sensitivity,
+            GameBootstrap.Settings.Steering.DeadZoneDegrees, ProceduralRoad.WidthMeters,
+            freshSterzoSample && sterzoTimestamp > _keyboardControllerSampleBaseline);
         var routeLength = _geometry.LengthMeters;
         var wrappedDistance = _geometry.WrapDistance(distance);
         var playerState = new RiderState("player", "You", _loadedRoute!.Id, distance, wrappedDistance,
-            (int)Math.Floor(distance / routeLength) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+            (int)Math.Floor(distance / routeLength) + 1, lateralOffset,
             Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
             _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
         _riderStateSource!.Update(playerState, routeLength, _loadedRoute.GetGradientAt, delta);
@@ -552,7 +615,7 @@ public partial class RideWorldView : Node3D
             }
             var pose = _geometry.GetPoseAtDistance(wrapped);
             var rider = new RiderState(remote.RiderId, remote.DisplayName, _loadedRoute.Id, absoluteDistance, wrapped,
-                (int)Math.Floor(absoluteDistance / routeLength) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+                (int)Math.Floor(absoluteDistance / routeLength) + 1, remote.LateralOffsetMeters ?? RiderLaneMath.RiderLateralOffsetMeters,
                 (remote.Paused ? 0 : remote.SpeedKph ?? 0) / 3.6, remote.PowerWatts ?? 0,
                 remote.CadenceRpm, remote.Paused, 0);
             visual.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), delta);
@@ -589,7 +652,7 @@ public partial class RideWorldView : Node3D
         _lastPose = pose;
         var state = _session.CurrentRideState;
         var rider = new RiderState("player", "You", _loadedRoute.Id, distance, wrapped,
-            (int)Math.Floor(distance / _geometry.LengthMeters) + 1, RiderLaneMath.RiderLateralOffsetMeters,
+            (int)Math.Floor(distance / _geometry.LengthMeters) + 1, _steering.LateralOffsetMeters,
             0, state.CurrentPowerWatts, _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, state.ElapsedSeconds);
         _rider!.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), 0);
         _camera!.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(pose.Forward), 1);

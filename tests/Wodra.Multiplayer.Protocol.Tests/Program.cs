@@ -1,4 +1,5 @@
 using Wodra.Multiplayer.Protocol;
+using System.Text.Json;
 
 if (EosSessionRecoveryPolicy.DecideMembership(identityMatches: true, lobbyHandleAvailable: true, localUserListed: true)
         != EosMembershipRecovery.MembershipRetained ||
@@ -52,7 +53,16 @@ if (MultiplayerProtocol.ValidateReposition(reposition, riderId, routeId, fingerp
     MultiplayerProtocol.ValidateState(new RiderStateMessage { RiderId = riderId, DistanceMeters = double.NaN }, riderId) is null)
     throw new InvalidOperationException("EOS protocol payload compatibility or range validation failed.");
 
+var oldPeerState = JsonSerializer.Deserialize<RiderStateMessage>("""
+    {"type":"RiderState","protocolVersion":2,"riderId":"peer-a","displayName":"Rider","distanceMeters":2,"speedKph":10,"cadenceRpm":80,"powerWatts":100,"paused":false,"sequence":1}
+    """, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+    ?? throw new InvalidOperationException("Could not deserialize a pre-steering peer state.");
+if (oldPeerState.LateralOffsetMeters != 1.75 || MultiplayerProtocol.ValidateState(oldPeerState, riderId) is not null ||
+    MultiplayerProtocol.ValidateState(oldPeerState with { LateralOffsetMeters = 9 }, riderId) is null)
+    throw new InvalidOperationException("Lateral state must default for old peers and reject unsafe values.");
+
 Console.WriteLine("PASS: multiplayer snapshot ordering and duplicate rejection");
 Console.WriteLine("PASS: reliable reposition sequence barrier and peer departure cleanup");
 Console.WriteLine("PASS: route fingerprint, rider identity, and telemetry range validation");
+Console.WriteLine("PASS: steering position interpolates and old peers default to the normal line");
 Console.WriteLine("PASS: EOS reauthentication preserves confirmed membership, rejoins only when absent, rejects identity changes, and bounds retries");

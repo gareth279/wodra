@@ -125,7 +125,7 @@ public partial class RideSessionNode : Node
 	public IReadOnlyList<MultiplayerRemoteRider> GetInterpolatedRemoteRiders() => _remoteInterpolators.Values
 		.Select(track => track.TrySample(MonotonicSeconds(), out var sample)
 			? new MultiplayerRemoteRider(sample.RiderId, sample.DisplayName, sample.DistanceMeters, sample.SpeedKph,
-				sample.PowerWatts, sample.Paused, true, sample.CadenceRpm, track.LastReceivedAtSeconds)
+			sample.PowerWatts, sample.Paused, true, sample.CadenceRpm, track.LastReceivedAtSeconds, sample.LateralOffsetMeters)
 			: null).Where(rider => rider is not null).Cast<MultiplayerRemoteRider>().ToArray();
 
 	private const double TrainerCommandMinIntervalSeconds = 1.0;
@@ -1460,7 +1460,7 @@ public partial class RideSessionNode : Node
 				case RiderStateMessage state when state.RiderId != client.RiderId:
 					var joiningRider = !_remoteRiders.TryGetValue(state.RiderId, out var knownRider) || !knownRider.HasState;
 					ApplyRemoteSample(state.RiderId, state.DisplayName, state.DistanceMeters, state.SpeedKph,
-						state.CadenceRpm, state.PowerWatts, state.Paused, state.Sequence, reposition: false);
+						state.CadenceRpm, state.PowerWatts, state.Paused, state.Sequence, state.LateralOffsetMeters, reposition: false);
 					if (joiningRider)
 					{
 						var distanceAhead = state.DistanceMeters - _rideState.DistanceMeters;
@@ -1481,7 +1481,7 @@ public partial class RideSessionNode : Node
 					break;
 				case RiderRepositionedMessage reposition when reposition.RiderId != client.RiderId:
 					ApplyRemoteSample(reposition.RiderId, reposition.DisplayName, reposition.DistanceMeters, reposition.SpeedKph,
-						reposition.CadenceRpm, reposition.PowerWatts, reposition.Paused, reposition.Sequence, reposition: true);
+						reposition.CadenceRpm, reposition.PowerWatts, reposition.Paused, reposition.Sequence, reposition.LateralOffsetMeters, reposition: true);
 					break;
 				case RiderLeftMessage left:
 					_remoteRiders.Remove(left.RiderId);
@@ -1549,6 +1549,7 @@ public partial class RideSessionNode : Node
 			CadenceRpm = _pauseGate.IsPaused ? 0 : Math.Max(0, _rideState.CurrentCadenceRpm),
 			PowerWatts = Math.Max(0, _rideState.CurrentPowerWatts),
 			Paused = _pauseGate.IsPaused,
+			LateralOffsetMeters = _rideWorldView?.CurrentLateralOffsetMeters ?? 1.75,
 			Sequence = ++_multiplayerSequence
 		});
 	}
@@ -1557,15 +1558,17 @@ public partial class RideSessionNode : Node
 		_remoteRiders.Values, _rideState.DistanceMeters, _currentRoute?.DistanceMeters ?? 0, MonotonicSeconds());
 
 	private void ApplyRemoteSample(string riderId, string name, double distance, double speed, int cadence,
-		int power, bool paused, long sequence, bool reposition)
+		int power, bool paused, long sequence, double lateralOffsetMeters, bool reposition)
 	{
 		var now = MonotonicSeconds();
-		var sample = new RemoteRiderSample(riderId, name, distance, speed, cadence, power, paused, sequence, now);
+		var sample = new RemoteRiderSample(riderId, name, distance, speed, cadence, power, paused, sequence, now,
+			Math.Clamp(double.IsFinite(lateralOffsetMeters) ? lateralOffsetMeters : 1.75, -3.05, 3.05));
 		if (!_remoteInterpolators.TryGetValue(riderId, out var track))
 			_remoteInterpolators[riderId] = track = new RemoteRiderInterpolator();
 		if (reposition) track.Reset(sample);
 		else track.Add(sample);
-		_remoteRiders[riderId] = new MultiplayerRemoteRider(riderId, name, distance, speed, power, paused, true, cadence, now);
+		_remoteRiders[riderId] = new MultiplayerRemoteRider(riderId, name, distance, speed, power, paused, true, cadence, now,
+			sample.LateralOffsetMeters);
 	}
 
 	private static double MonotonicSeconds() => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
@@ -1663,7 +1666,8 @@ public partial class RideSessionNode : Node
 				RouteId = route.Id, RouteFingerprint = route.GeometryFingerprint,
 				DistanceMeters = destination, SpeedKph = _pauseGate.IsPaused ? 0 : matchedSpeedKph,
 				CadenceRpm = _pauseGate.IsPaused ? 0 : _rideState.CurrentCadenceRpm,
-				PowerWatts = _rideState.CurrentPowerWatts, Paused = _pauseGate.IsPaused };
+				PowerWatts = _rideState.CurrentPowerWatts, Paused = _pauseGate.IsPaused,
+				LateralOffsetMeters = _rideWorldView?.CurrentLateralOffsetMeters ?? 1.75 };
 			_pendingRepositionMessage = reposition;
 			_repositionRetryElapsed = 0;
 			_repositionSendTask = client.PublishRepositionAsync(reposition);
@@ -1898,7 +1902,8 @@ public partial class RideSessionNode : Node
 }
 
 public sealed record MultiplayerRemoteRider(string RiderId, string DisplayName, double? DistanceMeters,
-	double? SpeedKph, int? PowerWatts, bool Paused, bool HasState, int CadenceRpm = 0, double ReceivedAtSeconds = 0);
+	double? SpeedKph, int? PowerWatts, bool Paused, bool HasState, int CadenceRpm = 0, double ReceivedAtSeconds = 0,
+	double? LateralOffsetMeters = 1.75);
 
 public sealed record FitSegmentManifestEntry(string FileName, double RouteStartDistanceMeters,
 	double RouteEndDistanceMeters, double RiddenDistanceMeters, DateTimeOffset FinalisedAtUtc);
