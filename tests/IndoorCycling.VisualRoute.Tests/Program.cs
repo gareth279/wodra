@@ -46,24 +46,26 @@ var tests = new (string Name, Action Run)[]
             return offset + new Vector2((point.X - minX) * scale, (point.Y - minY) * scale);
         }
     }),
-    ("debug overlay bounds reserve bottom controls and separate inset from dummy controls", () =>
+    ("debug overlay bounds keep dummy controls below the full inset in the right column", () =>
     {
         foreach (var (width, height) in new[] { (960f, 540f), (1152f, 648f), (1366f, 768f), (1920f, 1080f) })
         foreach (var insetVisible in new[] { true, false })
         {
             var layout = RideHudOverlayLayoutPolicy.ForViewport(width, height, insetVisible);
             if (layout.DebugPanel.X < 0 || layout.DebugPanel.Y < 0 || layout.DebugPanel.Right > width ||
-                layout.DebugPanel.Bottom > height - RideHudOverlayLayoutPolicy.DummyBottomOffset)
+                layout.DebugPanel.Bottom > height - RideHudOverlayLayoutPolicy.DebugBottomClearance)
                 throw new Exception($"Debug panel overlaps persistent controls at {width}x{height}.");
-            if (insetVisible && layout.RouteInset.Right > layout.DummyPanel.X &&
-                layout.RouteInset.X < layout.DummyPanel.Right && layout.RouteInset.Bottom > layout.DummyPanel.Y &&
-                layout.RouteInset.Y < layout.DummyPanel.Bottom)
+            if (layout.DummyPanel.X < layout.RouteInset.X ||
+                layout.DummyPanel.Y < layout.RouteInset.Bottom + RideHudOverlayLayoutPolicy.PanelGap)
+                throw new Exception($"Dummy controls are not in the right column below the complete inset at {width}x{height} (inset visible={insetVisible}).");
+            if (layout.RouteInset.Right > layout.DummyPanel.X && layout.RouteInset.X < layout.DummyPanel.Right &&
+                layout.RouteInset.Bottom > layout.DummyPanel.Y && layout.RouteInset.Y < layout.DummyPanel.Bottom)
                 throw new Exception($"Dummy controls overlap the route inset at {width}x{height}.");
             if (layout.DummyPanel.X < layout.DebugPanel.Right && layout.DummyPanel.Right > layout.DebugPanel.X &&
                 layout.DummyPanel.Y < layout.DebugPanel.Bottom && layout.DummyPanel.Bottom > layout.DebugPanel.Y)
                 throw new Exception($"Dummy controls overlap debug details at {width}x{height}.");
-            if (layout.DummyPanel.X < 0 || layout.DummyPanel.Right > width || layout.DummyPanel.Bottom > height - 96)
-                throw new Exception($"Dummy controls escape viewport or obscure the persistent bottom bar at {width}x{height}.");
+            if (layout.DummyPanel.X < 0 || layout.DummyPanel.Right > width || layout.DummyPanel.Bottom > height - RideHudOverlayLayoutPolicy.ViewportMargin)
+                throw new Exception($"Dummy controls escape the viewport at {width}x{height}.");
         }
     }),
     ("repeated physical road ribbons emit one surface while crossings and parallel roads remain separate", () =>

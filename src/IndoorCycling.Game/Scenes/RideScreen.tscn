@@ -717,65 +717,73 @@ layout_mode = 2
 layout_mode = 2
 text = "Dummy"
 
-[node name="DummyWkgPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+[node name="DummyControlsScroll" type="ScrollContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DummyControlsLayout" type="VBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll"]
 layout_mode = 2
 
-[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+[node name="DummyWkgPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout"]
+layout_mode = 2
+
+[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWkgPowerRow"]
 layout_mode = 2
 text = "Power:"
 
-[node name="MinusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+[node name="MinusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWkgPowerRow"]
 layout_mode = 2
 text = "−0.2"
 
-[node name="MinusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+[node name="MinusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWkgPowerRow"]
 layout_mode = 2
 text = "−0.1"
 
-[node name="PlusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+[node name="PlusPointOneButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWkgPowerRow"]
 layout_mode = 2
 text = "+0.1"
 
-[node name="PlusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWkgPowerRow"]
+[node name="PlusPointTwoButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWkgPowerRow"]
 layout_mode = 2
 text = "+0.2"
 
-[node name="DummyWattsPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+[node name="DummyWattsPowerRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout"]
 visible = false
 layout_mode = 2
 
-[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+[node name="PowerLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWattsPowerRow"]
 layout_mode = 2
 text = "Power:"
 
-[node name="MinusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+[node name="MinusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWattsPowerRow"]
 layout_mode = 2
 text = "−25"
 
-[node name="MinusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+[node name="MinusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWattsPowerRow"]
 layout_mode = 2
 text = "−10"
 
-[node name="PlusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+[node name="PlusTenButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWattsPowerRow"]
 layout_mode = 2
 text = "+10"
 
-[node name="PlusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyWattsPowerRow"]
+[node name="PlusTwentyFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyWattsPowerRow"]
 layout_mode = 2
 text = "+25"
 
-[node name="DummyCadenceRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout"]
+[node name="DummyCadenceRow" type="HBoxContainer" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout"]
 layout_mode = 2
 
-[node name="CadenceLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+[node name="CadenceLabel" type="Label" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyCadenceRow"]
 layout_mode = 2
 text = "Cadence:"
 
-[node name="MinusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+[node name="MinusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyCadenceRow"]
 layout_mode = 2
 text = "−5"
 
-[node name="PlusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyCadenceRow"]
+[node name="PlusFiveButton" type="Button" parent="HudController/DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/DummyCadenceRow"]
 layout_mode = 2
 text = "+5"
 

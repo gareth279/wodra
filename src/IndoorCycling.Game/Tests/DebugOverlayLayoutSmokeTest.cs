@@ -20,7 +20,7 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 	{
 		try
 		{
-			var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "debug-overlay-alpha-polish");
+			var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "dummy-under-inset-alpha34");
 			Directory.CreateDirectory(output);
 			foreach (var size in ViewportSizes)
 			foreach (var riderCount in new[] { 0, 1, 2, 12 })
@@ -64,7 +64,7 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 				ApplyRuntimeLayout(hud);
 				await Settle();
 
-				CheckRuntimeBounds(hud, inset, dummy, viewport, size, riderCount, dummyMode, insetVisible);
+				await CheckRuntimeBounds(hud, inset, dummy, viewport, size, riderCount, dummyMode, insetVisible);
 				// Exercise live membership changes and a resize on the same HUD instance.
 				hud.UpdateDebugOverlay(CreateSnapshot(12, dummyMode));
 				await Settle();
@@ -84,12 +84,22 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 				viewport.Size = new Vector2I(size.X + 32, size.Y + 24);
 				await Settle();
 				ApplyRuntimeLayout(hud);
-				CheckRuntimeBounds(hud, inset, dummy, viewport, viewport.Size, riderCount, dummyMode, insetVisible);
+				await CheckRuntimeBounds(hud, inset, dummy, viewport, viewport.Size, riderCount, dummyMode, insetVisible);
 				viewport.Size = size;
 				await Settle();
 				ApplyRuntimeLayout(hud);
 
 				var scroll = hud.GetNode<ScrollContainer>("DebugRideOverlay/DebugLayout/DebugDetailsScroll");
+				if (dummyMode && insetVisible && riderCount == 2 && size.X is 960 or 1152 or 1920)
+				{
+					var controlsScroll = dummy.GetNode<ScrollContainer>("DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll");
+					controlsScroll.ScrollVertical = 0;
+					await Settle();
+					SaveScreenshot(viewport, output, size, riderCount, dummyMode, insetVisible, "dummy-controls-top");
+					controlsScroll.ScrollVertical = (int)controlsScroll.GetVScrollBar().MaxValue;
+					await Settle();
+					SaveScreenshot(viewport, output, size, riderCount, dummyMode, insetVisible, "dummy-controls-bottom");
+				}
 				if (riderCount == 12)
 				{
 					if (scroll.GetVScrollBar().MaxValue <= scroll.GetVScrollBar().Page)
@@ -141,17 +151,25 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 		row.AddChild(new Label { Name = "RecordingIndicator", Text = "● REC", Visible = true });
 		row.AddChild(new Button { Name = "MenuButton", Text = "Menu" });
 		margin.AddChild(row); bar.AddChild(margin); hud.AddChild(bar);
-		var dummy = new Control { Name = "DummyControlPanel" };
-		var panel = new PanelContainer();
+		var dummy = new Control { Name = "DummyControlPanel", ClipContents = true };
+		var panel = new PanelContainer { Name = "DummyPanel" };
 		panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-		var controls = new VBoxContainer();
-		controls.AddChild(new Label { Text = "DUMMY TRAINER · controls remain clickable" });
-		var power = new HBoxContainer(); power.AddChild(new Label { Text = "Power:" });
-		foreach (var label in new[] { "−0.2", "−0.1", "+0.1", "+0.2" }) power.AddChild(new Button { Text = label });
-		controls.AddChild(power);
-		var cadence = new HBoxContainer(); cadence.AddChild(new Label { Text = "Cadence:" });
-		cadence.AddChild(new Button { Text = "−5" }); cadence.AddChild(new Button { Text = "+5" });
-		controls.AddChild(cadence); panel.AddChild(controls); dummy.AddChild(panel); hud.AddChild(dummy);
+		var dummyMargin = new MarginContainer { Name = "DummyPanelMargin" };
+		var controls = new VBoxContainer { Name = "DummyPanelLayout" };
+		controls.AddChild(new Label { Name = "DummySummaryLabel", Text = "Dummy trainer · controls remain clickable" });
+		var scroll = new ScrollContainer { Name = "DummyControlsScroll", SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+		var rows = new VBoxContainer { Name = "DummyControlsLayout" };
+		var power = new HBoxContainer { Name = "DummyWkgPowerRow" }; power.AddChild(new Label { Text = "Power:" });
+		foreach (var (name, label) in new[] { ("MinusPointTwoButton", "−0.2"), ("MinusPointOneButton", "−0.1"), ("PlusPointOneButton", "+0.1"), ("PlusPointTwoButton", "+0.2") })
+			power.AddChild(new Button { Name = name, Text = label });
+		rows.AddChild(power);
+		var watts = new HBoxContainer { Name = "DummyWattsPowerRow", Visible = false }; watts.AddChild(new Label { Text = "Power:" });
+		foreach (var (name, label) in new[] { ("MinusTwentyFiveButton", "−25"), ("MinusTenButton", "−10"), ("PlusTenButton", "+10"), ("PlusTwentyFiveButton", "+25") })
+			watts.AddChild(new Button { Name = name, Text = label });
+		rows.AddChild(watts);
+		var cadence = new HBoxContainer { Name = "DummyCadenceRow" }; cadence.AddChild(new Label { Text = "Cadence:" });
+		cadence.AddChild(new Button { Name = "MinusFiveButton", Text = "−5" }); cadence.AddChild(new Button { Name = "PlusFiveButton", Text = "+5" });
+		rows.AddChild(cadence); scroll.AddChild(rows); controls.AddChild(scroll); dummyMargin.AddChild(controls); panel.AddChild(dummyMargin); dummy.AddChild(panel); hud.AddChild(dummy);
 		return hud;
 	}
 
@@ -198,7 +216,7 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 		};
 	}
 
-	private void CheckRuntimeBounds(HudController hud, Control inset, Control dummy, SubViewport viewport,
+	private async Task CheckRuntimeBounds(HudController hud, Control inset, Control dummy, SubViewport viewport,
 		Vector2I size, int riderCount, bool dummyMode, bool insetVisible)
 	{
 		var debug = hud.GetNode<PanelContainer>("DebugRideOverlay");
@@ -220,16 +238,31 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 		foreach (var action in hud.GetNode("DebugRideOverlay/DebugLayout/DebugControls").FindChildren("*", "Button", true, false).Cast<Button>())
 			if (action.Disabled || action.MouseFilter == Control.MouseFilterEnum.Ignore)
 				_failures.Add($"Debug action {action.Text} is not clickable at {size}.");
-		if (!dummyMode || !insetVisible) return;
+		if (!dummyMode) return;
 		var d = dummy.GetGlobalRect(); var i = inset.GetGlobalRect();
-		if (d.Intersects(i))
-			_failures.Add($"Dummy controls overlap route inset at {size}, riders={riderCount}.");
+		if (d.Position.X < i.Position.X - .5f || d.Position.Y < i.End.Y + RideHudOverlayLayoutPolicy.PanelGap - .5f)
+			_failures.Add($"Dummy controls are not wholly below the reserved route inset column at {size}, riders={riderCount}.");
+		if (d.Intersects(i)) _failures.Add($"Dummy controls overlap route inset at {size}, riders={riderCount}.");
 		if (d.Intersects(bottomBar.GetGlobalRect()))
 			_failures.Add($"Dummy controls overlap persistent ride controls at {size}, riders={riderCount}.");
-		foreach (var button in dummy.FindChildren("*", "Button", true, false).Cast<Button>())
+		var dummyScroll = dummy.GetNode<ScrollContainer>("DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll");
+		var buttons = dummy.FindChildren("*", "Button", true, false).Cast<Button>().ToArray();
+		foreach (var button in buttons)
 		{
-			CheckInside(button.GetGlobalRect(), size, "dummy control", riderCount, dummyMode, insetVisible);
-			if (button.Disabled) _failures.Add($"Dummy control is disabled at {size}.");
+			if (button.Disabled || button.MouseFilter == Control.MouseFilterEnum.Ignore)
+				_failures.Add($"Dummy control {button.Name} is not clickable at {size}.");
+		}
+		var scrollViewport = dummyScroll.GetGlobalRect();
+		foreach (var button in buttons.Where(button => button.IsVisibleInTree()))
+		{
+			var maxScroll = (int)dummyScroll.GetVScrollBar().MaxValue;
+			var currentButton = button.GetGlobalRect();
+			var targetScroll = (int)Math.Clamp(dummyScroll.ScrollVertical + currentButton.Position.Y - scrollViewport.Position.Y, 0, maxScroll);
+			dummyScroll.ScrollVertical = targetScroll;
+			await Settle();
+			var visibleHitArea = button.GetGlobalRect().Intersection(dummyScroll.GetGlobalRect());
+			if (visibleHitArea.Size.X < Math.Min(20, button.Size.X * .75f) || visibleHitArea.Size.Y < Math.Min(18, button.Size.Y * .75f))
+				_failures.Add($"Dummy control {button.Name} cannot be fully reached for clicking at {size}.");
 		}
 	}
 
