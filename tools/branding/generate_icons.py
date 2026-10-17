@@ -12,7 +12,7 @@ from scipy import ndimage
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "images" / "Cobalt Helmet Tortoiseshell Cycling Icon.png"
+SOURCE = ROOT / "images" / "Golden Helmet Tortoiseshell Cat Icon.png"
 OUTPUT = ROOT / "src" / "IndoorCycling.Game" / "Assets" / "Branding"
 SIZES = (16, 24, 32, 48, 64, 128, 256, 512, 1024)
 ICO_SIZES = (16, 24, 32, 48, 64, 128, 256)

@@ -55,24 +55,88 @@ function Assert-WodraIconResource([string]$ExecutablePath) {
         if ($bitmap.Width -lt 16 -or $bitmap.Height -lt 16) {
             throw "Windows icon resource is too small in $ExecutablePath ($($bitmap.Width)x$($bitmap.Height))."
         }
-        $bluePixels = 0
+        $goldPixels = 0
         for ($y = 0; $y -lt $bitmap.Height; $y++) {
             for ($x = 0; $x -lt $bitmap.Width; $x++) {
                 $pixel = $bitmap.GetPixel($x, $y)
-                if ($pixel.A -gt 0 -and $pixel.B -gt 100 -and $pixel.B -gt ($pixel.R * 1.3) -and $pixel.B -gt ($pixel.G * 1.08)) {
-                    $bluePixels++
+                if ($pixel.A -gt 0 -and $pixel.R -gt 150 -and $pixel.G -gt 90 -and
+                    $pixel.R -gt ($pixel.B * 1.35) -and $pixel.G -gt ($pixel.B * 1.15)) {
+                    $goldPixels++
                 }
             }
         }
-        if ($bluePixels -lt [Math]::Max(8, [int]($bitmap.Width * $bitmap.Height * 0.04))) {
-            throw "The Windows icon resource does not contain the approved cobalt artwork in $ExecutablePath."
+        if ($goldPixels -lt [Math]::Max(8, [int]($bitmap.Width * $bitmap.Height * 0.04))) {
+            throw "The Windows icon resource does not contain the approved golden artwork in $ExecutablePath."
         }
-        Write-Host "Windows icon resource verified: $(Split-Path $ExecutablePath -Leaf) ($($bitmap.Width)x$($bitmap.Height), cobalt artwork present)"
+        Write-Host "Windows icon resource verified: $(Split-Path $ExecutablePath -Leaf) ($($bitmap.Width)x$($bitmap.Height), golden artwork present)"
     }
     finally {
         $bitmap.Dispose()
         $icon.Dispose()
     }
+}
+
+function Set-WodraExecutableIcon([string]$ExecutablePath, [string]$IconPath) {
+    # Godot's export-pack flow produces a fresh PCK but stages the release
+    # template separately. Apply the approved ICO to that staged PE executable
+    # before Velopack creates the app and Setup packages.
+    $source = @'
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+
+public static class WodraIconResourceWriter {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr BeginUpdateResource(string fileName, bool deleteExistingResources);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool UpdateResource(IntPtr update, IntPtr type, IntPtr name, ushort language, byte[] data, uint size);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool EndUpdateResource(IntPtr update, bool discard);
+
+    private static IntPtr Id(int value) => new IntPtr(value);
+    private static void Check(bool ok, string action) {
+        if (!ok) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), action);
+    }
+
+    public static void Apply(string exe, string ico) {
+        byte[] bytes = File.ReadAllBytes(ico);
+        if (bytes.Length < 6 || bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 1 || bytes[3] != 0)
+            throw new InvalidDataException("The application icon is not a valid ICO file.");
+        int count = bytes[4] | (bytes[5] << 8);
+        if (count < 1 || bytes.Length < 6 + count * 16) throw new InvalidDataException("The ICO directory is incomplete.");
+        IntPtr update = BeginUpdateResource(exe, false);
+        if (update == IntPtr.Zero) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not open the app executable for icon resources.");
+        bool committed = false;
+        try {
+            byte[] group = new byte[6 + count * 14];
+            Buffer.BlockCopy(bytes, 0, group, 0, 6);
+            for (int i = 0; i < count; i++) {
+                int entry = 6 + i * 16;
+                int length = BitConverter.ToInt32(bytes, entry + 8);
+                int offset = BitConverter.ToInt32(bytes, entry + 12);
+                if (length < 1 || offset < 0 || offset > bytes.Length - length) throw new InvalidDataException("An ICO image is outside the file bounds.");
+                byte[] image = new byte[length];
+                Buffer.BlockCopy(bytes, offset, image, 0, length);
+                ushort imageId = checked((ushort)(i + 1));
+                Check(UpdateResource(update, Id(3), Id(imageId), 0, image, (uint)image.Length), "Could not write an application icon image resource.");
+                int groupEntry = 6 + i * 14;
+                Buffer.BlockCopy(bytes, entry, group, groupEntry, 12);
+                Buffer.BlockCopy(BitConverter.GetBytes(imageId), 0, group, groupEntry + 12, 2);
+            }
+            Check(UpdateResource(update, Id(14), Id(1), 0, group, (uint)group.Length), "Could not write the application icon group resource.");
+            Check(EndUpdateResource(update, false), "Could not commit the application icon resources.");
+            committed = true;
+        } finally {
+            if (!committed) EndUpdateResource(update, true);
+        }
+    }
+}
+'@
+    if (-not ('WodraIconResourceWriter' -as [type])) {
+        Add-Type -TypeDefinition $source -Language CSharp
+    }
+    [WodraIconResourceWriter]::Apply($ExecutablePath, $IconPath)
+    Assert-WodraIconResource $ExecutablePath
 }
 
 function Invoke-TrackedProcess {
@@ -387,6 +451,7 @@ try {
     if (-not (Test-Path -LiteralPath $ExePath -PathType Leaf)) {
         throw "Could not stage the matching Godot Windows x64 release template: $GodotReleaseTemplate"
     }
+    Set-WodraExecutableIcon $ExePath (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico')
     Complete-Phase
 
     # Godot 4.6.2 may report the managed export hook as failed after its
@@ -513,7 +578,7 @@ try {
             $smokeExe = Join-Path $extractDir 'Wodra.exe'
             $smokeLog = Join-Path $workRoot "offline-smoke-$safeVersion.log"
             [void](Invoke-TrackedProcess -FilePath $smokeExe `
-                -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog) `
+                -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog, '--', '--layout-smoke-test') `
                 -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "smoke-process-$safeVersion.log") `
                 -TimeoutSeconds 45 -Label 'Extracted Wodra offline smoke test' `
                 -RemoveEnvironmentVariables @('WODRA_EOS_PRODUCT_ID', 'WODRA_EOS_SANDBOX_ID',
@@ -551,6 +616,7 @@ try {
         '--runtime', 'win-x64',
         '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', 'alpha', '--packTitle', 'Wodra',
         '--packAuthors', 'Wodra', '--icon', (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico'),
+        '--shortcuts', 'Desktop,StartMenuRoot',
         '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
     [void](Invoke-TrackedProcess -FilePath $dotnet -ArgumentList $vpkArguments -WorkingDirectory $RepoDir `
         -LogPath (Join-Path $workRoot 'velopack-pack.log') -TimeoutSeconds 900 -Label 'Velopack full installer and update feed packaging')
