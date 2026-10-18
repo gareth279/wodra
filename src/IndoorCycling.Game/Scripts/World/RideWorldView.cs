@@ -642,9 +642,9 @@ public partial class RideWorldView : Node3D
             {
                 var isBest = CollectibleResultStore.Save(profileId, result);
                 if (GameFeaturesPreference.Enabled)
-                    LastChallengeSummary = $"Game features · {result.Score} points · {result.PickupsCollected}/{result.PickupsAvailable} cats · " +
-                        (result.Completed ? "completed" : "partial") + (isBest ? " · personal best" : "") +
-                        (result.EligibleForPersonalBest ? "" : " · practice attempt");
+                    LastChallengeSummary = CollectibleUiText.ResultSummary(result.Score, result.PickupsCollected,
+                        result.PickupsAvailable, (result.Completed ? "completed" : "partial") + (isBest ? " · personal best" : "") +
+                        (result.EligibleForPersonalBest ? "" : " · practice attempt"));
                 GameLogger.Log("collectible_attempt_saved", new { result.RouteId, result.Score, result.PickupsCollected,
                     result.PickupsAvailable, result.Completed, result.EligibleForPersonalBest, personalBest = isBest });
             }

@@ -212,7 +212,7 @@ public partial class RideMenuPanelController : Control
 					_rideWorldView?.OnGameFeaturesChanged(enabled);
 				};
 				_content.AddChild(gameFeatures);
-				_content.AddChild(new Label { Text = "Collect cats and earn points while you ride.", HorizontalAlignment = HorizontalAlignment.Center,
+				_content.AddChild(new Label { Text = CollectibleUiText.HelperText, HorizontalAlignment = HorizontalAlignment.Center,
 					AutowrapMode = TextServer.AutowrapMode.WordSmart });
 				#if DEBUG
 				_content.AddChild(new Label { Text = "Debug mode", HorizontalAlignment = HorizontalAlignment.Center });

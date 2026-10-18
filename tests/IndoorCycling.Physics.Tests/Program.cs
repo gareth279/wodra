@@ -71,8 +71,12 @@ var tests = new (string Name, Action Run)[]
     ,("Collectible layout is deterministic and includes blue and rare gold cats", CollectibleLayoutIsDeterministic)
     ,("Collectible swept hit catches frame crossing and rejects lateral misses", CollectibleSweptDetection)
     ,("Collectible attempts prevent duplicate awards and flag practice eligibility", CollectibleAttemptEligibility)
+	,("Collectible user-facing text uses artwork-agnostic token wording", CollectibleUiUsesTokenWording)
     ,("Diagnostic log sanitizer removes tokens secrets keys and local paths", DiagnosticLogSanitization)
     ,("Diagnostic archive includes selected files without changing sources and enforces its bound", DiagnosticArchiveWriting)
+	,("Diagnostic redaction handles profile path variants and keeps JSONL valid", DiagnosticRedactionPreservesJsonl)
+	,("Diagnostic ZIP prioritizes bounded tails of current logs before recent history", DiagnosticCurrentLogsArePrioritized)
+	,("Diagnostic collector reads active sessions and reports missing or locked logs", DiagnosticCurrentLogReadFailures)
     ,("Game features default off and persist independently per profile", GameFeaturesPersistPerProfile)
 };
 
@@ -142,6 +146,141 @@ static void DiagnosticLogSanitization()
 		"Known secret values and bearer tokens must be removed.");
 	Assert(safe.Contains("safe=yes", StringComparison.Ordinal) && safe.Contains("%USERPROFILE%", StringComparison.Ordinal),
 		"Non-sensitive URL fields should be kept and local profile paths should be replaced.");
+}
+
+static void CollectibleUiUsesTokenWording()
+{
+	Assert(CollectibleUiText.HelperText == "Collect tokens and earn points while you ride.",
+		"The pre-ride and Settings helper must use the agreed generic wording.");
+	Assert(CollectibleUiText.Score(7, 3, 12).StartsWith("Tokens ·", StringComparison.Ordinal),
+		"The ride score should refer to tokens.");
+	Assert(CollectibleUiText.PickupFeedback("Blue", 1, 7).Contains("token", StringComparison.OrdinalIgnoreCase) &&
+		CollectibleUiText.PickupFeedback("Golden", 5, 12).Contains("token", StringComparison.OrdinalIgnoreCase),
+		"Both pickup feedback types should refer to tokens.");
+	Assert(CollectibleUiText.ResultSummary(12, 4, 20, "completed").Contains("tokens", StringComparison.Ordinal),
+		"Ride summaries should refer to tokens.");
+}
+
+static void DiagnosticRedactionPreservesJsonl()
+{
+	const string profile = @"C:\Users\Gareth WoodΩ";
+	var plain = "forward C:/Users/gareth woodω/AppData/Local/log.json and escaped C:\\\\Users\\\\GARETH WOODΩ\\\\Documents\\\\ride.json";
+	var redactedPlain = DiagnosticLogSanitizer.Redact(plain, profile);
+	Assert(!redactedPlain.Contains("Gareth Wood", StringComparison.OrdinalIgnoreCase) &&
+		redactedPlain.Contains("%USERPROFILE%/AppData/Local/log.json", StringComparison.Ordinal) &&
+		redactedPlain.Contains("%USERPROFILE%\\\\Documents\\\\ride.json", StringComparison.Ordinal),
+		"Forward-slash and JSON-escaped profile paths must redact the username while keeping path suffixes.");
+
+	var jsonl = JsonSerializer.Serialize(new
+	{
+		path = @"C:\Users\GARETH WOODΩ\AppData\Roaming\session.jsonl",
+		nested = new { file = "C:/Users/gareth woodω/Documents/ride.fit" },
+		token = "credential-sentinel",
+		message = "Authorization: Bearer bearer-sentinel"
+	});
+	var safeJsonl = DiagnosticLogSanitizer.RedactJsonLine(jsonl, profile);
+	using var parsed = JsonDocument.Parse(safeJsonl);
+	var serializedSafe = parsed.RootElement.GetProperty("path").GetString()!;
+	Assert(serializedSafe.StartsWith("%USERPROFILE%", StringComparison.Ordinal) &&
+		parsed.RootElement.GetProperty("nested").GetProperty("file").GetString()!.StartsWith("%USERPROFILE%", StringComparison.Ordinal),
+		"Structured JSON string values must redact Windows paths case-insensitively and retain suffixes.");
+	Assert(parsed.RootElement.GetProperty("token").GetString() == "[REDACTED]" &&
+		!safeJsonl.Contains("credential-sentinel", StringComparison.Ordinal) && !safeJsonl.Contains("bearer-sentinel", StringComparison.Ordinal),
+		"Structured credential fields and bearer values must remain redacted.");
+	Assert(!safeJsonl.Contains("Gareth Wood", StringComparison.OrdinalIgnoreCase) &&
+		!safeJsonl.Contains("gareth wood", StringComparison.OrdinalIgnoreCase),
+		"Sanitized JSONL must not retain the profile username.");
+}
+
+static void DiagnosticCurrentLogsArePrioritized()
+{
+	var root = Path.Combine(Path.GetTempPath(), "WodraDiagnosticPriorityTests", Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(root);
+	try
+	{
+		const string profile = @"C:\Users\Unicode Rider Ω";
+		var currentJsonl = Path.Combine(root, "current.jsonl");
+		var currentGodot = Path.Combine(root, "godot.log");
+		var newest = Path.Combine(root, "older-newest.jsonl");
+		var middle = Path.Combine(root, "older-middle.jsonl");
+		var oldest = Path.Combine(root, "older-oldest.jsonl");
+		File.WriteAllText(currentJsonl, string.Concat(Enumerable.Range(0, 80).Select(index =>
+			JsonSerializer.Serialize(new { eventName = "current-session", index, message = new string('x', 700) + "🚴", path = profile + @"\AppData\Local\current.jsonl" }) + "\n")));
+		File.WriteAllText(currentGodot, string.Join("\n", Enumerable.Range(0, 80).Select(index =>
+			$"Godot line {index} {new string('g', 700)} 🚴 current-godot-marker-{index}")) + "\n", new System.Text.UTF8Encoding(false));
+		void WriteOld(string path, int id) => File.WriteAllText(path, string.Concat(Enumerable.Range(0, 16).Select(index =>
+			JsonSerializer.Serialize(new { eventName = "older-session", id, index, message = new string((char)('a' + id), 700) }) + "\n")));
+		WriteOld(newest, 1); WriteOld(middle, 2); WriteOld(oldest, 3);
+		var reserved = new (string Name, byte[] Data)[]
+		{
+			("build.txt", System.Text.Encoding.UTF8.GetBytes("version=test\n")),
+			("settings-sanitized.json", System.Text.Encoding.UTF8.GetBytes("{}"))
+		};
+		var collection = DiagnosticInputCollector.Collect(reserved,
+			new[] { new DiagnosticLogSource(currentJsonl, "logs/current-session.jsonl", true), new DiagnosticLogSource(currentGodot, "logs/godot.log", false) },
+			new[] { new DiagnosticLogSource(newest, "logs/recent-newest.jsonl", true), new DiagnosticLogSource(middle, "logs/recent-middle.jsonl", true), new DiagnosticLogSource(oldest, "logs/recent-oldest.jsonl", true) },
+			profile, 16 * 1024, 15 * 1024, 4 * 1024, manifestReserveBytes: 512);
+		Assert(collection.Files.Any(file => file.Name == "logs/current-session.jsonl") && collection.Files.Any(file => file.Name == "logs/godot.log"),
+			"Both oversized current log types must survive within their reserved allocation.");
+		Assert(collection.Files.Any(file => file.Name == "logs/recent-newest.jsonl") && collection.Files.Any(file => file.Name == "logs/recent-middle.jsonl") &&
+			!collection.Files.Any(file => file.Name == "logs/recent-oldest.jsonl"),
+			"Remaining capacity must go to recent older sessions in newest-first order.");
+		var sessionText = System.Text.Encoding.UTF8.GetString(collection.Files.Single(file => file.Name == "logs/current-session.jsonl").Data);
+		Assert(sessionText.Contains("current-session", StringComparison.Ordinal), "The current JSONL tail should include records from the current session.");
+		Assert(!sessionText.Contains("Unicode Rider", StringComparison.Ordinal), "The current JSONL tail must redact profile paths.");
+		var parsedMessages = new List<string>();
+		foreach (var line in sessionText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+		{
+			using var parsedLine = JsonDocument.Parse(line);
+			parsedMessages.Add(parsedLine.RootElement.GetProperty("message").GetString()!);
+		}
+		Assert(parsedMessages.Any(message => message.Contains("🚴", StringComparison.Ordinal)), "The current JSONL tail should preserve complete UTF-8 characters.");
+		var godotText = System.Text.Encoding.UTF8.GetString(collection.Files.Single(file => file.Name == "logs/godot.log").Data);
+		Assert(godotText.Contains("current-godot-marker", StringComparison.Ordinal) && !godotText.Contains('\uFFFD'),
+			"The bounded current Godot log tail must remain useful UTF-8 text.");
+		Assert(collection.Omissions.Any(item => item.Contains("truncated", StringComparison.OrdinalIgnoreCase)) &&
+			collection.Omissions.Any(item => item.Contains("size limit", StringComparison.OrdinalIgnoreCase)),
+			"The collection manifest data must report truncation and older-log omissions.");
+
+		var zipPath = Path.Combine(root, "diagnostics.zip");
+		var archiveFiles = collection.Files.ToList();
+		archiveFiles.Add(("manifest.txt", System.Text.Encoding.UTF8.GetBytes("Omissions and truncation:\n- " + string.Join("\n- ", collection.Omissions))));
+		DiagnosticArchiveWriter.Write(zipPath, archiveFiles, 16 * 1024);
+		using var archive = System.IO.Compression.ZipFile.OpenRead(zipPath);
+		Assert(archive.GetEntry("logs/current-session.jsonl") is not null && archive.GetEntry("logs/godot.log") is not null,
+			"The actual diagnostic ZIP must contain both current log types.");
+		Assert(archive.Entries.Sum(entry => entry.Length) <= 16 * 1024, "The diagnostic ZIP's uncompressed content must stay within the cap.");
+	}
+	finally { Directory.Delete(root, recursive: true); }
+}
+
+static void DiagnosticCurrentLogReadFailures()
+{
+	var root = Path.Combine(Path.GetTempPath(), "WodraDiagnosticReadTests", Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(root);
+	var activePath = Path.Combine(root, "active.jsonl");
+	var lockedPath = Path.Combine(root, "locked.log");
+	try
+	{
+		using (var activeWriter = new FileStream(activePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+		using (var lockedWriter = new FileStream(lockedPath, FileMode.Create, FileAccess.Write, FileShare.None))
+		{
+			var record = System.Text.Encoding.UTF8.GetBytes("{\"event\":\"active-writer\"}\n");
+			activeWriter.Write(record); activeWriter.Flush();
+			lockedWriter.Write(System.Text.Encoding.UTF8.GetBytes("locked diagnostics")); lockedWriter.Flush();
+			var reserved = new[] { ("build.txt", System.Text.Encoding.UTF8.GetBytes("version=test")) };
+			var collection = DiagnosticInputCollector.Collect(reserved,
+				new[] { new DiagnosticLogSource(activePath, "logs/current-session.jsonl", true), new DiagnosticLogSource(lockedPath, "logs/godot.log", false) },
+				new[] { new DiagnosticLogSource(Path.Combine(root, "missing.jsonl"), "logs/recent-missing.jsonl", true) },
+				null, 2048, 1800, 1024, manifestReserveBytes: 256);
+			Assert(collection.Files.Any(file => file.Name == "logs/current-session.jsonl"),
+				"The current session log must be readable while its writer is active.");
+			Assert(collection.Omissions.Any(item => item == "logs/godot.log: unreadable") && collection.Omissions.Any(item => item == "logs/recent-missing.jsonl: missing"),
+				"Locked and missing logs must be reported clearly without failing export.");
+			using var parsed = JsonDocument.Parse(System.Text.Encoding.UTF8.GetString(collection.Files.Single(file => file.Name == "logs/current-session.jsonl").Data));
+		}
+	}
+	finally { Directory.Delete(root, recursive: true); }
 }
 
 static void DiagnosticArchiveWriting()

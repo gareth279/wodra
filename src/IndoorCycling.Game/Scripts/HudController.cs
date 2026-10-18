@@ -761,7 +761,7 @@ public partial class HudController : Control
 	{
 		if (_gameScoreLabel is null) return;
 		_gameScoreLabel.Visible = enabled;
-		_gameScoreLabel.Text = enabled ? $"Cats · {score} pts · {collected}/{available}" : "";
+		_gameScoreLabel.Text = enabled ? CollectibleUiText.Score(score, collected, available) : "";
 		if (!enabled && _catFeedbackLabel is not null) _catFeedbackLabel.Visible = false;
 	}
 
@@ -770,7 +770,7 @@ public partial class HudController : Control
 	public void ShowCatCollection(string kind, int points, int score)
 	{
 		if (_catFeedbackLabel is null) return;
-		_catFeedbackLabel.Text = $"{kind} cat +{points} · {score} points";
+		_catFeedbackLabel.Text = CollectibleUiText.PickupFeedback(kind, points, score);
 		_catFeedbackLabel.Visible = true;
 		_catFeedbackSeconds = 2;
 	}
