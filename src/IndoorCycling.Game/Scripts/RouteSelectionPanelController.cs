@@ -77,7 +77,7 @@ public partial class RouteSelectionPanelController : Control
 		_gameFeaturesToggle = new CheckButton { Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
 		_gameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled);
 		gameFeatures.AddChild(_gameFeaturesToggle);
-		gameFeatures.AddChild(new Label { Text = "Collect cats and earn points while you ride.", HorizontalAlignment = HorizontalAlignment.Center,
+		gameFeatures.AddChild(new Label { Text = CollectibleUiText.HelperText, HorizontalAlignment = HorizontalAlignment.Center,
 			AutowrapMode = TextServer.AutowrapMode.WordSmart });
 		column.AddChild(gameFeatures);
 		column.MoveChild(gameFeatures, 1);

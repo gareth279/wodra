@@ -14,7 +14,7 @@ public sealed record DiagnosticExportResult(bool Success, string Message, string
 public static class DiagnosticZipExporter
 {
 	private const int MaxTotalBytes = 8 * 1024 * 1024;
-	private const int MaxLogBytes = MaxTotalBytes - 16 * 1024;
+	private const int MaxLogBytes = MaxTotalBytes - 32 * 1024;
 	private const int MaxArchiveBytes = MaxTotalBytes + 256 * 1024;
 	private const int MaxFileBytes = 2 * 1024 * 1024;
 
@@ -35,10 +35,10 @@ public static class DiagnosticZipExporter
 
 	private static List<(string Name, byte[] Data)> BuildInputs()
 	{
-		var files = new List<(string Name, byte[] Data)>();
-		var omissions = new List<string>();
+		var reservedFiles = new List<(string Name, byte[] Data)>();
+		var initialOmissions = new List<string>();
 		var root = ProjectSettings.GlobalizePath("user://");
-		AddText(files, "build.txt", $"version={Assembly.GetExecutingAssembly().GetName().Version}\ncommit={Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown"}\nos={OS.GetName()} {OS.GetVersion()}\nruntime={System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\narchitecture={System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}\ncreatedUtc={DateTime.UtcNow:O}\n");
+		AddText(reservedFiles, "build.txt", $"version={Assembly.GetExecutingAssembly().GetName().Version}\ncommit={Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown"}\nos={OS.GetName()} {OS.GetVersion()}\nruntime={System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}\narchitecture={System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}\ncreatedUtc={DateTime.UtcNow:O}\n");
 		var settings = AppSettings.SettingsPath;
 		if (File.Exists(settings))
 		{
@@ -54,47 +54,42 @@ public static class DiagnosticZipExporter
 					safe["Display"] = new { RouteGradientInsetVisible = BoolProperty(display, "RouteGradientInsetVisible") };
 				safe["DebugModeEnabled"] = Bool("DebugModeEnabled");
 				safe["OnlineRidingEnabled"] = Bool("OnlineRidingEnabled");
-				AddText(files, "settings-sanitized.json", JsonSerializer.Serialize(safe, new JsonSerializerOptions { WriteIndented = true }));
+				AddText(reservedFiles, "settings-sanitized.json", JsonSerializer.Serialize(safe, new JsonSerializerOptions { WriteIndented = true }));
 			}
-			catch { omissions.Add("settings-sanitized.json: settings could not be read"); }
+			catch { AddText(reservedFiles, "settings-sanitized.json", "{}"); initialOmissions.Add("settings-sanitized.json: settings could not be read"); }
 		}
-		else omissions.Add("settings-sanitized.json: settings file missing");
+		else { AddText(reservedFiles, "settings-sanitized.json", "{}"); initialOmissions.Add("settings-sanitized.json: settings file missing"); }
 
-		var candidates = new List<(string Path, string Name)>();
-		if (GameLogger.LogPath is { } currentJsonl) candidates.Add((currentJsonl, "logs/current-session.jsonl"));
-		candidates.Add((Path.Combine(root, "logs", "godot.log"), "logs/godot.log"));
-		var logDir = Path.Combine(root, "logs");
-		if (Directory.Exists(logDir))
-			foreach (var path in Directory.GetFiles(logDir, "wodra-*.jsonl").OrderByDescending(File.GetLastWriteTimeUtc).Take(5))
-				if (!candidates.Any(c => string.Equals(c.Path, path, StringComparison.OrdinalIgnoreCase))) candidates.Add((path, $"logs/recent-{Path.GetFileName(path)}"));
-		var used = files.Sum(file => file.Data.Length);
-		foreach (var candidate in candidates)
+		var currentJsonl = GameLogger.LogPath;
+		var currentLogs = new List<DiagnosticLogSource>
 		{
-			if (!File.Exists(candidate.Path)) { omissions.Add($"{candidate.Name}: missing"); continue; }
+			new(currentJsonl ?? string.Empty, "logs/current-session.jsonl", true),
+			new(Path.Combine(root, "logs", "godot.log"), "logs/godot.log", false)
+		};
+		var logDir = Path.Combine(root, "logs");
+		var olderLogs = new List<DiagnosticLogSource>();
+		var logDirectoryUnavailable = false;
+		if (Directory.Exists(logDir))
+		{
 			try
 			{
-				var bytes = ReadBounded(candidate.Path, Math.Min(MaxFileBytes, MaxLogBytes - used));
-				if (bytes.Length == 0) { omissions.Add($"{candidate.Name}: size limit reached"); continue; }
-				var content = DiagnosticLogSanitizer.Redact(Encoding.UTF8.GetString(bytes), System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile));
-				var data = Encoding.UTF8.GetBytes(content);
-				files.Add((candidate.Name, data)); used += data.Length;
-				if (new FileInfo(candidate.Path).Length > bytes.Length) omissions.Add($"{candidate.Name}: truncated to size limit");
+				var currentPath = currentJsonl is null ? null : Path.GetFullPath(currentJsonl);
+				foreach (var path in Directory.GetFiles(logDir, "wodra-*.jsonl").OrderByDescending(File.GetLastWriteTimeUtc)
+					.Where(path => currentPath is null || !string.Equals(Path.GetFullPath(path), currentPath, StringComparison.OrdinalIgnoreCase)).Take(5))
+					olderLogs.Add(new(path, $"logs/recent-{Path.GetFileName(path)}", true));
 			}
-			catch { omissions.Add($"{candidate.Name}: unreadable"); }
+			catch { logDirectoryUnavailable = true; }
 		}
-		AddText(files, "manifest.txt", "Wodra diagnostics export\nNo files were modified. Settings use a whitelist; logs are redacted and bounded.\n" +
-			(omissions.Count == 0 ? "Omissions: none\n" : "Omissions:\n- " + string.Join("\n- ", omissions) + "\n"));
-		return files;
-	}
 
-	private static byte[] ReadBounded(string path, int limit)
-	{
-		if (limit <= 0) return [];
-		using var stream = new FileStream(path, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-		var buffer = new byte[Math.Min(limit, checked((int)Math.Min(stream.Length, int.MaxValue)))];
-		var read = 0;
-		while (read < buffer.Length) { var n = stream.Read(buffer, read, buffer.Length - read); if (n == 0) break; read += n; }
-		return read == buffer.Length ? buffer : buffer[..read];
+		var collected = DiagnosticInputCollector.Collect(reservedFiles, currentLogs, olderLogs,
+			System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
+			MaxTotalBytes, MaxLogBytes, MaxFileBytes);
+		var omissions = collected.Omissions.Concat(initialOmissions).ToList();
+		if (logDirectoryUnavailable) omissions.Add("logs: recent session directory could not be read");
+		var files = collected.Files.ToList();
+		AddText(files, "manifest.txt", "Wodra diagnostics export\nNo files were modified. Settings use a whitelist; logs are sanitised, bounded and prioritised current Wodra and Godot logs before recent sessions.\n" +
+			(omissions.Count == 0 ? "Omissions: none\n" : "Omissions and truncation:\n- " + string.Join("\n- ", omissions) + "\n"));
+		return files;
 	}
 
 	private static double? Number(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.TryGetDouble(out var number) && double.IsFinite(number) ? number : null;
