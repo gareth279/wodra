@@ -50,8 +50,8 @@ public partial class RouteWorldSmokeTest : Node
             var buildingLayer = new BuildingLayer { Name = "SmokeBuildings" };
             world.AddChild(buildingLayer);
             buildingLayer.Configure(visual, route, buildings);
-            if (buildingLayer.BuildingsLoaded != buildings.Count)
-                throw new InvalidOperationException($"Route {id} skipped {buildings.Count - buildingLayer.BuildingsLoaded} building meshes.");
+            if (buildingLayer.BuildingsLoaded + buildingLayer.BuildingsSuppressedForRideCorridor != buildings.Count)
+                throw new InvalidOperationException($"Route {id} neither built nor corridor-filtered every source building.");
 
             var streetLayer = new BackgroundStreetLayer { Name = "SmokeStreets" };
             world.AddChild(streetLayer);
@@ -85,6 +85,7 @@ public partial class RouteWorldSmokeTest : Node
             }
             timer.Stop();
             GD.Print($"[RouteWorldSmoke] route={id} buildings={buildingLayer.BuildingsLoaded} " +
+                $"corridorSuppressed={buildingLayer.BuildingsSuppressedForRideCorridor} " +
                 $"buildingTriangles={buildingLayer.TriangleCount} buildingMs={buildingLayer.BuildMilliseconds:F1} " +
                 $"streets={streetLayer.LoadedStreetCount} streetMeshes={streetLayer.MeshChunkCount} " +
                 $"streetTriangles={streetLayer.TriangleCount} streetMs={streetLayer.BuildMilliseconds} " +

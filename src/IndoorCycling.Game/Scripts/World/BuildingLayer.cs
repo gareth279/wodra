@@ -9,11 +9,13 @@ public partial class BuildingLayer : Node3D
 {
     private const double ChunkLengthMeters = 350;
     private const double VisibleDistanceMeters = 950;
-    private sealed record Chunk(int Index, double CenterDistanceMeters, MeshInstance3D Instance);
+    private sealed record Chunk(int Index, double CenterDistanceMeters, MeshInstance3D Instance,
+        StaticBody3D CollisionBody);
     private readonly List<Chunk> _chunks = [];
     private double _routeLengthMeters;
 
     public int BuildingsLoaded { get; private set; }
+    public int BuildingsSuppressedForRideCorridor { get; private set; }
     public int ChunkCount => _chunks.Count;
     public int MeshInstanceCount => _chunks.Count;
     public int VisibleChunkCount => _chunks.Count(item => item.Instance.Visible);
@@ -76,6 +78,19 @@ public partial class BuildingLayer : Node3D
                 var mappedOrInferredHeight = string.Equals(building.HeightSource, "Fallback", StringComparison.OrdinalIgnoreCase)
                     ? BuildingVisualStyle.ResolveFallbackVisualHeight(building.OsmId, category, footprintArea, (float)building.HeightMeters)
                     : (float)building.HeightMeters;
+                var routeElevation = route.GetSampleAt(building.NearestRouteDistanceMeters).ElevationMeters;
+                var footprintBases = building.FootprintElevationMeters.Count == building.Footprint.Count
+                    ? building.FootprintElevationMeters.Where(value => value.HasValue).Select(value => value!.Value).ToArray()
+                    : [];
+                var minimumBase = footprintBases.Length > 0 ? footprintBases.Min() : elevation;
+                var maximumBase = footprintBases.Length > 0 ? footprintBases.Max() : elevation;
+                if (routeElevation is { } roadElevation
+                    && BuildingCorridorPolicy.IntersectsRideCorridor(building.DistanceFromRouteMeters,
+                        ProceduralRoad.WidthMeters, roadElevation, minimumBase, maximumBase, mappedOrInferredHeight))
+                {
+                    BuildingsSuppressedForRideCorridor++;
+                    continue;
+                }
                 var shape = BuildingVisualStyle.ResolveRoofShape(building.OsmId, rawRoofShape, category,
                     building.HeightSource, footprintArea, Math.Min(ring.Max(point => point.X) - ring.Min(point => point.X),
                         ring.Max(point => point.Z) - ring.Min(point => point.Z)));
@@ -122,11 +137,12 @@ public partial class BuildingLayer : Node3D
                 Name = $"BuildingsChunk{group.Key:D2}", Position = origin, Mesh = mesh,
             };
             AddChild(instance);
-            _chunks.Add(new Chunk(group.Key, centerDistance, instance));
+            var collisionBody = AddObstructionCollider(instance.Name, mesh, origin);
+            _chunks.Add(new Chunk(group.Key, centerDistance, instance, collisionBody));
             BuildingsLoaded += buildingCount;
         }
         timer.Stop(); BuildMilliseconds = timer.Elapsed.TotalMilliseconds;
-        GD.Print($"Buildings visual: loaded={BuildingsLoaded} detailed={DetailedBuildingCount} " +
+        GD.Print($"Buildings visual: loaded={BuildingsLoaded} corridorSuppressed={BuildingsSuppressedForRideCorridor} detailed={DetailedBuildingCount} " +
             $"pitchedRoofs={RoofedBuildingCount} triangles={TriangleCount} " +
             $"facade={FacadeTriangleCount} roof={RoofTriangleCount} windows={WindowTriangleCount} " +
             $"chunks={ChunkCount} meshInstances={MeshInstanceCount} surfaces={SurfaceCount} " +
@@ -141,7 +157,9 @@ public partial class BuildingLayer : Node3D
         {
             var difference = Math.Abs(chunk.CenterDistanceMeters - wrapped);
             var along = Math.Min(difference, _routeLengthMeters - difference);
-            chunk.Instance.Visible = along <= VisibleDistanceMeters;
+            var visible = along <= VisibleDistanceMeters;
+            chunk.Instance.Visible = visible;
+            chunk.CollisionBody.CollisionLayer = visible ? 1u << 1 : 0;
         }
     }
 
@@ -161,6 +179,20 @@ public partial class BuildingLayer : Node3D
         AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 0.92f,
         CullMode = BaseMaterial3D.CullModeEnum.Disabled
     };
+
+    private StaticBody3D AddObstructionCollider(string name, Mesh mesh, Vector3 position)
+    {
+        var shape = mesh.CreateTrimeshShape();
+        if (shape is null) throw new InvalidOperationException($"Building chunk '{name}' did not produce a collision mesh.");
+        var body = new StaticBody3D
+        {
+            Name = $"{name}CameraCollision", Position = position,
+            CollisionLayer = 1u << 1, CollisionMask = 0
+        };
+        body.AddChild(new CollisionShape3D { Shape = shape });
+        AddChild(body);
+        return body;
+    }
 
     private static Color ToGodotColour(BuildingRgb colour) => new(colour.R, colour.G, colour.B);
 

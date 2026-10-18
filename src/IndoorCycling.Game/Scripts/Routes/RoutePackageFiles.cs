@@ -11,7 +11,13 @@ public static class RoutePackageFiles
 	/// <summary>Portable route packages shipped next to the Windows application.</summary>
 	public static string PackagedPackagesDirectory
 	{
-		get => ResolvePackagedPackagesDirectory(Environment.ProcessPath, AppContext.BaseDirectory);
+		get
+		{
+			var overridePath = Environment.GetEnvironmentVariable("WODRA_PACKAGED_ROUTES_DIR");
+			return string.IsNullOrWhiteSpace(overridePath)
+				? ResolvePackagedPackagesDirectory(Environment.ProcessPath, AppContext.BaseDirectory)
+				: Path.GetFullPath(overridePath);
+		}
 	}
 
 	public static string ResolvePackagedPackagesDirectory(string? processPath, string? applicationBaseDirectory)

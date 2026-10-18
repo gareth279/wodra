@@ -3,7 +3,7 @@
   "routeName": "Dunedin Signal Hill Climbing Loop",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
     "waysConsidered": 930,
@@ -996,7 +996,7 @@
     },
     {
       "osmId": 18579747,
-      "name": "\u014Cpoho Road",
+      "name": "\u014cpoho Road",
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -1308,7 +1308,7 @@
     },
     {
       "osmId": 19781073,
-      "name": "\u014Cpoho Road",
+      "name": "\u014cpoho Road",
       "highway": "residential",
       "oneway": false,
       "widthMeters": 3.6,

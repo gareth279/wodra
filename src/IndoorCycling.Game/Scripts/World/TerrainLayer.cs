@@ -9,7 +9,8 @@ public partial class TerrainLayer : Node3D
 {
     private const double VisibleRouteRadiusMeters = 1200;
     private VisualRoute? _route;
-    private readonly System.Collections.Generic.List<(Vector2 Center, bool Far, MeshInstance3D Mesh)> _chunks = [];
+    private readonly System.Collections.Generic.List<(Vector2 Center, bool Far, MeshInstance3D Mesh,
+        StaticBody3D CollisionBody)> _chunks = [];
     private double _routeLength;
     public int TerrainChunksLoaded => _chunks.Count;
     public int VisibleTerrainChunks { get; private set; }
@@ -70,9 +71,10 @@ public partial class TerrainLayer : Node3D
                 Name = chunk.Id, Mesh = surface.Commit(), MaterialOverride = material
             };
             AddChild(instance);
+            var collisionBody = AddObstructionCollider(instance.Name, instance.Mesh!);
             var far = chunk.Id.StartsWith("far-", StringComparison.Ordinal);
             var center = new Vector2(chunk.Vertices.Average(v => v.X), chunk.Vertices.Average(v => v.Z));
-            _chunks.Add((center, far, instance));
+            _chunks.Add((center, far, instance, collisionBody));
         }
         timer.Stop();
         BuildMilliseconds = timer.Elapsed.TotalMilliseconds;
@@ -108,11 +110,25 @@ public partial class TerrainLayer : Node3D
             var dz = chunk.Center.Y - rider.Z;
             var visible = dx * dx + dz * dz <= VisibleRouteRadiusMeters * VisibleRouteRadiusMeters;
             chunk.Mesh.Visible = visible;
+            chunk.CollisionBody.CollisionLayer = visible ? 1u << 1 : 0;
             if (visible) { VisibleTerrainChunks++; if (chunk.Far) VisibleFarTerrainChunks++; else VisibleNearTerrainChunks++; }
         }
     }
 
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
+
+    private StaticBody3D AddObstructionCollider(string name, Mesh mesh)
+    {
+        var shape = mesh.CreateTrimeshShape();
+        if (shape is null) throw new InvalidOperationException($"Terrain chunk '{name}' did not produce a collision mesh.");
+        var body = new StaticBody3D
+        {
+            Name = $"{name}CameraCollision", CollisionLayer = 1u << 1, CollisionMask = 0
+        };
+        body.AddChild(new CollisionShape3D { Shape = shape });
+        AddChild(body);
+        return body;
+    }
     private static float StableVariation(Vector3 position)
     {
         var hash = Math.Sin(position.X * 0.071 + position.Z * 0.113) * 43758.5453;
