@@ -10,6 +10,7 @@ public sealed class ScreenshotCaptureService
 {
     private readonly HudController _hud;
     private readonly Func<Guid?>? _activityIdProvider;
+    private readonly Func<string?>? _sessionIdProvider;
     private readonly List<CapturedScreenshot> _capturedMedia = [];
     private readonly HashSet<string> _reservedStems = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Task<CapturedScreenshot?>> _pendingCaptures = [];
@@ -17,10 +18,12 @@ public sealed class ScreenshotCaptureService
 
     public IReadOnlyList<CapturedScreenshot> CapturedMedia => _capturedMedia;
 
-    public ScreenshotCaptureService(HudController hud, Func<Guid?>? activityIdProvider = null)
+    public ScreenshotCaptureService(HudController hud, Func<Guid?>? activityIdProvider = null,
+        Func<string?>? sessionIdProvider = null)
     {
         _hud = hud;
         _activityIdProvider = activityIdProvider;
+        _sessionIdProvider = sessionIdProvider;
     }
 
     public Task<CapturedScreenshot?> CaptureCleanAsync(RideDebugSnapshot? snapshot = null) =>
@@ -128,7 +131,7 @@ public sealed class ScreenshotCaptureService
 
         if (sidecarPath is not null && snapshot is not null)
         {
-            try { await File.WriteAllTextAsync(sidecarPath, ScreenshotCaptureFileStore.SerializeSidecar(snapshot)); }
+            try { await File.WriteAllTextAsync(sidecarPath, ScreenshotCaptureFileStore.SerializeSidecar(snapshot, _sessionIdProvider?.Invoke())); }
             catch (Exception ex) { GD.PushWarning($"Screenshot saved, but its metadata sidecar failed: {ex.Message}"); }
         }
 

@@ -43,7 +43,6 @@ public partial class RideMenuPanelController : Control
 	private string? _catchUpRiderId;
 	private bool _catchUpReturnsToMultiplayer;
 	private string _riderOptionIds = "";
-	private bool _exportingDiagnostics;
 
 	public bool IsMenuVisible => _view != MenuView.Closed;
 
@@ -132,23 +131,6 @@ public partial class RideMenuPanelController : Control
 
 	private void ReturnToSettings() => ShowView(MenuView.Settings);
 
-	private async void ExportDiagnostics()
-	{
-		if (_exportingDiagnostics) return;
-		_exportingDiagnostics = true;
-		try
-		{
-			var result = await DiagnosticZipExporter.ExportAsync();
-			var dialog = new AcceptDialog { Title = result.Success ? "Diagnostics exported" : "Export failed",
-				DialogText = result.Success ? $"Saved to:\n{result.Path}" : result.Message };
-			AddChild(dialog);
-			dialog.Confirmed += () => dialog.QueueFree();
-			dialog.Canceled += () => dialog.QueueFree();
-			dialog.PopupCentered(new Vector2I(600, 180));
-		}
-		finally { _exportingDiagnostics = false; }
-	}
-
 	private void ReturnFromSettings()
 	{
 		if (SettingsReturnPolicy.ShouldReturnToConnection(_settingsReturnToConnection, _rideSessionNode?.IsRideActive == true))
@@ -229,7 +211,6 @@ public partial class RideMenuPanelController : Control
 				_content.AddChild(new Label { Text = "Steering controls", HorizontalAlignment = HorizontalAlignment.Center });
 				AddSteeringSensitivityControl();
 				AddAction("Devices", () => ShowView(MenuView.Devices));
-				AddAction("Export diagnostics", ExportDiagnostics);
 				if (GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient { HasLiveDummyControls: true })
 					AddDummyTrainerSettings();
 				AddAction("Back", ReturnFromSettings);

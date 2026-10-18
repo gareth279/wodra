@@ -24,6 +24,8 @@ public partial class RideHistoryPanelController : Control
     private Button _viewButton = null!;
     private Button _ghostButton = null!;
     private Button _doneButton = null!;
+    private Button _diagnosticExportButton = null!;
+    private string? _completedDiagnosticSessionId;
     private List<RideActivity> _activities = [];
     private RideActivity? _selected;
     private bool _summaryMode;
@@ -59,6 +61,9 @@ public partial class RideHistoryPanelController : Control
         var buttons = new HBoxContainer();
         _viewButton = new Button { Text = "View selected ride" }; _viewButton.Pressed += ShowSelectedSummary; buttons.AddChild(_viewButton);
         _ghostButton = new Button { Text = "Ride against ghost", Visible = false }; _ghostButton.Pressed += StartAgainstGhost; buttons.AddChild(_ghostButton);
+        _diagnosticExportButton = new Button { Text = "Export session diagnostics", Visible = false };
+        _diagnosticExportButton.Pressed += () => GetNodeOrNull<DiagnosticPanelController>("../DiagnosticPanel")?.OpenFor(this, _completedDiagnosticSessionId);
+        buttons.AddChild(_diagnosticExportButton);
         _doneButton = new Button { Text = "Done / Return to start" }; _doneButton.Pressed += ClosePanel; buttons.AddChild(_doneButton);
         column.AddChild(buttons); margin.AddChild(column); _panel.AddChild(margin); AddChild(_panel);
         Resized += FitPanelToViewport;
@@ -114,6 +119,7 @@ public partial class RideHistoryPanelController : Control
 
     public async void ShowHistory()
     {
+        _completedDiagnosticSessionId = null; _diagnosticExportButton.Hide();
         _summaryMode = false; _returnToRouteSelection = false; _selected = null; _list.Visible = true; _summaryEssentials.Visible = false; _detailScroll.Visible = true; _list.Clear(); _title.Text = "Ride History";
         _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false; _stravaUploads.Visible = false;
         _startPanel?.Hide(); Show(); MoveToFront();
@@ -136,6 +142,8 @@ public partial class RideHistoryPanelController : Control
 
     public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId, string? fitRecordingError = null, string? challengeSummary = null)
     {
+        _completedDiagnosticSessionId = GameLogger.SessionId;
+        _diagnosticExportButton.Visible = true;
         _summaryMode = true; _selected = null; _list.Visible = false; _summaryEssentials.Visible = true; _detailScroll.Visible = true; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;
         _returnToRouteSelection = GameBootstrap.TrainerClient is not null;
         _startPanel?.Hide(); Show(); MoveToFront();

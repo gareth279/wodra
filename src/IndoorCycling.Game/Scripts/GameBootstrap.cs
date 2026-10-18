@@ -67,10 +67,10 @@ public partial class GameBootstrap : Node
 			}
 		}
 
-		GameLogger.Init();
 		RefreshInstalledShortcutIcons();
 
 		Settings = AppSettings.LoadOrCreate();
+		GameLogger.Init();
 		if (!OS.GetCmdlineUserArgs().Contains("--layout-smoke-test"))
 			StravaIntegrationClient.Shared.ResumePendingAutomaticUploads();
 		ConfigureMainWindow();
@@ -287,6 +287,7 @@ public partial class GameBootstrap : Node
 			_mainWindow.CloseRequested -= OnMainWindowCloseRequested;
 		}
 		EpicOnlineServicesMultiplayerProvider.ShutdownPlatform();
+		GameLogger.EndSession();
 	}
 
 	public static async Task<RiderProfileRecord> GetPersistentRiderAsync()

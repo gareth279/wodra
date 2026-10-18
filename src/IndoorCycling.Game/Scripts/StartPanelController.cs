@@ -49,6 +49,7 @@ public partial class StartPanelController : Control
 	private Guid? _editingProfileId;
 	private VelopackUpdatePanel? _updatePanel;
 	private PanelContainer? _startupPanel;
+	private DiagnosticPanelController? _diagnosticPanel;
 
 	public override void _Ready()
 	{
@@ -76,6 +77,12 @@ public partial class StartPanelController : Control
 		var startupColumn = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer");
 		if (startupColumn is not null)
 		{
+			_diagnosticPanel = new DiagnosticPanelController { Name = "DiagnosticPanel" };
+			GetParent().CallDeferred(Node.MethodName.AddChild, _diagnosticPanel);
+			var diagnosticsButton = new Button { Name = "LocalDiagnosticsButton", Text = "Diagnostics" };
+			diagnosticsButton.Pressed += () => _diagnosticPanel.OpenFor(this);
+			startupColumn.AddChild(diagnosticsButton);
+			startupColumn.MoveChild(diagnosticsButton, startupColumn.GetNode<Button>("QuitButton").GetIndex());
 			_updatePanel = new VelopackUpdatePanel();
 			startupColumn.AddChild(_updatePanel);
 			// Keep update status/actions with the startup choices, before the terminal
@@ -104,6 +111,8 @@ public partial class StartPanelController : Control
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
 	}
+
+
 
 	private void FitStartupPanel()
 	{

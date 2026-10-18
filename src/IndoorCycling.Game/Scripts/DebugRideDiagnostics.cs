@@ -11,6 +11,7 @@ public sealed class DebugRideDiagnostics
 
     public bool Enabled { get; private set; }
     public string? SessionId { get; private set; }
+    public int MarkerCount => _markerNumber;
 
     public void Begin(bool enabled)
     {

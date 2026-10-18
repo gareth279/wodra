@@ -31,6 +31,7 @@ public sealed record CapturedScreenshot(string ImagePath, string? SidecarPath,
 /// <summary>Compact screenshot metadata; deliberately excludes bulky diagnostic payloads.</summary>
 public sealed record ScreenshotMetadata
 {
+	public string? sessionId { get; init; }
     public DateTimeOffset timestamp { get; init; }
     public int? marker { get; init; }
     public string? routeId { get; init; }
@@ -69,8 +70,9 @@ public sealed record ScreenshotMetadata
     public int loadedBackgroundStreets { get; init; }
     public int visibleStreetChunks { get; init; }
 
-    public static ScreenshotMetadata FromSnapshot(RideDebugSnapshot s) => new()
+	public static ScreenshotMetadata FromSnapshot(RideDebugSnapshot s, string? sessionId = null) => new()
     {
+		sessionId = sessionId,
         timestamp = s.timestamp, marker = s.marker, routeId = s.routeId, routeName = s.routeName,
         totalRideDistanceMeters = s.totalRideDistanceMeters, wrappedRouteDistanceMeters = s.wrappedRouteDistanceMeters,
         lapNumber = s.lapNumber, virtualSpeedKph = s.virtualSpeedKph, trainerSpeedKph = s.rawTrainerSpeedKph,
@@ -131,6 +133,6 @@ public static class ScreenshotCaptureFileStore
         }
     }
 
-    public static string SerializeSidecar(RideDebugSnapshot snapshot) =>
-        JsonSerializer.Serialize(ScreenshotMetadata.FromSnapshot(snapshot), JsonOptions);
+    public static string SerializeSidecar(RideDebugSnapshot snapshot, string? sessionId = null) =>
+		JsonSerializer.Serialize(ScreenshotMetadata.FromSnapshot(snapshot, sessionId), JsonOptions);
 }

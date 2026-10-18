@@ -221,8 +221,8 @@ public partial class DeviceConnectionPanelController : Control
 		_changeTrainerButton.Pressed += OnChangeTrainerPressed;
 		_continueButton.Pressed += OnContinuePressed;
 		_diagnosticsButton.Pressed += ToggleDiagnostics;
-		_exportDiagnosticsButton = new Button { Name = "ExportDiagnosticsButton", Text = "Export diagnostics" };
-		_exportDiagnosticsButton.Pressed += ExportDiagnostics;
+		_exportDiagnosticsButton = new Button { Name = "ExportDiagnosticsButton", Text = "Session diagnostics" };
+		_exportDiagnosticsButton.Pressed += () => GetNodeOrNull<DiagnosticPanelController>("../DiagnosticPanel")?.OpenFor(this);
 		var diagnosticsParent = _diagnosticsButton.GetParent();
 		diagnosticsParent.AddChild(_exportDiagnosticsButton);
 		diagnosticsParent.MoveChild(_exportDiagnosticsButton, _diagnosticsLabel.GetIndex());
@@ -426,6 +426,7 @@ public partial class DeviceConnectionPanelController : Control
 			antFeCAvailable: true,
 			lastSuccessfulProtocol: GameBootstrap.Settings.Trainer.LastSuccessfulProtocol);
 		SetPhase(attemptId, TrainerConnectionPhase.Scanning);
+		GameLogger.Log("trainer_discovery_started", new { attemptId, protocolPreference = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString() });
 		try
 		{
 			if (!protocolSelection.IsAvailable)
@@ -458,6 +459,7 @@ public partial class DeviceConnectionPanelController : Control
 			var found = await client.ScanForDevicesAsync(TimeSpan.FromSeconds(7), cancellationToken);
 			if (!_connectionState.IsCurrent(attemptId)) return;
 			var selection = TrainerDiscoveryPolicy.Select(found, GameBootstrap.Settings.LastTrainerBluetoothAddress);
+			GameLogger.Log("trainer_discovery_completed", new { attemptId, discoveredCount = found.Count, compatibleCount = selection.Candidates.Count, outcome = selection.Outcome.ToString() });
 			_discovered = selection.Candidates.ToArray();
 			if (selection.Outcome == TrainerDiscoveryOutcome.None)
 			{
@@ -1715,27 +1717,6 @@ public partial class DeviceConnectionPanelController : Control
 		_diagnosticsLabel.Visible = show;
 		_diagnosticsButton!.Text = show ? "Hide technical details" : "Technical details";
 		RefreshTelemetryUi();
-	}
-
-	private async void ExportDiagnostics()
-	{
-		if (_exportDiagnosticsButton is null || _exportDiagnosticsStatus is null || _exportDiagnosticsButton.Disabled) return;
-		_exportDiagnosticsButton.Disabled = true;
-		_exportDiagnosticsButton.Text = "Exporting diagnostics…";
-		_exportDiagnosticsStatus.Visible = true;
-		_exportDiagnosticsStatus.Text = "Preparing a sanitized local ZIP…";
-		try
-		{
-			var result = await DiagnosticZipExporter.ExportAsync();
-			_exportDiagnosticsStatus.Text = result.Success ? $"Saved to:\n{result.Path}" : result.Message;
-			GameLogger.Log("diagnostic_export_completed", new { result.Success, outputPath = result.Path });
-		}
-		catch (Exception ex)
-		{
-			_exportDiagnosticsStatus.Text = $"Could not export diagnostics: {ex.Message}";
-			GameLogger.Log("diagnostic_export_failed", new { exceptionType = ex.GetType().FullName });
-		}
-		finally { _exportDiagnosticsButton.Disabled = false; _exportDiagnosticsButton.Text = "Export diagnostics"; }
 	}
 
 	private bool SetPhase(long attemptId, TrainerConnectionPhase phase) => _connectionState.SetPhase(attemptId, phase);
