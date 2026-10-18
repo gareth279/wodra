@@ -156,7 +156,8 @@ public partial class HudController : Control
 			MouseFilter = Control.MouseFilterEnum.Ignore
 		};
 		AddChild(_routeGradientInset);
-		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId);
+		_screenshotCapture = new ScreenshotCaptureService(this, () => _rideSessionNode?.CurrentActivityId,
+			() => GameLogger.SessionId);
 		_screenshotToast = new Label
 		{
 			Name = "ScreenshotToast", Text = "Screenshot saved", Visible = false,

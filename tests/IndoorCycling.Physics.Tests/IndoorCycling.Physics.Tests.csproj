@@ -14,6 +14,9 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DiagnosticLogSanitizer.cs" Link="DiagnosticLogSanitizer.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DiagnosticArchiveWriter.cs" Link="DiagnosticArchiveWriter.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/DiagnosticInputCollector.cs" Link="DiagnosticInputCollector.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/DiagnosticSessionCatalog.cs" Link="DiagnosticSessionCatalog.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/DiagnosticSessionFiles.cs" Link="DiagnosticSessionFiles.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/ExplorerNavigation.cs" Link="ExplorerNavigation.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/CollectibleUiText.cs" Link="CollectibleUiText.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/SteeringSensitivityPreferencePolicy.cs" Link="SteeringSensitivityPreferencePolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosIdentityDiagnostics.cs" Link="EosIdentityDiagnostics.cs" />

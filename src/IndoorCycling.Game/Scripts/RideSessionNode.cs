@@ -475,6 +475,14 @@ public partial class RideSessionNode : Node
 			GameLogger.Log("quit_cleanup_failed", new { ex.Message });
 			_hudController?.SetStatus($"Could not finish session: {ex.Message}");
 		}
+		GameLogger.Log("ride_ended", new
+		{
+			activityId = _currentActivityId,
+			routeId = _currentRoute?.Id,
+			endedAtUtc = DateTimeOffset.UtcNow,
+			debugMarkerCount = _debugDiagnostics.MarkerCount
+		});
+		GameLogger.Flush();
 	}
 
 	public override void _Notification(int what)

@@ -77,6 +77,8 @@ var tests = new (string Name, Action Run)[]
 	,("Diagnostic redaction handles profile path variants and keeps JSONL valid", DiagnosticRedactionPreservesJsonl)
 	,("Diagnostic ZIP prioritizes bounded tails of current logs before recent history", DiagnosticCurrentLogsArePrioritized)
 	,("Diagnostic collector reads active sessions and reports missing or locked logs", DiagnosticCurrentLogReadFailures)
+	,("Diagnostic session catalog selects matching Wodra, rotated Godot, and marker files", DiagnosticSessionFilesAreScoped)
+	,("Explorer navigation normalizes mixed Windows separators", ExplorerPathNormalization)
     ,("Game features default off and persist independently per profile", GameFeaturesPersistPerProfile)
 };
 
@@ -281,6 +283,62 @@ static void DiagnosticCurrentLogReadFailures()
 		}
 	}
 	finally { Directory.Delete(root, recursive: true); }
+}
+
+static void DiagnosticSessionFilesAreScoped()
+{
+	var root = Path.Combine(Path.GetTempPath(), "WodraSessionCatalogTests", Guid.NewGuid().ToString("N"));
+	var logs = Path.Combine(root, "logs");
+	var pictures = Path.Combine(root, "pictures");
+	Directory.CreateDirectory(logs); Directory.CreateDirectory(pictures);
+	try
+	{
+		var now = DateTimeOffset.Now;
+		var first = DiagnosticSessionCatalog.Start(root, "wodra-first.jsonl", "test", true, now.AddHours(-1));
+		File.WriteAllText(Path.Combine(logs, first.WodraLogFile), "{\"event\":\"connection_attempt\"}\n");
+		DiagnosticSessionCatalog.End(root, first.Id, now.AddMinutes(-40));
+		var second = DiagnosticSessionCatalog.Start(root, "wodra-second.jsonl", "test", false, now);
+		File.WriteAllText(Path.Combine(logs, second.WodraLogFile), "{\"event\":\"current\"}\n");
+		File.WriteAllText(Path.Combine(logs, "godot" + now.ToLocalTime().AddHours(-1).ToString("yyyy-MM-dd'T'HH.mm.ss", CultureInfo.InvariantCulture) + ".log"), "first session engine");
+		File.WriteAllText(Path.Combine(logs, "godot" + now.ToLocalTime().ToString("yyyy-MM-dd'T'HH.mm.ss", CultureInfo.InvariantCulture) + ".log"), "second session engine");
+		File.WriteAllText(Path.Combine(logs, "godot.log"), "current engine");
+		var markerDirectory = Path.Combine(pictures, "Wodra"); Directory.CreateDirectory(markerDirectory);
+		var marker = Path.Combine(markerDirectory, "wodra-first-marker-001.json");
+		File.WriteAllText(marker, JsonSerializer.Serialize(new { sessionId = first.Id, timestamp = now.AddHours(-1), path = @"C:\Users\rider\ride.json" }));
+		File.WriteAllBytes(Path.ChangeExtension(marker, ".png"), [137, 80, 78, 71]);
+		var unrelated = Path.Combine(markerDirectory, "wodra-other-marker-001.json");
+		File.WriteAllText(unrelated, JsonSerializer.Serialize(new { sessionId = "unrelated", timestamp = now.AddHours(-1) }));
+		var all = DiagnosticSessionCatalog.ListRecent(root);
+		var selected = DiagnosticSessionFiles.Discover(first, root, pictures, all, second.Id, includeScreenshots: true);
+		Assert(selected.Any(file => file.SourcePath == Path.Combine(logs, first.WodraLogFile)), "The selected application session log must be present.");
+		Assert(selected.Any(file => file.Kind == DiagnosticSessionFileKind.PlainText && File.ReadAllText(file.SourcePath) == "first session engine"), "The matching rotated Godot log must be present for a prior session.");
+		Assert(!selected.Any(file => file.SourcePath.EndsWith("godot.log", StringComparison.OrdinalIgnoreCase)), "The current active Godot log must not be attached to an older session.");
+		var currentFiles = DiagnosticSessionFiles.Discover(second, root, pictures, all, second.Id, includeScreenshots: true);
+		Assert(currentFiles.Any(file => File.ReadAllText(file.SourcePath) == "second session engine") &&
+			!currentFiles.Any(file => File.ReadAllText(file.SourcePath) == "first session engine"), "A rotated Godot file must belong to only its nearest Wodra session.");
+		Assert(selected.Any(file => file.Kind == DiagnosticSessionFileKind.MarkerJson) && selected.Any(file => file.Kind == DiagnosticSessionFileKind.ScreenshotPng), "Debug marker JSON and its PNG pair must be discoverable.");
+		Assert(!selected.Any(file => file.SourcePath == unrelated), "Markers from other application sessions must be excluded.");
+		Assert(!DiagnosticSessionFiles.Discover(first, root, pictures, all, second.Id, includeScreenshots: false).Any(file => file.Kind == DiagnosticSessionFileKind.ScreenshotPng), "Screenshot deselection must omit PNG files.");
+	}
+	finally { Directory.Delete(root, recursive: true); }
+}
+
+static void ExplorerPathNormalization()
+{
+	if (!OperatingSystem.IsWindows()) return;
+	var normalized = ExplorerNavigation.NormalizePath("C:/Users/Gareth Ω/OneDrive\\Wodra/diagnostics/export.zip");
+	Assert(normalized.Contains("Gareth Ω", StringComparison.Ordinal) && normalized.Contains(Path.DirectorySeparatorChar), "Mixed path separators and Unicode names must normalize without losing path components.");
+	if (Environment.GetEnvironmentVariable("WODRA_VERIFY_EXPLORER") == "1")
+	{
+		var previousExports = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Godot", "app_userdata", "Wodra", "diagnostics");
+		var sample = Directory.Exists(previousExports)
+			? Directory.GetFiles(previousExports, "*.zip").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
+			: null;
+		sample ??= Path.Combine(Environment.CurrentDirectory, "publish.ps1");
+		var navigation = ExplorerNavigation.OpenAndVerify(sample, TimeSpan.FromSeconds(10));
+		Console.WriteLine($"EXPLORER_VISIBLE={navigation.ExplorerVerified}; FILE_SELECTED={navigation.FileSelected}; {navigation.Message}");
+		Assert(navigation.ExplorerVerified && navigation.FileSelected, "Explorer must visibly open the containing folder and select the requested file.");
+	}
 }
 
 static void DiagnosticArchiveWriting()
