@@ -12,6 +12,10 @@ public partial class HudController : Control
 
 	private Label? _routeLabel;
 	private Label? _segmentLabel;
+	private Label? _gameScoreLabel;
+	private Label? _gameSteeringHint;
+	private Label? _catFeedbackLabel;
+	private double _catFeedbackSeconds;
 	private Label? _statusLabel;
 	private Label? _powerLabel;
 	private Label? _cadenceLabel;
@@ -104,6 +108,18 @@ public partial class HudController : Control
 		_nearbyHumanRidersLabel.AddThemeFontSizeOverride("font_size", 12);
 		topHudLayout?.AddChild(_nearbyHumanRidersLabel);
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
+		_gameScoreLabel = new Label { Name = "GameScore", Visible = false, HorizontalAlignment = HorizontalAlignment.Center };
+		_gameScoreLabel.AddThemeColorOverride("font_color", new Color(.9f, .78f, .44f));
+		_gameScoreLabel.AddThemeFontSizeOverride("font_size", 13);
+		topHudLayout?.AddChild(_gameScoreLabel);
+		_gameSteeringHint = new Label { Name = "GameSteeringHint", Visible = false, HorizontalAlignment = HorizontalAlignment.Center,
+			Text = "← / → arrow keys steer" };
+		_gameSteeringHint.AddThemeFontSizeOverride("font_size", 12);
+		topHudLayout?.AddChild(_gameSteeringHint);
+		_catFeedbackLabel = new Label { Name = "CatCollectionFeedback", Visible = false, HorizontalAlignment = HorizontalAlignment.Center };
+		_catFeedbackLabel.AddThemeColorOverride("font_color", new Color(1f, .85f, .52f));
+		_catFeedbackLabel.AddThemeFontSizeOverride("font_size", 14);
+		topHudLayout?.AddChild(_catFeedbackLabel);
 		_dummyControlPanel = GetNodeOrNull<Control>("DummyControlPanel");
 		_dummySummary = GetNodeOrNull<Label>("DummyControlPanel/DummyPanel/DummyPanelMargin/DummyPanelLayout/DummySummaryLabel");
 		var dummyRows = "DummyPanel/DummyPanelMargin/DummyPanelLayout/DummyControlsScroll/DummyControlsLayout/";
@@ -741,6 +757,24 @@ public partial class HudController : Control
 		}
 	}
 
+	public void SetGameScore(bool enabled, int score, int collected, int available)
+	{
+		if (_gameScoreLabel is null) return;
+		_gameScoreLabel.Visible = enabled;
+		_gameScoreLabel.Text = enabled ? $"Cats · {score} pts · {collected}/{available}" : "";
+		if (!enabled && _catFeedbackLabel is not null) _catFeedbackLabel.Visible = false;
+	}
+
+	public void SetGameSteeringHint(bool enabled) { if (_gameSteeringHint is not null) _gameSteeringHint.Visible = enabled; }
+
+	public void ShowCatCollection(string kind, int points, int score)
+	{
+		if (_catFeedbackLabel is null) return;
+		_catFeedbackLabel.Text = $"{kind} cat +{points} · {score} points";
+		_catFeedbackLabel.Visible = true;
+		_catFeedbackSeconds = 2;
+	}
+
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry? telemetry, double elapsedSeconds)
 	{
 		UpdateHudVisibility();
@@ -853,6 +887,7 @@ public partial class HudController : Control
 
 	public override void _Process(double delta)
 	{
+		if (_catFeedbackLabel?.Visible == true && (_catFeedbackSeconds -= delta) <= 0) _catFeedbackLabel.Visible = false;
 		if (_cameraInspectionLabelSeconds <= 0) return;
 		_cameraInspectionLabelSeconds = Math.Max(0, _cameraInspectionLabelSeconds - delta);
 		if (_cameraInspectionLabelSeconds == 0 && _cameraInspectionLabel is not null)

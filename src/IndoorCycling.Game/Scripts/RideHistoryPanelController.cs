@@ -134,7 +134,7 @@ public partial class RideHistoryPanelController : Control
         catch (Exception ex) { _detail.Text = $"Ride history could not be loaded.\n{ex.Message}"; GD.PushWarning($"Ride history load failed: {ex.Message}"); }
     }
 
-    public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId, string? fitRecordingError = null)
+    public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId, string? fitRecordingError = null, string? challengeSummary = null)
     {
         _summaryMode = true; _selected = null; _list.Visible = false; _summaryEssentials.Visible = true; _detailScroll.Visible = true; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;
         _returnToRouteSelection = GameBootstrap.TrainerClient is not null;
@@ -143,7 +143,7 @@ public partial class RideHistoryPanelController : Control
         var fit = fitRecordingError is not null
             ? $"FIT RECORDING ISSUE: {fitRecordingError}\nFIT: {draft.FitFilePath ?? "not saved"}"
             : string.IsNullOrWhiteSpace(draft.FitFilePath) ? "FIT: not saved" : $"FIT: {draft.FitFilePath}";
-        _summaryEssentials.Text = FormatSummaryEssentials(draft);
+        _summaryEssentials.Text = FormatSummaryEssentials(draft) + (string.IsNullOrWhiteSpace(challengeSummary) ? "" : $"\n{challengeSummary}");
         _detail.Text = $"{fit}\n\nScreenshots: loading…";
         IReadOnlyList<RideActivityMedia> media = Array.Empty<RideActivityMedia>();
         if (activityId is { } id && GameBootstrap.RideHistory is { } repository)

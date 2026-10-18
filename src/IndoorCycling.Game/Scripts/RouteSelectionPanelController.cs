@@ -16,6 +16,7 @@ public partial class RouteSelectionPanelController : Control
 	private PanelContainer? _selectionPanel;
 	private Button? _backButton;
 	private CheckButton? _onlineRidingToggle;
+	private CheckButton? _gameFeaturesToggle;
 	private Label? _onlineStatusLabel;
 	private VBoxContainer? _startupOnlineControls;
 	private readonly Dictionary<string, Button> _routeButtons = new(StringComparer.Ordinal);
@@ -57,6 +58,7 @@ public partial class RouteSelectionPanelController : Control
 
 	public void ShowRouteSelection()
 	{
+		RefreshGameFeaturesToggle();
 		_hudController?.Hide();
 		_deviceConnectionPanel?.Hide();
 		_startPanel?.Hide();
@@ -71,6 +73,14 @@ public partial class RouteSelectionPanelController : Control
 		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
 		if (column is null) return;
 		_startupOnlineControls = new VBoxContainer { Name = "OnlineRidingControls" };
+		var gameFeatures = new VBoxContainer { Name = "GameFeaturesControls" };
+		_gameFeaturesToggle = new CheckButton { Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
+		_gameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled);
+		gameFeatures.AddChild(_gameFeaturesToggle);
+		gameFeatures.AddChild(new Label { Text = "Collect cats and earn points while you ride.", HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart });
+		column.AddChild(gameFeatures);
+		column.MoveChild(gameFeatures, 1);
 		_onlineRidingToggle = new CheckButton
 		{
 			Text = "Online Riding",
@@ -94,6 +104,11 @@ public partial class RouteSelectionPanelController : Control
 	}
 
 	public override void _Process(double delta) => UpdateOnlineStatusLabel();
+
+	public void RefreshGameFeaturesToggle()
+	{
+		if (_gameFeaturesToggle is not null) _gameFeaturesToggle.ButtonPressed = GameFeaturesPreference.Enabled;
+	}
 
 	private void UpdateOnlineStatusLabel()
 	{

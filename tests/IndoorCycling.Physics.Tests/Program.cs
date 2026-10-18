@@ -68,6 +68,12 @@ var tests = new (string Name, Action Run)[]
     ,("Steering sensitivity and dead zone persist with bounded settings", SteeringSettingsPersist)
     ,("Window placement is clamped to a visible display and chooses a remaining monitor", WindowPlacementRestoresSafely)
     ,("Shared steering sensitivity persists and scales keyboard and Sterzo response", SteeringSensitivityIsShared)
+    ,("Collectible layout is deterministic and includes blue and rare gold cats", CollectibleLayoutIsDeterministic)
+    ,("Collectible swept hit catches frame crossing and rejects lateral misses", CollectibleSweptDetection)
+    ,("Collectible attempts prevent duplicate awards and flag practice eligibility", CollectibleAttemptEligibility)
+    ,("Diagnostic log sanitizer removes tokens secrets keys and local paths", DiagnosticLogSanitization)
+    ,("Diagnostic archive includes selected files without changing sources and enforces its bound", DiagnosticArchiveWriting)
+    ,("Game features default off and persist independently per profile", GameFeaturesPersistPerProfile)
 };
 
 var failed = 0;
@@ -86,6 +92,92 @@ static void ControllerDevicePreferencePersists()
     var restored = JsonSerializer.Deserialize<TestControllerPreference>(JsonSerializer.Serialize(settings));
     Assert(restored?.DeviceType == ControllerDeviceTypePreference.EliteSterzoSmart,
         "The explicit existing Sterzo adapter selection must survive settings serialization.");
+}
+
+static void CollectibleLayoutIsDeterministic()
+{
+    var samples = Enumerable.Range(0, 1001).Select(i => ((double)i * 10, System.Numerics.Vector3.UnitZ)).ToArray();
+    var first = CollectibleChallenge.Generate("test-road", 10000, samples);
+    var second = CollectibleChallenge.Generate("test-road", 10000, samples);
+    Assert(first.SequenceEqual(second), "The same route and challenge version must produce identical pickup placements.");
+    Assert(first.Any(p => p.Kind == CollectibleKind.BlueCat && p.Points == 1), "The layout needs one point blue cats.");
+    Assert(first.Any(p => p.Kind == CollectibleKind.GoldenCat && p.Points == 5), "The layout needs five point rare gold cats.");
+    Assert(!first.SequenceEqual(CollectibleChallenge.Generate("other-road", 10000, samples)), "Route identity must be part of the deterministic seed.");
+
+    var uTurnSamples = Enumerable.Range(0, 91).Select(i => (i * 10d,
+        i < 36 ? System.Numerics.Vector3.UnitZ : -System.Numerics.Vector3.UnitZ)).ToArray();
+    Assert(CollectibleChallenge.Generate("u-turn", 900, uTurnSamples).All(p => Math.Abs(p.RouteDistanceMeters - 360) > 120),
+        "A sharp reversal must not receive a pickup at the U-turn.");
+}
+
+static void CollectibleSweptDetection()
+{
+    var pickup = new CollectiblePlacement("v1:road:100", 100, 0.5, CollectibleKind.BlueCat, 1);
+    Assert(CollectibleChallenge.SweptHit(95, 105, 0, 1, pickup, 1000, false), "Crossing between frames should collect when the interpolated lateral path hits.");
+    Assert(!CollectibleChallenge.SweptHit(95, 105, 4, 4, pickup, 1000, false), "A rider outside lateral clearance must miss.");
+    Assert(!CollectibleChallenge.SweptHit(105, 95, 0.5, 0.5, pickup, 1000, false), "Reverse re-entry must not collect.");
+}
+
+static void CollectibleAttemptEligibility()
+{
+    var pickup = new CollectiblePlacement("v1:road:100", 100, 0, CollectibleKind.GoldenCat, 5);
+    var attempt = new CollectibleAttemptState();
+    Assert(attempt.Award(pickup, 0), "First pickup identity should award.");
+    Assert(!attempt.Award(pickup, 0) && attempt.Score == 5, "Duplicate award in the same lap must be ignored.");
+    Assert(attempt.Award(pickup, 1) && attempt.Score == 10, "A new explicit lap identity may award the pickup once.");
+    attempt.MarkPractice(toggled: true);
+    var result = attempt.CreateResult("road", "fingerprint", 1, 1, 3, true, 90);
+    Assert(!result.EligibleForPersonalBest && result.GameFeatureToggledDuringRide && result.SchemaVersion == 1,
+        "Toggled attempts must retain a versioned result and be ineligible for PB comparison.");
+    var partial = new CollectibleAttemptState().CreateResult("road", "fingerprint", 1, 1, 3, false, 30);
+    Assert(!partial.EligibleForPersonalBest, "Partial rides must remain ineligible.");
+}
+
+static void DiagnosticLogSanitization()
+{
+	const string input = "GET https://host/path?access_token=token-sentinel&safe=yes clientSecret=secret-sentinel ANT_NETWORK_KEY=ant-key-sentinel Authorization: Bearer opaque-token C:\\Users\\rider\\logs";
+	var safe = DiagnosticLogSanitizer.Redact(input, @"C:\Users\rider");
+	Assert(!safe.Contains("token-sentinel", StringComparison.Ordinal) && !safe.Contains("secret-sentinel", StringComparison.Ordinal) &&
+		!safe.Contains("ant-key-sentinel", StringComparison.Ordinal) && !safe.Contains("opaque-token", StringComparison.Ordinal),
+		"Known secret values and bearer tokens must be removed.");
+	Assert(safe.Contains("safe=yes", StringComparison.Ordinal) && safe.Contains("%USERPROFILE%", StringComparison.Ordinal),
+		"Non-sensitive URL fields should be kept and local profile paths should be replaced.");
+}
+
+static void DiagnosticArchiveWriting()
+{
+	var root = Path.Combine(Path.GetTempPath(), "WodraDiagnosticArchiveTests", Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(root);
+	try
+	{
+		var original = Path.Combine(root, "session.jsonl");
+		File.WriteAllText(original, "session-log");
+		var bytes = File.ReadAllBytes(original);
+		var archivePath = Path.Combine(root, "diagnostics.zip");
+		DiagnosticArchiveWriter.Write(archivePath, new[] { ("logs/current.jsonl", bytes), ("manifest.txt", System.Text.Encoding.UTF8.GetBytes("omissions: none")) }, 100);
+		using var archive = System.IO.Compression.ZipFile.OpenRead(archivePath);
+		Assert(archive.GetEntry("logs/current.jsonl") is not null && archive.GetEntry("manifest.txt") is not null,
+			"The ZIP must contain the selected log and manifest.");
+		Assert(File.ReadAllBytes(original).SequenceEqual(bytes), "Archive creation must not modify the original log.");
+		var tooLarge = Path.Combine(root, "too-large.zip");
+		try { DiagnosticArchiveWriter.Write(tooLarge, new[] { ("large.bin", new byte[200]) }, 100); throw new Exception("Oversized archives must be rejected."); }
+		catch (InvalidDataException) { }
+		Assert(!File.Exists(tooLarge), "An oversized archive must not be left behind.");
+	}
+	finally { Directory.Delete(root, recursive: true); }
+}
+
+static void GameFeaturesPersistPerProfile()
+{
+	var first = Guid.NewGuid();
+	var second = Guid.NewGuid();
+	var settings = new Dictionary<string, bool>();
+	Assert(!GameFeaturePreferencePolicy.IsEnabled(settings, first) && !GameFeaturePreferencePolicy.IsEnabled(settings, null),
+		"Missing preference entries must default off.");
+	GameFeaturePreferencePolicy.Set(settings, first, true);
+	var restored = JsonSerializer.Deserialize<Dictionary<string, bool>>(JsonSerializer.Serialize(settings))!;
+	Assert(GameFeaturePreferencePolicy.IsEnabled(restored, first) && !GameFeaturePreferencePolicy.IsEnabled(restored, second),
+		"The profile choice must round-trip and must not affect another rider.");
 }
 
 static void SettingsReturnRespectsEntryContext()

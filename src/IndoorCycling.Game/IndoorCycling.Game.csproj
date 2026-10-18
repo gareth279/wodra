@@ -15,6 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Velopack" Version="1.2.161" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
+    <Content Include="Data\Cats\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.vegetation.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json" />

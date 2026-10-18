@@ -24,6 +24,8 @@ public sealed class AppSettings
 	public ControllerDeviceTypePreference ControllerDeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 	public RideDisplayPreferences Display { get; set; } = new();
 	public SteeringControlSettings Steering { get; set; } = new();
+	/// <summary>Per-profile opt-in. Missing profiles default to OFF.</summary>
+	public System.Collections.Generic.Dictionary<string, bool> GameFeaturesByProfile { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 	public int SteeringSensitivityPreferenceVersion { get; set; }
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
@@ -94,6 +96,7 @@ public sealed class AppSettings
 				}
 			}
 			settings.Display ??= new RideDisplayPreferences();
+			settings.GameFeaturesByProfile ??= new System.Collections.Generic.Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 			settings.Steering ??= new SteeringControlSettings();
 			var migratedSteeringSensitivity = SteeringSensitivityPreferencePolicy.Migrate(
 				json, settings.Steering, settings.SteeringSensitivityPreferenceVersion);
@@ -158,6 +161,26 @@ public sealed class AppSettings
 		{
 			path = SettingsPath
 		});
+	}
+}
+
+public static class GameFeaturesPreference
+{
+	public static bool Enabled
+	{
+		get
+		{
+			return IndoorCycling.Core.Simulation.GameFeaturePreferencePolicy.IsEnabled(
+				GameBootstrap.Settings.GameFeaturesByProfile, GameBootstrap.Settings.ActiveProfileId);
+		}
+	}
+
+	public static void Set(bool enabled)
+	{
+		var id = GameBootstrap.Settings.ActiveProfileId;
+		if (id is null) return;
+		IndoorCycling.Core.Simulation.GameFeaturePreferencePolicy.Set(GameBootstrap.Settings.GameFeaturesByProfile, id.Value, enabled);
+		GameBootstrap.Settings.Save();
 	}
 }
 
