@@ -90,6 +90,12 @@ public partial class RideWorldView : Node3D
     private BackgroundStreetLayer? _backgroundStreetLayer;
     private AmbientActorManager? _ambientActorManager;
     private TerrainLayer? _terrainLayer;
+    private CollectibleCatLayer? _collectibleLayer;
+    private bool _gameFeatureToggledDuringAttempt;
+    private double _lastChallengeDistance;
+    private double _lastChallengeElapsed;
+    private double _steeringDiagnosticElapsed;
+    public string? LastChallengeSummary { get; private set; }
     private double _debugElapsed;
     private bool _wasActive;
     private VisualRoutePose _lastPose;
@@ -405,6 +411,7 @@ public partial class RideWorldView : Node3D
             _camera.Current = false;
             if (_wasActive)
             {
+                SaveChallengeAttempt();
                 _routeLoadAttempt.Reset();
                 _steering.Reset();
                 _steerLeftHeld = _steerRightHeld = false;
@@ -464,12 +471,20 @@ public partial class RideWorldView : Node3D
         _wasActive = true;
         Show();
         _camera.Current = true;
+        if (rideJustActivated)
+        {
+            _gameFeatureToggledDuringAttempt = false;
+            _lastChallengeDistance = 0;
+            _lastChallengeElapsed = 0;
+        }
 #if DEBUG
         if (rideJustActivated)
             GD.Print($"[CameraInspect] ride active route={_session.CurrentRoute.Id} node={GetPath()} " +
                 $"visible={IsVisibleInTree()} inputProcessing={IsProcessingInput()} mode={_camera.View} camera={_camera.GetPath()}");
 #endif
         var distance = _session.CurrentRideState.DistanceMeters;
+        _lastChallengeDistance = distance;
+        _lastChallengeElapsed = _session.CurrentRideState.ElapsedSeconds;
         var pose = _geometry!.GetPoseAtDistance(distance);
         _lastPose = pose;
         var rideState = _session.CurrentRideState;
@@ -489,6 +504,22 @@ public partial class RideWorldView : Node3D
             IsTypingIntoControl(), GameBootstrap.Settings.Steering.Sensitivity,
             GameBootstrap.Settings.Steering.DeadZoneDegrees, ProceduralRoad.WidthMeters,
             freshSterzoSample && sterzoTimestamp > _keyboardControllerSampleBaseline);
+        _steeringDiagnosticElapsed += delta;
+        if (_steeringDiagnosticElapsed >= 1)
+        {
+            _steeringDiagnosticElapsed = 0;
+            GameLogger.Log("steering_sample", new { routeId = _loadedRoute?.Id, lateralOffsetMeters = lateralOffset,
+                keyboardLeft = _steerLeftHeld, keyboardRight = _steerRightHeld, sterzoConnected = _deviceConnectionPanel?.HasSteeringController == true,
+                sterzoFresh = hasFreshSterzo, paused = _session.IsRidePaused });
+        }
+        var gameEnabled = GameFeaturesPreference.Enabled;
+        if (gameEnabled) EnsureCollectibleLayer();
+        _collectibleLayer?.Attempt.MarkPractice(toggled: _gameFeatureToggledDuringAttempt);
+        _collectibleLayer?.UpdateRide(distance, lateralOffset, gameEnabled,
+            _loadedRoute?.RouteType == "Loop");
+        _hudController?.SetGameScore(gameEnabled, _collectibleLayer?.Score ?? 0,
+            _collectibleLayer?.Collected ?? 0, _collectibleLayer?.Available ?? 0);
+        _hudController?.SetGameSteeringHint(gameEnabled && _deviceConnectionPanel?.HasSteeringController != true);
         var routeLength = _geometry.LengthMeters;
         var wrappedDistance = _geometry.WrapDistance(distance);
         var playerState = new RiderState("player", "You", _loadedRoute!.Id, distance, wrappedDistance,
@@ -551,6 +582,73 @@ public partial class RideWorldView : Node3D
             }
             if (_roadMarkingLayer is { } markingLayer)
                 GD.Print($"Road markings loaded: {markingLayer.LoadedMarkingCount}; nearby crossings: {markingLayer.NearbyCrossingCount}");
+        }
+    }
+
+    private void EnsureCollectibleLayer()
+    {
+        if (_collectibleLayer is not null || _routeRoot is null || _loadedRoute is null || _geometry is null) return;
+        _collectibleLayer = new CollectibleCatLayer { Name = "CollectibleCats" };
+        _routeRoot.AddChild(_collectibleLayer);
+        _collectibleLayer.Configure(_loadedRoute.Id, _geometry);
+        GameLogger.Log("collectible_layout_created", new { routeId = _loadedRoute.Id,
+            challengeVersion = IndoorCycling.Core.Simulation.CollectibleChallenge.CurrentVersion,
+            placementCount = _collectibleLayer.Available, routeFingerprint = _loadedRoute.GeometryFingerprint });
+        _collectibleLayer.CollectedPickup += pickup =>
+        {
+            var kind = pickup.Kind == IndoorCycling.Core.Simulation.CollectibleKind.GoldenCat ? "Golden" : "Blue";
+            _hudController?.ShowCatCollection(kind, pickup.Points, _collectibleLayer.Score);
+            GameLogger.Log("collectible_collected", new { pickup.Id, pickup.Kind, pickup.Points, score = _collectibleLayer.Score });
+        };
+    }
+
+    public void OnGameFeaturesChanged(bool enabled)
+    {
+        if (_session?.IsRideActive == true)
+        {
+            _gameFeatureToggledDuringAttempt = true;
+            _collectibleLayer?.Attempt.MarkPractice(toggled: true);
+            GameLogger.Log("game_features_changed_during_ride", new { enabled, ineligible = true });
+        }
+        if (!enabled)
+        {
+            _collectibleLayer?.Hide();
+            _hudController?.SetGameScore(false, 0, 0, 0);
+        }
+    }
+
+    public void MarkChallengePractice(bool debugJump = false, bool catchUp = false)
+    {
+        _collectibleLayer?.Attempt.MarkPractice(debugJump: debugJump, catchUp: catchUp);
+        _collectibleLayer?.SuppressNextSweep();
+    }
+
+    private void SaveChallengeAttempt()
+    {
+        LastChallengeSummary = null;
+        if (_collectibleLayer is null || _loadedRoute is null) return;
+        var length = _loadedRoute.DistanceMeters;
+        var completed = length > 0 && _lastChallengeDistance >= length && !_gameFeatureToggledDuringAttempt;
+        _collectibleLayer.Attempt.MarkPractice(
+            dummy: GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient,
+            toggled: _gameFeatureToggledDuringAttempt);
+        var lap = Math.Max(1, (int)Math.Floor(_lastChallengeDistance / Math.Max(1, length)));
+        var result = _collectibleLayer.Attempt.CreateResult(_loadedRoute.Id, _loadedRoute.GeometryFingerprint,
+            IndoorCycling.Core.Simulation.CollectibleChallenge.CurrentVersion, lap,
+            _collectibleLayer.Available * lap, completed, _lastChallengeElapsed);
+        if (GameBootstrap.Settings.ActiveProfileId is { } profileId)
+        {
+            try
+            {
+                var isBest = CollectibleResultStore.Save(profileId, result);
+                if (GameFeaturesPreference.Enabled)
+                    LastChallengeSummary = $"Game features · {result.Score} points · {result.PickupsCollected}/{result.PickupsAvailable} cats · " +
+                        (result.Completed ? "completed" : "partial") + (isBest ? " · personal best" : "") +
+                        (result.EligibleForPersonalBest ? "" : " · practice attempt");
+                GameLogger.Log("collectible_attempt_saved", new { result.RouteId, result.Score, result.PickupsCollected,
+                    result.PickupsAvailable, result.Completed, result.EligibleForPersonalBest, personalBest = isBest });
+            }
+            catch (Exception ex) { GameLogger.Log("collectible_attempt_save_failed", new { message = ex.Message }); }
         }
     }
 
@@ -774,6 +872,7 @@ public partial class RideWorldView : Node3D
 
     private void LoadRoute(RouteDefinition route)
     {
+        _collectibleLayer = null;
         if (_remoteVisualRoot is not null)
         {
             RemoveChild(_remoteVisualRoot);
@@ -1036,10 +1135,12 @@ public partial class RideWorldView : Node3D
             aiCyclistApproximateTriangles = _riderVisuals.Where(pair => pair.Key != "player").Sum(pair => pair.Value.ApproximateTriangleCount)
         });
         _loadedRoute = route;
+        if (GameFeaturesPreference.Enabled) EnsureCollectibleLayer();
     }
 
     private void CleanupFailedRouteLoad()
     {
+        if (_collectibleLayer is not null) { _collectibleLayer.QueueFree(); _collectibleLayer = null; }
         if (_remoteVisualRoot is not null)
         {
             RemoveChild(_remoteVisualRoot);

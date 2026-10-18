@@ -991,6 +991,7 @@ public partial class RideSessionNode : Node
 	private void ApplyDebugDistanceJump(double distance)
 	{
 		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance, out var jumped)) return;
+		_rideWorldView?.MarkChallengePractice(debugJump: true);
 		var before = _rideState.DistanceMeters;
 		_rideState = jumped;
 		_recordingSampleElapsedSeconds = 0;
@@ -1641,6 +1642,7 @@ public partial class RideSessionNode : Node
 		_trainerCommandElapsedSeconds = TrainerCommandMinIntervalSeconds;
 		UpdateRouteHud();
 		_rideWorldView.ResetAfterReposition();
+		_rideWorldView.MarkChallengePractice(catchUp: true);
 		var fitRestartFailed = false;
 		if (shouldRestartRecording)
 		{

@@ -26,6 +26,8 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _powerStatusLabel;
 	private Label? _cadenceStatusLabel;
 	private Label? _diagnosticsLabel;
+	private Button? _exportDiagnosticsButton;
+	private Label? _exportDiagnosticsStatus;
 	private VBoxContainer? _connectionDetails;
 	private Button? _antSetupButton;
 	private RideMenuPanelController? _rideMenuPanel;
@@ -219,6 +221,15 @@ public partial class DeviceConnectionPanelController : Control
 		_changeTrainerButton.Pressed += OnChangeTrainerPressed;
 		_continueButton.Pressed += OnContinuePressed;
 		_diagnosticsButton.Pressed += ToggleDiagnostics;
+		_exportDiagnosticsButton = new Button { Name = "ExportDiagnosticsButton", Text = "Export diagnostics" };
+		_exportDiagnosticsButton.Pressed += ExportDiagnostics;
+		var diagnosticsParent = _diagnosticsButton.GetParent();
+		diagnosticsParent.AddChild(_exportDiagnosticsButton);
+		diagnosticsParent.MoveChild(_exportDiagnosticsButton, _diagnosticsLabel.GetIndex());
+		_exportDiagnosticsStatus = new Label { Name = "ExportDiagnosticsStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center, Visible = false };
+		diagnosticsParent.AddChild(_exportDiagnosticsStatus);
+		diagnosticsParent.MoveChild(_exportDiagnosticsStatus, _exportDiagnosticsButton.GetIndex() + 1);
 		_diagnosticsLabel.Hide();
 		_trainerPicker.Hide();
 		Hide();
@@ -948,6 +959,7 @@ public partial class DeviceConnectionPanelController : Control
 	}
 
 	public DateTimeOffset? LatestSteeringInputAt => _steeringClient?.LastInputAt;
+	public bool HasSteeringController => _steeringClient?.IsConnected == true;
 
 	public void OnSettingsReturned()
 	{
@@ -1703,6 +1715,27 @@ public partial class DeviceConnectionPanelController : Control
 		_diagnosticsLabel.Visible = show;
 		_diagnosticsButton!.Text = show ? "Hide technical details" : "Technical details";
 		RefreshTelemetryUi();
+	}
+
+	private async void ExportDiagnostics()
+	{
+		if (_exportDiagnosticsButton is null || _exportDiagnosticsStatus is null || _exportDiagnosticsButton.Disabled) return;
+		_exportDiagnosticsButton.Disabled = true;
+		_exportDiagnosticsButton.Text = "Exporting diagnostics…";
+		_exportDiagnosticsStatus.Visible = true;
+		_exportDiagnosticsStatus.Text = "Preparing a sanitized local ZIP…";
+		try
+		{
+			var result = await DiagnosticZipExporter.ExportAsync();
+			_exportDiagnosticsStatus.Text = result.Success ? $"Saved to:\n{result.Path}" : result.Message;
+			GameLogger.Log("diagnostic_export_completed", new { result.Success, outputPath = result.Path });
+		}
+		catch (Exception ex)
+		{
+			_exportDiagnosticsStatus.Text = $"Could not export diagnostics: {ex.Message}";
+			GameLogger.Log("diagnostic_export_failed", new { exceptionType = ex.GetType().FullName });
+		}
+		finally { _exportDiagnosticsButton.Disabled = false; _exportDiagnosticsButton.Text = "Export diagnostics"; }
 	}
 
 	private bool SetPhase(long attemptId, TrainerConnectionPhase phase) => _connectionState.SetPhase(attemptId, phase);
