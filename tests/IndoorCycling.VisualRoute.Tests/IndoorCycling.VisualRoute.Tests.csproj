@@ -34,6 +34,8 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RiderLaneMath.cs" Link="RiderLaneMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RiderVisualInputMath.cs" Link="RiderVisualInputMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/ChaseCameraMath.cs" Link="ChaseCameraMath.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/CameraObstructionMath.cs" Link="CameraObstructionMath.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingCorridorPolicy.cs" Link="BuildingCorridorPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/StreetFurniturePlacementMath.cs" Link="StreetFurniturePlacementMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadsidePrimitiveMath.cs" Link="RoadsidePrimitiveMath.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/RoadMarkingGeometry.cs" Link="RoadMarkingGeometry.cs" />

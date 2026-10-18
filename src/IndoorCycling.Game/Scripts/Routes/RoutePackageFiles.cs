@@ -11,7 +11,19 @@ public static class RoutePackageFiles
 	/// <summary>Portable route packages shipped next to the Windows application.</summary>
 	public static string PackagedPackagesDirectory
 	{
-		get => ResolvePackagedPackagesDirectory(Environment.ProcessPath, AppContext.BaseDirectory);
+		get
+		{
+			var overridePath = Environment.GetEnvironmentVariable("WODRA_PACKAGED_ROUTES_DIR");
+			if (!string.IsNullOrWhiteSpace(overridePath)) return Path.GetFullPath(overridePath);
+			var processPath = Environment.ProcessPath;
+			// Test runners are hosted by dotnet.exe; their package fixtures live beside
+			// the test assembly, not beside the shared SDK host.
+			var dotnetHost = string.Equals(Path.GetFileNameWithoutExtension(processPath), "dotnet",
+				StringComparison.OrdinalIgnoreCase);
+			return dotnetHost
+				? ResolvePackagedPackagesDirectory(null, AppContext.BaseDirectory)
+				: ResolvePackagedPackagesDirectory(processPath, AppContext.BaseDirectory);
+		}
 	}
 
 	public static string ResolvePackagedPackagesDirectory(string? processPath, string? applicationBaseDirectory)

@@ -3,7 +3,7 @@
   "routeName": "Dunedin South Dunedin Coastal Loop",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
     "waysConsidered": 345,
@@ -5446,7 +5446,7 @@
     },
     {
       "osmId": 150886894,
-      "name": "Lawyer\u0027s Head Road",
+      "name": "Lawyer's Head Road",
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,

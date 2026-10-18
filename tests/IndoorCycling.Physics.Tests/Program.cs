@@ -1416,6 +1416,23 @@ static void PackagedRouteDirectoryResolution()
     var fallback = RoutePackageFiles.ResolvePackagedPackagesDirectory(null, Path.Combine(exportRoot, "managed"));
     if (!string.Equals(fallback, Path.Combine(exportRoot, "managed", "Routes"), StringComparison.OrdinalIgnoreCase))
         throw new Exception("The application base directory should be used when no executable path is available.");
+
+    var previousOverride = Environment.GetEnvironmentVariable("WODRA_PACKAGED_ROUTES_DIR");
+    var overrideRoot = Path.Combine(exportRoot, "fixture-routes");
+    try
+    {
+        Environment.SetEnvironmentVariable("WODRA_PACKAGED_ROUTES_DIR", overrideRoot);
+        if (!string.Equals(RoutePackageFiles.PackagedPackagesDirectory, Path.GetFullPath(overrideRoot),
+                StringComparison.OrdinalIgnoreCase))
+            throw new Exception("A configured route bundle root should support isolated package validation.");
+    }
+    finally { Environment.SetEnvironmentVariable("WODRA_PACKAGED_ROUTES_DIR", previousOverride); }
+
+    if (string.Equals(Path.GetFileNameWithoutExtension(Environment.ProcessPath), "dotnet",
+            StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(previousOverride)
+        && !string.Equals(RoutePackageFiles.PackagedPackagesDirectory,
+            Path.Combine(AppContext.BaseDirectory, "Routes"), StringComparison.OrdinalIgnoreCase))
+        throw new Exception("A test hosted by dotnet.exe should load package fixtures beside its test assembly.");
 }
 
 sealed class TestControllerPreference

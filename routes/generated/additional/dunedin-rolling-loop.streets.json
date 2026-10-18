@@ -3,7 +3,7 @@
   "routeName": "Dunedin Rolling City and Valley Loop",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
     "waysConsidered": 1752,
@@ -106167,7 +106167,7 @@
     },
     {
       "osmId": 1548734750,
-      "name": "\u014Cpoho Road",
+      "name": "\u014cpoho Road",
       "highway": "tertiary",
       "oneway": false,
       "widthMeters": 9.600000000000001,

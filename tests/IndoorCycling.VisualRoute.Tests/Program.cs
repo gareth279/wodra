@@ -372,6 +372,21 @@ var tests = new (string Name, Action Run)[]
             if (nearRoadOffsets.Length > 0 && percentile95 > 2.25)
                 throw new Exception($"{id} building bases disagree with route terrain (95th percentile {percentile95:F2} m).");
 
+            var corridorIntersections = buildings.Where(item =>
+            {
+                var bases = item.FootprintElevationMeters.Where(value => value.HasValue)
+                    .Select(value => value!.Value).ToArray();
+                var minimumBase = bases.Length > 0 ? bases.Min() : item.BaseElevationMeters!.Value;
+                var maximumBase = bases.Length > 0 ? bases.Max() : item.BaseElevationMeters!.Value;
+                var routeElevation = route.GetSampleAt(item.NearestRouteDistanceMeters).ElevationMeters;
+                return routeElevation is { } roadElevation && BuildingCorridorPolicy.IntersectsRideCorridor(
+                    item.DistanceFromRouteMeters, 7, roadElevation, minimumBase, maximumBase, item.HeightMeters);
+            }).ToArray();
+            if (id == "dunedin-rolling-loop" && !corridorIntersections.Any(item =>
+                    item.OsmId is 381857813 or 381857770 && item.NearestRouteDistanceMeters is >= 450 and <= 600))
+                throw new Exception("Rolling City 450–600 m has no verified footprint/road volume clearance for the reported facade obstruction.");
+            Console.WriteLine($"CHECK {id} same-level building/ribbon intersections={corridorIntersections.Length}");
+
             var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
                 resource + "vegetation.json", id);
             var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
@@ -2386,6 +2401,35 @@ var tests = new (string Name, Action Run)[]
         var rider=RiderLaneMath.OffsetPosition(new Vector3(10,3,20),new Vector3(0,0,-1));
         NearVector(rider-new Vector3(0,0,-1)*8+Vector3.UnitY*4,ChaseCameraMath.FollowPosition(rider,new Vector3(0,0,-1)));
         NearVector(rider+new Vector3(0,0,-1)*6+Vector3.UnitY,ChaseCameraMath.LookTarget(rider,new Vector3(0,0,-1)));
+    }),
+    ("camera boom retracts before an obstruction and restores smoothly after clearance", () =>
+    {
+        var anchor = Vector3.Zero;
+        var target = new Vector3(0, 2, 10);
+        var hit = new Vector3(0, 1, 5);
+        var safe = CameraObstructionMath.ClampToHit(anchor, target, hit, .5f);
+        if (safe.Z >= 5 || safe.Z <= 4 || Math.Abs(safe.X) > .001f)
+            throw new Exception($"Camera target was not kept in front of the obstruction: {safe}.");
+        var retracted = CameraObstructionMath.ResolveBoomDistance(10, safe.Length(), .016);
+        if (Math.Abs(retracted - safe.Length()) > .001)
+            throw new Exception("The camera boom must retract immediately to prevent clipping.");
+        var restored = CameraObstructionMath.ResolveBoomDistance(retracted, 10, .1);
+        if (restored <= retracted || restored >= 10)
+            throw new Exception("The camera boom must recover gradually after the obstruction clears.");
+        var throughClearPath = CameraObstructionMath.ClampToHit(anchor, target, null);
+        if (throughClearPath != target)
+            throw new Exception("A clear camera path must retain the authored view distance.");
+    }),
+    ("building footprints are excluded only when mapped building volume intersects the riding corridor", () =>
+    {
+        if (!BuildingCorridorPolicy.IntersectsRideCorridor(1.1, 7, 6, 5, 6, 8))
+            throw new Exception("A same-level footprint inside the 7 m road corridor must be excluded.");
+        if (BuildingCorridorPolicy.IntersectsRideCorridor(3.6, 7, 6, 5, 6, 8))
+            throw new Exception("A building outside the road corridor must remain visible.");
+        if (BuildingCorridorPolicy.IntersectsRideCorridor(1.1, 7, 20, 5, 6, 8))
+            throw new Exception("A valid elevated road crossing above the building must remain visible.");
+        if (BuildingCorridorPolicy.IntersectsRideCorridor(1.1, 7, 6, 20, 21, 8))
+            throw new Exception("A building on a different upper level must remain visible.");
     }),
     ("rider camera inspection views retain original framing and frame full bike", () =>
     {
