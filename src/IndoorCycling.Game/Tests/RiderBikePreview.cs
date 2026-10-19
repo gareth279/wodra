@@ -31,6 +31,14 @@ public partial class RiderBikePreview : Node3D
     private bool _frontCaptured;
     private bool _reviewMatrixRequested;
     private bool _kneeReviewRequested;
+    private bool _bikeReviewRequested;
+    private bool _bikeOnlyCaptured;
+    private bool _riderSideCaptured;
+    private bool _riderFrontCaptured;
+    private bool _motionClipRequested;
+    private string _motionClipView = "chase";
+    private double _motionClipAccumulator;
+    private int _motionClipFrame;
     private RiderCameraView _kneeReviewView = RiderCameraView.CloseRear;
     private int _reviewMatrixIndex;
     private double _reviewMatrixWait;
@@ -45,6 +53,10 @@ public partial class RiderBikePreview : Node3D
             _captureRequested = OS.GetCmdlineUserArgs().Contains("--capture-preview");
             _reviewMatrixRequested = OS.GetCmdlineUserArgs().Contains("--capture-rider-matrix");
             _kneeReviewRequested = OS.GetCmdlineUserArgs().Contains("--capture-knee-review");
+            _bikeReviewRequested = OS.GetCmdlineUserArgs().Contains("--capture-road-bike-review");
+            _motionClipRequested = OS.GetCmdlineUserArgs().Contains("--capture-road-bike-motion");
+            var motionView = OS.GetCmdlineUserArgs().FirstOrDefault(arg => arg.StartsWith("--motion-view="));
+            if (motionView is not null) _motionClipView = motionView.Split('=', 2)[1].ToLowerInvariant();
             var kneeView = OS.GetCmdlineUserArgs().FirstOrDefault(arg => arg.StartsWith("--knee-view="));
             _kneeReviewView = kneeView?.Split('=', 2)[1].ToLowerInvariant() switch
             {
@@ -59,6 +71,8 @@ public partial class RiderBikePreview : Node3D
                 _riders[i] = new CyclistVisual { Name = $"PreviewRider{i + 1}" };
                 _riders[i].Build(i);
                 _riders[i].SetHelmetVisible(_helmetVisible);
+                if (_bikeReviewRequested && i > 0) _riders[i].Visible = false;
+                if (_motionClipRequested && _motionClipView != "chase" && i > 0) _riders[i].Visible = false;
                 if ((_reviewMatrixRequested || _kneeReviewRequested) && i > 0) _riders[i].Visible = false;
                 AddChild(_riders[i]);
             }
@@ -66,7 +80,21 @@ public partial class RiderBikePreview : Node3D
             _camera.SetView(RiderCameraView.GameplayRefined);
             if (_reviewMatrixRequested) _camera.Fov = 32f;
             if (_kneeReviewRequested) _camera.Fov = 26f;
-            AddChild(CreateHud());
+            if (_bikeReviewRequested) _camera.Fov = 24f;
+            if (_motionClipRequested)
+            {
+                _camera.SetView(_motionClipView switch
+                {
+                    "front" => RiderCameraView.FrontThreeQuarter,
+                    "rear" => RiderCameraView.CloseRear,
+                    _ => RiderCameraView.GameplayRefined
+                });
+                _camera.Fov = _motionClipView switch { "chase" => 65f, "front" => 42f, _ => 36f };
+            }
+            var hud = CreateHud();
+            if (_bikeReviewRequested) hud.Visible = false;
+            if (_motionClipRequested) hud.Visible = false;
+            AddChild(hud);
             if (_reviewMatrixRequested)
             {
                 _riders[0].SetReviewCrankPhase(ReviewPhases[0]);
@@ -76,6 +104,12 @@ public partial class RiderBikePreview : Node3D
             {
                 _camera.SetView(_kneeReviewView);
                 GD.Print($"[RiderBikePreview] Continuous knee review: fixed {_kneeReviewView} view; 45/85/120 rpm, coast, restart");
+            }
+            if (_bikeReviewRequested)
+            {
+                _riders[0].SetRiderVisible(false);
+                _camera.SetView(RiderCameraView.Side);
+                GD.Print("[RiderBikePreview] Focused road-bike geometry review: side/front-three-quarter, then fitted rider contacts");
             }
             GD.Print("[RiderBikePreview] Wodra route render active · 3 riders · cadences 55/85/115 rpm · camera cycles");
         }
@@ -91,6 +125,16 @@ public partial class RiderBikePreview : Node3D
         if (_kneeReviewRequested)
         {
             CaptureContinuousKneeReview(delta);
+            return;
+        }
+        if (_bikeReviewRequested)
+        {
+            CaptureRoadBikeReview(delta);
+            return;
+        }
+        if (_motionClipRequested)
+        {
+            CaptureRoadBikeMotion(delta);
             return;
         }
         if (_reviewMatrixRequested)
@@ -140,6 +184,99 @@ public partial class RiderBikePreview : Node3D
             _statsElapsed = _frameTimeSum = 0;
             _frameSamples = 0;
             _slowestFrameMs = 0;
+        }
+    }
+
+    private void CaptureRoadBikeMotion(double delta)
+    {
+        if (_motionClipFrame >= 300) return;
+        _elapsed += delta;
+        _routeDistance = (_routeDistance + Math.Max(0, delta) * 8.5) % _route.LengthMeters;
+        var pose = _route.GetPoseAtDistance(_routeDistance);
+        var forward = ProceduralRoad.ToGodot(pose.Forward);
+        var lanes = _motionClipView == "chase" ? new[] { -1.6f, 0f, 1.6f } : new[] { 0f, 0f, 0f };
+        var cadences = new[] { LeftCadence(_elapsed), 85, 115 };
+        for (var i = 0; i < _riders.Length; i++)
+        {
+            if (_motionClipView != "chase" && i > 0) break;
+            var position = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, lanes[i]);
+            _riders[i].UpdateFromRideState(ProceduralRoad.ToGodot(position), forward,
+                31, _motionClipView == "chase" ? cadences[i] : ClipCadence(_elapsed), 0, false, delta);
+        }
+        if (_motionClipView == "chase")
+        {
+            _buildings.UpdateForRideDistance(_routeDistance);
+            _terrain.UpdateForRideDistance(_routeDistance);
+            _vegetation.UpdateForRideDistance(_routeDistance);
+        }
+        var cameraPosition = ProceduralRoad.ToGodot(pose.Position);
+        _camera.Follow(cameraPosition, forward, delta);
+        _motionClipAccumulator += delta;
+        if (_motionClipAccumulator < 1.0 / 30.0) return;
+        _motionClipAccumulator -= 1.0 / 30.0;
+        var directory = ProjectSettings.GlobalizePath($"res://Tests/previews/RoadBikeMotion/{_motionClipView}");
+        DirAccess.MakeDirRecursiveAbsolute(directory);
+        var file = System.IO.Path.Combine(directory, $"frame{_motionClipFrame:D4}.png");
+        var error = GetViewport().GetTexture().GetImage().SavePng(file);
+        if (error != Error.Ok) GD.PushWarning($"[RiderBikePreview] Motion frame {_motionClipFrame} failed: {error}");
+        _motionClipFrame++;
+        if (_motionClipFrame == 300)
+            GD.Print($"[RiderBikePreview] Captured 10 seconds of 30 fps {_motionClipView} review frames.");
+    }
+
+    private static int ClipCadence(double seconds) => seconds switch
+    {
+        < 3 => 45,
+        < 6 => 85,
+        < 8.5 => 120,
+        < 9.5 => 0,
+        _ => 85
+    };
+
+    private void CaptureRoadBikeReview(double delta)
+    {
+        _elapsed += delta;
+        var pose = _route.GetPoseAtDistance(_routeDistance);
+        var position = ProceduralRoad.ToGodot(pose.Position);
+        var forward = ProceduralRoad.ToGodot(pose.Forward);
+        _riders[0].UpdateFromRideState(position, forward, 0, 0, 0, false, delta);
+        if (_elapsed < 2.2)
+        {
+            _camera.SetView(RiderCameraView.Side);
+            _camera.Follow(position, forward, delta);
+            if (!_bikeOnlyCaptured && _elapsed >= 1.8)
+                _bikeOnlyCaptured = CaptureFrame("RoadBike-Only-Side.png");
+            return;
+        }
+        if (_elapsed < 4.4)
+        {
+            _camera.SetView(RiderCameraView.FrontThreeQuarter);
+            _camera.Fov = 18f;
+            _camera.Follow(position, forward, delta);
+            if (_bikeOnlyCaptured && !_frontCaptured && _elapsed >= 4.0)
+            {
+                _frontCaptured = CaptureFrame("RoadBike-Only-FrontThreeQuarter.png");
+                _riders[0].SetRiderVisible(true);
+                _camera.Fov = 30f;
+            }
+            return;
+        }
+        if (_elapsed < 6.6)
+        {
+            _camera.SetView(RiderCameraView.Side);
+            _camera.Fov = 30f;
+            _camera.Follow(position, forward, delta);
+            if (!_riderSideCaptured && _elapsed >= 6.2)
+                _riderSideCaptured = CaptureFrame("RoadBike-Rider-Side.png");
+            return;
+        }
+        _camera.SetView(RiderCameraView.FrontThreeQuarter);
+        _camera.Fov = 27f;
+        _camera.Follow(position, forward, delta);
+        if (!_riderFrontCaptured && _elapsed >= 8.4)
+        {
+            _riderFrontCaptured = CaptureFrame("RoadBike-Rider-FrontThreeQuarter.png");
+            GD.Print("[RiderBikePreview] Completed bike-only and rider-on-bike side/front review captures.");
         }
     }
 

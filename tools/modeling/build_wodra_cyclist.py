@@ -565,8 +565,8 @@ def add_spokes(name, mat, parent, center_y, center_z, radius=0.285, count=18):
         for spoke in range(count):
             theta = math.tau * (spoke + (0.5 if side_x > 0 else 0.0)) / count
             end = (side_x, center_y + radius * math.sin(theta), center_z + radius * math.cos(theta))
-            start = (side_x, center_y, center_z)
-            tube_vertices, tube_faces = tube_data(start, end, 0.0022, 0.0015, 6)
+            start = (side_x, center_y + 0.045 * math.sin(theta), center_z + 0.045 * math.cos(theta))
+            tube_vertices, tube_faces = tube_data(start, end, 0.0015, 0.0012, 5)
             base = len(vertices)
             vertices.extend(tube_vertices)
             faces.extend(tuple(base + i for i in face) for face in tube_faces)
@@ -621,7 +621,10 @@ def build_model():
     shorts = material("Wodra Bib Shorts · charcoal", (0.035, 0.047, 0.058))
     frame = material("Wodra Frame · deep teal", (0.055, 0.34, 0.39), 0.58)
     metal = material("Wodra Brushed Alloy", (0.34, 0.38, 0.39), 0.48)
+    lever_material = material("Brake Lever Alloy", (0.12, 0.14, 0.15), 0.82)
     rubber = material("Road Tyre", (0.018, 0.022, 0.026), 0.92)
+    rim_carbon = material("Deep Carbon Rim", (0.055, 0.065, 0.07), 0.68)
+    spoke_material = material("Dark Stainless Spokes", (0.035, 0.042, 0.045), 0.9)
     glove = material("Glove", (0.045, 0.052, 0.055))
 
     root = empty("WodraCyclist", None)
@@ -635,8 +638,10 @@ def build_model():
     front_spin = empty("FrontWheelSpin", bike, (0.0, front_y, wheel_z))
     for prefix, pivot in (("Rear", rear_spin), ("Front", front_spin)):
         torus_yz(prefix + "WheelTyre", 0.326, 0.024, rubber, pivot)
-        torus_yz(prefix + "WheelRim", 0.295, 0.011, metal, pivot)
-        add_spokes(prefix + "WheelSpokes", metal, pivot, 0.0, 0.0, 0.286, 14)
+        # 40 mm radial rim section, distinct dark carbon beside the rubber tyre.
+        torus_yz(prefix + "WheelRim", 0.283, 0.020, rim_carbon, pivot)
+        # Nine spokes per flange (18 per wheel), dark and fine enough to recede.
+        add_spokes(prefix + "WheelSpokes", spoke_material, pivot, 0.0, 0.0, 0.267, 9)
         ellipsoid(prefix + "WheelHub", (0, 0, 0), (0.035, 0.045, 0.045), metal, pivot, 6, 10)
 
     # Road frame tubes meet at shared BB, seat, head and hub coordinates.
@@ -656,9 +661,9 @@ def build_model():
             u = normalize(cross(axis, reference))
             v = normalize(cross(axis, u))
             width_scale = {"down tube": 1.85, "top tube": 1.25,
-                           "head tube": 1.30, "fork": 1.45}[name]
+                           "head tube": 1.15, "fork": 1.45}[name]
             depth_scale = {"down tube": .72, "top tube": .78,
-                           "head tube": .88, "fork": .70}[name]
+                           "head tube": .82, "fork": .70}[name]
             sections = ((.0, .82), (.12, 1.0), (.34, 1.08),
                         (.72, 1.0), (.9, .94), (1.0, .82))
             length = distance(a, b)
@@ -688,7 +693,7 @@ def build_model():
     frame_tube("seat tube", bb, saddle_node, 0.031)
     frame_tube("down tube", bb, head_low, 0.034)
     frame_tube("top tube", saddle_node, head_high, 0.027)
-    frame_tube("head tube", head_low, head_high, 0.041)
+    frame_tube("head tube", head_low, head_high, 0.033)
     for side in (-0.045, 0.045):
         frame_tube("chain stay", (side, rear_y, wheel_z), (side, bb_y, bb_z), 0.016)
         frame_tube("seat stay", (side, rear_y, wheel_z), (side, -0.25, 0.88), 0.015)
@@ -705,7 +710,7 @@ def build_model():
     # Compact road saddle, tapered stem and familiar drop bars.
     ellipsoid("Saddle", (0, -0.25, 1.01), (0.12, 0.065, 0.022), shorts, bike, 5, 10)
     # Adult road-bike reach is kept compact enough for a relaxed bent-elbow fit.
-    tube_between("Stem", head_high, (0.0, 0.22, 0.92), 0.021, 0.018, metal, bike)
+    tube_between("Stem", head_high, (0.0, 0.22, 0.92), 0.016, 0.014, metal, bike)
     bar_parts = []
     def bar(a, b, radius=0.012):
         bar_parts.append(tube_data(a, b, radius, radius, 8))
@@ -714,7 +719,11 @@ def build_model():
         bar((side * .25, .22, .92), (side * .25, .30, .91))
         bar((side * .25, .30, .91), (side * .22, .33, .85))
         bar((side * .22, .33, .85), (side * .17, .28, .82))
-        ellipsoid("BrakeHood" + ("L" if side < 0 else "R"), (side * .25, .225, .955), (.047, .06, .055), glove, bike, 5, 9)
+        ellipsoid("BrakeHood" + ("L" if side < 0 else "R"), (side * .25, .205, .955), (.029, .040, .034), glove, bike, 6, 12)
+        # Slim lever blade sits directly below the forward edge of the hood.
+        tube_between("BrakeLever" + ("L" if side < 0 else "R"),
+                     (side * .25, .195, .940), (side * .25, .250, .877),
+                     .008, .006, lever_material, bike, 8)
     vertices, faces = [], []
     for part_vertices, part_faces in bar_parts:
         base = len(vertices)

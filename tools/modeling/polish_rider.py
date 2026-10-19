@@ -299,35 +299,132 @@ def curl_fingers(rig):
 
 
 def refine_brake_hoods():
-    """Replace the oversized contact blobs with compact, smooth road hoods."""
+    """Replace the old oval blobs with compact, tapered road hoods."""
     for side in (-1,1):
         name="BrakeHoodL" if side<0 else "BrakeHoodR"
         obj=bpy.data.objects.get(name)
         if not obj: continue
+        if obj.get("WodraRoadHoodPolished",False): continue
         rubber=obj.data.materials[0] if obj.data.materials else mat("Brake Hood Rubber",(.045,.052,.055))
         old_vertices=list(obj.data.vertices)
         center=Vector(tuple((min(v.co[i] for v in old_vertices)+max(v.co[i] for v in old_vertices))*.5
                             for i in range(3)))
-        rx,ry,rz=.034,.046,.050
-        rings=((-.95,.52),(-.60,.88),(0,1.0),(.52,.78),(.92,.46))
-        seg=16; verts=[]; faces=[]
-        for zfactor,rfactor in rings:
+        center.y-=.020
+        center.z+=.015
+        # Cross-sections run along the bar; the rear palm shelf tapers into a
+        # compact forward nose instead of reading as a rounded knob.
+        sections=((-0.038,.019,.024),(-.022,.027,.032),(.002,.029,.032),
+                  (.023,.024,.027),(.039,.016,.020))
+        seg=12; verts=[]; faces=[]
+        for y_offset,rx,rz in sections:
             for i in range(seg):
                 a=math.tau*i/seg
-                verts.append((center.x+rx*rfactor*math.cos(a),
-                              center.y+ry*rfactor*math.sin(a),
-                              center.z+rz*zfactor))
-        for j in range(len(rings)-1):
+                verts.append((center.x+rx*math.cos(a),center.y+y_offset,
+                              center.z+rz*math.sin(a)))
+        for j in range(len(sections)-1):
             for i in range(seg):
                 a=j*seg+i; b=j*seg+(i+1)%seg
                 faces.append((a,b,b+seg,a+seg))
         faces.extend((tuple(range(seg-1,-1,-1)),
-                      tuple((len(rings)-1)*seg+i for i in range(seg))))
+                      tuple((len(sections)-1)*seg+i for i in range(seg))))
         mesh=bpy.data.meshes.new(name+"RoadHoodMesh")
         mesh.from_pydata(verts,[],faces); mesh.materials.append(rubber)
         for polygon in mesh.polygons: polygon.use_smooth=True
         old=obj.data; obj.data=mesh
         if old.users==0: bpy.data.meshes.remove(old)
+        obj["WodraRoadHoodPolished"]=True
+
+
+def refine_road_bike():
+    """Refine the preserved frame's wheel profile, spokes, and road controls."""
+    bike=bpy.data.objects.get("BicycleModel")
+    if bike is None: raise RuntimeError("Preserved bicycle model is missing")
+    rim_material=bpy.data.materials.get("Deep Carbon Rim") or mat("Deep Carbon Rim",(.055,.065,.07))
+    spoke_material=bpy.data.materials.get("Dark Stainless Spokes") or mat("Dark Stainless Spokes",(.035,.042,.045),.9)
+    frame=bpy.data.objects.get("BikeFrame")
+    if frame is None or len(frame.data.vertices)!=480:
+        raise RuntimeError("Preserved BikeFrame does not match the documented five aero-tube mesh")
+    head_low=Vector((0,.32,.72)); head_high=Vector((0,.37,.84))
+    sections=(0.0,.12,.34,.72,.9,1.0)
+    first_head_vertex=164
+    if not frame.get("WodraHeadTubePolished",False):
+        for row,along in enumerate(sections):
+            center=head_low.lerp(head_high,along)
+            for vertex in frame.data.vertices[first_head_vertex+row*12:first_head_vertex+(row+1)*12]:
+                offset=vertex.co-center
+                vertex.co=center+Vector((offset.x*.72,offset.y*.76,offset.z*.76))
+        frame["WodraHeadTubePolished"]=True
+        frame.data.update()
+    stem=bpy.data.objects.get("Stem")
+    if stem is not None and not stem.get("WodraStemPolished",False):
+        center=sum((v.co for v in stem.data.vertices),Vector())/len(stem.data.vertices)
+        for vertex in stem.data.vertices: vertex.co=center+(vertex.co-center)*.76
+        stem["WodraStemPolished"]=True
+        stem.data.update()
+    for side in ("Front","Rear"):
+        rim=bpy.data.objects.get(side+"WheelRim")
+        if rim is None: raise RuntimeError(f"Missing {side} wheel rim")
+        # The bead seat stays on the existing tyre radius; grow the visible
+        # annular carbon section inward to a 40 mm radial profile.
+        if not rim.get("WodraDeepCarbonRim",False):
+            for vertex in rim.data.vertices:
+                radius=math.hypot(vertex.co.y,vertex.co.z)
+                new_radius=.283+(radius-.295)*(.020/.011)
+                factor=new_radius/radius if radius else 1.0
+                vertex.co.x*=1.45
+                vertex.co.y*=factor; vertex.co.z*=factor
+            rim["WodraDeepCarbonRim"]=True
+        rim.data.materials.clear(); rim.data.materials.append(rim_material)
+        spokes=bpy.data.objects.get(side+"WheelSpokes")
+        if spokes is None: raise RuntimeError(f"Missing {side} wheel spokes")
+        vertices=[]; faces=[]
+        for flange_x in (-.012,.012):
+            for spoke in range(9):
+                angle=math.tau*(spoke+(.5 if flange_x>0 else 0.0))/9
+                start=(flange_x, .045*math.sin(angle), .045*math.cos(angle))
+                end=(flange_x, .267*math.sin(angle), .267*math.cos(angle))
+                part_vertices,part_faces=thin_tube_mesh(start,end,.0015,.0012,5)
+                offset=len(vertices); vertices.extend(part_vertices)
+                faces.extend(tuple(offset+i for i in face) for face in part_faces)
+        spokes.data.clear_geometry(); spokes.data.from_pydata(vertices,[],faces)
+        spokes.data.materials.clear(); spokes.data.materials.append(spoke_material)
+        for polygon in spokes.data.polygons: polygon.use_smooth=True
+        spokes.data.update()
+    # Discrete lever blades join each compact hood to the drop bar.
+    lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
+    for side in (-1,1):
+        name="BrakeLeverL" if side<0 else "BrakeLeverR"
+        old=bpy.data.objects.get(name)
+        if old: bpy.data.objects.remove(old,do_unlink=True)
+        start=Vector((side*.25,.195,.940)); end=Vector((side*.25,.250,.877))
+        direction=end-start
+        bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.006,depth=direction.length,
+            location=(start+end)*.5)
+        lever=bpy.context.object; lever.name=name
+        lever.rotation_mode='QUATERNION'; lever.rotation_quaternion=direction.to_track_quat('Z','Y')
+        lever.parent=bike
+        lever.data.materials.append(lever_material)
+        lever.matrix_parent_inverse=bike.matrix_world.inverted()
+    pedal_material=bpy.data.materials.get("Wodra Contact Carbon") or mat("Wodra Contact Carbon",(.045,.052,.055),.82)
+    for name in ("LeftPedal","RightPedal"):
+        pedal=bpy.data.objects.get(name)
+        if pedal is None: raise RuntimeError(f"Missing contact anchor geometry {name}")
+        pedal.scale=(.05,.095,.015)
+        pedal.data.materials.clear(); pedal.data.materials.append(pedal_material)
+
+
+def thin_tube_mesh(start,end,r0,r1,sides):
+    a,b=Vector(start),Vector(end); axis=(b-a).normalized()
+    ref=Vector((0,0,1)) if abs(axis.z)<.9 else Vector((1,0,0))
+    u=axis.cross(ref).normalized(); v=axis.cross(u).normalized()
+    verts=[]; faces=[]
+    for center,radius in ((a,r0),(b,r1)):
+        for i in range(sides):
+            angle=math.tau*i/sides
+            verts.append(tuple(center+radius*(u*math.cos(angle)+v*math.sin(angle))))
+    for i in range(sides):
+        faces.append((i,(i+1)%sides,(i+1)%sides+sides,i+sides))
+    return verts,faces
 
 
 def extend_shoe_uppers(rig):
@@ -516,6 +613,7 @@ def main():
     make_helmet(rig)
     round_clothing_edges()
     refine_brake_hoods()
+    refine_road_bike()
     extend_shoe_uppers(rig)
     curl_fingers(rig)
     if not skip_previews:

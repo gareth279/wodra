@@ -243,3 +243,56 @@ visual inspection. The MPFB rig has 171 bones and the human mesh has 291 weight
 groups. The side render shows saddle contact, forward torso lean, bent elbows,
 hood contact, and feet on the pedals without bone stretching. The current asset
 is a prototype; owner visual review remains required before merging or releasing.
+
+### Carbon road-bike polish (PR #89 review)
+
+The focused road-bike finish is authored in `source/WodraCyclist.blend`; it
+preserves the existing weighted rider, helmet accessory, and `PedalCycle`
+action. `polish_rider.py` can be rerun on that saved blend without rebuilding
+the human or changing the wheelbase, bottom bracket, saddle, crank length, or
+pedal anchors. The head tube/stem junction is slimmed, platform pedals are
+darkened and thinned at their existing anchors, and the hoods use a tapered
+grip profile with separate brake blades. The rim profile is 40 mm radial depth,
+dark carbon, with 18 fine dark spokes per wheel. The source generator has
+matching frame, cockpit, and wheel dimensions.
+
+Re-export a candidate and preserve an editable blend checkpoint before
+promoting it to the runtime asset:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+& $blender --background tools/modeling/source/WodraCyclist.blend `
+  --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-road-bike-review.glb `
+  tools/modeling/checkpoints/WodraCyclist-road-bike-review.blend `
+  tools/modeling/previews/road-bike-review --skip-previews
+```
+
+`inspect_wodra_glb.py` checks the normalized crank/pedal animation templates;
+the complete thighs, shins, shoes, and knees are skinned parts of `Human`, not
+separate runtime-scaled meshes. Run `check_baked_cycle.py` against the saved
+blend to check the three-revolution seam and knee motion.
+
+For bike-only and rider-on-bike side/front-three-quarter stills under the
+Godot route lighting:
+
+```powershell
+$env:APPDATA = Join-Path (Get-Location).Path 'tools/modeling/previews/godot-user-data'
+& 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe' `
+  --path src/IndoorCycling.Game --quit-after 640 `
+  res://Tests/RiderBikePreview.tscn -- --capture-road-bike-review
+```
+
+Capture chase, fixed front, or fixed rear motion with
+`--capture-road-bike-motion --motion-view=chase|front|rear`. Godot writes the
+PNG sequence to `src/IndoorCycling.Game/Tests/previews/RoadBikeMotion/<view>/`.
+Encode the first 300 frames as a 10-second 30 fps MP4 using the installed
+FFmpeg package:
+
+```powershell
+$ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe'
+& $ffmpeg -y -framerate 30 -start_number 0 `
+  -i src/IndoorCycling.Game/Tests/previews/RoadBikeMotion/front/frame%04d.png `
+  -frames:v 300 -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p `
+  tools/modeling/previews/road-bike-front-10s.mp4
+```

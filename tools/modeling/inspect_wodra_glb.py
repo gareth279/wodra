@@ -13,9 +13,10 @@ import sys
 from pathlib import Path
 
 RUNTIME_SCALED_TARGETS = {
-    "LeftCrank", "RightCrank", "LeftPedal", "RightPedal", "LeftThigh", "RightThigh",
-    "LeftShin", "RightShin", "LeftCyclingShoe", "RightCyclingShoe", "LeftShoeSole",
-    "RightShoeSole", "LeftAnkle", "RightAnkle", "LeftKnee", "RightKnee",
+    # The GLB contains the complete skinned human mesh. Only these four
+    # procedural control meshes use normalized unit geometry and are scaled
+    # by CyclistVisual at runtime; limb surfaces are weighted in Human.
+    "LeftCrank", "RightCrank", "LeftPedal", "RightPedal",
 }
 
 

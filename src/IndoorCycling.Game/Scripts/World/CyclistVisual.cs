@@ -114,6 +114,11 @@ public partial class CyclistVisual : Node3D
     public bool UsesImportedModel { get; private set; }
 
     public double WheelAngleRadians => _wheelAngle;
+
+    public void SetRiderVisible(bool visible)
+    {
+        if (_riderModel is not null) _riderModel.Visible = visible;
+    }
     public double CrankAngleRadians => _crankAngle;
     public double LeanDegrees => _leanRadians * 180 / Math.PI;
     public double CurrentGradientPercent { get; private set; }
