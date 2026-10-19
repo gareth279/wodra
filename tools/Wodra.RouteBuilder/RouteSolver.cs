@@ -303,6 +303,12 @@ public static class RouteSolver
         }
         if (sourceCentreline.Count < 2) throw new InvalidOperationException("Route produced fewer than two OSM centreline points.");
 
+        var sourceOsmNodeCount = sourceCentreline.Count;
+        var turnaroundResult = config.TurnaroundWidthMeters is { } turnaroundWidth
+            ? TurnaroundGeometry.Repair(sourceCentreline, turnaroundWidth, config.TurnaroundWidthSource)
+            : new TurnaroundGeometryResult(sourceCentreline, []);
+        sourceCentreline = turnaroundResult.Points.ToList();
+
         var rawDistance = 0d;
         var maximumSourceGap = 0d;
         for (var i = 1; i < sourceCentreline.Count; i++)
@@ -325,8 +331,9 @@ public static class RouteSolver
             point.Latitude, point.Longitude)).ToArray();
         var maximumDeviationOverall = legs.Count == 0 ? 0 : legs.Max(leg => leg.MaximumCorridorDeviationMeters);
         return new RouteBuildResult(centreline, points, snaps, legs, rawDistance,
-            maximumOutputGap, maximumSourceGap, maximumDeviationOverall, sourceCentreline.Count,
-            centreline.Count - sourceCentreline.Count, errors.Count == 0, warnings, errors);
+            maximumOutputGap, maximumSourceGap, maximumDeviationOverall, sourceOsmNodeCount,
+            centreline.Count - sourceOsmNodeCount, errors.Count == 0, warnings, errors,
+            Turnarounds: turnaroundResult.Turnarounds);
     }
 
     private static (int[] CandidateIndexes, LegChoice[] Choices) SelectContinuousRoute(RoadGraph graph,

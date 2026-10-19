@@ -4,6 +4,17 @@ using System.Numerics;
 /// <summary>Pure camera boom clipping helpers. Distances are route-world metres.</summary>
 public static class CameraObstructionMath
 {
+    public static float ResolveSafeDistance(float requestedDistance, float safeMotionFraction,
+        float clearanceMeters)
+    {
+        if (!float.IsFinite(requestedDistance) || requestedDistance < 0
+            || !float.IsFinite(safeMotionFraction) || safeMotionFraction is < 0 or > 1
+            || !float.IsFinite(clearanceMeters) || clearanceMeters < 0)
+            throw new ArgumentOutOfRangeException(nameof(requestedDistance));
+        return Math.Clamp(requestedDistance * safeMotionFraction - clearanceMeters,
+            0, requestedDistance);
+    }
+
     public static Vector3 ClampToHit(Vector3 anchor, Vector3 target, Vector3? hitPosition,
         float clearanceMeters = 0.3f)
     {

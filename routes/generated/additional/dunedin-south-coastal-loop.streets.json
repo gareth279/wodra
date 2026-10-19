@@ -2,8 +2,10 @@
   "id": "dunedin-south-coastal-loop",
   "routeName": "Dunedin South Dunedin Coastal Loop",
   "source": "OpenStreetMap",
-  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
+  "sourcePbfFilename": "new-zealand-261018.osm.pbf",
+  "elevationSamplerVersion": 2,
+  "elevationSamplingMethod": "finest-valid LINZ DEM raster; bilinear pixel-centred samples",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
   "sampleSpacingMeters": 15,
   "statistics": {
     "waysConsidered": 345,
@@ -23,13 +25,11 @@
       "lanes": 10
     },
     "namedStreetCount": 94,
-    "totalLengthMeters": 39698.451973402676,
-    "suppressedOverlapMeters": 9693.610056226718,
-    "runtimeSampleCount": 4257,
+    "totalLengthMeters": 39720.112287508084,
+    "suppressedOverlapMeters": 9693.575660640838,
+    "runtimeSampleCount": 4262,
     "elevationSkippedStreetCount": 0,
-    "elevationSkippedPointCount": 0,
-    "elevationSamplerVersion": 2,
-    "elevationSamplingMethod": "finest-valid LINZ DEM raster; bilinear pixel-centred samples"
+    "elevationSkippedPointCount": 0
   },
   "streets": [
     {
@@ -51,8 +51,8 @@
           "elevationMeters": 1.1486043697674113
         }
       ],
-      "distanceFromRouteMeters": 140.7255883826804,
-      "nearestRouteDistanceMeters": 1032.982674968815,
+      "distanceFromRouteMeters": 140.72558836200045,
+      "nearestRouteDistanceMeters": 1032.9815050464988,
       "onewayDirection": 1
     },
     {
@@ -210,7 +210,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 732.3499025533484,
+      "nearestRouteDistanceMeters": 732.3487794093032,
       "onewayDirection": 1
     },
     {
@@ -388,7 +388,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 905.86416752508,
+      "nearestRouteDistanceMeters": 905.8630439788167,
       "onewayDirection": 1
     },
     {
@@ -435,8 +435,8 @@
           "elevationMeters": 0.7598295160871826
         }
       ],
-      "distanceFromRouteMeters": 108.14499632251537,
-      "nearestRouteDistanceMeters": 1025.5400673732925,
+      "distanceFromRouteMeters": 108.1448833164443,
+      "nearestRouteDistanceMeters": 1025.5389435164739,
       "onewayDirection": 1
     },
     {
@@ -544,7 +544,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 977.8800147798534,
+      "nearestRouteDistanceMeters": 977.8788910571719,
       "onewayDirection": 1
     },
     {
@@ -637,7 +637,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 711.0292726985919,
+      "nearestRouteDistanceMeters": 711.0281496015284,
       "onewayDirection": 1
     },
     {
@@ -660,7 +660,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1119.8168997758876,
+      "nearestRouteDistanceMeters": 1119.815294689031,
       "onewayDirection": 1
     },
     {
@@ -983,7 +983,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1119.8168997758876,
+      "nearestRouteDistanceMeters": 1119.815294689031,
       "onewayDirection": 1
     },
     {
@@ -1066,7 +1066,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 799.3021716885455,
+      "nearestRouteDistanceMeters": 799.3010484114209,
       "onewayDirection": 1
     },
     {
@@ -1104,7 +1104,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 799.3021716885455,
+      "nearestRouteDistanceMeters": 799.3010484114209,
       "onewayDirection": 1
     },
     {
@@ -1176,8 +1176,8 @@
           "elevationMeters": 1.482831339282342
         }
       ],
-      "distanceFromRouteMeters": 44.7051745727937,
-      "nearestRouteDistanceMeters": 4795.509620523075,
+      "distanceFromRouteMeters": 44.705153298118645,
+      "nearestRouteDistanceMeters": 4795.494155957647,
       "onewayDirection": 1
     },
     {
@@ -1240,7 +1240,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 347.9635768126267,
+      "nearestRouteDistanceMeters": 347.9624546639107,
       "onewayDirection": 1
     },
     {
@@ -1348,7 +1348,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 573.9307912173816,
+      "nearestRouteDistanceMeters": 573.9296685282363,
       "onewayDirection": 1
     },
     {
@@ -1415,8 +1415,8 @@
           "elevationMeters": 4.421482238172539
         }
       ],
-      "distanceFromRouteMeters": 100.74428501447203,
-      "nearestRouteDistanceMeters": 2176.9904411317707,
+      "distanceFromRouteMeters": 100.74407225574348,
+      "nearestRouteDistanceMeters": 2176.9852137346174,
       "onewayDirection": 1
     },
     {
@@ -1488,8 +1488,8 @@
           "elevationMeters": 1.2620998775305856
         }
       ],
-      "distanceFromRouteMeters": 7.506307848460342,
-      "nearestRouteDistanceMeters": 4178.5496371787585,
+      "distanceFromRouteMeters": 7.506304574657324,
+      "nearestRouteDistanceMeters": 4178.537175904234,
       "onewayDirection": 1
     },
     {
@@ -1662,7 +1662,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1617.7320837916145,
+      "nearestRouteDistanceMeters": 1617.7291081088383,
       "onewayDirection": 1
     },
     {
@@ -1693,8 +1693,8 @@
           "elevationMeters": 38.57379849996593
         }
       ],
-      "distanceFromRouteMeters": 131.58582234016887,
-      "nearestRouteDistanceMeters": 1808.7411431038724,
+      "distanceFromRouteMeters": 131.58582156997127,
+      "nearestRouteDistanceMeters": 1808.7372306321915,
       "onewayDirection": 1
     },
     {
@@ -1782,7 +1782,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2097.595260914971,
+      "nearestRouteDistanceMeters": 2097.5898172765424,
       "onewayDirection": 1
     },
     {
@@ -1854,8 +1854,8 @@
           "elevationMeters": 0.8828909827802869
         }
       ],
-      "distanceFromRouteMeters": 59.587741692775296,
-      "nearestRouteDistanceMeters": 4189.784723072426,
+      "distanceFromRouteMeters": 59.587715704162406,
+      "nearestRouteDistanceMeters": 4189.772059502381,
       "onewayDirection": 1
     },
     {
@@ -1972,8 +1972,8 @@
           "elevationMeters": 4.955023193154468
         }
       ],
-      "distanceFromRouteMeters": 7.045035076559271,
-      "nearestRouteDistanceMeters": 4080.429903530292,
+      "distanceFromRouteMeters": 7.0450332966644185,
+      "nearestRouteDistanceMeters": 4080.4179342101465,
       "onewayDirection": 1
     },
     {
@@ -2076,7 +2076,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2525.1686620762525,
+      "nearestRouteDistanceMeters": 2525.161711698586,
       "onewayDirection": 1
     },
     {
@@ -2113,8 +2113,8 @@
           "elevationMeters": 23.39224759206529
         }
       ],
-      "distanceFromRouteMeters": 99.8943859982543,
-      "nearestRouteDistanceMeters": 3213.5587140921766,
+      "distanceFromRouteMeters": 99.89408173545573,
+      "nearestRouteDistanceMeters": 3213.5500049448506,
       "onewayDirection": 1
     },
     {
@@ -2221,8 +2221,8 @@
           "elevationMeters": 29.519688482363872
         }
       ],
-      "distanceFromRouteMeters": 99.8943859982543,
-      "nearestRouteDistanceMeters": 3213.5587140921766,
+      "distanceFromRouteMeters": 99.89408173545573,
+      "nearestRouteDistanceMeters": 3213.5500049448506,
       "onewayDirection": 1
     },
     {
@@ -2244,8 +2244,8 @@
           "elevationMeters": 0.8731159586729793
         }
       ],
-      "distanceFromRouteMeters": 142.07144838810345,
-      "nearestRouteDistanceMeters": 1352.406352363553,
+      "distanceFromRouteMeters": 142.07112349384641,
+      "nearestRouteDistanceMeters": 1352.4032793795352,
       "onewayDirection": 1
     },
     {
@@ -2307,8 +2307,8 @@
           "elevationMeters": 0.5950164331898457
         }
       ],
-      "distanceFromRouteMeters": 140.27535243264327,
-      "nearestRouteDistanceMeters": 1290.5546394478338,
+      "distanceFromRouteMeters": 140.27521429098354,
+      "nearestRouteDistanceMeters": 1290.5524800593587,
       "onewayDirection": 1
     },
     {
@@ -2380,8 +2380,8 @@
           "elevationMeters": 2.1505568318226844
         }
       ],
-      "distanceFromRouteMeters": 15.883661857594566,
-      "nearestRouteDistanceMeters": 4600.8810477593815,
+      "distanceFromRouteMeters": 15.883654047720169,
+      "nearestRouteDistanceMeters": 4600.86658421002,
       "onewayDirection": 1
     },
     {
@@ -2518,8 +2518,8 @@
           "elevationMeters": 0.7933131005351306
         }
       ],
-      "distanceFromRouteMeters": 13.1837401197674,
-      "nearestRouteDistanceMeters": 4408.834919854031,
+      "distanceFromRouteMeters": 13.183734184905594,
+      "nearestRouteDistanceMeters": 4408.821358032095,
       "onewayDirection": 1
     },
     {
@@ -2602,7 +2602,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -2720,7 +2720,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3114.8419437255698,
+      "nearestRouteDistanceMeters": 3114.833947930633,
       "onewayDirection": 1
     },
     {
@@ -2752,8 +2752,8 @@
           "elevationMeters": 23.233649392235083
         }
       ],
-      "distanceFromRouteMeters": 112.58151492870799,
-      "nearestRouteDistanceMeters": 3395.7412642349277,
+      "distanceFromRouteMeters": 112.5812744421852,
+      "nearestRouteDistanceMeters": 3395.7319535015768,
       "onewayDirection": 1
     },
     {
@@ -2780,8 +2780,8 @@
           "elevationMeters": 35.68781116960089
         }
       ],
-      "distanceFromRouteMeters": 133.63671674400797,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "distanceFromRouteMeters": 133.63606947707876,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -2839,7 +2839,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -3027,7 +3027,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2563.654892309454,
+      "nearestRouteDistanceMeters": 2563.6477448535657,
       "onewayDirection": 1
     },
     {
@@ -3074,8 +3074,8 @@
           "elevationMeters": 29.519688482363872
         }
       ],
-      "distanceFromRouteMeters": 104.58351187255339,
-      "nearestRouteDistanceMeters": 3129.6233833498263,
+      "distanceFromRouteMeters": 104.58319332740527,
+      "nearestRouteDistanceMeters": 3129.614827021806,
       "onewayDirection": 1
     },
     {
@@ -3153,7 +3153,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 7174.858209704947,
+      "nearestRouteDistanceMeters": 7180.042267298166,
       "onewayDirection": 1
     },
     {
@@ -3221,7 +3221,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1158.820271135984,
+      "nearestRouteDistanceMeters": 1158.8184761771226,
       "onewayDirection": 1
     },
     {
@@ -3494,7 +3494,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -3572,7 +3572,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 573.9307912173816,
+      "nearestRouteDistanceMeters": 573.9296685282363,
       "onewayDirection": 1
     },
     {
@@ -3599,8 +3599,8 @@
           "elevationMeters": 2.1442325945561245
         }
       ],
-      "distanceFromRouteMeters": 7.365599194602505,
-      "nearestRouteDistanceMeters": 4849.091480113031,
+      "distanceFromRouteMeters": 7.3655956893990915,
+      "nearestRouteDistanceMeters": 4849.075876506156,
       "onewayDirection": 1
     },
     {
@@ -3622,8 +3622,8 @@
           "elevationMeters": 2.1455341806667296
         }
       ],
-      "distanceFromRouteMeters": 7.365599194602505,
-      "nearestRouteDistanceMeters": 4849.091480113031,
+      "distanceFromRouteMeters": 7.3655956893990915,
+      "nearestRouteDistanceMeters": 4849.075876506156,
       "onewayDirection": 1
     },
     {
@@ -3740,8 +3740,8 @@
           "elevationMeters": 0.6209606097392676
         }
       ],
-      "distanceFromRouteMeters": 21.636612146360402,
-      "nearestRouteDistanceMeters": 4846.446247168329,
+      "distanceFromRouteMeters": 21.636601849747166,
+      "nearestRouteDistanceMeters": 4846.430613358537,
       "onewayDirection": 1
     },
     {
@@ -3763,7 +3763,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6451.287158947641,
+      "nearestRouteDistanceMeters": 6456.474614786233,
       "onewayDirection": 1
     },
     {
@@ -3840,7 +3840,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6451.287158947641,
+      "nearestRouteDistanceMeters": 6456.474614786233,
       "onewayDirection": 1
     },
     {
@@ -3938,7 +3938,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 188.62451346016104,
+      "nearestRouteDistanceMeters": 188.62362272576019,
       "onewayDirection": 1
     },
     {
@@ -4026,7 +4026,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6903.96268446383,
+      "nearestRouteDistanceMeters": 6909.148016228884,
       "onewayDirection": 1
     },
     {
@@ -4114,7 +4114,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6690.672013800032,
+      "nearestRouteDistanceMeters": 6695.858350559009,
       "onewayDirection": 1
     },
     {
@@ -4202,7 +4202,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 85.56777595199492,
+      "nearestRouteDistanceMeters": 85.56737065813387,
       "onewayDirection": 1
     },
     {
@@ -4290,7 +4290,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6992.182492883463,
+      "nearestRouteDistanceMeters": 6997.3674079910315,
       "onewayDirection": 1
     },
     {
@@ -4378,7 +4378,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 7096.479096285487,
+      "nearestRouteDistanceMeters": 7101.6635149577305,
       "onewayDirection": 1
     },
     {
@@ -4535,8 +4535,8 @@
           "elevationMeters": 1.1007072642921978
         }
       ],
-      "distanceFromRouteMeters": 57.61263829063128,
-      "nearestRouteDistanceMeters": 6811.04516123917,
+      "distanceFromRouteMeters": 57.61261258828089,
+      "nearestRouteDistanceMeters": 6816.230764418629,
       "onewayDirection": 1
     },
     {
@@ -4713,8 +4713,8 @@
           "elevationMeters": 1.0319926513439925
         }
       ],
-      "distanceFromRouteMeters": 62.12676243144872,
-      "nearestRouteDistanceMeters": 7110.415802222406,
+      "distanceFromRouteMeters": 62.12673365661081,
+      "nearestRouteDistanceMeters": 7115.600154379951,
       "onewayDirection": 1
     },
     {
@@ -4746,8 +4746,8 @@
           "elevationMeters": 0.9367409997260732
         }
       ],
-      "distanceFromRouteMeters": 139.63069081585783,
-      "nearestRouteDistanceMeters": 7128.273930496427,
+      "distanceFromRouteMeters": 139.63062501015233,
+      "nearestRouteDistanceMeters": 7133.457784460461,
       "onewayDirection": 1
     },
     {
@@ -4859,8 +4859,8 @@
           "elevationMeters": 0.9195547310470433
         }
       ],
-      "distanceFromRouteMeters": 23.78341818959759,
-      "nearestRouteDistanceMeters": 6803.7328926354,
+      "distanceFromRouteMeters": 23.78340757925651,
+      "nearestRouteDistanceMeters": 6808.9186282105275,
       "onewayDirection": 1
     },
     {
@@ -4887,8 +4887,8 @@
           "elevationMeters": 2.2785247494142284
         }
       ],
-      "distanceFromRouteMeters": 133.9877577647189,
-      "nearestRouteDistanceMeters": 3959.441964325247,
+      "distanceFromRouteMeters": 133.98774620526,
+      "nearestRouteDistanceMeters": 3959.4304247228215,
       "onewayDirection": 1
     },
     {
@@ -5065,8 +5065,8 @@
           "elevationMeters": 2.1505568318226844
         }
       ],
-      "distanceFromRouteMeters": 7.506307848460342,
-      "nearestRouteDistanceMeters": 4178.5496371787585,
+      "distanceFromRouteMeters": 7.506304574657324,
+      "nearestRouteDistanceMeters": 4178.537175904234,
       "onewayDirection": 1
     },
     {
@@ -5153,7 +5153,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1253.3024195829291,
+      "nearestRouteDistanceMeters": 1253.3004357913335,
       "onewayDirection": 1
     },
     {
@@ -5180,8 +5180,8 @@
           "elevationMeters": 3.256510267119807
         }
       ],
-      "distanceFromRouteMeters": 6.41767630916634,
-      "nearestRouteDistanceMeters": 4103.7743387882765,
+      "distanceFromRouteMeters": 6.417675196507165,
+      "nearestRouteDistanceMeters": 4103.762258246905,
       "onewayDirection": 1
     },
     {
@@ -5218,8 +5218,8 @@
           "elevationMeters": 4.251657625979829
         }
       ],
-      "distanceFromRouteMeters": 6.41767630916634,
-      "nearestRouteDistanceMeters": 4103.7743387882765,
+      "distanceFromRouteMeters": 6.417675196507165,
+      "nearestRouteDistanceMeters": 4103.762258246905,
       "onewayDirection": 1
     },
     {
@@ -5286,7 +5286,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3399.7979242987362,
+      "nearestRouteDistanceMeters": 3399.789172589277,
       "onewayDirection": 1
     },
     {
@@ -5369,7 +5369,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 7079.748315671282,
+      "nearestRouteDistanceMeters": 7084.932814528314,
       "onewayDirection": 1
     },
     {
@@ -5441,12 +5441,12 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2003.352820095107,
+      "nearestRouteDistanceMeters": 2003.3478609795568,
       "onewayDirection": 1
     },
     {
       "osmId": 150886894,
-      "name": "Lawyer's Head Road",
+      "name": "Lawyer\u0027s Head Road",
       "highway": "residential",
       "oneway": false,
       "widthMeters": 6,
@@ -5529,7 +5529,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3998.172020245689,
+      "nearestRouteDistanceMeters": 3998.1604765056563,
       "onewayDirection": 1
     },
     {
@@ -5556,8 +5556,8 @@
           "elevationMeters": 0.8487260196787201
         }
       ],
-      "distanceFromRouteMeters": 138.7307966774199,
-      "nearestRouteDistanceMeters": 4257.723818187901,
+      "distanceFromRouteMeters": 138.73073721176198,
+      "nearestRouteDistanceMeters": 4257.710610115383,
       "onewayDirection": 1
     },
     {
@@ -5653,8 +5653,8 @@
           "elevationMeters": 3.3192297522744143
         }
       ],
-      "distanceFromRouteMeters": 16.395514582995748,
-      "nearestRouteDistanceMeters": 4667.921990049603,
+      "distanceFromRouteMeters": 16.395506796770924,
+      "nearestRouteDistanceMeters": 4667.907303994753,
       "onewayDirection": 1
     },
     {
@@ -5690,8 +5690,8 @@
           "elevationMeters": 3.1976523703208226
         }
       ],
-      "distanceFromRouteMeters": 69.61840887629533,
-      "nearestRouteDistanceMeters": 4583.758591688751,
+      "distanceFromRouteMeters": 69.61837328361575,
+      "nearestRouteDistanceMeters": 4583.744255973701,
       "onewayDirection": 1
     },
     {
@@ -5883,7 +5883,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4626.469534738495,
+      "nearestRouteDistanceMeters": 4626.454997346205,
       "onewayDirection": 1
     },
     {
@@ -5919,8 +5919,8 @@
           "elevationMeters": 2.9605783430637787
         }
       ],
-      "distanceFromRouteMeters": 21.88264424267,
-      "nearestRouteDistanceMeters": 4559.802808776243,
+      "distanceFromRouteMeters": 21.88263444900335,
+      "nearestRouteDistanceMeters": 4559.788638661263,
       "onewayDirection": 1
     },
     {
@@ -6018,7 +6018,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5213.742103416187,
+      "nearestRouteDistanceMeters": 5213.725511831861,
       "onewayDirection": 1
     },
     {
@@ -6080,7 +6080,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2821.0396311088375,
+      "nearestRouteDistanceMeters": 2821.032100690996,
       "onewayDirection": 1
     },
     {
@@ -6243,7 +6243,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 572.6181208174643,
+      "nearestRouteDistanceMeters": 572.6169981341907,
       "onewayDirection": 1
     },
     {
@@ -6381,7 +6381,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 413.2936724635787,
+      "nearestRouteDistanceMeters": 413.2925501686817,
       "onewayDirection": 1
     },
     {
@@ -6422,8 +6422,8 @@
           "elevationMeters": 2.893927262560514
         }
       ],
-      "distanceFromRouteMeters": 82.53932347073399,
-      "nearestRouteDistanceMeters": 4543.186879049845,
+      "distanceFromRouteMeters": 82.53928652992323,
+      "nearestRouteDistanceMeters": 4543.172963038755,
       "onewayDirection": 1
     },
     {
@@ -6509,8 +6509,8 @@
           "elevationMeters": 2.455853418951738
         }
       ],
-      "distanceFromRouteMeters": 21.86961272492527,
-      "nearestRouteDistanceMeters": 4530.274780496995,
+      "distanceFromRouteMeters": 21.869602937090946,
+      "nearestRouteDistanceMeters": 4530.2607491784875,
       "onewayDirection": 1
     },
     {
@@ -6612,7 +6612,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4121.266042538023,
+      "nearestRouteDistanceMeters": 4121.253886880351,
       "onewayDirection": 1
     },
     {
@@ -6673,8 +6673,8 @@
           "elevationMeters": 28.24724673651531
         }
       ],
-      "distanceFromRouteMeters": 141.9996790566386,
-      "nearestRouteDistanceMeters": 2692.5545900134557,
+      "distanceFromRouteMeters": 141.99902804765304,
+      "nearestRouteDistanceMeters": 2692.5467241184606,
       "onewayDirection": 1
     },
     {
@@ -6701,8 +6701,8 @@
           "elevationMeters": 0.8987559897842854
         }
       ],
-      "distanceFromRouteMeters": 140.7255883826804,
-      "nearestRouteDistanceMeters": 1032.982674968815,
+      "distanceFromRouteMeters": 140.72558836200045,
+      "nearestRouteDistanceMeters": 1032.9815050464988,
       "onewayDirection": 1
     },
     {
@@ -6755,7 +6755,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1421.5333773581476,
+      "nearestRouteDistanceMeters": 1421.530811668584,
       "onewayDirection": 1
     },
     {
@@ -6853,7 +6853,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2308.4086991199256,
+      "nearestRouteDistanceMeters": 2308.4026524287156,
       "onewayDirection": 1
     },
     {
@@ -6921,7 +6921,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2347.9464317602674,
+      "nearestRouteDistanceMeters": 2347.9401873867014,
       "onewayDirection": 1
     },
     {
@@ -6943,8 +6943,8 @@
           "elevationMeters": 5.310301472340924
         }
       ],
-      "distanceFromRouteMeters": 98.3724657330037,
-      "nearestRouteDistanceMeters": 2348.4841441409676,
+      "distanceFromRouteMeters": 98.3724519845951,
+      "nearestRouteDistanceMeters": 2348.47773244982,
       "onewayDirection": 1
     },
     {
@@ -7056,8 +7056,8 @@
           "elevationMeters": 5.248483113061129
         }
       ],
-      "distanceFromRouteMeters": 98.17402014589675,
-      "nearestRouteDistanceMeters": 2257.781024605565,
+      "distanceFromRouteMeters": 98.17373398053277,
+      "nearestRouteDistanceMeters": 2257.7745958304586,
       "onewayDirection": 1
     },
     {
@@ -7088,8 +7088,8 @@
           "elevationMeters": 8.856504977085674
         }
       ],
-      "distanceFromRouteMeters": 15.726445739145143,
-      "nearestRouteDistanceMeters": 5312.539218439766,
+      "distanceFromRouteMeters": 15.726445574194575,
+      "nearestRouteDistanceMeters": 5312.522173364531,
       "onewayDirection": 1
     },
     {
@@ -7145,8 +7145,8 @@
           "elevationMeters": 2.724478261583402
         }
       ],
-      "distanceFromRouteMeters": 4.07274377036688,
-      "nearestRouteDistanceMeters": 5196.125840779029,
+      "distanceFromRouteMeters": 4.072728543584421,
+      "nearestRouteDistanceMeters": 5196.109305424636,
       "onewayDirection": 1
     },
     {
@@ -7212,8 +7212,8 @@
           "elevationMeters": 2.7172171226603843
         }
       ],
-      "distanceFromRouteMeters": 79.18653095776405,
-      "nearestRouteDistanceMeters": 5152.869872216544,
+      "distanceFromRouteMeters": 79.18623660933766,
+      "nearestRouteDistanceMeters": 5152.85374524305,
       "onewayDirection": 1
     },
     {
@@ -7254,8 +7254,8 @@
           "elevationMeters": 3.620985180264131
         }
       ],
-      "distanceFromRouteMeters": 77.34767353286178,
-      "nearestRouteDistanceMeters": 5156.6418674416145,
+      "distanceFromRouteMeters": 77.34738601974915,
+      "nearestRouteDistanceMeters": 5156.625726580336,
       "onewayDirection": 1
     },
     {
@@ -7311,8 +7311,8 @@
           "elevationMeters": 2.7023931272106694
         }
       ],
-      "distanceFromRouteMeters": 14.094120703210494,
-      "nearestRouteDistanceMeters": 5124.34227534569,
+      "distanceFromRouteMeters": 14.094068313211814,
+      "nearestRouteDistanceMeters": 5124.325888853519,
       "onewayDirection": 1
     },
     {
@@ -7423,8 +7423,8 @@
           "elevationMeters": 2.6872608912306046
         }
       ],
-      "distanceFromRouteMeters": 63.58412912136983,
-      "nearestRouteDistanceMeters": 5152.5295798339785,
+      "distanceFromRouteMeters": 63.583892769453264,
+      "nearestRouteDistanceMeters": 5152.513381348999,
       "onewayDirection": 1
     },
     {
@@ -7450,8 +7450,8 @@
           "elevationMeters": 2.823451254268468
         }
       ],
-      "distanceFromRouteMeters": 30.93088145342109,
-      "nearestRouteDistanceMeters": 5136.912234356731,
+      "distanceFromRouteMeters": 30.930766478611915,
+      "nearestRouteDistanceMeters": 5136.895907556983,
       "onewayDirection": 1
     },
     {
@@ -7562,8 +7562,8 @@
           "elevationMeters": 2.910158473912597
         }
       ],
-      "distanceFromRouteMeters": 27.028272597845376,
-      "nearestRouteDistanceMeters": 5171.281170274949,
+      "distanceFromRouteMeters": 27.028172129629326,
+      "nearestRouteDistanceMeters": 5171.2647762435745,
       "onewayDirection": 1
     },
     {
@@ -7589,8 +7589,8 @@
           "elevationMeters": 2.6774493400752157
         }
       ],
-      "distanceFromRouteMeters": 52.28898619924582,
-      "nearestRouteDistanceMeters": 5141.3752837805305,
+      "distanceFromRouteMeters": 52.2887918331001,
+      "nearestRouteDistanceMeters": 5141.359049147989,
       "onewayDirection": 1
     },
     {
@@ -7631,8 +7631,8 @@
           "elevationMeters": 2.945342952155563
         }
       ],
-      "distanceFromRouteMeters": 117.30327355520554,
-      "nearestRouteDistanceMeters": 5145.216056452052,
+      "distanceFromRouteMeters": 117.30283752102717,
+      "nearestRouteDistanceMeters": 5145.20011633376,
       "onewayDirection": 1
     },
     {
@@ -7678,8 +7678,8 @@
           "elevationMeters": 2.950041422897813
         }
       ],
-      "distanceFromRouteMeters": 147.33035832732278,
-      "nearestRouteDistanceMeters": 5129.679401363947,
+      "distanceFromRouteMeters": 147.3298106778855,
+      "nearestRouteDistanceMeters": 5129.66362206,
       "onewayDirection": 1
     },
     {
@@ -7816,8 +7816,8 @@
           "elevationMeters": 2.866099450181206
         }
       ],
-      "distanceFromRouteMeters": 121.44118480313081,
-      "nearestRouteDistanceMeters": 5083.113447571083,
+      "distanceFromRouteMeters": 121.44073783724362,
+      "nearestRouteDistanceMeters": 5083.097621238819,
       "onewayDirection": 1
     },
     {
@@ -7863,8 +7863,8 @@
           "elevationMeters": 2.866099450181206
         }
       ],
-      "distanceFromRouteMeters": 117.0157167842968,
-      "nearestRouteDistanceMeters": 5092.9720148285205,
+      "distanceFromRouteMeters": 117.0152861064032,
+      "nearestRouteDistanceMeters": 6362.989259360558,
       "onewayDirection": 1
     },
     {
@@ -7950,8 +7950,8 @@
           "elevationMeters": 2.8897848774037787
         }
       ],
-      "distanceFromRouteMeters": 135.82714911698488,
-      "nearestRouteDistanceMeters": 123.77283467523755,
+      "distanceFromRouteMeters": 135.82709318402715,
+      "nearestRouteDistanceMeters": 123.7718689522817,
       "onewayDirection": 1
     },
     {
@@ -8067,8 +8067,8 @@
           "elevationMeters": 2.8986091494054476
         }
       ],
-      "distanceFromRouteMeters": 141.0558277966365,
-      "nearestRouteDistanceMeters": 6353.852242214703,
+      "distanceFromRouteMeters": 141.05530863879628,
+      "nearestRouteDistanceMeters": 5096.906215042924,
       "onewayDirection": 1
     },
     {
@@ -8109,8 +8109,8 @@
           "elevationMeters": 2.8287580590580905
         }
       ],
-      "distanceFromRouteMeters": 25.005969370775826,
-      "nearestRouteDistanceMeters": 7075.751796047029,
+      "distanceFromRouteMeters": 25.00596100848183,
+      "nearestRouteDistanceMeters": 7080.936377608235,
       "onewayDirection": 1
     },
     {
@@ -8152,7 +8152,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 7449.6709091843,
+      "nearestRouteDistanceMeters": 7454.85379350631,
       "onewayDirection": 1
     },
     {
@@ -8233,8 +8233,8 @@
           "elevationMeters": 7.252941071269099
         }
       ],
-      "distanceFromRouteMeters": 98.36173046276451,
-      "nearestRouteDistanceMeters": 7477.181619652071,
+      "distanceFromRouteMeters": 95.79118951066296,
+      "nearestRouteDistanceMeters": 7485.98722267855,
       "onewayDirection": 1
     },
     {
@@ -8244,6 +8244,16 @@
       "widthMeters": 2,
       "widthSource": "class",
       "points": [
+        {
+          "latitude": -45.909919800000004,
+          "longitude": 170.4959278,
+          "elevationMeters": 17.47748149413851
+        },
+        {
+          "latitude": -45.909965,
+          "longitude": 170.49594760000002,
+          "elevationMeters": 17.472457039367526
+        },
         {
           "latitude": -45.909973300000004,
           "longitude": 170.495977,
@@ -8263,10 +8273,15 @@
           "latitude": -45.9100185,
           "longitude": 170.4960804,
           "elevationMeters": 15.560303302243199
+        },
+        {
+          "latitude": -45.9100891,
+          "longitude": 170.49614490000002,
+          "elevationMeters": 13.639746653936673
         }
       ],
-      "distanceFromRouteMeters": 148.15584186107435,
-      "nearestRouteDistanceMeters": 7477.181619652071,
+      "distanceFromRouteMeters": 145.91004850839656,
+      "nearestRouteDistanceMeters": 7485.383395170644,
       "onewayDirection": 1
     },
     {
@@ -8302,8 +8317,8 @@
           "elevationMeters": 8.098717631959406
         }
       ],
-      "distanceFromRouteMeters": 53.3377411531318,
-      "nearestRouteDistanceMeters": 7242.563395431865,
+      "distanceFromRouteMeters": 53.337694263648416,
+      "nearestRouteDistanceMeters": 7247.747370593905,
       "onewayDirection": 1
     },
     {
@@ -8369,8 +8384,8 @@
           "elevationMeters": 3.8907099444167237
         }
       ],
-      "distanceFromRouteMeters": 64.14315180918624,
-      "nearestRouteDistanceMeters": 4142.90622640128,
+      "distanceFromRouteMeters": 64.14314884152293,
+      "nearestRouteDistanceMeters": 4142.894024094126,
       "onewayDirection": 1
     },
     {
@@ -8401,8 +8416,8 @@
           "elevationMeters": 3.8042892416949914
         }
       ],
-      "distanceFromRouteMeters": 100.59527576222945,
-      "nearestRouteDistanceMeters": 4121.266042538023,
+      "distanceFromRouteMeters": 100.59525898065493,
+      "nearestRouteDistanceMeters": 4121.253886880351,
       "onewayDirection": 1
     },
     {
@@ -8448,8 +8463,8 @@
           "elevationMeters": 3.1054640397407494
         }
       ],
-      "distanceFromRouteMeters": 112.66867628118355,
-      "nearestRouteDistanceMeters": 4194.4905330159945,
+      "distanceFromRouteMeters": 112.66862714183824,
+      "nearestRouteDistanceMeters": 4194.478341208114,
       "onewayDirection": 1
     },
     {
@@ -8505,8 +8520,8 @@
           "elevationMeters": 5.664182281199898
         }
       ],
-      "distanceFromRouteMeters": 8.061490557340768,
-      "nearestRouteDistanceMeters": 4009.5918029688,
+      "distanceFromRouteMeters": 8.061490450672107,
+      "nearestRouteDistanceMeters": 4009.5802051079604,
       "onewayDirection": 1
     },
     {
@@ -8543,7 +8558,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4063.31977521634,
+      "nearestRouteDistanceMeters": 4063.3079053509655,
       "onewayDirection": 1
     },
     {
@@ -8585,7 +8600,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4102.358963175537,
+      "nearestRouteDistanceMeters": 4102.346901598704,
       "onewayDirection": 1
     },
     {
@@ -8687,7 +8702,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4494.4813328983255,
+      "nearestRouteDistanceMeters": 4494.467406959397,
       "onewayDirection": 1
     },
     {
@@ -8768,8 +8783,8 @@
           "elevationMeters": 4.776736766414578
         }
       ],
-      "distanceFromRouteMeters": 22.124301990297816,
-      "nearestRouteDistanceMeters": 3947.1238976390414,
+      "distanceFromRouteMeters": 22.12430008157896,
+      "nearestRouteDistanceMeters": 3947.112626755681,
       "onewayDirection": 1
     },
     {
@@ -8815,8 +8830,8 @@
           "elevationMeters": 4.16380145229146
         }
       ],
-      "distanceFromRouteMeters": 7.13500482746611,
-      "nearestRouteDistanceMeters": 3909.1512722894136,
+      "distanceFromRouteMeters": 7.135003834638233,
+      "nearestRouteDistanceMeters": 3909.1401520713503,
       "onewayDirection": 1
     },
     {
@@ -8867,8 +8882,8 @@
           "elevationMeters": 5.31778917027865
         }
       ],
-      "distanceFromRouteMeters": 89.10348053857757,
-      "nearestRouteDistanceMeters": 3861.8900763816096,
+      "distanceFromRouteMeters": 89.10347457631548,
+      "nearestRouteDistanceMeters": 3861.879311467841,
       "onewayDirection": 1
     },
     {
@@ -8915,7 +8930,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5322.3627954271315,
+      "nearestRouteDistanceMeters": 5322.345692567868,
       "onewayDirection": 1
     },
     {
@@ -8966,8 +8981,8 @@
           "elevationMeters": 16.02469923003165
         }
       ],
-      "distanceFromRouteMeters": 59.130591208926305,
-      "nearestRouteDistanceMeters": 3709.17005417335,
+      "distanceFromRouteMeters": 59.13054120846055,
+      "nearestRouteDistanceMeters": 3709.1601013574327,
       "onewayDirection": 1
     },
     {
@@ -9023,8 +9038,8 @@
           "elevationMeters": 9.917290692250438
         }
       ],
-      "distanceFromRouteMeters": 33.227321743332496,
-      "nearestRouteDistanceMeters": 3697.3758655641373,
+      "distanceFromRouteMeters": 33.22729533720112,
+      "nearestRouteDistanceMeters": 3697.365861913001,
       "onewayDirection": 1
     },
     {
@@ -9060,8 +9075,8 @@
           "elevationMeters": 9.030506367884712
         }
       ],
-      "distanceFromRouteMeters": 133.296617406104,
-      "nearestRouteDistanceMeters": 5677.507354560685,
+      "distanceFromRouteMeters": 132.91573787096397,
+      "nearestRouteDistanceMeters": 5730.198405247503,
       "onewayDirection": 1
     },
     {
@@ -9117,8 +9132,8 @@
           "elevationMeters": 26.043317127383553
         }
       ],
-      "distanceFromRouteMeters": 40.76223518228389,
-      "nearestRouteDistanceMeters": 3431.7014266615924,
+      "distanceFromRouteMeters": 40.76210492037503,
+      "nearestRouteDistanceMeters": 3431.692630848132,
       "onewayDirection": 1
     },
     {
@@ -9266,7 +9281,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2299.0625716063514,
+      "nearestRouteDistanceMeters": 2299.0565568268476,
       "onewayDirection": 1
     },
     {
@@ -9388,7 +9403,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2122.815821106905,
+      "nearestRouteDistanceMeters": 2122.81024929174,
       "onewayDirection": 1
     },
     {
@@ -9424,8 +9439,8 @@
           "elevationMeters": 4.505733505322401
         }
       ],
-      "distanceFromRouteMeters": 48.060893641212296,
-      "nearestRouteDistanceMeters": 4667.400441192982,
+      "distanceFromRouteMeters": 48.060870817108615,
+      "nearestRouteDistanceMeters": 4667.3858519342675,
       "onewayDirection": 1
     },
     {
@@ -9496,8 +9511,8 @@
           "elevationMeters": 2.9472652412403977
         }
       ],
-      "distanceFromRouteMeters": 77.35076196723367,
-      "nearestRouteDistanceMeters": 4678.945248957551,
+      "distanceFromRouteMeters": 77.35072523338043,
+      "nearestRouteDistanceMeters": 4678.930693012908,
       "onewayDirection": 1
     },
     {
@@ -9599,8 +9614,8 @@
           "elevationMeters": 3.267368621016014
         }
       ],
-      "distanceFromRouteMeters": 11.882583505156484,
-      "nearestRouteDistanceMeters": 3884.3930898400963,
+      "distanceFromRouteMeters": 11.882582710046384,
+      "nearestRouteDistanceMeters": 3884.3820927731563,
       "onewayDirection": 1
     },
     {
@@ -9697,8 +9712,8 @@
           "elevationMeters": 3.3444504561620905
         }
       ],
-      "distanceFromRouteMeters": 73.05211020228171,
-      "nearestRouteDistanceMeters": 1502.4805345515852,
+      "distanceFromRouteMeters": 73.05173446943257,
+      "nearestRouteDistanceMeters": 1502.4776222978492,
       "onewayDirection": 1
     },
     {
@@ -9854,8 +9869,8 @@
           "elevationMeters": 5.22535002765718
         }
       ],
-      "distanceFromRouteMeters": 5.671717986045571,
-      "nearestRouteDistanceMeters": 3489.7430749566083,
+      "distanceFromRouteMeters": 5.671717357751101,
+      "nearestRouteDistanceMeters": 3489.7339756496804,
       "onewayDirection": 1
     },
     {
@@ -9886,8 +9901,8 @@
           "elevationMeters": 21.211694830020203
         }
       ],
-      "distanceFromRouteMeters": 5.671717986045571,
-      "nearestRouteDistanceMeters": 3489.7430749566083,
+      "distanceFromRouteMeters": 5.671717357751101,
+      "nearestRouteDistanceMeters": 3489.7339756496804,
       "onewayDirection": 1
     },
     {
@@ -9960,7 +9975,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1517.1274749035392,
+      "nearestRouteDistanceMeters": 1517.1245368723216,
       "onewayDirection": 1
     },
     {
@@ -10043,7 +10058,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -10125,7 +10140,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3670.9379186993965,
+      "nearestRouteDistanceMeters": 3670.9279153143993,
       "onewayDirection": 1
     },
     {
@@ -10166,8 +10181,8 @@
           "elevationMeters": 10.642006102633774
         }
       ],
-      "distanceFromRouteMeters": 123.87545545062754,
-      "nearestRouteDistanceMeters": 2573.6326022748453,
+      "distanceFromRouteMeters": 123.87538314519402,
+      "nearestRouteDistanceMeters": 2573.6254045046635,
       "onewayDirection": 1
     },
     {
@@ -10228,8 +10243,8 @@
           "elevationMeters": 22.911636872424758
         }
       ],
-      "distanceFromRouteMeters": 22.35163011979609,
-      "nearestRouteDistanceMeters": 1385.9067418959335,
+      "distanceFromRouteMeters": 22.351585277281604,
+      "nearestRouteDistanceMeters": 1385.9044100810995,
       "onewayDirection": 1
     },
     {
@@ -10266,8 +10281,8 @@
           "elevationMeters": 1.8324981139994112
         }
       ],
-      "distanceFromRouteMeters": 7.365599194602505,
-      "nearestRouteDistanceMeters": 4849.091480113031,
+      "distanceFromRouteMeters": 7.3655956893990915,
+      "nearestRouteDistanceMeters": 4849.075876506156,
       "onewayDirection": 1
     },
     {
@@ -10329,8 +10344,8 @@
           "elevationMeters": 1.191310004906203
         }
       ],
-      "distanceFromRouteMeters": 70.43265608613456,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "distanceFromRouteMeters": 70.43247645612327,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -10357,8 +10372,8 @@
           "elevationMeters": 1.2136467973661464
         }
       ],
-      "distanceFromRouteMeters": 69.36324643597735,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "distanceFromRouteMeters": 69.36301614679635,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -10405,8 +10420,8 @@
           "elevationMeters": 1.662519773298522
         }
       ],
-      "distanceFromRouteMeters": 142.00921801561316,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "distanceFromRouteMeters": 142.00919617180276,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -10508,8 +10523,8 @@
           "elevationMeters": 0.6511743428416288
         }
       ],
-      "distanceFromRouteMeters": 57.06203262929002,
-      "nearestRouteDistanceMeters": 4794.912823453882,
+      "distanceFromRouteMeters": 57.06200547412927,
+      "nearestRouteDistanceMeters": 4794.897324821514,
       "onewayDirection": 1
     },
     {
@@ -10536,8 +10551,8 @@
           "elevationMeters": 2.368109061210163
         }
       ],
-      "distanceFromRouteMeters": 127.33764915955507,
-      "nearestRouteDistanceMeters": 2299.0625716063514,
+      "distanceFromRouteMeters": 127.33754743168768,
+      "nearestRouteDistanceMeters": 2299.0565568268476,
       "onewayDirection": 1
     },
     {
@@ -10559,8 +10574,8 @@
           "elevationMeters": 2.404578121496754
         }
       ],
-      "distanceFromRouteMeters": 133.68503188060183,
-      "nearestRouteDistanceMeters": 2299.0625716063514,
+      "distanceFromRouteMeters": 133.68490756526245,
+      "nearestRouteDistanceMeters": 2299.0565568268476,
       "onewayDirection": 1
     },
     {
@@ -10671,8 +10686,8 @@
           "elevationMeters": 4.9442723702100615
         }
       ],
-      "distanceFromRouteMeters": 7.102473683126109,
-      "nearestRouteDistanceMeters": 2303.8049718401817,
+      "distanceFromRouteMeters": 7.102470183737232,
+      "nearestRouteDistanceMeters": 2303.798913442798,
       "onewayDirection": 1
     },
     {
@@ -10728,8 +10743,8 @@
           "elevationMeters": 2.8601235052597396
         }
       ],
-      "distanceFromRouteMeters": 7.102473683126109,
-      "nearestRouteDistanceMeters": 2303.8049718401817,
+      "distanceFromRouteMeters": 7.102470183737232,
+      "nearestRouteDistanceMeters": 2303.798913442798,
       "onewayDirection": 1
     },
     {
@@ -10765,8 +10780,8 @@
           "elevationMeters": 2.21052382680785
         }
       ],
-      "distanceFromRouteMeters": 7.102473683126109,
-      "nearestRouteDistanceMeters": 2303.8049718401817,
+      "distanceFromRouteMeters": 7.102470183737232,
+      "nearestRouteDistanceMeters": 2303.798913442798,
       "onewayDirection": 1
     },
     {
@@ -10862,8 +10877,8 @@
           "elevationMeters": 9.518373523732024
         }
       ],
-      "distanceFromRouteMeters": 7.102473683126109,
-      "nearestRouteDistanceMeters": 2303.8049718401817,
+      "distanceFromRouteMeters": 7.102470183737232,
+      "nearestRouteDistanceMeters": 2303.798913442798,
       "onewayDirection": 1
     },
     {
@@ -10944,8 +10959,8 @@
           "elevationMeters": 2.5839553329615335
         }
       ],
-      "distanceFromRouteMeters": 5.61796757856614,
-      "nearestRouteDistanceMeters": 2458.9501400291174,
+      "distanceFromRouteMeters": 5.617948295811333,
+      "nearestRouteDistanceMeters": 2458.9433682712715,
       "onewayDirection": 1
     },
     {
@@ -11126,8 +11141,8 @@
           "elevationMeters": 23.79170726479767
         }
       ],
-      "distanceFromRouteMeters": 5.973923643781956,
-      "nearestRouteDistanceMeters": 2523.009407047546,
+      "distanceFromRouteMeters": 5.973920666041063,
+      "nearestRouteDistanceMeters": 2523.002448520741,
       "onewayDirection": 1
     },
     {
@@ -11303,8 +11318,8 @@
           "elevationMeters": 3.6804631579103515
         }
       ],
-      "distanceFromRouteMeters": 4.809282505766658,
-      "nearestRouteDistanceMeters": 2743.5035431465035,
+      "distanceFromRouteMeters": 4.809260488059696,
+      "nearestRouteDistanceMeters": 2743.4960896294265,
       "onewayDirection": 1
     },
     {
@@ -11380,8 +11395,8 @@
           "elevationMeters": 8.014414704951552
         }
       ],
-      "distanceFromRouteMeters": 4.809282505766658,
-      "nearestRouteDistanceMeters": 2743.5035431465035,
+      "distanceFromRouteMeters": 4.809260488059696,
+      "nearestRouteDistanceMeters": 2743.4960896294265,
       "onewayDirection": 1
     },
     {
@@ -11432,8 +11447,8 @@
           "elevationMeters": 22.139291982359076
         }
       ],
-      "distanceFromRouteMeters": 4.809282505766658,
-      "nearestRouteDistanceMeters": 2743.5035431465035,
+      "distanceFromRouteMeters": 4.809260488059696,
+      "nearestRouteDistanceMeters": 2743.4960896294265,
       "onewayDirection": 1
     },
     {
@@ -11544,8 +11559,8 @@
           "elevationMeters": 37.0967191719905
         }
       ],
-      "distanceFromRouteMeters": 4.809282505766658,
-      "nearestRouteDistanceMeters": 2743.5035431465035,
+      "distanceFromRouteMeters": 4.809260488059696,
+      "nearestRouteDistanceMeters": 2743.4960896294265,
       "onewayDirection": 1
     },
     {
@@ -11636,8 +11651,8 @@
           "elevationMeters": 24.08706836308052
         }
       ],
-      "distanceFromRouteMeters": 5.141290198621021,
-      "nearestRouteDistanceMeters": 3027.146961884555,
+      "distanceFromRouteMeters": 5.141264681675031,
+      "nearestRouteDistanceMeters": 3027.13904716158,
       "onewayDirection": 1
     },
     {
@@ -11763,8 +11778,8 @@
           "elevationMeters": 23.012607703402132
         }
       ],
-      "distanceFromRouteMeters": 5.141290198621021,
-      "nearestRouteDistanceMeters": 3027.146961884555,
+      "distanceFromRouteMeters": 5.141264681675031,
+      "nearestRouteDistanceMeters": 3027.13904716158,
       "onewayDirection": 1
     },
     {
@@ -11855,8 +11870,8 @@
           "elevationMeters": 21.7738688110214
         }
       ],
-      "distanceFromRouteMeters": 8.151126386928542,
-      "nearestRouteDistanceMeters": 3120.8489398536826,
+      "distanceFromRouteMeters": 8.151101559862521,
+      "nearestRouteDistanceMeters": 3120.8409726870873,
       "onewayDirection": 1
     },
     {
@@ -12032,8 +12047,8 @@
           "elevationMeters": 21.733725730440348
         }
       ],
-      "distanceFromRouteMeters": 8.151126386928542,
-      "nearestRouteDistanceMeters": 3120.8489398536826,
+      "distanceFromRouteMeters": 8.151101559862521,
+      "nearestRouteDistanceMeters": 3120.8409726870873,
       "onewayDirection": 1
     },
     {
@@ -12099,8 +12114,8 @@
           "elevationMeters": 25.371684636756562
         }
       ],
-      "distanceFromRouteMeters": 6.523965197258215,
-      "nearestRouteDistanceMeters": 3237.6309444925755,
+      "distanceFromRouteMeters": 6.52395126134953,
+      "nearestRouteDistanceMeters": 3237.6226483260566,
       "onewayDirection": 1
     },
     {
@@ -12176,8 +12191,8 @@
           "elevationMeters": 10.346079268642422
         }
       ],
-      "distanceFromRouteMeters": 4.987852045387619,
-      "nearestRouteDistanceMeters": 3109.6052695272406,
+      "distanceFromRouteMeters": 4.987836400001948,
+      "nearestRouteDistanceMeters": 3109.59725920715,
       "onewayDirection": 1
     },
     {
@@ -12273,8 +12288,8 @@
           "elevationMeters": 17.429213888048253
         }
       ],
-      "distanceFromRouteMeters": 4.987852045387619,
-      "nearestRouteDistanceMeters": 3109.6052695272406,
+      "distanceFromRouteMeters": 4.987836400001948,
+      "nearestRouteDistanceMeters": 3109.59725920715,
       "onewayDirection": 1
     },
     {
@@ -12475,8 +12490,8 @@
           "elevationMeters": 22.27101287880107
         }
       ],
-      "distanceFromRouteMeters": 4.987852045387619,
-      "nearestRouteDistanceMeters": 3109.6052695272406,
+      "distanceFromRouteMeters": 4.987836400001948,
+      "nearestRouteDistanceMeters": 3109.59725920715,
       "onewayDirection": 1
     },
     {
@@ -12547,8 +12562,8 @@
           "elevationMeters": 23.1782695407947
         }
       ],
-      "distanceFromRouteMeters": 4.987852045387619,
-      "nearestRouteDistanceMeters": 3109.6052695272406,
+      "distanceFromRouteMeters": 4.987836400001948,
+      "nearestRouteDistanceMeters": 3109.59725920715,
       "onewayDirection": 1
     },
     {
@@ -12664,8 +12679,8 @@
           "elevationMeters": 33.85258753809135
         }
       ],
-      "distanceFromRouteMeters": 7.802730006798012,
-      "nearestRouteDistanceMeters": 3419.0665031021617,
+      "distanceFromRouteMeters": 7.802691541589877,
+      "nearestRouteDistanceMeters": 3419.057724251638,
       "onewayDirection": 1
     },
     {
@@ -12716,8 +12731,8 @@
           "elevationMeters": 34.12853456162373
         }
       ],
-      "distanceFromRouteMeters": 93.792271234909,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "distanceFromRouteMeters": 93.79194245966858,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -12743,8 +12758,8 @@
           "elevationMeters": 23.198849130442547
         }
       ],
-      "distanceFromRouteMeters": 93.792271234909,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "distanceFromRouteMeters": 93.79194245966858,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -12765,8 +12780,8 @@
           "elevationMeters": 35.85691242218179
         }
       ],
-      "distanceFromRouteMeters": 145.06292573770304,
-      "nearestRouteDistanceMeters": 3227.758943996048,
+      "distanceFromRouteMeters": 145.06222112956834,
+      "nearestRouteDistanceMeters": 3227.7507106792327,
       "onewayDirection": 1
     },
     {
@@ -12877,8 +12892,8 @@
           "elevationMeters": 33.53067996581929
         }
       ],
-      "distanceFromRouteMeters": 109.35422408656176,
-      "nearestRouteDistanceMeters": 3133.2410060847133,
+      "distanceFromRouteMeters": 109.3538910105645,
+      "nearestRouteDistanceMeters": 3133.232417995939,
       "onewayDirection": 1
     },
     {
@@ -12944,8 +12959,8 @@
           "elevationMeters": 3.4332352385323497
         }
       ],
-      "distanceFromRouteMeters": 5.821619480895665,
-      "nearestRouteDistanceMeters": 2455.4082468146476,
+      "distanceFromRouteMeters": 5.821594558838411,
+      "nearestRouteDistanceMeters": 2455.401507383926,
       "onewayDirection": 1
     },
     {
@@ -13101,8 +13116,8 @@
           "elevationMeters": 5.566454409004914
         }
       ],
-      "distanceFromRouteMeters": 5.821619480895665,
-      "nearestRouteDistanceMeters": 2455.4082468146476,
+      "distanceFromRouteMeters": 5.821594558838411,
+      "nearestRouteDistanceMeters": 2455.401507383926,
       "onewayDirection": 1
     },
     {
@@ -13183,8 +13198,8 @@
           "elevationMeters": 3.027690819924964
         }
       ],
-      "distanceFromRouteMeters": 5.821619480895665,
-      "nearestRouteDistanceMeters": 2455.4082468146476,
+      "distanceFromRouteMeters": 5.821594558838411,
+      "nearestRouteDistanceMeters": 2455.401507383926,
       "onewayDirection": 1
     },
     {
@@ -13210,8 +13225,8 @@
           "elevationMeters": 2.4561879881549045
         }
       ],
-      "distanceFromRouteMeters": 5.821619480895665,
-      "nearestRouteDistanceMeters": 2455.4082468146476,
+      "distanceFromRouteMeters": 5.821594558838411,
+      "nearestRouteDistanceMeters": 2455.401507383926,
       "onewayDirection": 1
     },
     {
@@ -13243,8 +13258,8 @@
           "elevationMeters": 2.2611305788171903
         }
       ],
-      "distanceFromRouteMeters": 133.9877577647189,
-      "nearestRouteDistanceMeters": 3959.441964325247,
+      "distanceFromRouteMeters": 133.98774620526,
+      "nearestRouteDistanceMeters": 3959.4304247228215,
       "onewayDirection": 1
     },
     {
@@ -13266,7 +13281,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3895.741393413761,
+      "nearestRouteDistanceMeters": 3895.7303525290563,
       "onewayDirection": 1
     },
     {
@@ -13293,7 +13308,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3895.741393413761,
+      "nearestRouteDistanceMeters": 3895.7303525290563,
       "onewayDirection": 1
     },
     {
@@ -13315,7 +13330,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3895.741393413761,
+      "nearestRouteDistanceMeters": 3895.7303525290563,
       "onewayDirection": 1
     },
     {
@@ -13338,7 +13353,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 3776.1487741345086,
+      "nearestRouteDistanceMeters": 3776.1382919419057,
       "onewayDirection": 1
     },
     {
@@ -13399,8 +13414,8 @@
           "elevationMeters": 5.5955432962682385
         }
       ],
-      "distanceFromRouteMeters": 8.891909198797558,
-      "nearestRouteDistanceMeters": 2187.5655254243734,
+      "distanceFromRouteMeters": 8.891889829162169,
+      "nearestRouteDistanceMeters": 2187.5598009081023,
       "onewayDirection": 1
     },
     {
@@ -13676,8 +13691,8 @@
           "elevationMeters": 7.666972999400887
         }
       ],
-      "distanceFromRouteMeters": 8.201774816634389,
-      "nearestRouteDistanceMeters": 1590.3778848618583,
+      "distanceFromRouteMeters": 8.201733239655807,
+      "nearestRouteDistanceMeters": 1590.3749355123043,
       "onewayDirection": 1
     },
     {
@@ -13883,8 +13898,8 @@
           "elevationMeters": 4.4506640766395416
         }
       ],
-      "distanceFromRouteMeters": 5.36146779386021,
-      "nearestRouteDistanceMeters": 1511.310105391521,
+      "distanceFromRouteMeters": 5.361440268553029,
+      "nearestRouteDistanceMeters": 1511.307170466939,
       "onewayDirection": 1
     },
     {
@@ -13940,8 +13955,8 @@
           "elevationMeters": 5.1398987848548785
         }
       ],
-      "distanceFromRouteMeters": 4.705445090466177,
-      "nearestRouteDistanceMeters": 2186.537176578435,
+      "distanceFromRouteMeters": 4.705434840388909,
+      "nearestRouteDistanceMeters": 2186.5313859346074,
       "onewayDirection": 1
     },
     {
@@ -13987,8 +14002,8 @@
           "elevationMeters": 3.015730101459633
         }
       ],
-      "distanceFromRouteMeters": 8.012162743884474,
-      "nearestRouteDistanceMeters": 2296.1368609713163,
+      "distanceFromRouteMeters": 8.012124894287178,
+      "nearestRouteDistanceMeters": 2296.130875567,
       "onewayDirection": 1
     },
     {
@@ -14015,8 +14030,8 @@
           "elevationMeters": 2.952930609734492
         }
       ],
-      "distanceFromRouteMeters": 59.94092858182192,
-      "nearestRouteDistanceMeters": 2296.950480475161,
+      "distanceFromRouteMeters": 59.94074452642426,
+      "nearestRouteDistanceMeters": 2296.9444720109454,
       "onewayDirection": 1
     },
     {
@@ -14147,8 +14162,8 @@
           "elevationMeters": 16.65150951646306
         }
       ],
-      "distanceFromRouteMeters": 8.386233690861655,
-      "nearestRouteDistanceMeters": 1248.7850315955986,
+      "distanceFromRouteMeters": 8.386222537601746,
+      "nearestRouteDistanceMeters": 1248.7830272560136,
       "onewayDirection": 1
     },
     {
@@ -14169,8 +14184,8 @@
           "elevationMeters": 4.853718797303849
         }
       ],
-      "distanceFromRouteMeters": 6.537240456757912,
-      "nearestRouteDistanceMeters": 1273.9115991734025,
+      "distanceFromRouteMeters": 6.537240388186879,
+      "nearestRouteDistanceMeters": 1273.9095182752294,
       "onewayDirection": 1
     },
     {
@@ -14201,8 +14216,8 @@
           "elevationMeters": 7.823447078034987
         }
       ],
-      "distanceFromRouteMeters": 6.537240456757912,
-      "nearestRouteDistanceMeters": 1273.9115991734025,
+      "distanceFromRouteMeters": 6.537240388186879,
+      "nearestRouteDistanceMeters": 1273.9095182752294,
       "onewayDirection": 1
     },
     {
@@ -14253,8 +14268,8 @@
           "elevationMeters": 8.640511561668141
         }
       ],
-      "distanceFromRouteMeters": 6.537240456757912,
-      "nearestRouteDistanceMeters": 1273.9115991734025,
+      "distanceFromRouteMeters": 6.537240388186879,
+      "nearestRouteDistanceMeters": 1273.9095182752294,
       "onewayDirection": 1
     },
     {
@@ -14285,8 +14300,8 @@
           "elevationMeters": 8.244707632956079
         }
       ],
-      "distanceFromRouteMeters": 6.537240456757912,
-      "nearestRouteDistanceMeters": 1273.9115991734025,
+      "distanceFromRouteMeters": 6.537240388186879,
+      "nearestRouteDistanceMeters": 1273.9095182752294,
       "onewayDirection": 1
     },
     {
@@ -14327,8 +14342,8 @@
           "elevationMeters": 15.290884763050645
         }
       ],
-      "distanceFromRouteMeters": 7.876722824376313,
-      "nearestRouteDistanceMeters": 1422.2009458911712,
+      "distanceFromRouteMeters": 7.876711485496262,
+      "nearestRouteDistanceMeters": 1422.198414130163,
       "onewayDirection": 1
     },
     {
@@ -14349,8 +14364,8 @@
           "elevationMeters": 9.65447666209297
         }
       ],
-      "distanceFromRouteMeters": 5.6982157435081495,
-      "nearestRouteDistanceMeters": 1596.9907812714755,
+      "distanceFromRouteMeters": 5.698189367554891,
+      "nearestRouteDistanceMeters": 1596.987857868978,
       "onewayDirection": 1
     },
     {
@@ -14546,8 +14561,8 @@
           "elevationMeters": 44.09128125032856
         }
       ],
-      "distanceFromRouteMeters": 5.6982157435081495,
-      "nearestRouteDistanceMeters": 1596.9907812714755,
+      "distanceFromRouteMeters": 5.698189367554891,
+      "nearestRouteDistanceMeters": 1596.987857868978,
       "onewayDirection": 1
     },
     {
@@ -14569,7 +14584,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1631.9852939604075,
+      "nearestRouteDistanceMeters": 1631.9822449657192,
       "onewayDirection": 1
     },
     {
@@ -14741,7 +14756,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1631.9852939604075,
+      "nearestRouteDistanceMeters": 1631.9822449657192,
       "onewayDirection": 1
     },
     {
@@ -14822,8 +14837,8 @@
           "elevationMeters": 13.131142016101194
         }
       ],
-      "distanceFromRouteMeters": 8.251083082212089,
-      "nearestRouteDistanceMeters": 2088.211858515227,
+      "distanceFromRouteMeters": 8.251083015435933,
+      "nearestRouteDistanceMeters": 2088.206466485226,
       "onewayDirection": 1
     },
     {
@@ -14904,8 +14919,8 @@
           "elevationMeters": 3.664516797728912
         }
       ],
-      "distanceFromRouteMeters": 7.95598516319953,
-      "nearestRouteDistanceMeters": 2105.9017264868444,
+      "distanceFromRouteMeters": 7.955985151538879,
+      "nearestRouteDistanceMeters": 2105.8962414699886,
       "onewayDirection": 1
     },
     {
@@ -14961,8 +14976,8 @@
           "elevationMeters": 5.715749073605998
         }
       ],
-      "distanceFromRouteMeters": 7.947913256023804,
-      "nearestRouteDistanceMeters": 2110.9937510746577,
+      "distanceFromRouteMeters": 7.947913244374857,
+      "nearestRouteDistanceMeters": 2110.988239843339,
       "onewayDirection": 1
     },
     {
@@ -15143,8 +15158,8 @@
           "elevationMeters": 5.592716543673409
         }
       ],
-      "distanceFromRouteMeters": 81.86623798703224,
-      "nearestRouteDistanceMeters": 1502.1338885038117,
+      "distanceFromRouteMeters": 81.86581842971911,
+      "nearestRouteDistanceMeters": 1502.1309506334583,
       "onewayDirection": 1
     },
     {
@@ -15210,8 +15225,8 @@
           "elevationMeters": 3.3727781667450234
         }
       ],
-      "distanceFromRouteMeters": 83.02531136374307,
-      "nearestRouteDistanceMeters": 1502.1338885038117,
+      "distanceFromRouteMeters": 83.0248895501576,
+      "nearestRouteDistanceMeters": 1502.1309506334583,
       "onewayDirection": 1
     },
     {
@@ -15247,8 +15262,8 @@
           "elevationMeters": 4.2952546918812935
         }
       ],
-      "distanceFromRouteMeters": 114.96486474530205,
-      "nearestRouteDistanceMeters": 2183.61916692514,
+      "distanceFromRouteMeters": 114.96462195457256,
+      "nearestRouteDistanceMeters": 2183.613991427208,
       "onewayDirection": 1
     },
     {
@@ -15314,8 +15329,8 @@
           "elevationMeters": 8.972759636052842
         }
       ],
-      "distanceFromRouteMeters": 7.542869355443856,
-      "nearestRouteDistanceMeters": 1456.4983856001672,
+      "distanceFromRouteMeters": 7.542865636727509,
+      "nearestRouteDistanceMeters": 1456.495653091291,
       "onewayDirection": 1
     },
     {
@@ -15356,8 +15371,8 @@
           "elevationMeters": 9.920367348460431
         }
       ],
-      "distanceFromRouteMeters": 7.542869355443856,
-      "nearestRouteDistanceMeters": 1456.4983856001672,
+      "distanceFromRouteMeters": 7.542865636727509,
+      "nearestRouteDistanceMeters": 1456.495653091291,
       "onewayDirection": 1
     },
     {
@@ -15418,8 +15433,8 @@
           "elevationMeters": 17.050052012505514
         }
       ],
-      "distanceFromRouteMeters": 9.723901653244203,
-      "nearestRouteDistanceMeters": 1431.3044035261835,
+      "distanceFromRouteMeters": 9.723890105506754,
+      "nearestRouteDistanceMeters": 1431.3017590833826,
       "onewayDirection": 1
     },
     {
@@ -15650,8 +15665,8 @@
           "elevationMeters": 2.0785496965584564
         }
       ],
-      "distanceFromRouteMeters": 7.998267480398935,
-      "nearestRouteDistanceMeters": 1216.5419285109238,
+      "distanceFromRouteMeters": 7.998253942331689,
+      "nearestRouteDistanceMeters": 1216.5401143505203,
       "onewayDirection": 1
     },
     {
@@ -15672,8 +15687,8 @@
           "elevationMeters": 1.128767423522288
         }
       ],
-      "distanceFromRouteMeters": 6.084164138388853,
-      "nearestRouteDistanceMeters": 1178.6871231518362,
+      "distanceFromRouteMeters": 6.08413380264374,
+      "nearestRouteDistanceMeters": 1178.6853317552575,
       "onewayDirection": 1
     },
     {
@@ -15744,8 +15759,8 @@
           "elevationMeters": 0.461997964313931
         }
       ],
-      "distanceFromRouteMeters": 6.084164138388853,
-      "nearestRouteDistanceMeters": 1178.6871231518362,
+      "distanceFromRouteMeters": 6.08413380264374,
+      "nearestRouteDistanceMeters": 1178.6853317552575,
       "onewayDirection": 1
     },
     {
@@ -15811,8 +15826,8 @@
           "elevationMeters": 0.520682257668122
         }
       ],
-      "distanceFromRouteMeters": 128.35990915239896,
-      "nearestRouteDistanceMeters": 1290.5546394478338,
+      "distanceFromRouteMeters": 128.3597841548124,
+      "nearestRouteDistanceMeters": 1290.5524800593587,
       "onewayDirection": 1
     },
     {
@@ -15858,8 +15873,8 @@
           "elevationMeters": 0.4308161626109358
         }
       ],
-      "distanceFromRouteMeters": 145.50057976761735,
-      "nearestRouteDistanceMeters": 1290.5546394478338,
+      "distanceFromRouteMeters": 145.50048760738625,
+      "nearestRouteDistanceMeters": 1290.5524800593587,
       "onewayDirection": 1
     },
     {
@@ -15885,8 +15900,8 @@
           "elevationMeters": 0.9643243935881834
         }
       ],
-      "distanceFromRouteMeters": 142.07144838810345,
-      "nearestRouteDistanceMeters": 1352.406352363553,
+      "distanceFromRouteMeters": 142.07112349384641,
+      "nearestRouteDistanceMeters": 1352.4032793795352,
       "onewayDirection": 1
     },
     {
@@ -15952,8 +15967,8 @@
           "elevationMeters": 5.945608073531289
         }
       ],
-      "distanceFromRouteMeters": 68.04028812073156,
-      "nearestRouteDistanceMeters": 1502.1338885038117,
+      "distanceFromRouteMeters": 68.03994040709821,
+      "nearestRouteDistanceMeters": 1502.1309506334583,
       "onewayDirection": 1
     },
     {
@@ -15984,8 +15999,8 @@
           "elevationMeters": 2.9782992735213036
         }
       ],
-      "distanceFromRouteMeters": 123.32960901985888,
-      "nearestRouteDistanceMeters": 2195.560399036092,
+      "distanceFromRouteMeters": 123.32939332018341,
+      "nearestRouteDistanceMeters": 2195.5546041261523,
       "onewayDirection": 1
     },
     {
@@ -16016,8 +16031,8 @@
           "elevationMeters": 4.522340370306292
         }
       ],
-      "distanceFromRouteMeters": 123.32960901985888,
-      "nearestRouteDistanceMeters": 2195.560399036092,
+      "distanceFromRouteMeters": 123.32939332018341,
+      "nearestRouteDistanceMeters": 2195.5546041261523,
       "onewayDirection": 1
     },
     {
@@ -16053,8 +16068,8 @@
           "elevationMeters": 0.9823956873657299
         }
       ],
-      "distanceFromRouteMeters": 130.0667899105473,
-      "nearestRouteDistanceMeters": 3967.1173009557046,
+      "distanceFromRouteMeters": 130.06677868936012,
+      "nearestRouteDistanceMeters": 3967.1057276754036,
       "onewayDirection": 1
     },
     {
@@ -16105,8 +16120,8 @@
           "elevationMeters": 1.242119775654687
         }
       ],
-      "distanceFromRouteMeters": 67.7623489239346,
-      "nearestRouteDistanceMeters": 4182.882081518272,
+      "distanceFromRouteMeters": 67.76231937004638,
+      "nearestRouteDistanceMeters": 4182.8694270412025,
       "onewayDirection": 1
     },
     {
@@ -16142,8 +16157,8 @@
           "elevationMeters": 3.2314408653877393
         }
       ],
-      "distanceFromRouteMeters": 19.326977203367683,
-      "nearestRouteDistanceMeters": 4171.549468305052,
+      "distanceFromRouteMeters": 19.326970529692126,
+      "nearestRouteDistanceMeters": 4171.537011989947,
       "onewayDirection": 1
     },
     {
@@ -16264,8 +16279,8 @@
           "elevationMeters": 1.8449514247885173
         }
       ],
-      "distanceFromRouteMeters": 17.49176547454684,
-      "nearestRouteDistanceMeters": 4099.048002976266,
+      "distanceFromRouteMeters": 17.49176244423724,
+      "nearestRouteDistanceMeters": 4099.035925393734,
       "onewayDirection": 1
     },
     {
@@ -16431,8 +16446,8 @@
           "elevationMeters": 2.009304432581362
         }
       ],
-      "distanceFromRouteMeters": 14.60214945232822,
-      "nearestRouteDistanceMeters": 4068.4694558029328,
+      "distanceFromRouteMeters": 14.602145763164138,
+      "nearestRouteDistanceMeters": 4068.4575282384144,
       "onewayDirection": 1
     },
     {
@@ -16498,8 +16513,8 @@
           "elevationMeters": 4.5445342273189215
         }
       ],
-      "distanceFromRouteMeters": 16.296392907035354,
-      "nearestRouteDistanceMeters": 4069.854088314973,
+      "distanceFromRouteMeters": 16.29638878982865,
+      "nearestRouteDistanceMeters": 4069.8421502014644,
       "onewayDirection": 1
     },
     {
@@ -16570,8 +16585,8 @@
           "elevationMeters": 1.5249267927980952
         }
       ],
-      "distanceFromRouteMeters": 53.1693803361254,
-      "nearestRouteDistanceMeters": 4179.459834772943,
+      "distanceFromRouteMeters": 53.16935714681824,
+      "nearestRouteDistanceMeters": 4179.447238270607,
       "onewayDirection": 1
     },
     {
@@ -16632,8 +16647,8 @@
           "elevationMeters": 0.7426957648455355
         }
       ],
-      "distanceFromRouteMeters": 72.6179491208839,
-      "nearestRouteDistanceMeters": 4184.057835164779,
+      "distanceFromRouteMeters": 72.61791744927302,
+      "nearestRouteDistanceMeters": 4184.045161222827,
       "onewayDirection": 1
     },
     {
@@ -16664,8 +16679,8 @@
           "elevationMeters": 0.47744805478345215
         }
       ],
-      "distanceFromRouteMeters": 138.173130036745,
-      "nearestRouteDistanceMeters": 4640.931035319406,
+      "distanceFromRouteMeters": 138.17312989840318,
+      "nearestRouteDistanceMeters": 4640.916426575767,
       "onewayDirection": 1
     },
     {
@@ -16901,8 +16916,8 @@
           "elevationMeters": 3.3024308627654326
         }
       ],
-      "distanceFromRouteMeters": 17.661484289306884,
-      "nearestRouteDistanceMeters": 4192.905925299544,
+      "distanceFromRouteMeters": 17.66147658642261,
+      "nearestRouteDistanceMeters": 4192.893367241308,
       "onewayDirection": 1
     },
     {
@@ -16968,8 +16983,8 @@
           "elevationMeters": 1.1131899422212725
         }
       ],
-      "distanceFromRouteMeters": 18.014629237089608,
-      "nearestRouteDistanceMeters": 4189.749387048769,
+      "distanceFromRouteMeters": 18.01462138018459,
+      "nearestRouteDistanceMeters": 4189.736842855272,
       "onewayDirection": 1
     },
     {
@@ -17000,8 +17015,8 @@
           "elevationMeters": 0.8487260196787201
         }
       ],
-      "distanceFromRouteMeters": 133.7871514086285,
-      "nearestRouteDistanceMeters": 4245.74986450934,
+      "distanceFromRouteMeters": 133.78709406201784,
+      "nearestRouteDistanceMeters": 4245.736727026746,
       "onewayDirection": 1
     },
     {
@@ -17022,8 +17037,8 @@
           "elevationMeters": 0.9280752043953783
         }
       ],
-      "distanceFromRouteMeters": 142.99982031924938,
-      "nearestRouteDistanceMeters": 4248.073178951037,
+      "distanceFromRouteMeters": 142.99975902371443,
+      "nearestRouteDistanceMeters": 4248.060004290944,
       "onewayDirection": 1
     },
     {
@@ -17154,8 +17169,8 @@
           "elevationMeters": 2.285441524038512
         }
       ],
-      "distanceFromRouteMeters": 21.933387227930968,
-      "nearestRouteDistanceMeters": 4413.449124598615,
+      "distanceFromRouteMeters": 21.93337735428197,
+      "nearestRouteDistanceMeters": 4413.4355156420725,
       "onewayDirection": 1
     },
     {
@@ -17266,8 +17281,8 @@
           "elevationMeters": 0.6953526604077598
         }
       ],
-      "distanceFromRouteMeters": 21.99399330236715,
-      "nearestRouteDistanceMeters": 4416.5407253002595,
+      "distanceFromRouteMeters": 21.99398340143543,
+      "nearestRouteDistanceMeters": 4416.527101639469,
       "onewayDirection": 1
     },
     {
@@ -17368,8 +17383,8 @@
           "elevationMeters": 1.7785466706769384
         }
       ],
-      "distanceFromRouteMeters": 16.7652672387971,
-      "nearestRouteDistanceMeters": 4830.08324283977,
+      "distanceFromRouteMeters": 16.765259260400526,
+      "nearestRouteDistanceMeters": 4830.067700031043,
       "onewayDirection": 1
     },
     {
@@ -17435,8 +17450,8 @@
           "elevationMeters": 0.7088317669947669
         }
       ],
-      "distanceFromRouteMeters": 25.065428763057437,
-      "nearestRouteDistanceMeters": 4607.945669471084,
+      "distanceFromRouteMeters": 25.065416438578882,
+      "nearestRouteDistanceMeters": 4607.931145227445,
       "onewayDirection": 1
     },
     {
@@ -17557,8 +17572,8 @@
           "elevationMeters": 2.0194498454432117
         }
       ],
-      "distanceFromRouteMeters": 16.7652672387971,
-      "nearestRouteDistanceMeters": 4830.08324283977,
+      "distanceFromRouteMeters": 16.765259260400526,
+      "nearestRouteDistanceMeters": 4830.067700031043,
       "onewayDirection": 1
     },
     {
@@ -17600,8 +17615,8 @@
           "elevationMeters": 1.2455920452054023
         }
       ],
-      "distanceFromRouteMeters": 2.9417560641979863,
-      "nearestRouteDistanceMeters": 1144.9698059001664,
+      "distanceFromRouteMeters": 2.9417560633012614,
+      "nearestRouteDistanceMeters": 1144.9680759504909,
       "onewayDirection": 1
     },
     {
@@ -17658,8 +17673,8 @@
           "elevationMeters": 1.4399414386041278
         }
       ],
-      "distanceFromRouteMeters": 2.9417560641979863,
-      "nearestRouteDistanceMeters": 1144.9698059001664,
+      "distanceFromRouteMeters": 2.9417560633012614,
+      "nearestRouteDistanceMeters": 1144.9680759504909,
       "onewayDirection": 1
     },
     {
@@ -17710,8 +17725,8 @@
           "elevationMeters": 1.3101432277642657
         }
       ],
-      "distanceFromRouteMeters": 69.96783582888008,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "distanceFromRouteMeters": 69.96764764957186,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -17757,8 +17772,8 @@
           "elevationMeters": 0.92252331557934
         }
       ],
-      "distanceFromRouteMeters": 69.40792106613422,
-      "nearestRouteDistanceMeters": 1200.7362113315492,
+      "distanceFromRouteMeters": 69.40767854946425,
+      "nearestRouteDistanceMeters": 1200.7344022464322,
       "onewayDirection": 1
     },
     {
@@ -17784,8 +17799,8 @@
           "elevationMeters": 0.7379560470379845
         }
       ],
-      "distanceFromRouteMeters": 134.82233587159703,
-      "nearestRouteDistanceMeters": 1025.5400673732925,
+      "distanceFromRouteMeters": 134.82233577266376,
+      "nearestRouteDistanceMeters": 1025.5389435164739,
       "onewayDirection": 1
     },
     {
@@ -17976,8 +17991,8 @@
           "elevationMeters": 0.7063127501900401
         }
       ],
-      "distanceFromRouteMeters": 8.374604372751538,
-      "nearestRouteDistanceMeters": 255.5806718069428,
+      "distanceFromRouteMeters": 8.374561260614877,
+      "nearestRouteDistanceMeters": 255.57955139795922,
       "onewayDirection": 1
     },
     {
@@ -18058,8 +18073,8 @@
           "elevationMeters": 0.7467738892024259
         }
       ],
-      "distanceFromRouteMeters": 8.95724120225674,
-      "nearestRouteDistanceMeters": 563.1905830347193,
+      "distanceFromRouteMeters": 8.957195100558458,
+      "nearestRouteDistanceMeters": 563.189462393785,
       "onewayDirection": 1
     },
     {
@@ -18135,8 +18150,8 @@
           "elevationMeters": 0.4894704459848067
         }
       ],
-      "distanceFromRouteMeters": 8.969913331307367,
-      "nearestRouteDistanceMeters": 576.1876693109592,
+      "distanceFromRouteMeters": 8.969867183559499,
+      "nearestRouteDistanceMeters": 576.1865493728577,
       "onewayDirection": 1
     },
     {
@@ -18217,8 +18232,8 @@
           "elevationMeters": 0.4641100453699978
         }
       ],
-      "distanceFromRouteMeters": 8.281045274263644,
-      "nearestRouteDistanceMeters": 895.7152138104483,
+      "distanceFromRouteMeters": 8.281002653330539,
+      "nearestRouteDistanceMeters": 895.7140921781146,
       "onewayDirection": 1
     },
     {
@@ -18264,8 +18279,8 @@
           "elevationMeters": 0.6527933281120526
         }
       ],
-      "distanceFromRouteMeters": 8.67694115800354,
-      "nearestRouteDistanceMeters": 914.772776122804,
+      "distanceFromRouteMeters": 8.676896498812146,
+      "nearestRouteDistanceMeters": 914.7716545033294,
       "onewayDirection": 1
     },
     {
@@ -18361,8 +18376,8 @@
           "elevationMeters": 0.8617292204214791
         }
       ],
-      "distanceFromRouteMeters": 8.002757320491733,
-      "nearestRouteDistanceMeters": 985.8123175641731,
+      "distanceFromRouteMeters": 8.002716134163885,
+      "nearestRouteDistanceMeters": 985.8111957454628,
       "onewayDirection": 1
     },
     {
@@ -18423,8 +18438,8 @@
           "elevationMeters": 0.5579919172015398
         }
       ],
-      "distanceFromRouteMeters": 4.529176942984643,
-      "nearestRouteDistanceMeters": 1144.617121069995,
+      "distanceFromRouteMeters": 4.529176941603969,
+      "nearestRouteDistanceMeters": 1144.6153928105225,
       "onewayDirection": 1
     },
     {
@@ -18455,8 +18470,8 @@
           "elevationMeters": 1.0435811174153757
         }
       ],
-      "distanceFromRouteMeters": 4.529176942984643,
-      "nearestRouteDistanceMeters": 1144.617121069995,
+      "distanceFromRouteMeters": 4.529176941603969,
+      "nearestRouteDistanceMeters": 1144.6153928105225,
       "onewayDirection": 1
     },
     {
@@ -18552,8 +18567,8 @@
           "elevationMeters": 0.42986312889120265
         }
       ],
-      "distanceFromRouteMeters": 6.383489775303595,
-      "nearestRouteDistanceMeters": 1033.7143927462168,
+      "distanceFromRouteMeters": 6.383489774365524,
+      "nearestRouteDistanceMeters": 1033.7132271494804,
       "onewayDirection": 1
     },
     {
@@ -18604,8 +18619,8 @@
           "elevationMeters": 0.38684606924984344
         }
       ],
-      "distanceFromRouteMeters": 9.055539923001403,
-      "nearestRouteDistanceMeters": 806.6321159632795,
+      "distanceFromRouteMeters": 9.055493315894546,
+      "nearestRouteDistanceMeters": 806.63099060274,
       "onewayDirection": 1
     },
     {
@@ -18696,8 +18711,8 @@
           "elevationMeters": 0.525398975983528
         }
       ],
-      "distanceFromRouteMeters": 6.182793320813898,
-      "nearestRouteDistanceMeters": 1117.4862827090376,
+      "distanceFromRouteMeters": 6.182789587537128,
+      "nearestRouteDistanceMeters": 1117.4847073753776,
       "onewayDirection": 1
     },
     {
@@ -18788,8 +18803,8 @@
           "elevationMeters": 0.4020625270846444
         }
       ],
-      "distanceFromRouteMeters": 7.789280886430826,
-      "nearestRouteDistanceMeters": 1129.019291275857,
+      "distanceFromRouteMeters": 7.789280884056287,
+      "nearestRouteDistanceMeters": 1129.0176443060907,
       "onewayDirection": 1
     },
     {
@@ -18825,8 +18840,8 @@
           "elevationMeters": 0.24697566503249507
         }
       ],
-      "distanceFromRouteMeters": 101.48543553415206,
-      "nearestRouteDistanceMeters": 806.1437825551274,
+      "distanceFromRouteMeters": 101.48491320830753,
+      "nearestRouteDistanceMeters": 806.1426361193671,
       "onewayDirection": 1
     },
     {
@@ -18932,8 +18947,8 @@
           "elevationMeters": 0.6693357838258532
         }
       ],
-      "distanceFromRouteMeters": 8.853638311612364,
-      "nearestRouteDistanceMeters": 793.0033592872016,
+      "distanceFromRouteMeters": 8.85359273889089,
+      "nearestRouteDistanceMeters": 793.0022342315141,
       "onewayDirection": 1
     },
     {
@@ -18984,8 +18999,8 @@
           "elevationMeters": 0.44127310262339997
         }
       ],
-      "distanceFromRouteMeters": 8.999606115308096,
-      "nearestRouteDistanceMeters": 579.9959039891064,
+      "distanceFromRouteMeters": 8.999559814799072,
+      "nearestRouteDistanceMeters": 579.9947785014498,
       "onewayDirection": 1
     },
     {
@@ -19081,8 +19096,8 @@
           "elevationMeters": 0.5261000484471119
         }
       ],
-      "distanceFromRouteMeters": 89.19986974553906,
-      "nearestRouteDistanceMeters": 580.7267939302913,
+      "distanceFromRouteMeters": 89.19941083663541,
+      "nearestRouteDistanceMeters": 580.7256437491712,
       "onewayDirection": 1
     },
     {
@@ -19133,8 +19148,8 @@
           "elevationMeters": 0.49879692390641245
         }
       ],
-      "distanceFromRouteMeters": 8.853638311612364,
-      "nearestRouteDistanceMeters": 793.0033592872016,
+      "distanceFromRouteMeters": 8.85359273889089,
+      "nearestRouteDistanceMeters": 793.0022342315141,
       "onewayDirection": 1
     },
     {
@@ -19230,8 +19245,8 @@
           "elevationMeters": 0.5023067519085593
         }
       ],
-      "distanceFromRouteMeters": 102.80209457649217,
-      "nearestRouteDistanceMeters": 793.3036206248834,
+      "distanceFromRouteMeters": 102.80156541875431,
+      "nearestRouteDistanceMeters": 793.3024765629116,
       "onewayDirection": 1
     },
     {
@@ -19272,8 +19287,8 @@
           "elevationMeters": 0.4823634809711902
         }
       ],
-      "distanceFromRouteMeters": 100.14904099276228,
-      "nearestRouteDistanceMeters": 581.3992473358288,
+      "distanceFromRouteMeters": 100.14852575337066,
+      "nearestRouteDistanceMeters": 581.3980937808486,
       "onewayDirection": 1
     },
     {
@@ -19309,8 +19324,8 @@
           "elevationMeters": 0.4135292869349782
         }
       ],
-      "distanceFromRouteMeters": 101.02494145655162,
-      "nearestRouteDistanceMeters": 793.1574816204165,
+      "distanceFromRouteMeters": 101.02442144643216,
+      "nearestRouteDistanceMeters": 793.1563379182518,
       "onewayDirection": 1
     },
     {
@@ -19361,8 +19376,8 @@
           "elevationMeters": 0.6871270394617167
         }
       ],
-      "distanceFromRouteMeters": 9.165461070199903,
-      "nearestRouteDistanceMeters": 567.2355032435711,
+      "distanceFromRouteMeters": 9.165413896822242,
+      "nearestRouteDistanceMeters": 567.2343785075752,
       "onewayDirection": 1
     },
     {
@@ -19403,8 +19418,8 @@
           "elevationMeters": 0.4506375101221203
         }
       ],
-      "distanceFromRouteMeters": 100.55010003706072,
-      "nearestRouteDistanceMeters": 567.0900741759946,
+      "distanceFromRouteMeters": 100.54958251941426,
+      "nearestRouteDistanceMeters": 567.0889288411438,
       "onewayDirection": 1
     },
     {
@@ -19500,8 +19515,8 @@
           "elevationMeters": 1.9919664147796279
         }
       ],
-      "distanceFromRouteMeters": 8.409414253472303,
-      "nearestRouteDistanceMeters": 255.66548012101137,
+      "distanceFromRouteMeters": 8.40937096213581,
+      "nearestRouteDistanceMeters": 255.66435689222737,
       "onewayDirection": 1
     },
     {
@@ -19632,8 +19647,8 @@
           "elevationMeters": 1.4956554795893349
         }
       ],
-      "distanceFromRouteMeters": 8.409414253472303,
-      "nearestRouteDistanceMeters": 255.66548012101137,
+      "distanceFromRouteMeters": 8.40937096213581,
+      "nearestRouteDistanceMeters": 255.66435689222737,
       "onewayDirection": 1
     },
     {
@@ -19739,8 +19754,8 @@
           "elevationMeters": 0.505873452623983
         }
       ],
-      "distanceFromRouteMeters": 89.04796015897203,
-      "nearestRouteDistanceMeters": 4893.191704603148,
+      "distanceFromRouteMeters": 89.04791701816583,
+      "nearestRouteDistanceMeters": 4893.175649218271,
       "onewayDirection": 1
     },
     {
@@ -19911,8 +19926,8 @@
           "elevationMeters": 1.8582032316737709
         }
       ],
-      "distanceFromRouteMeters": 24.227887460615282,
-      "nearestRouteDistanceMeters": 4888.862763835126,
+      "distanceFromRouteMeters": 24.22787572300112,
+      "nearestRouteDistanceMeters": 4888.846923534702,
       "onewayDirection": 1
     },
     {
@@ -19993,8 +20008,8 @@
           "elevationMeters": 0.6491611275930811
         }
       ],
-      "distanceFromRouteMeters": 35.81923871872939,
-      "nearestRouteDistanceMeters": 4838.915315835486,
+      "distanceFromRouteMeters": 35.81922167276832,
+      "nearestRouteDistanceMeters": 4838.899674919444,
       "onewayDirection": 1
     },
     {
@@ -20045,8 +20060,8 @@
           "elevationMeters": 1.2320867103790423
         }
       ],
-      "distanceFromRouteMeters": 58.22550674614546,
-      "nearestRouteDistanceMeters": 4791.9018541932655,
+      "distanceFromRouteMeters": 58.22547903730085,
+      "nearestRouteDistanceMeters": 4791.886366162275,
       "onewayDirection": 1
     },
     {
@@ -20092,8 +20107,8 @@
           "elevationMeters": 0.9047604699235502
         }
       ],
-      "distanceFromRouteMeters": 8.969429498050886,
-      "nearestRouteDistanceMeters": 354.30100620149835,
+      "distanceFromRouteMeters": 8.969383331553802,
+      "nearestRouteDistanceMeters": 354.2998821134546,
       "onewayDirection": 1
     },
     {
@@ -20194,8 +20209,8 @@
           "elevationMeters": 0.8761467070077043
         }
       ],
-      "distanceFromRouteMeters": 8.964214174018885,
-      "nearestRouteDistanceMeters": 353.0663655209795,
+      "distanceFromRouteMeters": 8.964168034365587,
+      "nearestRouteDistanceMeters": 353.0652414368177,
       "onewayDirection": 1
     },
     {
@@ -20261,8 +20276,8 @@
           "elevationMeters": 0.7010771623208
         }
       ],
-      "distanceFromRouteMeters": 7.792701815794643,
-      "nearestRouteDistanceMeters": 1144.4720512675908,
+      "distanceFromRouteMeters": 7.792701813419212,
+      "nearestRouteDistanceMeters": 1144.4703247314205,
       "onewayDirection": 1
     },
     {
@@ -20373,8 +20388,8 @@
           "elevationMeters": 0.6759529900247405
         }
       ],
-      "distanceFromRouteMeters": 9.15428374673295,
-      "nearestRouteDistanceMeters": 408.3982370629134,
+      "distanceFromRouteMeters": 9.154236628773724,
+      "nearestRouteDistanceMeters": 408.39711674379356,
       "onewayDirection": 1
     },
     {
@@ -20430,8 +20445,8 @@
           "elevationMeters": 0.5952435378622224
         }
       ],
-      "distanceFromRouteMeters": 85.87271600814917,
-      "nearestRouteDistanceMeters": 670.7379479459726,
+      "distanceFromRouteMeters": 85.87227408148733,
+      "nearestRouteDistanceMeters": 670.736846427148,
       "onewayDirection": 1
     },
     {
@@ -20487,8 +20502,8 @@
           "elevationMeters": 0.6074094401274939
         }
       ],
-      "distanceFromRouteMeters": 9.425958286834168,
-      "nearestRouteDistanceMeters": 715.8613263195756,
+      "distanceFromRouteMeters": 9.425909770220096,
+      "nearestRouteDistanceMeters": 715.8602052195769,
       "onewayDirection": 1
     },
     {
@@ -20539,8 +20554,8 @@
           "elevationMeters": 0.5646914631186379
         }
       ],
-      "distanceFromRouteMeters": 9.861356889402037,
-      "nearestRouteDistanceMeters": 698.2990128892044,
+      "distanceFromRouteMeters": 9.861306139912246,
+      "nearestRouteDistanceMeters": 698.2978922946943,
       "onewayDirection": 1
     },
     {
@@ -20601,8 +20616,8 @@
           "elevationMeters": 0.5683959591016914
         }
       ],
-      "distanceFromRouteMeters": 77.03556109084488,
-      "nearestRouteDistanceMeters": 656.4706308147249,
+      "distanceFromRouteMeters": 77.03516464282356,
+      "nearestRouteDistanceMeters": 656.4695271311286,
       "onewayDirection": 1
     },
     {
@@ -20713,8 +20728,8 @@
           "elevationMeters": 0.6452425951377582
         }
       ],
-      "distanceFromRouteMeters": 9.038974068289788,
-      "nearestRouteDistanceMeters": 418.2354589576641,
+      "distanceFromRouteMeters": 9.03892754563132,
+      "nearestRouteDistanceMeters": 418.23433867484016,
       "onewayDirection": 1
     },
     {
@@ -20775,8 +20790,8 @@
           "elevationMeters": 0.6197390324654293
         }
       ],
-      "distanceFromRouteMeters": 8.962501851386676,
-      "nearestRouteDistanceMeters": 558.0978248847075,
+      "distanceFromRouteMeters": 8.962455722322721,
+      "nearestRouteDistanceMeters": 558.0967042440949,
       "onewayDirection": 1
     },
     {
@@ -20842,8 +20857,8 @@
           "elevationMeters": 0.6844318469158903
         }
       ],
-      "distanceFromRouteMeters": 8.980211406579416,
-      "nearestRouteDistanceMeters": 577.5667952959177,
+      "distanceFromRouteMeters": 8.980165205850705,
+      "nearestRouteDistanceMeters": 577.565675354635,
       "onewayDirection": 1
     },
     {
@@ -20879,8 +20894,8 @@
           "elevationMeters": 0.5697572899579745
         }
       ],
-      "distanceFromRouteMeters": 8.95906330300752,
-      "nearestRouteDistanceMeters": 973.1133601466075,
+      "distanceFromRouteMeters": 8.959017191766721,
+      "nearestRouteDistanceMeters": 973.1122384475725,
       "onewayDirection": 1
     },
     {
@@ -20936,8 +20951,8 @@
           "elevationMeters": 0.5357244639580624
         }
       ],
-      "distanceFromRouteMeters": 43.61157267430681,
-      "nearestRouteDistanceMeters": 951.9371161851656,
+      "distanceFromRouteMeters": 43.6113482106926,
+      "nearestRouteDistanceMeters": 951.9360023200462,
       "onewayDirection": 1
     },
     {
@@ -20968,8 +20983,8 @@
           "elevationMeters": 0.5329508502370067
         }
       ],
-      "distanceFromRouteMeters": 121.90590830960377,
-      "nearestRouteDistanceMeters": 903.3638737105504,
+      "distanceFromRouteMeters": 121.90528088354841,
+      "nearestRouteDistanceMeters": 903.3627779683655,
       "onewayDirection": 1
     },
     {
@@ -21010,8 +21025,8 @@
           "elevationMeters": 0.3732309426992191
         }
       ],
-      "distanceFromRouteMeters": 126.9194808429367,
-      "nearestRouteDistanceMeters": 911.803859265186,
+      "distanceFromRouteMeters": 126.91882760335754,
+      "nearestRouteDistanceMeters": 911.8027642071419,
       "onewayDirection": 1
     },
     {
@@ -21082,8 +21097,8 @@
           "elevationMeters": 0.3485185701194756
         }
       ],
-      "distanceFromRouteMeters": 48.340969844417934,
-      "nearestRouteDistanceMeters": 960.1199303873804,
+      "distanceFromRouteMeters": 48.340721039155135,
+      "nearestRouteDistanceMeters": 960.1188175643133,
       "onewayDirection": 1
     },
     {
@@ -21124,8 +21139,8 @@
           "elevationMeters": 0.6284799823074422
         }
       ],
-      "distanceFromRouteMeters": 9.304106897055663,
-      "nearestRouteDistanceMeters": 984.2024856009342,
+      "distanceFromRouteMeters": 9.304059013309875,
+      "nearestRouteDistanceMeters": 984.2013640999947,
       "onewayDirection": 1
     },
     {
@@ -21181,8 +21196,8 @@
           "elevationMeters": 0.5187706636686016
         }
       ],
-      "distanceFromRouteMeters": 86.59706098433998,
-      "nearestRouteDistanceMeters": 670.2865760378489,
+      "distanceFromRouteMeters": 86.59661532998231,
+      "nearestRouteDistanceMeters": 670.2854747013771,
       "onewayDirection": 1
     },
     {
@@ -21248,8 +21263,8 @@
           "elevationMeters": 0.6467918228978872
         }
       ],
-      "distanceFromRouteMeters": 78.59670526769006,
-      "nearestRouteDistanceMeters": 675.1857208589281,
+      "distanceFromRouteMeters": 78.59630078555405,
+      "nearestRouteDistanceMeters": 675.1846175086399,
       "onewayDirection": 1
     },
     {
@@ -21345,8 +21360,8 @@
           "elevationMeters": 0.48833934476015717
         }
       ],
-      "distanceFromRouteMeters": 9.642907761332433,
-      "nearestRouteDistanceMeters": 724.4762887098985,
+      "distanceFromRouteMeters": 9.642858128051559,
+      "nearestRouteDistanceMeters": 724.4751676371259,
       "onewayDirection": 1
     },
     {
@@ -21432,8 +21447,8 @@
           "elevationMeters": 0.6492857439394943
         }
       ],
-      "distanceFromRouteMeters": 9.443482486675329,
-      "nearestRouteDistanceMeters": 743.8531728753215,
+      "distanceFromRouteMeters": 9.443433877823157,
+      "nearestRouteDistanceMeters": 743.8520516188195,
       "onewayDirection": 1
     },
     {
@@ -21479,8 +21494,8 @@
           "elevationMeters": 0.5478998616832138
         }
       ],
-      "distanceFromRouteMeters": 9.716566869850533,
-      "nearestRouteDistanceMeters": 895.1829138066684,
+      "distanceFromRouteMeters": 9.716516860566308,
+      "nearestRouteDistanceMeters": 895.1817925030158,
       "onewayDirection": 1
     },
     {
@@ -21521,8 +21536,8 @@
           "elevationMeters": 0.5994257024141062
         }
       ],
-      "distanceFromRouteMeters": 8.686065343593182,
-      "nearestRouteDistanceMeters": 917.3195467982783,
+      "distanceFromRouteMeters": 8.68602063744073,
+      "nearestRouteDistanceMeters": 917.318425174614,
       "onewayDirection": 1
     },
     {
@@ -21548,8 +21563,8 @@
           "elevationMeters": 0.4615651962266848
         }
       ],
-      "distanceFromRouteMeters": 131.16947232884561,
-      "nearestRouteDistanceMeters": 1025.5400673732925,
+      "distanceFromRouteMeters": 131.168954983823,
+      "nearestRouteDistanceMeters": 1025.5389435164739,
       "onewayDirection": 1
     },
     {
@@ -21595,8 +21610,8 @@
           "elevationMeters": 0.7598295160871826
         }
       ],
-      "distanceFromRouteMeters": 108.14499632251537,
-      "nearestRouteDistanceMeters": 1025.5400673732925,
+      "distanceFromRouteMeters": 108.1448833164443,
+      "nearestRouteDistanceMeters": 1025.5389435164739,
       "onewayDirection": 1
     },
     {
@@ -21682,8 +21697,8 @@
           "elevationMeters": 0.483772301657748
         }
       ],
-      "distanceFromRouteMeters": 40.83414897746879,
-      "nearestRouteDistanceMeters": 965.8225281848271,
+      "distanceFromRouteMeters": 40.833938808926426,
+      "nearestRouteDistanceMeters": 965.8214136619563,
       "onewayDirection": 1
     },
     {
@@ -21759,8 +21774,8 @@
           "elevationMeters": 0.45964086085332434
         }
       ],
-      "distanceFromRouteMeters": 50.39741565316386,
-      "nearestRouteDistanceMeters": 962.1437836489649,
+      "distanceFromRouteMeters": 50.397156263617205,
+      "nearestRouteDistanceMeters": 962.1426712827637,
       "onewayDirection": 1
     },
     {
@@ -21801,8 +21816,8 @@
           "elevationMeters": 0.3750332420327962
         }
       ],
-      "distanceFromRouteMeters": 118.96950557955026,
-      "nearestRouteDistanceMeters": 917.0601174729118,
+      "distanceFromRouteMeters": 118.96889325755492,
+      "nearestRouteDistanceMeters": 917.0590206166365,
       "onewayDirection": 1
     },
     {
@@ -21838,8 +21853,8 @@
           "elevationMeters": 0.3486605296149744
         }
       ],
-      "distanceFromRouteMeters": 128.27930222701272,
-      "nearestRouteDistanceMeters": 911.696337709966,
+      "distanceFromRouteMeters": 128.27864198859345,
+      "nearestRouteDistanceMeters": 911.6952429575654,
       "onewayDirection": 1
     },
     {
@@ -21965,8 +21980,8 @@
           "elevationMeters": 1.5796997968459716
         }
       ],
-      "distanceFromRouteMeters": 5.23374031693431,
-      "nearestRouteDistanceMeters": 7054.609186210664,
+      "distanceFromRouteMeters": 5.233738566709228,
+      "nearestRouteDistanceMeters": 7059.793819393042,
       "onewayDirection": 1
     },
     {
@@ -22077,8 +22092,8 @@
           "elevationMeters": 7.685701564706298
         }
       ],
-      "distanceFromRouteMeters": 5.23374031693431,
-      "nearestRouteDistanceMeters": 7054.609186210664,
+      "distanceFromRouteMeters": 5.233738566709228,
+      "nearestRouteDistanceMeters": 7059.793819393042,
       "onewayDirection": 1
     },
     {
@@ -22099,8 +22114,8 @@
           "elevationMeters": 0.8042092882373013
         }
       ],
-      "distanceFromRouteMeters": 145.88618366199202,
-      "nearestRouteDistanceMeters": 7122.253711981204,
+      "distanceFromRouteMeters": 145.88611490817289,
+      "nearestRouteDistanceMeters": 7127.437575531583,
       "onewayDirection": 1
     },
     {
@@ -22151,8 +22166,8 @@
           "elevationMeters": 0.890714440773575
         }
       ],
-      "distanceFromRouteMeters": 69.21190439345368,
-      "nearestRouteDistanceMeters": 7106.772432776461,
+      "distanceFromRouteMeters": 69.21187832088384,
+      "nearestRouteDistanceMeters": 7111.956616717095,
       "onewayDirection": 1
     },
     {
@@ -22198,8 +22213,8 @@
           "elevationMeters": 1.5141595228736004
         }
       ],
-      "distanceFromRouteMeters": 7.458443457045505,
-      "nearestRouteDistanceMeters": 7091.709406320295,
+      "distanceFromRouteMeters": 7.458440796748643,
+      "nearestRouteDistanceMeters": 7096.89382834877,
       "onewayDirection": 1
     },
     {
@@ -22275,8 +22290,8 @@
           "elevationMeters": 0.8316074276225085
         }
       ],
-      "distanceFromRouteMeters": 9.433863552083496,
-      "nearestRouteDistanceMeters": 7106.953637299839,
+      "distanceFromRouteMeters": 9.433859998286266,
+      "nearestRouteDistanceMeters": 7112.137980682242,
       "onewayDirection": 1
     },
     {
@@ -22347,8 +22362,8 @@
           "elevationMeters": 1.9596718045127006
         }
       ],
-      "distanceFromRouteMeters": 6.642803778831199,
-      "nearestRouteDistanceMeters": 7276.187745058723,
+      "distanceFromRouteMeters": 6.64279786074944,
+      "nearestRouteDistanceMeters": 7281.371343158396,
       "onewayDirection": 1
     },
     {
@@ -22374,8 +22389,8 @@
           "elevationMeters": 1.3165001723332665
         }
       ],
-      "distanceFromRouteMeters": 6.642803778831199,
-      "nearestRouteDistanceMeters": 7276.187745058723,
+      "distanceFromRouteMeters": 6.64279786074944,
+      "nearestRouteDistanceMeters": 7281.371343158396,
       "onewayDirection": 1
     },
     {
@@ -22401,8 +22416,8 @@
           "elevationMeters": 1.38947045275813
         }
       ],
-      "distanceFromRouteMeters": 7.646768687965338,
-      "nearestRouteDistanceMeters": 7161.7502996851745,
+      "distanceFromRouteMeters": 7.646763136424494,
+      "nearestRouteDistanceMeters": 7166.934387852806,
       "onewayDirection": 1
     },
     {
@@ -22433,8 +22448,8 @@
           "elevationMeters": 1.3472648650123247
         }
       ],
-      "distanceFromRouteMeters": 7.646768687965338,
-      "nearestRouteDistanceMeters": 7161.7502996851745,
+      "distanceFromRouteMeters": 7.646763136424494,
+      "nearestRouteDistanceMeters": 7166.934387852806,
       "onewayDirection": 1
     },
     {
@@ -22455,8 +22470,8 @@
           "elevationMeters": 1.574224730181318
         }
       ],
-      "distanceFromRouteMeters": 5.89544123337896,
-      "nearestRouteDistanceMeters": 7084.797035061018,
+      "distanceFromRouteMeters": 5.895439130577682,
+      "nearestRouteDistanceMeters": 7089.981494305198,
       "onewayDirection": 1
     },
     {
@@ -22482,8 +22497,8 @@
           "elevationMeters": 1.5118028085526543
         }
       ],
-      "distanceFromRouteMeters": 5.89544123337896,
-      "nearestRouteDistanceMeters": 7084.797035061018,
+      "distanceFromRouteMeters": 5.895439130577682,
+      "nearestRouteDistanceMeters": 7089.981494305198,
       "onewayDirection": 1
     },
     {
@@ -22509,8 +22524,8 @@
           "elevationMeters": 1.6368002459077342
         }
       ],
-      "distanceFromRouteMeters": 6.930754417041221,
-      "nearestRouteDistanceMeters": 6983.757141644722,
+      "distanceFromRouteMeters": 6.93075146079207,
+      "nearestRouteDistanceMeters": 6988.942076869616,
       "onewayDirection": 1
     },
     {
@@ -22531,8 +22546,8 @@
           "elevationMeters": 1.4133700447722801
         }
       ],
-      "distanceFromRouteMeters": 6.930754417041221,
-      "nearestRouteDistanceMeters": 6983.757141644722,
+      "distanceFromRouteMeters": 6.93075146079207,
+      "nearestRouteDistanceMeters": 6988.942076869616,
       "onewayDirection": 1
     },
     {
@@ -22553,8 +22568,8 @@
           "elevationMeters": 1.5597238062451568
         }
       ],
-      "distanceFromRouteMeters": 6.608616503166976,
-      "nearestRouteDistanceMeters": 6744.3132025568675,
+      "distanceFromRouteMeters": 6.608613517363219,
+      "nearestRouteDistanceMeters": 6749.499266576069,
       "onewayDirection": 1
     },
     {
@@ -22575,8 +22590,8 @@
           "elevationMeters": 1.320392304605254
         }
       ],
-      "distanceFromRouteMeters": 6.608616503166976,
-      "nearestRouteDistanceMeters": 6744.3132025568675,
+      "distanceFromRouteMeters": 6.608613517363219,
+      "nearestRouteDistanceMeters": 6749.499266576069,
       "onewayDirection": 1
     },
     {
@@ -22602,8 +22617,8 @@
           "elevationMeters": 1.3892705264166367
         }
       ],
-      "distanceFromRouteMeters": 6.402219596754278,
-      "nearestRouteDistanceMeters": 6681.302006639327,
+      "distanceFromRouteMeters": 6.4022169202806545,
+      "nearestRouteDistanceMeters": 6686.488369722427,
       "onewayDirection": 1
     },
     {
@@ -22624,8 +22639,8 @@
           "elevationMeters": 1.3050453521371288
         }
       ],
-      "distanceFromRouteMeters": 6.402219596754278,
-      "nearestRouteDistanceMeters": 6681.302006639327,
+      "distanceFromRouteMeters": 6.4022169202806545,
+      "nearestRouteDistanceMeters": 6686.488369722427,
       "onewayDirection": 1
     },
     {
@@ -22651,8 +22666,8 @@
           "elevationMeters": 1.3132994942082736
         }
       ],
-      "distanceFromRouteMeters": 7.233004384269542,
-      "nearestRouteDistanceMeters": 118.71795006508091,
+      "distanceFromRouteMeters": 7.233001405753641,
+      "nearestRouteDistanceMeters": 118.71740792628837,
       "onewayDirection": 1
     },
     {
@@ -22698,8 +22713,8 @@
           "elevationMeters": 1.1493301182329003
         }
       ],
-      "distanceFromRouteMeters": 7.233004384269542,
-      "nearestRouteDistanceMeters": 118.71795006508091,
+      "distanceFromRouteMeters": 7.233001405753641,
+      "nearestRouteDistanceMeters": 118.71740792628837,
       "onewayDirection": 1
     },
     {
@@ -22765,8 +22780,8 @@
           "elevationMeters": 0.8928758352175074
         }
       ],
-      "distanceFromRouteMeters": 13.61866412249562,
-      "nearestRouteDistanceMeters": 178.7641436894993,
+      "distanceFromRouteMeters": 13.6186550932089,
+      "nearestRouteDistanceMeters": 178.76334416715707,
       "onewayDirection": 1
     },
     {
@@ -22812,8 +22827,8 @@
           "elevationMeters": 0.9017034612718766
         }
       ],
-      "distanceFromRouteMeters": 123.41122047366524,
-      "nearestRouteDistanceMeters": 339.73942165085185,
+      "distanceFromRouteMeters": 123.41058544451019,
+      "nearestRouteDistanceMeters": 339.73833357159134,
       "onewayDirection": 1
     },
     {
@@ -22869,8 +22884,8 @@
           "elevationMeters": 0.818105174860333
         }
       ],
-      "distanceFromRouteMeters": 71.503931427284,
-      "nearestRouteDistanceMeters": 7107.366246096033,
+      "distanceFromRouteMeters": 71.50390449129291,
+      "nearestRouteDistanceMeters": 7112.550421056097,
       "onewayDirection": 1
     },
     {
@@ -22921,8 +22936,8 @@
           "elevationMeters": 0.847698853612775
         }
       ],
-      "distanceFromRouteMeters": 96.82081832581493,
-      "nearestRouteDistanceMeters": 7011.3740917604955,
+      "distanceFromRouteMeters": 96.82077635664946,
+      "nearestRouteDistanceMeters": 7016.558639503616,
       "onewayDirection": 1
     },
     {
@@ -22978,8 +22993,8 @@
           "elevationMeters": 0.7571105743273353
         }
       ],
-      "distanceFromRouteMeters": 117.66948152785903,
-      "nearestRouteDistanceMeters": 6928.302725019434,
+      "distanceFromRouteMeters": 117.66943136850225,
+      "nearestRouteDistanceMeters": 6933.487607899895,
       "onewayDirection": 1
     },
     {
@@ -23010,8 +23025,8 @@
           "elevationMeters": 0.8621521394441302
         }
       ],
-      "distanceFromRouteMeters": 143.3917396822335,
-      "nearestRouteDistanceMeters": 6826.517367851594,
+      "distanceFromRouteMeters": 143.3916757118122,
+      "nearestRouteDistanceMeters": 6831.702649756707,
       "onewayDirection": 1
     },
     {
@@ -23062,8 +23077,8 @@
           "elevationMeters": 0.6923950482764741
         }
       ],
-      "distanceFromRouteMeters": 128.68591842229574,
-      "nearestRouteDistanceMeters": 6820.059701115156,
+      "distanceFromRouteMeters": 128.68586101248655,
+      "nearestRouteDistanceMeters": 6825.245055995355,
       "onewayDirection": 1
     },
     {
@@ -23119,8 +23134,8 @@
           "elevationMeters": 0.8262019255828881
         }
       ],
-      "distanceFromRouteMeters": 102.51126173763618,
-      "nearestRouteDistanceMeters": 6924.647927067663,
+      "distanceFromRouteMeters": 102.51121803982369,
+      "nearestRouteDistanceMeters": 6929.832870226294,
       "onewayDirection": 1
     },
     {
@@ -23176,8 +23191,8 @@
           "elevationMeters": 0.8693971554165787
         }
       ],
-      "distanceFromRouteMeters": 81.88379130494428,
-      "nearestRouteDistanceMeters": 7008.019274370674,
+      "distanceFromRouteMeters": 81.88375581056968,
+      "nearestRouteDistanceMeters": 7013.203880647138,
       "onewayDirection": 1
     },
     {
@@ -23228,8 +23243,8 @@
           "elevationMeters": 0.9979066385590001
         }
       ],
-      "distanceFromRouteMeters": 56.29949523157927,
-      "nearestRouteDistanceMeters": 7103.608576471343,
+      "distanceFromRouteMeters": 56.29947402319712,
+      "nearestRouteDistanceMeters": 7108.792810139053,
       "onewayDirection": 1
     },
     {
@@ -23275,8 +23290,8 @@
           "elevationMeters": 0.7945965809223191
         }
       ],
-      "distanceFromRouteMeters": 8.15443696372858,
-      "nearestRouteDistanceMeters": 7002.905850037174,
+      "distanceFromRouteMeters": 8.1544334290041,
+      "nearestRouteDistanceMeters": 7008.090691257233,
       "onewayDirection": 1
     },
     {
@@ -23332,8 +23347,8 @@
           "elevationMeters": 1.6002881674870162
         }
       ],
-      "distanceFromRouteMeters": 7.994524170746535,
-      "nearestRouteDistanceMeters": 6986.17644064114,
+      "distanceFromRouteMeters": 7.994520760756304,
+      "nearestRouteDistanceMeters": 6991.361361420535,
       "onewayDirection": 1
     },
     {
@@ -23384,8 +23399,8 @@
           "elevationMeters": 0.9139162235348146
         }
       ],
-      "distanceFromRouteMeters": 8.109244901456378,
-      "nearestRouteDistanceMeters": 6913.912184128835,
+      "distanceFromRouteMeters": 8.109241444701855,
+      "nearestRouteDistanceMeters": 6919.097445889204,
       "onewayDirection": 1
     },
     {
@@ -23441,8 +23456,8 @@
           "elevationMeters": 1.5641949814525438
         }
       ],
-      "distanceFromRouteMeters": 8.081044104840693,
-      "nearestRouteDistanceMeters": 6897.664439959824,
+      "distanceFromRouteMeters": 8.081040658949314,
+      "nearestRouteDistanceMeters": 6902.849778534888,
       "onewayDirection": 1
     },
     {
@@ -23508,8 +23523,8 @@
           "elevationMeters": 0.8081730919776399
         }
       ],
-      "distanceFromRouteMeters": 7.00192824476068,
-      "nearestRouteDistanceMeters": 6806.780070386597,
+      "distanceFromRouteMeters": 7.001925121036079,
+      "nearestRouteDistanceMeters": 6811.965840246818,
       "onewayDirection": 1
     },
     {
@@ -23560,8 +23575,8 @@
           "elevationMeters": 0.8734006478096173
         }
       ],
-      "distanceFromRouteMeters": 64.34844079561334,
-      "nearestRouteDistanceMeters": 6805.715881422706,
+      "distanceFromRouteMeters": 64.34841208826326,
+      "nearestRouteDistanceMeters": 6810.901490153014,
       "onewayDirection": 1
     },
     {
@@ -23602,8 +23617,8 @@
           "elevationMeters": 1.386513670461886
         }
       ],
-      "distanceFromRouteMeters": 6.870414948364687,
-      "nearestRouteDistanceMeters": 6791.060045436927,
+      "distanceFromRouteMeters": 6.8704117930902875,
+      "nearestRouteDistanceMeters": 6796.245889214042,
       "onewayDirection": 1
     },
     {
@@ -23649,8 +23664,8 @@
           "elevationMeters": 0.971966495223537
         }
       ],
-      "distanceFromRouteMeters": 67.3900083099396,
-      "nearestRouteDistanceMeters": 6804.673872630341,
+      "distanceFromRouteMeters": 67.38997824567488,
+      "nearestRouteDistanceMeters": 6809.859477449899,
       "onewayDirection": 1
     },
     {
@@ -23701,8 +23716,8 @@
           "elevationMeters": 0.7847102545768018
         }
       ],
-      "distanceFromRouteMeters": 8.066881826240602,
-      "nearestRouteDistanceMeters": 75.19601934479302,
+      "distanceFromRouteMeters": 8.066878523036886,
+      "nearestRouteDistanceMeters": 75.19568568826925,
       "onewayDirection": 1
     },
     {
@@ -23738,8 +23753,8 @@
           "elevationMeters": 0.8930410369777892
         }
       ],
-      "distanceFromRouteMeters": 105.72816708196369,
-      "nearestRouteDistanceMeters": 50.84880981123299,
+      "distanceFromRouteMeters": 105.72812378869526,
+      "nearestRouteDistanceMeters": 50.84886366999083,
       "onewayDirection": 1
     },
     {
@@ -23775,8 +23790,8 @@
           "elevationMeters": 0.7109943515971147
         }
       ],
-      "distanceFromRouteMeters": 109.36362958679263,
-      "nearestRouteDistanceMeters": 66.2005564764159,
+      "distanceFromRouteMeters": 109.36358480488548,
+      "nearestRouteDistanceMeters": 66.2005476995648,
       "onewayDirection": 1
     },
     {
@@ -23837,8 +23852,8 @@
           "elevationMeters": 1.3093793015340816
         }
       ],
-      "distanceFromRouteMeters": 8.274985317135583,
-      "nearestRouteDistanceMeters": 91.98448253841883,
+      "distanceFromRouteMeters": 8.274981909537033,
+      "nearestRouteDistanceMeters": 91.98406996121459,
       "onewayDirection": 1
     },
     {
@@ -23889,8 +23904,8 @@
           "elevationMeters": 0.8524498242958086
         }
       ],
-      "distanceFromRouteMeters": 96.83966912157888,
-      "nearestRouteDistanceMeters": 65.2777490889421,
+      "distanceFromRouteMeters": 96.83962946794733,
+      "nearestRouteDistanceMeters": 65.27770979063578,
       "onewayDirection": 1
     },
     {
@@ -23941,8 +23956,8 @@
           "elevationMeters": 0.8567827543536963
         }
       ],
-      "distanceFromRouteMeters": 75.41611146891374,
-      "nearestRouteDistanceMeters": 6705.0417155153955,
+      "distanceFromRouteMeters": 75.41608020975616,
+      "nearestRouteDistanceMeters": 6710.227772934368,
       "onewayDirection": 1
     },
     {
@@ -23998,8 +24013,8 @@
           "elevationMeters": 1.0672737732951025
         }
       ],
-      "distanceFromRouteMeters": 51.812756521625005,
-      "nearestRouteDistanceMeters": 6800.938770340529,
+      "distanceFromRouteMeters": 51.812732726342595,
+      "nearestRouteDistanceMeters": 6806.124435868193,
       "onewayDirection": 1
     },
     {
@@ -24040,8 +24055,8 @@
           "elevationMeters": 0.9728836150703069
         }
       ],
-      "distanceFromRouteMeters": 7.20235627002422,
-      "nearestRouteDistanceMeters": 6700.709581049749,
+      "distanceFromRouteMeters": 7.202353284725946,
+      "nearestRouteDistanceMeters": 6705.895850102765,
       "onewayDirection": 1
     },
     {
@@ -24092,8 +24107,8 @@
           "elevationMeters": 0.9725383835328503
         }
       ],
-      "distanceFromRouteMeters": 84.22323247041776,
-      "nearestRouteDistanceMeters": 6720.503152487616,
+      "distanceFromRouteMeters": 84.22319756080438,
+      "nearestRouteDistanceMeters": 6725.6891120231985,
       "onewayDirection": 1
     },
     {
@@ -24144,8 +24159,8 @@
           "elevationMeters": 0.8559924288622558
         }
       ],
-      "distanceFromRouteMeters": 90.98699843326203,
-      "nearestRouteDistanceMeters": 6708.83490646369,
+      "distanceFromRouteMeters": 90.98696072014127,
+      "nearestRouteDistanceMeters": 6714.020902295808,
       "onewayDirection": 1
     },
     {
@@ -24196,8 +24211,8 @@
           "elevationMeters": 0.9545599908100129
         }
       ],
-      "distanceFromRouteMeters": 111.93990405118525,
-      "nearestRouteDistanceMeters": 61.45741197309212,
+      "distanceFromRouteMeters": 111.93985821435258,
+      "nearestRouteDistanceMeters": 61.457432856321496,
       "onewayDirection": 1
     },
     {
@@ -24243,8 +24258,8 @@
           "elevationMeters": 0.8953546528111236
         }
       ],
-      "distanceFromRouteMeters": 88.21876282895576,
-      "nearestRouteDistanceMeters": 6704.416958035932,
+      "distanceFromRouteMeters": 88.21872626323851,
+      "nearestRouteDistanceMeters": 6709.602982542422,
       "onewayDirection": 1
     },
     {
@@ -24295,8 +24310,8 @@
           "elevationMeters": 1.402606922595131
         }
       ],
-      "distanceFromRouteMeters": 7.675175200155727,
-      "nearestRouteDistanceMeters": 6684.02340351825,
+      "distanceFromRouteMeters": 7.675171991517888,
+      "nearestRouteDistanceMeters": 6689.209750145123,
       "onewayDirection": 1
     },
     {
@@ -24337,8 +24352,8 @@
           "elevationMeters": 0.8913781175375803
         }
       ],
-      "distanceFromRouteMeters": 93.84290415650945,
-      "nearestRouteDistanceMeters": 7023.588608910942,
+      "distanceFromRouteMeters": 93.84286347818794,
+      "nearestRouteDistanceMeters": 7028.773107567455,
       "onewayDirection": 1
     },
     {
@@ -24374,8 +24389,8 @@
           "elevationMeters": 0.8876913611967455
         }
       ],
-      "distanceFromRouteMeters": 133.52367769239592,
-      "nearestRouteDistanceMeters": 7118.846880844993,
+      "distanceFromRouteMeters": 133.5236147648277,
+      "nearestRouteDistanceMeters": 7124.030797044838,
       "onewayDirection": 1
     },
     {
@@ -24416,8 +24431,8 @@
           "elevationMeters": 0.8265814272424468
         }
       ],
-      "distanceFromRouteMeters": 94.77176542707977,
-      "nearestRouteDistanceMeters": 7007.604870239718,
+      "distanceFromRouteMeters": 94.77172434612233,
+      "nearestRouteDistanceMeters": 7012.78944161724,
       "onewayDirection": 1
     },
     {
@@ -24453,8 +24468,8 @@
           "elevationMeters": 0.879767881590005
         }
       ],
-      "distanceFromRouteMeters": 111.50581844115064,
-      "nearestRouteDistanceMeters": 6939.0902150571665,
+      "distanceFromRouteMeters": 111.50577090919889,
+      "nearestRouteDistanceMeters": 6944.275064479045,
       "onewayDirection": 1
     },
     {
@@ -24485,8 +24500,8 @@
           "elevationMeters": 0.8451693661859104
         }
       ],
-      "distanceFromRouteMeters": 115.63741956188876,
-      "nearestRouteDistanceMeters": 6924.437223186976,
+      "distanceFromRouteMeters": 115.63737026874571,
+      "nearestRouteDistanceMeters": 6929.6221300910665,
       "onewayDirection": 1
     },
     {
@@ -24512,8 +24527,8 @@
           "elevationMeters": 0.8486415502516567
         }
       ],
-      "distanceFromRouteMeters": 137.701027594379,
-      "nearestRouteDistanceMeters": 6839.584436455829,
+      "distanceFromRouteMeters": 137.7009688763738,
+      "nearestRouteDistanceMeters": 6844.769681443163,
       "onewayDirection": 1
     },
     {
@@ -24534,8 +24549,8 @@
           "elevationMeters": 0.8037234539013691
         }
       ],
-      "distanceFromRouteMeters": 141.568314509411,
-      "nearestRouteDistanceMeters": 6823.467954782374,
+      "distanceFromRouteMeters": 141.56825135246254,
+      "nearestRouteDistanceMeters": 6828.653256312051,
       "onewayDirection": 1
     },
     {
@@ -24567,7 +24582,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4993.486368956188,
+      "nearestRouteDistanceMeters": 4993.470111092712,
       "onewayDirection": 1
     },
     {
@@ -24604,7 +24619,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4993.486368956188,
+      "nearestRouteDistanceMeters": 4993.470111092712,
       "onewayDirection": 1
     },
     {
@@ -24626,7 +24641,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4993.486368956188,
+      "nearestRouteDistanceMeters": 4993.470111092712,
       "onewayDirection": 1
     },
     {
@@ -24697,8 +24712,8 @@
           "elevationMeters": 0.8695519835346825
         }
       ],
-      "distanceFromRouteMeters": 8.465944898164839,
-      "nearestRouteDistanceMeters": 7185.470339923445,
+      "distanceFromRouteMeters": 8.465937455708826,
+      "nearestRouteDistanceMeters": 7190.654319394603,
       "onewayDirection": 1
     },
     {
@@ -24769,8 +24784,8 @@
           "elevationMeters": 1.3563540954735829
         }
       ],
-      "distanceFromRouteMeters": 8.819564390774923,
-      "nearestRouteDistanceMeters": 7165.800121097685,
+      "distanceFromRouteMeters": 8.819557987786604,
+      "nearestRouteDistanceMeters": 7170.984187148254,
       "onewayDirection": 1
     },
     {
@@ -24831,8 +24846,8 @@
           "elevationMeters": 3.064086746016855
         }
       ],
-      "distanceFromRouteMeters": 139.67780283946075,
-      "nearestRouteDistanceMeters": 1603.2007584330327,
+      "distanceFromRouteMeters": 139.67729568198277,
+      "nearestRouteDistanceMeters": 1603.1984652510637,
       "onewayDirection": 1
     },
     {
@@ -24889,8 +24904,8 @@
           "elevationMeters": 2.9982528829473085
         }
       ],
-      "distanceFromRouteMeters": 142.02183250421677,
-      "nearestRouteDistanceMeters": 1606.0776736319767,
+      "distanceFromRouteMeters": 142.02131847409376,
+      "nearestRouteDistanceMeters": 1606.0747201454503,
       "onewayDirection": 1
     },
     {
@@ -24917,8 +24932,8 @@
           "elevationMeters": 1.324911040875225
         }
       ],
-      "distanceFromRouteMeters": 69.76662770648507,
-      "nearestRouteDistanceMeters": 1207.0258040989256,
+      "distanceFromRouteMeters": 69.76643228392032,
+      "nearestRouteDistanceMeters": 1207.0239841395864,
       "onewayDirection": 1
     },
     {
@@ -24965,8 +24980,8 @@
           "elevationMeters": 1.5715209493369977
         }
       ],
-      "distanceFromRouteMeters": 6.492350269727954,
-      "nearestRouteDistanceMeters": 1190.1507177491528,
+      "distanceFromRouteMeters": 6.492317470672859,
+      "nearestRouteDistanceMeters": 1190.1489234799567,
       "onewayDirection": 1
     },
     {
@@ -24988,8 +25003,8 @@
           "elevationMeters": 1.6883724423013047
         }
       ],
-      "distanceFromRouteMeters": 6.879500415896883,
-      "nearestRouteDistanceMeters": 1199.0860562658022,
+      "distanceFromRouteMeters": 6.879475688617398,
+      "nearestRouteDistanceMeters": 1199.0842822749057,
       "onewayDirection": 1
     },
     {
@@ -25017,7 +25032,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 1145.6192163296935,
+      "nearestRouteDistanceMeters": 1145.6174832692786,
       "onewayDirection": 1
     },
     {
@@ -25114,8 +25129,8 @@
           "elevationMeters": 0.9068094175693615
         }
       ],
-      "distanceFromRouteMeters": 2.500619001795548,
-      "nearestRouteDistanceMeters": 1145.6192163296935,
+      "distanceFromRouteMeters": 2.500618448342719,
+      "nearestRouteDistanceMeters": 1145.6174832692786,
       "onewayDirection": 1
     },
     {
@@ -25156,8 +25171,8 @@
           "elevationMeters": 0.6993560843847291
         }
       ],
-      "distanceFromRouteMeters": 116.27418316556579,
-      "nearestRouteDistanceMeters": 4723.881879221546,
+      "distanceFromRouteMeters": 116.27412783202809,
+      "nearestRouteDistanceMeters": 4723.866535939989,
       "onewayDirection": 1
     },
     {
@@ -25179,8 +25194,8 @@
           "elevationMeters": 1.9332986433951245
         }
       ],
-      "distanceFromRouteMeters": 8.137408856275641,
-      "nearestRouteDistanceMeters": 4882.820160437673,
+      "distanceFromRouteMeters": 8.137404983776925,
+      "nearestRouteDistanceMeters": 4882.804396899623,
       "onewayDirection": 1
     },
     {
@@ -25203,7 +25218,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4882.923340003384,
+      "nearestRouteDistanceMeters": 4882.907600254077,
       "onewayDirection": 1
     },
     {
@@ -25226,7 +25241,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 5013.706368359556,
+      "nearestRouteDistanceMeters": 5013.690099508954,
       "onewayDirection": 1
     },
     {
@@ -25253,7 +25268,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4578.680138627302,
+      "nearestRouteDistanceMeters": 4578.665818951131,
       "onewayDirection": 1
     },
     {
@@ -25275,7 +25290,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 4578.680138627302,
+      "nearestRouteDistanceMeters": 4578.665818951131,
       "onewayDirection": 1
     },
     {
@@ -25362,8 +25377,8 @@
           "elevationMeters": 1.2865467193287774
         }
       ],
-      "distanceFromRouteMeters": 15.518041835496014,
-      "nearestRouteDistanceMeters": 4882.722928720685,
+      "distanceFromRouteMeters": 15.518034450639567,
+      "nearestRouteDistanceMeters": 4882.707143623283,
       "onewayDirection": 1
     },
     {
@@ -25390,8 +25405,8 @@
           "elevationMeters": 1.2047121136354857
         }
       ],
-      "distanceFromRouteMeters": 52.75373850179427,
-      "nearestRouteDistanceMeters": 4803.467601520164,
+      "distanceFromRouteMeters": 52.75371339690087,
+      "nearestRouteDistanceMeters": 4803.452075757591,
       "onewayDirection": 1
     },
     {
@@ -25512,8 +25527,8 @@
           "elevationMeters": 2.8807688337568265
         }
       ],
-      "distanceFromRouteMeters": 125.59408876923683,
-      "nearestRouteDistanceMeters": 5137.26907064781,
+      "distanceFromRouteMeters": 125.59362191683228,
+      "nearestRouteDistanceMeters": 5137.253180169863,
       "onewayDirection": 1
     },
     {
@@ -25535,8 +25550,8 @@
           "elevationMeters": 2.866099450181206
         }
       ],
-      "distanceFromRouteMeters": 135.66737451456686,
-      "nearestRouteDistanceMeters": 109.15408828862604,
+      "distanceFromRouteMeters": 135.66731864740362,
+      "nearestRouteDistanceMeters": 109.15319226887149,
       "onewayDirection": 1
     },
     {
@@ -25618,7 +25633,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 2327.6924442449586,
+      "nearestRouteDistanceMeters": 2327.686301430273,
       "onewayDirection": 1
     },
     {
@@ -25664,8 +25679,8 @@
           "elevationMeters": 2.389312678544476
         }
       ],
-      "distanceFromRouteMeters": 123.41364754662666,
-      "nearestRouteDistanceMeters": 2301.705098326932,
+      "distanceFromRouteMeters": 123.41359509902703,
+      "nearestRouteDistanceMeters": 2301.699071224132,
       "onewayDirection": 1
     },
     {
@@ -25703,7 +25718,7 @@
         }
       ],
       "distanceFromRouteMeters": 0,
-      "nearestRouteDistanceMeters": 6447.541281704932,
+      "nearestRouteDistanceMeters": 6452.72875682396,
       "onewayDirection": 1
     },
     {
@@ -25730,8 +25745,8 @@
           "elevationMeters": 2.0041374692906104
         }
       ],
-      "distanceFromRouteMeters": 7.061150289860601,
-      "nearestRouteDistanceMeters": 4965.007176188163,
+      "distanceFromRouteMeters": 7.061147046296468,
+      "nearestRouteDistanceMeters": 4964.991031163225,
       "onewayDirection": 1
     },
     {
@@ -25758,8 +25773,8 @@
           "elevationMeters": 1.8903222667334378
         }
       ],
-      "distanceFromRouteMeters": 7.061150289860601,
-      "nearestRouteDistanceMeters": 4965.007176188163,
+      "distanceFromRouteMeters": 7.061147046296468,
+      "nearestRouteDistanceMeters": 4964.991031163225,
       "onewayDirection": 1
     },
     {
@@ -25781,8 +25796,8 @@
           "elevationMeters": 2.1455341806667296
         }
       ],
-      "distanceFromRouteMeters": 2.5457355915542514,
-      "nearestRouteDistanceMeters": 4882.89071202427,
+      "distanceFromRouteMeters": 2.545734380068131,
+      "nearestRouteDistanceMeters": 4882.874964834439,
       "onewayDirection": 1
     },
     {
@@ -25792,6 +25807,16 @@
       "widthMeters": 2,
       "widthSource": "class",
       "points": [
+        {
+          "latitude": -45.909938000000004,
+          "longitude": 170.495866,
+          "elevationMeters": 16.69755661839317
+        },
+        {
+          "latitude": -45.909930300000006,
+          "longitude": 170.4959143,
+          "elevationMeters": 17.459293807932745
+        },
         {
           "latitude": -45.909922400000006,
           "longitude": 170.49591120000002,
@@ -25823,8 +25848,8 @@
           "elevationMeters": 17.469036295007434
         }
       ],
-      "distanceFromRouteMeters": 144.18247708230362,
-      "nearestRouteDistanceMeters": 7477.181619652071,
+      "distanceFromRouteMeters": 142.0581905779373,
+      "nearestRouteDistanceMeters": 7485.383395170644,
       "onewayDirection": 1
     },
     {
@@ -25855,8 +25880,8 @@
           "elevationMeters": 33.230424603867476
         }
       ],
-      "distanceFromRouteMeters": 110.608544559436,
-      "nearestRouteDistanceMeters": 3431.7014266615924,
+      "distanceFromRouteMeters": 110.60824116411864,
+      "nearestRouteDistanceMeters": 3431.692630848132,
       "onewayDirection": 1
     },
     {
@@ -25877,11 +25902,9 @@
           "elevationMeters": 33.60848711337781
         }
       ],
-      "distanceFromRouteMeters": 142.28520325546145,
-      "nearestRouteDistanceMeters": 3431.7014266615924,
+      "distanceFromRouteMeters": 142.28503469479872,
+      "nearestRouteDistanceMeters": 3431.692630848132,
       "onewayDirection": 1
     }
-  ],
-  "elevationSamplerVersion": 2,
-  "elevationSamplingMethod": "finest-valid LINZ DEM raster; bilinear pixel-centred samples"
+  ]
 }

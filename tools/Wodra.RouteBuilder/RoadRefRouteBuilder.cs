@@ -128,6 +128,12 @@ internal static class RoadRefRouteBuilder
             throw new InvalidOperationException("The generated road-ref route did not close at its selected Oval node.");
         allPoints[^1] = allPoints[0];
 
+        var sourceOsmNodeCount = allPoints.Count;
+        var turnaroundResult = config.TurnaroundWidthMeters is { } turnaroundWidth
+            ? TurnaroundGeometry.Repair(allPoints, turnaroundWidth, config.TurnaroundWidthSource)
+            : new TurnaroundGeometryResult(allPoints, []);
+        allPoints = turnaroundResult.Points.ToList();
+
         var rawDistance = 0d;
         var maximumSourceGap = 0d;
         for (var i = 1; i < allPoints.Count; i++)
@@ -178,8 +184,8 @@ internal static class RoadRefRouteBuilder
             : Array.Empty<string>();
         var snaps = new[] { startSnap, turnInSnap, turnOutSnap, finishSnap };
         return new RouteBuildResult(centreline, routePoints, snaps, legs, rawDistance, maximumOutputGap,
-            maximumSourceGap, 0, allPoints.Count, centreline.Count - allPoints.Count,
-            true, warnings, [], summary, roadSegments);
+            maximumSourceGap, 0, sourceOsmNodeCount, centreline.Count - sourceOsmNodeCount,
+            true, warnings, [], summary, roadSegments, turnaroundResult.Turnarounds);
 
         void AddSection(string name, string sectionType, RoutedPath path, AnchorSnap from, AnchorSnap to)
         {

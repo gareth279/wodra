@@ -50,7 +50,11 @@ public readonly record struct RideWorldDiagnostic(
       int AiRiders = 0, string? NearestAiName = null,
       double? NearestAiRelativeDistanceMeters = null, double? NearestAiSpeedKph = null,
       IReadOnlyList<AiRiderDebugState>? NearestAiRiders = null,
-      IReadOnlyList<RemoteHumanRiderDebugState>? RemoteHumanRiders = null);
+      IReadOnlyList<RemoteHumanRiderDebugState>? RemoteHumanRiders = null,
+      Godot.Vector3? CameraDesiredPosition = null,
+      string? CameraObstructionSource = null,
+      string? CameraClearanceResult = null,
+      string? CameraView = null);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -223,6 +227,7 @@ public partial class RideWorldView : Node3D
     {
         if (_session?.IsRideActive != true) return;
         _camera.Current = true;
+        UpdateSceneryCollisionForDistance(_session.CurrentRideState.DistanceMeters);
         _camera.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(_lastPose.Forward), 0);
     }
 
@@ -545,14 +550,8 @@ public partial class RideWorldView : Node3D
         UpdateRemoteRiders(delta, routeLength);
         var position = _rider.GlobalPosition;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
+        UpdateSceneryCollisionForDistance(distance);
         _camera.Follow(position, forward, delta);
-        _landmarkLayer?.UpdateForRideDistance(distance);
-        _buildingLayer?.UpdateForRideDistance(distance);
-        _vegetationLayer?.UpdateForRideDistance(distance);
-        _streetFurnitureLayer?.UpdateForRideDistance(distance);
-        _roadMarkingLayer?.UpdateForRideDistance(distance);
-        _backgroundStreetLayer?.UpdateForRideDistance(distance);
-        _terrainLayer?.UpdateForRideDistance(distance);
         _ambientActorManager?.UpdateForRider(new System.Numerics.Vector3(position.X, position.Y, position.Z),
             delta, _session.IsRidePaused);
         _debugElapsed += delta;
@@ -753,14 +752,8 @@ public partial class RideWorldView : Node3D
             (int)Math.Floor(distance / _geometry.LengthMeters) + 1, _steering.LateralOffsetMeters,
             0, state.CurrentPowerWatts, _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, state.ElapsedSeconds);
         _rider!.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), 0);
+        UpdateSceneryCollisionForDistance(distance);
         _camera!.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(pose.Forward), 1);
-        _landmarkLayer?.UpdateForRideDistance(distance);
-        _buildingLayer?.UpdateForRideDistance(distance);
-        _vegetationLayer?.UpdateForRideDistance(distance);
-        _streetFurnitureLayer?.UpdateForRideDistance(distance);
-        _roadMarkingLayer?.UpdateForRideDistance(distance);
-        _backgroundStreetLayer?.UpdateForRideDistance(distance);
-        _terrainLayer?.UpdateForRideDistance(distance);
     }
 
     public RideWorldDiagnostic GetDiagnosticState()
@@ -811,7 +804,22 @@ public partial class RideWorldView : Node3D
             _ambientActorManager?.FirstPedestrianState?.SpeedMetersPerSecond, _ambientActorManager?.FirstPedestrianVisible,
             Math.Max(0, ( _riderStateSource?.GetRiders().Count ?? 1) - 1),
             nearestAiRider?.Name, nearestAiRider?.RelativeDistanceMeters, nearestAiRider?.SpeedKph, nearestAi,
-            GetRemoteHumanRiderDiagnostics(distance, routeLength: _geometry?.LengthMeters ?? 0));
+            GetRemoteHumanRiderDiagnostics(distance, routeLength: _geometry?.LengthMeters ?? 0),
+            _camera.DesiredPosition, _camera.ObstructionSource, _camera.ClearanceResult,
+            _camera.View.ToString());
+    }
+
+    private void UpdateSceneryCollisionForDistance(double distance)
+    {
+        // Collision chunks must be active for the destination route position
+        // before camera queries, especially after debug and lap jumps.
+        _landmarkLayer?.UpdateForRideDistance(distance);
+        _buildingLayer?.UpdateForRideDistance(distance);
+        _vegetationLayer?.UpdateForRideDistance(distance);
+        _streetFurnitureLayer?.UpdateForRideDistance(distance);
+        _roadMarkingLayer?.UpdateForRideDistance(distance);
+        _backgroundStreetLayer?.UpdateForRideDistance(distance);
+        _terrainLayer?.UpdateForRideDistance(distance);
     }
 
     private IReadOnlyList<RemoteHumanRiderDebugState> GetRemoteHumanRiderDiagnostics(double localDistance, double routeLength)

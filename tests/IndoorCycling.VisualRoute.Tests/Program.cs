@@ -1322,6 +1322,57 @@ var tests = new (string Name, Action Run)[]
         };
         if (route.GeometryFingerprint == changedElevation.GeometryFingerprint)
             throw new Exception("Route fingerprint must change when the elevation profile changes.");
+        var southCoastal = RouteCatalog.GetById("dunedin-south-coastal-loop");
+        if (southCoastal is null || southCoastal.RouteDataVersion != 2
+            || southCoastal.GeometryFingerprint.Length != 64)
+            throw new Exception("The regenerated South Coastal route must publish a new geometry version and fingerprint.");
+    }),
+    ("South Coastal regenerated turnarounds keep continuous heading, bounded steering and stable grade", () =>
+    {
+        const string id = "dunedin-south-coastal-loop";
+        var route = RouteCatalog.GetById(id) ?? throw new Exception("South Coastal route was not loaded.");
+        var packagePath = Path.Combine(AppContext.BaseDirectory, "Routes", id, $"{id}.route-points.json");
+        using var package = JsonDocument.Parse(File.ReadAllText(packagePath));
+        var turnarounds = package.RootElement.GetProperty("generatedTurnarounds");
+        if (turnarounds.GetArrayLength() != 2)
+            throw new Exception("Expected both source reverse stubs to have generated turnarounds.");
+        var geometry = new VisualRoute(route);
+        foreach (var turnaround in turnarounds.EnumerateArray())
+        {
+            var start = turnaround.GetProperty("newDistanceMeters").GetDouble();
+            if (Math.Abs(turnaround.GetProperty("widthMeters").GetDouble() - 7) > 0.001
+                || Math.Abs(turnaround.GetProperty("radiusMeters").GetDouble() - 1.54) > 0.001)
+                throw new Exception("Turnaround geometry escaped its documented road corridor policy.");
+
+            var first = geometry.GetPoseAtDistance(start - 2).Forward;
+            var previous = first;
+            for (var distance = start - 1.75; distance <= start + 5; distance += 0.25)
+            {
+                var pose = geometry.GetPoseAtDistance(distance);
+                if (!float.IsFinite(pose.Position.X) || !float.IsFinite(pose.Position.Y)
+                    || !float.IsFinite(pose.Position.Z) || !float.IsFinite(pose.Forward.X)
+                    || !float.IsFinite(pose.Forward.Y) || !float.IsFinite(pose.Forward.Z))
+                    throw new Exception($"Nonfinite route pose through turnaround at {distance:F2} m.");
+                if (Vector3.Dot(Vector3.Normalize(previous), Vector3.Normalize(pose.Forward)) < 0.75f)
+                    throw new Exception($"Heading discontinuity through turnaround at {distance:F2} m.");
+                var grade = route.GetGradientAt(distance);
+                if (!double.IsFinite(grade) || Math.Abs(grade) >= 15)
+                    throw new Exception($"Unstable elevation gradient through turnaround at {distance:F2} m.");
+                foreach (var lane in new[] { -1.75f, 0f, 1.75f })
+                {
+                    var steered = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, lane);
+                    if (!float.IsFinite(steered.X) || !float.IsFinite(steered.Z))
+                        throw new Exception("Steering produced a nonfinite position through the turnaround.");
+                }
+                previous = pose.Forward;
+            }
+
+            var reversed = geometry.GetPoseAtDistance(start + 4.8).Forward;
+            if (Vector3.Dot(Vector3.Normalize(first), Vector3.Normalize(reversed)) > -0.8f)
+                throw new Exception("Generated turnaround did not reverse heading continuously.");
+        }
+        if (route.DistanceMeters < 8276.3 || route.DistanceMeters > 8276.5)
+            throw new Exception($"Generated lap distance is inconsistent: {route.DistanceMeters:F3} m.");
     }),
     ("external route packages load validated geometry and attribution without catalogue code changes", () =>
     {
@@ -1343,6 +1394,19 @@ var tests = new (string Name, Action Run)[]
                 || route.SourceAttribution != "© OpenStreetMap contributors, ODbL 1.0"
                 || route.GeometryFingerprint.Length != 64)
                 throw new Exception("External route package metadata was not loaded.");
+            File.WriteAllText(path, $$"""
+                {"id":"fixture-loop","name":"Fixture Loop","routeType":"loop","difficulty":"Easy","routeDataVersion":4,
+                 "geometryFingerprint":"{{route.GeometryFingerprint}}","sourceAttribution":"© OpenStreetMap contributors, ODbL 1.0","isValid":true,"actualOsmDistanceMeters":20,
+                 "points":[{"distanceMeters":0,"latitude":-45,"longitude":170,"elevationMeters":5,"rawElevationMeters":5,"gradientPercent":1},
+                           {"distanceMeters":10,"latitude":-45.00002,"longitude":170,"elevationMeters":5.1,"rawElevationMeters":5.1,"gradientPercent":1},
+                           {"distanceMeters":20,"latitude":-45,"longitude":170,"elevationMeters":5,"rawElevationMeters":5,"gradientPercent":-1}]}
+                """);
+            try
+            {
+                RouteDataLoader.LoadPackage(path);
+                throw new Exception("A stale route fingerprint was accepted.");
+            }
+            catch (InvalidDataException) { }
         }
         finally { Directory.Delete(folder, true); }
     }),
@@ -2419,6 +2483,9 @@ var tests = new (string Name, Action Run)[]
         var throughClearPath = CameraObstructionMath.ClampToHit(anchor, target, null);
         if (throughClearPath != target)
             throw new Exception("A clear camera path must retain the authored view distance.");
+        Near(4.8f, CameraObstructionMath.ResolveSafeDistance(10, .5f, .2f), .001f);
+        Near(0f, CameraObstructionMath.ResolveSafeDistance(10, 0, .2f), .001f);
+        Near(9.8f, CameraObstructionMath.ResolveSafeDistance(10, 1, .2f), .001f);
     }),
     ("building footprints are excluded only when mapped building volume intersects the riding corridor", () =>
     {

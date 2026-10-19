@@ -31,6 +31,38 @@ var tests = new (string Name, Action Run)[]
             .Append(new RouteAnchor("Finish", 400, .001, 0)).ToList()).Validate());
         Throws<InvalidDataException>(() => OutAndBackConfig(anchors.Take(anchors.Count - 1).ToList()).Validate());
     }),
+    ("exact reversed road stubs become continuous width-bounded U-turns", () =>
+    {
+        static GeoPoint East(double meters) => new(0, meters / 111_194.9266);
+        var source = new[] { East(0), East(10), East(20), East(10), East(0), East(-10), East(-20) };
+        var result = TurnaroundGeometry.Repair(source, 7, "test road width");
+        Equal(1, result.Turnarounds.Count);
+        var turn = result.Turnarounds[0];
+        Near(7, turn.WidthMeters, .001);
+        Near(1.54, turn.RadiusMeters, .001);
+        if (turn.MergeLengthMeters > 14 || turn.AddedDistanceMeters <= 0)
+            throw new Exception("The generated turn must stay within the merge corridor and account for added route distance.");
+        var maximumOffset = result.Points.Max(point => Math.Abs(point.Latitude) * Math.PI / 180 * 6_371_000);
+        if (maximumOffset > 3.5 + .05)
+            throw new Exception($"Generated turnaround exceeded half the documented road width: {maximumOffset:F2} m.");
+        for (var i = 1; i + 1 < result.Points.Count; i++)
+        {
+            static (double East, double North) Vector(GeoPoint from, GeoPoint to)
+            {
+                var latitude = (from.Latitude + to.Latitude) * .5 * Math.PI / 180;
+                return ((to.Longitude - from.Longitude) * Math.PI / 180 * 6_371_000 * Math.Cos(latitude),
+                    (to.Latitude - from.Latitude) * Math.PI / 180 * 6_371_000);
+            }
+            static double Length((double East, double North) v) => Math.Sqrt(v.East * v.East + v.North * v.North);
+            var a = Vector(result.Points[i - 1], result.Points[i]);
+            var b = Vector(result.Points[i], result.Points[i + 1]);
+            var cosine = (a.East * b.East + a.North * b.North) / (Length(a) * Length(b));
+            if (cosine < .70)
+                throw new Exception($"Generated route heading changed abruptly at output index {i}: cosine={cosine:F3}.");
+        }
+        if (result.Points.Zip(result.Points.Skip(1)).Any(pair => GeoMath.HaversineMeters(pair.First, pair.Second) < .01))
+            throw new Exception("Turnaround output must not contain duplicate or zero-length route edges.");
+    }),
     ("out-and-back solving uses connected legal road edges in both directions", () =>
     {
         var config = OutAndBackConfig([

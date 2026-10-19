@@ -36,7 +36,7 @@ internal static class RoutePackageMetadata
                 ? "" : $"; terrain: {terrainAttribution}");
         routeNode["routeType"] = type;
         routeNode["difficulty"] = difficulty;
-        routeNode["routeDataVersion"] = 1;
+        routeNode["routeDataVersion"] = config.RouteDataVersion;
         routeNode["geometryFingerprint"] = fingerprint;
         routeNode["totalAscentMeters"] = totalAscent;
         routeNode["sourceAttribution"] = attribution;
@@ -44,7 +44,7 @@ internal static class RoutePackageMetadata
 
         reportNode["routeType"] = type;
         reportNode["difficulty"] = difficulty;
-        reportNode["routeDataVersion"] = 1;
+        reportNode["routeDataVersion"] = config.RouteDataVersion;
         reportNode["geometryFingerprint"] = fingerprint;
         reportNode["totalAscentMeters"] = totalAscent;
         reportNode["sourceAttribution"] = attribution;
