@@ -100,6 +100,8 @@ public partial class RouteWorldSmokeTest : Node
 
             if (id == "dunedin-rolling-loop")
             {
+                await VerifySustainedRightLaneCameraFollow(visual, camera, buildingLayer, terrainLayer);
+                await VerifyReleasedAndHighSpeedCameraFollow(visual, camera, buildingLayer, terrainLayer);
                 foreach (var view in RiderCameraViewCycle.Views)
                 foreach (var lane in new[] { -1.75f, 0f, 1.75f })
                 {
@@ -168,7 +170,7 @@ public partial class RouteWorldSmokeTest : Node
         var wall = new StaticBody3D
         {
             Name = "SmokeCameraWall",
-            GlobalPosition = anchor.Lerp(target, .7f),
+            Position = anchor.Lerp(target, .7f),
             CollisionLayer = 1u << 1,
             CollisionMask = 0
         };
@@ -184,10 +186,124 @@ public partial class RouteWorldSmokeTest : Node
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         var nextPose = route.GetPoseAtDistance(242.390684);
         camera.Follow(ProceduralRoad.ToGodot(nextPose.Position), ProceduralRoad.ToGodot(nextPose.Forward), 1d / 60);
-        if (camera.ClearanceResult != "camera-overlap-retracted")
+        if (camera.ClearanceResult != "camera-overlap-recovered")
             throw new InvalidOperationException($"A camera beginning inside a collision mesh was not retracted: {camera.ClearanceResult}.");
         world.RemoveChild(wall);
         wall.Free();
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
     }
+
+    private async System.Threading.Tasks.Task VerifySustainedRightLaneCameraFollow(VisualRoute route,
+        ChaseCamera camera, BuildingLayer buildings, TerrainLayer terrain)
+    {
+        const float rightLaneMeters = 3.05f;
+        const double speedMetersPerSecond = 61d / 3.6d;
+        const double startDistance = 200d;
+        const double endDistance = 420d;
+        var first = route.GetPoseAtDistance(startDistance);
+        var firstCenter = ProceduralRoad.ToGodot(first.Position);
+        // RiderLaneMath's positive value is route-left; the right key drives the
+        // offset negative. Verify the actual world-space side rather than relying
+        // on the sign shown in a diagnostic field.
+        var firstLane = ProceduralRoad.ToGodot(RiderLaneMath.OffsetPosition(first.Position, first.Forward, -rightLaneMeters));
+        var flatForward = ProceduralRoad.ToGodot(first.Forward);
+        var flatRight = new Vector3(flatForward.X, 0, flatForward.Z).Cross(Vector3.Up).Normalized();
+        var signedLane = (firstLane - firstCenter).Dot(flatRight);
+        if (Math.Abs(signedLane - rightLaneMeters) > .02f)
+            throw new InvalidOperationException($"Right lane steering sign mismatch: expected +{rightLaneMeters:F2}m, world-space offset was {signedLane:F2}m.");
+
+        camera.SetView(RiderCameraView.GameplayRefined);
+        camera.ResetFollow();
+        Vector3? beforeObstruction = null;
+        Vector3? afterLongAdvance = null;
+        var sawObstruction = false;
+        var maxRiderDistance = 0f;
+        var frames = (int)Math.Ceiling((endDistance - startDistance) / (speedMetersPerSecond / 60));
+        for (var frame = 0; frame <= frames; frame++)
+        {
+            var distance = Math.Min(endDistance, startDistance + frame * speedMetersPerSecond / 60);
+            var pose = route.GetPoseAtDistance(distance);
+            var lanePosition = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, -rightLaneMeters);
+            var rider = ProceduralRoad.ToGodot(lanePosition);
+            var forward = ProceduralRoad.ToGodot(pose.Forward);
+            buildings.UpdateForRideDistance(distance);
+            terrain.UpdateForRideDistance(distance);
+            camera.Follow(rider, forward, 1d / 60);
+            if (!Finite(camera.GlobalPosition) || !Finite(camera.DesiredPosition))
+                throw new InvalidOperationException($"Sustained camera follow became nonfinite at {distance:F2}m.");
+            if (!camera.HasClearanceAtCurrentPosition())
+                throw new InvalidOperationException($"Camera volume remained inside scenery at {distance:F2}m ({camera.ClearanceResult}/{camera.ObstructionSource}); camera={camera.GlobalPosition}, desired={camera.DesiredPosition}, rider={rider}, follow={camera.RiderToCameraDistance:F2}m.");
+            if (!camera.CanSeeRider(rider))
+                throw new InvalidOperationException($"Camera lost direct rider visibility at {distance:F2}m ({camera.ClearanceResult}/{camera.ObstructionSource}).");
+            maxRiderDistance = Math.Max(maxRiderDistance, camera.GlobalPosition.DistanceTo(rider));
+            if (camera.ClearanceResult is "movement-swept" or "movement-recovered" or "camera-overlap-recovered"
+                or "boom-final-volume-retracted" or "final-volume-recovered")
+            {
+                sawObstruction = true;
+                beforeObstruction ??= camera.GlobalPosition;
+            }
+            if (distance >= 390) afterLongAdvance = camera.GlobalPosition;
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        }
+
+        if (!sawObstruction)
+            throw new InvalidOperationException("Rolling City sustained-right regression did not encounter a real scenery obstruction in the 200–420m section.");
+        if (afterLongAdvance is null || beforeObstruction is null
+            || beforeObstruction.Value.DistanceTo(afterLongAdvance.Value) < 20f)
+            throw new InvalidOperationException("Camera did not recover its position after sustained rider progress through the obstructed section.");
+        if (maxRiderDistance > 24f)
+            throw new InvalidOperationException($"Camera exceeded bounded follow distance during recovery: {maxRiderDistance:F1}m.");
+        GD.Print($"[CameraFollowRegression] route=dunedin-rolling-loop section={startDistance:F0}-{endDistance:F0}m " +
+            $"lane=right({signedLane:F2}m) speed=61km/h obstructionObserved={sawObstruction} " +
+            $"maxRiderDistance={maxRiderDistance:F2}m recoveryDistance={beforeObstruction!.Value.DistanceTo(afterLongAdvance!.Value):F2}m " +
+            $"result={camera.ClearanceResult} source={camera.ObstructionSource ?? "none"}");
+    }
+
+    private async System.Threading.Tasks.Task VerifyReleasedAndHighSpeedCameraFollow(VisualRoute route,
+        ChaseCamera camera, BuildingLayer buildings, TerrainLayer terrain)
+    {
+        const double speedMetersPerSecond = 62d / 3.6d;
+        const double frameRate = 30;
+        const double startDistance = 450;
+        const double endDistance = 600;
+        camera.SetView(RiderCameraView.GameplayRefined);
+        camera.ResetFollow();
+        var frames = (int)Math.Ceiling((endDistance - startDistance) / (speedMetersPerSecond / frameRate));
+        var maxRiderDistance = 0f;
+        for (var frame = 0; frame <= frames; frame++)
+        {
+            var distance = Math.Min(endDistance, startDistance + frame * speedMetersPerSecond / frameRate);
+            var release = Math.Clamp((distance - 485) / 30, 0, 1);
+            var laneOffset = (float)(-3.05 + (1.75 + 3.05) * release);
+            var pose = route.GetPoseAtDistance(distance);
+            var rider = ProceduralRoad.ToGodot(RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, laneOffset));
+            var forward = ProceduralRoad.ToGodot(pose.Forward);
+            buildings.UpdateForRideDistance(distance);
+            terrain.UpdateForRideDistance(distance);
+            camera.Follow(rider, forward, 1d / frameRate);
+            if (!camera.HasClearanceAtCurrentPosition() || !camera.CanSeeRider(rider))
+                throw new InvalidOperationException($"Released/high-speed camera invalid at {distance:F2}m: {camera.ClearanceResult}/{camera.ObstructionSource}.");
+            maxRiderDistance = Math.Max(maxRiderDistance, camera.GlobalPosition.DistanceTo(rider));
+            if (maxRiderDistance > 24f)
+                throw new InvalidOperationException($"Released/high-speed camera exceeded bounded follow distance: {maxRiderDistance:F1}m.");
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        }
+
+        // The debug route jump used during owner inspection must clear stale
+        // camera state and immediately resolve a valid pose at the new location.
+        var jumpDistance = 225.564230;
+        var jumpPose = route.GetPoseAtDistance(jumpDistance);
+        var jumpRider = ProceduralRoad.ToGodot(RiderLaneMath.OffsetPosition(jumpPose.Position, jumpPose.Forward, 1.75f));
+        buildings.UpdateForRideDistance(jumpDistance);
+        terrain.UpdateForRideDistance(jumpDistance);
+        camera.ResetFollow();
+        camera.Follow(jumpRider, ProceduralRoad.ToGodot(jumpPose.Forward), 0);
+        if (!camera.HasClearanceAtCurrentPosition() || !camera.CanSeeRider(jumpRider)
+            || camera.GlobalPosition.DistanceTo(jumpRider) > 12f)
+            throw new InvalidOperationException("Camera did not safely reset after the Rolling City debug reposition.");
+        GD.Print($"[CameraFollowVariants] route=dunedin-rolling-loop section={startDistance:F0}-{endDistance:F0}m " +
+            $"speed=62km/h frameRate={frameRate:F0} steering=right-held-then-released maxRiderDistance={maxRiderDistance:F2}m " +
+            $"debugReposition={jumpDistance:F3}m result={camera.ClearanceResult}");
+    }
+
 }

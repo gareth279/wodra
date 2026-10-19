@@ -21,10 +21,28 @@ public partial class ChaseCamera : Camera3D
     private string? _obstructionSource;
     private string _clearanceResult = "unresolved";
     private Vector3 _desiredPosition;
+    private int _repeatedBlockedMovement;
+    private string _recoveryReason = "none";
 
     public Vector3 DesiredPosition => _desiredPosition;
     public string? ObstructionSource => _obstructionSource;
     public string ClearanceResult => _clearanceResult;
+    public int RepeatedBlockedMovement => _repeatedBlockedMovement;
+    public float RiderToCameraDistance { get; private set; }
+    public string RecoveryReason => _recoveryReason;
+
+    public bool HasClearanceAtCurrentPosition()
+    {
+        var state = GetSpaceState();
+        if (state is null) return false;
+        SetQueryTransform(GlobalPosition);
+        return state.IntersectShape(_clearanceQuery, 1).Count == 0;
+    }
+
+    public bool CanSeeRider(Vector3 riderPosition)
+    {
+        return HasLineOfSight(GlobalPosition, riderPosition + Vector3.Up * 1.05f);
+    }
 
     public ChaseCamera()
     {
@@ -52,6 +70,7 @@ public partial class ChaseCamera : Camera3D
 
     public void Follow(Vector3 riderPosition, Vector3 forward, double delta)
     {
+        _recoveryReason = "none";
         var riderAnchor = new System.Numerics.Vector3(riderPosition.X,riderPosition.Y,riderPosition.Z);
         var routeForward = new System.Numerics.Vector3(forward.X,forward.Y,forward.Z);
         var follow = ChaseCameraMath.FollowPosition(riderAnchor, routeForward, _view);
@@ -79,7 +98,26 @@ public partial class ChaseCamera : Camera3D
             GlobalPosition = blocked || _snap
                 ? safeTarget
                 : ResolveMovementPosition(GlobalPosition, smoothed, safeTarget);
+            if (blocked || _snap) _repeatedBlockedMovement = 0;
+            if (!IsValidEndpoint(anchor, GlobalPosition))
+            {
+                // Re-query the actual resolved endpoint after path resolution.
+                // If a seam/corner invalidated it, search back toward the clear
+                // rider anchor in bounded steps rather than leaving an overlap.
+                var recoveredDistance = safeDistance;
+                var recoveredPosition = anchor + direction * recoveredDistance;
+                while (recoveredDistance > 0 && !IsValidEndpoint(anchor, recoveredPosition))
+                {
+                    recoveredDistance = Math.Max(0, recoveredDistance - 0.25f);
+                    recoveredPosition = anchor + direction * recoveredDistance;
+                }
+                GlobalPosition = recoveredPosition;
+                _clearanceResult = "final-volume-recovered";
+                _recoveryReason = "resolved-endpoint-failed-camera-volume-or-rider-visibility-check";
+                _repeatedBlockedMovement++;
+            }
         }
+        RiderToCameraDistance = GlobalPosition.DistanceTo(riderPosition);
         _lookTarget = _lookTarget.Lerp(lookTarget, weight);
         LookAt(_lookTarget, Vector3.Up);
         _snap = false;
@@ -102,6 +140,7 @@ public partial class ChaseCamera : Camera3D
         {
             _obstructionSource = ColliderName(startOverlaps[0]);
             _clearanceResult = "anchor-overlap";
+            _recoveryReason = "rider-anchor-overlaps-collision-mesh; camera-held-at-anchor";
             // An anchor overlap means the source geometry intrudes on the rider
             // volume. Avoid sending the camera farther through it.
             return 0;
@@ -111,42 +150,112 @@ public partial class ChaseCamera : Camera3D
         var motion = state.CastMotion(_clearanceQuery);
         if (motion.Length < 2 || motion[0] >= 0.99999f)
         {
-            _clearanceResult = "clear";
-            return desiredDistance;
+            if (IsValidEndpoint(anchor, target))
+            {
+                _clearanceResult = "clear";
+                return desiredDistance;
+            }
+            SetQueryTransform(target);
+            var endpointHit = state.IntersectShape(_clearanceQuery, 1);
+            _obstructionSource = endpointHit.Count > 0 ? ColliderName(endpointHit[0]) : "camera-collision-mesh";
+            var endpointValidatedDistance = desiredDistance;
+            while (!IsValidEndpoint(anchor, anchor + direction * endpointValidatedDistance) && endpointValidatedDistance > 0)
+                endpointValidatedDistance = Math.Max(0, endpointValidatedDistance - 0.25f);
+            _clearanceResult = "boom-final-volume-retracted";
+            _recoveryReason = "boom-endpoint-retracted-until-camera-volume-and-rider-sightline-are-clear";
+            return endpointValidatedDistance;
         }
 
         var safeDistance = CameraObstructionMath.ResolveSafeDistance(desiredDistance,
             motion[0], CameraClearanceMeters);
+        // Godot's cast fraction can leave a camera sphere touching an adjacent
+        // triangle at chunk seams/corners. Validate the final volume and retract
+        // in bounded increments until the actual destination is clear.
+        var validatedDistance = safeDistance;
+        while (!IsValidEndpoint(anchor, anchor + direction * validatedDistance) && validatedDistance > 0)
+            validatedDistance = Math.Max(0, validatedDistance - 0.25f);
+        var finalVolumeRetracted = validatedDistance + 0.001f < safeDistance;
+        safeDistance = validatedDistance;
         SetQueryTransform(anchor + direction * Math.Min(desiredDistance, motion[1] * desiredDistance));
         var hit = state.IntersectShape(_clearanceQuery, 1);
         _obstructionSource = hit.Count > 0 ? ColliderName(hit[0]) : "camera-collision-mesh";
-        _clearanceResult = "boom-clamped";
+        _clearanceResult = finalVolumeRetracted ? "boom-final-volume-retracted" : "boom-clamped";
+        if (finalVolumeRetracted)
+            _recoveryReason = "boom-endpoint-retracted-until-camera-volume-and-rider-sightline-are-clear";
+        else
+            _recoveryReason = "rider-to-camera-boom-obstructed; camera-retracted-to-safe-distance";
         return safeDistance;
+    }
+
+    private bool IsClearAt(Vector3 position)
+    {
+        var state = GetSpaceState();
+        if (state is null) return false;
+        SetQueryTransform(position);
+        return state.IntersectShape(_clearanceQuery, 1).Count == 0;
+    }
+
+    private bool IsValidEndpoint(Vector3 anchor, Vector3 position) =>
+        IsClearAt(position) && HasLineOfSight(position, anchor);
+
+    private bool HasLineOfSight(Vector3 from, Vector3 to)
+    {
+        var state = GetSpaceState();
+        if (state is null) return false;
+        var query = new PhysicsRayQueryParameters3D
+        {
+            From = from,
+            To = to,
+            CollisionMask = ObstructionCollisionMask,
+            CollideWithAreas = false,
+            CollideWithBodies = true
+        };
+        var hit = state.IntersectRay(query);
+        if (hit.Count == 0) return true;
+        _obstructionSource ??= ColliderName(hit);
+        return false;
     }
 
     private Vector3 ResolveMovementPosition(Vector3 from, Vector3 to, Vector3 safeTarget)
     {
         var state = GetSpaceState();
-        if (state is null || from.DistanceSquaredTo(to) <= 1e-6f) return to;
+        if (state is null || from.DistanceSquaredTo(to) <= 1e-6f)
+        {
+            _repeatedBlockedMovement = 0;
+            return to;
+        }
         SetQueryTransform(from);
         var startOverlaps = state.IntersectShape(_clearanceQuery, 1);
         if (startOverlaps.Count > 0)
         {
             _obstructionSource ??= ColliderName(startOverlaps[0]);
-            _clearanceResult = "camera-overlap-retracted";
+            _clearanceResult = "camera-overlap-recovered";
+            _recoveryReason = "previous-camera-position-overlapped; used-current-rider-validated-boom-endpoint";
+            _repeatedBlockedMovement++;
+            // safeTarget was independently swept from the current rider anchor
+            // by FindAllowedBoomDistance. It is current-frame validated, whereas
+            // the old camera volume is allowed to overlap after a moving obstacle.
             return safeTarget;
         }
         var motionVector = to - from;
         _clearanceQuery.Motion = motionVector;
         var motion = state.CastMotion(_clearanceQuery);
-        if (motion.Length < 2 || motion[0] >= 0.99999f) return to;
-        var safeFraction = motion[0];
-        var safeFractionWithClearance = Math.Max(0, safeFraction - CameraClearanceMeters / motionVector.Length());
-        _clearanceResult = "movement-swept";
+        if (motion.Length < 2 || motion[0] >= 0.99999f)
+        {
+            _repeatedBlockedMovement = 0;
+            return to;
+        }
+        _clearanceResult = "movement-recovered";
+        _recoveryReason = "previous-to-current-camera-sweep-blocked; used-current-rider-validated-boom-endpoint";
+        _repeatedBlockedMovement++;
         SetQueryTransform(from + motionVector * Math.Min(1, motion[1]));
         var hit = state.IntersectShape(_clearanceQuery, 1);
         _obstructionSource ??= hit.Count > 0 ? ColliderName(hit[0]) : "camera-collision-mesh";
-        return from.Lerp(to, safeFractionWithClearance);
+        // Movement sweeps prevent the camera volume crossing scenery, but a
+        // blocked historical path must not pin the camera to that old position.
+        // safeTarget is already validated against the current rider's boom and
+        // is the closest valid current-frame fallback.
+        return safeTarget;
     }
 
     private PhysicsDirectSpaceState3D? GetSpaceState() => IsInsideTree() ? GetWorld3D().DirectSpaceState : null;
@@ -155,6 +264,7 @@ public partial class ChaseCamera : Camera3D
     {
         _clearanceQuery.Shape = _clearanceShape;
         _clearanceQuery.Transform = new Transform3D(Basis.Identity, position);
+        _clearanceQuery.Motion = Vector3.Zero;
     }
 
     private static string? ColliderName(Godot.Collections.Dictionary result)
