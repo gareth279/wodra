@@ -189,6 +189,10 @@ public sealed record RideDebugSnapshot
     public DebugVector3 riderForward { get; init; }
     public DebugVector3 riderRotation { get; init; }
     public DebugVector3? cameraWorldPosition { get; init; }
+    public DebugVector3? cameraDesiredPosition { get; init; }
+    public string? cameraObstructionSource { get; init; }
+    public string? cameraClearanceResult { get; init; }
+    public string? cameraMode { get; init; }
     public double? requestedTrainerGradientPercent { get; init; }
     public double? successfulTrainerGradientPercent { get; init; }
     public double? secondsSinceTrainerCommand { get; init; }

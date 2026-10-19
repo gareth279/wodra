@@ -111,5 +111,8 @@
     "verticalBiasMeters": 0.08
   },
   "difficulty": "Easy",
-  "routeType": "loop"
+  "routeType": "loop",
+  "routeDataVersion": 2,
+  "turnaroundWidthMeters": 7.0,
+  "turnaroundWidthSource": "documented default: 7 m road corridor (no OSM width tag on source segments)"
 }

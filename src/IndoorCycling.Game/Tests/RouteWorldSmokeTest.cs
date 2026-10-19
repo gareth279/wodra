@@ -5,7 +5,7 @@ using Godot;
 /// <summary>Headless Godot smoke coverage for the real built-in and installed Dunedin world packages.</summary>
 public partial class RouteWorldSmokeTest : Node
 {
-    public override void _Ready()
+    public override async void _Ready()
     {
         try
         {
@@ -14,7 +14,7 @@ public partial class RouteWorldSmokeTest : Node
                 "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop",
                 "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop"
             };
-            foreach (var id in ids) BuildRoute(id);
+            foreach (var id in ids) await BuildRoute(id);
             GD.Print("[RouteWorldSmoke] PASS: all four route meshes constructed and released.");
             GetTree().Quit(0);
         }
@@ -25,7 +25,7 @@ public partial class RouteWorldSmokeTest : Node
         }
     }
 
-    private void BuildRoute(string id)
+    private async System.Threading.Tasks.Task BuildRoute(string id)
     {
         var timer = Stopwatch.StartNew();
         var route = RouteCatalog.GetById(id) ?? throw new InvalidOperationException($"Route package {id} is not installed.");
@@ -66,22 +66,70 @@ public partial class RouteWorldSmokeTest : Node
             var vegetationLayer = new VegetationLayer { Name = "SmokeVegetation" };
             world.AddChild(vegetationLayer);
             vegetationLayer.Configure(visual, route, vegetationData, roadCorridors);
-            foreach (var distance in id == "dunedin-rolling-loop" ? new[] { 0d, 50d, 60d, 85d, 200d, 220d, 350d }
+            var camera = new ChaseCamera { Name = "SmokeCamera" };
+            world.AddChild(camera);
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            if (id == "dunedin-rolling-loop")
+                await VerifyCameraVolumeCollision(visual, camera, world);
+            var distances = id == "dunedin-rolling-loop"
+                ? new[] { 0d, 50d, 60d, 85d, 200d, 210d, 225.564230d, 242.390684d, 350d,
+                    450d, 480.106d, 550.746d, 573.300d, 600d, 225.564230d }
                 : id == "dunedin-signal-hill-climbing-loop" ? new[] { 0d, 3500d, 8000d, 12700d }
                 : id == "dunedin-south-coastal-loop" ? new[] { 0d, 5000d }
-                : new[] { 0d, 5000d })
+                : new[] { 0d, 5000d };
+            var previousDistance = 0d;
+            foreach (var distance in distances)
             {
                 streetLayer.UpdateForRideDistance(distance);
                 terrainLayer.UpdateForRideDistance(distance);
                 vegetationLayer.UpdateForRideDistance(distance);
+                buildingLayer.UpdateForRideDistance(distance);
                 if (streetLayer.VisibleChunkCount == 0)
                     throw new InvalidOperationException($"Route {id} has no visible street chunks at {distance:F0} m.");
+                if (distance + 100 < previousDistance) camera.ResetFollow();
                 var pose = visual.GetPoseAtDistance(distance);
-                var camera = new ChaseCamera { Name = "SmokeCamera" };
-                world.AddChild(camera);
-                camera.Follow(ProceduralRoad.ToGodot(pose.Position), ProceduralRoad.ToGodot(pose.Forward), 0);
-                world.RemoveChild(camera);
-                camera.Free();
+                camera.Follow(ProceduralRoad.ToGodot(pose.Position), ProceduralRoad.ToGodot(pose.Forward), 1d / 60);
+                if (!Finite(camera.GlobalPosition) || !Finite(camera.DesiredPosition))
+                    throw new InvalidOperationException($"Route {id} camera produced a nonfinite position at {distance:F3} m.");
+                if (id == "dunedin-rolling-loop" && distance is >= 210 and <= 600)
+                    GD.Print($"[CameraClearanceSmoke] route={id} distance={distance:F3}m view={camera.View} " +
+                        $"result={camera.ClearanceResult} source={camera.ObstructionSource ?? "none"} " +
+                        $"desired={camera.DesiredPosition} resolved={camera.GlobalPosition}");
+                previousDistance = distance;
+            }
+
+            if (id == "dunedin-rolling-loop")
+            {
+                foreach (var view in RiderCameraViewCycle.Views)
+                foreach (var lane in new[] { -1.75f, 0f, 1.75f })
+                {
+                    var pose = visual.GetPoseAtDistance(225.564230);
+                    var position = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, lane);
+                    camera.SetView(view);
+                    camera.ResetFollow();
+                    buildingLayer.UpdateForRideDistance(225.564230);
+                    terrainLayer.UpdateForRideDistance(225.564230);
+                    camera.Follow(ProceduralRoad.ToGodot(position), ProceduralRoad.ToGodot(pose.Forward), 0);
+                    if (!Finite(camera.GlobalPosition))
+                        throw new InvalidOperationException($"Camera clearance failed at Rolling City 225.564 m, lane {lane}, view {view}.");
+                }
+
+                foreach (var speedMetersPerSecond in new[] { 30d / 3.6, 62d / 3.6 })
+                {
+                    camera.SetView(RiderCameraView.GameplayRefined);
+                    camera.ResetFollow();
+                    var positionDistance = 210d;
+                    for (var frame = 0; frame < 180; frame++)
+                    {
+                        positionDistance = Math.Min(250, positionDistance + speedMetersPerSecond / 60);
+                        var pose = visual.GetPoseAtDistance(positionDistance);
+                        buildingLayer.UpdateForRideDistance(positionDistance);
+                        terrainLayer.UpdateForRideDistance(positionDistance);
+                        camera.Follow(ProceduralRoad.ToGodot(pose.Position), ProceduralRoad.ToGodot(pose.Forward), 1d / 60);
+                        if (!Finite(camera.GlobalPosition))
+                            throw new InvalidOperationException($"Camera sweep failed at {speedMetersPerSecond * 3.6:F0} km/h and {positionDistance:F3} m.");
+                    }
+                }
             }
             timer.Stop();
             GD.Print($"[RouteWorldSmoke] route={id} buildings={buildingLayer.BuildingsLoaded} " +
@@ -100,5 +148,46 @@ public partial class RouteWorldSmokeTest : Node
             RemoveChild(world);
             world.Free();
         }
+    }
+
+    private static bool Finite(Vector3 value) => float.IsFinite(value.X)
+        && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+
+    private async System.Threading.Tasks.Task VerifyCameraVolumeCollision(VisualRoute route,
+        ChaseCamera camera, Node3D world)
+    {
+        var distance = 225.564230;
+        var pose = route.GetPoseAtDistance(distance);
+        var rider = ProceduralRoad.ToGodot(pose.Position);
+        var forward = ProceduralRoad.ToGodot(pose.Forward);
+        var desired = ChaseCameraMath.FollowPosition(
+            new System.Numerics.Vector3(rider.X, rider.Y, rider.Z),
+            new System.Numerics.Vector3(forward.X, forward.Y, forward.Z), camera.View);
+        var target = ProceduralRoad.ToGodot(new System.Numerics.Vector3(desired.X, desired.Y, desired.Z));
+        var anchor = rider + Vector3.Up * 1.05f;
+        var wall = new StaticBody3D
+        {
+            Name = "SmokeCameraWall",
+            GlobalPosition = anchor.Lerp(target, .7f),
+            CollisionLayer = 1u << 1,
+            CollisionMask = 0
+        };
+        wall.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(1.4f, 3f, 1.4f) } });
+        world.AddChild(wall);
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        camera.ResetFollow();
+        camera.Follow(rider, forward, 0);
+        if (camera.ClearanceResult != "boom-clamped" || camera.ObstructionSource != wall.Name.ToString())
+            throw new InvalidOperationException($"Camera volume sweep did not detect the synthetic wall: {camera.ClearanceResult}/{camera.ObstructionSource}.");
+
+        wall.GlobalPosition = camera.GlobalPosition;
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        var nextPose = route.GetPoseAtDistance(242.390684);
+        camera.Follow(ProceduralRoad.ToGodot(nextPose.Position), ProceduralRoad.ToGodot(nextPose.Forward), 1d / 60);
+        if (camera.ClearanceResult != "camera-overlap-retracted")
+            throw new InvalidOperationException($"A camera beginning inside a collision mesh was not retracted: {camera.ClearanceResult}.");
+        world.RemoveChild(wall);
+        wall.Free();
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
     }
 }

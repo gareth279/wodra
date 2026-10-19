@@ -102,7 +102,7 @@
       "latitude": -45.90770207450981,
       "longitude": 170.50700547843135,
       "distanceFromRouteMeters": 6.2218659031154475,
-      "nearestRouteDistanceMeters": 7047.082867052456,
+      "nearestRouteDistanceMeters": 7052.292279950336,
       "osmType": "way",
       "osmId": 385641112,
       "tags": {
@@ -129,8 +129,8 @@
       "category": "monument",
       "latitude": -45.909915090909095,
       "longitude": 170.49590052727274,
-      "distanceFromRouteMeters": 143.93343750103915,
-      "nearestRouteDistanceMeters": 7477.135682134724,
+      "distanceFromRouteMeters": 141.82788009669764,
+      "nearestRouteDistanceMeters": 7485.364022837609,
       "osmType": "way",
       "osmId": 548225426,
       "tags": {
@@ -144,7 +144,7 @@
       "latitude": -45.90900426603776,
       "longitude": 170.49958685283022,
       "distanceFromRouteMeters": 31.17984470636233,
-      "nearestRouteDistanceMeters": 7363.269272504441,
+      "nearestRouteDistanceMeters": 7368.4786854023205,
       "osmType": "way",
       "osmId": 385641074,
       "tags": {
@@ -186,8 +186,8 @@
       "category": "monument",
       "latitude": -45.9099086,
       "longitude": 170.49591170000002,
-      "distanceFromRouteMeters": 148.6100874163709,
-      "nearestRouteDistanceMeters": 7477.135682134724,
+      "distanceFromRouteMeters": 146.48905929526103,
+      "nearestRouteDistanceMeters": 7485.364022837609,
       "osmType": "node",
       "osmId": 5296418439,
       "tags": {
@@ -201,7 +201,7 @@
       "latitude": -45.90838253793105,
       "longitude": 170.50572344827586,
       "distanceFromRouteMeters": 90.36678622627791,
-      "nearestRouteDistanceMeters": 7044.894499646368,
+      "nearestRouteDistanceMeters": 7050.103912544248,
       "osmType": "way",
       "osmId": 1541169504,
       "tags": {

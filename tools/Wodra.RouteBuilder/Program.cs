@@ -99,6 +99,9 @@ try
         {
             Id = config.Id, Name = config.Name, Loop = config.Loop, RouteType = config.RouteType,
             Difficulty = config.Difficulty,
+            RouteDataVersion = config.RouteDataVersion,
+            TurnaroundWidthMeters = config.TurnaroundWidthMeters,
+            TurnaroundWidthSource = config.TurnaroundWidthSource,
             RoutingMode = config.RoutingMode, PreferredRefs = config.PreferredRefs,
             StartArea = config.StartArea, TurnaroundArea = config.TurnaroundArea,
             StartAreaRadiusMeters = config.StartAreaRadiusMeters,

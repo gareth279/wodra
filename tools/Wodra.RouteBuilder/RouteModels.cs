@@ -20,6 +20,10 @@ public sealed class RouteAuthoringConfig
     /// <summary>Optional explicit catalogue type: loop or outAndBack. Blank preserves legacy Loop behaviour.</summary>
     public string RouteType { get; init; } = "";
     public string Difficulty { get; init; } = "";
+    public int RouteDataVersion { get; init; } = 1;
+    /// <summary>Optional explicit usable road width for generated U-turns; never inferred from GPS data.</summary>
+    public double? TurnaroundWidthMeters { get; init; }
+    public string TurnaroundWidthSource { get; init; } = "";
     [JsonIgnore]
     public bool IsClosedRoute => Loop || RouteType is "loop" or "outAndBack";
     public string RoutingMode { get; init; } = "anchors";
@@ -58,6 +62,13 @@ public sealed class RouteAuthoringConfig
         if (Id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Id.Contains('/') || Id.Contains('\\'))
             throw new InvalidDataException("Config id must be a simple filename-safe identifier.");
         if (string.IsNullOrWhiteSpace(Name)) throw new InvalidDataException("Config name is required.");
+        if (RouteDataVersion <= 0) throw new InvalidDataException("routeDataVersion must be positive.");
+        if (TurnaroundWidthMeters is { } turnaroundWidth
+            && (!double.IsFinite(turnaroundWidth) || turnaroundWidth < 3 || turnaroundWidth > 40
+                || string.IsNullOrWhiteSpace(TurnaroundWidthSource)))
+            throw new InvalidDataException("A turnaround width must be 3..40 m and include explicit width provenance.");
+        if (TurnaroundWidthMeters is null && !string.IsNullOrWhiteSpace(TurnaroundWidthSource))
+            throw new InvalidDataException("turnaroundWidthSource requires turnaroundWidthMeters.");
         if (Bbox.MinLatitude >= Bbox.MaxLatitude || Bbox.MinLongitude >= Bbox.MaxLongitude)
             throw new InvalidDataException("bbox minimum values must be less than maximum values.");
         if (MarginMeters < 0 || MaxSnapDistanceMeters <= 0 || RouteCorridorMeters <= 0 || MaxOutputSpacingMeters <= 0)
@@ -316,7 +327,8 @@ public sealed record RouteBuildResult(IReadOnlyList<GeoPoint> Centreline, IReadO
     double MaximumCorridorDeviationMeters, int SourceOsmNodeCount,
     int DensifiedPointCount, bool IsValid, IReadOnlyList<string> Warnings, IReadOnlyList<string> Errors,
     RouteRefSummary? RouteRefSummary = null,
-    IReadOnlyList<RoutedRoadSegment>? RoadSegments = null);
+    IReadOnlyList<RoutedRoadSegment>? RoadSegments = null,
+    IReadOnlyList<GeneratedTurnaround>? Turnarounds = null);
 
 public sealed record BuildTimings(double NodeScanSeconds, double WayScanSeconds, double GraphBuildSeconds,
     double RouteSolveSeconds, double OutputGenerationSeconds, double CacheLoadSeconds = 0, double CacheSaveSeconds = 0,
@@ -348,6 +360,10 @@ public sealed class BuildReport
     public IReadOnlyList<RoutedLeg> Legs { get; init; } = [];
     public RouteRefSummary? RouteRefSummary { get; init; }
     public IReadOnlyList<RoutedRoadSegment> RoadSegments { get; init; } = [];
+    public double? TurnaroundWidthMeters { get; init; }
+    public string TurnaroundWidthSource { get; init; } = "";
+    public IReadOnlyList<GeneratedTurnaround> GeneratedTurnarounds { get; init; } = [];
+    public double SourceNetworkDistanceMeters { get; init; }
     public IReadOnlyList<ClosureEdgeExclusion> ExcludedClosureEdges { get; init; } = [];
     public int NearbyLandmarkCandidatesConsidered { get; init; }
     public int SelectedLandmarkCount { get; init; }
