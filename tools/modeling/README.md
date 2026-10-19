@@ -1,52 +1,111 @@
-# Wodra cyclist model workflow
+# Wodra rider and road bicycle prototype
 
-`build_wodra_cyclist.py` creates an original low-poly rider and road bike using Blender's built-in Python API. It uses no external assets or add-on dependencies. The generated GLB is deliberately split into named rider and bicycle presentation trees, with the same named transform targets the C# ride animation already drives.
+This is an owner-review prototype for issues #84, #85, and #86. It keeps the
+existing runtime contact targets and cadence-driven pedal solver while
+replacing the faceless chest/head with a generated adult human mesh. The bike,
+clothing finish, helmet, and remaining articulated rider parts are authored by
+the Wodra Blender script. The game ships only the GLB; Blender and MPFB are
+authoring tools.
 
-## Generate and preview
+## Versions and generation
 
-Run this from the repository root in PowerShell. The script validates every mesh's finite vertices, face indices, local dimensions, world scale, and overall model envelope; applies the game's seated leg pose temporarily; renders three previews; restores neutral animation templates; and exports the GLB.
+- Blender 5.2.2 LTS (glTF 2.0 exporter enabled).
+- MPFB 2.0.18 extension, compatible with Blender 4.2+.
+- Godot 4.6.2 .NET imports the resulting GLB using its glTF scene importer.
 
-On the Windows machine used for this asset, call Blender by its full path:
+Install and enable MPFB from Blender's Extensions preferences. It uses its
+bundled base mesh and macro targets; this model does not need MakeHuman, other
+asset packs, online services, a Blender MCP server, or a Blender installation
+on player machines. From the repository root run:
 
 ```powershell
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python tools/modeling/build_wodra_cyclist.py
 ```
 
-The script writes:
+The script saves an editable Blender scene to
+`tools/modeling/source/WodraCyclist.blend`, exports the game asset to
+`src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb`, and produces three
+Blender geometry previews under `tools/modeling/previews/`. Open the Godot
+project once after regeneration so it refreshes the imported GLB.
 
-```text
-src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb
-tools/modeling/previews/side.png
-tools/modeling/previews/rear.png
-tools/modeling/previews/rear_three_quarter.png
-```
-
-The GLB can be independently checked using its exported mesh and transformed bounds, target-node contract, and normalized animation templates:
+Run the in-game prototype on the real Rolling City route with production rider,
+camera, terrain, buildings, vegetation, and golden-hour lighting:
 
 ```powershell
-python tools/modeling/inspect_wodra_glb.py
+& 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64.exe' --path src/IndoorCycling.Game res://Tests/RiderBikePreview.tscn
 ```
 
-To export to another destination, pass an absolute path after `--`:
+The preview cycles the chase, side, and front three-quarter cameras. Three
+variant riders animate together at 55, 85, and 115 rpm; the left rider coasts,
+restarts, and steers across the lane. Close the window to stop it.
+
+To record the 18-second review run and save three stills from the actual Godot
+route scene:
 
 ```powershell
-& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python tools/modeling/build_wodra_cyclist.py -- 'D:\models\WodraCyclist.glb'
+& 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe' --path src/IndoorCycling.Game res://Tests/RiderBikePreview.tscn --write-movie "$env:TEMP\Wodra-rider-preview.avi" --fixed-fps 30 --resolution 960x540 --quit-after 540 -- --capture-preview
 ```
 
-Open `src/IndoorCycling.Game/project.godot` in Godot once so it imports the new GLB, then run the game. `CyclistVisual` loads the GLB when present and its required target nodes are found; otherwise the existing procedural visual remains the fallback. Both representations use the same cadence, wheel, pedal, and two-bone leg update code.
+The captured stills are in `src/IndoorCycling.Game/Tests/previews/`:
+`RiderBikePreview-Chase.png`, `RiderBikePreview-Side.png`, and
+`RiderBikePreview-FrontThreeQuarter.png`.
 
-## Animation target contract
+## Runtime integration
 
-The imported scene must contain these nodes with the stated types:
+`CyclistVisual` is used for local, AI, ghost, and interpolated remote riders.
+All use the same imported meshes and runtime cadence, two-bone leg, wheel,
+crank, steering, and lean updates. Rider variation changes jersey and bicycle
+frame materials without making duplicate meshes. Cadence still comes from
+ride telemetry; no power or cadence values are synthesized by the renderer.
 
-- `BicycleModel`, `RiderModel`, `TorsoRig`, `FrontWheelSpin`, `RearWheelSpin`, `CrankPivot`: `Node3D`
-- `LeftCrank`, `RightCrank`, `LeftPedal`, `RightPedal`, `LeftThigh`, `LeftShin`, `RightThigh`, `RightShin`, `LeftCyclingShoe`, `RightCyclingShoe`, `LeftShoeSole`, `RightShoeSole`, `LeftAnkle`, `RightAnkle`, `LeftKnee`, `RightKnee`: `MeshInstance3D`
-- `BikeFrame`, `JerseyTorso`, `LeftJerseySleeve`, `RightJerseySleeve`: `MeshInstance3D` material targets
+The mesh retains the existing named GLB targets documented in
+`CyclistVisual.TryBuildImportedModel`. At zero or stale cadence the established
+animation policy settles into its coasting pose. Wheel rotation remains tied to
+road speed and wheel radius, separately from crank cadence. The generated
+human mesh adds no bones or runtime dependency; Blender's MPFB rig API was
+evaluated, but the game's existing rider controller provides the practical
+cadence/contact solution with lower runtime and asset cost for this pass.
 
-The procedural visual remains in `CyclistVisual.cs` as a fallback. It does not own a separate animation loop; `UpdatePedalingGeometry` updates either model using these shared targets.
+## Provenance and licensing
 
-## Preview in a debug ride
+- MPFB source code is GPL-3.0-or-later. It is not copied into the game or this
+  repository. MPFB's bundled base meshes, targets, rigs, and textures are
+  CC0-1.0. The generated character mesh is released as CC0 by its upstream
+  authors; this export uses generated base-mesh data and Wodra-authored edits.
+- The bike, jersey/shorts material treatment, helmet geometry, and Wodra
+  modeling/export scripts are project-authored. The repository has no root
+  source license yet, so no broader project license is implied here.
+- No OpenSim model or data is included. OpenSim's application/API license does
+  not determine the license on individual models or teaching materials. Its
+  educational cycling material was reviewed as optional posture context, but
+  it did not provide a needed runtime dependency or a data asset used here.
+- Godot uses glTF 2.0/GLB, avoiding editor-time Blender calls in player builds.
 
-In a Debug build, start a ride and press F6 to cycle the camera views. The small camera label appears briefly even when the debug panel is hidden. Press Shift+F12 in each view to save a HUD screenshot under Pictures/Wodra; the label identifies the captured view. Inspect Side, Rear three-quarter, and Front three-quarter for posture, hand reach, articulation, wheel clearance, and frame silhouette.
+## Review status and limits
 
-The previews are Blender renders of the authored model with the runtime animation targets posed and scaled to the game's neutral seated pedal position. They are a geometry review aid; check import orientation and motion in Godot after generating the asset.
+The base torso/head now has facial and anatomical shape, while the established
+procedural arms/legs remain visibly stylized. This is intended for owner visual
+feedback, not a claim of production-finished clothing fit or biological joint
+simulation. Inspect the side, rear, and three-quarter previews, then run the
+actual Godot route preview as described in the PR. No external mesh, texture,
+or model license was left unresolved in the distributed asset.
+
+## P620 preview cost
+
+Measured on the NVIDIA Quadro P620 with Godot 4.6.2 .NET, OpenGL Compatibility,
+and the same Rolling City preview scene with three visible riders. The normal
+interactive run reported 57.8 fps during its first five-second sample and 60.0
+fps in the next two samples; the project frame cap is 60 fps. Its longest early
+frame was about 146 ms while route scenery initialized, then steady samples
+were 16.7 ms. A controlled run with the pre-existing procedural fallback in
+the same scene reported 57.9 then 60.0 fps, with a similar 150 ms startup
+spike. This is a capped-scene comparison, so it shows no measurable steady
+frame-rate regression; it is not an uncapped throughput benchmark.
+
+Each imported rider is about 21,656 triangles (64,968 across the three preview
+riders), compared with the existing fallback estimate of 2,200 per rider.
+The exported GLB is 444 KB; the editable Blender scene is 366 KB. The GLB has
+45 mesh nodes and no image textures or runtime armature. The Rolling City
+building mesh alone is about 249,873 triangles in this scene, so scenery remains
+the larger triangle cost. GLB triangle count is the main cost increase to
+consider for larger multiplayer fields.

@@ -75,6 +75,7 @@ public partial class CyclistVisual : Node3D
     private Node3D _bicycleModel = default!;
     private Node3D _riderModel = default!;
     private Node3D _upperBody = default!;
+    private Vector3 _upperBodyRestPosition;
     private Node3D _headRig = default!;
     private Node3D _leftArmRig = default!;
     private Node3D _rightArmRig = default!;
@@ -87,6 +88,7 @@ public partial class CyclistVisual : Node3D
     private double _animatedCadenceRpm;
     private double _leanRadians;
     private bool _built;
+    private int _approximateTriangleCount = 2200;
 
     public bool UsesImportedModel { get; private set; }
 
@@ -96,7 +98,7 @@ public partial class CyclistVisual : Node3D
     public double CurrentGradientPercent { get; private set; }
     public double RiderHeightMeters => Size.RiderHeight;
     public int ApproximateNodeCount => CountNodes(this);
-    public int ApproximateTriangleCount => 2200;
+    public int ApproximateTriangleCount => _approximateTriangleCount;
 
     public void Build(int visualVariant = 0)
     {
@@ -159,6 +161,7 @@ public partial class CyclistVisual : Node3D
 
         _upperBody = new Node3D { Name = "TorsoRig" };
         _riderModel.AddChild(_upperBody);
+        _upperBodyRestPosition = _upperBody.Position;
         var torso = new MeshInstance3D { Name = "JerseyTorso", Mesh = BuildJerseyMesh(), MaterialOverride = _jerseyMaterial };
         _upperBody.AddChild(torso);
         AddSphere("PelvisAndShorts",SeatedPose.Pelvis,new Vector3(.235f,.145f,.205f),_shortsMaterial,_upperBody);
@@ -258,6 +261,7 @@ public partial class CyclistVisual : Node3D
         _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
         _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
         _upperBody = FindModelNode<Node3D>(instance, "TorsoRig")!;
+        _upperBodyRestPosition = _upperBody.Position;
         _leftCrank = FindModelNode<MeshInstance3D>(instance, "LeftCrank")!;
         _rightCrank = FindModelNode<MeshInstance3D>(instance, "RightCrank")!;
         _leftPedal = FindModelNode<MeshInstance3D>(instance, "LeftPedal")!;
@@ -292,7 +296,19 @@ public partial class CyclistVisual : Node3D
         SetImportedMaterial(instance, "JerseyTorso", _jerseyMaterial);
         SetImportedMaterial(instance, "LeftJerseySleeve", _jerseyMaterial);
         SetImportedMaterial(instance, "RightJerseySleeve", _jerseyMaterial);
+        SetImportedMaterial(instance, "JerseyShoulderCapL", _jerseyMaterial);
+        SetImportedMaterial(instance, "JerseyShoulderCapR", _jerseyMaterial);
+        _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private static int CountTriangles(Node root)
+    {
+        var total = root is MeshInstance3D { Mesh: { } mesh }
+            ? mesh.GetFaces().Length / 3 : 0;
+        foreach (var child in root.GetChildren())
+            total += CountTriangles(child);
+        return total;
     }
 
     private static T? FindModelNode<T>(Node root, string name) where T : Node =>
@@ -361,7 +377,7 @@ public partial class CyclistVisual : Node3D
         GlobalPosition=routePosition;
         LookAt(routePosition+routeForward,Vector3.Up);
         RotateObjectLocal(Vector3.Back,(float)_leanRadians);
-        _upperBody.Position = new Vector3(0, paused ? 0 : (float)(.003 * Math.Sin(_crankAngle * 2) * Math.Clamp(_animatedCadenceRpm / 90, 0, 1)), 0);
+        _upperBody.Position = _upperBodyRestPosition + new Vector3(0, paused ? 0 : (float)(.003 * Math.Sin(_crankAngle * 2) * Math.Clamp(_animatedCadenceRpm / 90, 0, 1)), 0);
         UpdatePedalingGeometry();
     }
 

@@ -10,7 +10,9 @@ This file intentionally uses no downloaded assets or third-party Python packages
 from __future__ import annotations
 
 import math
+import os
 import sys
+import importlib
 from pathlib import Path
 
 import bpy
@@ -310,17 +312,22 @@ def tube_between(name, start, end, radius_start, radius_end, mat, parent, sides=
 
 def unit_rod(name, mat, parent, sides=10):
     vertices, faces = [], []
-    for z, radius in ((-0.5, 0.38), (-0.42, 0.5), (0.42, 0.5), (0.5, 0.38)):
+    # The runtime scales this mesh to the segment's diameter and length. Keep
+    # its widest source diameter below one metre so it behaves like the fallback
+    # cylinder instead of multiplying the requested segment thickness.
+    profile = ((-0.50, .14), (-.43, .26), (-.31, .38), (-.10, .455),
+               (.12, .43), (.29, .345), (.43, .23), (.50, .13))
+    for z, radius in profile:
         for side in range(sides):
             angle = math.tau * side / sides
             vertices.append((radius * math.cos(angle), radius * math.sin(angle), z))
-    for row in range(3):
+    for row in range(len(profile) - 1):
         for side in range(sides):
             a = row * sides + side
             b = row * sides + (side + 1) % sides
             faces.extend(((a, b, b + sides), (a, b + sides, a + sides)))
     faces.append(tuple(range(sides - 1, -1, -1)))
-    top = 3 * sides
+    top = (len(profile) - 1) * sides
     faces.append(tuple(top + side for side in range(sides)))
     return mesh_object(name, vertices, faces, mat, parent, smooth=True)
 
@@ -427,6 +434,9 @@ def build_model():
     torso_rig = empty("TorsoRig", rider)
     left_arm = empty("LeftArmRig", torso_rig)
     right_arm = empty("RightArmRig", torso_rig)
+    # Bring the upper sleeves into the generated torso seam; extend the forearms
+    # back to the unchanged brake-hood contact points.
+    left_arm.location.y = right_arm.location.y = -0.12
     left_leg = empty("LeftLegRig", rider)
     right_leg = empty("RightLegRig", rider)
 
@@ -515,7 +525,7 @@ def build_model():
     for side, suffix, arm_rig in ((-1, "L", left_arm), (1, "R", right_arm)):
         shoulder = (side * .18, .045, 1.29)
         elbow = (side * .29, .335, 1.105)
-        wrist = (side * .30, .565, .955)
+        wrist = (side * .30, .685, .955)
         side_name = "Left" if side < 0 else "Right"
         tube_between(side_name + "JerseySleeve", shoulder, elbow, .071, .053, jersey, arm_rig, 12)
         tube_between(side_name + "Forearm", elbow, wrist, .050, .040, skin, arm_rig, 12)
@@ -535,6 +545,142 @@ def build_model():
     return root
 
 
+def replace_placeholder_torso_with_mpfb(rider_torso):
+    """Replace the segmented placeholder chest/head with an MPFB adult mesh.
+
+    The game still owns articulation: the existing arm, leg, pedal, and wheel
+    targets stay in place and are updated by CyclistVisual. This keeps MPFB and
+    Blender on the authoring side of the GLB boundary.
+    """
+    mpfb_source = os.environ.get("WODRA_MPFB_SOURCE")
+    if mpfb_source:
+        sys.path.insert(0, str(Path(mpfb_source).resolve()))
+
+    try:
+        try:
+            mpfb = importlib.import_module("mpfb")
+        except ModuleNotFoundError:
+            import addon_utils
+            modules = [m.__name__ for m in addon_utils.modules(refresh=True)
+                       if m.__name__.split(".")[-1] == "mpfb"]
+            if not modules:
+                raise RuntimeError("MPFB is not installed in Blender")
+            mpfb = importlib.import_module(modules[0])
+        services_module = mpfb.__name__ + ".services"
+        if services_module not in sys.modules:
+            if not mpfb_source:
+                import addon_utils
+                addon_utils.enable(mpfb.__name__)
+            else:
+            # This source-checkout path is only for the reproducible local build
+            # and CI probe; normal Blender use registers MPFB through its extension.
+                temp_home = os.environ.get("TEMP", ".")
+                preferences = {
+                    "mpfb_user_data": os.path.join(temp_home, "wodra-mpfb-build"),
+                    "mpfb_second_root": None, "mh_user_data": None,
+                    "mh_auto_user_data": False, "mpfb_shelf_label": "MPFB",
+                }
+                mpfb.get_preference = lambda key: preferences.get(key)
+                bpy.utils.extension_path_user = lambda package, path="", create=False: os.path.join(
+                    preferences["mpfb_user_data"], package, path)
+                mpfb.register()
+        mpfb_services = importlib.import_module(services_module)
+        HumanService = mpfb_services.HumanService
+        TargetService = mpfb_services.TargetService
+    except Exception as exc:
+        raise RuntimeError(
+            "The cyclist export requires MPFB 2.0.18 (Blender extension, Blender 4.2+). "
+            "Install/enable it in Blender Preferences > Get Extensions."
+        ) from exc
+
+    macro = TargetService.get_default_macro_info_dict()
+    macro.update({"gender": 1.0, "age": 0.35, "muscle": 0.72,
+                  "weight": 0.25, "proportions": 0.62, "height": 0.58})
+    for name in ("JerseyTorso", "PelvisAndShorts", "Neck", "Head"):
+        old = bpy.data.objects.get(name)
+        if old is not None:
+            bpy.data.objects.remove(old, do_unlink=True)
+    human = HumanService.create_human(scale=0.1, feet_on_ground=True,
+                                      mask_helpers=True, macro_detail_dict=macro)
+    # Read the evaluated mesh so MPFB's helper mask is respected while the
+    # source shape keys remain untouched.
+    evaluated = human.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    source_mesh = evaluated.to_mesh()
+
+    skin = material("Rider Skin · MPFB CC0", (0.48, 0.29, 0.21), 0.72)
+    jersey = material("Wodra Endurance Jersey", (0.46, 0.105, 0.075), 0.78)
+    shorts = material("Wodra Bib Shorts", (0.035, 0.047, 0.058), 0.86)
+    # Keep the human silhouette above the hips; the runtime's cadence-driven
+    # articulated mesh targets supply arms and legs and stay tied to bike contacts.
+    groups = {"skin": [], "jersey": [], "shorts": []}
+    for polygon in source_mesh.polygons:
+        center = polygon.center
+        x, z = abs(center.x), center.z
+        lateral_limit = 0.30 if z > 1.15 else 0.22
+        if z < 0.77 or z > 1.68 or x > lateral_limit:
+            continue
+        if z < 0.99:
+            groups["shorts"].append(polygon.index)
+        elif z < 1.36 and not (z > 1.27 and x < 0.075):
+            groups["jersey"].append(polygon.index)
+        else:
+            groups["skin"].append(polygon.index)
+
+    def subset_mesh(name, polygon_indices, target_material, parent):
+        if not polygon_indices:
+            raise RuntimeError(f"MPFB human produced no faces for {name}")
+        remap = {}
+        vertices = []
+        faces = []
+        for polygon_index in polygon_indices:
+            polygon = source_mesh.polygons[polygon_index]
+            face = []
+            for source_index in polygon.vertices:
+                if source_index not in remap:
+                    remap[source_index] = len(vertices)
+                    vertex = source_mesh.vertices[source_index].co.copy()
+                    vertices.append(vertex)
+                face.append(remap[source_index])
+            faces.append(face)
+        mesh = bpy.data.meshes.new(name + "Mesh")
+        mesh.from_pydata(vertices, [], faces)
+        mesh.update()
+        for face in mesh.polygons:
+            face.use_smooth = True
+        mesh.materials.append(target_material)
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.parent = parent
+        obj.matrix_parent_inverse = parent.matrix_world.inverted()
+        return obj
+
+    mpfb_rider = empty("MPFBRider", rider_torso, (0.0, -0.13, 0.0))
+    # MPFB's base character faces -Y; Wodra's bicycle faces +Y.
+    mpfb_rider.rotation_euler.z = math.pi
+    subset_mesh("RiderHeadSkin", groups["skin"], skin, mpfb_rider)
+    subset_mesh("JerseyTorso", groups["jersey"], jersey, mpfb_rider)
+    subset_mesh("PelvisAndShorts", groups["shorts"], shorts, mpfb_rider)
+    evaluated.to_mesh_clear()
+    bpy.data.objects.remove(human, do_unlink=True)
+
+    # The generated human is seated at the same hip/saddle reference as the
+    # existing bike anchors. Rotate the natural torso forward around the hips.
+    hip = Vector((0.0, -0.19, 0.99))
+    rider_torso.matrix_basis = (Matrix.Translation(hip) @
+                                Matrix.Rotation(math.radians(-12), 4, "X") @
+                                Matrix.Translation(-hip))
+    helmet = bpy.data.objects.get("CyclingHelmet")
+    if helmet is not None:
+        center = Vector((0.0, 0.08, 1.59))
+        for vertex in helmet.data.vertices:
+            vertex.co = center + (vertex.co - center) * 0.76
+        helmet.location.y = -0.18
+        helmet.location.z = -0.035
+    brim = bpy.data.objects.get("HelmetBrim")
+    if brim is not None:
+        bpy.data.objects.remove(brim, do_unlink=True)
+
+
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     if args:
@@ -544,11 +690,19 @@ def main():
         output = Path(__file__).resolve().parents[2] / "src" / "IndoorCycling.Game" / "Assets" / "Models" / "WodraCyclist.glb"
     output.parent.mkdir(parents=True, exist_ok=True)
     root = build_model()
+    rider_torso = bpy.data.objects.get("TorsoRig")
+    if rider_torso is None:
+        raise RuntimeError("The Wodra bicycle asset is missing its TorsoRig anchor")
+    replace_placeholder_torso_with_mpfb(rider_torso)
     validate_model()
     render_previews(Path(__file__).resolve().parent / "previews")
     bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
         obj.select_set(True)
+    bpy.context.view_layer.objects.active = root
+    source_dir = Path(__file__).resolve().parent / "source"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(source_dir / "WodraCyclist.blend"))
     bpy.context.view_layer.objects.active = root
     bpy.ops.export_scene.gltf(filepath=str(output), export_format="GLB", use_selection=True)
     print(f"Exported Wodra cyclist to {output}")
