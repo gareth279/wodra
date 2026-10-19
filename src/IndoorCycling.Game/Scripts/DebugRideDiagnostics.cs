@@ -193,6 +193,9 @@ public sealed record RideDebugSnapshot
     public string? cameraObstructionSource { get; init; }
     public string? cameraClearanceResult { get; init; }
     public string? cameraMode { get; init; }
+    public double? cameraRiderDistanceMeters { get; init; }
+    public int cameraRepeatedBlockedMovement { get; init; }
+    public string? cameraRecoveryReason { get; init; }
     public double? requestedTrainerGradientPercent { get; init; }
     public double? successfulTrainerGradientPercent { get; init; }
     public double? secondsSinceTrainerCommand { get; init; }

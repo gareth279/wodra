@@ -54,7 +54,10 @@ public readonly record struct RideWorldDiagnostic(
       Godot.Vector3? CameraDesiredPosition = null,
       string? CameraObstructionSource = null,
       string? CameraClearanceResult = null,
-      string? CameraView = null);
+      string? CameraView = null,
+      float CameraRiderDistanceMeters = 0,
+      int CameraRepeatedBlockedMovement = 0,
+      string? CameraRecoveryReason = null);
 
 /// <summary>Read-only view of the session: no speed integration or trainer access.</summary>
 public partial class RideWorldView : Node3D
@@ -806,7 +809,8 @@ public partial class RideWorldView : Node3D
             nearestAiRider?.Name, nearestAiRider?.RelativeDistanceMeters, nearestAiRider?.SpeedKph, nearestAi,
             GetRemoteHumanRiderDiagnostics(distance, routeLength: _geometry?.LengthMeters ?? 0),
             _camera.DesiredPosition, _camera.ObstructionSource, _camera.ClearanceResult,
-            _camera.View.ToString());
+            _camera.View.ToString(), _camera.RiderToCameraDistance, _camera.RepeatedBlockedMovement,
+            _camera.RecoveryReason);
     }
 
     private void UpdateSceneryCollisionForDistance(double distance)
