@@ -5,6 +5,14 @@ complete MPFB human mesh, the default weighted skeleton, fitted road-bike
 geometry, a baked three-revolution pedal action, and an in-game cadence-driven
 preview. It remains a work in progress pending owner visual approval.
 
+## Visual direction
+
+Wodra uses a **stylised low-poly** direction: clean geometry, strong readable
+colours, restrained surface detail, and believable human and bicycle proportions.
+The simplified world is intended to make riding accessible and clear; block-
+shaped riders are not the target. The complete weighted human, fitted kit, and
+optional helmet stay intact. Natural movement takes priority over polygon count.
+
 ## Verified authoring tools
 
 - Blender 5.2.2 LTS, installed at `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`.
@@ -48,20 +56,46 @@ sequence without overwriting the accepted static source blend or its previews:
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python tools/modeling/build_wodra_cyclist.py -- tools/modeling/exports/WodraCyclist-animated-candidate.glb tools/modeling/checkpoints/WodraCyclist.animated-candidate-01.blend
 ```
 
-The script uses MPFB's documented `LOWERUPPER` leg and arm helpers, saves a
-36 fps `PedalCycle` action lasting about 3.03 seconds in GLB and covering three
-complete revolutions,
-exports the full weighted skeleton and human mesh, and renders new previews at:
+The script uses MPFB's documented `LOWERUPPER` leg and arm helpers, samples
+pedal motion every 5 degrees with a temporally regularized, per-leg pole solve,
+and saves a 72 fps `PedalCycle` action lasting about 3.03 seconds in GLB and
+covering three complete revolutions. The 72 fps authoring rate preserves the
+original 60 rpm reference duration while doubling knee trajectory samples.
+It exports the full weighted skeleton and human mesh. The aero tube profiles,
+wheel build, and contact anchors live in `build_model()` separately from the
+shared baked cadence action.
 
-- `tools/modeling/previews/static_fit_candidate_03/fit_{side,front,rear}.png`
-- `tools/modeling/previews/crank_phase_checks_03/crank_{000,090,180,270}.png`
-- `tools/modeling/previews/cadence_preview_01/frames/frame_####.png`
-
-The animation preview uses side lighting and camera framing. Encode the image
-sequence as an H.264 review clip with FFmpeg:
+The rider profile remains generated from MPFB 2.0.18. To reproduce the current
+review asset without changing the accepted checkpoint until generation passes,
+run:
 
 ```powershell
-& "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe" -framerate 36 -i tools/modeling/previews/cadence_preview_01/frames/frame_%04d.png -c:v libx264 -crf 22 -pix_fmt yuv420p -movflags +faststart tools/modeling/previews/cadence_preview_01/pedal_cycle_side.mp4
+$env:WODRA_MPFB_SOURCE = Join-Path $env:APPDATA 'Blender Foundation\Blender\5.2\extensions\user_default\mpfb'
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  --python tools/modeling/build_wodra_cyclist.py -- `
+  tools/modeling/exports/WodraCyclist.knee-bike-candidate.glb `
+  tools/modeling/checkpoints/WodraCyclist.knee-bike-candidate.blend --skip-previews
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/checkpoints/WodraCyclist.knee-bike-candidate.blend `
+  --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist.knee-bike-final.glb `
+  tools/modeling/source/WodraCyclist.blend tools/modeling/previews/knee-bike-final --skip-previews
+Copy-Item tools/modeling/exports/WodraCyclist.knee-bike-final.glb `
+  src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb -Force
+```
+
+The build uses MPFB's installed source and redirects MPFB's temporary user data
+to the OS temp directory. It does not write to Blender's profile log folder.
+
+The build script can also render pre-bake fit/phase views and a side animation
+sequence. These are authoring previews; Godot review captures below use the
+actual imported GLB under route lighting.
+
+Run focused Blender regressions on the saved source blend:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.blend --python tools/modeling/check_baked_cycle.py
 ```
 
 To regenerate the runtime GLB directly, pass
@@ -123,6 +157,31 @@ and the production chase, side, and front three-quarter cameras cycle. For an
 The stills are saved in `src/IndoorCycling.Game/Tests/previews/` as
 `RiderBikePreview-Chase.png`, `RiderBikePreview-Side.png`, and
 `RiderBikePreview-FrontThreeQuarter.png`.
+
+Capture a close, fixed-camera Godot clip with three complete cadence segments
+(45, 85, and 120 rpm), then a coast and restart. Pick `rear`, `front`, or
+`side`; outputs use the actual imported rider, animation, and route lighting:
+
+```powershell
+$godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+$out = Join-Path (Get-Location).Path 'tools/modeling/previews/knee-review-rear.avi'
+& $godot --path src/IndoorCycling.Game res://Tests/RiderBikePreview.tscn `
+  --write-movie $out --fixed-fps 30 --resolution 960x540 --quit-after 540 `
+  -- --capture-knee-review --knee-view=rear
+```
+
+Repeat with AVI outputs `knee-review-front.avi` / `front` and
+`knee-review-side.avi` / `side`, then encode to H.264:
+
+```powershell
+$ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe'
+& $ffmpeg -y -i tools/modeling/previews/knee-review-rear.avi -an -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart tools/modeling/previews/knee-review-rear.mp4
+```
+
+To compare all eight crank phases in Godot, pass `--quit-after 8000 -- --capture-rider-matrix`;
+the option before `--` is an engine option and the matrix flag after it is a
+preview argument. It writes `Rider-000` through `Rider-315` with rear, side,
+and front captures.
 
 ### Leg helper and outfit export correction
 

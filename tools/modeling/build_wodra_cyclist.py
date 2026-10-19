@@ -635,8 +635,8 @@ def build_model():
     front_spin = empty("FrontWheelSpin", bike, (0.0, front_y, wheel_z))
     for prefix, pivot in (("Rear", rear_spin), ("Front", front_spin)):
         torus_yz(prefix + "WheelTyre", 0.326, 0.024, rubber, pivot)
-        torus_yz(prefix + "WheelRim", 0.295, 0.006, metal, pivot)
-        add_spokes(prefix + "WheelSpokes", metal, pivot, 0.0, 0.0, 0.286, 18)
+        torus_yz(prefix + "WheelRim", 0.295, 0.011, metal, pivot)
+        add_spokes(prefix + "WheelSpokes", metal, pivot, 0.0, 0.0, 0.286, 14)
         ellipsoid(prefix + "WheelHub", (0, 0, 0), (0.035, 0.045, 0.045), metal, pivot, 6, 10)
 
     # Road frame tubes meet at shared BB, seat, head and hub coordinates.
@@ -648,6 +648,38 @@ def build_model():
     head_high = (0.0, 0.37, 0.84)
     frame_parts = []
     def frame_tube(name, a, b, radius):
+        if name in {"down tube", "top tube", "head tube", "fork"}:
+            # Elliptical, tapered sections read as molded carbon aero profiles
+            # while remaining lightweight and easy to deform for future frames.
+            axis = normalize(sub(b, a))
+            reference = (0.0, 0.0, 1.0) if abs(axis[2]) < 0.9 else (1.0, 0.0, 0.0)
+            u = normalize(cross(axis, reference))
+            v = normalize(cross(axis, u))
+            width_scale = {"down tube": 1.85, "top tube": 1.25,
+                           "head tube": 1.30, "fork": 1.45}[name]
+            depth_scale = {"down tube": .72, "top tube": .78,
+                           "head tube": .88, "fork": .70}[name]
+            sections = ((.0, .82), (.12, 1.0), (.34, 1.08),
+                        (.72, 1.0), (.9, .94), (1.0, .82))
+            length = distance(a, b)
+            vertices, faces = [], []
+            sides = 12
+            for along, taper in sections:
+                center = add(a, mul(axis, length * along))
+                for section in range(sides):
+                    theta = math.tau * section / sides
+                    offset = add(mul(u, math.cos(theta) * radius * width_scale * taper),
+                                 mul(v, math.sin(theta) * radius * depth_scale * taper))
+                    vertices.append(add(center, offset))
+            for row in range(len(sections) - 1):
+                for section in range(sides):
+                    a0 = row * sides + section
+                    b0 = row * sides + (section + 1) % sides
+                    faces.extend(((a0, b0, b0 + sides), (a0, b0 + sides, a0 + sides)))
+            faces.extend((tuple(reversed(range(sides))),
+                          tuple((len(sections) - 1) * sides + side for side in range(sides))))
+            frame_parts.append((vertices, faces))
+            return
         axis = normalize(sub(b, a))
         start = sub(a, mul(axis, radius * 0.85))
         end = add(b, mul(axis, radius * 0.85))
@@ -1021,10 +1053,13 @@ def add_skinned_road_shoes(rig):
 def build_cadence_animation(rig):
     """Sample three full crank revolutions through nonstretching MPFB IK, then bake bones."""
     scene = bpy.context.scene
-    cycle_intervals = 36
+    # Five-degree source samples keep the baked knee trajectory smooth at the
+    # fastest supported cadence. The higher authoring frame rate keeps the
+    # exported cycle at one second per revolution (60 rpm).
+    cycle_intervals = 72
     cycle_count = 3
     scene.frame_start, scene.frame_end = 1, cycle_intervals * cycle_count + 1
-    scene.render.fps = 36  # One full turn per second at 60 rpm.
+    scene.render.fps = 72  # One full turn per second at 60 rpm.
     bpy.context.view_layer.objects.active = rig
     bpy.ops.object.mode_set(mode="OBJECT")
     rig.animation_data_clear()
@@ -1052,10 +1087,11 @@ def build_cadence_animation(rig):
 
     for index in range(cycle_intervals * cycle_count + 1):
         frame = index + 1
-        degrees = (index % cycle_intervals) * 10
-        phase = math.radians(degrees)
+        phase_index = index % cycle_intervals
+        degrees = phase_index * (360 / cycle_intervals)
+        phase = math.tau * phase_index / cycle_intervals
         scene.frame_set(frame)
-        if index % cycle_intervals == 0:
+        if phase_index == 0:
             previous = {side: {"pole": state["pole"].copy(), "angle": state["angle"]}
                         for side, state in start_states.items()}
         desired = {}
@@ -1065,7 +1101,7 @@ def build_cadence_animation(rig):
                                             radius * math.cos(crank_angle)))
             ankle = (side * .13, pedal.y - .08, pedal.z + .075)
             set_control_world(suffix + "_foot_ik", ankle)
-            if degrees == 0:
+            if phase_index == 0:
                 side_name = "L" if side < 0 else "R"
                 state = start_states[side_name]
                 pole = state["pole"]
@@ -1080,30 +1116,47 @@ def build_cadence_animation(rig):
         for side, suffix in ((-1, "left"), (1, "right")):
             side_name = "L" if side < 0 else "R"
             leg_ik = next(c for c in rig.pose.bones["lowerleg02." + side_name].constraints if c.type == "IK")
-            if degrees != 0:
+            if phase_index != 0:
                 target = desired[side]
                 best = None
-                for pole_x in (side * .13, -side * .13, side * .35, -side * .35):
-                    for y_offset in (-.35, -.15, .05, .25):
-                        pole = Vector((pole_x, target.y + y_offset, target.z))
-                        for angle_degrees in range(0, 360, 45):
-                            angle = math.radians(angle_degrees)
-                            set_control_world(suffix + "_knee_ik", pole)
-                            leg_ik.pole_angle = angle
-                            bpy.context.view_layer.update()
-                            joint = rig.matrix_world @ rig.pose.bones["lowerleg01." + side_name].head
-                            error = Vector((joint.x - target.x, joint.y - target.y, joint.z - target.z))
-                            angular_delta = (angle - previous[side_name]["angle"] + math.pi) % math.tau - math.pi
-                            pole_delta = pole - previous[side_name]["pole"]
-                            score = ((1.5 * error.x) ** 2 + error.y ** 2 + error.z ** 2
-                                     + .035 * angular_delta ** 2 + .8 * pole_delta.length_squared)
-                            if best is None or score < best[0]:
-                                best = (score, pole.copy(), angle, joint.copy())
+                # Keep each pole on its own leg's lateral bend plane. The old
+                # coarse search could switch between opposite-side planes and
+                # 45-degree pole-angle branches every 10 degrees of crank
+                # motion. Search only small, continuous changes around the
+                # previous solution and regularize them against that solution.
+                previous_pole = previous[side_name]["pole"]
+                pole_x = previous_pole.x
+                previous_angle = previous[side_name]["angle"]
+                cycle_progress = phase_index / cycle_intervals
+                seam_weight = max(0.0, (cycle_progress - .75) / .25) ** 2
+                seam_state = start_states[side_name]
+                angle_offsets = (-math.radians(5), -math.radians(2.5), 0.0,
+                                 math.radians(2.5), math.radians(5))
+                for y_delta in (-.025, -.0125, 0.0, .0125, .025):
+                    pole_y = previous_pole.y + y_delta
+                    for angle_delta in angle_offsets:
+                        angle = (previous_angle + angle_delta + math.pi) % math.tau - math.pi
+                        pole = Vector((pole_x, pole_y, target.z))
+                        set_control_world(suffix + "_knee_ik", pole)
+                        leg_ik.pole_angle = angle
+                        bpy.context.view_layer.update()
+                        joint = rig.matrix_world @ rig.pose.bones["lowerleg01." + side_name].head
+                        error = Vector((joint.x - target.x, joint.y - target.y, joint.z - target.z))
+                        angular_delta = (angle - previous_angle + math.pi) % math.tau - math.pi
+                        pole_delta = pole - previous[side_name]["pole"]
+                        seam_pole_delta = pole - seam_state["pole"]
+                        seam_angle_delta = (angle - seam_state["angle"] + math.pi) % math.tau - math.pi
+                        score = ((1.5 * error.x) ** 2 + error.y ** 2 + error.z ** 2
+                                 + .35 * angular_delta ** 2 + 2.5 * pole_delta.length_squared
+                                 + seam_weight * (2.5 * seam_pole_delta.length_squared
+                                                  + .35 * seam_angle_delta ** 2))
+                        if best is None or score < best[0]:
+                            best = (score, pole.copy(), angle, joint.copy())
                 _, pole, angle, joint = best
                 set_control_world(suffix + "_knee_ik", pole)
                 leg_ik.pole_angle = angle
                 previous[side_name] = {"pole": pole, "angle": angle}
-                if degrees % 30 == 0:
+                if phase_index % 6 == 0:
                     print(f"Cycle frame {frame} {side_name}: knee={tuple(round(v, 3) for v in joint)} "
                           f"poleAngle={round(math.degrees(angle))}")
             control = rig.pose.bones[suffix + "_foot_ik"]
@@ -1196,6 +1249,8 @@ def render_cadence_preview(rig, preview_dir: Path):
 
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    skip_previews = "--skip-previews" in args
+    args = [arg for arg in args if arg != "--skip-previews"]
     if args:
         requested_output = Path(args[0])
         output = requested_output if requested_output.is_absolute() else Path(__file__).resolve().parents[2] / requested_output
@@ -1207,10 +1262,12 @@ def main():
     rig, rig_targets = build_skinned_rider(rider_model)
     add_skinned_road_shoes(rig)
     validate_model()
-    render_fit_previews(Path(__file__).resolve().parent / "previews" / "static_fit_candidate_03")
-    render_crank_phase_checks(rig, Path(__file__).resolve().parent / "previews" / "crank_phase_checks_03")
+    if not skip_previews:
+        render_fit_previews(Path(__file__).resolve().parent / "previews" / "static_fit_candidate_04")
+        render_crank_phase_checks(rig, Path(__file__).resolve().parent / "previews" / "crank_phase_checks_04")
     build_cadence_animation(rig)
-    render_cadence_preview(rig, Path(__file__).resolve().parent / "previews" / "cadence_preview_01")
+    if not skip_previews:
+        render_cadence_preview(rig, Path(__file__).resolve().parent / "previews" / "cadence_preview_02")
     for target in rig_targets:
         bpy.data.objects.remove(target, do_unlink=True)
     bpy.ops.object.select_all(action="DESELECT")
