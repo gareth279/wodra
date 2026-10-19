@@ -178,6 +178,7 @@ def round_clothing_edges():
         for vertex in human.data.vertices:
             weight=next((g.weight for g in vertex.groups if g.group==head_group.index),0.0)
             attr.data[vertex.index].color=(weight,0.0,0.0,1.0)
+        human.data.color_attributes.active_color=attr
     m=bpy.data.materials.get("Rider Outfit | smooth fitted transitions") or bpy.data.materials.new("Rider Outfit | smooth fitted transitions")
     m.use_nodes=True; nodes=m.node_tree.nodes; links=m.node_tree.links; nodes.clear()
     out=nodes.new("ShaderNodeOutputMaterial"); bsdf=nodes.new("ShaderNodeBsdfPrincipled")
@@ -210,10 +211,28 @@ def round_clothing_edges():
         if isinstance(base,bpy.types.NodeSocket): links.new(base,n.inputs[1])
         else: n.inputs[1].default_value=base
         n.inputs[2].default_value=color; links.new(factor,n.inputs[0]); return n.outputs[0]
-    color=mix(colors[0],colors[1],jersey); color=mix(color,colors[2],shorts); color=mix(color,colors[3],shoe)
+    color=mix(colors[0],colors[1],jersey); color=mix(color,colors[2],shorts)
+    color=mix(color,colors[3],shoe)
     links.new(color,bsdf.inputs["Base Color"])
     human.data.materials.clear(); human.data.materials.append(m)
-    for poly in human.data.polygons: poly.material_index=0
+    # Assign the retained toe/foot weighted skin to the exact dark upper color.
+    # The editable body and skeleton stay intact; this removes exposed skin
+    # slivers at the modeled shell edge and the face material survives glTF.
+    toe_groups={g.index for g in human.vertex_groups
+                if g.name in ("foot.L","foot.R") or g.name.startswith(tuple(
+                    f"toe{i}-{j}.{side}" for side in ("L","R")
+                    for i in range(1,6) for j in range(1,5)))}
+    toe_material=mat("Road Shoe Upper",(.045,.065,.075),.58)
+    human.data.materials.append(toe_material)
+    enclosed=0
+    for poly in human.data.polygons:
+        indices=list(poly.vertices)
+        foot_weight=sum(max((g.weight for g in human.data.vertices[i].groups
+                             if g.group in toe_groups),default=0.0) for i in indices)/len(indices)
+        mean_z=sum(human.data.vertices[i].co.z for i in indices)/len(indices)
+        poly.material_index=1 if foot_weight>.25 and mean_z<.36 else 0
+        enclosed+=poly.material_index
+    print("SHOE_COVERAGE",enclosed,"toe/foot material faces")
 
 
 def curl_fingers(rig):
@@ -283,7 +302,7 @@ def extend_shoe_uppers(rig):
         world_to_rest=rest @ pose.inverted() @ rig.matrix_world.inverted()
         # Replace the last two cross-sections in the existing 12-sided shell;
         # the new toe covers the measured MPFB toe joints without a second mesh.
-        stations=((.118,.046,-.072,.022),(.190,.036,-.074,.002))
+        stations=((.118,.052,-.086,.022),(.190,.048,-.092,.002))
         ring_count=12
         for ring_offset,(dy,width,bottom,top) in enumerate(stations,start=3):
             center_z=(bottom+top)*.5; radius_z=(top-bottom)*.5
