@@ -25,6 +25,7 @@ public partial class RiderBikePreview : Node3D
     private int _frameSamples;
     private float _slowestFrameMs;
     private bool _captureRequested;
+    private bool _helmetVisible = true;
     private bool _chaseCaptured;
     private bool _sideCaptured;
     private bool _frontCaptured;
@@ -34,11 +35,13 @@ public partial class RiderBikePreview : Node3D
         try
         {
             _captureRequested = OS.GetCmdlineUserArgs().Contains("--capture-preview");
+            _helmetVisible = !OS.GetCmdlineUserArgs().Contains("--helmet-off");
             BuildWorld();
             for (var i = 0; i < _riders.Length; i++)
             {
                 _riders[i] = new CyclistVisual { Name = $"PreviewRider{i + 1}" };
                 _riders[i].Build(i);
+                _riders[i].SetHelmetVisible(_helmetVisible);
                 AddChild(_riders[i]);
             }
             AddChild(_camera);
@@ -192,7 +195,7 @@ public partial class RiderBikePreview : Node3D
         _vegetation.UpdateForRideDistance(_routeDistance);
     }
 
-    private static CanvasLayer CreateHud()
+    private CanvasLayer CreateHud()
     {
         var layer = new CanvasLayer { Name = "PreviewReadout" };
         var panel = new PanelContainer
@@ -202,12 +205,22 @@ public partial class RiderBikePreview : Node3D
             OffsetRight = 490,
             OffsetBottom = 110
         };
+        var stack = new VBoxContainer();
         var label = new Label
         {
             Text = "ROAD BIKE / RIDER PREVIEW\nLeft coasts and restarts · Three jersey/frame variants\nCamera: chase → side → front three-quarter",
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
-        panel.AddChild(label);
+        stack.AddChild(label);
+        var helmetToggle = new CheckButton { Name = "HelmetToggle", Text = "Helmet", ButtonPressed = _helmetVisible };
+        helmetToggle.Toggled += visible =>
+        {
+            _helmetVisible = visible;
+            foreach (var rider in _riders)
+                rider?.SetHelmetVisible(visible);
+        };
+        stack.AddChild(helmetToggle);
+        panel.AddChild(stack);
         layer.AddChild(panel);
         return layer;
     }

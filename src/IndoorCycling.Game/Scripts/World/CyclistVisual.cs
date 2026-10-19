@@ -84,6 +84,7 @@ public partial class CyclistVisual : Node3D
     private AnimationPlayer? _riderAnimationPlayer;
     private Animation? _pedalCycleAnimation;
     private StringName _pedalCycleName;
+    private readonly System.Collections.Generic.List<Node3D> _helmetParts = new();
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
     private double _wheelAngle;
@@ -102,6 +103,13 @@ public partial class CyclistVisual : Node3D
     public double RiderHeightMeters => Size.RiderHeight;
     public int ApproximateNodeCount => CountNodes(this);
     public int ApproximateTriangleCount => _approximateTriangleCount;
+
+    /// <summary>Show or hide the optional imported road helmet and its straps.</summary>
+    public void SetHelmetVisible(bool visible)
+    {
+        foreach (var part in _helmetParts)
+            part.Visible = visible;
+    }
 
     public void Build(int visualVariant = 0)
     {
@@ -301,8 +309,22 @@ public partial class CyclistVisual : Node3D
         }
 
         SetImportedMaterial(instance, "BikeFrame", _frameMaterial);
+        CollectHelmetParts(instance);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private void CollectHelmetParts(Node node)
+    {
+        if (node is Node3D spatial &&
+            (spatial.Name.ToString().StartsWith("CyclingHelmet", StringComparison.Ordinal) ||
+             spatial.Name.ToString().StartsWith("HelmetRim", StringComparison.Ordinal) ||
+             spatial.Name.ToString().StartsWith("HelmetVent", StringComparison.Ordinal) ||
+             spatial.Name.ToString().StartsWith("HelmetStrap", StringComparison.Ordinal) ||
+             spatial.Name.ToString().StartsWith("HelmetYAnchor", StringComparison.Ordinal)))
+            _helmetParts.Add(spatial);
+        foreach (var child in node.GetChildren())
+            CollectHelmetParts(child);
     }
 
     private static T? FindFirstNode<T>(Node root) where T : Node

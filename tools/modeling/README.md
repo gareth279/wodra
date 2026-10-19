@@ -69,6 +69,33 @@ To regenerate the runtime GLB directly, pass
 Open/import the Godot project after changing the GLB so its scene importer
 refreshes the asset.
 
+### Focused helmet and contact polish
+
+To apply the helmet/accessory and clothing/grip finish pass to the preserved
+full-body rig and cadence action without regenerating the human or pose, run:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background tools/modeling/source/WodraCyclist.blend --python tools/modeling/polish_rider.py -- tools/modeling/exports/WodraCyclist-final.glb tools/modeling/checkpoints/WodraCyclist.final-helmet.blend tools/modeling/previews/helmet_toggle_02
+```
+
+This keeps the source blend unchanged. The script fits a separate head-bone
+helmet and straps, preserves the pedal action, softens the clothing color hems,
+adds toe coverage and compact brake hoods, and bakes a modest curl into the
+existing finger bones across the action. It writes close helmet ON/OFF front,
+side, and rear views; full-bike inspection views; and a two-revolution side
+sequence with matching start/end crank poses. Add `--head-only` after the
+preview directory to regenerate the six close helmet views and model export
+without rerendering the bike or animation. Encode the clip with:
+
+```powershell
+$ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe'
+& $ffmpeg -y -framerate 12 -i tools/modeling/previews/helmet_toggle_02/animated_side/frames/frame_%03d.png -c:v libx264 -crf 20 -pix_fmt yuv420p -movflags +faststart tools/modeling/previews/helmet_toggle_02/animated_side/helmet_attached_two_cycles.mp4
+```
+
+`RiderBikePreview.tscn` provides a `Helmet` check button that hides the shell,
+vent detail, rim, and straps together. It does not change the rider
+rig, cadence playback, trainer data, or camera behavior.
+
 ## Godot runtime and review
 
 `CyclistVisual` imports the `Skeleton3D` and `PedalCycle` `AnimationPlayer` clip.
