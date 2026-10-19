@@ -81,6 +81,9 @@ public partial class CyclistVisual : Node3D
     private Node3D _rightArmRig = default!;
     private Node3D _leftLegRig = default!;
     private Node3D _rightLegRig = default!;
+    private AnimationPlayer? _riderAnimationPlayer;
+    private Animation? _pedalCycleAnimation;
+    private StringName _pedalCycleName;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
     private double _wheelAngle;
@@ -231,15 +234,9 @@ public partial class CyclistVisual : Node3D
         {
             ("BicycleModel", typeof(Node3D)), ("RiderModel", typeof(Node3D)),
             ("FrontWheelSpin", typeof(Node3D)), ("RearWheelSpin", typeof(Node3D)),
-            ("CrankPivot", typeof(Node3D)), ("TorsoRig", typeof(Node3D)),
+            ("CrankPivot", typeof(Node3D)),
             ("LeftCrank", typeof(MeshInstance3D)), ("RightCrank", typeof(MeshInstance3D)),
-            ("LeftPedal", typeof(MeshInstance3D)), ("RightPedal", typeof(MeshInstance3D)),
-            ("LeftThigh", typeof(MeshInstance3D)), ("LeftShin", typeof(MeshInstance3D)),
-            ("RightThigh", typeof(MeshInstance3D)), ("RightShin", typeof(MeshInstance3D)),
-            ("LeftCyclingShoe", typeof(MeshInstance3D)), ("RightCyclingShoe", typeof(MeshInstance3D)),
-            ("LeftShoeSole", typeof(MeshInstance3D)), ("RightShoeSole", typeof(MeshInstance3D)),
-            ("LeftAnkle", typeof(MeshInstance3D)), ("RightAnkle", typeof(MeshInstance3D)),
-            ("LeftKnee", typeof(MeshInstance3D)), ("RightKnee", typeof(MeshInstance3D))
+            ("LeftPedal", typeof(MeshInstance3D)), ("RightPedal", typeof(MeshInstance3D))
         };
         var invalidTargets = new System.Collections.Generic.List<string>();
         foreach (var required in requiredTargets)
@@ -255,36 +252,47 @@ public partial class CyclistVisual : Node3D
             instance.QueueFree();
             return false;
         }
+
+        _riderAnimationPlayer = FindFirstNode<AnimationPlayer>(instance);
+        var skeleton = FindFirstNode<Skeleton3D>(instance);
+        if (_riderAnimationPlayer is null || skeleton is null)
+        {
+            GD.PushWarning($"Imported cyclist at {ImportedModelPath} must contain a Skeleton3D and AnimationPlayer; using procedural fallback.");
+            RemoveChild(instance);
+            instance.QueueFree();
+            return false;
+        }
+        foreach (var animationName in _riderAnimationPlayer.GetAnimationList())
+        {
+            if (!animationName.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase)) continue;
+            _pedalCycleName = animationName;
+            _pedalCycleAnimation = _riderAnimationPlayer.GetAnimation(animationName);
+            break;
+        }
+        if (_pedalCycleAnimation is null || _pedalCycleAnimation.Length <= 0)
+        {
+            GD.PushWarning($"Imported cyclist at {ImportedModelPath} has no baked PedalCycle animation; using procedural fallback.");
+            RemoveChild(instance);
+            instance.QueueFree();
+            return false;
+        }
+        _riderAnimationPlayer.Play(_pedalCycleName);
+        _riderAnimationPlayer.Pause(); // The ride cadence drives sampling; the player must not free-run.
+        GD.Print($"[Cyclist GLB] Skeleton bones={skeleton.GetBoneCount()} animation={_pedalCycleName} length={_pedalCycleAnimation.Length:F3}s");
         _bicycleModel = FindModelNode<Node3D>(instance, "BicycleModel")!;
         _riderModel = FindModelNode<Node3D>(instance, "RiderModel")!;
         _frontWheel = FindModelNode<Node3D>(instance, "FrontWheelSpin")!;
         _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
         _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
-        _upperBody = FindModelNode<Node3D>(instance, "TorsoRig")!;
-        _upperBodyRestPosition = _upperBody.Position;
+        _upperBody = null!; // The complete imported rider is animated by its Skeleton3D.
         _leftCrank = FindModelNode<MeshInstance3D>(instance, "LeftCrank")!;
         _rightCrank = FindModelNode<MeshInstance3D>(instance, "RightCrank")!;
         _leftPedal = FindModelNode<MeshInstance3D>(instance, "LeftPedal")!;
         _rightPedal = FindModelNode<MeshInstance3D>(instance, "RightPedal")!;
-        _leftUpperLeg = FindModelNode<MeshInstance3D>(instance, "LeftThigh")!;
-        _leftLowerLeg = FindModelNode<MeshInstance3D>(instance, "LeftShin")!;
-        _rightUpperLeg = FindModelNode<MeshInstance3D>(instance, "RightThigh")!;
-        _rightLowerLeg = FindModelNode<MeshInstance3D>(instance, "RightShin")!;
-        _leftFoot = FindModelNode<MeshInstance3D>(instance, "LeftCyclingShoe")!;
-        _rightFoot = FindModelNode<MeshInstance3D>(instance, "RightCyclingShoe")!;
-        _leftSole = FindModelNode<MeshInstance3D>(instance, "LeftShoeSole")!;
-        _rightSole = FindModelNode<MeshInstance3D>(instance, "RightShoeSole")!;
-        _leftAnkle = FindModelNode<MeshInstance3D>(instance, "LeftAnkle")!;
-        _rightAnkle = FindModelNode<MeshInstance3D>(instance, "RightAnkle")!;
-        _leftKnee = FindModelNode<MeshInstance3D>(instance, "LeftKnee")!;
-        _rightKnee = FindModelNode<MeshInstance3D>(instance, "RightKnee")!;
 
         if (_bicycleModel is null || _riderModel is null || _frontWheel is null || _rearWheel is null ||
-            _crankPivot is null || _upperBody is null || _leftCrank is null || _rightCrank is null ||
-            _leftPedal is null || _rightPedal is null || _leftUpperLeg is null || _leftLowerLeg is null ||
-            _rightUpperLeg is null || _rightLowerLeg is null || _leftFoot is null || _rightFoot is null ||
-            _leftSole is null || _rightSole is null || _leftAnkle is null || _rightAnkle is null ||
-            _leftKnee is null || _rightKnee is null)
+            _crankPivot is null || _leftCrank is null || _rightCrank is null ||
+            _leftPedal is null || _rightPedal is null)
         {
             GD.PushWarning($"Imported cyclist at {ImportedModelPath} does not match the Wodra animation-target contract; using procedural fallback.");
             RemoveChild(instance);
@@ -293,13 +301,17 @@ public partial class CyclistVisual : Node3D
         }
 
         SetImportedMaterial(instance, "BikeFrame", _frameMaterial);
-        SetImportedMaterial(instance, "JerseyTorso", _jerseyMaterial);
-        SetImportedMaterial(instance, "LeftJerseySleeve", _jerseyMaterial);
-        SetImportedMaterial(instance, "RightJerseySleeve", _jerseyMaterial);
-        SetImportedMaterial(instance, "JerseyShoulderCapL", _jerseyMaterial);
-        SetImportedMaterial(instance, "JerseyShoulderCapR", _jerseyMaterial);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private static T? FindFirstNode<T>(Node root) where T : Node
+    {
+        if (root is T match) return match;
+        foreach (var child in root.GetChildren())
+            if (FindFirstNode<T>(child) is { } result)
+                return result;
+        return null;
     }
 
     private static int CountTriangles(Node root)
@@ -377,12 +389,27 @@ public partial class CyclistVisual : Node3D
         GlobalPosition=routePosition;
         LookAt(routePosition+routeForward,Vector3.Up);
         RotateObjectLocal(Vector3.Back,(float)_leanRadians);
-        _upperBody.Position = _upperBodyRestPosition + new Vector3(0, paused ? 0 : (float)(.003 * Math.Sin(_crankAngle * 2) * Math.Clamp(_animatedCadenceRpm / 90, 0, 1)), 0);
+        if (!UsesImportedModel)
+            _upperBody.Position = _upperBodyRestPosition + new Vector3(0, paused ? 0 : (float)(.003 * Math.Sin(_crankAngle * 2) * Math.Clamp(_animatedCadenceRpm / 90, 0, 1)), 0);
         UpdatePedalingGeometry();
     }
 
     private void UpdatePedalingGeometry()
     {
+        if (UsesImportedModel)
+        {
+            // The baked skeleton owns rider motion. Crank and wheel visuals remain driven
+            // independently from cadence and road speed, respectively. At zero cadence the
+            // crank phase and skeleton sample hold their last pose; restart resumes there.
+            _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
+            if (_riderAnimationPlayer is not null && _pedalCycleAnimation is not null)
+            {
+                var cycleLength = _pedalCycleAnimation.Length / 3.0;
+                var phase = CyclistAnimationMath.WrapAngle(_crankAngle) / Math.Tau;
+                _riderAnimationPlayer.Seek(phase * cycleLength, true);
+            }
+            return;
+        }
         var bb=new Vector3(0,Size.CrankY,Size.CrankZ);
         var left=PedalWorldPosition(_crankAngle);
         var right=PedalWorldPosition(_crankAngle+Math.PI);
@@ -457,34 +484,43 @@ public partial class CyclistVisual : Node3D
         }
         if (node is MeshInstance3D instance && instance.Mesh is { } mesh)
         {
-            var local = mesh.GetAabb();
-            var transformedMin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-            var transformedMax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
-            for (var x = 0; x < 2; x++)
-            for (var y = 0; y < 2; y++)
-            for (var z = 0; z < 2; z++)
+            // Godot's static mesh AABB does not represent a weighted mesh's evaluated
+            // skeleton pose. The Blender export step validates the full skinned envelope.
+            if (instance.Skin is not null || !instance.Skeleton.IsEmpty)
             {
-                var corner = local.Position + new Vector3(x == 0 ? 0 : local.Size.X,
-                    y == 0 ? 0 : local.Size.Y, z == 0 ? 0 : local.Size.Z);
-                var point = transform * corner;
-                transformedMin = transformedMin.Min(point);
-                transformedMax = transformedMax.Max(point);
-                modelMin = modelMin.Min(point);
-                modelMax = modelMax.Max(point);
+                meshCount++;
             }
-            var transformedSize = transformedMax - transformedMin;
-            var largestDimension = Math.Max(transformedSize.X, Math.Max(transformedSize.Y, transformedSize.Z));
-            if (largestDimension > largestMeshDimension)
+            else
             {
-                largestMeshDimension = largestDimension;
-                largestMesh = safePath;
+                var local = mesh.GetAabb();
+                var transformedMin = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+                var transformedMax = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+                for (var x = 0; x < 2; x++)
+                for (var y = 0; y < 2; y++)
+                for (var z = 0; z < 2; z++)
+                {
+                    var corner = local.Position + new Vector3(x == 0 ? 0 : local.Size.X,
+                        y == 0 ? 0 : local.Size.Y, z == 0 ? 0 : local.Size.Z);
+                    var point = transform * corner;
+                    transformedMin = transformedMin.Min(point);
+                    transformedMax = transformedMax.Max(point);
+                    modelMin = modelMin.Min(point);
+                    modelMax = modelMax.Max(point);
+                }
+                var transformedSize = transformedMax - transformedMin;
+                var largestDimension = Math.Max(transformedSize.X, Math.Max(transformedSize.Y, transformedSize.Z));
+                if (largestDimension > largestMeshDimension)
+                {
+                    largestMeshDimension = largestDimension;
+                    largestMesh = safePath;
+                }
+                var scale = instance.Scale;
+                if (transformedSize.X > 1.25f || transformedSize.Y > 1.25f || transformedSize.Z > 1.25f)
+                    GD.PushWarning($"[Cyclist GLB] Unexpectedly large mesh {safePath}: {transformedSize}.");
+                if (!float.IsFinite(scale.X) || !float.IsFinite(scale.Y) || !float.IsFinite(scale.Z))
+                    GD.PushWarning($"[Cyclist GLB] Invalid mesh scale on {safePath}: {scale}.");
+                meshCount++;
             }
-            var scale = instance.Scale;
-            if (transformedSize.X > 1.25f || transformedSize.Y > 1.25f || transformedSize.Z > 1.25f)
-                GD.PushWarning($"[Cyclist GLB] Unexpectedly large mesh {safePath}: {transformedSize}.");
-            if (!float.IsFinite(scale.X) || !float.IsFinite(scale.Y) || !float.IsFinite(scale.Z))
-                GD.PushWarning($"[Cyclist GLB] Invalid mesh scale on {safePath}: {scale}.");
-            meshCount++;
         }
         foreach (Node child in node.GetChildren())
             if (child is Node3D child3D)
