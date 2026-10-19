@@ -124,6 +124,49 @@ The stills are saved in `src/IndoorCycling.Game/Tests/previews/` as
 `RiderBikePreview-Chase.png`, `RiderBikePreview-Side.png`, and
 `RiderBikePreview-FrontThreeQuarter.png`.
 
+### Leg helper and outfit export correction
+
+`polish_rider.py` removes only the isolated, fully weighted MPFB
+`helper-skirt` and `helper-tights` proxy face islands from the `Human` mesh.
+The continuous weighted body and all skeleton weights remain. It bakes smooth
+jersey/shorts/shoe masks to `RiderOutfitWeights`, marks that layer as Blender's
+render color, and exports it as glTF `COLOR_0`. The Godot `Human` mesh shader
+uses those three channels and computes skin as the residual; its jersey uniform
+selects the rider variant while shorts, skin, and shoes keep fixed colors.
+
+Regenerate an editable checkpoint and runtime GLB from the preserved helmet
+candidate without rerendering Blender previews:
+
+```powershell
+$root = (Get-Location).Path
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  (Join-Path $root 'tools/modeling/checkpoints/WodraCyclist.final-helmet.blend') `
+  --python (Join-Path $root 'tools/modeling/polish_rider.py') -- `
+  (Join-Path $root 'tools/modeling/exports/WodraCyclist-fixed.glb') `
+  (Join-Path $root 'tools/modeling/checkpoints/WodraCyclist.fixed.blend') `
+  (Join-Path $root 'tools/modeling/previews/rider_export_fix') --skip-previews
+Copy-Item tools/modeling/exports/WodraCyclist-fixed.glb `
+  src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb -Force
+```
+
+Refresh the Godot import, then capture one rider at eight evenly spaced crank
+phases from rear, side, and front-three-quarter views. This uses the actual
+Rolling City route lighting and the review-only close framing; it does not
+change the production camera:
+
+```powershell
+& 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe' `
+  --headless --editor --import --path src/IndoorCycling.Game
+& 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe' `
+  --path src/IndoorCycling.Game res://Tests/RiderBikePreview.tscn --resolution 960x540 `
+  --quit-after 360 -- --capture-rider-matrix
+```
+
+The 24 stills are written to `src/IndoorCycling.Game/Tests/previews/` as
+`Rider-000` through `Rider-315` with `Rear`, `Side`, and `Front` suffixes.
+For the normal three-rider chase/side/front preview and an 18-second in-game
+recording, use the regular movie command above with `--capture-preview`.
+
 ## Provenance and licensing
 
 - MPFB code is GPL-3.0-or-later. Its base mesh, default rig, and related bundled

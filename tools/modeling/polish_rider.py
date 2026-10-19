@@ -86,7 +86,7 @@ def tube(name, points, radius, material, rig, bone="head", sides=8):
 def make_helmet(rig):
     # Head-local basis is derived from the actual evaluated head bone; source
     # model faces +Y and the original rider object is rotated in the scene.
-    old = [o for o in bpy.data.objects if o.name.startswith(("CyclingHelmet", "HelmetBrim", "HelmetStrap", "HelmetVent"))]
+    old = [o for o in bpy.data.objects if o.name.startswith(("CyclingHelmet", "HelmetBrim", "HelmetRim", "HelmetStrap", "HelmetVent"))]
     for obj in old:
         bpy.data.objects.remove(obj, do_unlink=True)
     # Geometry in armature rest coordinates matches the existing fitted skull:
@@ -157,82 +157,124 @@ def make_helmet(rig):
         obj["optional_accessory"] = True
 
 
+def remove_mp_fb_leg_proxy_panels(human):
+    """Remove the MPFB skirt/tights helper islands that bridge the actual legs.
+
+    These are isolated, fully helper-weighted proxy components in MPFB's Human
+    mesh. The real body is a separate continuous component and remains fully
+    skinned. Match the dedicated helper groups at full weight so this cannot
+    remove ordinary torso, pelvis, or leg vertices.
+    """
+    import bmesh
+    mesh=human.data
+    groups={name:human.vertex_groups.get(name) for name in ("helper-skirt","helper-tights")}
+    if any(group is None for group in groups.values()):
+        raise RuntimeError("Expected MPFB helper-skirt and helper-tights proxy groups")
+    group_indices={name:group.index for name,group in groups.items()}
+    bm=bmesh.new(); bm.from_mesh(mesh)
+    remove=[]
+    for face in bm.faces:
+        # Blender's deform layer carries the actual full-weight helper label.
+        weights=[face.verts[i][bm.verts.layers.deform.verify()] for i in range(len(face.verts))]
+        matched=None
+        for name,index in group_indices.items():
+            if all(abs(weight.get(index,0.0)-1.0)<1e-5 for weight in weights):
+                matched=name; break
+        if matched:
+            remove.append((face,matched))
+    counts={name:0 for name in group_indices}
+    for face,name in remove:
+        if face.is_valid:
+            bmesh.ops.delete(bm,geom=[face],context='FACES_ONLY')
+            counts[name]+=1
+    bm.to_mesh(mesh); bm.free(); mesh.update()
+    # Allow a fully cleaned mesh, while rejecting partial helper islands.
+    if any(0<count<100 for count in counts.values()):
+        raise RuntimeError(f"Unexpected MPFB helper proxy removal counts: {counts}")
+    print("REMOVED_MPFB_LEG_PROXY_FACES",counts)
+
+
 def round_clothing_edges():
     human=bpy.data.objects.get("Human")
     if not human or not human.type == "MESH":
         return
-    if len(human.data.materials) < 4:
-        return
-    # Blend the existing skin, jersey, shorts, and shoe colors in a shader over
-    # a narrow smoothstep band. This preserves the accepted body and rig while
-    # removing the jagged face-by-face hems from the prototype.
-    old=list(human.data.materials)
-    colors=[]
-    for material in old[:4]:
-        bsdf=material.node_tree.nodes.get("Principled BSDF") if material and material.use_nodes else None
-        colors.append(tuple(bsdf.inputs["Base Color"].default_value) if bsdf else tuple(material.diffuse_color))
-    head_group=human.vertex_groups.get("head")
-    if head_group:
-        attr=human.data.color_attributes.get("RiderHeadWeight") or human.data.color_attributes.new(
-            name="RiderHeadWeight",type="FLOAT_COLOR",domain="POINT")
-        for vertex in human.data.vertices:
-            weight=next((g.weight for g in vertex.groups if g.group==head_group.index),0.0)
-            attr.data[vertex.index].color=(weight,0.0,0.0,1.0)
-        human.data.color_attributes.active_color=attr
-    m=bpy.data.materials.get("Rider Outfit | smooth fitted transitions") or bpy.data.materials.new("Rider Outfit | smooth fitted transitions")
-    m.use_nodes=True; nodes=m.node_tree.nodes; links=m.node_tree.links; nodes.clear()
+    remove_mp_fb_leg_proxy_panels(human)
+    # Bake smooth category masks into glTF's standard COLOR_0 vertex attribute.
+    # The earlier procedural material graph used unsupported glTF nodes, so the
+    # exported body fell back to its white diffuse default in Godot. Keeping the
+    # masks in RGBA lets the runtime shader apply rider variants to jersey only.
+    mesh=human.data
+    groups={g.name:g.index for g in human.vertex_groups}
+    head_idx=groups.get("head")
+    foot_indices=[idx for name,idx in groups.items() if name in ("foot.L","foot.R") or name.startswith("toe")]
+    def smooth(value,lo,hi):
+        t=max(0.0,min(1.0,(value-lo)/(hi-lo)))
+        return t*t*(3-2*t)
+    def group_weight(vertex,index):
+        if index is None: return 0.0
+        return max((g.weight for g in vertex.groups if g.group==index),default=0.0)
+    attr=mesh.color_attributes.get("RiderOutfitWeights") or mesh.color_attributes.new(
+        name="RiderOutfitWeights",type="FLOAT_COLOR",domain="POINT")
+    for vertex in mesh.vertices:
+        x,y,z=vertex.co
+        ax=abs(x)
+        head=group_weight(vertex,head_idx)
+        jersey=(smooth(z,.955,.99)*(1-smooth(z,1.39,1.42))*(1-smooth(ax,.26,.36))
+                *(1-smooth(head,.08,.50)))
+        face_center=1-smooth(ax,.075,.15)
+        face_upper=smooth(z,1.29,1.34)
+        jersey*=1-face_center*face_upper
+        shorts=smooth(z,.70,.74)*(1-smooth(z,1.00,1.04))*(1-smooth(ax,.20,.23))
+        shoe=(1-smooth(z,.10,.13))*(1-smooth(y,-.075,-.045))
+        foot=max((group_weight(vertex,idx) for idx in foot_indices),default=0.0)
+        shoe=max(shoe,foot*(1-smooth(z,.27,.38)))
+        # Pack three outfit masks in glTF's RGB vertex attribute. Skin is the
+        # residual weight in the Godot shader, avoiding dependence on optional
+        # COLOR_0 alpha (which Blender's exporter omits for RGB materials).
+        w_jersey=jersey*(1-shorts)*(1-shoe)
+        w_shorts=shorts*(1-shoe)
+        w_shoe=shoe
+        attr.data[vertex.index].color=(w_jersey,w_shorts,w_shoe,1.0)
+    # Blender glTF exports the render color layer as COLOR_0. Merely selecting
+    # the active layer leaves the prior MPFB head-weight layer in that slot.
+    for other in list(mesh.color_attributes):
+        if other != attr:
+            mesh.color_attributes.remove(other)
+    color_index=next(i for i,layer in enumerate(mesh.color_attributes)
+                     if layer.name=="RiderOutfitWeights")
+    mesh.color_attributes.active_color=attr
+    mesh.color_attributes.active_color_index=color_index
+    mesh.color_attributes.render_color_index=color_index
+    m=bpy.data.materials.get("Rider Outfit | glTF vertex masks") or bpy.data.materials.new("Rider Outfit | glTF vertex masks")
+    m.diffuse_color=(.58,.27,.2,1); m.use_nodes=True
+    nodes=m.node_tree.nodes; links=m.node_tree.links; nodes.clear()
     out=nodes.new("ShaderNodeOutputMaterial"); bsdf=nodes.new("ShaderNodeBsdfPrincipled")
-    bsdf.inputs["Roughness"].default_value=.78; links.new(bsdf.outputs["BSDF"],out.inputs["Surface"])
-    tex=nodes.new("ShaderNodeTexCoord"); sep=nodes.new("ShaderNodeSeparateXYZ"); links.new(tex.outputs["Object"],sep.inputs["Vector"])
-    absx=nodes.new("ShaderNodeMath"); absx.operation="ABSOLUTE"; links.new(sep.outputs["X"],absx.inputs[0])
-    head_color=nodes.new("ShaderNodeVertexColor"); head_color.layer_name="RiderHeadWeight"
-    head_sep=nodes.new("ShaderNodeSeparateColor"); head_sep.mode="RGB"
-    links.new(head_color.outputs["Color"],head_sep.inputs["Color"])
-    def smooth(source,lo,hi):
-        n=nodes.new("ShaderNodeMapRange"); n.clamp=True; n.interpolation_type="SMOOTHSTEP"
-        n.inputs["From Min"].default_value=lo; n.inputs["From Max"].default_value=hi
-        n.inputs["To Min"].default_value=0; n.inputs["To Max"].default_value=1
-        links.new(source,n.inputs["Value"]); return n.outputs["Result"]
-    def inv(socket):
-        n=nodes.new("ShaderNodeMath"); n.operation="SUBTRACT"; n.inputs[0].default_value=1; links.new(socket,n.inputs[1]); return n.outputs[0]
-    def mul(a,b):
-        n=nodes.new("ShaderNodeMath"); n.operation="MULTIPLY"; links.new(a,n.inputs[0]); links.new(b,n.inputs[1]); return n.outputs[0]
-    jersey=mul(mul(mul(smooth(sep.outputs["Z"],.955,.99),inv(smooth(sep.outputs["Z"],1.39,1.42))),
-                   inv(smooth(absx.outputs[0],.26,.36))),inv(smooth(head_sep.outputs["Red"],.08,.50)))
-    # The original coarse classifier extended jersey color into the lower face.
-    # Preserve the crew-neck edge by tapering jersey away from the face center.
-    face_center=inv(smooth(absx.outputs[0],.075,.15))
-    face_upper=smooth(sep.outputs["Z"],1.29,1.34)
-    jersey=mul(jersey,inv(mul(face_center,face_upper)))
-    shorts=mul(mul(smooth(sep.outputs["Z"],.70,.74),inv(smooth(sep.outputs["Z"],1.00,1.04))),inv(smooth(absx.outputs[0],.20,.23)))
-    shoe=mul(inv(smooth(sep.outputs["Z"],.10,.13)),inv(smooth(sep.outputs["Y"],-.075,-.045)))
-    def mix(base,color,factor):
-        n=nodes.new("ShaderNodeMixRGB"); n.blend_type="MIX"
-        if isinstance(base,bpy.types.NodeSocket): links.new(base,n.inputs[1])
-        else: n.inputs[1].default_value=base
-        n.inputs[2].default_value=color; links.new(factor,n.inputs[0]); return n.outputs[0]
-    color=mix(colors[0],colors[1],jersey); color=mix(color,colors[2],shorts)
-    color=mix(color,colors[3],shoe)
-    links.new(color,bsdf.inputs["Base Color"])
-    human.data.materials.clear(); human.data.materials.append(m)
-    # Assign the retained toe/foot weighted skin to the exact dark upper color.
-    # The editable body and skeleton stay intact; this removes exposed skin
-    # slivers at the modeled shell edge and the face material survives glTF.
-    toe_groups={g.index for g in human.vertex_groups
-                if g.name in ("foot.L","foot.R") or g.name.startswith(tuple(
-                    f"toe{i}-{j}.{side}" for side in ("L","R")
-                    for i in range(1,6) for j in range(1,5)))}
-    toe_material=mat("Road Shoe Upper",(.045,.065,.075),.58)
-    human.data.materials.append(toe_material)
-    enclosed=0
-    for poly in human.data.polygons:
-        indices=list(poly.vertices)
-        foot_weight=sum(max((g.weight for g in human.data.vertices[i].groups
-                             if g.group in toe_groups),default=0.0) for i in indices)/len(indices)
-        mean_z=sum(human.data.vertices[i].co.z for i in indices)/len(indices)
-        poly.material_index=1 if foot_weight>.25 and mean_z<.36 else 0
-        enclosed+=poly.material_index
-    print("SHOE_COVERAGE",enclosed,"toe/foot material faces")
+    bsdf.inputs["Roughness"].default_value=.82
+    color=nodes.new("ShaderNodeVertexColor"); color.layer_name="RiderOutfitWeights"
+    separate=nodes.new("ShaderNodeSeparateColor"); separate.mode="RGB"
+    links.new(color.outputs["Color"],separate.inputs["Color"])
+    def scaled(channel,rgba):
+        n=nodes.new("ShaderNodeVectorMath"); n.operation="SCALE"
+        n.inputs[0].default_value=rgba; links.new(channel,n.inputs[3]); return n.outputs[0]
+    # Blender preview uses the same masks as Godot; the GLB runtime shader maps
+    # these channels to the selected variant and fixed shorts/skin/shoe colors.
+    jersey=scaled(separate.outputs["Red"],(.58,.13,.09))
+    shorts=scaled(separate.outputs["Green"],(.035,.047,.058))
+    shoe=scaled(separate.outputs["Blue"],(.68,.66,.58))
+    used=nodes.new("ShaderNodeMath"); used.operation="ADD"
+    links.new(separate.outputs["Red"],used.inputs[0]); links.new(separate.outputs["Green"],used.inputs[1])
+    used2=nodes.new("ShaderNodeMath"); used2.operation="ADD"
+    links.new(used.outputs[0],used2.inputs[0]); links.new(separate.outputs["Blue"],used2.inputs[1])
+    skin_weight=nodes.new("ShaderNodeMath"); skin_weight.operation="SUBTRACT"
+    skin_weight.inputs[0].default_value=1.0; links.new(used2.outputs[0],skin_weight.inputs[1])
+    skin=scaled(skin_weight.outputs[0],(.58,.36,.25))
+    add=jersey
+    for channel in (shorts,skin,shoe):
+        node=nodes.new("ShaderNodeVectorMath"); node.operation="ADD"
+        links.new(add,node.inputs[0]); links.new(channel,node.inputs[1]); add=node.outputs[0]
+    links.new(add,bsdf.inputs["Base Color"]); links.new(bsdf.outputs["BSDF"],out.inputs["Surface"])
+    mesh.materials.clear(); mesh.materials.append(m)
+    print("BAKED_RIDER_VERTEX_MASKS",len(mesh.vertices),"channels=jersey,shorts,skin,shoe")
 
 
 def curl_fingers(rig):
@@ -443,10 +485,27 @@ def render_full_views(preview_root: Path):
         scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage=old_res
 
 
+def configure_gltf_vertex_color_material():
+    """Export COLOR_0 directly; Godot applies the weighted outfit shader."""
+    human=bpy.data.objects["Human"]
+    material=human.data.materials[0]
+    nodes=material.node_tree.nodes; links=material.node_tree.links
+    bsdf=next(node for node in nodes if node.type=="BSDF_PRINCIPLED")
+    for link in list(bsdf.inputs["Base Color"].links): links.remove(link)
+    color=next((node for node in nodes if node.type=="VERTEX_COLOR" and
+                node.layer_name=="RiderOutfitWeights"),None)
+    if color is None:
+        color=nodes.new("ShaderNodeVertexColor"); color.layer_name="RiderOutfitWeights"
+    bsdf.inputs["Base Color"].default_value=(1,1,1,1)
+    links.new(color.outputs["Color"],bsdf.inputs["Base Color"])
+    print("GLTF_EXPORT_COLOR_ATTRIBUTE",color.layer_name,"directly connected to base color")
+
+
 def main():
     args=sys.argv[sys.argv.index("--")+1:]
     head_only="--head-only" in args
-    args=[arg for arg in args if arg!="--head-only"]
+    skip_previews="--skip-previews" in args
+    args=[arg for arg in args if arg not in ("--head-only","--skip-previews")]
     if len(args)!=3: raise SystemExit("expected output GLB, output blend, preview directory [--head-only]")
     glb,blend,preview=map(Path,args)
     glb.parent.mkdir(parents=True,exist_ok=True); blend.parent.mkdir(parents=True,exist_ok=True)
@@ -459,12 +518,16 @@ def main():
     refine_brake_hoods()
     extend_shoe_uppers(rig)
     curl_fingers(rig)
-    inspect_and_render(preview,rig)
-    if not head_only:
-        render_full_views(preview/"full_rider_review")
-        render_cycle(preview/"animated_side",rig)
+    if not skip_previews:
+        inspect_and_render(preview,rig)
+        if not head_only:
+            render_full_views(preview/"full_rider_review")
+            render_cycle(preview/"animated_side",rig)
     # Save a non-destructive review checkpoint and export full weighted model/action.
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+    # Keep the editable checkpoint on the Blender authoring shader network;
+    # only the exported GLB uses the direct COLOR_0 connection Godot imports.
+    configure_gltf_vertex_color_material()
     bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects: obj.select_set(True)
     bpy.context.view_layer.objects.active=bpy.data.objects.get("BicycleModel")

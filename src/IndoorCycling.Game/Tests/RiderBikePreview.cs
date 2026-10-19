@@ -29,12 +29,19 @@ public partial class RiderBikePreview : Node3D
     private bool _chaseCaptured;
     private bool _sideCaptured;
     private bool _frontCaptured;
+    private bool _reviewMatrixRequested;
+    private int _reviewMatrixIndex;
+    private double _reviewMatrixWait;
+    private static readonly int[] ReviewPhases = [0, 45, 90, 135, 180, 225, 270, 315];
+    private static readonly RiderCameraView[] ReviewViews =
+        [RiderCameraView.CloseRear, RiderCameraView.Side, RiderCameraView.FrontThreeQuarter];
 
     public override void _Ready()
     {
         try
         {
             _captureRequested = OS.GetCmdlineUserArgs().Contains("--capture-preview");
+            _reviewMatrixRequested = OS.GetCmdlineUserArgs().Contains("--capture-rider-matrix");
             _helmetVisible = !OS.GetCmdlineUserArgs().Contains("--helmet-off");
             BuildWorld();
             for (var i = 0; i < _riders.Length; i++)
@@ -42,11 +49,18 @@ public partial class RiderBikePreview : Node3D
                 _riders[i] = new CyclistVisual { Name = $"PreviewRider{i + 1}" };
                 _riders[i].Build(i);
                 _riders[i].SetHelmetVisible(_helmetVisible);
+                if (_reviewMatrixRequested && i > 0) _riders[i].Visible = false;
                 AddChild(_riders[i]);
             }
             AddChild(_camera);
             _camera.SetView(RiderCameraView.GameplayRefined);
+            if (_reviewMatrixRequested) _camera.Fov = 32f;
             AddChild(CreateHud());
+            if (_reviewMatrixRequested)
+            {
+                _riders[0].SetReviewCrankPhase(ReviewPhases[0]);
+                GD.Print("[RiderBikePreview] Godot inspection matrix: 8 crank phases × rear/side/front views under route lighting");
+            }
             GD.Print("[RiderBikePreview] Wodra route render active · 3 riders · cadences 55/85/115 rpm · camera cycles");
         }
         catch (Exception exception)
@@ -58,6 +72,11 @@ public partial class RiderBikePreview : Node3D
     public override void _Process(double delta)
     {
         if (_route is null || _riders[0] is null) return;
+        if (_reviewMatrixRequested)
+        {
+            CaptureReviewMatrixStep(delta);
+            return;
+        }
         _elapsed += delta;
         _statsElapsed += delta;
         _frameTimeSum += delta;
@@ -101,6 +120,33 @@ public partial class RiderBikePreview : Node3D
             _frameSamples = 0;
             _slowestFrameMs = 0;
         }
+    }
+
+    private void CaptureReviewMatrixStep(double delta)
+    {
+        if (_reviewMatrixIndex >= ReviewPhases.Length * ReviewViews.Length) return;
+        var pose = _route.GetPoseAtDistance(_routeDistance);
+        var position = ProceduralRoad.ToGodot(pose.Position);
+        var forward = ProceduralRoad.ToGodot(pose.Forward);
+        var phaseIndex = _reviewMatrixIndex / ReviewViews.Length;
+        var viewIndex = _reviewMatrixIndex % ReviewViews.Length;
+        _riders[0].SetReviewCrankPhase(ReviewPhases[phaseIndex]);
+        _riders[0].UpdateFromRideState(position, forward, 31, 0, 0, false, delta);
+        _camera.SetView(ReviewViews[viewIndex]);
+        _camera.Follow(position, forward, delta);
+        _reviewMatrixWait += delta;
+        if (_reviewMatrixWait < 0.22) return;
+        var viewName = ReviewViews[viewIndex] switch
+        {
+            RiderCameraView.CloseRear => "Rear",
+            RiderCameraView.Side => "Side",
+            _ => "Front"
+        };
+        CaptureFrame($"Rider-{ReviewPhases[phaseIndex]:000}-{viewName}.png");
+        _reviewMatrixIndex++;
+        _reviewMatrixWait = 0;
+        if (_reviewMatrixIndex == ReviewPhases.Length * ReviewViews.Length)
+            GD.Print("[RiderBikePreview] Completed 24 Godot crank-phase/view captures.");
     }
 
     private bool CaptureFrame(string fileName)
@@ -208,7 +254,9 @@ public partial class RiderBikePreview : Node3D
         var stack = new VBoxContainer();
         var label = new Label
         {
-            Text = "ROAD BIKE / RIDER PREVIEW\nLeft coasts and restarts · Three jersey/frame variants\nCamera: chase → side → front three-quarter",
+            Text = _reviewMatrixRequested
+                ? "GODOT RIDER INSPECTION\nEight pedal phases · rear, side, front views"
+                : "ROAD BIKE / RIDER PREVIEW\nLeft coasts and restarts · Three jersey/frame variants\nCamera: chase → side → front three-quarter",
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         stack.AddChild(label);

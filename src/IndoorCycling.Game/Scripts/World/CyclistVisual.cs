@@ -45,6 +45,23 @@ public partial class CyclistVisual : Node3D
     private static readonly StandardMaterial3D ShoeMaterial = Material(new Color(.88f,.87f,.79f));
     private static readonly StandardMaterial3D HelmetMaterial = Material(new Color(.79f,.61f,.27f));
     private static readonly StandardMaterial3D GloveMaterial = Material(new Color(.10f,.12f,.14f));
+    private static readonly Shader RiderOutfitShader = new()
+    {
+        Code = """
+            shader_type spatial;
+            render_mode cull_back;
+            uniform vec4 jersey_color : source_color = vec4(0.58, 0.13, 0.09, 1.0);
+            uniform vec4 shorts_color : source_color = vec4(0.035, 0.047, 0.058, 1.0);
+            uniform vec4 skin_color : source_color = vec4(0.58, 0.36, 0.25, 1.0);
+            uniform vec4 shoe_color : source_color = vec4(0.68, 0.66, 0.58, 1.0);
+            void fragment() {
+                float skin_weight = max(0.0, 1.0 - COLOR.r - COLOR.g - COLOR.b);
+                ALBEDO = COLOR.r * jersey_color.rgb + COLOR.g * shorts_color.rgb +
+                         skin_weight * skin_color.rgb + COLOR.b * shoe_color.rgb;
+                ROUGHNESS = 0.82;
+            }
+            """
+    };
     private StandardMaterial3D _frameMaterial = FramePalette[0];
     private StandardMaterial3D _tyreMaterial = TyreMaterial;
     private StandardMaterial3D _rimMaterial = RimMaterial;
@@ -309,9 +326,33 @@ public partial class CyclistVisual : Node3D
         }
 
         SetImportedMaterial(instance, "BikeFrame", _frameMaterial);
+        ApplyImportedRiderMaterials(instance);
         CollectHelmetParts(instance);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private void ApplyImportedRiderMaterials(Node root)
+    {
+        var human = FindModelNode<MeshInstance3D>(root, "Human")
+            ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh.");
+        var outfit = new ShaderMaterial { Shader = RiderOutfitShader };
+        outfit.SetShaderParameter("jersey_color", _jerseyMaterial.AlbedoColor);
+        outfit.SetShaderParameter("shorts_color", new Color(.035f,.047f,.058f));
+        outfit.SetShaderParameter("skin_color", new Color(.58f,.36f,.25f));
+        outfit.SetShaderParameter("shoe_color", new Color(.68f,.66f,.58f));
+        human.MaterialOverride = outfit;
+        GD.Print($"[Cyclist GLB] Human outfit shader applied to {human.GetSurfaceOverrideMaterialCount()} imported surface overrides; surfaces={human.Mesh?.GetSurfaceCount() ?? 0}");
+    }
+
+    /// <summary>Set an exact baked pedal phase for the Godot visual review harness.</summary>
+    public void SetReviewCrankPhase(int degrees)
+    {
+        if (!UsesImportedModel || _riderAnimationPlayer is null || _pedalCycleAnimation is null) return;
+        _crankAngle = Math.Tau * ((degrees % 360 + 360) % 360) / 360.0;
+        _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
+        var cycleLength = _pedalCycleAnimation.Length / 3.0;
+        _riderAnimationPlayer.Seek((_crankAngle / Math.Tau) * cycleLength, true);
     }
 
     private void CollectHelmetParts(Node node)
