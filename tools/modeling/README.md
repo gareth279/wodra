@@ -105,6 +105,39 @@ To regenerate the runtime GLB directly, pass
 Open/import the Godot project after changing the GLB so its scene importer
 refreshes the asset.
 
+### Alpha.47 rider finishing
+
+`source/WodraCyclist.alpha47.blend` is the editable full rig and bicycle source
+for the alpha.47 hand/head polish. It preserves the accepted pedal action,
+wheel/bike geometry, helmet accessory, and rider colours. The polish script
+adds a 12 mm wrist-only adjustment against the existing runtime hood targets;
+it does not alter elbow, leg, saddle, or pedal keys. The runtime shader adds a
+small skin-only ambient contribution so facial planes remain readable in the
+normal route shadows without changing the skin's base colour or the world
+lighting. The head remains the full MPFB mesh. Export keeps the MPFB weighted
+eye surfaces on their own warm ivory material, so the game applies rider
+colour variants only to the outfit surface. Exploratory separate eye overlays
+were rejected after their imported orientation looked detached.
+
+Re-export the committed source without rebuilding the rider or changing the
+source blend:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha47.blend --python `
+  tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-alpha47-review.glb `
+  tools/modeling/checkpoints/WodraCyclist.alpha47-review.blend `
+  tools/modeling/previews/alpha47-review --skip-previews
+```
+
+`RiderFinishingSceneReviewTest.tscn` starts the production RideScreen with the
+imported GLB and route HUD, checks settled side framing with debug on/off, and
+captures actual Godot head/helmet, hood, side, and chase views. Redirect
+`APPDATA` and `LOCALAPPDATA` into a writable local test directory when running
+under a restricted account; Godot writes `user://` logs and automatic FIT data
+during this ride-scene test.
+
 ### Focused helmet and contact polish
 
 To apply the helmet/accessory and clothing/grip finish pass to the preserved
