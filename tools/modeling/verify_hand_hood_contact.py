@@ -36,6 +36,22 @@ for frame in frames:
                 raise RuntimeError(f"BrakeHood{side} is missing")
             hood_eval = hood.evaluated_get(depsgraph)
             surface = BVHTree.FromObject(hood_eval, depsgraph)
+            # Sample the weighted palm/metacarpal skin itself. This is the
+            # palm-seating check; the wrist bone origin is not a contact point.
+            palm_indices = set()
+            for metacarpal in range(1, 5):
+                group = human.vertex_groups.get(f"metacarpal{metacarpal}.{side}")
+                if group is None:
+                    raise RuntimeError(f"Metacarpal group metacarpal{metacarpal}.{side} is missing")
+                palm_indices.update(index for index, vertex in enumerate(human.data.vertices)
+                                    if any(weight.group == group.index and weight.weight >= .1
+                                           for weight in vertex.groups))
+            palm_distances = [surface.find_nearest(points[index])[3] for index in palm_indices]
+            palm_median = statistics.median(palm_distances)
+            palm_p90 = sorted(palm_distances)[int(.9 * (len(palm_distances) - 1))]
+            print(f"PALM frame={frame} side={side} median={palm_median:.4f} p90={palm_p90:.4f}")
+            if palm_median > .035 or palm_p90 > .060:
+                raise AssertionError(f"Palm {side} is not seated near its hood: median={palm_median:.3f}m p90={palm_p90:.3f}m")
             for finger in range(1, 6):
                 group = human.vertex_groups.get(f"finger{finger}-3.{side}")
                 if group is None:

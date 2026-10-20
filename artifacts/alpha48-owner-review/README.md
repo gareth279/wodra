@@ -4,7 +4,7 @@ These are before/after captures from the production `RideScreen` and imported ri
 
 ## Evidence
 
-- `after/hand-left-hood-close.png` and `hand-right-hood-close.png`: actual runtime hand/hood views from each side. The wrists and hand pose were adjusted locally; fingers now curl toward and overlap the hood grip surfaces. The close view still shows the low-poly fingers as somewhat stiff, so owner visual review remains appropriate.
+- `after/hand-left-hood-close.png` and `hand-right-hood-close.png`: actual runtime hand/hood views from each side. The wrists and hand pose were adjusted locally; fingers now curl toward and overlap the hood grip surfaces. The low-poly fingers still read somewhat stiff in macro view, so owner visual review remains appropriate. Evaluated palm/metacarpal vertices have a 12 mm median and 28 mm 90th-percentile gap to hood surfaces across all five checked cadence phases; distal finger groups have 6–26 mm medians.
 - `after/pedalling-steering-coast-restart.mp4`: 12 seconds at 30 fps from the production RideScreen; includes pedalling, held right steering, coast, and restart.
 - `after/camera-marker003-*`: Side and FrontThreeQuarter views after settling at the reproduced Rolling City segment, at 1500x900 and 1920x1080 with debug on/off.
 - `after/ride-side-debug-*.png` and `ride-chase.png`: normal route-lighting views after centring and chase composition.
