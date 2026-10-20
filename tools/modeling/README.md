@@ -297,6 +297,52 @@ render color, and exports it as glTF `COLOR_0`. The Godot `Human` mesh shader
 uses those three channels and computes skin as the residual; its jersey uniform
 selects the rider variant while shorts, skin, and shoes keep fixed colors.
 
+### MPFB hand export diagnosis and correction
+
+The controlled hand comparison established that the source is sound through the
+authored grip. The first failure is Blender's glTF export: MPFB's `Mask`
+modifier is active in the editable scene but omitted from the GLB. The unmasked
+export therefore included rig-control helper faces around fingertips and
+wrists. The GLB-reimport image first shows those fragments; production
+RideScreen loads that same geometry. The four-influence change was not the
+cause: Blender 5.2.2 emitted only `JOINTS_0`/`WEIGHTS_0` and warned that it
+selected and normalized the four largest influences itself.
+
+Earlier helper cleanup had also removed 24 genuine wrist seam quads per hand.
+The preserved source repairs those faces from a matching MPFB 2.0.18 mesh after
+checking identical vertex coordinates, topology, and wrist/finger weights.
+`remove_mp_fb_leg_proxy_panels` now protects faces carrying deformation-bone
+weights from being classified as leg helpers again. The repair does not change
+the armature or bone scales.
+
+The exporter now makes a temporary Human duplicate, bakes the MPFB body mask
+into that duplicate, retains the explicit unweighted eye-material faces, and
+exports the duplicate. The editable weighted Human, 291 groups, 19 shape keys,
+171-bone rig, and animation remain intact. The source mask evaluates to 13,378
+body faces; the export adds its 152 eye faces and excludes the 1,774 helper
+faces. The eye surface must be retained explicitly because MPFB's body mask
+also removes those intentionally unweighted vertices.
+
+Reproduce the final export from its editable checkpoint without rebuilding the
+character:
+
+```powershell
+$root = (Get-Location).Path
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-mask-export-fixed.blend') `
+  --python (Join-Path $root 'tools/modeling/polish_rider.py') -- `
+  (Join-Path $root 'tools/modeling/exports/WodraCyclist-alpha48-hand-mask-fixed.glb') `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-mask-export-fixed.blend') `
+  (Join-Path $root 'tools/modeling/previews/alpha48-hand-mask-fixed') --export-only
+```
+
+The stage renders are under `tools/modeling/diagnostics/alpha48-control/`;
+Godot close hand captures and the ride motion preview are under
+`artifacts/alpha48-hand-correction/`. `HandGlbMinimalReviewTest.tscn` checks a
+direct GLB import and embedded animation without Wodra rider scripts.
+`RiderFinishingSceneReviewTest.tscn` and `RiderMotionReviewTest.tscn` exercise
+the production RideScreen, route lighting, HUD and imported rider.
+
 Regenerate an editable checkpoint and runtime GLB from the preserved helmet
 candidate without rerendering Blender previews:
 
