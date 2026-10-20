@@ -28,6 +28,9 @@ public partial class HudController : Control
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
 	private Control? _topHudPanel;
+	private Control? _bottomHudPanel;
+	private Rect2? _cameraSafeViewportRect;
+	private int _cameraSafeViewportLayoutHash;
 	private RouteGradientInset? _routeGradientInset;
 	private Control? _dummyControlPanel;
 
@@ -82,6 +85,7 @@ public partial class HudController : Control
 	{
 		_modeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ModeLabel");
 		_topHudPanel = GetNodeOrNull<Control>("TopHudPanel");
+		_bottomHudPanel = GetNodeOrNull<Control>("BottomBar");
 		_statusLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/StatusLabel");
 		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric/Value");
 		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric/Value");
@@ -374,6 +378,63 @@ public partial class HudController : Control
 
 	public bool HudDisplayEnabled => _hudDisplayEnabled;
 	public bool DebugDisplayEnabled => _debugEnabled;
+
+	/// <summary>Largest viewport rectangle not covered by currently visible ride HUD panels.</summary>
+	public Rect2 GetCameraSafeViewportRect()
+	{
+		var screen = GetViewportRect();
+		if (screen.Size.X <= 0 || screen.Size.Y <= 0) return new Rect2(0, 0, 1, 1);
+		var controls = new[] { _topHudPanel, _bottomHudPanel, _routeGradientInset, _dummyControlPanel,
+			(Control?)_debugOverlay, _cameraInspectionLabel, _catchUpOfferPanel, _trainerRecoveryPanel,
+			_debugJumpConfirmation };
+		var blocked = controls.Where(control => control is { Visible: true } && control.IsVisibleInTree())
+			.Select(control => ClipToScreen(Inflate(control!.GetGlobalRect(), 10), screen))
+			.Where(rect => rect.Size.X > 0 && rect.Size.Y > 0).ToArray();
+		var layoutHash = new HashCode();
+		layoutHash.Add(screen.Position); layoutHash.Add(screen.Size);
+		foreach (var rect in blocked) { layoutHash.Add(rect.Position); layoutHash.Add(rect.Size); }
+		var layoutKey = layoutHash.ToHashCode();
+		if (_cameraSafeViewportRect is { } cached && _cameraSafeViewportLayoutHash == layoutKey) return cached;
+		var xEdges = new SortedSet<float> { screen.Position.X, screen.End.X };
+		var yEdges = new SortedSet<float> { screen.Position.Y, screen.End.Y };
+		foreach (var rect in blocked)
+		{
+			xEdges.Add(rect.Position.X); xEdges.Add(rect.End.X);
+			yEdges.Add(rect.Position.Y); yEdges.Add(rect.End.Y);
+		}
+		var xs = xEdges.ToArray();
+		var ys = yEdges.ToArray();
+		var best = screen;
+		var bestArea = 0f;
+		for (var left = 0; left < xs.Length - 1; left++)
+		for (var right = left + 1; right < xs.Length; right++)
+		for (var top = 0; top < ys.Length - 1; top++)
+		for (var bottom = top + 1; bottom < ys.Length; bottom++)
+		{
+			var candidate = new Rect2(xs[left], ys[top], xs[right] - xs[left], ys[bottom] - ys[top]);
+			if (candidate.Size.X < screen.Size.X * .18f || candidate.Size.Y < screen.Size.Y * .28f ||
+				blocked.Any(rect => candidate.Intersects(rect))) continue;
+			var area = candidate.Size.X * candidate.Size.Y;
+			if (area <= bestArea) continue;
+			bestArea = area;
+			best = candidate;
+		}
+		_cameraSafeViewportRect = new Rect2((best.Position - screen.Position) / screen.Size, best.Size / screen.Size);
+		_cameraSafeViewportLayoutHash = layoutKey;
+		return _cameraSafeViewportRect.Value;
+	}
+
+	private static Rect2 Inflate(Rect2 rect, float margin) =>
+		new(rect.Position - Vector2.One * margin, rect.Size + Vector2.One * margin * 2);
+
+	private static Rect2 ClipToScreen(Rect2 rect, Rect2 screen)
+	{
+		var left = Mathf.Max(rect.Position.X, screen.Position.X);
+		var top = Mathf.Max(rect.Position.Y, screen.Position.Y);
+		var right = Mathf.Min(rect.End.X, screen.End.X);
+		var bottom = Mathf.Min(rect.End.Y, screen.End.Y);
+		return new Rect2(left, top, Mathf.Max(0, right - left), Mathf.Max(0, bottom - top));
+	}
 
 	public void SetHudDisplayEnabled(bool enabled)
 	{

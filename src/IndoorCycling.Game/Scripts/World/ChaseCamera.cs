@@ -53,6 +53,8 @@ public partial class ChaseCamera : Camera3D
 
     public void ResetFollow() => _snap = true;
     public RiderCameraView View => _view;
+    public bool FitsVisualBounds => _view is RiderCameraView.CloseRear or RiderCameraView.RearThreeQuarter
+        or RiderCameraView.Side or RiderCameraView.FrontThreeQuarter;
 
     public void SetView(RiderCameraView view)
     {
@@ -69,12 +71,17 @@ public partial class ChaseCamera : Camera3D
     }
 
     public void Follow(Vector3 riderPosition, Vector3 forward, double delta)
+        => Follow(riderPosition, forward, delta, default, new Rect2(0, 0, 1, 1));
+
+    public void Follow(Vector3 riderPosition, Vector3 forward, double delta, Aabb riderBikeBounds, Rect2 safeViewportRect)
     {
         _recoveryReason = "none";
         var riderAnchor = new System.Numerics.Vector3(riderPosition.X,riderPosition.Y,riderPosition.Z);
         var routeForward = new System.Numerics.Vector3(forward.X,forward.Y,forward.Z);
         var follow = ChaseCameraMath.FollowPosition(riderAnchor, routeForward, _view);
         var look = ChaseCameraMath.LookTarget(riderAnchor, routeForward, _view);
+        if (FitsVisualBounds && riderBikeBounds.Size.LengthSquared() > 1e-4f)
+            (follow, look) = FitInspectionView(riderAnchor, routeForward, riderBikeBounds, safeViewportRect);
         var targetPosition = new Vector3(follow.X,follow.Y,follow.Z);
         _desiredPosition = targetPosition;
         var lookTarget = new Vector3(look.X,look.Y,look.Z);
@@ -121,6 +128,48 @@ public partial class ChaseCamera : Camera3D
         _lookTarget = _lookTarget.Lerp(lookTarget, weight);
         LookAt(_lookTarget, Vector3.Up);
         _snap = false;
+    }
+
+    private (System.Numerics.Vector3 Follow, System.Numerics.Vector3 Look) FitInspectionView(
+        System.Numerics.Vector3 riderPosition, System.Numerics.Vector3 forward,
+        Aabb bounds, Rect2 safeRect)
+    {
+        var baseFollow = ChaseCameraMath.FollowPosition(riderPosition, forward, _view);
+        var center = bounds.GetCenter();
+        var cameraOffset = new Vector3(baseFollow.X, baseFollow.Y, baseFollow.Z) - center;
+        if (cameraOffset.LengthSquared() < 1e-5f) cameraOffset = Vector3.Back * 4;
+        var away = cameraOffset.Normalized();
+        var towardView = -away;
+        var right = towardView.Cross(Vector3.Up).Normalized();
+        if (right.LengthSquared() < 1e-5f) right = Vector3.Right;
+        var up = right.Cross(towardView).Normalized();
+        var halfWidth = 0f;
+        var halfHeight = 0f;
+        for (var i = 0; i < 8; i++)
+        {
+            var corner = bounds.Position + new Vector3((i & 1) == 0 ? 0 : bounds.Size.X,
+                (i & 2) == 0 ? 0 : bounds.Size.Y, (i & 4) == 0 ? 0 : bounds.Size.Z);
+            var relative = corner - center;
+            halfWidth = Math.Max(halfWidth, Math.Abs(relative.Dot(right)));
+            halfHeight = Math.Max(halfHeight, Math.Abs(relative.Dot(up)));
+        }
+
+        var viewport = GetViewport().GetVisibleRect().Size;
+        var aspect = viewport.Y > 0 ? viewport.X / viewport.Y : 16f / 9f;
+        var tanVertical = Mathf.Tan(Mathf.DegToRad(Fov) * .5f);
+        var tanHorizontal = tanVertical * aspect;
+        safeRect = safeRect.Size.X > .05f && safeRect.Size.Y > .05f ? safeRect : new Rect2(0, 0, 1, 1);
+        var fitDistance = Math.Max(2 * halfHeight / (tanVertical * safeRect.Size.Y),
+            2 * halfWidth / (tanHorizontal * safeRect.Size.X)) * 1.15f;
+        var distance = Math.Max(cameraOffset.Length(), fitDistance);
+        var safeCenter = safeRect.GetCenter();
+        // Aim at the world point whose projection lands at the center of the largest
+        // HUD-free rectangle. The offset is derived from viewport geometry and FOV.
+        var target = center + right * ((.5f - safeCenter.X) * 2 * distance * tanHorizontal)
+                    + up * ((safeCenter.Y - .5f) * 2 * distance * tanVertical);
+        var position = center + away * distance;
+        return (new System.Numerics.Vector3(position.X, position.Y, position.Z),
+            new System.Numerics.Vector3(target.X, target.Y, target.Z));
     }
 
     private float FindAllowedBoomDistance(Vector3 anchor, Vector3 target, float desiredDistance)
