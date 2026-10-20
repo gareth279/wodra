@@ -102,6 +102,7 @@ public partial class RouteWorldSmokeTest : Node
             {
                 await VerifySustainedRightLaneCameraFollow(visual, camera, buildingLayer, terrainLayer);
                 await VerifyReleasedAndHighSpeedCameraFollow(visual, camera, buildingLayer, terrainLayer);
+                await VerifyRiderBoundsFraming(visual, rider, camera);
                 foreach (var view in RiderCameraViewCycle.Views)
                 foreach (var lane in new[] { -1.75f, 0f, 1.75f })
                 {
@@ -150,6 +151,36 @@ public partial class RouteWorldSmokeTest : Node
             RemoveChild(world);
             world.Free();
         }
+    }
+
+    private async System.Threading.Tasks.Task VerifyRiderBoundsFraming(VisualRoute route, CyclistVisual rider, ChaseCamera camera)
+    {
+        foreach (var sample in new[] { (699.672, RiderCameraView.Side), (725.002, RiderCameraView.FrontThreeQuarter) })
+        foreach (var lane in new[] { -1.75f, 0f, 1.75f })
+        {
+            var pose = route.GetPoseAtDistance(sample.Item1);
+            var position = RiderLaneMath.OffsetPosition(pose.Position, pose.Forward, lane);
+            var forward = ProceduralRoad.ToGodot(pose.Forward);
+            rider.GlobalPosition = ProceduralRoad.ToGodot(position);
+            rider.LookAt(rider.GlobalPosition + forward, Vector3.Up);
+            camera.SetView(sample.Item2);
+            camera.ResetFollow();
+            var bounds = rider.GetWorldVisualBounds();
+            camera.Follow(rider.GlobalPosition, forward, 0, bounds, new Rect2(0, 0, 1, 1));
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            var viewport = camera.GetViewport().GetVisibleRect();
+            for (var cornerIndex = 0; cornerIndex < 8; cornerIndex++)
+            {
+                var corner = bounds.Position + new Vector3((cornerIndex & 1) == 0 ? 0 : bounds.Size.X,
+                    (cornerIndex & 2) == 0 ? 0 : bounds.Size.Y, (cornerIndex & 4) == 0 ? 0 : bounds.Size.Z);
+                var projected = camera.UnprojectPosition(corner);
+                if (!float.IsFinite(projected.X) || !float.IsFinite(projected.Y) ||
+                    projected.X < viewport.Size.X * .025f || projected.X > viewport.Size.X * .975f ||
+                    projected.Y < viewport.Size.Y * .025f || projected.Y > viewport.Size.Y * .975f)
+                    throw new InvalidOperationException($"Rider/bike bounds escaped the viewport after settling: view={sample.Item2}, distance={sample.Item1:F3}m, lane={lane}, corner={projected}, viewport={viewport.Size}.");
+            }
+        }
+        GD.Print("[CameraFramingRegression] PASS: side/front-three-quarter bounds remain inside viewport through lateral steering.");
     }
 
     private static bool Finite(Vector3 value) => float.IsFinite(value.X)

@@ -123,6 +123,33 @@ public partial class CyclistVisual : Node3D
     public double LeanDegrees => _leanRadians * 180 / Math.PI;
     public double CurrentGradientPercent { get; private set; }
     public double RiderHeightMeters => Size.RiderHeight;
+    /// <summary>World-space bounds of the visible rider and bicycle, for camera framing and diagnostics.</summary>
+    public Aabb GetWorldVisualBounds()
+    {
+        var minimum = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        var maximum = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        AccumulateVisibleBounds(this, ref minimum, ref maximum);
+        if (!float.IsFinite(minimum.X) || !float.IsFinite(maximum.X))
+            return new Aabb(GlobalPosition + new Vector3(-.55f, 0, -.75f), new Vector3(1.1f, 1.8f, 1.5f));
+        return new Aabb(minimum, maximum - minimum);
+    }
+
+    private static void AccumulateVisibleBounds(Node node, ref Vector3 minimum, ref Vector3 maximum)
+    {
+        if (node is GeometryInstance3D geometry && geometry.IsVisibleInTree())
+        {
+            var box = geometry.GetAabb();
+            for (var i = 0; i < 8; i++)
+            {
+                var local = box.Position + new Vector3((i & 1) == 0 ? 0 : box.Size.X,
+                    (i & 2) == 0 ? 0 : box.Size.Y, (i & 4) == 0 ? 0 : box.Size.Z);
+                var world = geometry.GlobalTransform * local;
+                minimum = minimum.Min(world);
+                maximum = maximum.Max(world);
+            }
+        }
+        foreach (Node child in node.GetChildren()) AccumulateVisibleBounds(child, ref minimum, ref maximum);
+    }
     public int ApproximateNodeCount => CountNodes(this);
     public int ApproximateTriangleCount => _approximateTriangleCount;
 
