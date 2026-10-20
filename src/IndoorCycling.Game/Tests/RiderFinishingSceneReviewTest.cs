@@ -12,12 +12,13 @@ public partial class RiderFinishingSceneReviewTest : Node
         try
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "rider-finishing-alpha47-reviewed");
+            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "grip-v2", "godot-candidate-v14");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
             await Settle(12);
             GameBootstrap.Settings.DebugModeEnabled = true;
+            GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(output, "fit");
             GameBootstrap.ConfigureFakeTrainerMode();
             var session = screen.GetNode<RideSessionNode>("RideSessionNode");
             if (!await session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-rolling-loop")))
@@ -30,6 +31,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             screen.GetNode<StartPanelController>("StartPanel").Hide();
             session.JumpToRouteDistance("738.5");
             session.ConfirmDebugDistanceJump();
+            hud.HideDebugJumpConfirmation();
+            hud.SetRecordingState(false, false);
             await Settle(24);
 
             var camera = world.InspectionCamera;
@@ -53,6 +56,14 @@ public partial class RiderFinishingSceneReviewTest : Node
                 if (child is CanvasItem overlay) overlay.Hide();
             var rider = world.PlayerRider;
             if (!rider.UsesImportedModel) throw new InvalidOperationException("RideScreen used the procedural rider fallback.");
+            // Match Blender frame 1 exactly (glTF t=0) while inspecting source
+            // deformation. The ride clock is frozen below; seeking this imported
+            // animation here avoids comparing unrelated crank phases.
+            rider.SetProcess(false);
+            var riderAnimation = Find<AnimationPlayer>(rider)
+                ?? throw new InvalidOperationException("Imported rider AnimationPlayer missing.");
+            riderAnimation.Seek(0.0, true);
+            await Settle(2);
             foreach (var other in FindAll<CyclistVisual>(world)) other.Visible = other == rider;
             var skeleton = Find<Skeleton3D>(rider) ?? throw new InvalidOperationException("Imported rider skeleton missing.");
             var human = Find<MeshInstance3D>(rider, "Human") ?? throw new InvalidOperationException("Weighted human mesh missing.");

@@ -21,6 +21,7 @@ scene = bpy.context.scene
 frames = sorted({scene.frame_start, scene.frame_start + (scene.frame_end-scene.frame_start)//4,
                  scene.frame_start + (scene.frame_end-scene.frame_start)//2,
                  scene.frame_start + 3*(scene.frame_end-scene.frame_start)//4, scene.frame_end})
+failures = []
 depsgraph = bpy.context.evaluated_depsgraph_get()
 for frame in frames:
     scene.frame_set(frame)
@@ -35,7 +36,7 @@ for frame in frames:
             if hood is None:
                 raise RuntimeError(f"BrakeHood{side} is missing")
             hood_eval = hood.evaluated_get(depsgraph)
-            surface = BVHTree.FromObject(hood_eval, depsgraph)
+            hood_surface = BVHTree.FromObject(hood_eval, depsgraph)
             # Sample the weighted palm/metacarpal skin itself. This is the
             # palm-seating check; the wrist bone origin is not a contact point.
             palm_indices = set()
@@ -46,19 +47,30 @@ for frame in frames:
                 palm_indices.update(index for index, vertex in enumerate(human.data.vertices)
                                     if any(weight.group == group.index and weight.weight >= .1
                                            for weight in vertex.groups))
-            palm_distances = [surface.find_nearest(points[index])[3] for index in palm_indices]
+            palm_distances = [hood_surface.find_nearest(points[index])[3] for index in palm_indices]
             palm_median = statistics.median(palm_distances)
             palm_p90 = sorted(palm_distances)[int(.9 * (len(palm_distances) - 1))]
             print(f"PALM frame={frame} side={side} median={palm_median:.4f} p90={palm_p90:.4f}")
             if palm_median > .035 or palm_p90 > .060:
-                raise AssertionError(f"Palm {side} is not seated near its hood: median={palm_median:.3f}m p90={palm_p90:.3f}m")
+                failures.append(f"Palm {side} frame {frame}: median={palm_median:.3f}m p90={palm_p90:.3f}m")
             for finger in range(1, 6):
                 group = human.vertex_groups.get(f"finger{finger}-3.{side}")
                 if group is None:
                     raise RuntimeError(f"Finger group finger{finger}-3.{side} is missing")
                 vertices = [index for index, vertex in enumerate(human.data.vertices)
                             if any(weight.group == group.index and weight.weight >= .1 for weight in vertex.groups)]
-                distances = [surface.find_nearest(points[index])[3] for index in vertices]
+                surfaces = [hood_surface]
+                # In a relaxed road hood grip, the index and middle fingers
+                # can rest on the brake blade while the other digits wrap the
+                # rubber hood. Measure their contact against either real mesh.
+                if finger in (2, 3):
+                    lever = bpy.data.objects.get("BrakeLever" + side)
+                    if lever is None:
+                        raise RuntimeError(f"BrakeLever{side} is missing")
+                    lever_eval = lever.evaluated_get(depsgraph)
+                    surfaces.append(BVHTree.FromObject(lever_eval, depsgraph))
+                distances = [min(surface.find_nearest(points[index])[3] for surface in surfaces)
+                             for index in vertices]
                 median = statistics.median(distances)
                 maximum = max(distances)
                 # Fingers 1 and 2 bridge toward the thumb/brake lever. Other
@@ -67,7 +79,9 @@ for frame in frames:
                 limit = .035 if finger in (1, 2) else .030
                 print(f"CONTACT frame={frame} side={side} finger={finger} median={median:.4f} max={maximum:.4f} limit={limit:.3f}")
                 if median > limit:
-                    raise AssertionError(f"finger{finger} {side} median hood gap {median:.3f}m exceeds {limit:.3f}m")
+                    failures.append(f"finger{finger} {side} frame {frame}: median={median:.3f}m limit={limit:.3f}m")
     finally:
         evaluated.to_mesh_clear()
+if failures:
+    raise AssertionError("hood contact failures: " + "; ".join(failures))
 print(f"PASS: both weighted hands remain near their hood surfaces over frames {frames}")

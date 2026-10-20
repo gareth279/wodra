@@ -10,7 +10,6 @@ mask-baked export input and a fresh GLB reimport.
 """
 import bpy
 import importlib.util
-import itertools
 import sys
 from pathlib import Path
 
@@ -47,13 +46,38 @@ for face_id, expected_vertices in helper_ids.items():
     helper_keys[face_id] = face_key(human.data, polygon)
 
 groups = {group.name: group.index for group in human.vertex_groups}
-helper_tights = groups.get("helper-tights")
-if helper_tights is None:
-    fail("source lost helper-tights weights used to identify restored wrist seams")
+proxy_group_indices = {name: groups[name] for name in ("JointCubes", "HelperGeometry") if name in groups}
+if not proxy_group_indices:
+    fail("source lost the MPFB proxy groups used to identify disconnected finger/wrist controls")
 
 def weight(vertex, group_index):
     return next((assignment.weight for assignment in vertex.groups
                  if assignment.group == group_index), 0.0)
+
+def full_proxy_face(polygon):
+    vertices = [human.data.vertices[index] for index in polygon.vertices]
+    for name, group_index in proxy_group_indices.items():
+        if all(weight(vertex, group_index) >= .999 for vertex in vertices):
+            return name
+    return None
+
+eye_material_indices = {index for index, material in enumerate(human.data.materials)
+                        if material and "Rider Eye" in material.name}
+eye_group_indices = {side: groups.get(f"eye.{side}") for side in ("L", "R")}
+helper_geometry_index = groups.get("HelperGeometry")
+
+def is_anatomical_eye(polygon):
+    if polygon.material_index not in eye_material_indices or helper_geometry_index is None:
+        return False
+    vertices = [human.data.vertices[index] for index in polygon.vertices]
+    helper_shell = all(weight(vertex, helper_geometry_index) >= .999 for vertex in vertices)
+    eye_weighted = any(index is not None and all(weight(vertex, index) >= .95 for vertex in vertices)
+                       for index in eye_group_indices.values())
+    return helper_shell and eye_weighted
+
+helper_tights = groups.get("helper-tights")
+if helper_tights is None:
+    fail("source lost helper-tights weights used to identify restored wrist seams")
 
 wrist_faces = {"L": [], "R": []}
 for side in ("L", "R"):
@@ -75,6 +99,16 @@ for side in ("L", "R"):
     if len(wrist_faces[side]) != 24:
         fail(f"expected 24 restored {side} wrist seam faces, found {len(wrist_faces[side])}")
 
+restored_wrist_ids = {polygon.index for faces in wrist_faces.values() for polygon in faces}
+proxy_face_ids = {name: [] for name in proxy_group_indices}
+for polygon in human.data.polygons:
+    proxy_name = full_proxy_face(polygon)
+    if proxy_name and polygon.index not in restored_wrist_ids and not is_anatomical_eye(polygon):
+        proxy_face_ids[proxy_name].append(polygon.index)
+if not proxy_face_ids.get("JointCubes") or not proxy_face_ids.get("HelperGeometry"):
+    fail(f"expected disconnected MPFB finger and wrist controls in source for export regression: "
+         f"{ {name: len(faces) for name, faces in proxy_face_ids.items()} }")
+
 module_path = Path(__file__).with_name("polish_rider.py")
 spec = importlib.util.spec_from_file_location("wodra_polish_rider", module_path)
 polish = importlib.util.module_from_spec(spec)
@@ -89,6 +123,12 @@ try:
         missing = [polygon.index for polygon in faces if face_key(human.data, polygon) not in baked_keys]
         if missing:
             fail(f"mask-baked export mesh omitted restored {side} wrist faces {missing}")
+    for name, face_ids in proxy_face_ids.items():
+        for face_id in face_ids:
+            polygon = human.data.polygons[face_id]
+            signature = face_key(human.data, polygon)
+            if signature in baked_keys:
+                fail(f"full-weight {name} control face {face_id} returned in mask-baked export mesh")
 finally:
     bpy.data.objects.remove(export_mesh, do_unlink=True)
     authoring_mesh.name = authoring_name
@@ -102,6 +142,14 @@ imported = [obj for obj in bpy.data.objects if obj not in before_objects and obj
 if not imported:
     fail("GLB reimport produced no meshes")
 human_runtime = max(imported, key=lambda obj: len(obj.data.vertices))
+runtime_eye_materials = {material.name for material in human_runtime.data.materials
+                         if material and "Rider Eye" in material.name}
+runtime_eye_faces = sum(1 for polygon in human_runtime.data.polygons
+                        if polygon.material_index < len(human_runtime.data.materials)
+                        and human_runtime.data.materials[polygon.material_index]
+                        and "Rider Eye" in human_runtime.data.materials[polygon.material_index].name)
+if not runtime_eye_materials or runtime_eye_faces == 0:
+    fail("GLB reimport lost the anatomical eye material surface")
 runtime_triangles = []
 for polygon in human_runtime.data.polygons:
     if len(polygon.vertices) != 3:
@@ -109,25 +157,31 @@ for polygon in human_runtime.data.polygons:
     runtime_triangles.append([human_runtime.matrix_world @ human_runtime.data.vertices[i].co
                               for i in polygon.vertices])
 runtime_wrist = {side: [] for side in ("L", "R")}
+runtime_triangle_keys = {tuple(sorted(tuple(round(float(component), 5) for component in point)
+                                     for point in triangle))
+                         for triangle in runtime_triangles}
 
 def reimport_contains_quad(corners):
-    found = []
-    for triangle in runtime_triangles:
-        corner_ids = []
-        for point in triangle:
-            nearest = min(range(4), key=lambda i: (point - corners[i]).length)
-            if (point - corners[nearest]).length >= 2e-5:
-                break
-            corner_ids.append(nearest)
-        if len(corner_ids) == 3 and len(set(corner_ids)) == 3:
-            found.append(set(corner_ids))
-    return any(a | b == {0, 1, 2, 3} for a, b in itertools.combinations(found, 2))
+    keys = [tuple(round(float(component), 5) for component in point) for point in corners]
+    triangles = [tuple(sorted((keys[0], keys[1], keys[2]))),
+                 tuple(sorted((keys[0], keys[2], keys[3]))),
+                 tuple(sorted((keys[0], keys[1], keys[3]))),
+                 tuple(sorted((keys[1], keys[2], keys[3])))]
+    return (triangles[0] in runtime_triangle_keys and triangles[1] in runtime_triangle_keys) or \
+           (triangles[2] in runtime_triangle_keys and triangles[3] in runtime_triangle_keys)
 
 for face_id in helper_ids:
     polygon = human.data.polygons[face_id]
     corners = [human.matrix_world @ human.data.vertices[i].co for i in polygon.vertices]
     if reimport_contains_quad(corners):
         fail(f"traced MPFB helper face {face_id} returned in reimported GLB")
+
+for name, face_ids in proxy_face_ids.items():
+    for face_id in face_ids:
+        polygon = human.data.polygons[face_id]
+        corners = [human.matrix_world @ human.data.vertices[i].co for i in polygon.vertices]
+        if reimport_contains_quad(corners):
+            fail(f"full-weight {name} control face {face_id} returned in reimported GLB")
 
 for side, faces in wrist_faces.items():
     for polygon in faces:
@@ -138,6 +192,8 @@ for side, faces in wrist_faces.items():
         fail(f"GLB reimport retained {len(runtime_wrist[side])}/24 restored {side} wrist surfaces")
 
 print("PASS: traced helper faces absent from baked export input and reimported GLB")
+print("PASS: disconnected MPFB rig helpers absent", {name: len(faces) for name, faces in proxy_face_ids.items()})
 print("PASS: restored wrist surfaces retained", {side: len(items) for side, items in runtime_wrist.items()})
+print("PASS: anatomical eye surface retained", sorted(runtime_eye_materials), runtime_eye_faces)
 print("GLB_REIMPORT", glb, "mesh", human_runtime.name,
       "vertices", len(human_runtime.data.vertices), "faces", len(human_runtime.data.polygons))

@@ -247,13 +247,18 @@ def _build_mask_baked_mesh_copy(source, target, mask):
         if material and "Rider Eye" in material.name}
     group_by_index={g.index:g.name for g in source.vertex_groups}
     helper_tights=source.vertex_groups.get("helper-tights")
+    joint_cubes=source.vertex_groups.get("JointCubes")
+    helper_geometry=source.vertex_groups.get("HelperGeometry")
     hand_groups={g.index for g in source.vertex_groups
         if g.name.startswith(("wrist.","metacarpal","finger"))}
     if helper_tights is None or not hand_groups:
         raise RuntimeError("Expected MPFB helper-tights and weighted hand-deformation groups")
     wrist_group_ids={side:source.vertex_groups[f"wrist.{side}"].index for side in ("L","R")
         if source.vertex_groups.get(f"wrist.{side}") is not None}
+    eye_group_ids={side:source.vertex_groups[f"eye.{side}"].index for side in ("L","R")
+        if source.vertex_groups.get(f"eye.{side}") is not None}
     wrist_faces={"L":[],"R":[]}
+    removed_rig_proxy_faces={"JointCubes":0,"HelperGeometry":0}
     retained=[]
     for polygon in mesh.polygons:
         body=all(i in mask_vertex_ids for i in polygon.vertices)
@@ -274,9 +279,35 @@ def _build_mask_baked_mesh_copy(source, target, mask):
                        if a.group==wrist_id)>.01:
                     retained_wrist_side=side
                     break
+        # MPFB includes disconnected control cubes in the Human mesh. They
+        # carry deformation-bone weights as well as their full proxy-group
+        # weights, so the body mask alone does not remove every fingertip
+        # controller. Their geometry must not be skinned into the runtime
+        # hand. HelperGeometry also marks a disconnected wrist control shell;
+        # the 24 verified anatomical wrist seam quads per hand remain because
+        # they do not have a full HelperGeometry weight on every corner.
+        fully_joint_cube=joint_cubes is not None and all(any(
+            a.group==joint_cubes.index and a.weight>=.999 for a in vertex.groups)
+            for vertex in vertices)
+        fully_helper_geometry=helper_geometry is not None and all(any(
+            a.group==helper_geometry.index and a.weight>=.999 for a in vertex.groups)
+            for vertex in vertices)
+        # MPFB's visible eye shells share HelperGeometry weights, but the
+        # adjacent JointCubes are rig controls and must still be removed.
+        # Preserve only material-assigned eye faces with matching eye weights.
+        anatomical_eye=eye and fully_helper_geometry and not fully_joint_cube and any(
+            all(any(a.group==eye_index and a.weight>=.95 for a in vertex.groups)
+                for vertex in vertices)
+            for eye_index in eye_group_ids.values())
+        if fully_joint_cube:
+            removed_rig_proxy_faces["JointCubes"]+=1
+            continue
+        if fully_helper_geometry and retained_wrist_side is None and not anatomical_eye:
+            removed_rig_proxy_faces["HelperGeometry"]+=1
+            continue
         if retained_wrist_side is not None:
             wrist_faces[retained_wrist_side].append(polygon.index)
-        if body or eye or retained_wrist_side is not None:
+        if body or anatomical_eye or retained_wrist_side is not None:
             retained.append(polygon)
     if {side:len(indices) for side,indices in wrist_faces.items()}!={"L":24,"R":24}:
         raise RuntimeError(f"Expected 24 restored wrist faces per side; found "
@@ -323,6 +354,7 @@ def _build_mask_baked_mesh_copy(source, target, mask):
           "source_faces",len(mesh.polygons),"retained_eye_faces",sum(1 for p in source_polygons if p.material_index in eye_material_indices),
           "retained_wrist_faces",{side:len(indices) for side,indices in wrist_faces.items()},
           "export_faces",len(source_polygons),
+          "removed_rig_proxy_faces",removed_rig_proxy_faces,
           "shape_keys",len(target.data.shape_keys.key_blocks) if target.data.shape_keys else 0,
           "vertex_groups",len(target.vertex_groups))
 

@@ -12,7 +12,7 @@ public partial class RiderMotionReviewTest : Node
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
-                "alpha47-owner-review", "runtime-after", "motion-frames");
+                "alpha48-hand-correction", "grip-v2", "godot-motion-frames-v14");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
@@ -35,7 +35,10 @@ public partial class RiderMotionReviewTest : Node
             screen.GetNode<StartPanelController>("StartPanel").Hide();
             session.JumpToRouteDistance("720");
             session.ConfirmDebugDistanceJump();
+            hud.HideDebugJumpConfirmation();
+            hud.SetRecordingState(false, false);
             GameBootstrap.Settings.DebugModeEnabled = false;
+            hud.SetDebugMode(false);
             world.SelectCameraInspectionView(RiderCameraView.GameplayRefined);
             await Settle(120);
 

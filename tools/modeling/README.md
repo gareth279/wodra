@@ -234,6 +234,61 @@ views, camera offset smoothing follows the current route basis, then a live
 view-space correction centers the projected rider/bike bounds in the current
 HUD-safe rectangle. Gameplay chase look-ahead is unchanged.
 
+### Alpha.48 relaxed hood-grip candidate
+
+`source/WodraCyclist.alpha48-mask-export-fixed.blend` is the preserved starting
+blend and `source/WodraCyclist.alpha48-relaxed-hood-grip-v14.blend` is the
+editable v14 grip candidate. `author_hood_grip_pose.py` adjusts the existing
+`PedalCycle` action only: it narrows the measured metacarpal fan, adds a varied
+MCP/PIP/DIP curl so the fingers wrap from their bases, and applies a 0.1 rad
+mirrored wrist rotation. It does not scale bones, move the forearms, change
+skin weights/topology, or alter the legs and crank animation. Local
+metacarpal signs were selected from evaluated distal finger-centre spacing;
+the wrist signs came from a small wrist-axis sweep against the actual hood/lever
+meshes. The weighted skin passed the five-phase contact regression and the
+existing proxy/wrist-face export guard.
+
+The visual reference is this close road-cycling hood grip photograph:
+[Cyclist's road hood grip](https://unsplash.com/photos/a-close-up-of-a-person-riding-a-bike-Kg6bZocKRrE).
+The in-game side/elevated captures under
+`artifacts/rider-finishing-alpha48/grip-v14/after/` show both
+hands against the actual imported brake hoods. The fixed chase view and
+side-view debug on/off captures are beside them. The continuous 12 second
+RideScreen motion clip (pedalling, steering, coasting, restart) is
+`artifacts/rider-finishing-alpha48/grip-v14/after/godot-motion-preview-v14.mp4`.
+The five-phase Blender regression is supporting evidence; owner visual review
+remains necessary.
+
+Re-export the editable candidate without rebuilding the rider:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-relaxed-hood-grip-v14.blend --python `
+  tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-alpha48-relaxed-hood-grip.glb `
+  tools/modeling/source/WodraCyclist.alpha48-relaxed-hood-grip-export.blend `
+  tools/modeling/previews/alpha48-relaxed-hood-grip --export-only
+```
+
+Open the resulting GLB in the production RideScreen using
+`RiderFinishingSceneReviewTest.tscn`; continuous pedal, steering, coast, and
+restart frames are captured by `RiderMotionReviewTest.tscn`.
+
+### Issue #93 rendering jitter investigation
+
+The local real-time RideScreen comparison is in
+`artifacts/rider-finishing-alpha48/grip-v14/jitter/`. On the Quadro P620 with
+Godot 4.6.2 OpenGL Compatibility at 1920x1080/59.97 Hz, three 12 second
+variable-frame samples at the reported route section recorded zero frames at
+or above 33.33 ms. Animated baseline p50/p95/p99/max was 9.17/9.52/10.00/14.58
+ms; disabling rider skeletal sampling reduced it to 4.55/5.20/9.17/9.17 ms.
+Thus animation sampling has measurable cost here, but this run did not
+reproduce the reported judder and does not establish that sampling is its
+cause. The supplied diagnostic ZIP has no per-frame timing stream, and the
+local execution did not use its ANGLE fallback path. Issue #93 remains open
+pending a comparable native capture/timing series from the affected renderer
+or machine; do not treat the local no-reproduction result as a jitter fix.
+
 ## Godot runtime and review
 
 `CyclistVisual` imports the `Skeleton3D` and `PedalCycle` `AnimationPlayer` clip.
