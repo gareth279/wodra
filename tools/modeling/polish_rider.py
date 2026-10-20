@@ -245,9 +245,43 @@ def _build_mask_baked_mesh_copy(source, target, mask):
     # Preserve those explicit eye-material faces while filtering helper proxies.
     eye_material_indices={i for i,material in enumerate(mesh.materials)
         if material and "Rider Eye" in material.name}
-    source_polygons=[p for p in mesh.polygons if
-        all(i in mask_vertex_ids for i in p.vertices) or
-        p.material_index in eye_material_indices]
+    group_by_index={g.index:g.name for g in source.vertex_groups}
+    helper_tights=source.vertex_groups.get("helper-tights")
+    hand_groups={g.index for g in source.vertex_groups
+        if g.name.startswith(("wrist.","metacarpal","finger"))}
+    if helper_tights is None or not hand_groups:
+        raise RuntimeError("Expected MPFB helper-tights and weighted hand-deformation groups")
+    wrist_group_ids={side:source.vertex_groups[f"wrist.{side}"].index for side in ("L","R")
+        if source.vertex_groups.get(f"wrist.{side}") is not None}
+    wrist_faces={"L":[],"R":[]}
+    retained=[]
+    for polygon in mesh.polygons:
+        body=all(i in mask_vertex_ids for i in polygon.vertices)
+        eye=polygon.material_index in eye_material_indices
+        vertices=[mesh.vertices[i] for i in polygon.vertices]
+        # The restored MPFB wrist seam quads are fully tagged helper-tights,
+        # like leg proxy faces, but also carry genuine wrist/finger skinning.
+        # Keep exactly those weighted seam surfaces; JointCubes controls have
+        # no helper-tights tag and remain excluded by the body mask.
+        fully_helper_tights=all(any(a.group==helper_tights.index and a.weight>=.999
+            for a in vertex.groups) for vertex in vertices)
+        has_hand_deformation=sum(any(a.group in hand_groups and a.weight>.01
+            for a in vertex.groups) for vertex in vertices)>=2
+        retained_wrist_side=None
+        if fully_helper_tights and has_hand_deformation:
+            for side,wrist_id in wrist_group_ids.items():
+                if sum(a.weight for vertex in vertices for a in vertex.groups
+                       if a.group==wrist_id)>.01:
+                    retained_wrist_side=side
+                    break
+        if retained_wrist_side is not None:
+            wrist_faces[retained_wrist_side].append(polygon.index)
+        if body or eye or retained_wrist_side is not None:
+            retained.append(polygon)
+    if {side:len(indices) for side,indices in wrist_faces.items()}!={"L":24,"R":24}:
+        raise RuntimeError(f"Expected 24 restored wrist faces per side; found "
+            f"{ {side:len(indices) for side,indices in wrist_faces.items()} }")
+    source_polygons=retained
     old_vertex_ids=sorted({i for p in source_polygons for i in p.vertices})
     remap={old:new for new,old in enumerate(old_vertex_ids)}
     new_mesh=bpy.data.meshes.new(mesh.name+"_GLTFMaskBaked")
@@ -286,7 +320,8 @@ def _build_mask_baked_mesh_copy(source, target, mask):
         raise RuntimeError("Mask-baked Human copy lost MPFB expression keys")
     target.data.update()
     print("GLTF_MASK_COPY", "source_vertices",len(mesh.vertices),"export_vertices",len(old_vertex_ids),
-          "source_faces",len(mesh.polygons),"retained_eye_faces",len(source_polygons)-sum(1 for p in source_polygons if all(i in mask_vertex_ids for i in p.vertices)),
+          "source_faces",len(mesh.polygons),"retained_eye_faces",sum(1 for p in source_polygons if p.material_index in eye_material_indices),
+          "retained_wrist_faces",{side:len(indices) for side,indices in wrist_faces.items()},
           "export_faces",len(source_polygons),
           "shape_keys",len(target.data.shape_keys.key_blocks) if target.data.shape_keys else 0,
           "vertex_groups",len(target.vertex_groups))
