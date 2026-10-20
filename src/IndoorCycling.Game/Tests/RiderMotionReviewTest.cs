@@ -12,7 +12,7 @@ public partial class RiderMotionReviewTest : Node
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
-                "alpha48-hand-correction", "grip-v2", "godot-motion-frames-v14");
+                "alpha48-hand-correction", "cockpit-v22", "godot-motion-frames-v22");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);

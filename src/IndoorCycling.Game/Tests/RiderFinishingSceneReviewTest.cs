@@ -12,7 +12,7 @@ public partial class RiderFinishingSceneReviewTest : Node
         try
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "grip-v2", "godot-candidate-v14");
+            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
@@ -115,7 +115,24 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Left runtime brake hood missing.");
             var rightHood = Find<GeometryInstance3D>(rider, "BrakeHoodR")
                 ?? throw new InvalidOperationException("Right runtime brake hood missing.");
-            camera.Fov = 38f;
+            camera.Fov = 32f;
+            var wasHumanVisible = human.Visible;
+            human.Visible = false;
+            rider.SetHelmetVisible(false);
+            var leftHoodCenter = leftHood.GlobalTransform * leftHood.GetAabb().GetCenter();
+            var rightHoodCenter = rightHood.GlobalTransform * rightHood.GetAabb().GetCenter();
+            var cockpitTarget = (leftHoodCenter + rightHoodCenter) * .5f;
+            GD.Print($"[RiderFinishingSceneReview] hood centers L={leftHoodCenter} R={rightHoodCenter} target={cockpitTarget}");
+            camera.GlobalPosition = cockpitTarget + bikeSide * .56f + Vector3.Up * .10f;
+            camera.LookAt(cockpitTarget, Vector3.Up);
+            await Settle(3);
+            await Save(output, "cockpit-no-hands-side.png");
+            camera.GlobalPosition = cockpitTarget + bikeForward * .42f + bikeSide * .25f + Vector3.Up * .34f;
+            camera.LookAt(cockpitTarget, Vector3.Up);
+            await Settle(3);
+            await Save(output, "cockpit-no-hands-front-three-quarter.png");
+            human.Visible = wasHumanVisible;
+            rider.SetHelmetVisible(true);
             foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
             {
                 var hoodCenter = hood.GlobalTransform * hood.GetAabb().GetCenter();
@@ -135,16 +152,16 @@ public partial class RiderFinishingSceneReviewTest : Node
                 var target = hoodCenter.Lerp(palm, .58f);
                 // A near-lateral, rider-scale view shows the palm, fingers,
                 // brake hood and lever together instead of clipping the hand.
-                var view = (bikeSide * side * .68f + bikeForward * .72f + Vector3.Up * .12f).Normalized();
-                camera.GlobalPosition = target + view * .72f;
+                var view = (bikeSide * side * .58f + bikeForward * .72f + Vector3.Up * .12f).Normalized();
+                camera.GlobalPosition = target + view * .52f;
                 camera.LookAt(target, Vector3.Up);
                 await Settle(3);
                 await Save(output, side < 0 ? "hand-left-hood-close.png" : "hand-right-hood-close.png");
 
                 // An elevated oblique view shows the palm surface seated on
                 // the hood shelf and the fingers wrapping its outside edge.
-                var elevated = (bikeSide * side * .48f + bikeForward * .48f + Vector3.Up * .73f).Normalized();
-                camera.GlobalPosition = target + elevated * .82f;
+                var elevated = (bikeSide * side * .42f + bikeForward * .48f + Vector3.Up * .78f).Normalized();
+                camera.GlobalPosition = target + elevated * .58f;
                 camera.LookAt(target, Vector3.Up);
                 await Settle(3);
                 await Save(output, side < 0 ? "hand-left-hood-elevated.png" : "hand-right-hood-elevated.png");

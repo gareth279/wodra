@@ -10,7 +10,7 @@ import math
 import sys
 from pathlib import Path
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 
 def mat(name, color, roughness=.72, metallic=0.0):
@@ -554,6 +554,337 @@ def refine_brake_hoods():
         obj["WodraRoadHoodPolished"]=True
 
 
+def _catmull_rom_path(points, steps_per_span=6):
+    """Sample a smooth open curve through the authored cockpit control points."""
+    points=[Vector(point) for point in points]
+    samples=[]
+    for span in range(len(points)-1):
+        p0=points[max(0,span-1)]; p1=points[span]
+        p2=points[span+1]; p3=points[min(len(points)-1,span+2)]
+        for step in range(steps_per_span):
+            t=step/steps_per_span; t2=t*t; t3=t2*t
+            samples.append(.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+
+                               (-p0+3*p1-3*p2+p3)*t3))
+    samples.append(points[-1])
+    return samples
+
+
+def _swept_round_tube(points, radius, sides=12):
+    """Create one continuous capped mesh along a Catmull-Rom path."""
+    path=_catmull_rom_path(points)
+    vertices=[]; faces=[]
+    for index,center in enumerate(path):
+        before=path[max(0,index-1)]; after=path[min(len(path)-1,index+1)]
+        tangent=(after-before).normalized()
+        reference=Vector((0,1,0))
+        if abs(tangent.dot(reference))>.92: reference=Vector((0,0,1))
+        u=tangent.cross(reference).normalized(); v=tangent.cross(u).normalized()
+        for section in range(sides):
+            angle=math.tau*section/sides
+            vertices.append(tuple(center+radius*(u*math.cos(angle)+v*math.sin(angle))))
+    for row in range(len(path)-1):
+        for section in range(sides):
+            a=row*sides+section; b=row*sides+(section+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.extend((tuple(reversed(range(sides))),
+                  tuple((len(path)-1)*sides+i for i in range(sides))))
+    return vertices,faces
+
+
+def refine_road_cockpit(bike):
+    """Replace the segmented placeholder cockpit with a continuous road bar and fitted controls."""
+    bar=bpy.data.objects.get("RoadDropHandlebars")
+    if bar is None: raise RuntimeError("RoadDropHandlebars is missing")
+    if bar.get("WodraRoadCockpitV3",False): return
+    # Coordinates are bike-local. This single path joins the drops, bends and
+    # tops on both sides; it removes the capped, disconnected cylinder pieces
+    # that read as broken angular bars in the runtime screenshots.
+    left=[(0,.22,.920),(-.09,.22,.920),(-.17,.225,.924),
+          (-.218,.229,.938),(-.246,.244,.946),(-.270,.266,.932),
+          (-.279,.276,.898),(-.274,.264,.858),(-.254,.240,.812),
+          (-.226,.212,.765),(-.198,.180,.733)]
+    # Keep 15 mm swept tube around a 470 mm hood-centre width, scaled for the
+    # existing adult rider while moving the hoods into the original hand reach.
+    left=[(x*.85,y,z) for x,y,z in left]
+    path=list(reversed(left))+[(-point[0],point[1],point[2]) for point in left[1:]]
+    vertices,faces=_swept_round_tube(path,.0115,14)
+    new_mesh=bpy.data.meshes.new("RoadDropHandlebarsContinuousMesh")
+    new_mesh.from_pydata(vertices,[],faces)
+    if bar.data.materials: new_mesh.materials.append(bar.data.materials[0])
+    import bmesh
+    bm=bmesh.new(); bm.from_mesh(new_mesh)
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(new_mesh); bm.free()
+    old=bar.data; bar.data=new_mesh
+    if old.users==0: bpy.data.meshes.remove(old)
+    bar.location=(0,0,0); bar.rotation_euler=(0,0,0); bar.scale=(1,1,1)
+    bar["WodraRoadCockpitV3"]=True
+
+    rubber=bpy.data.materials.get("Brake Hood Rubber") or mat("Brake Hood Rubber",(.085,.092,.098),.9)
+    rubber.diffuse_color=(.085,.092,.098,1)
+    if rubber.use_nodes:
+        bsdf=next((node for node in rubber.node_tree.nodes if node.type=="BSDF_PRINCIPLED"),None)
+        if bsdf: bsdf.inputs["Base Color"].default_value=(.085,.092,.098,1)
+    lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
+    for side in (-1,1):
+        suffix="L" if side<0 else "R"
+        hood=bpy.data.objects.get("BrakeHood"+suffix)
+        if hood is None: raise RuntimeError(f"BrakeHood{suffix} is missing")
+        # Match modern long, slim road hoods: 102 mm fore-aft, 33 mm across,
+        # and 36 mm high. The top rises about seven degrees and the nose
+        # narrows; the rear flare meets the wrapped bar without a bulb.
+        center_x=side*.235; center_y=.215
+        sections=((-0.051,.005,.008,.944),(-.038,.011,.013,.946),
+                  (-.018,.015,.017,.949),(.006,.0165,.018,.952),
+                  (.030,.014,.016,.955),(.051,.006,.009,.958))
+        hood_vertices=[]; hood_faces=[]; ring=16
+        for y_offset,rx,rz,center_z in sections:
+            inboard=-side*min(max(y_offset,0)*.12, .006)
+            for section in range(ring):
+                angle=math.tau*section/ring
+                # A flattened superellipse leaves a broad palm shelf and
+                # tapered sides instead of the old circular knob profile.
+                cx=math.cos(angle); sz=math.sin(angle)
+                hood_vertices.append((center_x+inboard+rx*math.copysign(abs(cx)**.62,cx),
+                                      center_y+y_offset,
+                                      center_z+rz*math.copysign(abs(sz)**.62,sz)))
+        for row in range(len(sections)-1):
+            for section in range(ring):
+                a=row*ring+section; b=row*ring+(section+1)%ring
+                hood_faces.append((a,b,b+ring,a+ring))
+        hood_faces.extend((tuple(reversed(range(ring))),
+                           tuple((len(sections)-1)*ring+i for i in range(ring))))
+        hood_mesh=bpy.data.meshes.new("BrakeHood"+suffix+"ErgoShellV2")
+        hood_mesh.from_pydata(hood_vertices,[],hood_faces); hood_mesh.materials.append(rubber)
+        bm=bmesh.new(); bm.from_mesh(hood_mesh)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(hood_mesh); bm.free()
+        for polygon in hood_mesh.polygons: polygon.use_smooth=True
+        old=hood.data; hood.data=hood_mesh
+        if old.users==0: bpy.data.meshes.remove(old)
+        hood.location=(0,0,0); hood.rotation_euler=(0,0,0); hood.scale=(1,1,1)
+        hood["WodraErgoHoodV3"]=True
+
+        # A narrow, flattened brake blade emerges below the front of the hood.
+        lever_name="BrakeLever"+suffix
+        lever=bpy.data.objects.get(lever_name)
+        if lever is None:
+            lever_mesh=bpy.data.meshes.new(lever_name+"V2Mesh")
+            lever=bpy.data.objects.new(lever_name,lever_mesh); bpy.context.collection.objects.link(lever)
+            lever.parent=bike
+        points=[(side*.235,.239,.938),(side*.235,.247,.914),
+                (side*.235,.243,.889),(side*.235,.228,.867),
+                (side*.235,.208,.853)]
+        lever_vertices=[]; lever_faces=[]; sides=10
+        for row,point in enumerate(points):
+            previous=Vector(points[max(0,row-1)]); following=Vector(points[min(len(points)-1,row+1)])
+            tangent=(following-previous).normalized()
+            across=Vector((1,0,0))
+            across=(across-tangent*across.dot(tangent)).normalized()
+            depth=tangent.cross(across).normalized()
+            taper=1.0-.34*row/(len(points)-1)
+            center=Vector(point)
+            for section in range(sides):
+                angle=math.tau*section/sides
+                vertex=center+across*(.0065*taper*math.cos(angle))+depth*(.0026*taper*math.sin(angle))
+                lever_vertices.append(tuple(vertex))
+        for row in range(len(points)-1):
+            for section in range(sides):
+                a=row*sides+section; b=row*sides+(section+1)%sides
+                lever_faces.append((a,b,b+sides,a+sides))
+        lever_faces.extend((tuple(reversed(range(sides))),
+                            tuple((len(points)-1)*sides+i for i in range(sides))))
+        lever_mesh=bpy.data.meshes.new(lever_name+"CurvedBladeV2Mesh")
+        lever_mesh.from_pydata(lever_vertices,[],lever_faces); lever_mesh.materials.append(lever_material)
+        bm=bmesh.new(); bm.from_mesh(lever_mesh)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(lever_mesh); bm.free()
+        for polygon in lever_mesh.polygons: polygon.use_smooth=True
+        old=lever.data; lever.data=lever_mesh
+        if old.users==0: bpy.data.meshes.remove(old)
+        lever.location=(0,0,0); lever.rotation_euler=(0,0,0); lever.scale=(1,1,1)
+        lever.parent=bike
+        lever.matrix_parent_inverse=bike.matrix_world.inverted()
+    bpy.context.view_layer.update()
+    print("ROAD_COCKPIT_V3", "continuous-bar vertices",len(bar.data.vertices),
+          "bar dimensions",tuple(round(x,4) for x in bar.dimensions))
+
+
+def refine_hood_grip_pose():
+    """Make a small symmetric relaxed grip correction using the photographed hood posture."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraPhotoGuidedGripV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # The source action already contains the measured MPFB hand pose. This
+    # correction only reduces the visible MCP fan a few degrees and closes the
+    # fingers another 3–5 degrees at each joint. It does not scale bones,
+    # change topology or move the wrist/arm anchors.
+    adduction={"L":{1:-3,2:-2,3:3,4:3},"R":{1:3,2:-2,3:3,4:-3}}
+    for side in ("L","R"):
+        for digit,degrees in adduction[side].items():
+            path=f'pose.bones["metacarpal{digit}.{side}"].rotation_euler'
+            curve=next((fc for fc in bag.fcurves if fc.data_path==path and fc.array_index==2),None)
+            if curve is None: raise RuntimeError(f"missing metacarpal bend channel: {path}")
+            delta=math.radians(degrees)
+            for key in curve.keyframe_points:
+                key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+            curve.update()
+        for finger in range(1,6):
+            for joint,delta in ((1,.045),(2,.07),(3,.05)):
+                path=f'pose.bones["finger{finger}-{joint}.{side}"].rotation_euler'
+                curve=next((fc for fc in bag.fcurves if fc.data_path==path and fc.array_index==0),None)
+                if curve is None: raise RuntimeError(f"missing finger flex channel: {path}")
+                for key in curve.keyframe_points:
+                    key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+                curve.update()
+    action["WodraPhotoGuidedGripV1"]=True
+    print("PHOTO_GUIDED_GRIP_V1", "metacarpal adduction",adduction,"joint curl deltas radians",(.045,.07,.05))
+
+
+def refine_finger_spacing_from_probe():
+    """Apply one measured local-Z step to bring splayed fingertips inward."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraPhotoGripFanTightenedV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # probe_hand_adduction.py perturbs each metacarpal by ±0.1 rad and measures
+    # the weighted distal-finger fan with the evaluated Armature modifier. On
+    # the preserved current pose, this single step reduced the fan cost for
+    # each metacarpal on both hands. Apply only that local step; do not flip or
+    # replace the established grip angles, which would move several fingers
+    # away from their contact surfaces.
+    inward={"L":{1:-.1,2:.1,3:-.1,4:.1},"R":{1:-.1,2:.1,3:-.1,4:.1}}
+    changes=[]
+    for side in ("L","R"):
+        for finger,sign in inward[side].items():
+            path=f'pose.bones["metacarpal{finger}.{side}"].rotation_euler'
+            curve=next((fc for fc in bag.fcurves
+                        if fc.data_path==path and fc.array_index==2),None)
+            if curve is None or not curve.keyframe_points:
+                raise RuntimeError(f"missing metacarpal spacing channel: {path}")
+            delta=sign
+            for key in curve.keyframe_points:
+                key.co.y+=delta
+                key.handle_left.y+=delta
+                key.handle_right.y+=delta
+            curve.update(); changes.append((path,sign))
+    action["WodraPhotoGripFanTightenedV1"]=True
+    print("PHOTO_GRIP_FAN_DIRECTIONS",changes)
+
+
+def refine_finger_bends_in_bike_space():
+    """Add a small anatomically aligned curl around the bike-width axis."""
+    rig=bpy.data.objects.get("Human.rig")
+    bike=bpy.data.objects.get("BicycleModel")
+    if rig is None or bike is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider and bicycle are required")
+    action=rig.animation_data.action
+    if action.get("WodraBikeSpaceGripFlexV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # A world-axis sweep on each weighted joint showed that one local Euler X
+    # assumption does not bend every mirrored MPFB digit in the same plane.
+    # Use a common bike-lateral flex axis, transformed through each evaluated
+    # bone, with small per-joint signs measured against the hood/lever surface.
+    # The index/middle fingers rest at the blade; ring/little fingers curl
+    # around the rubber. This is a 0.12 rad rotation only; no bone is scaled.
+    bend_signs={
+        "L":{1:(0,1,1),2:(1,1,1),3:(1,1,1),4:(-1,-1,-1),5:(1,-1,-1)},
+        "R":{1:(0,1,1),2:(-1,-1,-1),3:(1,1,1),4:(-1,-1,-1),5:(-1,-1,-1)},
+    }
+    scene=bpy.context.scene
+    scene.frame_set(scene.frame_start)
+    bpy.context.view_layer.update()
+    bike_lateral=(bike.matrix_world.to_3x3()@Vector((1,0,0))).normalized()
+    changes=[]
+    for side in ("L","R"):
+        for finger,joint_signs in bend_signs[side].items():
+            for joint,sign in enumerate(joint_signs,1):
+                if sign==0: continue
+                name=f"finger{finger}-{joint}.{side}"
+                bone=rig.pose.bones.get(name)
+                if bone is None or bone.rotation_mode!="XYZ":
+                    raise RuntimeError(f"expected XYZ deformation bone {name}")
+                path=f'pose.bones["{name}"].rotation_euler'
+                curves=[next((fc for fc in bag.fcurves
+                              if fc.data_path==path and fc.array_index==axis),None)
+                        for axis in range(3)]
+                if any(curve is None or not curve.keyframe_points for curve in curves):
+                    raise RuntimeError(f"incomplete finger rotation channels: {path}")
+                current=bone.rotation_euler.copy()
+                current_world=(rig.matrix_world@bone.matrix).to_3x3().to_quaternion()
+                axis_local=current_world.inverted()@bike_lateral
+                corrected=current.to_quaternion()@Quaternion(axis_local,sign*.12)
+                corrected_euler=corrected.to_euler("XYZ",current)
+                deltas=[corrected_euler[axis]-current[axis] for axis in range(3)]
+                for axis,curve in enumerate(curves):
+                    for key in curve.keyframe_points:
+                        key.co.y+=deltas[axis]
+                        key.handle_left.y+=deltas[axis]
+                        key.handle_right.y+=deltas[axis]
+                    curve.update()
+                changes.append((name,sign,tuple(round(value,4) for value in deltas)))
+                bpy.context.view_layer.update()
+    action["WodraBikeSpaceGripFlexV1"]=True
+    print("BIKE_SPACE_GRIP_FLEX",changes)
+
+
+def seat_hands_on_hood_shelves():
+    """Translate only the existing hand IK targets using a measured rig-space Jacobian."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraHoodShelfFitV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    scene=bpy.context.scene; scene.frame_set(scene.frame_start); bpy.context.view_layer.update()
+    # The hands sit slightly inboard, 35 mm forward, and 15 mm lower so their
+    # palm heels meet the new shelves. The local channel correction comes from
+    # the evaluated MPFB control Jacobian; mirrored bone axes are measured.
+    corrections=[]
+    for prefix,world_delta in (("left",Vector((.015,.035,-.015))),
+                               ("right",Vector((-.015,.035,-.015)))):
+        bone=rig.pose.bones[prefix+"_hand_ik"]
+        origin=(rig.matrix_world @ bone.matrix).translation.copy()
+        original=bone.location.copy(); columns=[]
+        for axis in range(3):
+            bone.location[axis]+=0.01; bpy.context.view_layer.update()
+            moved=(rig.matrix_world @ bone.matrix).translation.copy()
+            columns.append((moved-origin)/0.01)
+            bone.location=original; bpy.context.view_layer.update()
+        jacobian=Matrix(((columns[0].x,columns[1].x,columns[2].x),
+                         (columns[0].y,columns[1].y,columns[2].y),
+                         (columns[0].z,columns[1].z,columns[2].z)))
+        local_delta=jacobian.inverted() @ world_delta
+        corrections.append((prefix,world_delta,local_delta))
+    for prefix,world_delta,local_delta in corrections:
+        path=f'pose.bones["{prefix}_hand_ik"].location'
+        curves=[fc for fc in bag.fcurves if fc.data_path==path]
+        if {fc.array_index for fc in curves}!={0,1,2}:
+            raise RuntimeError(f"incomplete hand target channels: {path}")
+        for curve in curves:
+            delta=local_delta[curve.array_index]
+            for key in curve.keyframe_points:
+                key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+            curve.update()
+        print("HOOD_SHELF_HAND_FIT",prefix,"worldDelta",tuple(round(v,4) for v in world_delta),
+              "measuredLocalDelta",tuple(round(v,5) for v in local_delta))
+    action["WodraHoodShelfFitV1"]=True
+
+
 def refine_road_bike():
     """Refine the preserved frame's wheel profile, spokes, and road controls."""
     bike=bpy.data.objects.get("BicycleModel")
@@ -609,21 +940,27 @@ def refine_road_bike():
         spokes.data.materials.clear(); spokes.data.materials.append(spoke_material)
         for polygon in spokes.data.polygons: polygon.use_smooth=True
         spokes.data.update()
-    # Discrete lever blades join each compact hood to the drop bar.
-    lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
-    for side in (-1,1):
-        name="BrakeLeverL" if side<0 else "BrakeLeverR"
-        old=bpy.data.objects.get(name)
-        if old: bpy.data.objects.remove(old,do_unlink=True)
-        start=Vector((side*.25,.195,.940)); end=Vector((side*.25,.250,.877))
-        direction=end-start
-        bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.006,depth=direction.length,
-            location=(start+end)*.5)
-        lever=bpy.context.object; lever.name=name
-        lever.rotation_mode='QUATERNION'; lever.rotation_quaternion=direction.to_track_quat('Z','Y')
-        lever.parent=bike
-        lever.data.materials.append(lever_material)
-        lever.matrix_parent_inverse=bike.matrix_world.inverted()
+    # Preserve a polished, already tagged cockpit on repeat exports. The older
+    # initialization path below creates temporary cylindrical levers before the
+    # first cockpit refinement; rebuilding those on every run would overwrite
+    # the finished blade profile.
+    bar=bpy.data.objects.get("RoadDropHandlebars")
+    if not (bar and bar.get("WodraRoadCockpitV3",False)):
+        lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
+        for side in (-1,1):
+            name="BrakeLeverL" if side<0 else "BrakeLeverR"
+            old=bpy.data.objects.get(name)
+            if old: bpy.data.objects.remove(old,do_unlink=True)
+            start=Vector((side*.25,.195,.940)); end=Vector((side*.25,.250,.877))
+            direction=end-start
+            bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.006,depth=direction.length,
+                location=(start+end)*.5)
+            lever=bpy.context.object; lever.name=name
+            lever.rotation_mode='QUATERNION'; lever.rotation_quaternion=direction.to_track_quat('Z','Y')
+            lever.parent=bike
+            lever.data.materials.append(lever_material)
+            lever.matrix_parent_inverse=bike.matrix_world.inverted()
+        refine_road_cockpit(bike)
     pedal_material=bpy.data.materials.get("Wodra Contact Carbon") or mat("Wodra Contact Carbon",(.045,.052,.055),.82)
     for name in ("LeftPedal","RightPedal"):
         pedal=bpy.data.objects.get(name)
@@ -869,6 +1206,10 @@ def main():
         round_clothing_edges()
         refine_brake_hoods()
         refine_road_bike()
+        refine_hood_grip_pose()
+        refine_finger_spacing_from_probe()
+        refine_finger_bends_in_bike_space()
+        seat_hands_on_hood_shelves()
         extend_shoe_uppers(rig)
         # Keep the accepted authored MPFB hand pose and its existing animation
         # curves intact. The prior alpha48 pass overwrote every finger's XYZ Euler

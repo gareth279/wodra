@@ -274,6 +274,50 @@ Open the resulting GLB in the production RideScreen using
 `RiderFinishingSceneReviewTest.tscn`; continuous pedal, steering, coast, and
 restart frames are captured by `RiderMotionReviewTest.tscn`.
 
+### Alpha.48 cockpit reference comparison (v22, owner review pending)
+
+The next cockpit pass used one modern road-control family throughout. SRAM's
+[AXS controls guide](https://www.sram.com/en/learn/tech-deep-dives/axs-controls)
+describes the narrower, longer hood, the raised/inward-flared support, and the
+distinct brake paddle. Its [road setup guide](https://www.sram.com/en/learn/road-axs-welcome-guide)
+provides the matching production photographs. For grip anatomy, compare the
+[SRAM AXS hand-on-hood photograph](https://www.sram.com/globalassets/publicsites/03_learn/sr/road-axs-2x/welcome-guide-fival-update/04_fps_force-rival-shifter-update.jpg?format=jpg&quality=90&w=950)
+and a [full rider on the hoods](https://www.cyclingweekly.com/fitness/marginal-gains-everybody-318503).
+These are photographic modelling references; no third-party images are stored
+in this repository.
+
+The current editable candidate is
+`source/WodraCyclist.alpha48-cockpit-v22.blend`, exported as
+`exports/WodraCyclist-alpha48-cockpit-v22.glb`. It replaces the separated bar
+segments with a continuous swept drop-bar loop, narrows/tapers the hood shell
+to approximately 102 x 33 x 36 mm with a raised nose, and adds a separate
+flattened curved lever blade. The current close Godot captures are in
+`artifacts/alpha48-hand-correction/cockpit-v22/godot-candidate/`; the runtime
+motion clip is `artifacts/alpha48-hand-correction/cockpit-v22/godot-motion-v22.mp4`.
+
+**Visual review remains failed/pending.** Compared with the SRAM photographs,
+the in-game hood still reads too much like a rounded capsule and the fingers
+still look long and flat rather than curled naturally around the grip. The
+five-phase contact and mask-export regressions pass, but neither establishes
+anatomically convincing appearance. Do not merge or publish this candidate
+until a further hand/cockpit correction passes owner visual review. Issue #93
+rendering jitter is a separate investigation and is not claimed fixed here.
+
+Reproduce the v22 export from the preserved v21 editable source:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-cockpit-v21.blend --python `
+  tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-alpha48-cockpit-v22.glb `
+  tools/modeling/source/WodraCyclist.alpha48-cockpit-v22.blend `
+  tools/modeling/previews/alpha48-cockpit-v22 --skip-previews
+```
+
+Then copy the GLB to `src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb`,
+run a Godot import, and capture `RiderFinishingSceneReviewTest.tscn` and
+`RiderMotionReviewTest.tscn` in a fresh Godot process.
+
 ### Issue #93 rendering jitter investigation
 
 The local real-time RideScreen comparison is in
