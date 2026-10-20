@@ -10,7 +10,7 @@ import math
 import sys
 from pathlib import Path
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 
 def mat(name, color, roughness=.72, metallic=0.0):
@@ -181,6 +181,11 @@ def remove_mp_fb_leg_proxy_panels(human):
     if any(group is None for group in groups.values()):
         raise RuntimeError("Expected MPFB helper-skirt and helper-tights proxy groups")
     group_indices={name:group.index for name,group in groups.items()}
+    # MPFB's helper-tights label overlaps real wrist transitions on a small
+    # set of hand vertices. Those quads still carry deformation-bone weights;
+    # preserve the weighted anatomy while removing the isolated proxy panels.
+    hand_indices={group.index for group in human.vertex_groups
+                  if group.name.startswith(("wrist.","metacarpal","finger"))}
     bm=bmesh.new(); bm.from_mesh(mesh)
     remove=[]
     for face in bm.faces:
@@ -191,6 +196,10 @@ def remove_mp_fb_leg_proxy_panels(human):
             if all(abs(weight.get(index,0.0)-1.0)<1e-5 for weight in weights):
                 matched=name; break
         if matched:
+            has_hand_skin=any(any(weight.get(index,0.0)>.01 for index in hand_indices)
+                              for weight in weights)
+            if has_hand_skin:
+                continue
             remove.append((face,matched))
     counts={name:0 for name in group_indices}
     for face,name in remove:
@@ -202,6 +211,200 @@ def remove_mp_fb_leg_proxy_panels(human):
     if any(0<count<100 for count in counts.values()):
         raise RuntimeError(f"Unexpected MPFB helper proxy removal counts: {counts}")
     print("REMOVED_MPFB_LEG_PROXY_FACES",counts)
+
+
+def _copy_shape_keys_filtered(source, target, old_vertex_ids):
+    """Copy MPFB expression keys onto the filtered export mesh."""
+    source_keys=source.data.shape_keys
+    if source_keys is None:return
+    blocks={}
+    for source_block in source_keys.key_blocks:
+        block=target.shape_key_add(name=source_block.name,from_mix=False)
+        for new_index,old_index in enumerate(old_vertex_ids):
+            block.data[new_index].co=source_block.data[old_index].co
+        block.slider_min=source_block.slider_min;block.slider_max=source_block.slider_max
+        block.value=source_block.value;block.mute=source_block.mute
+        block.vertex_group=source_block.vertex_group
+        blocks[source_block.name]=block
+    target.data.shape_keys.use_relative=source_keys.use_relative
+    for source_block in source_keys.key_blocks:
+        blocks[source_block.name].relative_key=blocks[source_block.relative_key.name]
+
+
+def _build_mask_baked_mesh_copy(source, target, mask):
+    """Bake Mask's body-group vertex filter while retaining skin and morphs."""
+    mesh=source.data;group=source.vertex_groups.get(mask.vertex_group)
+    if group is None:raise RuntimeError(f"Mask vertex group {mask.vertex_group!r} is missing")
+    group_index=group.index;threshold=mask.threshold
+    # MPFB's VERTEX_GROUP mask retains only vertices with weight above its
+    # threshold. Validate that exact rule against Blender's evaluated result.
+    mask_vertex_ids={v.index for v in mesh.vertices if any(
+        assignment.group==group_index and assignment.weight>threshold
+        for assignment in v.groups)}
+    # MPFB's mask also removes the two deliberately unweighted eye surfaces.
+    # Preserve those explicit eye-material faces while filtering helper proxies.
+    eye_material_indices={i for i,material in enumerate(mesh.materials)
+        if material and "Rider Eye" in material.name}
+    group_by_index={g.index:g.name for g in source.vertex_groups}
+    helper_tights=source.vertex_groups.get("helper-tights")
+    joint_cubes=source.vertex_groups.get("JointCubes")
+    helper_geometry=source.vertex_groups.get("HelperGeometry")
+    hand_groups={g.index for g in source.vertex_groups
+        if g.name.startswith(("wrist.","metacarpal","finger"))}
+    if helper_tights is None or not hand_groups:
+        raise RuntimeError("Expected MPFB helper-tights and weighted hand-deformation groups")
+    wrist_group_ids={side:source.vertex_groups[f"wrist.{side}"].index for side in ("L","R")
+        if source.vertex_groups.get(f"wrist.{side}") is not None}
+    eye_group_ids={side:source.vertex_groups[f"eye.{side}"].index for side in ("L","R")
+        if source.vertex_groups.get(f"eye.{side}") is not None}
+    wrist_faces={"L":[],"R":[]}
+    removed_rig_proxy_faces={"JointCubes":0,"HelperGeometry":0}
+    retained=[]
+    for polygon in mesh.polygons:
+        body=all(i in mask_vertex_ids for i in polygon.vertices)
+        eye=polygon.material_index in eye_material_indices
+        vertices=[mesh.vertices[i] for i in polygon.vertices]
+        # The restored MPFB wrist seam quads are fully tagged helper-tights,
+        # like leg proxy faces, but also carry genuine wrist/finger skinning.
+        # Keep exactly those weighted seam surfaces; JointCubes controls have
+        # no helper-tights tag and remain excluded by the body mask.
+        fully_helper_tights=all(any(a.group==helper_tights.index and a.weight>=.999
+            for a in vertex.groups) for vertex in vertices)
+        has_hand_deformation=sum(any(a.group in hand_groups and a.weight>.01
+            for a in vertex.groups) for vertex in vertices)>=2
+        retained_wrist_side=None
+        if fully_helper_tights and has_hand_deformation:
+            for side,wrist_id in wrist_group_ids.items():
+                if sum(a.weight for vertex in vertices for a in vertex.groups
+                       if a.group==wrist_id)>.01:
+                    retained_wrist_side=side
+                    break
+        # MPFB includes disconnected control cubes in the Human mesh. They
+        # carry deformation-bone weights as well as their full proxy-group
+        # weights, so the body mask alone does not remove every fingertip
+        # controller. Their geometry must not be skinned into the runtime
+        # hand. HelperGeometry also marks a disconnected wrist control shell;
+        # the 24 verified anatomical wrist seam quads per hand remain because
+        # they do not have a full HelperGeometry weight on every corner.
+        fully_joint_cube=joint_cubes is not None and all(any(
+            a.group==joint_cubes.index and a.weight>=.999 for a in vertex.groups)
+            for vertex in vertices)
+        fully_helper_geometry=helper_geometry is not None and all(any(
+            a.group==helper_geometry.index and a.weight>=.999 for a in vertex.groups)
+            for vertex in vertices)
+        # MPFB's visible eye shells share HelperGeometry weights, but the
+        # adjacent JointCubes are rig controls and must still be removed.
+        # Preserve only material-assigned eye faces with matching eye weights.
+        anatomical_eye=eye and fully_helper_geometry and not fully_joint_cube and any(
+            all(any(a.group==eye_index and a.weight>=.95 for a in vertex.groups)
+                for vertex in vertices)
+            for eye_index in eye_group_ids.values())
+        if fully_joint_cube:
+            removed_rig_proxy_faces["JointCubes"]+=1
+            continue
+        if fully_helper_geometry and retained_wrist_side is None and not anatomical_eye:
+            removed_rig_proxy_faces["HelperGeometry"]+=1
+            continue
+        if retained_wrist_side is not None:
+            wrist_faces[retained_wrist_side].append(polygon.index)
+        if body or anatomical_eye or retained_wrist_side is not None:
+            retained.append(polygon)
+    if {side:len(indices) for side,indices in wrist_faces.items()}!={"L":24,"R":24}:
+        raise RuntimeError(f"Expected 24 restored wrist faces per side; found "
+            f"{ {side:len(indices) for side,indices in wrist_faces.items()} }")
+    source_polygons=retained
+    old_vertex_ids=sorted({i for p in source_polygons for i in p.vertices})
+    remap={old:new for new,old in enumerate(old_vertex_ids)}
+    new_mesh=bpy.data.meshes.new(mesh.name+"_GLTFMaskBaked")
+    new_mesh.from_pydata([tuple(mesh.vertices[i].co) for i in old_vertex_ids],[],
+                         [tuple(remap[i] for i in p.vertices) for p in source_polygons])
+    for material in mesh.materials:new_mesh.materials.append(material)
+    for source_poly,target_poly in zip(source_polygons,new_mesh.polygons):
+        target_poly.material_index=source_poly.material_index
+        target_poly.use_smooth=source_poly.use_smooth
+    # Preserve UV coordinates and the outfit vertex colors used by Godot.
+    for source_uv in mesh.uv_layers:
+        target_uv=new_mesh.uv_layers.new(name=source_uv.name)
+        for source_poly,target_poly in zip(source_polygons,new_mesh.polygons):
+            for old_loop,new_loop in zip(source_poly.loop_indices,target_poly.loop_indices):
+                target_uv.data[new_loop].uv=source_uv.data[old_loop].uv
+    for source_attr in mesh.color_attributes:
+        if source_attr.domain!="POINT":continue
+        target_attr=new_mesh.color_attributes.new(name=source_attr.name,
+            type=source_attr.data_type,domain=source_attr.domain)
+        for new_index,old_index in enumerate(old_vertex_ids):
+            target_attr.data[new_index].color=source_attr.data[old_index].color
+    target.data=new_mesh
+    # Vertex group weights are stored per object/mesh vertex. Transfer the
+    # exact surviving influences; the glTF exporter can then choose its own
+    # supported payload without us assuming that weight pruning fixes shape.
+    if len(target.vertex_groups)==0:
+        for source_group in source.vertex_groups:
+            target.vertex_groups.new(name=source_group.name)
+    if [g.name for g in target.vertex_groups]!=[g.name for g in source.vertex_groups]:
+        raise RuntimeError("Mask-baked Human copy has different vertex groups")
+    for new_index,old_index in enumerate(old_vertex_ids):
+        for assignment in mesh.vertices[old_index].groups:
+            target.vertex_groups[assignment.group].add([new_index],assignment.weight,"REPLACE")
+    _copy_shape_keys_filtered(source,target,old_vertex_ids)
+    if source.data.shape_keys and len(target.data.shape_keys.key_blocks)!=len(source.data.shape_keys.key_blocks):
+        raise RuntimeError("Mask-baked Human copy lost MPFB expression keys")
+    target.data.update()
+    print("GLTF_MASK_COPY", "source_vertices",len(mesh.vertices),"export_vertices",len(old_vertex_ids),
+          "source_faces",len(mesh.polygons),"retained_eye_faces",sum(1 for p in source_polygons if p.material_index in eye_material_indices),
+          "retained_wrist_faces",{side:len(indices) for side,indices in wrist_faces.items()},
+          "export_faces",len(source_polygons),
+          "removed_rig_proxy_faces",removed_rig_proxy_faces,
+          "shape_keys",len(target.data.shape_keys.key_blocks) if target.data.shape_keys else 0,
+          "vertex_groups",len(target.vertex_groups))
+
+
+def make_gltf_human_copy(human):
+    """Copy the skinned mesh and bake MPFB's unsupported helper mask on it.
+
+    Blender's GLB exporter omits the Mask modifier. Exporting the authoring
+    Human directly therefore leaks MPFB rig-control proxy geometry at wrists
+    and fingertips. This temporary duplicate keeps the editable full mesh and
+    skin weights intact while applying only the helper mask to export geometry.
+    """
+    armature=next((m for m in human.modifiers if m.type=="ARMATURE"),None)
+    mask=next((m for m in human.modifiers if m.type=="MASK"),None)
+    if armature is None or mask is None:
+        raise RuntimeError("Expected weighted Human with armature and MPFB helper-mask modifiers")
+    original_name=human.name
+    before=len(human.data.polygons)
+    human.name="Human_Authoring"
+    duplicate=human.copy()
+    duplicate.data=human.data.copy()
+    duplicate.name="Human"
+    bpy.context.scene.collection.objects.link(duplicate)
+    try:
+        duplicate.parent=human.parent
+        duplicate.matrix_parent_inverse=human.matrix_parent_inverse.copy()
+        duplicate.matrix_basis=human.matrix_basis.copy()
+        arm_copy=next(m for m in duplicate.modifiers if m.type=="ARMATURE")
+        mask_copy=next(m for m in duplicate.modifiers if m.type=="MASK")
+        original_arm_state=arm_copy.show_viewport,arm_copy.show_render
+        arm_copy.show_viewport=False;arm_copy.show_render=False
+        _build_mask_baked_mesh_copy(human,duplicate,mask_copy)
+        duplicate.modifiers.remove(mask_copy)
+        arm_copy=next(m for m in duplicate.modifiers if m.type=="ARMATURE")
+        arm_copy.show_viewport,arm_copy.show_render=original_arm_state
+        if len(duplicate.vertex_groups)!=len(human.vertex_groups):
+            raise RuntimeError("Mask bake lost the Human skin vertex groups")
+        expected=[sum(1 for g in v.groups if g.weight>.001)
+                  for v in duplicate.data.vertices]
+        if not expected or max(expected)==0:
+            raise RuntimeError("Mask-baked Human copy has no surviving skin weights")
+        print("GLTF_HELPER_MASK_BAKED", "source_faces",before,
+              "export_faces",len(duplicate.data.polygons),
+              "vertices",len(duplicate.data.vertices),
+              "skin_groups",len(duplicate.vertex_groups))
+        return duplicate,human,original_name
+    except Exception:
+        bpy.data.objects.remove(duplicate,do_unlink=True)
+        human.name=original_name
+        raise
 
 
 def round_clothing_edges():
@@ -283,7 +486,10 @@ def round_clothing_edges():
         node=nodes.new("ShaderNodeVectorMath"); node.operation="ADD"
         links.new(add,node.inputs[0]); links.new(channel,node.inputs[1]); add=node.outputs[0]
     links.new(add,bsdf.inputs["Base Color"]); links.new(bsdf.outputs["BSDF"],out.inputs["Surface"])
-    eye_mat=mat("Rider Eye | warm ivory",(.82,.77,.68),.72)
+    # The GLB's exposed eye islands read as bright rectangular patches under
+    # route key lighting. A quiet warm brown keeps the low-poly eye surfaces
+    # legible without adding floating iris geometry or changing world light.
+    eye_mat=mat("Rider Eye | muted warm brown",(.065,.045,.035),.92)
     eye_indices=[groups.get("eye.L"),groups.get("eye.R")]
     eye_indices=[idx for idx in eye_indices if idx is not None]
     mesh.materials.clear(); mesh.materials.append(m); mesh.materials.append(eye_mat)
@@ -294,67 +500,6 @@ def round_clothing_edges():
                                for group_idx in eye_indices):
             polygon.material_index=1
     print("BAKED_RIDER_VERTEX_MASKS",len(mesh.vertices),"channels=jersey,shorts,shoe")
-
-
-def curl_fingers(rig):
-    """Bake a modest, symmetric finger curl into the existing cadence action."""
-    if not rig.animation_data or not rig.animation_data.action:
-        return
-    scene=bpy.context.scene; action=rig.animation_data.action
-    start,end=scene.frame_start,scene.frame_end
-    digit_bones=[b for b in rig.pose.bones if any(f"finger{i}-" in b.name for i in range(1,6))]
-    if not digit_bones: return
-    for frame in range(start,end+1):
-        scene.frame_set(frame)
-        for bone in digit_bones:
-            parts=bone.name.split("-")
-            finger=int(parts[0].replace("finger","")); joint=int(parts[1].split(".")[0])
-            # The relaxed first prototype only flexed about 30 degrees in total,
-            # leaving the fingers nearly flat above the compact hoods. This
-            # modest 45–50 degree curl brings the distal joints down around the
-            # grip without forming a clenched fist.
-            angles={1:(.18,.32,.24),2:(.24,.34,.28),3:(.24,.34,.28),
-                    4:(.22,.32,.26),5:(.19,.30,.24)}
-            angle=angles[finger][joint-1]
-            bone.rotation_mode="XYZ"
-            bone.rotation_euler=(angle,0,0)
-            bone.keyframe_insert(data_path="rotation_euler",frame=frame,group=bone.name)
-    scene.frame_set(start)
-
-
-def fit_hands_to_hoods(rig):
-    """Lower the complete hand chains onto the existing brake-hood grip tops."""
-    wrists = [rig.pose.bones.get(f"wrist.{side}") for side in ("L", "R")]
-    if not all(wrists):
-        raise RuntimeError("MPFB wrist bones are required for hood contact fitting")
-    if all(bone.get("WodraAlpha47HoodContactFix4", False) for bone in wrists):
-        return
-    scene = bpy.context.scene
-    for frame in range(scene.frame_start, scene.frame_end + 1):
-        scene.frame_set(frame)
-        for side, wrist in zip(("L", "R"), wrists):
-            # Measured from the saved pose and BrakeHoodL/R world bounds:
-            # Measured against the runtime hood: align the palm on the shelf,
-            # keeping the adjustment inside the existing elbow reach.
-            # Move the wrist root and its weighted hand/finger descendants
-            # together, preserving the upper-arm, elbow, and leg animation.
-            # The alpha.46 source already contains the 36 mm first fit. This
-            # small second move seats the palm closer to the hood shelf while
-            # leaving shoulder, elbow, and all leg joints untouched.
-            world_delta = Vector((0, 0, -.012))
-            pose = wrist.matrix.copy()
-            current_world = rig.matrix_world @ pose.translation
-            pose.translation = rig.matrix_world.inverted_safe() @ (current_world + world_delta)
-            wrist.matrix = pose
-            bpy.context.view_layer.update()
-            evaluated_world = rig.matrix_world @ wrist.matrix.translation
-            if (evaluated_world - current_world - world_delta).length > 1e-4:
-                raise RuntimeError(f"{wrist.name} hood fit did not apply in world space")
-            wrist.keyframe_insert(data_path="location", frame=frame, group=wrist.name)
-        bpy.context.view_layer.update()
-    for wrist in wrists:
-        wrist["WodraAlpha47HoodContactFix4"] = True
-    scene.frame_set(scene.frame_start)
 
 
 def refine_brake_hoods():
@@ -407,6 +552,337 @@ def refine_brake_hoods():
         old=obj.data; obj.data=mesh
         if old.users==0: bpy.data.meshes.remove(old)
         obj["WodraRoadHoodPolished"]=True
+
+
+def _catmull_rom_path(points, steps_per_span=6):
+    """Sample a smooth open curve through the authored cockpit control points."""
+    points=[Vector(point) for point in points]
+    samples=[]
+    for span in range(len(points)-1):
+        p0=points[max(0,span-1)]; p1=points[span]
+        p2=points[span+1]; p3=points[min(len(points)-1,span+2)]
+        for step in range(steps_per_span):
+            t=step/steps_per_span; t2=t*t; t3=t2*t
+            samples.append(.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+
+                               (-p0+3*p1-3*p2+p3)*t3))
+    samples.append(points[-1])
+    return samples
+
+
+def _swept_round_tube(points, radius, sides=12):
+    """Create one continuous capped mesh along a Catmull-Rom path."""
+    path=_catmull_rom_path(points)
+    vertices=[]; faces=[]
+    for index,center in enumerate(path):
+        before=path[max(0,index-1)]; after=path[min(len(path)-1,index+1)]
+        tangent=(after-before).normalized()
+        reference=Vector((0,1,0))
+        if abs(tangent.dot(reference))>.92: reference=Vector((0,0,1))
+        u=tangent.cross(reference).normalized(); v=tangent.cross(u).normalized()
+        for section in range(sides):
+            angle=math.tau*section/sides
+            vertices.append(tuple(center+radius*(u*math.cos(angle)+v*math.sin(angle))))
+    for row in range(len(path)-1):
+        for section in range(sides):
+            a=row*sides+section; b=row*sides+(section+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.extend((tuple(reversed(range(sides))),
+                  tuple((len(path)-1)*sides+i for i in range(sides))))
+    return vertices,faces
+
+
+def refine_road_cockpit(bike):
+    """Replace the segmented placeholder cockpit with a continuous road bar and fitted controls."""
+    bar=bpy.data.objects.get("RoadDropHandlebars")
+    if bar is None: raise RuntimeError("RoadDropHandlebars is missing")
+    if bar.get("WodraRoadCockpitV3",False): return
+    # Coordinates are bike-local. This single path joins the drops, bends and
+    # tops on both sides; it removes the capped, disconnected cylinder pieces
+    # that read as broken angular bars in the runtime screenshots.
+    left=[(0,.22,.920),(-.09,.22,.920),(-.17,.225,.924),
+          (-.218,.229,.938),(-.246,.244,.946),(-.270,.266,.932),
+          (-.279,.276,.898),(-.274,.264,.858),(-.254,.240,.812),
+          (-.226,.212,.765),(-.198,.180,.733)]
+    # Keep 15 mm swept tube around a 470 mm hood-centre width, scaled for the
+    # existing adult rider while moving the hoods into the original hand reach.
+    left=[(x*.85,y,z) for x,y,z in left]
+    path=list(reversed(left))+[(-point[0],point[1],point[2]) for point in left[1:]]
+    vertices,faces=_swept_round_tube(path,.0115,14)
+    new_mesh=bpy.data.meshes.new("RoadDropHandlebarsContinuousMesh")
+    new_mesh.from_pydata(vertices,[],faces)
+    if bar.data.materials: new_mesh.materials.append(bar.data.materials[0])
+    import bmesh
+    bm=bmesh.new(); bm.from_mesh(new_mesh)
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(new_mesh); bm.free()
+    old=bar.data; bar.data=new_mesh
+    if old.users==0: bpy.data.meshes.remove(old)
+    bar.location=(0,0,0); bar.rotation_euler=(0,0,0); bar.scale=(1,1,1)
+    bar["WodraRoadCockpitV3"]=True
+
+    rubber=bpy.data.materials.get("Brake Hood Rubber") or mat("Brake Hood Rubber",(.085,.092,.098),.9)
+    rubber.diffuse_color=(.085,.092,.098,1)
+    if rubber.use_nodes:
+        bsdf=next((node for node in rubber.node_tree.nodes if node.type=="BSDF_PRINCIPLED"),None)
+        if bsdf: bsdf.inputs["Base Color"].default_value=(.085,.092,.098,1)
+    lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
+    for side in (-1,1):
+        suffix="L" if side<0 else "R"
+        hood=bpy.data.objects.get("BrakeHood"+suffix)
+        if hood is None: raise RuntimeError(f"BrakeHood{suffix} is missing")
+        # Match modern long, slim road hoods: 102 mm fore-aft, 33 mm across,
+        # and 36 mm high. The top rises about seven degrees and the nose
+        # narrows; the rear flare meets the wrapped bar without a bulb.
+        center_x=side*.235; center_y=.215
+        sections=((-0.051,.005,.008,.944),(-.038,.011,.013,.946),
+                  (-.018,.015,.017,.949),(.006,.0165,.018,.952),
+                  (.030,.014,.016,.955),(.051,.006,.009,.958))
+        hood_vertices=[]; hood_faces=[]; ring=16
+        for y_offset,rx,rz,center_z in sections:
+            inboard=-side*min(max(y_offset,0)*.12, .006)
+            for section in range(ring):
+                angle=math.tau*section/ring
+                # A flattened superellipse leaves a broad palm shelf and
+                # tapered sides instead of the old circular knob profile.
+                cx=math.cos(angle); sz=math.sin(angle)
+                hood_vertices.append((center_x+inboard+rx*math.copysign(abs(cx)**.62,cx),
+                                      center_y+y_offset,
+                                      center_z+rz*math.copysign(abs(sz)**.62,sz)))
+        for row in range(len(sections)-1):
+            for section in range(ring):
+                a=row*ring+section; b=row*ring+(section+1)%ring
+                hood_faces.append((a,b,b+ring,a+ring))
+        hood_faces.extend((tuple(reversed(range(ring))),
+                           tuple((len(sections)-1)*ring+i for i in range(ring))))
+        hood_mesh=bpy.data.meshes.new("BrakeHood"+suffix+"ErgoShellV2")
+        hood_mesh.from_pydata(hood_vertices,[],hood_faces); hood_mesh.materials.append(rubber)
+        bm=bmesh.new(); bm.from_mesh(hood_mesh)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(hood_mesh); bm.free()
+        for polygon in hood_mesh.polygons: polygon.use_smooth=True
+        old=hood.data; hood.data=hood_mesh
+        if old.users==0: bpy.data.meshes.remove(old)
+        hood.location=(0,0,0); hood.rotation_euler=(0,0,0); hood.scale=(1,1,1)
+        hood["WodraErgoHoodV3"]=True
+
+        # A narrow, flattened brake blade emerges below the front of the hood.
+        lever_name="BrakeLever"+suffix
+        lever=bpy.data.objects.get(lever_name)
+        if lever is None:
+            lever_mesh=bpy.data.meshes.new(lever_name+"V2Mesh")
+            lever=bpy.data.objects.new(lever_name,lever_mesh); bpy.context.collection.objects.link(lever)
+            lever.parent=bike
+        points=[(side*.235,.239,.938),(side*.235,.247,.914),
+                (side*.235,.243,.889),(side*.235,.228,.867),
+                (side*.235,.208,.853)]
+        lever_vertices=[]; lever_faces=[]; sides=10
+        for row,point in enumerate(points):
+            previous=Vector(points[max(0,row-1)]); following=Vector(points[min(len(points)-1,row+1)])
+            tangent=(following-previous).normalized()
+            across=Vector((1,0,0))
+            across=(across-tangent*across.dot(tangent)).normalized()
+            depth=tangent.cross(across).normalized()
+            taper=1.0-.34*row/(len(points)-1)
+            center=Vector(point)
+            for section in range(sides):
+                angle=math.tau*section/sides
+                vertex=center+across*(.0065*taper*math.cos(angle))+depth*(.0026*taper*math.sin(angle))
+                lever_vertices.append(tuple(vertex))
+        for row in range(len(points)-1):
+            for section in range(sides):
+                a=row*sides+section; b=row*sides+(section+1)%sides
+                lever_faces.append((a,b,b+sides,a+sides))
+        lever_faces.extend((tuple(reversed(range(sides))),
+                            tuple((len(points)-1)*sides+i for i in range(sides))))
+        lever_mesh=bpy.data.meshes.new(lever_name+"CurvedBladeV2Mesh")
+        lever_mesh.from_pydata(lever_vertices,[],lever_faces); lever_mesh.materials.append(lever_material)
+        bm=bmesh.new(); bm.from_mesh(lever_mesh)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(lever_mesh); bm.free()
+        for polygon in lever_mesh.polygons: polygon.use_smooth=True
+        old=lever.data; lever.data=lever_mesh
+        if old.users==0: bpy.data.meshes.remove(old)
+        lever.location=(0,0,0); lever.rotation_euler=(0,0,0); lever.scale=(1,1,1)
+        lever.parent=bike
+        lever.matrix_parent_inverse=bike.matrix_world.inverted()
+    bpy.context.view_layer.update()
+    print("ROAD_COCKPIT_V3", "continuous-bar vertices",len(bar.data.vertices),
+          "bar dimensions",tuple(round(x,4) for x in bar.dimensions))
+
+
+def refine_hood_grip_pose():
+    """Make a small symmetric relaxed grip correction using the photographed hood posture."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraPhotoGuidedGripV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # The source action already contains the measured MPFB hand pose. This
+    # correction only reduces the visible MCP fan a few degrees and closes the
+    # fingers another 3–5 degrees at each joint. It does not scale bones,
+    # change topology or move the wrist/arm anchors.
+    adduction={"L":{1:-3,2:-2,3:3,4:3},"R":{1:3,2:-2,3:3,4:-3}}
+    for side in ("L","R"):
+        for digit,degrees in adduction[side].items():
+            path=f'pose.bones["metacarpal{digit}.{side}"].rotation_euler'
+            curve=next((fc for fc in bag.fcurves if fc.data_path==path and fc.array_index==2),None)
+            if curve is None: raise RuntimeError(f"missing metacarpal bend channel: {path}")
+            delta=math.radians(degrees)
+            for key in curve.keyframe_points:
+                key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+            curve.update()
+        for finger in range(1,6):
+            for joint,delta in ((1,.045),(2,.07),(3,.05)):
+                path=f'pose.bones["finger{finger}-{joint}.{side}"].rotation_euler'
+                curve=next((fc for fc in bag.fcurves if fc.data_path==path and fc.array_index==0),None)
+                if curve is None: raise RuntimeError(f"missing finger flex channel: {path}")
+                for key in curve.keyframe_points:
+                    key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+                curve.update()
+    action["WodraPhotoGuidedGripV1"]=True
+    print("PHOTO_GUIDED_GRIP_V1", "metacarpal adduction",adduction,"joint curl deltas radians",(.045,.07,.05))
+
+
+def refine_finger_spacing_from_probe():
+    """Apply one measured local-Z step to bring splayed fingertips inward."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraPhotoGripFanTightenedV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # probe_hand_adduction.py perturbs each metacarpal by ±0.1 rad and measures
+    # the weighted distal-finger fan with the evaluated Armature modifier. On
+    # the preserved current pose, this single step reduced the fan cost for
+    # each metacarpal on both hands. Apply only that local step; do not flip or
+    # replace the established grip angles, which would move several fingers
+    # away from their contact surfaces.
+    inward={"L":{1:-.1,2:.1,3:-.1,4:.1},"R":{1:-.1,2:.1,3:-.1,4:.1}}
+    changes=[]
+    for side in ("L","R"):
+        for finger,sign in inward[side].items():
+            path=f'pose.bones["metacarpal{finger}.{side}"].rotation_euler'
+            curve=next((fc for fc in bag.fcurves
+                        if fc.data_path==path and fc.array_index==2),None)
+            if curve is None or not curve.keyframe_points:
+                raise RuntimeError(f"missing metacarpal spacing channel: {path}")
+            delta=sign
+            for key in curve.keyframe_points:
+                key.co.y+=delta
+                key.handle_left.y+=delta
+                key.handle_right.y+=delta
+            curve.update(); changes.append((path,sign))
+    action["WodraPhotoGripFanTightenedV1"]=True
+    print("PHOTO_GRIP_FAN_DIRECTIONS",changes)
+
+
+def refine_finger_bends_in_bike_space():
+    """Add a small anatomically aligned curl around the bike-width axis."""
+    rig=bpy.data.objects.get("Human.rig")
+    bike=bpy.data.objects.get("BicycleModel")
+    if rig is None or bike is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider and bicycle are required")
+    action=rig.animation_data.action
+    if action.get("WodraBikeSpaceGripFlexV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    # A world-axis sweep on each weighted joint showed that one local Euler X
+    # assumption does not bend every mirrored MPFB digit in the same plane.
+    # Use a common bike-lateral flex axis, transformed through each evaluated
+    # bone, with small per-joint signs measured against the hood/lever surface.
+    # The index/middle fingers rest at the blade; ring/little fingers curl
+    # around the rubber. This is a 0.12 rad rotation only; no bone is scaled.
+    bend_signs={
+        "L":{1:(0,1,1),2:(1,1,1),3:(1,1,1),4:(-1,-1,-1),5:(1,-1,-1)},
+        "R":{1:(0,1,1),2:(-1,-1,-1),3:(1,1,1),4:(-1,-1,-1),5:(-1,-1,-1)},
+    }
+    scene=bpy.context.scene
+    scene.frame_set(scene.frame_start)
+    bpy.context.view_layer.update()
+    bike_lateral=(bike.matrix_world.to_3x3()@Vector((1,0,0))).normalized()
+    changes=[]
+    for side in ("L","R"):
+        for finger,joint_signs in bend_signs[side].items():
+            for joint,sign in enumerate(joint_signs,1):
+                if sign==0: continue
+                name=f"finger{finger}-{joint}.{side}"
+                bone=rig.pose.bones.get(name)
+                if bone is None or bone.rotation_mode!="XYZ":
+                    raise RuntimeError(f"expected XYZ deformation bone {name}")
+                path=f'pose.bones["{name}"].rotation_euler'
+                curves=[next((fc for fc in bag.fcurves
+                              if fc.data_path==path and fc.array_index==axis),None)
+                        for axis in range(3)]
+                if any(curve is None or not curve.keyframe_points for curve in curves):
+                    raise RuntimeError(f"incomplete finger rotation channels: {path}")
+                current=bone.rotation_euler.copy()
+                current_world=(rig.matrix_world@bone.matrix).to_3x3().to_quaternion()
+                axis_local=current_world.inverted()@bike_lateral
+                corrected=current.to_quaternion()@Quaternion(axis_local,sign*.12)
+                corrected_euler=corrected.to_euler("XYZ",current)
+                deltas=[corrected_euler[axis]-current[axis] for axis in range(3)]
+                for axis,curve in enumerate(curves):
+                    for key in curve.keyframe_points:
+                        key.co.y+=deltas[axis]
+                        key.handle_left.y+=deltas[axis]
+                        key.handle_right.y+=deltas[axis]
+                    curve.update()
+                changes.append((name,sign,tuple(round(value,4) for value in deltas)))
+                bpy.context.view_layer.update()
+    action["WodraBikeSpaceGripFlexV1"]=True
+    print("BIKE_SPACE_GRIP_FLEX",changes)
+
+
+def seat_hands_on_hood_shelves():
+    """Translate only the existing hand IK targets using a measured rig-space Jacobian."""
+    rig=bpy.data.objects.get("Human.rig")
+    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
+        raise RuntimeError("preserved animated rider is missing")
+    action=rig.animation_data.action
+    if action.get("WodraHoodShelfFitV1",False): return
+    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
+    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
+              if strip.channelbag(slot)),None)
+    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
+    scene=bpy.context.scene; scene.frame_set(scene.frame_start); bpy.context.view_layer.update()
+    # The hands sit slightly inboard, 35 mm forward, and 15 mm lower so their
+    # palm heels meet the new shelves. The local channel correction comes from
+    # the evaluated MPFB control Jacobian; mirrored bone axes are measured.
+    corrections=[]
+    for prefix,world_delta in (("left",Vector((.015,.035,-.015))),
+                               ("right",Vector((-.015,.035,-.015)))):
+        bone=rig.pose.bones[prefix+"_hand_ik"]
+        origin=(rig.matrix_world @ bone.matrix).translation.copy()
+        original=bone.location.copy(); columns=[]
+        for axis in range(3):
+            bone.location[axis]+=0.01; bpy.context.view_layer.update()
+            moved=(rig.matrix_world @ bone.matrix).translation.copy()
+            columns.append((moved-origin)/0.01)
+            bone.location=original; bpy.context.view_layer.update()
+        jacobian=Matrix(((columns[0].x,columns[1].x,columns[2].x),
+                         (columns[0].y,columns[1].y,columns[2].y),
+                         (columns[0].z,columns[1].z,columns[2].z)))
+        local_delta=jacobian.inverted() @ world_delta
+        corrections.append((prefix,world_delta,local_delta))
+    for prefix,world_delta,local_delta in corrections:
+        path=f'pose.bones["{prefix}_hand_ik"].location'
+        curves=[fc for fc in bag.fcurves if fc.data_path==path]
+        if {fc.array_index for fc in curves}!={0,1,2}:
+            raise RuntimeError(f"incomplete hand target channels: {path}")
+        for curve in curves:
+            delta=local_delta[curve.array_index]
+            for key in curve.keyframe_points:
+                key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
+            curve.update()
+        print("HOOD_SHELF_HAND_FIT",prefix,"worldDelta",tuple(round(v,4) for v in world_delta),
+              "measuredLocalDelta",tuple(round(v,5) for v in local_delta))
+    action["WodraHoodShelfFitV1"]=True
 
 
 def refine_road_bike():
@@ -464,21 +940,27 @@ def refine_road_bike():
         spokes.data.materials.clear(); spokes.data.materials.append(spoke_material)
         for polygon in spokes.data.polygons: polygon.use_smooth=True
         spokes.data.update()
-    # Discrete lever blades join each compact hood to the drop bar.
-    lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
-    for side in (-1,1):
-        name="BrakeLeverL" if side<0 else "BrakeLeverR"
-        old=bpy.data.objects.get(name)
-        if old: bpy.data.objects.remove(old,do_unlink=True)
-        start=Vector((side*.25,.195,.940)); end=Vector((side*.25,.250,.877))
-        direction=end-start
-        bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.006,depth=direction.length,
-            location=(start+end)*.5)
-        lever=bpy.context.object; lever.name=name
-        lever.rotation_mode='QUATERNION'; lever.rotation_quaternion=direction.to_track_quat('Z','Y')
-        lever.parent=bike
-        lever.data.materials.append(lever_material)
-        lever.matrix_parent_inverse=bike.matrix_world.inverted()
+    # Preserve a polished, already tagged cockpit on repeat exports. The older
+    # initialization path below creates temporary cylindrical levers before the
+    # first cockpit refinement; rebuilding those on every run would overwrite
+    # the finished blade profile.
+    bar=bpy.data.objects.get("RoadDropHandlebars")
+    if not (bar and bar.get("WodraRoadCockpitV3",False)):
+        lever_material=bpy.data.materials.get("Brake Lever Alloy") or mat("Brake Lever Alloy",(.12,.14,.15),.82)
+        for side in (-1,1):
+            name="BrakeLeverL" if side<0 else "BrakeLeverR"
+            old=bpy.data.objects.get(name)
+            if old: bpy.data.objects.remove(old,do_unlink=True)
+            start=Vector((side*.25,.195,.940)); end=Vector((side*.25,.250,.877))
+            direction=end-start
+            bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.006,depth=direction.length,
+                location=(start+end)*.5)
+            lever=bpy.context.object; lever.name=name
+            lever.rotation_mode='QUATERNION'; lever.rotation_quaternion=direction.to_track_quat('Z','Y')
+            lever.parent=bike
+            lever.data.materials.append(lever_material)
+            lever.matrix_parent_inverse=bike.matrix_world.inverted()
+        refine_road_cockpit(bike)
     pedal_material=bpy.data.materials.get("Wodra Contact Carbon") or mat("Wodra Contact Carbon",(.045,.052,.055),.82)
     for name in ("LeftPedal","RightPedal"):
         pedal=bpy.data.objects.get(name)
@@ -709,39 +1191,54 @@ def main():
     args=sys.argv[sys.argv.index("--")+1:]
     head_only="--head-only" in args
     skip_previews="--skip-previews" in args
-    args=[arg for arg in args if arg not in ("--head-only","--skip-previews")]
-    if len(args)!=3: raise SystemExit("expected output GLB, output blend, preview directory [--head-only]")
+    export_only="--export-only" in args
+    args=[arg for arg in args if arg not in ("--head-only","--skip-previews","--export-only")]
+    if len(args)!=3: raise SystemExit("expected output GLB, output blend, preview directory [--head-only] [--skip-previews] [--export-only]")
     glb,blend,preview=map(Path,args)
     glb.parent.mkdir(parents=True,exist_ok=True); blend.parent.mkdir(parents=True,exist_ok=True)
     rig=bpy.data.objects.get("metarig") or next((o for o in bpy.data.objects if o.type=="ARMATURE"),None)
     if rig is None: raise RuntimeError("preserved cyclist blend has no armature")
     print("PRESERVED", "bones",len(rig.data.bones),"actions",[a.name for a in bpy.data.actions])
     print("HEAD_BONE",rig.data.bones.get("head"))
-    make_helmet(rig)
-    refine_human_eyes(rig)
-    round_clothing_edges()
-    refine_brake_hoods()
-    refine_road_bike()
-    extend_shoe_uppers(rig)
-    curl_fingers(rig)
-    fit_hands_to_hoods(rig)
-    if not skip_previews:
-        inspect_and_render(preview,rig)
-        if not head_only:
-            render_full_views(preview/"full_rider_review")
-            render_hand_contact_views(preview/"hand_contact")
-            render_cycle(preview/"animated_side",rig)
-    # Save a non-destructive review checkpoint and export full weighted model/action.
-    bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+    if not export_only:
+        make_helmet(rig)
+        refine_human_eyes(rig)
+        round_clothing_edges()
+        refine_brake_hoods()
+        refine_road_bike()
+        refine_hood_grip_pose()
+        refine_finger_spacing_from_probe()
+        refine_finger_bends_in_bike_space()
+        seat_hands_on_hood_shelves()
+        extend_shoe_uppers(rig)
+        # Keep the accepted authored MPFB hand pose and its existing animation
+        # curves intact. The prior alpha48 pass overwrote every finger's XYZ Euler
+        # rotation with an assumed common local X curl and translated the wrist
+        # root an extra 30 mm. Inspection showed that this authored stage, before
+        # export, pinched the webbing and created sharp knuckle/wrist deformation.
+        if not skip_previews:
+            inspect_and_render(preview,rig)
+            if not head_only:
+                render_full_views(preview/"full_rider_review")
+                render_hand_contact_views(preview/"hand_contact")
+                render_cycle(preview/"animated_side",rig)
+        # Save a non-destructive review checkpoint and export full weighted model/action.
+        bpy.ops.wm.save_as_mainfile(filepath=str(blend))
     # Keep the editable checkpoint on the Blender authoring shader network;
-    # only the exported GLB uses the direct COLOR_0 connection Godot imports.
+    # only the temporary export copy gets glTF's direct COLOR_0 connection.
+    export_human,authoring_human,authoring_name=make_gltf_human_copy(bpy.data.objects["Human"])
     configure_gltf_vertex_color_material()
     bpy.ops.object.select_all(action="DESELECT")
-    for obj in bpy.context.scene.objects: obj.select_set(True)
+    for obj in bpy.context.scene.objects:
+        if obj is not authoring_human: obj.select_set(True)
     bpy.context.view_layer.objects.active=bpy.data.objects.get("BicycleModel")
-    bpy.ops.export_scene.gltf(filepath=str(glb),export_format="GLB",use_selection=True,
-        export_animations=True,export_frame_range=True,export_force_sampling=True,export_animation_mode="ACTIONS")
-    print("EXPORTED",glb)
+    try:
+        bpy.ops.export_scene.gltf(filepath=str(glb),export_format="GLB",use_selection=True,
+            export_animations=True,export_frame_range=True,export_force_sampling=True,export_animation_mode="ACTIONS")
+        print("EXPORTED",glb)
+    finally:
+        bpy.data.objects.remove(export_human,do_unlink=True)
+        authoring_human.name=authoring_name
 
 
 if __name__=="__main__": main()

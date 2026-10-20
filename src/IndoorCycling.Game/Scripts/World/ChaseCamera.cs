@@ -25,6 +25,7 @@ public partial class ChaseCamera : Camera3D
     private string _recoveryReason = "none";
 
     public Vector3 DesiredPosition => _desiredPosition;
+    public Vector3 LookTargetPosition => _lookTarget;
     public string? ObstructionSource => _obstructionSource;
     public string ClearanceResult => _clearanceResult;
     public int RepeatedBlockedMovement => _repeatedBlockedMovement;
@@ -86,6 +87,7 @@ public partial class ChaseCamera : Camera3D
         _desiredPosition = targetPosition;
         var lookTarget = new Vector3(look.X,look.Y,look.Z);
         var weight = _snap ? 1 : (float)(1 - Math.Exp(-6 * delta));
+        var inspectionWeight = _snap ? 1 : (float)(1 - Math.Exp(-24 * delta));
         var anchor = riderPosition + Vector3.Up * 1.05f;
         var boom = targetPosition - anchor;
         var desiredDistance = boom.Length();
@@ -99,7 +101,35 @@ public partial class ChaseCamera : Camera3D
             var safeDistance = Math.Min(_boomDistance, allowedDistance);
             var safeTarget = anchor + direction * safeDistance;
             var blocked = allowedDistance + 0.001f < desiredDistance;
-            var smoothed = blocked || _snap ? safeTarget : GlobalPosition.Lerp(safeTarget, weight);
+            // Inspection cameras frame the rider rather than a fixed world point.
+            // Smooth their relative offset in the route basis so the camera does
+            // not trail a fast-moving rider by speed / smoothing-rate metres.
+            // The previous world-space lerp left a persistent horizontal error
+            // at riding speed (about 2.8 m at 61 km/h with the 6/s response),
+            // which put Side and Front-three-quarter subjects under the HUD.
+            var smoothed = safeTarget;
+            if (!blocked && !_snap && FitsVisualBounds)
+            {
+                var flatForward = new System.Numerics.Vector3(routeForward.X, 0, routeForward.Z);
+                if (flatForward.LengthSquared() < 1e-6f) flatForward = new System.Numerics.Vector3(0, 0, -1);
+                flatForward = System.Numerics.Vector3.Normalize(flatForward);
+                var forwardAxis = new Vector3(flatForward.X, flatForward.Y, flatForward.Z);
+                var rightAxis = forwardAxis.Cross(Vector3.Up).Normalized();
+                if (rightAxis.LengthSquared() < 1e-6f) rightAxis = Vector3.Right;
+                var currentOffset = GlobalPosition - riderPosition;
+                var targetOffset = safeTarget - riderPosition;
+                var currentLocal = new Vector3(currentOffset.Dot(rightAxis), currentOffset.Y,
+                    currentOffset.Dot(forwardAxis));
+                var targetLocal = new Vector3(targetOffset.Dot(rightAxis), targetOffset.Y,
+                    targetOffset.Dot(forwardAxis));
+                var easedLocal = currentLocal.Lerp(targetLocal, inspectionWeight);
+                smoothed = riderPosition + rightAxis * easedLocal.X + Vector3.Up * easedLocal.Y +
+                           forwardAxis * easedLocal.Z;
+            }
+            else if (!blocked && !_snap)
+            {
+                smoothed = GlobalPosition.Lerp(safeTarget, weight);
+            }
             // Sweep the camera's near-plane volume along its actual eased path as well
             // as the rider-to-camera boom. A point ray misses corner and near-plane clips.
             GlobalPosition = blocked || _snap
@@ -125,9 +155,48 @@ public partial class ChaseCamera : Camera3D
             }
         }
         RiderToCameraDistance = GlobalPosition.DistanceTo(riderPosition);
-        _lookTarget = _lookTarget.Lerp(lookTarget, weight);
+        _lookTarget = FitsVisualBounds && !_snap
+            ? riderPosition + (_lookTarget - riderPosition).Lerp(lookTarget - riderPosition, inspectionWeight)
+            : _lookTarget.Lerp(lookTarget, weight);
         LookAt(_lookTarget, Vector3.Up);
+        if (FitsVisualBounds && riderBikeBounds.Size.LengthSquared() > 1e-4f)
+            CenterProjectedBounds(riderBikeBounds, safeViewportRect);
         _snap = false;
+    }
+
+    private void CenterProjectedBounds(Aabb bounds, Rect2 safeViewportRect)
+    {
+        var viewport = GetViewport().GetVisibleRect().Size;
+        if (viewport.X <= 0 || viewport.Y <= 0) return;
+        var safe = safeViewportRect.Size.X > .05f && safeViewportRect.Size.Y > .05f
+            ? safeViewportRect
+            : new Rect2(0, 0, 1, 1);
+        var minimum = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        var maximum = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        for (var i = 0; i < 8; i++)
+        {
+            var point = bounds.Position + new Vector3((i & 1) == 0 ? 0 : bounds.Size.X,
+                (i & 2) == 0 ? 0 : bounds.Size.Y, (i & 4) == 0 ? 0 : bounds.Size.Z);
+            var projected = UnprojectPosition(point) / viewport;
+            minimum = minimum.Min(projected);
+            maximum = maximum.Max(projected);
+        }
+
+        // Center the projected visual envelope rather than only its 3D AABB
+        // midpoint. A long bicycle sits at multiple depths, which shifts the
+        // screen-space bounds center in side views. This correction is derived
+        // from the current rider/bike projection and live HUD-safe rectangle.
+        var projectedCenter = (minimum + maximum) * .5f;
+        var error = projectedCenter - safe.GetCenter();
+        if (error.LengthSquared() < 1e-8f) return;
+        var depth = Math.Max(.1f, GlobalPosition.DistanceTo(bounds.GetCenter()));
+        var tanVertical = Mathf.Tan(Mathf.DegToRad(Fov) * .5f);
+        var tanHorizontal = tanVertical * viewport.X / viewport.Y;
+        var cameraRight = GlobalTransform.Basis.X.Normalized();
+        var cameraUp = GlobalTransform.Basis.Y.Normalized();
+        _lookTarget += cameraRight * (error.X * 2 * depth * tanHorizontal)
+                     + cameraUp * ((safe.GetCenter().Y - projectedCenter.Y) * 2 * depth * tanVertical);
+        LookAt(_lookTarget, Vector3.Up);
     }
 
     private (System.Numerics.Vector3 Follow, System.Numerics.Vector3 Look) FitInspectionView(

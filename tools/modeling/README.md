@@ -165,6 +165,174 @@ $ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Sha
 vent detail, rim, and straps together. It does not change the rider
 rig, cadence playback, trainer data, or camera behavior.
 
+### Alpha.47 owner-review follow-up — hand contact and camera framing
+
+`source/WodraCyclist.alpha48-final-review.blend` and
+`exports/WodraCyclist-alpha48-final-review.glb` are the editable and runtime
+review candidates for the alpha.47 owner feedback. This is a review build, not
+a published alpha. It starts from the preserved `WodraCyclist.alpha47.blend`,
+keeps the full weighted human, bicycle, helmet toggle, pedal action, leg pose,
+and accepted colours, then adjusts only the existing finger bones and wrist
+root. Blender mesh-to-hood sampling identified the positive MPFB local X flex
+direction and a 30 mm hand-root translation along the authored bike axis; no
+elbow, leg, saddle, or pedal targets move. The eye surface receives a muted
+warm-brown material; head geometry and world lighting are unchanged.
+
+Reproduce the candidate export without regenerating the rider:
+
+```powershell
+$root = (Get-Location).Path
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha47.blend') --python `
+  (Join-Path $root 'tools/modeling/polish_rider.py') -- `
+  (Join-Path $root 'tools/modeling/exports/WodraCyclist-alpha48-final-review.glb') `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-final-review.blend') `
+  (Join-Path $root 'tools/modeling/previews/alpha48-final-review') --skip-previews
+```
+
+Run the focused weighted-mesh contact regression on the saved blend. It samples
+both hands at five frames from the baked pedal cycle and checks distal finger
+segment distances against the actual hood surfaces:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-final-review.blend --python `
+  tools/modeling/verify_hand_hood_contact.py
+```
+
+Refresh Godot's import, then run the production RideScreen review scenes. The
+camera test records actual projected rider/bike bounds, HUD-safe center error,
+debug state, window size, ride distance/speed, and collision clearance. It
+checks settled Side and FrontThreeQuarter views at 1500×900 and 1920×1080 with
+debug both on and off. The motion scene records 360 runtime frames at 30 fps
+through pedalling, right steering, coasting, and restart:
+
+```powershell
+$env:APPDATA = (Resolve-Path '.godot-appdata').Path
+$env:LOCALAPPDATA = (Resolve-Path '.godot-localappdata').Path
+$godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+& $godot --headless --path src/IndoorCycling.Game --editor --import
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderFinishingSceneReviewTest.tscn --rendering-method gl_compatibility
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderContactCameraReviewTest.tscn --rendering-method gl_compatibility
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderMotionReviewTest.tscn --rendering-method gl_compatibility
+```
+
+The in-game stills and matched alpha.47/candidate comparisons are under
+`artifacts/alpha48-owner-review/`. The motion scene writes PNGs to
+`artifacts/alpha47-owner-review/runtime-after/motion-frames/`; encode them with
+the installed FFmpeg 9.0.2 shared build:
+
+```powershell
+$ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe'
+& $ffmpeg -y -framerate 30 -i 'artifacts/alpha47-owner-review/runtime-after/motion-frames/frame_%04d.png' `
+  -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -movflags +faststart `
+  'artifacts/alpha48-owner-review/after/pedalling-steering-coast-restart.mp4'
+```
+
+`ChaseCamera` retains its obstruction-resolution path. For fitted inspection
+views, camera offset smoothing follows the current route basis, then a live
+view-space correction centers the projected rider/bike bounds in the current
+HUD-safe rectangle. Gameplay chase look-ahead is unchanged.
+
+### Alpha.48 relaxed hood-grip candidate
+
+`source/WodraCyclist.alpha48-mask-export-fixed.blend` is the preserved starting
+blend and `source/WodraCyclist.alpha48-relaxed-hood-grip-v14.blend` is the
+editable v14 grip candidate. `author_hood_grip_pose.py` adjusts the existing
+`PedalCycle` action only: it narrows the measured metacarpal fan, adds a varied
+MCP/PIP/DIP curl so the fingers wrap from their bases, and applies a 0.1 rad
+mirrored wrist rotation. It does not scale bones, move the forearms, change
+skin weights/topology, or alter the legs and crank animation. Local
+metacarpal signs were selected from evaluated distal finger-centre spacing;
+the wrist signs came from a small wrist-axis sweep against the actual hood/lever
+meshes. The weighted skin passed the five-phase contact regression and the
+existing proxy/wrist-face export guard.
+
+The visual reference is this close road-cycling hood grip photograph:
+[Cyclist's road hood grip](https://unsplash.com/photos/a-close-up-of-a-person-riding-a-bike-Kg6bZocKRrE).
+The in-game side/elevated captures under
+`artifacts/rider-finishing-alpha48/grip-v14/after/` show both
+hands against the actual imported brake hoods. The fixed chase view and
+side-view debug on/off captures are beside them. The continuous 12 second
+RideScreen motion clip (pedalling, steering, coasting, restart) is
+`artifacts/rider-finishing-alpha48/grip-v14/after/godot-motion-preview-v14.mp4`.
+The five-phase Blender regression is supporting evidence; owner visual review
+remains necessary.
+
+Re-export the editable candidate without rebuilding the rider:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-relaxed-hood-grip-v14.blend --python `
+  tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-alpha48-relaxed-hood-grip.glb `
+  tools/modeling/source/WodraCyclist.alpha48-relaxed-hood-grip-export.blend `
+  tools/modeling/previews/alpha48-relaxed-hood-grip --export-only
+```
+
+Open the resulting GLB in the production RideScreen using
+`RiderFinishingSceneReviewTest.tscn`; continuous pedal, steering, coast, and
+restart frames are captured by `RiderMotionReviewTest.tscn`.
+
+### Alpha.48 cockpit reference comparison (v22, owner review pending)
+
+The next cockpit pass used one modern road-control family throughout. SRAM's
+[AXS controls guide](https://www.sram.com/en/learn/tech-deep-dives/axs-controls)
+describes the narrower, longer hood, the raised/inward-flared support, and the
+distinct brake paddle. Its [road setup guide](https://www.sram.com/en/learn/road-axs-welcome-guide)
+provides the matching production photographs. For grip anatomy, compare the
+[SRAM AXS hand-on-hood photograph](https://www.sram.com/globalassets/publicsites/03_learn/sr/road-axs-2x/welcome-guide-fival-update/04_fps_force-rival-shifter-update.jpg?format=jpg&quality=90&w=950)
+and a [full rider on the hoods](https://www.cyclingweekly.com/fitness/marginal-gains-everybody-318503).
+These are photographic modelling references; no third-party images are stored
+in this repository.
+
+The current editable candidate is
+`source/WodraCyclist.alpha48-cockpit-v22.blend`, exported as
+`exports/WodraCyclist-alpha48-cockpit-v22.glb`. It replaces the separated bar
+segments with a continuous swept drop-bar loop, narrows/tapers the hood shell
+to approximately 102 x 33 x 36 mm with a raised nose, and adds a separate
+flattened curved lever blade. The current close Godot captures are in
+`artifacts/alpha48-hand-correction/cockpit-v22/godot-candidate/`; the runtime
+motion clip is `artifacts/alpha48-hand-correction/cockpit-v22/godot-motion-v22.mp4`.
+
+**Visual review remains failed/pending.** Compared with the SRAM photographs,
+the in-game hood still reads too much like a rounded capsule and the fingers
+still look long and flat rather than curled naturally around the grip. The
+five-phase contact and mask-export regressions pass, but neither establishes
+anatomically convincing appearance. Do not merge or publish this candidate
+until a further hand/cockpit correction passes owner visual review. Issue #93
+rendering jitter is a separate investigation and is not claimed fixed here.
+
+Reproduce the v22 export from the preserved v21 editable source:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-cockpit-v21.blend --python `
+  tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-alpha48-cockpit-v22.glb `
+  tools/modeling/source/WodraCyclist.alpha48-cockpit-v22.blend `
+  tools/modeling/previews/alpha48-cockpit-v22 --skip-previews
+```
+
+Then copy the GLB to `src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb`,
+run a Godot import, and capture `RiderFinishingSceneReviewTest.tscn` and
+`RiderMotionReviewTest.tscn` in a fresh Godot process.
+
+### Issue #93 rendering jitter investigation
+
+The local real-time RideScreen comparison is in
+`artifacts/rider-finishing-alpha48/grip-v14/jitter/`. On the Quadro P620 with
+Godot 4.6.2 OpenGL Compatibility at 1920x1080/59.97 Hz, three 12 second
+variable-frame samples at the reported route section recorded zero frames at
+or above 33.33 ms. Animated baseline p50/p95/p99/max was 9.17/9.52/10.00/14.58
+ms; disabling rider skeletal sampling reduced it to 4.55/5.20/9.17/9.17 ms.
+Thus animation sampling has measurable cost here, but this run did not
+reproduce the reported judder and does not establish that sampling is its
+cause. The supplied diagnostic ZIP has no per-frame timing stream, and the
+local execution did not use its ANGLE fallback path. Issue #93 remains open
+pending a comparable native capture/timing series from the affected renderer
+or machine; do not treat the local no-reproduction result as a jitter fix.
+
 ## Godot runtime and review
 
 `CyclistVisual` imports the `Skeleton3D` and `PedalCycle` `AnimationPlayer` clip.
@@ -227,6 +395,52 @@ jersey/shorts/shoe masks to `RiderOutfitWeights`, marks that layer as Blender's
 render color, and exports it as glTF `COLOR_0`. The Godot `Human` mesh shader
 uses those three channels and computes skin as the residual; its jersey uniform
 selects the rider variant while shorts, skin, and shoes keep fixed colors.
+
+### MPFB hand export diagnosis and correction
+
+The controlled hand comparison established that the source is sound through the
+authored grip. The first failure is Blender's glTF export: MPFB's `Mask`
+modifier is active in the editable scene but omitted from the GLB. The unmasked
+export therefore included rig-control helper faces around fingertips and
+wrists. The GLB-reimport image first shows those fragments; production
+RideScreen loads that same geometry. The four-influence change was not the
+cause: Blender 5.2.2 emitted only `JOINTS_0`/`WEIGHTS_0` and warned that it
+selected and normalized the four largest influences itself.
+
+Earlier helper cleanup had also removed 24 genuine wrist seam quads per hand.
+The preserved source repairs those faces from a matching MPFB 2.0.18 mesh after
+checking identical vertex coordinates, topology, and wrist/finger weights.
+`remove_mp_fb_leg_proxy_panels` now protects faces carrying deformation-bone
+weights from being classified as leg helpers again. The repair does not change
+the armature or bone scales.
+
+The exporter now makes a temporary Human duplicate, bakes the MPFB body mask
+into that duplicate, retains the explicit unweighted eye-material faces, and
+exports the duplicate. The editable weighted Human, 291 groups, 19 shape keys,
+171-bone rig, and animation remain intact. The source mask evaluates to 13,378
+body faces; the export adds its 152 eye faces and excludes the 1,774 helper
+faces. The eye surface must be retained explicitly because MPFB's body mask
+also removes those intentionally unweighted vertices.
+
+Reproduce the final export from its editable checkpoint without rebuilding the
+character:
+
+```powershell
+$root = (Get-Location).Path
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-mask-export-fixed.blend') `
+  --python (Join-Path $root 'tools/modeling/polish_rider.py') -- `
+  (Join-Path $root 'tools/modeling/exports/WodraCyclist-alpha48-hand-mask-fixed.glb') `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-mask-export-fixed.blend') `
+  (Join-Path $root 'tools/modeling/previews/alpha48-hand-mask-fixed') --export-only
+```
+
+The stage renders are under `tools/modeling/diagnostics/alpha48-control/`;
+Godot close hand captures and the ride motion preview are under
+`artifacts/alpha48-hand-correction/`. `HandGlbMinimalReviewTest.tscn` checks a
+direct GLB import and embedded animation without Wodra rider scripts.
+`RiderFinishingSceneReviewTest.tscn` and `RiderMotionReviewTest.tscn` exercise
+the production RideScreen, route lighting, HUD and imported rider.
 
 Regenerate an editable checkpoint and runtime GLB from the preserved helmet
 candidate without rerendering Blender previews:

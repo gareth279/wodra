@@ -121,6 +121,9 @@ public partial class CyclistVisual : Node3D
 
     public bool UsesImportedModel { get; private set; }
 
+    /// <summary>Allows the live performance review harness to isolate baked skeleton sampling.</summary>
+    public bool RiderAnimationSamplingEnabled { get; set; } = true;
+
     public double WheelAngleRadians => _wheelAngle;
 
     public void SetRiderVisible(bool visible)
@@ -517,7 +520,7 @@ public partial class CyclistVisual : Node3D
             // independently from cadence and road speed, respectively. At zero cadence the
             // crank phase and skeleton sample hold their last pose; restart resumes there.
             _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
-            if (_riderAnimationPlayer is not null && _pedalCycleAnimation is not null)
+            if (RiderAnimationSamplingEnabled && _riderAnimationPlayer is not null && _pedalCycleAnimation is not null)
             {
                 var cycleLength = _pedalCycleAnimation.Length / 3.0;
                 var phase = CyclistAnimationMath.WrapAngle(_crankAngle) / Math.Tau;
