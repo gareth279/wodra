@@ -60,7 +60,10 @@ def sphere_mesh(name, center, scale, material, rig, segments=16, rings=8, bone="
         for i in range(segments):
             a = j * segments + i
             b = j * segments + (i + 1) % segments
-            faces.append((a, b, b + segments, a + segments))
+            # Keep the sphere's face winding outward. Blender renders the
+            # previous inward winding as two-sided, but Godot's back-face
+            # culling turned the irises into dark angular patches.
+            faces.append((a, a + segments, b + segments, b))
     return mesh_obj(name, verts, faces, material, rig, bone)
 
 
@@ -155,6 +158,13 @@ def make_helmet(rig):
              (side*.078,.025,1.615),(side*.050,.065,1.565),(0,.090,1.550)]
         obj=tube("HelmetStrapL" if side<0 else "HelmetStrapR",pts,.004,dark,rig,sides=8)
         obj["optional_accessory"] = True
+
+
+def refine_human_eyes(rig):
+    """Remove exploratory eye overlays; keep the complete weighted MPFB face."""
+    for obj in list(bpy.data.objects):
+        if obj.name.startswith(("RiderIris", "RiderPupil", "RiderEyeHighlight")):
+            bpy.data.objects.remove(obj, do_unlink=True)
 
 
 def remove_mp_fb_leg_proxy_panels(human):
@@ -273,8 +283,17 @@ def round_clothing_edges():
         node=nodes.new("ShaderNodeVectorMath"); node.operation="ADD"
         links.new(add,node.inputs[0]); links.new(channel,node.inputs[1]); add=node.outputs[0]
     links.new(add,bsdf.inputs["Base Color"]); links.new(bsdf.outputs["BSDF"],out.inputs["Surface"])
-    mesh.materials.clear(); mesh.materials.append(m)
-    print("BAKED_RIDER_VERTEX_MASKS",len(mesh.vertices),"channels=jersey,shorts,skin,shoe")
+    eye_mat=mat("Rider Eye | warm ivory",(.82,.77,.68),.72)
+    eye_indices=[groups.get("eye.L"),groups.get("eye.R")]
+    eye_indices=[idx for idx in eye_indices if idx is not None]
+    mesh.materials.clear(); mesh.materials.append(m); mesh.materials.append(eye_mat)
+    for polygon in mesh.polygons:
+        polygon.material_index=0
+        if eye_indices and any(all(group_weight(mesh.vertices[index],group_idx)>.95
+                                   for index in polygon.vertices)
+                               for group_idx in eye_indices):
+            polygon.material_index=1
+    print("BAKED_RIDER_VERTEX_MASKS",len(mesh.vertices),"channels=jersey,shorts,shoe")
 
 
 def curl_fingers(rig):
@@ -290,12 +309,52 @@ def curl_fingers(rig):
         for bone in digit_bones:
             parts=bone.name.split("-")
             finger=int(parts[0].replace("finger","")); joint=int(parts[1].split(".")[0])
-            angles={1:(.10,.18,.10),2:(.16,.24,.14),3:(.16,.24,.14),4:(.15,.22,.12),5:(.12,.19,.10)}
+            # The relaxed first prototype only flexed about 30 degrees in total,
+            # leaving the fingers nearly flat above the compact hoods. This
+            # modest 45–50 degree curl brings the distal joints down around the
+            # grip without forming a clenched fist.
+            angles={1:(.18,.32,.24),2:(.24,.34,.28),3:(.24,.34,.28),
+                    4:(.22,.32,.26),5:(.19,.30,.24)}
             angle=angles[finger][joint-1]
             bone.rotation_mode="XYZ"
             bone.rotation_euler=(angle,0,0)
             bone.keyframe_insert(data_path="rotation_euler",frame=frame,group=bone.name)
     scene.frame_set(start)
+
+
+def fit_hands_to_hoods(rig):
+    """Lower the complete hand chains onto the existing brake-hood grip tops."""
+    wrists = [rig.pose.bones.get(f"wrist.{side}") for side in ("L", "R")]
+    if not all(wrists):
+        raise RuntimeError("MPFB wrist bones are required for hood contact fitting")
+    if all(bone.get("WodraAlpha47HoodContactFix4", False) for bone in wrists):
+        return
+    scene = bpy.context.scene
+    for frame in range(scene.frame_start, scene.frame_end + 1):
+        scene.frame_set(frame)
+        for side, wrist in zip(("L", "R"), wrists):
+            # Measured from the saved pose and BrakeHoodL/R world bounds:
+            # Measured against the runtime hood: align the palm on the shelf,
+            # keeping the adjustment inside the existing elbow reach.
+            # Move the wrist root and its weighted hand/finger descendants
+            # together, preserving the upper-arm, elbow, and leg animation.
+            # The alpha.46 source already contains the 36 mm first fit. This
+            # small second move seats the palm closer to the hood shelf while
+            # leaving shoulder, elbow, and all leg joints untouched.
+            world_delta = Vector((0, 0, -.012))
+            pose = wrist.matrix.copy()
+            current_world = rig.matrix_world @ pose.translation
+            pose.translation = rig.matrix_world.inverted_safe() @ (current_world + world_delta)
+            wrist.matrix = pose
+            bpy.context.view_layer.update()
+            evaluated_world = rig.matrix_world @ wrist.matrix.translation
+            if (evaluated_world - current_world - world_delta).length > 1e-4:
+                raise RuntimeError(f"{wrist.name} hood fit did not apply in world space")
+            wrist.keyframe_insert(data_path="location", frame=frame, group=wrist.name)
+        bpy.context.view_layer.update()
+    for wrist in wrists:
+        wrist["WodraAlpha47HoodContactFix4"] = True
+    scene.frame_set(scene.frame_start)
 
 
 def refine_brake_hoods():
@@ -304,7 +363,15 @@ def refine_brake_hoods():
         name="BrakeHoodL" if side<0 else "BrakeHoodR"
         obj=bpy.data.objects.get(name)
         if not obj: continue
-        if obj.get("WodraRoadHoodPolished",False): continue
+        if obj.get("WodraRoadHoodPolished",False):
+            # Existing authoring blends already contain the shaped hood, but
+            # the imported GLB still showed a swollen dark blob because its
+            # normals were inward. Preserve its geometry and fix its normals.
+            import bmesh
+            bm=bmesh.new(); bm.from_mesh(obj.data)
+            bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+            bm.to_mesh(obj.data); bm.free(); obj.data.update()
+            continue
         rubber=obj.data.materials[0] if obj.data.materials else mat("Brake Hood Rubber",(.045,.052,.055))
         old_vertices=list(obj.data.vertices)
         center=Vector(tuple((min(v.co[i] for v in old_vertices)+max(v.co[i] for v in old_vertices))*.5
@@ -329,6 +396,13 @@ def refine_brake_hoods():
                       tuple((len(sections)-1)*seg+i for i in range(seg))))
         mesh=bpy.data.meshes.new(name+"RoadHoodMesh")
         mesh.from_pydata(verts,[],faces); mesh.materials.append(rubber)
+        # Recompute the closed hood's normals outward. The old mesh used the
+        # opposite winding on its side strips, which Godot's cull_back mode
+        # rendered as a dark, swollen-looking blob around the fingers.
+        import bmesh
+        bm=bmesh.new(); bm.from_mesh(mesh)
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(mesh); bm.free()
         for polygon in mesh.polygons: polygon.use_smooth=True
         old=obj.data; obj.data=mesh
         if old.users==0: bpy.data.meshes.remove(old)
@@ -582,6 +656,39 @@ def render_full_views(preview_root: Path):
         scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage=old_res
 
 
+def render_hand_contact_views(preview_root: Path):
+    """Render each hand against its real road hood at close review distance."""
+    scene=bpy.context.scene; preview_root.mkdir(parents=True,exist_ok=True)
+    old_cam=scene.camera; old_engine=scene.render.engine
+    old_res=(scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage)
+    created=[]
+    try:
+        engines={item.identifier for item in scene.render.bl_rna.properties["engine"].enum_items}
+        scene.render.engine="BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engines else "BLENDER_EEVEE"
+        scene.render.resolution_x=900; scene.render.resolution_y=700; scene.render.resolution_percentage=100
+        scene.render.image_settings.file_format="PNG"
+        target_lights=Vector((0,.18,.98))
+        for name,loc,energy,size in (("GripKey",(.8,-.25,1.8),260,.8),
+                                     ("GripFill",(-.8,.5,1.5),180,.9)):
+            data=bpy.data.lights.new(name,"AREA"); data.energy=energy; data.shape="DISK"; data.size=size
+            lamp=bpy.data.objects.new(name,data); scene.collection.objects.link(lamp); lamp.location=loc
+            lamp.rotation_euler=(target_lights-lamp.location).to_track_quat("-Z","Y").to_euler(); created.append(lamp)
+        for side,label in ((-1,"left"),(1,"right")):
+            target=Vector((side*.25,.195,.985))
+            data=bpy.data.cameras.new("HoodReview_"+label); data.type="ORTHO"; data.ortho_scale=.235
+            cam=bpy.data.objects.new("HoodReview_"+label,data); scene.collection.objects.link(cam)
+            cam.location=target+Vector((side*.47,.045,.105))
+            cam.rotation_euler=(target-cam.location).to_track_quat("-Z","Y").to_euler()
+            created.append(cam); scene.camera=cam; scene.frame_set(scene.frame_start)
+            scene.render.filepath=str(preview_root/f"hand_{label}_hood.png")
+            bpy.ops.render.render(write_still=True)
+    finally:
+        scene.camera=old_cam
+        for obj in created: bpy.data.objects.remove(obj,do_unlink=True)
+        scene.render.engine=old_engine
+        scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage=old_res
+
+
 def configure_gltf_vertex_color_material():
     """Export COLOR_0 directly; Godot applies the weighted outfit shader."""
     human=bpy.data.objects["Human"]
@@ -611,15 +718,18 @@ def main():
     print("PRESERVED", "bones",len(rig.data.bones),"actions",[a.name for a in bpy.data.actions])
     print("HEAD_BONE",rig.data.bones.get("head"))
     make_helmet(rig)
+    refine_human_eyes(rig)
     round_clothing_edges()
     refine_brake_hoods()
     refine_road_bike()
     extend_shoe_uppers(rig)
     curl_fingers(rig)
+    fit_hands_to_hoods(rig)
     if not skip_previews:
         inspect_and_render(preview,rig)
         if not head_only:
             render_full_views(preview/"full_rider_review")
+            render_hand_contact_views(preview/"hand_contact")
             render_cycle(preview/"animated_side",rig)
     # Save a non-destructive review checkpoint and export full weighted model/action.
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))

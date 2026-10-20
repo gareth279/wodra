@@ -55,9 +55,17 @@ public partial class CyclistVisual : Node3D
             uniform vec4 skin_color : source_color = vec4(0.58, 0.36, 0.25, 1.0);
             uniform vec4 shoe_color : source_color = vec4(0.68, 0.66, 0.58, 1.0);
             void fragment() {
-                float skin_weight = max(0.0, 1.0 - COLOR.r - COLOR.g - COLOR.b);
-                ALBEDO = COLOR.r * jersey_color.rgb + COLOR.g * shorts_color.rgb +
-                         skin_weight * skin_color.rgb + COLOR.b * shoe_color.rgb;
+                float jersey_weight = COLOR.r;
+                float shorts_weight = COLOR.g;
+                float shoe_weight = COLOR.b;
+                float skin_weight = max(0.0, 1.0 - jersey_weight - shorts_weight - shoe_weight);
+                vec3 outfit_color = jersey_weight * jersey_color.rgb + shorts_weight * shorts_color.rgb +
+                                    skin_weight * skin_color.rgb + shoe_weight * shoe_color.rgb;
+                ALBEDO = outfit_color;
+                // The low route sun can leave exposed skin nearly black.
+                // Add a restrained skin-coloured ambient contribution that
+                // preserves the skin hue without brightening clothing or world.
+                EMISSION = skin_weight * skin_color.rgb * 0.55;
                 ROUGHNESS = 0.82;
             }
             """
@@ -373,8 +381,20 @@ public partial class CyclistVisual : Node3D
         outfit.SetShaderParameter("shorts_color", new Color(.035f,.047f,.058f));
         outfit.SetShaderParameter("skin_color", new Color(.58f,.36f,.25f));
         outfit.SetShaderParameter("shoe_color", new Color(.68f,.66f,.58f));
-        human.MaterialOverride = outfit;
-        GD.Print($"[Cyclist GLB] Human outfit shader applied to {human.GetSurfaceOverrideMaterialCount()} imported surface overrides; surfaces={human.Mesh?.GetSurfaceCount() ?? 0}");
+        var surfaces = human.Mesh?.GetSurfaceCount() ?? 0;
+        var outfitSurfaces = 0;
+        for (var surface = 0; surface < surfaces; surface++)
+        {
+            var sourceMaterial = human.Mesh!.SurfaceGetMaterial(surface);
+            var eyeSurface =
+                sourceMaterial?.ResourceName.Contains("Rider Eye", StringComparison.OrdinalIgnoreCase) == true;
+            if (eyeSurface) continue;
+            human.SetSurfaceOverrideMaterial(surface, outfit);
+            outfitSurfaces++;
+        }
+        if (outfitSurfaces == 0)
+            throw new InvalidOperationException("Imported rider has no outfit surface for its colour shader.");
+        GD.Print($"[Cyclist GLB] Human outfit shader applied to {outfitSurfaces}/{surfaces} surfaces; eye material remains separate.");
     }
 
     /// <summary>Set an exact baked pedal phase for the Godot visual review harness.</summary>
