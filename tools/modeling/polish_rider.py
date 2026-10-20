@@ -283,7 +283,10 @@ def round_clothing_edges():
         node=nodes.new("ShaderNodeVectorMath"); node.operation="ADD"
         links.new(add,node.inputs[0]); links.new(channel,node.inputs[1]); add=node.outputs[0]
     links.new(add,bsdf.inputs["Base Color"]); links.new(bsdf.outputs["BSDF"],out.inputs["Surface"])
-    eye_mat=mat("Rider Eye | warm ivory",(.82,.77,.68),.72)
+    # The GLB's exposed eye islands read as bright rectangular patches under
+    # route key lighting. A quiet warm brown keeps the low-poly eye surfaces
+    # legible without adding floating iris geometry or changing world light.
+    eye_mat=mat("Rider Eye | muted warm brown",(.065,.045,.035),.92)
     eye_indices=[groups.get("eye.L"),groups.get("eye.R")]
     eye_indices=[idx for idx in eye_indices if idx is not None]
     mesh.materials.clear(); mesh.materials.append(m); mesh.materials.append(eye_mat)
@@ -309,12 +312,11 @@ def curl_fingers(rig):
         for bone in digit_bones:
             parts=bone.name.split("-")
             finger=int(parts[0].replace("finger","")); joint=int(parts[1].split(".")[0])
-            # The relaxed first prototype only flexed about 30 degrees in total,
-            # leaving the fingers nearly flat above the compact hoods. This
-            # modest 45–50 degree curl brings the distal joints down around the
-            # grip without forming a clenched fist.
-            angles={1:(.18,.32,.24),2:(.24,.34,.28),3:(.24,.34,.28),
-                    4:(.22,.32,.26),5:(.19,.30,.24)}
+            # MPFB local-axis sweep against the real hood surface showed
+            # positive X flexes down toward the grip. A graduated curl retains
+            # finger spread while bringing the distal pads around the hood.
+            angles={1:(.25,.40,.30),2:(.45,.65,.58),3:(.45,.65,.60),
+                    4:(.48,.68,.62),5:(.43,.63,.58)}
             angle=angles[finger][joint-1]
             bone.rotation_mode="XYZ"
             bone.rotation_euler=(angle,0,0)
@@ -327,7 +329,7 @@ def fit_hands_to_hoods(rig):
     wrists = [rig.pose.bones.get(f"wrist.{side}") for side in ("L", "R")]
     if not all(wrists):
         raise RuntimeError("MPFB wrist bones are required for hood contact fitting")
-    if all(bone.get("WodraAlpha47HoodContactFix4", False) for bone in wrists):
+    if all(bone.get("WodraAlpha48HoodContactFix1", False) for bone in wrists):
         return
     scene = bpy.context.scene
     for frame in range(scene.frame_start, scene.frame_end + 1):
@@ -338,10 +340,11 @@ def fit_hands_to_hoods(rig):
             # keeping the adjustment inside the existing elbow reach.
             # Move the wrist root and its weighted hand/finger descendants
             # together, preserving the upper-arm, elbow, and leg animation.
-            # The alpha.46 source already contains the 36 mm first fit. This
-            # small second move seats the palm closer to the hood shelf while
-            # leaving shoulder, elbow, and all leg joints untouched.
-            world_delta = Vector((0, 0, -.012))
+            # The prior authored pose places the palm near the grip shelf.
+            # Evaluated finger pads were 30–50 mm forward of the hood; this
+            # measured 30 mm move places the complete wrist-rooted hand back
+            # over the grip while preserving elbow, leg, and torso transforms.
+            world_delta = Vector((0, 0, .030))
             pose = wrist.matrix.copy()
             current_world = rig.matrix_world @ pose.translation
             pose.translation = rig.matrix_world.inverted_safe() @ (current_world + world_delta)
@@ -353,7 +356,7 @@ def fit_hands_to_hoods(rig):
             wrist.keyframe_insert(data_path="location", frame=frame, group=wrist.name)
         bpy.context.view_layer.update()
     for wrist in wrists:
-        wrist["WodraAlpha47HoodContactFix4"] = True
+            wrist["WodraAlpha48HoodContactFix1"] = True
     scene.frame_set(scene.frame_start)
 
 

@@ -165,6 +165,75 @@ $ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Sha
 vent detail, rim, and straps together. It does not change the rider
 rig, cadence playback, trainer data, or camera behavior.
 
+### Alpha.47 owner-review follow-up — hand contact and camera framing
+
+`source/WodraCyclist.alpha48-final-review.blend` and
+`exports/WodraCyclist-alpha48-final-review.glb` are the editable and runtime
+review candidates for the alpha.47 owner feedback. This is a review build, not
+a published alpha. It starts from the preserved `WodraCyclist.alpha47.blend`,
+keeps the full weighted human, bicycle, helmet toggle, pedal action, leg pose,
+and accepted colours, then adjusts only the existing finger bones and wrist
+root. Blender mesh-to-hood sampling identified the positive MPFB local X flex
+direction and a 30 mm hand-root translation along the authored bike axis; no
+elbow, leg, saddle, or pedal targets move. The eye surface receives a muted
+warm-brown material; head geometry and world lighting are unchanged.
+
+Reproduce the candidate export without regenerating the rider:
+
+```powershell
+$root = (Get-Location).Path
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha47.blend') --python `
+  (Join-Path $root 'tools/modeling/polish_rider.py') -- `
+  (Join-Path $root 'tools/modeling/exports/WodraCyclist-alpha48-final-review.glb') `
+  (Join-Path $root 'tools/modeling/source/WodraCyclist.alpha48-final-review.blend') `
+  (Join-Path $root 'tools/modeling/previews/alpha48-final-review') --skip-previews
+```
+
+Run the focused weighted-mesh contact regression on the saved blend. It samples
+both hands at five frames from the baked pedal cycle and checks distal finger
+segment distances against the actual hood surfaces:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background `
+  tools/modeling/source/WodraCyclist.alpha48-final-review.blend --python `
+  tools/modeling/verify_hand_hood_contact.py
+```
+
+Refresh Godot's import, then run the production RideScreen review scenes. The
+camera test records actual projected rider/bike bounds, HUD-safe center error,
+debug state, window size, ride distance/speed, and collision clearance. It
+checks settled Side and FrontThreeQuarter views at 1500×900 and 1920×1080 with
+debug both on and off. The motion scene records 360 runtime frames at 30 fps
+through pedalling, right steering, coasting, and restart:
+
+```powershell
+$env:APPDATA = (Resolve-Path '.godot-appdata').Path
+$env:LOCALAPPDATA = (Resolve-Path '.godot-localappdata').Path
+$godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+& $godot --headless --path src/IndoorCycling.Game --editor --import
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderFinishingSceneReviewTest.tscn --rendering-method gl_compatibility
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderContactCameraReviewTest.tscn --rendering-method gl_compatibility
+& $godot --path src/IndoorCycling.Game --scene res://Tests/RiderMotionReviewTest.tscn --rendering-method gl_compatibility
+```
+
+The in-game stills and matched alpha.47/candidate comparisons are under
+`artifacts/alpha48-owner-review/`. The motion scene writes PNGs to
+`artifacts/alpha47-owner-review/runtime-after/motion-frames/`; encode them with
+the installed FFmpeg 9.0.2 shared build:
+
+```powershell
+$ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Shared_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build-shared\bin\ffmpeg.exe'
+& $ffmpeg -y -framerate 30 -i 'artifacts/alpha47-owner-review/runtime-after/motion-frames/frame_%04d.png' `
+  -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -movflags +faststart `
+  'artifacts/alpha48-owner-review/after/pedalling-steering-coast-restart.mp4'
+```
+
+`ChaseCamera` retains its obstruction-resolution path. For fitted inspection
+views, camera offset smoothing follows the current route basis, then a live
+view-space correction centers the projected rider/bike bounds in the current
+HUD-safe rectangle. Gameplay chase look-ahead is unchanged.
+
 ## Godot runtime and review
 
 `CyclistVisual` imports the `Skeleton3D` and `PedalCycle` `AnimationPlayer` clip.
