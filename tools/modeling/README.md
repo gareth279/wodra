@@ -1,9 +1,11 @@
 # Wodra cyclist prototype
 
-This is an owner-review prototype for PR #89 and issues #84–#86. It contains a
-complete MPFB human mesh, the default weighted skeleton, fitted road-bike
-geometry, a baked three-revolution pedal action, and an in-game cadence-driven
-preview. It remains a work in progress pending owner visual approval.
+This is the accepted alpha rider and road-bike implementation from PR #89 and
+issues #84–#85. It contains a complete MPFB human mesh, the default weighted
+skeleton, fitted road-bike geometry, a baked three-revolution pedal action,
+and an in-game cadence-driven preview. The owner approved the rider and road
+bike for this alpha on 20 October 2026. Broader non-road disciplines remain
+future work.
 
 ## Visual direction
 
@@ -236,15 +238,17 @@ recording, use the regular movie command above with `--capture-preview`.
   Wodra-authored. No external human model or motion-capture animation is used.
 - The game ships the GLB only and has no Blender or MPFB runtime dependency.
 
-## Current review state
+## Accepted alpha implementation
 
 The static candidate and sampled 0°, 90°, 180°, and 270° phases are provided for
 visual inspection. The MPFB rig has 171 bones and the human mesh has 291 weight
 groups. The side render shows saddle contact, forward torso lean, bent elbows,
-hood contact, and feet on the pedals without bone stretching. The current asset
-is a prototype; owner visual review remains required before merging or releasing.
+hood contact, and feet on the pedals without bone stretching. The owner accepted
+the rider and refined road bike for this alpha. The model remains intentionally
+stylised low-poly; MTB/gravel/track geometry and broader OpenSim model research
+are outside this release.
 
-### Carbon road-bike polish (PR #89 review)
+### Carbon road-bike polish (PR #89)
 
 The focused road-bike finish is authored in `source/WodraCyclist.blend`; it
 preserves the existing weighted rider, helmet accessory, and `PedalCycle`
