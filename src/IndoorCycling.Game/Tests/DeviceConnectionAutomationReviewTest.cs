@@ -26,18 +26,31 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			var connect = screen.GetNode<Button>("StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer/ConnectTrainerButton");
 			GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
 			connect.EmitSignal(BaseButton.SignalName.Pressed);
+			connect.EmitSignal(BaseButton.SignalName.Pressed); // A rapid second activation must not replace the active attempt.
 			await WaitUntil(() => trainer.ControlRequestStarted && heartRate.ScanCount == 1 && steering.ScanCount == 1);
 			if (trainer.ScanCount != 1 || heartRate.ScanCount != 1 || steering.ScanCount != 1)
 				throw new InvalidOperationException($"First Connect click did not launch independent trainer/HR/steering scans: trainer={trainer.ScanCount}, HR={heartRate.ScanCount}, steering={steering.ScanCount}.");
 			var continueButton = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/ContinueButton");
 			if (!continueButton.Disabled || trainer.IsReady) throw new InvalidOperationException("Trainer was shown ready before FTMS control acknowledgement completed.");
+			var heartRateAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/ActionButton");
+			var steeringAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
+			heartRateAction.EmitSignal(BaseButton.SignalName.Pressed);
+			await WaitUntil(() => heartRate.ScanCancellationCount == 1);
+			heartRateAction.EmitSignal(BaseButton.SignalName.Pressed);
+			await WaitUntil(() => heartRate.ScanCount == 2 && heartRate.ScanPending);
+			steeringAction.EmitSignal(BaseButton.SignalName.Pressed);
+			await WaitUntil(() => steering.ScanCancellationCount == 1);
+			steeringAction.EmitSignal(BaseButton.SignalName.Pressed);
+			await WaitUntil(() => steering.ScanCount == 2 && steering.ScanPending);
+			if (trainer.ScanCount != 1 || !continueButton.Disabled)
+				throw new InvalidOperationException("Rapid Connect or optional-device retry started another trainer attempt or bypassed trainer readiness.");
 			trainer.CompleteControlRequest();
 			await WaitUntil(() => !continueButton.Disabled);
 			if (!trainer.IsReady || !heartRate.ScanPending || !steering.ScanPending)
 				throw new InvalidOperationException("Trainer readiness waited for optional scans or optional scans ended before the delayed trainer became ready.");
 			connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/BackButton").EmitSignal(BaseButton.SignalName.Pressed);
-			await WaitUntil(() => heartRate.ScanCancelled && steering.ScanCancelled);
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen first Connect click starts all three scans independently, trainer readiness waits for FTMS configuration only, and Back cancels both optional scans.");
+			await WaitUntil(() => heartRate.ScanCancellationCount == 2 && steering.ScanCancellationCount == 2);
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen starts all three scans independently, ignores rapid duplicate Connect, gates readiness on FTMS setup only, retries/cancels optional scans independently, and cancels them on Back.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
@@ -101,13 +114,13 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 	{
 		public int ScanCount { get; private set; }
 		public bool ScanPending { get; private set; }
-		public bool ScanCancelled { get; private set; }
+		public int ScanCancellationCount { get; private set; }
 		public override async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan duration, CancellationToken cancellationToken = default)
 		{
 			ScanCount++;
 			ScanPending = true;
 			try { await Task.Delay(Timeout.Infinite, cancellationToken); }
-			catch (OperationCanceledException) { ScanCancelled = true; ScanPending = false; throw; }
+			catch (OperationCanceledException) { ScanCancellationCount++; ScanPending = false; throw; }
 			return Array.Empty<BleDiscoveredDevice>();
 		}
 		public override void Dispose() { }
@@ -117,13 +130,13 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 	{
 		public int ScanCount { get; private set; }
 		public bool ScanPending { get; private set; }
-		public bool ScanCancelled { get; private set; }
+		public int ScanCancellationCount { get; private set; }
 		public override async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan timeout, CancellationToken cancellationToken)
 		{
 			ScanCount++;
 			ScanPending = true;
 			try { await Task.Delay(Timeout.Infinite, cancellationToken); }
-			catch (OperationCanceledException) { ScanCancelled = true; ScanPending = false; throw; }
+			catch (OperationCanceledException) { ScanCancellationCount++; ScanPending = false; throw; }
 			return Array.Empty<BleDiscoveredDevice>();
 		}
 		public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
