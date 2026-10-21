@@ -23,6 +23,8 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			connection.TrainerClientFactoryForTesting = () => trainer;
 			connection.HeartRateClientFactoryForTesting = () => heartRate;
 			connection.SteeringClientFactoryForTesting = () => steering;
+			var heartRateAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/ActionButton");
+			var steeringAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
 			var connect = screen.GetNode<Button>("StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer/ConnectTrainerButton");
 			GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
 			connect.EmitSignal(BaseButton.SignalName.Pressed);
@@ -32,8 +34,6 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				throw new InvalidOperationException($"First Connect click did not launch independent trainer/HR/steering scans: trainer={trainer.ScanCount}, HR={heartRate.ScanCount}, steering={steering.ScanCount}.");
 			var continueButton = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/ContinueButton");
 			if (!continueButton.Disabled || trainer.IsReady) throw new InvalidOperationException("Trainer was shown ready before FTMS control acknowledgement completed.");
-			var heartRateAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/ActionButton");
-			var steeringAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
 			heartRateAction.EmitSignal(BaseButton.SignalName.Pressed);
 			await WaitUntil(() => heartRate.ScanCancellationCount == 1);
 			heartRateAction.EmitSignal(BaseButton.SignalName.Pressed);
@@ -142,3 +142,4 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
 	}
 }
+
