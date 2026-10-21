@@ -700,6 +700,27 @@ var tests = new (string Name, Action Run)[]
         var b = AmbientActorMath.TrySelectSpawn(paths, Vector3.Zero, 50, 600, new Random(84721), 1, out var second);
         if (!a || !b || first != second) throw new Exception("Fixed seed did not reproduce a spawn selection.");
     }),
+    ("ambient actor diagnostic coordinates serialize as explicit numeric x y z", () =>
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            spawnPosition = AmbientActorDiagnosticPoint.From(new Vector3(12.5f, 3.25f, -8.75f)),
+            pathStart = AmbientActorDiagnosticPoint.From(new Vector3(1, 2, 3)),
+            pathEnd = AmbientActorDiagnosticPoint.From(new Vector3(4, 5, 6))
+        });
+        using var document = JsonDocument.Parse(json);
+        foreach (var field in new[] { "spawnPosition", "pathStart", "pathEnd" })
+        {
+            var point = document.RootElement.GetProperty(field);
+            foreach (var axis in new[] { "x", "y", "z" })
+                if (point.GetProperty(axis).ValueKind != JsonValueKind.Number)
+                    throw new Exception($"{field}.{axis} is not a JSON number: {json}");
+        }
+        var spawn = document.RootElement.GetProperty("spawnPosition");
+        Near(12.5f, spawn.GetProperty("x").GetSingle());
+        Near(3.25f, spawn.GetProperty("y").GetSingle());
+        Near(-8.75f, spawn.GetProperty("z").GetSingle());
+    }),
     ("spawning rejects a car inside its minimum rider distance", () =>
     {
         AmbientActorPath[] paths = [new AmbientActorPath(AmbientActorKind.Car, 1, 1,

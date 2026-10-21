@@ -2,12 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json.Serialization;
 
 public enum AmbientActorKind { Car, Pedestrian }
 
 /// <summary>Transient local scenery state. ActorId is session-local and has no persistence or network meaning.</summary>
 public readonly record struct AmbientActorState(int ActorId, AmbientActorKind Kind, Vector3 WorldPosition,
     Vector3 Heading, float SpeedMetersPerSecond, bool Active);
+
+/// <summary>JSON-safe coordinates for ambient actor diagnostics (System.Numerics.Vector3 serializes as an empty object by default).</summary>
+public readonly record struct AmbientActorDiagnosticPoint(
+    [property: JsonPropertyName("x")] float X,
+    [property: JsonPropertyName("y")] float Y,
+    [property: JsonPropertyName("z")] float Z)
+{
+    public static AmbientActorDiagnosticPoint From(Vector3 position) => new(position.X, position.Y, position.Z);
+}
 
 public readonly record struct AmbientRouteSample(double DistanceMeters, Vector3 Position, Vector3 Forward);
 public sealed record AmbientRoadInput(long OsmId, string Highway, bool Oneway, double WidthMeters,
