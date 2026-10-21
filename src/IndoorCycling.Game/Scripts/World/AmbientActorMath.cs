@@ -26,17 +26,132 @@ public sealed record AmbientRoadInput(long OsmId, string Highway, bool Oneway, d
 public readonly record struct AmbientRoadRouteConnection(int EndIndex, double RouteDistanceMeters, Vector3 RoutePosition);
 public readonly record struct AmbientSpeedRange(float MinimumMetersPerSecond, float MaximumMetersPerSecond);
 public readonly record struct AmbientSpawnSelection(int PathIndex, double DistanceMeters, Vector3 Position);
-public readonly record struct AmbientTrafficRider(string RiderId, Vector3 Position, Vector3 Forward, float SpeedMetersPerSecond);
+public readonly record struct AmbientTrafficPose(double TimeSeconds, Vector3 Position, Vector3 Forward);
+public readonly record struct AmbientTrafficRider(string RiderId, Vector3 Position, Vector3 Forward,
+    float SpeedMetersPerSecond, float LengthMeters = 1.9f, float WidthMeters = .86f,
+    float HeightMeters = 1.8f, IReadOnlyList<AmbientTrafficPose>? Prediction = null)
+{
+    public AmbientTrafficPose PoseAt(double seconds)
+    {
+        if (Prediction is not { Count: > 0 } samples)
+            return new AmbientTrafficPose(seconds, Position + HorizontalUnit(Forward) *
+                (Math.Max(0, SpeedMetersPerSecond) * (float)seconds), Forward);
+        if (seconds <= samples[0].TimeSeconds) return samples[0];
+        // Traffic predictions are queried for each vehicle/obstacle pair at many
+        // look-ahead samples. Binary search keeps this bounded as population grows.
+        var low = 0;
+        var high = samples.Count - 1;
+        while (high - low > 1)
+        {
+            var middle = low + (high - low) / 2;
+            if (seconds <= samples[middle].TimeSeconds) high = middle;
+            else low = middle;
+        }
+        if (seconds <= samples[^1].TimeSeconds)
+        {
+            var before = samples[low]; var after = samples[high];
+            var span = after.TimeSeconds - before.TimeSeconds;
+            var t = span <= 1e-8 ? 0 : (float)Math.Clamp((seconds - before.TimeSeconds) / span, 0, 1);
+            var heading = Vector3.Lerp(before.Forward, after.Forward, t);
+            if (heading.LengthSquared() > 1e-8f) heading = Vector3.Normalize(heading);
+            return new AmbientTrafficPose(seconds, Vector3.Lerp(before.Position, after.Position, t), heading);
+        }
+        var last = samples[^1];
+        var extra = Math.Max(0, seconds - last.TimeSeconds);
+        return new AmbientTrafficPose(seconds, last.Position + HorizontalUnit(last.Forward) *
+            (Math.Max(0, SpeedMetersPerSecond) * (float)extra), last.Forward);
+    }
+
+    private static Vector3 HorizontalUnit(Vector3 value)
+    {
+        value.Y = 0;
+        return value.LengthSquared() > 1e-8f ? Vector3.Normalize(value) : Vector3.UnitX;
+    }
+}
+
+/// <summary>3D world-envelope checks for moving ambient actors; route trajectories preserve bends and grades.</summary>
+public static class AmbientActorEnvelopeMath
+{
+    public const float SafetyMarginMeters = .18f;
+    public const float CarLengthMeters = 4.45f;
+    public const float CarWidthMeters = 1.82f;
+    public const float CarHeightMeters = 1.63f;
+    public const float PedestrianLengthMeters = .55f;
+    public const float PedestrianWidthMeters = .45f;
+    public const float PedestrianHeightMeters = 1.8f;
+
+    public static bool Overlaps(Vector3 firstBase, Vector3 firstForward, float firstLength,
+        float firstWidth, float firstHeight, AmbientTrafficPose secondPose, float secondLength,
+        float secondWidth, float secondHeight, float safetyMargin = SafetyMarginMeters) =>
+        SignedClearance(firstBase, firstForward, firstLength, firstWidth, firstHeight,
+            secondPose, secondLength, secondWidth, secondHeight) <= safetyMargin;
+
+    /// <summary>Positive means separated, zero touches, negative means model-envelope penetration.</summary>
+    public static float SignedClearance(Vector3 firstBase, Vector3 firstForward, float firstLength,
+        float firstWidth, float firstHeight, AmbientTrafficPose secondPose, float secondLength,
+        float secondWidth, float secondHeight)
+    {
+        if (!Finite(firstBase) || !Finite(firstForward) || !Finite(secondPose.Position)
+            || !Finite(secondPose.Forward) || !float.IsFinite(firstLength) || !float.IsFinite(secondLength)
+            || !float.IsFinite(firstWidth) || !float.IsFinite(secondWidth)
+            || !float.IsFinite(firstHeight) || !float.IsFinite(secondHeight)) return float.PositiveInfinity;
+        var firstTop = firstBase.Y + firstHeight;
+        var secondTop = secondPose.Position.Y + secondHeight;
+        var verticalSeparation = Math.Max(secondPose.Position.Y - firstTop, firstBase.Y - secondTop);
+        var aForward = HorizontalUnit(firstForward);
+        var bForward = HorizontalUnit(secondPose.Forward);
+        if (aForward == Vector3.Zero) return float.PositiveInfinity;
+        // A stationary pedestrian has no movement heading; treat its envelope as aligned to
+        // the approaching vehicle so that its footprint is still checked conservatively.
+        if (bForward == Vector3.Zero) bForward = aForward;
+        var aSide = new Vector3(-aForward.Z, 0, aForward.X);
+        var bSide = new Vector3(-bForward.Z, 0, bForward.X);
+        var relative = new Vector3(secondPose.Position.X - firstBase.X, 0, secondPose.Position.Z - firstBase.Z);
+        var planarSeparation = Math.Max(SeparationOnAxis(relative, aForward, firstLength * .5f,
+                firstWidth * .5f, secondLength * .5f, secondWidth * .5f, aForward, bForward, aSide, bSide),
+            Math.Max(SeparationOnAxis(relative, aSide, firstLength * .5f,
+                    firstWidth * .5f, secondLength * .5f, secondWidth * .5f, aForward, bForward, aSide, bSide),
+                Math.Max(SeparationOnAxis(relative, bForward, firstLength * .5f,
+                        firstWidth * .5f, secondLength * .5f, secondWidth * .5f, aForward, bForward, aSide, bSide),
+                    SeparationOnAxis(relative, bSide, firstLength * .5f,
+                        firstWidth * .5f, secondLength * .5f, secondWidth * .5f, aForward, bForward, aSide, bSide))));
+        return Math.Max(verticalSeparation, planarSeparation);
+    }
+
+    private static float SeparationOnAxis(Vector3 relative, Vector3 axis,
+        float aHalfLength, float aHalfWidth, float bHalfLength, float bHalfWidth,
+        Vector3 aForward, Vector3 bForward, Vector3 aSide, Vector3 bSide)
+    {
+        var radiusA = aHalfLength * Math.Abs(Vector3.Dot(aForward, axis))
+            + aHalfWidth * Math.Abs(Vector3.Dot(aSide, axis));
+        var radiusB = bHalfLength * Math.Abs(Vector3.Dot(bForward, axis))
+            + bHalfWidth * Math.Abs(Vector3.Dot(bSide, axis));
+        return Math.Abs(Vector3.Dot(relative, axis)) - radiusA - radiusB;
+    }
+
+    private static Vector3 HorizontalUnit(Vector3 value)
+    {
+        value.Y = 0;
+        return value.LengthSquared() > 1e-8f ? Vector3.Normalize(value) : Vector3.Zero;
+    }
+    private static bool Finite(Vector3 value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+}
 
 /// <summary>Speed control for scenery cars sharing a lane with riders; it never changes rider/ride state.</summary>
 public static class AmbientTrafficFollowingMath
 {
-    public const float MinimumFollowingGapMeters = 5.5f;
+    // Clearance is measured between model envelopes. This remains an extra surface gap,
+    // rather than a center-to-center threshold that ignores vehicle and bicycle length.
+    public const float MinimumFollowingGapMeters = 1.2f;
     public const float FollowingHeadwaySeconds = 1.5f;
     public const float MaximumBrakingMetersPerSecondSquared = 5f;
-    public const float MaximumLateralMatchMeters = 2.35f;
+    public const float MaximumLateralMatchMeters = 1.55f;
     public const float MaximumFollowingLookAheadMeters = 55f;
     public const float MaximumAccelerationMetersPerSecondSquared = 2.5f;
+    public const float MaximumConflictLookAheadSeconds = 8f;
+    public const float ConflictSampleSeconds = .1f;
+    public const float PredictionHorizonSeconds = 12f;
+    public const float PredictionSampleSeconds = .25f;
 
     public static float TargetSpeed(Vector3 vehiclePosition, Vector3 vehicleForward, float cruiseSpeedMetersPerSecond,
         IReadOnlyList<AmbientTrafficRider> riders)
@@ -44,27 +159,77 @@ public static class AmbientTrafficFollowingMath
         if (!Finite(vehiclePosition) || !Finite(vehicleForward) || vehicleForward.LengthSquared() < 1e-8f
             || !float.IsFinite(cruiseSpeedMetersPerSecond) || cruiseSpeedMetersPerSecond <= 0)
             return 0;
-        var forward = Vector2.Normalize(new Vector2(vehicleForward.X, vehicleForward.Z));
+        var forward = HorizontalUnit(vehicleForward);
         if (forward.LengthSquared() < 1e-8f) return cruiseSpeedMetersPerSecond;
         var target = cruiseSpeedMetersPerSecond;
         foreach (var rider in riders)
         {
             if (!Finite(rider.Position) || !Finite(rider.Forward) || !float.IsFinite(rider.SpeedMetersPerSecond)) continue;
-            var riderForward = new Vector2(rider.Forward.X, rider.Forward.Z);
-            if (riderForward.LengthSquared() < 1e-8f || Vector2.Dot(forward, Vector2.Normalize(riderForward)) < .5f) continue;
-            var relative = new Vector2(rider.Position.X - vehiclePosition.X, rider.Position.Z - vehiclePosition.Z);
-            var longitudinal = Vector2.Dot(relative, forward);
+            var riderForward = HorizontalUnit(rider.Forward);
+            if (riderForward.LengthSquared() < 1e-8f || Vector3.Dot(forward, riderForward) < .45f) continue;
+            var relative = new Vector3(rider.Position.X - vehiclePosition.X, 0, rider.Position.Z - vehiclePosition.Z);
+            var longitudinal = Vector3.Dot(relative, forward);
             if (longitudinal <= 0 || longitudinal > MaximumFollowingLookAheadMeters) continue;
-            var lateral = Math.Abs(forward.X * relative.Y - forward.Y * relative.X);
-            if (lateral > MaximumLateralMatchMeters) continue;
+            var side = new Vector3(-forward.Z, 0, forward.X);
+            var lateral = Math.Abs(Vector3.Dot(relative, side));
+            var lateralReach = AmbientActorEnvelopeMath.CarWidthMeters * .5f + rider.WidthMeters * .5f
+                + AmbientActorEnvelopeMath.SafetyMarginMeters;
+            if (lateral > Math.Max(MaximumLateralMatchMeters, lateralReach)
+                || Math.Abs(rider.Position.Y - vehiclePosition.Y) > rider.HeightMeters + .9f) continue;
 
-            var gap = Math.Max(0, longitudinal - MinimumFollowingGapMeters);
+            var gap = Math.Max(0, longitudinal - AmbientActorEnvelopeMath.CarLengthMeters * .5f
+                - rider.LengthMeters * .5f - MinimumFollowingGapMeters);
             var riderSpeed = Math.Max(0, rider.SpeedMetersPerSecond);
-            // Headway control starts slowing early; the braking envelope protects against a sudden close gap.
             var headwaySpeed = riderSpeed + gap / FollowingHeadwaySeconds;
             var brakingSpeed = MathF.Sqrt(riderSpeed * riderSpeed
                 + 2 * MaximumBrakingMetersPerSecondSquared * gap);
             target = Math.Min(target, Math.Min(headwaySpeed, brakingSpeed));
+        }
+        return Math.Max(0, target);
+    }
+
+    /// <summary>Predicts the vehicle and each obstacle along their actual curved paths.</summary>
+    public static float TargetSpeed(AmbientActorPath path, double distanceAlongPathMeters,
+        float laneOffsetMeters, float cruiseSpeedMetersPerSecond, IReadOnlyList<AmbientTrafficRider> obstacles)
+    {
+        if (!path.IsUsable || !double.IsFinite(distanceAlongPathMeters)
+            || !float.IsFinite(cruiseSpeedMetersPerSecond) || cruiseSpeedMetersPerSecond <= 0) return 0;
+        var (position, heading) = path.SampleLane(distanceAlongPathMeters, laneOffsetMeters);
+        var target = TargetSpeed(position, heading, cruiseSpeedMetersPerSecond, obstacles);
+        var samples = Math.Max(1, (int)Math.Ceiling(MaximumConflictLookAheadSeconds / ConflictSampleSeconds));
+        for (var sample = 1; sample <= samples; sample++)
+        {
+            var seconds = sample * ConflictSampleSeconds;
+            var pathDistance = AmbientActorMath.AdvancePathDistance(path, distanceAlongPathMeters,
+                cruiseSpeedMetersPerSecond, seconds, paused: false);
+            var (carPosition, carHeading) = path.SampleLane(pathDistance, laneOffsetMeters);
+            if (!AmbientActorMath.IsValidTransform(carPosition, carHeading)) continue;
+            foreach (var obstacle in obstacles)
+            {
+                var obstaclePose = obstacle.PoseAt(seconds);
+                if (!AmbientActorEnvelopeMath.Overlaps(carPosition, carHeading,
+                        AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                        AmbientActorEnvelopeMath.CarHeightMeters, obstaclePose, obstacle.LengthMeters,
+                        obstacle.WidthMeters, obstacle.HeightMeters)) continue;
+
+                var conflictDistance = Math.Max(0, (float)(pathDistance - distanceAlongPathMeters)
+                    - AmbientActorEnvelopeMath.CarLengthMeters * .5f - AmbientActorEnvelopeMath.SafetyMarginMeters);
+                if (Vector3.Dot(HorizontalUnit(carHeading), HorizontalUnit(obstaclePose.Forward)) > .55f)
+                {
+                    var freeGap = Math.Max(0, conflictDistance - obstacle.LengthMeters * .5f - MinimumFollowingGapMeters);
+                    var followingCap = obstacle.SpeedMetersPerSecond + freeGap / FollowingHeadwaySeconds;
+                    var brakingCap = MathF.Sqrt(obstacle.SpeedMetersPerSecond * obstacle.SpeedMetersPerSecond
+                        + 2 * MaximumBrakingMetersPerSecondSquared * freeGap);
+                    target = Math.Min(target, Math.Min(followingCap, brakingCap));
+                }
+                else
+                {
+                    // Crossing paths, turnarounds and opposing traffic yield before the first
+                    // occupied swept envelope instead of assuming a straight-line pass is clear.
+                    target = Math.Min(target, MathF.Sqrt(2 * MaximumBrakingMetersPerSecondSquared * conflictDistance));
+                }
+                break;
+            }
         }
         return Math.Max(0, target);
     }
@@ -81,40 +246,32 @@ public static class AmbientTrafficFollowingMath
             : Math.Min(targetSpeedMetersPerSecond, currentSpeedMetersPerSecond + step);
     }
 
-    /// <summary>Caps one car update at the last path point that preserves swept clearance to riders and pedestrians.</summary>
+    /// <summary>Caps one update at the last sample that preserves swept 3D model-envelope clearance.</summary>
     public static float ClampSpeedForClearance(AmbientActorPath path, double pathDistanceMeters,
         float proposedSpeedMetersPerSecond, double deltaSeconds, IReadOnlyList<AmbientTrafficRider> cyclists,
-        IReadOnlyList<AmbientTrafficRider> pedestrians)
+        IReadOnlyList<AmbientTrafficRider> pedestrians, IReadOnlyList<AmbientTrafficRider>? otherCars = null,
+        float laneOffsetMeters = 0)
     {
         if (!path.IsUsable || !double.IsFinite(pathDistanceMeters) || !float.IsFinite(proposedSpeedMetersPerSecond)
             || proposedSpeedMetersPerSecond <= 0 || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return 0;
         var travel = proposedSpeedMetersPerSecond * deltaSeconds;
-        var samples = Math.Clamp((int)Math.Ceiling(travel / .15), 1, 128);
+        var samples = Math.Clamp((int)Math.Ceiling(travel / .08), 1, 256);
         var safeProgress = 0d;
+        var obstacles = cyclists.Concat(pedestrians).Concat(otherCars ?? Array.Empty<AmbientTrafficRider>()).ToArray();
         for (var sample = 1; sample <= samples; sample++)
         {
             var time = deltaSeconds * sample / samples;
             var pathDistance = AmbientActorMath.AdvancePathDistance(path, pathDistanceMeters,
                 proposedSpeedMetersPerSecond, time, paused: false);
-            var vehiclePosition = path.Sample(pathDistance).Position;
-            var vehicleHeading = path.Sample(pathDistance).Heading;
-            var blocked = cyclists.Any(rider =>
-                {
-                    var sameDirection = Vector3.Dot(HorizontalUnit(vehicleHeading), HorizontalUnit(rider.Forward)) > .5f;
-                    var clearance = sameDirection ? MinimumFollowingGapMeters : 2.6f;
-                    return PredictedDistanceSquared(vehiclePosition, rider, time) < clearance * clearance;
-                })
-                || pedestrians.Any(pedestrian => PredictedDistanceSquared(vehiclePosition, pedestrian, time) < 2.2f * 2.2f);
+            var (vehiclePosition, vehicleHeading) = path.SampleLane(pathDistance, laneOffsetMeters);
+            var blocked = obstacles.Any(obstacle => AmbientActorEnvelopeMath.Overlaps(
+                vehiclePosition, vehicleHeading, AmbientActorEnvelopeMath.CarLengthMeters,
+                AmbientActorEnvelopeMath.CarWidthMeters, AmbientActorEnvelopeMath.CarHeightMeters,
+                obstacle.PoseAt(time), obstacle.LengthMeters, obstacle.WidthMeters, obstacle.HeightMeters));
             if (blocked) return (float)(safeProgress / deltaSeconds);
             safeProgress = travel * sample / samples;
         }
         return proposedSpeedMetersPerSecond;
-    }
-
-    private static float PredictedDistanceSquared(Vector3 vehiclePosition, AmbientTrafficRider obstacle, double elapsedSeconds)
-    {
-        var predicted = obstacle.Position + obstacle.Forward * (Math.Max(0, obstacle.SpeedMetersPerSecond) * (float)elapsedSeconds);
-        return Vector3.DistanceSquared(vehiclePosition, predicted);
     }
 
     private static Vector3 HorizontalUnit(Vector3 value)
@@ -142,10 +299,13 @@ public sealed class AmbientActorPath
     public double? LoopStartDistanceMeters { get; }
     public bool ContinuesAroundRoute => LoopStartDistanceMeters.HasValue;
     public double? RouteConnectionDistanceMeters { get; }
+    public double RoadWidthMeters { get; }
+    public float BaseLaneOffsetMeters { get; }
 
     public AmbientActorPath(AmbientActorKind kind, long sourceId, int direction,
         IEnumerable<Vector3> points, AmbientSpeedRange speedRange, string? sourceName = null, string? sourceClass = null,
-        double? loopStartDistanceMeters = null, double? routeConnectionDistanceMeters = null)
+        double? loopStartDistanceMeters = null, double? routeConnectionDistanceMeters = null,
+        double roadWidthMeters = 7, float baseLaneOffsetMeters = 0)
     {
         Kind = kind; SourceId = sourceId; Direction = direction; SpeedRange = speedRange;
         SourceName = sourceName; SourceClass = sourceClass;
@@ -160,6 +320,8 @@ public sealed class AmbientActorPath
         LoopStartDistanceMeters = loopStartDistanceMeters is { } loopStart && double.IsFinite(loopStart)
             && loopStart >= 0 && loopStart < LengthMeters ? loopStart : null;
         RouteConnectionDistanceMeters = routeConnectionDistanceMeters;
+        RoadWidthMeters = double.IsFinite(roadWidthMeters) && roadWidthMeters > 0 ? roadWidthMeters : 0;
+        BaseLaneOffsetMeters = float.IsFinite(baseLaneOffsetMeters) ? baseLaneOffsetMeters : 0;
     }
 
     public bool IsUsable => _points.Length >= 2 && double.IsFinite(LengthMeters) && LengthMeters > 0.01;
@@ -179,6 +341,15 @@ public sealed class AmbientActorPath
         var position = Vector3.Lerp(_points[low], _points[high], t);
         var heading = _points[high] - _points[low];
         return (position, heading.LengthSquared() > 1e-10f ? Vector3.Normalize(heading) : Vector3.Zero);
+    }
+
+    public (Vector3 Position, Vector3 Heading) SampleLane(double distanceMeters, float laneOffsetMeters)
+    {
+        var (position, heading) = Sample(distanceMeters);
+        var left = Vector3.Cross(Vector3.UnitY, heading);
+        if (left.LengthSquared() > 1e-8f)
+            position += Vector3.Normalize(left) * (laneOffsetMeters - BaseLaneOffsetMeters);
+        return (position, heading);
     }
 
     private static bool Finite(Vector3 p) => float.IsFinite(p.X) && float.IsFinite(p.Y) && float.IsFinite(p.Z);
@@ -256,7 +427,8 @@ public static class AmbientActorMath
                     }
                 }
                 var path = new AmbientActorPath(AmbientActorKind.Car, street.OsmId, direction,
-                    points, CarSpeedRange(street.Highway), street.Name, street.Highway, loopStart, routeDistance);
+                    points, CarSpeedRange(street.Highway), street.Name, street.Highway, loopStart, routeDistance,
+                    street.WidthMeters, offset);
                 if (path.IsUsable) paths.Add(path);
             }
         }
