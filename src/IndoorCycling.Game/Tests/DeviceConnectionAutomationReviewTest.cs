@@ -23,8 +23,8 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			connection.TrainerClientFactoryForTesting = () => trainer;
 			connection.HeartRateClientFactoryForTesting = () => heartRate;
 			connection.SteeringClientFactoryForTesting = () => steering;
-			var heartRateAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/HeartRateCard/MarginContainer/VBoxContainer/ActionButton");
-			var steeringAction = connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/GridContainer/SteeringCard/MarginContainer/VBoxContainer/ActionButton");
+			var heartRateAction = connection.HeartRateActionForTesting;
+			var steeringAction = connection.SteeringActionForTesting;
 			var connect = screen.GetNode<Button>("StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer/ConnectTrainerButton");
 			GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
 			connect.EmitSignal(BaseButton.SignalName.Pressed);
