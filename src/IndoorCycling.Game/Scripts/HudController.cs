@@ -226,6 +226,9 @@ public partial class HudController : Control
 		};
 		row.AddChild(_trainerRecoveryMessage);
 		_trainerRecoveryRetryButton = new Button { Name = "TrainerRecoveryRetryButton", Text = "Retry", Visible = false };
+		// Own one stable connection for this HUD's lifetime. Recovery state changes
+		// replace only the action; disconnecting an absent signal logs an engine error.
+		_trainerRecoveryRetryButton.Pressed += OnTrainerRecoveryRetry;
 		row.AddChild(_trainerRecoveryRetryButton);
 		_trainerRecoveryPanel.AddChild(row);
 		AddChild(_trainerRecoveryPanel);
@@ -238,11 +241,9 @@ public partial class HudController : Control
 		_trainerRecoveryPanel.Visible = !string.IsNullOrWhiteSpace(message) && _rideSessionNode?.IsRideActive == true;
 		if (_trainerRecoveryMessage is not null) _trainerRecoveryMessage.Text = message ?? string.Empty;
 		if (_trainerRecoveryRetryButton is null) return;
+		_trainerRecoveryRetry = retry;
 		_trainerRecoveryRetryButton.Visible = retry is not null;
 		_trainerRecoveryRetryButton.Disabled = retry is null;
-		_trainerRecoveryRetryButton.Pressed -= OnTrainerRecoveryRetry;
-		_trainerRecoveryRetryButton.Pressed += OnTrainerRecoveryRetry;
-		_trainerRecoveryRetry = retry;
 	}
 
 	private Action? _trainerRecoveryRetry;
