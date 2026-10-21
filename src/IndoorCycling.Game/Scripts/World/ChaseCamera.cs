@@ -8,6 +8,7 @@ public partial class ChaseCamera : Camera3D
     private const float CameraClearanceMeters = 0.12f;
     private Vector3 _lookTarget;
     private float _boomDistance;
+    private readonly Vector3[] _frameBoundsCorners = new Vector3[8];
     private bool _snap = true;
     private RiderCameraView _view = RiderCameraView.GameplayRefined;
     private readonly SphereShape3D _clearanceShape = new() { Radius = CameraShapeRadiusMeters };
@@ -75,14 +76,33 @@ public partial class ChaseCamera : Camera3D
         => Follow(riderPosition, forward, delta, default, new Rect2(0, 0, 1, 1));
 
     public void Follow(Vector3 riderPosition, Vector3 forward, double delta, Aabb riderBikeBounds, Rect2 safeViewportRect)
+        => FollowCore(riderPosition, forward, delta, riderBikeBounds, Transform3D.Identity, false, safeViewportRect);
+
+    public void Follow(Vector3 riderPosition, Vector3 forward, double delta, Aabb riderBikeLocalBounds,
+        Transform3D riderRootTransform, Rect2 safeViewportRect)
+        => FollowCore(riderPosition, forward, delta, riderBikeLocalBounds, riderRootTransform, true, safeViewportRect);
+
+    private void FollowCore(Vector3 riderPosition, Vector3 forward, double delta, Aabb riderBikeBounds,
+        Transform3D boundsTransform, bool transformBounds, Rect2 safeViewportRect)
     {
         _recoveryReason = "none";
+        var hasVisualBounds = riderBikeBounds.Size.LengthSquared() > 1e-4f;
+        if (hasVisualBounds)
+        {
+            for (var i = 0; i < _frameBoundsCorners.Length; i++)
+            {
+                var point = riderBikeBounds.Position + new Vector3((i & 1) == 0 ? 0 : riderBikeBounds.Size.X,
+                    (i & 2) == 0 ? 0 : riderBikeBounds.Size.Y,
+                    (i & 4) == 0 ? 0 : riderBikeBounds.Size.Z);
+                _frameBoundsCorners[i] = transformBounds ? boundsTransform * point : point;
+            }
+        }
         var riderAnchor = new System.Numerics.Vector3(riderPosition.X,riderPosition.Y,riderPosition.Z);
         var routeForward = new System.Numerics.Vector3(forward.X,forward.Y,forward.Z);
         var follow = ChaseCameraMath.FollowPosition(riderAnchor, routeForward, _view);
         var look = ChaseCameraMath.LookTarget(riderAnchor, routeForward, _view);
-        if (FitsVisualBounds && riderBikeBounds.Size.LengthSquared() > 1e-4f)
-            (follow, look) = FitInspectionView(riderAnchor, routeForward, riderBikeBounds, safeViewportRect);
+        if (FitsVisualBounds && hasVisualBounds)
+            (follow, look) = FitInspectionView(riderAnchor, routeForward, _frameBoundsCorners, safeViewportRect);
         var targetPosition = new Vector3(follow.X,follow.Y,follow.Z);
         _desiredPosition = targetPosition;
         var lookTarget = new Vector3(look.X,look.Y,look.Z);
@@ -159,12 +179,12 @@ public partial class ChaseCamera : Camera3D
             ? riderPosition + (_lookTarget - riderPosition).Lerp(lookTarget - riderPosition, inspectionWeight)
             : _lookTarget.Lerp(lookTarget, weight);
         LookAt(_lookTarget, Vector3.Up);
-        if (FitsVisualBounds && riderBikeBounds.Size.LengthSquared() > 1e-4f)
-            CenterProjectedBounds(riderBikeBounds, safeViewportRect);
+        if (FitsVisualBounds && hasVisualBounds)
+            CenterProjectedBounds(_frameBoundsCorners, safeViewportRect);
         _snap = false;
     }
 
-    private void CenterProjectedBounds(Aabb bounds, Rect2 safeViewportRect)
+    private void CenterProjectedBounds(Vector3[] corners, Rect2 safeViewportRect)
     {
         var viewport = GetViewport().GetVisibleRect().Size;
         if (viewport.X <= 0 || viewport.Y <= 0) return;
@@ -173,11 +193,9 @@ public partial class ChaseCamera : Camera3D
             : new Rect2(0, 0, 1, 1);
         var minimum = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
         var maximum = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-        for (var i = 0; i < 8; i++)
+        for (var i = 0; i < corners.Length; i++)
         {
-            var point = bounds.Position + new Vector3((i & 1) == 0 ? 0 : bounds.Size.X,
-                (i & 2) == 0 ? 0 : bounds.Size.Y, (i & 4) == 0 ? 0 : bounds.Size.Z);
-            var projected = UnprojectPosition(point) / viewport;
+            var projected = UnprojectPosition(corners[i]) / viewport;
             minimum = minimum.Min(projected);
             maximum = maximum.Max(projected);
         }
@@ -189,7 +207,10 @@ public partial class ChaseCamera : Camera3D
         var projectedCenter = (minimum + maximum) * .5f;
         var error = projectedCenter - safe.GetCenter();
         if (error.LengthSquared() < 1e-8f) return;
-        var depth = Math.Max(.1f, GlobalPosition.DistanceTo(bounds.GetCenter()));
+        var center = Vector3.Zero;
+        foreach (var corner in corners) center += corner;
+        center /= corners.Length;
+        var depth = Math.Max(.1f, GlobalPosition.DistanceTo(center));
         var tanVertical = Mathf.Tan(Mathf.DegToRad(Fov) * .5f);
         var tanHorizontal = tanVertical * viewport.X / viewport.Y;
         var cameraRight = GlobalTransform.Basis.X.Normalized();
@@ -201,10 +222,12 @@ public partial class ChaseCamera : Camera3D
 
     private (System.Numerics.Vector3 Follow, System.Numerics.Vector3 Look) FitInspectionView(
         System.Numerics.Vector3 riderPosition, System.Numerics.Vector3 forward,
-        Aabb bounds, Rect2 safeRect)
+        Vector3[] corners, Rect2 safeRect)
     {
         var baseFollow = ChaseCameraMath.FollowPosition(riderPosition, forward, _view);
-        var center = bounds.GetCenter();
+        var center = Vector3.Zero;
+        foreach (var corner in corners) center += corner;
+        center /= corners.Length;
         var cameraOffset = new Vector3(baseFollow.X, baseFollow.Y, baseFollow.Z) - center;
         if (cameraOffset.LengthSquared() < 1e-5f) cameraOffset = Vector3.Back * 4;
         var away = cameraOffset.Normalized();
@@ -214,11 +237,9 @@ public partial class ChaseCamera : Camera3D
         var up = right.Cross(towardView).Normalized();
         var halfWidth = 0f;
         var halfHeight = 0f;
-        for (var i = 0; i < 8; i++)
+        for (var i = 0; i < corners.Length; i++)
         {
-            var corner = bounds.Position + new Vector3((i & 1) == 0 ? 0 : bounds.Size.X,
-                (i & 2) == 0 ? 0 : bounds.Size.Y, (i & 4) == 0 ? 0 : bounds.Size.Z);
-            var relative = corner - center;
+            var relative = corners[i] - center;
             halfWidth = Math.Max(halfWidth, Math.Abs(relative.Dot(right)));
             halfHeight = Math.Max(halfHeight, Math.Abs(relative.Dot(up)));
         }

@@ -379,14 +379,15 @@ public partial class HudController : Control
 	public bool HudDisplayEnabled => _hudDisplayEnabled;
 	public bool DebugDisplayEnabled => _debugEnabled;
 
-	/// <summary>Largest viewport rectangle not covered by currently visible ride HUD panels.</summary>
+	/// <summary>Largest viewport rectangle not covered by persistent ride HUD panels.
+	/// Transient notifications are deliberately excluded so their appearance or expiry
+	/// cannot change camera framing.</summary>
 	public Rect2 GetCameraSafeViewportRect()
 	{
 		var screen = GetViewportRect();
 		if (screen.Size.X <= 0 || screen.Size.Y <= 0) return new Rect2(0, 0, 1, 1);
 		var controls = new[] { _topHudPanel, _bottomHudPanel, _routeGradientInset, _dummyControlPanel,
-			(Control?)_debugOverlay, _cameraInspectionLabel, _catchUpOfferPanel, _trainerRecoveryPanel,
-			_debugJumpConfirmation };
+			(Control?)_debugOverlay };
 		var blocked = controls.Where(control => control is { Visible: true } && control.IsVisibleInTree())
 			.Select(control => ClipToScreen(Inflate(control!.GetGlobalRect(), 10), screen))
 			.Where(rect => rect.Size.X > 0 && rect.Size.Y > 0).ToArray();

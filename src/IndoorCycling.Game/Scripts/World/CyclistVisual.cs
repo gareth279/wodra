@@ -117,6 +117,7 @@ public partial class CyclistVisual : Node3D
     private double _animatedCadenceRpm;
     private double _leanRadians;
     private bool _built;
+    private Aabb? _stableLocalVisualBounds;
     private int _approximateTriangleCount = 2200;
 
     public bool UsesImportedModel { get; private set; }
@@ -143,6 +144,44 @@ public partial class CyclistVisual : Node3D
         if (!float.IsFinite(minimum.X) || !float.IsFinite(maximum.X))
             return new Aabb(GlobalPosition + new Vector3(-.55f, 0, -.75f), new Vector3(1.1f, 1.8f, 1.5f));
         return new Aabb(minimum, maximum - minimum);
+    }
+
+    /// <summary>Conservative model-space envelope for camera framing. Unlike a per-frame
+    /// world AABB, this does not change as wheels rotate or the root follows a bend.</summary>
+    public Aabb GetStableLocalVisualBounds()
+    {
+        if (_stableLocalVisualBounds is { } cached) return cached;
+        var minimum = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        var maximum = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        AccumulateLocalBounds(this, GlobalTransform.AffineInverse(), ref minimum, ref maximum);
+        if (!float.IsFinite(minimum.X) || !float.IsFinite(maximum.X))
+        {
+            _stableLocalVisualBounds = new Aabb(new Vector3(-.65f, -.1f, -1f), new Vector3(1.3f, 1.9f, 2f));
+            return _stableLocalVisualBounds.Value;
+        }
+        // The mesh AABBs describe authored geometry, while the extra margin covers
+        // modest skin deformation and the optional helmet/straps.
+        _stableLocalVisualBounds = new Aabb(minimum, maximum - minimum).Grow(.12f);
+        return _stableLocalVisualBounds.Value;
+    }
+
+    private static void AccumulateLocalBounds(Node node, Transform3D rootInverse,
+        ref Vector3 minimum, ref Vector3 maximum)
+    {
+        if (node is GeometryInstance3D geometry)
+        {
+            var box = geometry.GetAabb();
+            var localTransform = rootInverse * geometry.GlobalTransform;
+            for (var i = 0; i < 8; i++)
+            {
+                var local = box.Position + new Vector3((i & 1) == 0 ? 0 : box.Size.X,
+                    (i & 2) == 0 ? 0 : box.Size.Y, (i & 4) == 0 ? 0 : box.Size.Z);
+                var point = localTransform * local;
+                minimum = minimum.Min(point);
+                maximum = maximum.Max(point);
+            }
+        }
+        foreach (Node child in node.GetChildren()) AccumulateLocalBounds(child, rootInverse, ref minimum, ref maximum);
     }
 
     private static void AccumulateVisibleBounds(Node node, ref Vector3 minimum, ref Vector3 maximum)

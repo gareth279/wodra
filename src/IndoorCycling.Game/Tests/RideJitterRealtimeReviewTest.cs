@@ -9,9 +9,10 @@ using Godot;
 /// <summary>Real-time RideScreen frame and camera sampler for issue #93.</summary>
 public partial class RideJitterRealtimeReviewTest : Node
 {
-    private readonly StringBuilder _csv = new("phase,elapsed_s,delta_ms,process_ms,physics_ms,distance_m,speed_kph,cadence_rpm,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z,draw_calls,render_objects\n");
+    private readonly StringBuilder _csv = new("phase,elapsed_s,delta_ms,process_ms,physics_ms,distance_m,speed_kph,cadence_rpm,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z,desired_x,desired_y,desired_z,look_x,look_y,look_z,camera_distance,bounds_x,bounds_y,bounds_z,bounds_w,bounds_h,bounds_d,safe_x,safe_y,safe_w,safe_h,stable_w,stable_h,stable_d,crank_phase,sampling_enabled,camera_view,clearance,draw_calls,render_objects\n");
     private RideSessionNode? _session;
     private RideWorldView? _world;
+    private HudController? _hud;
     private string _phase = "setup";
     private bool _recording;
     private ulong _startedAt;
@@ -23,7 +24,7 @@ public partial class RideJitterRealtimeReviewTest : Node
             DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Enabled);
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "jitter-issue-93", "realtime-review-v14");
+            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "jitter-issue-93", "realtime-review-issue93-fix");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
@@ -40,6 +41,7 @@ public partial class RideJitterRealtimeReviewTest : Node
             if (!await _session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-one-way-oval-gardens")))
                 throw new InvalidOperationException("Could not start production RideScreen on the reported route.");
             var hud = screen.GetNode<HudController>("HudController");
+            _hud = hud;
             hud.Show();
             hud.SetDebugDisplayEnabled(true);
             foreach (var window in screen.GetNode<StartPanelController>("StartPanel").GetChildren())
@@ -47,6 +49,8 @@ public partial class RideJitterRealtimeReviewTest : Node
             screen.GetNode<StartPanelController>("StartPanel").Hide();
             _session.JumpToRouteDistance("280");
             _session.ConfirmDebugDistanceJump();
+            hud.HideDebugJumpConfirmation();
+            hud.SetRecordingState(false, false);
             _world.SelectCameraInspectionView(RiderCameraView.RearThreeQuarter);
             var warmupFrames = 0;
             while (warmupFrames < 3600 &&
@@ -92,6 +96,9 @@ public partial class RideJitterRealtimeReviewTest : Node
         var rider = _world.PlayerRider;
         var camera = _world.InspectionCamera;
         var state = _session.CurrentRideState;
+        var bounds = rider.GetWorldVisualBounds();
+        var stableBounds = rider.GetStableLocalVisualBounds();
+        var safe = _hud?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1);
         var now = (Time.GetTicksUsec() - _startedAt) / 1_000_000d;
         var processMs = Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000d;
         var physicsMs = Performance.GetMonitor(Performance.Monitor.TimePhysicsProcess) * 1000d;
@@ -100,6 +107,15 @@ public partial class RideJitterRealtimeReviewTest : Node
             .Append(F(state.VirtualSpeedKph)).Append(',').Append(state.CurrentCadenceRpm).Append(',')
             .Append(F(rider.GlobalPosition.X)).Append(',').Append(F(rider.GlobalPosition.Y)).Append(',').Append(F(rider.GlobalPosition.Z)).Append(',')
             .Append(F(camera.GlobalPosition.X)).Append(',').Append(F(camera.GlobalPosition.Y)).Append(',').Append(F(camera.GlobalPosition.Z)).Append(',')
+            .Append(F(camera.DesiredPosition.X)).Append(',').Append(F(camera.DesiredPosition.Y)).Append(',').Append(F(camera.DesiredPosition.Z)).Append(',')
+            .Append(F(camera.LookTargetPosition.X)).Append(',').Append(F(camera.LookTargetPosition.Y)).Append(',').Append(F(camera.LookTargetPosition.Z)).Append(',')
+            .Append(F(camera.RiderToCameraDistance)).Append(',')
+            .Append(F(bounds.Position.X)).Append(',').Append(F(bounds.Position.Y)).Append(',').Append(F(bounds.Position.Z)).Append(',')
+            .Append(F(bounds.Size.X)).Append(',').Append(F(bounds.Size.Y)).Append(',').Append(F(bounds.Size.Z)).Append(',')
+            .Append(F(safe.Position.X)).Append(',').Append(F(safe.Position.Y)).Append(',').Append(F(safe.Size.X)).Append(',').Append(F(safe.Size.Y)).Append(',')
+            .Append(F(stableBounds.Size.X)).Append(',').Append(F(stableBounds.Size.Y)).Append(',').Append(F(stableBounds.Size.Z)).Append(',')
+            .Append(F(rider.CrankAngleRadians / Math.Tau)).Append(',').Append(rider.RiderAnimationSamplingEnabled ? 1 : 0).Append(',')
+            .Append(camera.View).Append(',').Append(camera.ClearanceResult).Append(',')
             .Append(Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame)).Append(',')
             .Append(Performance.GetMonitor(Performance.Monitor.RenderTotalObjectsInFrame)).AppendLine();
     }
@@ -140,15 +156,31 @@ public partial class RideJitterRealtimeReviewTest : Node
         var output = new StringBuilder();
         foreach (var phase in lines.Select(line => line.Split(',')).GroupBy(fields => fields[0]))
         {
-            var delta = phase.Select(fields => double.Parse(fields[2], CultureInfo.InvariantCulture)).Order().ToArray();
+            var rows = phase.ToArray();
+            var delta = rows.Select(fields => N(fields, 2)).Order().ToArray();
+            var boundsWidth = Range(rows, 24);
+            var boundsHeight = Range(rows, 25);
+            var boundsDepth = Range(rows, 26);
+            var safeRect = Math.Max(Range(rows, 27), Math.Max(Range(rows, 28), Math.Max(Range(rows, 29), Range(rows, 30))));
+            var stableBoundsRange = Math.Max(Range(rows, 31), Math.Max(Range(rows, 32), Range(rows, 33)));
+            var relativeCamera = new[] { RangeRelative(rows, 11, 8), RangeRelative(rows, 12, 9), RangeRelative(rows, 13, 10) };
+            var relativeDesired = new[] { RangeRelative(rows, 14, 8), RangeRelative(rows, 15, 9), RangeRelative(rows, 16, 10) };
+            var cameraDistanceRange = Range(rows, 20);
             var spikes = delta.Count(value => value >= 33.33);
-            output.AppendLine($"{phase.Key}: frames={delta.Length}, dt p50/p95/p99/max={Pct(delta,.50):F2}/{Pct(delta,.95):F2}/{Pct(delta,.99):F2}/{delta[^1]:F2} ms, dt>=33.33ms={spikes}");
+            var slowFrames = delta.Count(value => value > 17.0);
+            output.AppendLine($"{phase.Key}: frames={delta.Length}, dt p50/p95/p99/max={Pct(delta,.50):F2}/{Pct(delta,.95):F2}/{Pct(delta,.99):F2}/{delta[^1]:F2} ms, >17ms={slowFrames}, >=33.33ms={spikes}");
+            output.AppendLine($"  actual world-bounds range m: width={boundsWidth:F4}, height={boundsHeight:F4}, depth={boundsDepth:F4}; cached root-local bounds range={stableBoundsRange:F6}; safe-rect component range={safeRect:F5}");
+            output.AppendLine($"  desired camera-rider world-offset ranges m={relativeDesired[0]:F4}/{relativeDesired[1]:F4}/{relativeDesired[2]:F4}; camera-rider world-offset ranges m={relativeCamera[0]:F4}/{relativeCamera[1]:F4}/{relativeCamera[2]:F4}; camera-distance range={cameraDistanceRange:F4}m");
         }
         File.WriteAllText(summaryPath, output.ToString(), new UTF8Encoding(false));
     }
 
     private static double Pct(double[] sorted, double p) => sorted[Math.Clamp((int)Math.Ceiling(p * sorted.Length) - 1, 0, sorted.Length - 1)];
     private static string F(double value) => value.ToString("F6", CultureInfo.InvariantCulture);
+    private static double N(string[] fields, int index) => double.Parse(fields[index], CultureInfo.InvariantCulture);
+    private static double Range(string[][] rows, int index) => rows.Max(row => N(row, index)) - rows.Min(row => N(row, index));
+    private static double RangeRelative(string[][] rows, int camera, int rider) =>
+        rows.Max(row => N(row, camera) - N(row, rider)) - rows.Min(row => N(row, camera) - N(row, rider));
     private static T[] FindAll<T>(Node node) where T : Node
     {
         var found = node is T match ? new[] { match } : Array.Empty<T>();
