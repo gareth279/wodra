@@ -1,0 +1,6 @@
+animated-baseline: frames=722, dt p50/p95/p99/max=16.67/16.67/16.67/18.06 ms, >=16.67ms=7, >=33.33ms=0
+  bounds-size range m: width=0.0298, height=0.0123, depth=0.2403; safe-rect component range=0.00000; camera-rider world-offset ranges m=0.095/0.006/0.054
+skeletal-sampling-disabled: frames=720, dt p50/p95/p99/max=16.67/16.67/16.67/16.67 ms, >=16.67ms=0, >=33.33ms=0
+  bounds-size range m: width=0.0068, height=0.0047, depth=0.2383; safe-rect component range=0.00000; camera-rider world-offset ranges m=0.048/0.006/0.038
+animated-restart-steer-coast: frames=720, dt p50/p95/p99/max=16.67/16.67/16.67/16.67 ms, >=16.67ms=0, >=33.33ms=0
+  bounds-size range m: width=0.0671, height=0.0275, depth=0.2477; safe-rect component range=0.00000; camera-rider world-offset ranges m=0.168/0.009/0.077

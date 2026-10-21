@@ -234,7 +234,8 @@ public partial class RideWorldView : Node3D
         _camera.Current = true;
         UpdateSceneryCollisionForDistance(_session.CurrentRideState.DistanceMeters);
         _camera.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(_lastPose.Forward), 0,
-            _rider.GetWorldVisualBounds(), _hudController?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1));
+            _rider.GetStableLocalVisualBounds(), _rider.GlobalTransform,
+            _hudController?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1));
     }
 
     // This shared gameplay input path runs before Control focus/unhandled-input
@@ -557,11 +558,11 @@ public partial class RideWorldView : Node3D
         var position = _rider.GlobalPosition;
         var forward = ProceduralRoad.ToGodot(pose.Forward);
         UpdateSceneryCollisionForDistance(distance);
-        var inspectionBounds = _camera.FitsVisualBounds ? _rider.GetWorldVisualBounds() : default;
+        var inspectionBounds = _camera.FitsVisualBounds ? _rider.GetStableLocalVisualBounds() : default;
         var cameraSafeRect = _camera.FitsVisualBounds
             ? _hudController?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1)
             : new Rect2(0, 0, 1, 1);
-        _camera.Follow(position, forward, delta, inspectionBounds, cameraSafeRect);
+        _camera.Follow(position, forward, delta, inspectionBounds, _rider.GlobalTransform, cameraSafeRect);
         _ambientActorManager?.UpdateForRider(new System.Numerics.Vector3(position.X, position.Y, position.Z),
             delta, _session.IsRidePaused);
         _debugElapsed += delta;
