@@ -510,8 +510,19 @@ var nonHr = new BleDiscoveredDevice(103, "Controller", [TrainerDiscoveryPolicy.F
 Check(HeartRateDiscoveryPolicy.Select([]).Outcome == HeartRateDiscoveryOutcome.None &&
       HeartRateDiscoveryPolicy.Select([hrA]).Selected == hrA &&
       HeartRateDiscoveryPolicy.Select([hrA, hrB]).Outcome == HeartRateDiscoveryOutcome.Choose &&
+      HeartRateDiscoveryPolicy.Select([hrA, hrB], preferredAddress: hrB.BluetoothAddress).Selected == hrB &&
+      HeartRateDiscoveryPolicy.Select([hrA, hrA with { Rssi = -30 }]).Candidates.Count == 1 &&
       HeartRateDiscoveryPolicy.Select([nonHr]).Outcome == HeartRateDiscoveryOutcome.None,
-    "optional heart-rate discovery auto-selects one compatible monitor, asks when several exist, and ignores other services");
+    "optional heart-rate discovery auto-selects one compatible monitor, prefers its remembered identity, deduplicates advertisements, asks when several exist, and ignores other services");
+var sterzoA = new BleDiscoveredDevice(201, "Elite Sterzo Smart", [SteeringDiscoveryPolicy.ServiceUuid], -45);
+var sterzoB = new BleDiscoveredDevice(202, "Sterzo", [], -55);
+Check(SteeringDiscoveryPolicy.Select([]).Outcome == SteeringDiscoveryOutcome.None &&
+      SteeringDiscoveryPolicy.Select([sterzoA]).Selected == sterzoA &&
+      SteeringDiscoveryPolicy.Select([sterzoA, sterzoB]).Outcome == SteeringDiscoveryOutcome.Choose &&
+      SteeringDiscoveryPolicy.Select([sterzoA, sterzoB], preferredAddress: sterzoB.BluetoothAddress).Selected == sterzoB &&
+      SteeringDiscoveryPolicy.Select([sterzoA, sterzoA with { Rssi = -30 }]).Candidates.Count == 1 &&
+      SteeringDiscoveryPolicy.Select([nonHr]).Outcome == SteeringDiscoveryOutcome.None,
+    "optional steering discovery auto-selects one Sterzo, prefers remembered identity, deduplicates advertisements, asks for multiple units, and ignores unrelated devices");
 var freshOptionalHr = new TrainerTelemetry(now - TimeSpan.FromSeconds(30), 0, 0, 0,
     HeartRateBpm: 147, HasPowerMeasurement: false, HasCadenceMeasurement: false,
     HasReceivedMeasurement: false, HasSpeedMeasurement: false, HeartRateTimestamp: now);

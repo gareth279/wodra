@@ -11,6 +11,17 @@ using IndoorCycling.Trainer.Windows;
 /// <summary>Owns the selected trainer for the full application session, including ride transitions.</summary>
 public partial class DeviceConnectionPanelController : Control
 {
+	/// <summary>Optional device factories let the production RideScreen run against deterministic fake devices in scene tests.</summary>
+	internal Func<WindowsBleTrainerClient>? TrainerClientFactoryForTesting { get; set; }
+	internal Func<WindowsBleHeartRateClient>? HeartRateClientFactoryForTesting { get; set; }
+	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
+	internal Button HeartRateActionForTesting => _heartRateAction!;
+	internal Button SteeringActionForTesting => _steeringAction!;
+
+	private WindowsBleTrainerClient CreateTrainerClient() => TrainerClientFactoryForTesting?.Invoke() ?? new WindowsBleTrainerClient();
+	private WindowsBleHeartRateClient CreateHeartRateClient() => HeartRateClientFactoryForTesting?.Invoke() ?? new WindowsBleHeartRateClient();
+	private EliteSterzoSmartClient CreateSteeringClient() => SteeringClientFactoryForTesting?.Invoke() ?? new EliteSterzoSmartClient();
+
 	private const int MaximumAutomaticReconnects = TrainerRecoveryPolicy.MaximumAutomaticAttempts;
 	private readonly TrainerConnectionState _connectionState = new();
 	private WindowsBleTrainerClient? _realTrainerClient;
@@ -53,6 +64,8 @@ public partial class DeviceConnectionPanelController : Control
 	private BleDiscoveredDevice? _selectedSteeringDevice;
 	private CancellationTokenSource? _heartRateScanCancellation;
 	private CancellationTokenSource? _steeringScanCancellation;
+	private CancellationTokenSource? _heartRateConnectionCancellation;
+	private CancellationTokenSource? _steeringConnectionCancellation;
 	private bool _heartRateScanInProgress;
 	private bool _steeringScanInProgress;
 	private Task? _steeringReconnectTask;
@@ -78,6 +91,7 @@ public partial class DeviceConnectionPanelController : Control
 	private CancellationTokenSource? _recoveryCancellation;
 	private Task? _recoveryTask;
 	private Action? _disconnectedHandler;
+	private Action<object>? _trainerDebugEventHandler;
 	private Action? _antDisconnectedHandler;
 	private bool _attemptInProgress;
 	private bool _attemptUsingAnt;
@@ -88,6 +102,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	public override void _Ready()
 	{
+		_trainerDebugEventHandler = evt => GameLogger.Log("trainer_event", evt);
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_startPanel = GetNodeOrNull<Control>("../StartPanel");
@@ -411,6 +426,7 @@ public partial class DeviceConnectionPanelController : Control
 		var cancellationToken = operationCancellation.Token;
 		var attemptId = _connectionState.BeginAttempt();
 		if (_heartRateClient?.IsConnected != true) _ = ScanForHeartRateAsync(autoConnect: true);
+		if (_steeringClient?.IsConnected != true) _ = ScanForSteeringAsync();
 		_protocolPreferenceOption!.Disabled = true;
 		_cancelButton!.Show();
 		_disconnectButton!.Hide();
@@ -454,7 +470,7 @@ public partial class DeviceConnectionPanelController : Control
 			_protocolStatusLabel!.Text = "Bluetooth FTMS · Scanning";
 			if (_realTrainerClient is not null && !_realTrainerClient.IsConnected)
 				await ReleaseClientAsync(_realTrainerClient);
-			var client = new WindowsBleTrainerClient();
+			var client = CreateTrainerClient();
 			_realTrainerClient = client;
 			var found = await client.ScanForDevicesAsync(TimeSpan.FromSeconds(7), cancellationToken);
 			if (!_connectionState.IsCurrent(attemptId)) return;
@@ -598,19 +614,20 @@ public partial class DeviceConnectionPanelController : Control
 	private async Task ScanForHeartRateAsync(bool autoConnect)
 	{
 		if (_heartRateScanInProgress || _heartRateClient?.IsConnected == true) return;
+		if (_heartRateConnectionCancellation is not null) return;
 		_heartRateScanInProgress = true;
 		_heartRatePicker!.Hide();
 		_heartRateAction!.Text = "Cancel search";
 		_heartRateStatus!.Text = "Searching for Bluetooth heart-rate monitors…";
-		_heartRateScanCancellation?.Dispose();
+		_heartRateScanCancellation?.Cancel();
 		var cancellation = new CancellationTokenSource();
 		_heartRateScanCancellation = cancellation;
 		try
 		{
-			var scanner = _heartRateClient ??= new WindowsBleHeartRateClient();
+			var scanner = _heartRateClient ??= CreateHeartRateClient();
 			var found = await scanner.ScanAsync(TimeSpan.FromSeconds(5), cancellation.Token);
 			if (cancellation.IsCancellationRequested) return;
-			var selection = HeartRateDiscoveryPolicy.Select(found);
+			var selection = HeartRateDiscoveryPolicy.Select(found, GameBootstrap.Settings.LastHeartRateBluetoothAddress);
 			_heartRateDiscovered = selection.Candidates.ToArray();
 			if (selection.Outcome == HeartRateDiscoveryOutcome.None)
 			{
@@ -621,7 +638,7 @@ public partial class DeviceConnectionPanelController : Control
 			}
 			if (selection.Outcome == HeartRateDiscoveryOutcome.ConnectAutomatically)
 			{
-				await ConnectHeartRateAsync(selection.Selected!);
+				await ConnectHeartRateAsync(selection.Selected!, cancellation.Token);
 				return;
 			}
 			_heartRatePicker!.Clear();
@@ -634,13 +651,19 @@ public partial class DeviceConnectionPanelController : Control
 		}
 		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
 		{
-			_heartRateStatus!.Text = "Search cancelled · optional";
-			_heartRateAction!.Text = "Find monitor";
+			if (ReferenceEquals(_heartRateScanCancellation, cancellation))
+			{
+				_heartRateStatus!.Text = "Search cancelled · optional";
+				_heartRateAction!.Text = "Find monitor";
+			}
 		}
 		catch (Exception ex)
 		{
-			_heartRateStatus!.Text = "Could not search for a heart-rate monitor. Trainer connection is unaffected.";
-			_heartRateAction!.Text = "Retry search";
+			if (ReferenceEquals(_heartRateScanCancellation, cancellation))
+			{
+				_heartRateStatus!.Text = "Could not search for a heart-rate monitor. Trainer connection is unaffected.";
+				_heartRateAction!.Text = "Retry search";
+			}
 			GameLogger.Log("heart_rate_scan_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
 		}
 		finally
@@ -649,21 +672,32 @@ public partial class DeviceConnectionPanelController : Control
 			{
 				_heartRateScanInProgress = false;
 				_heartRateScanCancellation = null;
-				cancellation.Dispose();
 			}
+			cancellation.Dispose();
 		}
 	}
 
-	private async Task ConnectHeartRateAsync(BleDiscoveredDevice device)
+	private async Task ConnectHeartRateAsync(BleDiscoveredDevice device, CancellationToken cancellationToken = default)
 	{
+		if (_heartRateConnectionCancellation is not null) return;
+		var operation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		_heartRateConnectionCancellation = operation;
 		_heartRateAction!.Disabled = true;
 		_heartRateStatus!.Text = $"Connecting to {device.Name}…";
-		var client = _heartRateClient ??= new WindowsBleHeartRateClient();
+		var client = _heartRateClient ??= CreateHeartRateClient();
 		try
 		{
-			await client.ConnectAsync(device);
+			await client.ConnectAsync(device, operation.Token);
+			if (operation.IsCancellationRequested)
+			{
+				await client.DisconnectAsync();
+				return;
+			}
 			_heartRateClient = client;
 			GameBootstrap.HeartRateClient = client;
+			GameBootstrap.Settings.LastHeartRateBluetoothAddress = device.BluetoothAddress;
+			try { GameBootstrap.Settings.Save(); }
+			catch (Exception settingsError) { GameLogger.Log("device_preference_save_failed", new { category = "heart_rate", exceptionType = settingsError.GetType().Name }); }
 			client.Disconnected -= OnHeartRateDisconnected;
 			client.Disconnected += OnHeartRateDisconnected;
 			_heartRateName!.Text = client.ConnectedDeviceName ?? device.Name;
@@ -672,15 +706,36 @@ public partial class DeviceConnectionPanelController : Control
 			_heartRatePicker!.Hide();
 			GameLogger.Log("heart_rate_connected", new { service = "Bluetooth SIG Heart Rate", deviceName = client.ConnectedDeviceName ?? device.Name });
 		}
+		catch (OperationCanceledException) when (operation.IsCancellationRequested)
+		{
+			client.Disconnected -= OnHeartRateDisconnected;
+			await client.DisconnectAsync();
+			if (ReferenceEquals(_heartRateConnectionCancellation, operation))
+			{
+				_heartRateStatus!.Text = "Connection cancelled · optional";
+				_heartRateAction!.Text = "Find monitor";
+			}
+		}
 		catch (Exception ex)
 		{
 			await client.DisconnectAsync();
-			_heartRateName!.Text = device.Name;
-			_heartRateStatus!.Text = "Connection failed. Retry or choose another monitor.";
-			_heartRateAction!.Text = "Retry";
+			if (ReferenceEquals(_heartRateConnectionCancellation, operation))
+			{
+				_heartRateName!.Text = device.Name;
+				_heartRateStatus!.Text = "Connection failed. Retry or choose another monitor.";
+				_heartRateAction!.Text = "Retry";
+			}
 			GameLogger.Log("heart_rate_connection_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
 		}
-		finally { _heartRateAction!.Disabled = false; }
+		finally
+		{
+			if (ReferenceEquals(_heartRateConnectionCancellation, operation))
+			{
+				_heartRateConnectionCancellation = null;
+				_heartRateAction!.Disabled = false;
+			}
+			operation.Dispose();
+		}
 	}
 
 	private async Task DisconnectHeartRateAsync()
@@ -782,27 +837,28 @@ public partial class DeviceConnectionPanelController : Control
 
 	private async Task ScanForSteeringAsync()
 	{
-		if (_steeringScanInProgress) return;
+		if (_steeringScanInProgress || _steeringClient?.IsConnected == true || _steeringConnectionCancellation is not null) return;
 		_steeringScanInProgress = true;
 		_steeringAction!.Text = "Cancel search";
 		_steeringStatus!.Text = "Searching for Elite Sterzo Smart…";
 		var cancellation = new CancellationTokenSource();
-		_steeringScanCancellation?.Dispose();
+		_steeringScanCancellation?.Cancel();
 		_steeringScanCancellation = cancellation;
 		try
 		{
-			var client = _steeringClient ??= new EliteSterzoSmartClient();
+			var client = _steeringClient ??= CreateSteeringClient();
 			var found = await client.ScanAsync(TimeSpan.FromSeconds(7), cancellation.Token);
 			if (cancellation.IsCancellationRequested) return;
-			_steeringDiscovered = found.ToArray();
-			if (_steeringDiscovered.Length == 0)
+			var selection = SteeringDiscoveryPolicy.Select(found, GameBootstrap.Settings.LastSteeringBluetoothAddress);
+			_steeringDiscovered = selection.Candidates.ToArray();
+			if (selection.Outcome == SteeringDiscoveryOutcome.None)
 			{
 				_steeringName!.Text = "Elite Sterzo Smart";
 				_steeringStatus!.Text = "Not found · move the steering plate to wake it";
 				_steeringAction!.Text = "Connect";
 				return;
 			}
-			if (_steeringDiscovered.Length == 1) await ConnectSteeringAsync(_steeringDiscovered[0]);
+			if (selection.Outcome == SteeringDiscoveryOutcome.ConnectAutomatically) await ConnectSteeringAsync(selection.Selected!, cancellation.Token);
 			else
 			{
 				_steeringPicker!.Clear();
@@ -816,13 +872,19 @@ public partial class DeviceConnectionPanelController : Control
 		}
 		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
 		{
-			_steeringStatus!.Text = "Search cancelled · optional";
-			_steeringAction!.Text = "Connect";
+			if (ReferenceEquals(_steeringScanCancellation, cancellation))
+			{
+				_steeringStatus!.Text = "Search cancelled · optional";
+				_steeringAction!.Text = "Connect";
+			}
 		}
 		catch (Exception ex)
 		{
-			_steeringStatus!.Text = "Could not search for Sterzo Smart. Trainer connection is unaffected.";
-			_steeringAction!.Text = "Retry search";
+			if (ReferenceEquals(_steeringScanCancellation, cancellation))
+			{
+				_steeringStatus!.Text = "Could not search for Sterzo Smart. Trainer connection is unaffected.";
+				_steeringAction!.Text = "Retry search";
+			}
 			GameLogger.Log("steering_scan_failed", new { exceptionType = ex.GetType().Name });
 		}
 		finally
@@ -831,21 +893,32 @@ public partial class DeviceConnectionPanelController : Control
 			{
 				_steeringScanInProgress = false;
 				_steeringScanCancellation = null;
-				cancellation.Dispose();
 			}
+			cancellation.Dispose();
 		}
 	}
 
-	private async Task ConnectSteeringAsync(BleDiscoveredDevice device)
+	private async Task ConnectSteeringAsync(BleDiscoveredDevice device, CancellationToken cancellationToken = default)
 	{
+		if (_steeringConnectionCancellation is not null) return;
+		var operation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		_steeringConnectionCancellation = operation;
 		_steeringAction!.Disabled = true;
 		_steeringName!.Text = device.Name;
 		_steeringStatus!.Text = "Connecting to Sterzo Smart…";
-		var client = _steeringClient ??= new EliteSterzoSmartClient();
+			var client = _steeringClient ??= CreateSteeringClient();
 		try
 		{
-			await client.ConnectAsync(device);
+			await client.ConnectAsync(device, operation.Token);
+			if (operation.IsCancellationRequested)
+			{
+				await client.DisconnectAsync();
+				return;
+			}
 			_selectedSteeringDevice = device;
+			GameBootstrap.Settings.LastSteeringBluetoothAddress = device.BluetoothAddress;
+			try { GameBootstrap.Settings.Save(); }
+			catch (Exception settingsError) { GameLogger.Log("device_preference_save_failed", new { category = "steering", exceptionType = settingsError.GetType().Name }); }
 			client.Disconnected -= OnSteeringDisconnected;
 			client.Disconnected += OnSteeringDisconnected;
 			_steeringPicker!.Hide();
@@ -855,14 +928,35 @@ public partial class DeviceConnectionPanelController : Control
 			_steeringAction!.Text = "Disconnect";
 			GameLogger.Log("steering_device_connected", new { model = "Elite Sterzo Smart", protocol = "Bluetooth LE" });
 		}
+		catch (OperationCanceledException) when (operation.IsCancellationRequested)
+		{
+			client.Disconnected -= OnSteeringDisconnected;
+			await client.DisconnectAsync();
+			if (ReferenceEquals(_steeringConnectionCancellation, operation))
+			{
+				_steeringStatus!.Text = "Connection cancelled · optional";
+				_steeringAction!.Text = "Connect";
+			}
+		}
 		catch (Exception ex)
 		{
 			await client.DisconnectAsync();
-			_steeringStatus!.Text = "Connection failed · wake the unit and retry";
-			_steeringAction!.Text = "Retry";
+			if (ReferenceEquals(_steeringConnectionCancellation, operation))
+			{
+				_steeringStatus!.Text = "Connection failed · wake the unit and retry";
+				_steeringAction!.Text = "Retry";
+			}
 			GameLogger.Log("steering_device_connection_failed", new { exceptionType = ex.GetType().Name });
 		}
-		finally { _steeringAction!.Disabled = false; }
+		finally
+		{
+			if (ReferenceEquals(_steeringConnectionCancellation, operation))
+			{
+				_steeringConnectionCancellation = null;
+				_steeringAction!.Disabled = false;
+			}
+			operation.Dispose();
+		}
 	}
 
 	private async Task DisconnectSteeringAsync()
@@ -1141,12 +1235,13 @@ public partial class DeviceConnectionPanelController : Control
 	{
 		_selectedTrainer = device;
 		var operationCancellation = _attemptCancellation;
-		var client = _realTrainerClient ?? new WindowsBleTrainerClient();
+		var client = _realTrainerClient ?? CreateTrainerClient();
 		_realTrainerClient = client;
 		if (_disconnectedHandler is not null) client.Disconnected -= _disconnectedHandler;
 		_disconnectedHandler = () => Callable.From(() => HandleTrainerDisconnected(attemptId)).CallDeferred();
 		client.Disconnected += _disconnectedHandler;
-		client.DebugEvent += evt => GameLogger.Log("trainer_event", evt);
+		client.DebugEvent -= _trainerDebugEventHandler;
+		client.DebugEvent += _trainerDebugEventHandler;
 		_trainerPicker!.Hide();
 		_overallStatusLabel!.Text = $"Connecting to {DisplayName(device)}…";
 		_trainerNameLabel!.Text = DisplayName(device);
@@ -1558,8 +1653,17 @@ public partial class DeviceConnectionPanelController : Control
 	private void OnCancelPressed()
 	{
 		_attemptCancellation?.Cancel();
+		CancelOptionalDiscovery();
 		if (!_attemptInProgress) return;
 		_overallStatusLabel!.Text = "Cancelling trainer setup…";
+	}
+
+	private void CancelOptionalDiscovery()
+	{
+		_heartRateScanCancellation?.Cancel();
+		_steeringScanCancellation?.Cancel();
+		_heartRateConnectionCancellation?.Cancel();
+		_steeringConnectionCancellation?.Cancel();
 	}
 
 	private void OnChangeTrainerPressed()
@@ -1704,6 +1808,7 @@ public partial class DeviceConnectionPanelController : Control
 	private void OnBackPressed()
 	{
 		_attemptCancellation?.Cancel();
+		CancelOptionalDiscovery();
 		if (_connectionState.Phase is TrainerConnectionPhase.Scanning or TrainerConnectionPhase.Connecting or TrainerConnectionPhase.SettingUp)
 			_connectionState.Invalidate();
 		_hudController?.Hide();
@@ -1722,8 +1827,14 @@ public partial class DeviceConnectionPanelController : Control
 	private bool SetPhase(long attemptId, TrainerConnectionPhase phase) => _connectionState.SetPhase(attemptId, phase);
 	public override void _ExitTree()
 	{
+		_attemptCancellation?.Cancel();
 		_heartRateScanCancellation?.Cancel();
+		_steeringScanCancellation?.Cancel();
+		_heartRateConnectionCancellation?.Cancel();
+		_steeringConnectionCancellation?.Cancel();
+		_steeringReconnectCancellation?.Cancel();
 		_heartRateClient?.Dispose();
+		if (_steeringClient is not null) _ = _steeringClient.DisposeAsync();
 		if (ReferenceEquals(GameBootstrap.HeartRateClient, _heartRateClient)) GameBootstrap.HeartRateClient = null;
 	}
 	private static string DisplayName(BleDiscoveredDevice device) => string.IsNullOrWhiteSpace(device.Name) ? "Bluetooth trainer" : device.Name;

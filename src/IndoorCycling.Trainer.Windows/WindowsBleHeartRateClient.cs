@@ -12,7 +12,7 @@ using Windows.Storage.Streams;
 namespace IndoorCycling.Trainer.Windows;
 
 /// <summary>Independent Bluetooth LE Heart Rate Service client; it never owns or resets the ANT+ adapter.</summary>
-public sealed class WindowsBleHeartRateClient : IDisposable
+public class WindowsBleHeartRateClient : IDisposable
 {
     public static readonly Guid HeartRateServiceUuid = Guid.Parse(HeartRateDiscoveryPolicy.ServiceUuid);
     private static readonly Guid HeartRateMeasurementUuid = new("00002a37-0000-1000-8000-00805f9b34fb");
@@ -27,15 +27,16 @@ public sealed class WindowsBleHeartRateClient : IDisposable
 
     public event Action? Disconnected;
     public event Action<int>? MeasurementReceived;
-    public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected && _measurement is not null;
-    public string? ConnectedDeviceName => _name;
-    public DateTimeOffset LastMeasurementAt { get { lock (_gate) return _latestAt; } }
-    public int? GetFreshBpm(DateTimeOffset now, TimeSpan? maxAge = null)
+    protected void RaiseDisconnected() => Disconnected?.Invoke();
+    public virtual bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected && _measurement is not null;
+    public virtual string? ConnectedDeviceName => _name;
+    public virtual DateTimeOffset LastMeasurementAt { get { lock (_gate) return _latestAt; } }
+    public virtual int? GetFreshBpm(DateTimeOffset now, TimeSpan? maxAge = null)
     {
         lock (_gate) return _latestBpm is { } bpm && now >= _latestAt && now - _latestAt <= (maxAge ?? TimeSpan.FromSeconds(8)) ? bpm : null;
     }
 
-    public async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan duration, CancellationToken cancellationToken = default)
+    public virtual async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan duration, CancellationToken cancellationToken = default)
     {
         await StopScanAsync();
         var found = new Dictionary<ulong, BleDiscoveredDevice>();
@@ -60,7 +61,7 @@ public sealed class WindowsBleHeartRateClient : IDisposable
         lock (gate) return found.Values.OrderByDescending(device => device.Rssi).ToArray();
     }
 
-    public async Task ConnectAsync(BleDiscoveredDevice candidate, CancellationToken cancellationToken = default)
+    public virtual async Task ConnectAsync(BleDiscoveredDevice candidate, CancellationToken cancellationToken = default)
     {
         await DisconnectAsync();
         cancellationToken.ThrowIfCancellationRequested();
@@ -90,7 +91,7 @@ public sealed class WindowsBleHeartRateClient : IDisposable
             throw new InvalidOperationException("Could not enable heart-rate notifications from the selected device.");
     }
 
-    public async Task DisconnectAsync()
+    public virtual async Task DisconnectAsync()
     {
         if (_measurement is not null)
         {
@@ -142,11 +143,11 @@ public sealed class WindowsBleHeartRateClient : IDisposable
             _service?.Dispose();
             _service = null;
             lock (_gate) { _latestBpm = null; _latestAt = DateTimeOffset.MinValue; }
-            Disconnected?.Invoke();
+            RaiseDisconnected();
         }
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         _ = StopScanAsync();
         if (_measurement is not null) _measurement.ValueChanged -= OnMeasurementChanged;
