@@ -9,7 +9,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 namespace IndoorCycling.Trainer.Windows
 {
 
-public sealed class WindowsBleTrainerClient : ITrainerClient
+public class WindowsBleTrainerClient : ITrainerClient
 {
     private BluetoothLEAdvertisementWatcher? _watcher;
     private BluetoothLEAdvertisementWatcher? _activeScanWatcher;
@@ -29,8 +29,8 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
 
     private ulong? _lastSeenAddress;
     private string? _lastSeenName;
-    public string? ConnectedDeviceName => _deviceName;
-    public string ActiveProtocol => "Bluetooth FTMS";
+    public virtual string? ConnectedDeviceName => _deviceName;
+    public virtual string ActiveProtocol => "Bluetooth FTMS";
     private string? _deviceName;
     public ulong? ConnectedBluetoothAddress { get; private set; }
     public string? LastConnectionFailureStage { get; private set; }
@@ -43,16 +43,17 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         LastConnectionFailureStage = stage;
     }
 
-    public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
-    public bool IsReady { get; private set; }
+    public virtual bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
+    public virtual bool IsReady { get; private set; }
 
-    public void MarkReady()
+    public virtual void MarkReady()
     {
         EnsureConnected();
         IsReady = true;
     }
 
     public event Action? Disconnected;
+    protected void RaiseDisconnected() => Disconnected?.Invoke();
 
     public event Action<object>? DebugEvent;
 
@@ -74,7 +75,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         return ConnectToLastSeenDeviceAsync(cancellationToken);
     }
 
-    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+    public virtual async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
         IsReady = false;
         await StopScanAsync();
@@ -121,7 +122,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         EmitDebug("disconnect", new { });
     }
 
-    public async Task SetSimulationAsync(
+    public virtual async Task SetSimulationAsync(
     SimulationCommand command,
     CancellationToken cancellationToken = default)
     {
@@ -188,7 +189,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         LastAppliedSimulationGradePercent = appliedGradePercent;
     }
 
-    public Task SetResistanceAsync(
+    public virtual Task SetResistanceAsync(
         ResistanceCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -197,7 +198,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         return Task.CompletedTask;
     }
 
-    public TrainerTelemetry GetLatestTelemetry()
+    public virtual TrainerTelemetry GetLatestTelemetry()
     {
         return _latestTelemetry;
     }
@@ -252,7 +253,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         return Task.CompletedTask;
     }
 
-    public async Task<IReadOnlyList<BleDiscoveredDevice>> ScanForDevicesAsync(
+    public virtual async Task<IReadOnlyList<BleDiscoveredDevice>> ScanForDevicesAsync(
         TimeSpan duration,
         CancellationToken cancellationToken = default)
     {
@@ -334,7 +335,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         await ConnectToDeviceAsync(_lastSeenAddress.Value, cancellationToken);
     }
 
-    public async Task ConnectToDeviceAsync(ulong bluetoothAddress, CancellationToken cancellationToken = default)
+    public virtual async Task ConnectToDeviceAsync(ulong bluetoothAddress, CancellationToken cancellationToken = default)
     {
         await _connectionSetupLock.WaitAsync(cancellationToken);
         try
@@ -545,7 +546,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         }
     }
 
-    public async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
+    public virtual async Task SubscribeFtmsTelemetryAsync(CancellationToken cancellationToken = default)
     {
         _operationStage = "ftms_telemetry_subscription";
         EnsureConnected();
@@ -570,7 +571,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             throw new InvalidOperationException($"Trainer telemetry subscription failed ({status}).");
     }
 
-    public async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
+    public virtual async Task SubscribeControlPointAsync(CancellationToken cancellationToken = default)
     {
         _operationStage = "ftms_control_point_subscription";
         EnsureConnected();
@@ -595,7 +596,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
             throw new InvalidOperationException($"Trainer control subscription failed ({status}).");
     }
 
-    public async Task RequestControlAsync(CancellationToken cancellationToken = default)
+    public virtual async Task RequestControlAsync(CancellationToken cancellationToken = default)
     {
         _operationStage = "ftms_control_request_acknowledgement";
         EnsureConnected();
@@ -742,7 +743,7 @@ public sealed class WindowsBleTrainerClient : ITrainerClient
         {
             IsReady = false;
             EmitDebug("connection_lost", new { name = sender.Name });
-            Disconnected?.Invoke();
+            RaiseDisconnected();
         }
     }
 

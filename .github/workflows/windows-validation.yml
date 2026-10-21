@@ -76,6 +76,14 @@ jobs:
           if ($startupOutput -match 'Main scene''s path could not be resolved|Cannot instantiate C# script|SCRIPT ERROR:') {
             throw 'Godot headless startup reported project or C# script-loading errors.'
           }
+          $connectionLog = "$env:RUNNER_TEMP\wodra-device-connection-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/DeviceConnectionAutomationReviewTest.tscn --log-file $connectionLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production device connection automation scene test failed.' }
+          $connectionOutput = Get-Content -LiteralPath $connectionLog -Raw
+          if ($connectionOutput -notmatch '\[DeviceConnectionAutomationReview\] PASS:' -or
+              $connectionOutput -match 'SCRIPT ERROR:|\[DeviceConnectionAutomationReview\] FAIL:') {
+            throw 'Production device connection automation scene test did not report a clean pass.'
+          }
       - name: Install PHP runtime for Strava broker checks
         if: matrix.configuration == 'Release'
         uses: shivammathur/setup-php@v2

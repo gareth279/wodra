@@ -13,7 +13,7 @@ using IndoorCycling.Trainer.Models;
 namespace IndoorCycling.Trainer.Windows;
 
 /// <summary>Bluetooth adapter for the Elite Sterzo Smart (not the mechanical Elite Sterzo).</summary>
-public sealed class EliteSterzoSmartClient : IAsyncDisposable
+public class EliteSterzoSmartClient : IAsyncDisposable
 {
     private static readonly Guid ServiceId = Guid.Parse(SterzoSmartProtocol.ServiceUuid);
     private static readonly Guid AngleId = Guid.Parse(SterzoSmartProtocol.SteeringAngleCharacteristicUuid);
@@ -33,12 +33,13 @@ public sealed class EliteSterzoSmartClient : IAsyncDisposable
     private int _disposed;
 
     public event Action? Disconnected;
-    public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected && _angle is not null;
-    public string? ConnectedDeviceName => _device?.Name;
-    public float? LatestAngle { get; private set; }
-    public DateTimeOffset? LastInputAt { get; private set; }
+    protected void RaiseDisconnected() => Disconnected?.Invoke();
+    public virtual bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected && _angle is not null;
+    public virtual string? ConnectedDeviceName => _device?.Name;
+    public virtual float? LatestAngle { get; protected set; }
+    public virtual DateTimeOffset? LastInputAt { get; protected set; }
 
-    public async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan timeout, CancellationToken cancellationToken)
+    public virtual async Task<IReadOnlyList<BleDiscoveredDevice>> ScanAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
         var found = new Dictionary<ulong, BleDiscoveredDevice>();
         var gate = new object();
@@ -68,7 +69,7 @@ public sealed class EliteSterzoSmartClient : IAsyncDisposable
         }
     }
 
-    public async Task ConnectAsync(BleDiscoveredDevice candidate, CancellationToken cancellationToken = default)
+    public virtual async Task ConnectAsync(BleDiscoveredDevice candidate, CancellationToken cancellationToken = default)
     {
         await DisconnectAsync().ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
@@ -77,7 +78,7 @@ public sealed class EliteSterzoSmartClient : IAsyncDisposable
         _device = device;
         _connectionHandler = (_, _) =>
         {
-            if (device.ConnectionStatus != BluetoothConnectionStatus.Connected) Disconnected?.Invoke();
+            if (device.ConnectionStatus != BluetoothConnectionStatus.Connected) RaiseDisconnected();
         };
         device.ConnectionStatusChanged += _connectionHandler;
         var services = await device.GetGattServicesForUuidAsync(ServiceId, BluetoothCacheMode.Uncached).AsTask(cancellationToken).ConfigureAwait(false);
@@ -120,7 +121,7 @@ public sealed class EliteSterzoSmartClient : IAsyncDisposable
         await WriteAsync([0x02, 0x02], cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DisconnectAsync()
+    public virtual async Task DisconnectAsync()
     {
         if (_watcher?.Status == BluetoothLEAdvertisementWatcherStatus.Started) _watcher.Stop();
         if (_challenge is not null)
@@ -144,7 +145,7 @@ public sealed class EliteSterzoSmartClient : IAsyncDisposable
         LatestAngle = null; LastInputAt = null;
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
         await DisconnectAsync().ConfigureAwait(false);

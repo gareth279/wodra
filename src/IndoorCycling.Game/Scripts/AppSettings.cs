@@ -29,6 +29,10 @@ public sealed class AppSettings
 	public int SteeringSensitivityPreferenceVersion { get; set; }
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
+	/// <summary>Last successfully connected Bluetooth heart-rate monitor.</summary>
+	public ulong? LastHeartRateBluetoothAddress { get; set; }
+	/// <summary>Last successfully connected Bluetooth steering controller.</summary>
+	public ulong? LastSteeringBluetoothAddress { get; set; }
 	public int WindowedWidth { get; set; } = 1152;
 	public int WindowedHeight { get; set; } = 648;
 	public int WindowedX { get; set; } = int.MinValue;
