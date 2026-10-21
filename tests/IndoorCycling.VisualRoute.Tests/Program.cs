@@ -685,6 +685,47 @@ var tests = new (string Name, Action Run)[]
         var moved = AmbientActorMath.Advance(state, path, 5, 2, false);
         Near(9, moved.WorldPosition.X); Near(0, moved.WorldPosition.Z);
     }),
+    ("faster ambient cars follow slower cyclists without overtaking or overlap", () =>
+    {
+        var carPosition = 0f;
+        var carSpeed = 12f;
+        var cyclistPosition = 40f;
+        const float cyclistSpeed = 5f;
+        const double step = .05;
+        for (var frame = 0; frame < 1200; frame++)
+        {
+            var rider = new AmbientTrafficRider("player", new Vector3(cyclistPosition, 0, 0), Vector3.UnitX, cyclistSpeed);
+            var target = AmbientTrafficFollowingMath.TargetSpeed(new Vector3(carPosition, 0, 0), Vector3.UnitX, 12,
+                [rider, rider with { RiderId = "ai-pacer", Position = new Vector3(cyclistPosition + 75, 0, 0), SpeedMetersPerSecond = 8 },
+                    rider with { RiderId = "remote-rider", Position = new Vector3(cyclistPosition + 90, 0, 0), SpeedMetersPerSecond = 7 }]);
+            carSpeed = AmbientTrafficFollowingMath.ApproachSpeed(carSpeed, target, step);
+            carPosition += carSpeed * (float)step;
+            cyclistPosition += cyclistSpeed * (float)step;
+            var gap = cyclistPosition - carPosition;
+            if (gap < AmbientTrafficFollowingMath.MinimumFollowingGapMeters - .02f)
+                throw new Exception($"Car overlapped the slower rider at frame {frame}: gap={gap:F2}m.");
+            if (carPosition > cyclistPosition)
+                throw new Exception($"Car overtook without lateral passing clearance at frame {frame}.");
+        }
+        if (Math.Abs(carSpeed - cyclistSpeed) > .1 || cyclistPosition - carPosition > 12)
+            throw new Exception($"Car did not settle into a realistic follow gap: speed={carSpeed:F2}, gap={cyclistPosition - carPosition:F2}m.");
+        var otherLane = AmbientTrafficFollowingMath.TargetSpeed(Vector3.Zero, Vector3.UnitX, 12,
+            [new AmbientTrafficRider("adjacent-rider", new Vector3(10, 0, 4), Vector3.UnitX, 4)]);
+        Near(12, otherLane);
+    }),
+    ("ambient cars brake before pedestrian path conflicts", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1,
+            [Vector3.Zero, new Vector3(100, 0, 0)], new AmbientSpeedRange(10, 10));
+        var pedestrian = new AmbientTrafficRider("pedestrian", new Vector3(5, 0, 0), Vector3.UnitX, 0);
+        var safeSpeed = AmbientTrafficFollowingMath.ClampSpeedForClearance(path, 0, 10, .5,
+            Array.Empty<AmbientTrafficRider>(), [pedestrian]);
+        if (safeSpeed <= 0 || safeSpeed >= 10)
+            throw new Exception($"Vehicle was not slowed before the pedestrian conflict: {safeSpeed:F2}m/s.");
+        var next = path.Sample(safeSpeed * .5);
+        if (Vector3.Distance(next.Position, pedestrian.Position) < 2.2f - .02f)
+            throw new Exception("Vehicle entered pedestrian clearance after the swept path test.");
+    }),
     ("actors despawn at a path end without jumping to another path", () =>
     {
         var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1, [Vector3.Zero, new Vector3(5,0,0)], new AmbientSpeedRange(2,2));

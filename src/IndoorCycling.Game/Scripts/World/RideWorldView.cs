@@ -563,8 +563,7 @@ public partial class RideWorldView : Node3D
             ? _hudController?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1)
             : new Rect2(0, 0, 1, 1);
         _camera.Follow(position, forward, delta, inspectionBounds, _rider.GlobalTransform, cameraSafeRect);
-        _ambientActorManager?.UpdateForRider(new System.Numerics.Vector3(position.X, position.Y, position.Z),
-            delta, _session.IsRidePaused);
+        _ambientActorManager?.UpdateForCyclists(BuildAmbientTrafficRiders(position), delta, _session.IsRidePaused);
         _debugElapsed += delta;
         if (DebugPoseLogging && _debugElapsed >= 1)
         {
@@ -740,6 +739,36 @@ public partial class RideWorldView : Node3D
                 reason = _session.MultiplayerRiders.Any(rider => rider.RiderId == id) ? "stale_or_no_render_sample" : "left_or_disconnected"
             });
         }
+    }
+
+    private IReadOnlyList<AmbientTrafficRider> BuildAmbientTrafficRiders(Vector3 playerPosition)
+    {
+        if (_geometry is null || _loadedRoute is null) return Array.Empty<AmbientTrafficRider>();
+        var result = new List<AmbientTrafficRider>();
+        foreach (var rider in _riderStateSource?.GetRiders()
+                     .Concat(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>()) ?? Array.Empty<RiderState>())
+        {
+            var pose = _geometry.GetPoseAtDistance(rider.WrappedRouteDistanceMeters);
+            var input = RiderVisualInputMath.Create(rider, pose, _loadedRoute.GetGradientAt(rider.WrappedRouteDistanceMeters));
+            var position = rider.RiderId == "player"
+                ? new System.Numerics.Vector3(playerPosition.X, playerPosition.Y, playerPosition.Z)
+                : input.Position;
+            result.Add(new AmbientTrafficRider(rider.RiderId, position, input.Forward, (float)(input.SpeedKph / 3.6)));
+        }
+        foreach (var remote in _session.GetInterpolatedRemoteRiders())
+        {
+            if (!remote.HasState || remote.DistanceMeters is not { } distance) continue;
+            var wrapped = _geometry.WrapDistance(distance);
+            var state = new RiderState(remote.RiderId, remote.DisplayName, _loadedRoute.Id, distance, wrapped,
+                (int)Math.Floor(distance / _geometry.LengthMeters) + 1,
+                remote.LateralOffsetMeters ?? RiderLaneMath.RiderLateralOffsetMeters,
+                (remote.Paused ? 0 : remote.SpeedKph ?? 0) / 3.6,
+                remote.PowerWatts ?? 0, remote.CadenceRpm, remote.Paused, 0);
+            var pose = _geometry.GetPoseAtDistance(wrapped);
+            var input = RiderVisualInputMath.Create(state, pose, _loadedRoute.GetGradientAt(wrapped));
+            result.Add(new AmbientTrafficRider(remote.RiderId, input.Position, input.Forward, (float)(input.SpeedKph / 3.6)));
+        }
+        return result;
     }
 
     private static void LogRemoteRiderDiagnostic(string eventName, object details)
