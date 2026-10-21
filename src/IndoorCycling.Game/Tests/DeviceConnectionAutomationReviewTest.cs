@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
@@ -17,6 +20,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			AddChild(screen);
 			await Settle(3);
 			VerifyTrainerRecoveryRetrySignal(screen);
+			VerifyAmbientActorDiagnosticOutput();
 			var trainer = new FakeTrainer();
 			var heartRate = new FakeHeartRate();
 			var steering = new FakeSteering();
@@ -51,7 +55,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				throw new InvalidOperationException("Trainer readiness waited for optional scans or optional scans ended before the delayed trainer became ready.");
 			connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/BackButton").EmitSignal(BaseButton.SignalName.Pressed);
 			await WaitUntil(() => heartRate.ScanCancellationCount == 2 && steering.ScanCancellationCount == 2);
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen starts all three scans independently, ignores rapid duplicate Connect, gates readiness on FTMS setup only, retries/cancels optional scans independently, cancels them on Back, and keeps trainer recovery Retry bound once across repeated state changes.");
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen verifies single-bound trainer recovery retry and numeric ambient actor x/y/z in actual JSONL output, then validates trainer/HR/steering scan and cancellation behavior.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
@@ -82,6 +86,30 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		retry.EmitSignal(BaseButton.SignalName.Pressed);
 		if (latestCalls != 2)
 			throw new InvalidOperationException("Retry did not recover after a disconnect/search state cycle.");
+	}
+
+	private static void VerifyAmbientActorDiagnosticOutput()
+	{
+		var payload = new
+		{
+			actorId = 991,
+			spawnPosition = AmbientActorDiagnosticPoint.From(new System.Numerics.Vector3(12.5f, 3.25f, -8.75f)),
+			pathStart = AmbientActorDiagnosticPoint.From(new System.Numerics.Vector3(1, 2, 3)),
+			pathEnd = AmbientActorDiagnosticPoint.From(new System.Numerics.Vector3(4, 5, 6))
+		};
+		GameLogger.Log("ambient_actor_spawned", payload);
+		var line = File.ReadLines(GameLogger.LogPath!).Select(text => JsonDocument.Parse(text))
+			.Last(entry => entry.RootElement.GetProperty("type").GetString() == "ambient_actor_spawned");
+		using (line)
+		{
+			var actual = line.RootElement.GetProperty("payload");
+			foreach (var field in new[] { "spawnPosition", "pathStart", "pathEnd" })
+				foreach (var axis in new[] { "x", "y", "z" })
+					if (actual.GetProperty(field).GetProperty(axis).ValueKind != JsonValueKind.Number)
+						throw new InvalidOperationException($"Emitted {field}.{axis} was not a JSON number.");
+			if (actual.GetProperty("spawnPosition").GetProperty("z").GetSingle() != -8.75f)
+				throw new InvalidOperationException("Emitted actor spawn coordinates did not preserve the actual position.");
+		}
 	}
 
 	private async Task Settle(int frames)

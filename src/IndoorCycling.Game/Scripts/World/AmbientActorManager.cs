@@ -189,11 +189,12 @@ public partial class AmbientActorManager : Node3D
                 actorId = state.ActorId, kind = kind.ToString(), sourceOsmId = path.SourceId,
                 sourceName = path.SourceName, roadClass = path.SourceClass, direction = path.Direction,
                 spawnPathDistanceMeters = selected.DistanceMeters, pathLengthMeters = path.LengthMeters,
-                pathStart = path.Points[0], pathEnd = path.Points[^1],
+                pathStart = AmbientActorDiagnosticPoint.From(path.Points[0]),
+                pathEnd = AmbientActorDiagnosticPoint.From(path.Points[^1]),
                 routeLoopContinuation = path.ContinuesAroundRoute,
                 routeDistanceMeters = path.RouteConnectionDistanceMeters,
                 remainingToEndpointMeters = path.LengthMeters - selected.DistanceMeters,
-                spawnPosition = state.WorldPosition
+                spawnPosition = AmbientActorDiagnosticPoint.From(state.WorldPosition)
             });
         }
     }
