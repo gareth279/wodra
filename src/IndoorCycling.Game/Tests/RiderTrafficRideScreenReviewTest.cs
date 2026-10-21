@@ -149,19 +149,27 @@ public partial class RiderTrafficRideScreenReviewTest : Node
         var bounds = world.PlayerRider.GetWorldVisualBounds();
         var safe = hud.GetCameraSafeViewportRect();
         var viewport = camera.GetViewport().GetVisibleRect().Size;
+        var minimumX = float.PositiveInfinity;
+        var maximumX = float.NegativeInfinity;
         for (var corner = 0; corner < 8; corner++)
         {
             var point = bounds.Position + new Vector3((corner & 1) == 0 ? 0 : bounds.Size.X,
                 (corner & 2) == 0 ? 0 : bounds.Size.Y, (corner & 4) == 0 ? 0 : bounds.Size.Z);
             var normalized = camera.UnprojectPosition(point) / viewport;
-            // The usable rectangle already excludes persistent HUD panels; leave a small
-            // extra cushion without rejecting a valid settled composition on headless CI.
-            const float margin = .005f;
+            minimumX = Math.Min(minimumX, normalized.X);
+            maximumX = Math.Max(maximumX, normalized.X);
+            // The usable rectangle already excludes persistent HUD panels. Keep the
+            // complete subject inside it; a separate centre check below catches skew.
+            const float margin = 0f;
             if (!float.IsFinite(normalized.X) || !float.IsFinite(normalized.Y)
                 || normalized.X < safe.Position.X + margin || normalized.X > safe.End.X - margin
                 || normalized.Y < safe.Position.Y + margin || normalized.Y > safe.End.Y - margin)
                 throw new InvalidOperationException($"Rider/bike left the usable camera view during actor interaction: {view}, projected={normalized}, safe={safe}.");
         }
+        var subjectCenterX = (minimumX + maximumX) * .5f;
+        var safeCenterX = (safe.Position.X + safe.End.X) * .5f;
+        if (Math.Abs(subjectCenterX - safeCenterX) > safe.Size.X * .25f)
+            throw new InvalidOperationException($"Rider/bike centre drifted from the HUD-safe composition during actor interaction: {view}, subject={subjectCenterX:F3}, safe-centre={safeCenterX:F3}, safe={safe}.");
     }
 
     private async Task Capture(string path)
