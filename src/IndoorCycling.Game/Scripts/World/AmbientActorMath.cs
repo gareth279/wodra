@@ -26,6 +26,105 @@ public sealed record AmbientRoadInput(long OsmId, string Highway, bool Oneway, d
 public readonly record struct AmbientRoadRouteConnection(int EndIndex, double RouteDistanceMeters, Vector3 RoutePosition);
 public readonly record struct AmbientSpeedRange(float MinimumMetersPerSecond, float MaximumMetersPerSecond);
 public readonly record struct AmbientSpawnSelection(int PathIndex, double DistanceMeters, Vector3 Position);
+public readonly record struct AmbientTrafficRider(string RiderId, Vector3 Position, Vector3 Forward, float SpeedMetersPerSecond);
+
+/// <summary>Speed control for scenery cars sharing a lane with riders; it never changes rider/ride state.</summary>
+public static class AmbientTrafficFollowingMath
+{
+    public const float MinimumFollowingGapMeters = 5.5f;
+    public const float FollowingHeadwaySeconds = 1.5f;
+    public const float MaximumBrakingMetersPerSecondSquared = 5f;
+    public const float MaximumLateralMatchMeters = 2.35f;
+    public const float MaximumFollowingLookAheadMeters = 55f;
+    public const float MaximumAccelerationMetersPerSecondSquared = 2.5f;
+
+    public static float TargetSpeed(Vector3 vehiclePosition, Vector3 vehicleForward, float cruiseSpeedMetersPerSecond,
+        IReadOnlyList<AmbientTrafficRider> riders)
+    {
+        if (!Finite(vehiclePosition) || !Finite(vehicleForward) || vehicleForward.LengthSquared() < 1e-8f
+            || !float.IsFinite(cruiseSpeedMetersPerSecond) || cruiseSpeedMetersPerSecond <= 0)
+            return 0;
+        var forward = Vector2.Normalize(new Vector2(vehicleForward.X, vehicleForward.Z));
+        if (forward.LengthSquared() < 1e-8f) return cruiseSpeedMetersPerSecond;
+        var target = cruiseSpeedMetersPerSecond;
+        foreach (var rider in riders)
+        {
+            if (!Finite(rider.Position) || !Finite(rider.Forward) || !float.IsFinite(rider.SpeedMetersPerSecond)) continue;
+            var riderForward = new Vector2(rider.Forward.X, rider.Forward.Z);
+            if (riderForward.LengthSquared() < 1e-8f || Vector2.Dot(forward, Vector2.Normalize(riderForward)) < .5f) continue;
+            var relative = new Vector2(rider.Position.X - vehiclePosition.X, rider.Position.Z - vehiclePosition.Z);
+            var longitudinal = Vector2.Dot(relative, forward);
+            if (longitudinal <= 0 || longitudinal > MaximumFollowingLookAheadMeters) continue;
+            var lateral = Math.Abs(forward.X * relative.Y - forward.Y * relative.X);
+            if (lateral > MaximumLateralMatchMeters) continue;
+
+            var gap = Math.Max(0, longitudinal - MinimumFollowingGapMeters);
+            var riderSpeed = Math.Max(0, rider.SpeedMetersPerSecond);
+            // Headway control starts slowing early; the braking envelope protects against a sudden close gap.
+            var headwaySpeed = riderSpeed + gap / FollowingHeadwaySeconds;
+            var brakingSpeed = MathF.Sqrt(riderSpeed * riderSpeed
+                + 2 * MaximumBrakingMetersPerSecondSquared * gap);
+            target = Math.Min(target, Math.Min(headwaySpeed, brakingSpeed));
+        }
+        return Math.Max(0, target);
+    }
+
+    public static float ApproachSpeed(float currentSpeedMetersPerSecond, float targetSpeedMetersPerSecond, double deltaSeconds)
+    {
+        if (!float.IsFinite(currentSpeedMetersPerSecond) || !float.IsFinite(targetSpeedMetersPerSecond)
+            || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return Math.Max(0, currentSpeedMetersPerSecond);
+        var acceleration = targetSpeedMetersPerSecond < currentSpeedMetersPerSecond
+            ? MaximumBrakingMetersPerSecondSquared : MaximumAccelerationMetersPerSecondSquared;
+        var step = (float)(acceleration * deltaSeconds);
+        return targetSpeedMetersPerSecond < currentSpeedMetersPerSecond
+            ? Math.Max(targetSpeedMetersPerSecond, currentSpeedMetersPerSecond - step)
+            : Math.Min(targetSpeedMetersPerSecond, currentSpeedMetersPerSecond + step);
+    }
+
+    /// <summary>Caps one car update at the last path point that preserves swept clearance to riders and pedestrians.</summary>
+    public static float ClampSpeedForClearance(AmbientActorPath path, double pathDistanceMeters,
+        float proposedSpeedMetersPerSecond, double deltaSeconds, IReadOnlyList<AmbientTrafficRider> cyclists,
+        IReadOnlyList<AmbientTrafficRider> pedestrians)
+    {
+        if (!path.IsUsable || !double.IsFinite(pathDistanceMeters) || !float.IsFinite(proposedSpeedMetersPerSecond)
+            || proposedSpeedMetersPerSecond <= 0 || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return 0;
+        var travel = proposedSpeedMetersPerSecond * deltaSeconds;
+        var samples = Math.Clamp((int)Math.Ceiling(travel / .15), 1, 128);
+        var safeProgress = 0d;
+        for (var sample = 1; sample <= samples; sample++)
+        {
+            var time = deltaSeconds * sample / samples;
+            var pathDistance = AmbientActorMath.AdvancePathDistance(path, pathDistanceMeters,
+                proposedSpeedMetersPerSecond, time, paused: false);
+            var vehiclePosition = path.Sample(pathDistance).Position;
+            var vehicleHeading = path.Sample(pathDistance).Heading;
+            var blocked = cyclists.Any(rider =>
+                {
+                    var sameDirection = Vector3.Dot(HorizontalUnit(vehicleHeading), HorizontalUnit(rider.Forward)) > .5f;
+                    var clearance = sameDirection ? MinimumFollowingGapMeters : 2.6f;
+                    return PredictedDistanceSquared(vehiclePosition, rider, time) < clearance * clearance;
+                })
+                || pedestrians.Any(pedestrian => PredictedDistanceSquared(vehiclePosition, pedestrian, time) < 2.2f * 2.2f);
+            if (blocked) return (float)(safeProgress / deltaSeconds);
+            safeProgress = travel * sample / samples;
+        }
+        return proposedSpeedMetersPerSecond;
+    }
+
+    private static float PredictedDistanceSquared(Vector3 vehiclePosition, AmbientTrafficRider obstacle, double elapsedSeconds)
+    {
+        var predicted = obstacle.Position + obstacle.Forward * (Math.Max(0, obstacle.SpeedMetersPerSecond) * (float)elapsedSeconds);
+        return Vector3.DistanceSquared(vehiclePosition, predicted);
+    }
+
+    private static Vector3 HorizontalUnit(Vector3 value)
+    {
+        value.Y = 0;
+        return value.LengthSquared() > 1e-8f ? Vector3.Normalize(value) : Vector3.Zero;
+    }
+
+    private static bool Finite(Vector3 value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+}
 
 /// <summary>Immutable, cumulative-length path used by a lightweight ambient actor.</summary>
 public sealed class AmbientActorPath

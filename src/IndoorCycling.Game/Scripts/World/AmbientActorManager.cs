@@ -14,6 +14,7 @@ public partial class AmbientActorManager : Node3D
         public required AmbientActorState State;
         public required AmbientActorPath Path;
         public required double DistanceAlongPath;
+        public required float CruiseSpeedMetersPerSecond;
         public required Node3D Visual;
     }
 
@@ -96,29 +97,47 @@ public partial class AmbientActorManager : Node3D
             exclusionMeters: ProceduralRoad.NonAsphaltJoinExclusionMeters));
     }
 
-    public void UpdateForRider(NVector3 riderWorldPosition, double deltaSeconds, bool paused)
+    public void UpdateForCyclists(IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds, bool paused)
     {
-        if (!_configured || paused || !Finite(riderWorldPosition)) return;
-        UpdateAndCull(_active, riderWorldPosition, deltaSeconds);
-        EnsurePopulation(AmbientActorKind.Car, _carPaths, riderWorldPosition,
+        if (!_configured || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return;
+        var player = cyclists.FirstOrDefault(rider => rider.RiderId == "player");
+        if (!Finite(player.Position)) return;
+        UpdateAndCull(_active, cyclists, deltaSeconds);
+        EnsurePopulation(AmbientActorKind.Car, _carPaths, player.Position, cyclists,
             AmbientActorTuning.TargetCars, AmbientActorTuning.MaximumCars,
             AmbientActorTuning.CarMinimumSpawnDistanceMeters, AmbientActorTuning.CarSpawnRadiusMeters,
             AmbientActorTuning.CarDespawnRadiusMeters);
-        EnsurePopulation(AmbientActorKind.Pedestrian, _pedestrianPaths, riderWorldPosition,
+        EnsurePopulation(AmbientActorKind.Pedestrian, _pedestrianPaths, player.Position, cyclists,
             AmbientActorTuning.TargetPedestrians, AmbientActorTuning.MaximumPedestrians,
             AmbientActorTuning.PedestrianMinimumSpawnDistanceMeters, AmbientActorTuning.PedestrianSpawnRadiusMeters,
             AmbientActorTuning.PedestrianDespawnRadiusMeters);
     }
 
-    private void UpdateAndCull(List<ActiveActor> actors, NVector3 riderPosition, double deltaSeconds)
+    private void UpdateAndCull(List<ActiveActor> actors, IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds)
     {
+        var playerPosition = cyclists.FirstOrDefault(rider => rider.RiderId == "player").Position;
+        var pedestrians = actors.Where(actor => actor.State.Kind == AmbientActorKind.Pedestrian && actor.State.Active)
+            .Select(actor => new AmbientTrafficRider($"pedestrian-{actor.State.ActorId}",
+                ToNumerics(actor.State.WorldPosition), ToNumerics(actor.State.Heading), actor.State.SpeedMetersPerSecond)).ToArray();
         for (var i = actors.Count - 1; i >= 0; i--)
         {
             var actor = actors[i];
+            var currentPosition = ToNumerics(actor.State.WorldPosition);
+            var currentHeading = ToNumerics(actor.State.Heading);
+            var speed = actor.State.SpeedMetersPerSecond;
+            if (actor.State.Kind == AmbientActorKind.Car)
+            {
+                var targetSpeed = AmbientTrafficFollowingMath.TargetSpeed(currentPosition, currentHeading,
+                    actor.CruiseSpeedMetersPerSecond, cyclists);
+                speed = AmbientTrafficFollowingMath.ApproachSpeed(speed, targetSpeed, deltaSeconds);
+                speed = AmbientTrafficFollowingMath.ClampSpeedForClearance(actor.Path, actor.DistanceAlongPath,
+                    speed, deltaSeconds, cyclists, pedestrians);
+            }
+            var movingState = actor.State with { SpeedMetersPerSecond = speed };
             var nextDistance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
-                actor.State.SpeedMetersPerSecond, deltaSeconds, paused: false);
-            var nextState = AmbientActorMath.Advance(actor.State, actor.Path, actor.DistanceAlongPath, deltaSeconds, paused: false);
-            var visible = AmbientActorMath.IsVisible(ToNumerics(nextState.WorldPosition), riderPosition,
+                speed, deltaSeconds, paused: false);
+            var nextState = AmbientActorMath.Advance(movingState, actor.Path, actor.DistanceAlongPath, deltaSeconds, paused: false);
+            var visible = AmbientActorMath.IsVisible(ToNumerics(nextState.WorldPosition), playerPosition,
                 actor.State.Kind == AmbientActorKind.Car ? AmbientActorTuning.CarDespawnRadiusMeters : AmbientActorTuning.PedestrianDespawnRadiusMeters);
             if (actor.Path.LoopStartDistanceMeters is { } loopStart && actor.DistanceAlongPath < loopStart && nextDistance >= loopStart)
                 GameLogger.Log("ambient_car_junction_transition", new
@@ -130,7 +149,7 @@ public partial class AmbientActorManager : Node3D
                 });
             if (!nextState.Active || !visible)
             {
-                var distanceToRider = NVector3.Distance(ToNumerics(nextState.WorldPosition), riderPosition);
+                var distanceToRider = NVector3.Distance(ToNumerics(nextState.WorldPosition), playerPosition);
                 GameLogger.Log("ambient_actor_despawned", new
                 {
                     actorId = actor.State.ActorId, kind = actor.State.Kind.ToString(), sourceOsmId = actor.Path.SourceId,
@@ -149,7 +168,7 @@ public partial class AmbientActorManager : Node3D
     }
 
     private void EnsurePopulation(AmbientActorKind kind, IReadOnlyList<AmbientActorPath> paths,
-        NVector3 riderPosition, int target, int maximum, float minimumSpawnDistance,
+        NVector3 riderPosition, IReadOnlyList<AmbientTrafficRider> cyclists, int target, int maximum, float minimumSpawnDistance,
         float spawnRadius, float despawnRadius)
     {
         var activeCount = _active.Count(actor => actor.State.Kind == kind && actor.State.Active);
@@ -162,13 +181,31 @@ public partial class AmbientActorManager : Node3D
         var attempts = Math.Min(100, paths.Count * 3);
         while (activeCount < target && activeCount < maximum)
         {
-            if (!AmbientActorMath.TrySelectSpawn(paths, riderPosition, minimumSpawnDistance, spawnRadius,
-                    _random, attempts, out var selected, out var tooClose, out var outsideRadius, out var invalidPath))
+            var tooClose = 0;
+            var outsideRadius = 0;
+            var invalidPath = 0;
+            var found = false;
+            var selected = default(AmbientSpawnSelection);
+            for (var attempt = 0; attempt < attempts; attempt++)
             {
-                RecordRejections(kind, tooClose, outsideRadius, invalidPath, success: false);
+                if (!AmbientActorMath.TrySelectSpawn(paths, riderPosition, minimumSpawnDistance, spawnRadius,
+                        _random, 1, out var candidate, out var rejectedClose, out var rejectedRadius, out var rejectedInvalid))
+                {
+                    tooClose += rejectedClose; outsideRadius += rejectedRadius; invalidPath += rejectedInvalid;
+                    continue;
+                }
+                var minimumCyclistClearance = kind == AmbientActorKind.Car ? 24f : 8f;
+                if (cyclists.Any(rider => NVector3.Distance(candidate.Position, rider.Position) < minimumCyclistClearance))
+                { tooClose++; continue; }
+                if (_active.Any(actor => actor.State.Kind != kind
+                    && NVector3.Distance(candidate.Position, ToNumerics(actor.State.WorldPosition)) < 2.2f))
+                { tooClose++; continue; }
+                selected = candidate;
+                found = true;
                 break;
             }
-            RecordRejections(kind, tooClose, outsideRadius, invalidPath, success: true);
+            RecordRejections(kind, tooClose, outsideRadius, invalidPath, success: found);
+            if (!found) break;
             var path = paths[selected.PathIndex];
             var speed = path.SpeedRange.MinimumMetersPerSecond
                 + (float)_random.NextDouble() * (path.SpeedRange.MaximumMetersPerSecond - path.SpeedRange.MinimumMetersPerSecond);
@@ -182,7 +219,8 @@ public partial class AmbientActorManager : Node3D
             var state = new AmbientActorState(_nextActorId++, kind, position, heading, speed, true);
             var visual = CreateVisual(kind);
             AddChild(visual);
-            var actor = new ActiveActor { State = state, Path = path, DistanceAlongPath = selected.DistanceMeters, Visual = visual };
+            var actor = new ActiveActor { State = state, Path = path, DistanceAlongPath = selected.DistanceMeters,
+                CruiseSpeedMetersPerSecond = speed, Visual = visual };
             _active.Add(actor); ApplyPose(actor); activeCount++;
             GameLogger.Log("ambient_actor_spawned", new
             {
@@ -198,6 +236,26 @@ public partial class AmbientActorManager : Node3D
             });
         }
     }
+
+    // Internal deterministic fixture seam used only by the Godot scene regression.
+    internal void ConfigureTrafficTestFixture(AmbientActorPath path, double distanceAlongPathMeters, float speedMetersPerSecond)
+    {
+        _configured = true;
+        var (position, heading) = path.Sample(distanceAlongPathMeters);
+        var visual = new Node3D();
+        AddChild(visual);
+        _active.Add(new ActiveActor
+        {
+            State = new AmbientActorState(1, AmbientActorKind.Car, position, heading, speedMetersPerSecond, true),
+            Path = path,
+            DistanceAlongPath = distanceAlongPathMeters,
+            CruiseSpeedMetersPerSecond = speedMetersPerSecond,
+            Visual = visual
+        });
+    }
+
+    internal void UpdateTrafficTestFixture(IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds) =>
+        UpdateForCyclists(cyclists, deltaSeconds, paused: false);
 
     private Node3D CreateVisual(AmbientActorKind kind)
     {
