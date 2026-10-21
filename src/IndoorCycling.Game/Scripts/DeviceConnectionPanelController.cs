@@ -15,6 +15,8 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<WindowsBleTrainerClient>? TrainerClientFactoryForTesting { get; set; }
 	internal Func<WindowsBleHeartRateClient>? HeartRateClientFactoryForTesting { get; set; }
 	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
+	internal Button HeartRateActionForTesting => _heartRateAction!;
+	internal Button SteeringActionForTesting => _steeringAction!;
 
 	private WindowsBleTrainerClient CreateTrainerClient() => TrainerClientFactoryForTesting?.Invoke() ?? new WindowsBleTrainerClient();
 	private WindowsBleHeartRateClient CreateHeartRateClient() => HeartRateClientFactoryForTesting?.Invoke() ?? new WindowsBleHeartRateClient();
