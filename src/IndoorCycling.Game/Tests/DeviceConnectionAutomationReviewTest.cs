@@ -16,6 +16,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
 			AddChild(screen);
 			await Settle(3);
+			VerifyTrainerRecoveryRetrySignal(screen);
 			var trainer = new FakeTrainer();
 			var heartRate = new FakeHeartRate();
 			var steering = new FakeSteering();
@@ -50,7 +51,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				throw new InvalidOperationException("Trainer readiness waited for optional scans or optional scans ended before the delayed trainer became ready.");
 			connection.GetNode<Button>("PanelContainer/MarginContainer/VBoxContainer/ActionsRow/BackButton").EmitSignal(BaseButton.SignalName.Pressed);
 			await WaitUntil(() => heartRate.ScanCancellationCount == 2 && steering.ScanCancellationCount == 2);
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen starts all three scans independently, ignores rapid duplicate Connect, gates readiness on FTMS setup only, retries/cancels optional scans independently, and cancels them on Back.");
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen starts all three scans independently, ignores rapid duplicate Connect, gates readiness on FTMS setup only, retries/cancels optional scans independently, cancels them on Back, and keeps trainer recovery Retry bound once across repeated state changes.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
@@ -58,6 +59,29 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			GD.PushError($"[DeviceConnectionAutomationReview] FAIL: {ex}");
 			GetTree().Quit(1);
 		}
+	}
+
+	private static void VerifyTrainerRecoveryRetrySignal(Node screen)
+	{
+		var hud = screen.GetNode<HudController>("HudController");
+		var retry = hud.FindChild("TrainerRecoveryRetryButton", true, false) as Button
+			?? throw new InvalidOperationException("Production RideScreen did not create its trainer recovery retry button.");
+		var firstCalls = 0;
+		var latestCalls = 0;
+		for (var i = 0; i < 12; i++)
+			hud.SetTrainerRecoveryAction("Trainer disconnected", () => firstCalls++);
+		hud.SetTrainerRecoveryAction("Retry available", () => latestCalls++);
+		retry.EmitSignal(BaseButton.SignalName.Pressed);
+		if (firstCalls != 0 || latestCalls != 1)
+			throw new InvalidOperationException($"Repeated recovery updates must invoke only the latest action once (old={firstCalls}, latest={latestCalls}).");
+		hud.SetTrainerRecoveryAction("Searching", null);
+		retry.EmitSignal(BaseButton.SignalName.Pressed);
+		if (latestCalls != 1 || retry.Visible || !retry.Disabled)
+			throw new InvalidOperationException("Clearing recovery state left a stale retry action or visible button.");
+		hud.SetTrainerRecoveryAction("Retry available", () => latestCalls++);
+		retry.EmitSignal(BaseButton.SignalName.Pressed);
+		if (latestCalls != 2)
+			throw new InvalidOperationException("Retry did not recover after a disconnect/search state cycle.");
 	}
 
 	private async Task Settle(int frames)
