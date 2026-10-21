@@ -16,6 +16,7 @@ public sealed class AiRiderController
     private int _lapNumber = 1;
     private double _wrappedDistanceMeters;
     private double _lateralOffsetMeters;
+    private double _targetLateralOffsetMeters;
     private bool _paused;
     private bool _initialized;
 
@@ -35,6 +36,7 @@ public sealed class AiRiderController
         _speedMetersPerSecond = Profile.InitialSpeedMetersPerSecond;
         _simulationTimeSeconds = player.SimulationTimeSeconds;
         _lateralOffsetMeters = Profile.LateralOffsetMeters;
+        _targetLateralOffsetMeters = Profile.LateralOffsetMeters;
         _initialized = true;
         UpdateRouteCoordinates(routeLengthMeters);
     }
@@ -46,10 +48,17 @@ public sealed class AiRiderController
         UpdateRouteCoordinates(routeLengthMeters);
     }
 
-    public void SetLateralOffset(double lateralOffsetMeters) => _lateralOffsetMeters = lateralOffsetMeters;
+    public void SetLateralOffset(double lateralOffsetMeters)
+    {
+        if (double.IsFinite(lateralOffsetMeters))
+            _targetLateralOffsetMeters = Math.Clamp(lateralOffsetMeters,
+                -RiderTrafficSeparation.MaximumRoadCentreOffsetMeters,
+                RiderTrafficSeparation.MaximumRoadCentreOffsetMeters);
+    }
 
     public void Update(double routeLengthMeters, Func<double, double> gradientAt,
-        double deltaSeconds, bool paused, SimulationPhysicsParameters? physics = null)
+        double deltaSeconds, bool paused, SimulationPhysicsParameters? physics = null,
+        double maximumSpeedMetersPerSecond = double.PositiveInfinity)
     {
         _paused = paused;
         if (!_initialized || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return;
@@ -61,8 +70,19 @@ public sealed class AiRiderController
             var step = CyclingPhysicsMath.Advance(_speedMetersPerSecond, Profile.TargetPowerWatts,
                 gradientAt(wrapped), Profile.TotalMassKg, Profile.RollingResistanceCoefficient,
                 Profile.DragCoefficientArea, stepSeconds, physics);
-            _speedMetersPerSecond = step.SpeedMetersPerSecond;
-            _routeDistanceMeters += step.DistanceMeters;
+            var previousSpeed = _speedMetersPerSecond;
+            var desiredSpeed = Math.Min(step.SpeedMetersPerSecond, maximumSpeedMetersPerSecond);
+            var speedLimit = desiredSpeed < previousSpeed
+                ? RiderTrafficSeparation.MaximumBrakingMetersPerSecondSquared * stepSeconds
+                : RiderTrafficSeparation.MaximumAccelerationMetersPerSecondSquared * stepSeconds;
+            _speedMetersPerSecond = previousSpeed + Math.Clamp(desiredSpeed - previousSpeed, -speedLimit, speedLimit);
+            var constrained = _speedMetersPerSecond + 1e-6 < step.SpeedMetersPerSecond;
+            _routeDistanceMeters += constrained
+                ? (previousSpeed + _speedMetersPerSecond) * 0.5 * stepSeconds
+                : step.DistanceMeters;
+            var lateralStep = RiderTrafficSeparation.MaximumLateralSpeedMetersPerSecond * stepSeconds;
+            _lateralOffsetMeters += Math.Clamp(_targetLateralOffsetMeters - _lateralOffsetMeters,
+                -lateralStep, lateralStep);
             _simulationTimeSeconds += stepSeconds;
             remaining -= stepSeconds;
         }
@@ -117,7 +137,7 @@ public sealed class AiRiderPopulation : IRiderStateSource
     }
 
     public void Update(RiderState player, double routeLengthMeters,
-        Func<double, double> gradientAt, double deltaSeconds)
+        Func<double, double> gradientAt, double deltaSeconds, IReadOnlyList<RiderState>? externalRiders = null)
     {
         if (!double.IsFinite(routeLengthMeters) || routeLengthMeters <= 0)
         { _riders = [player]; return; }
@@ -131,17 +151,23 @@ public sealed class AiRiderPopulation : IRiderStateSource
             }
             _initialized = true;
         }
+        var external = externalRiders ?? Array.Empty<RiderState>();
+        var trafficSnapshot = new[] { player }.Concat(_controllers.Select(controller => controller.State))
+            .Concat(external).Where(rider => rider.RiderId != "ghost" && rider.RouteId == player.RouteId).ToArray();
+        var laneTargets = RiderTrafficSeparation.ResolveAiLaneTargets(trafficSnapshot, routeLengthMeters);
         foreach (var controller in _controllers)
         {
+            var state = controller.State;
+            var speedCap = RiderTrafficSeparation.FollowingSpeedCap(state, trafficSnapshot, routeLengthMeters);
+            if (laneTargets.TryGetValue(state.RiderId, out var targetOffset))
+                controller.SetLateralOffset(targetOffset);
             var relative = RelativeDistance(controller.State.WrappedRouteDistanceMeters,
                 player.WrappedRouteDistanceMeters, routeLengthMeters);
             if (Math.Abs(relative) > RecycleDistanceMeters && !player.Paused)
                 controller.RecycleRelativeTo(player, routeLengthMeters);
-            controller.Update(routeLengthMeters, gradientAt, deltaSeconds, player.Paused);
+            controller.Update(routeLengthMeters, gradientAt, deltaSeconds, player.Paused,
+                maximumSpeedMetersPerSecond: speedCap);
         }
-        var overlapOffsets = ResolveVisualOverlapOffsets(new[] { player }.Concat(_controllers.Select(controller => controller.State)).ToArray(), routeLengthMeters);
-        foreach (var controller in _controllers)
-            if (overlapOffsets.TryGetValue(controller.State.RiderId, out var offset)) controller.SetLateralOffset(offset);
         _riders = new[] { player }.Concat(_controllers.Select(controller => controller.State)).ToArray();
     }
 
@@ -157,24 +183,8 @@ public sealed class AiRiderPopulation : IRiderStateSource
     }
 
     public static IReadOnlyDictionary<string, double> ResolveVisualOverlapOffsets(
-        IReadOnlyList<RiderState> riders, double routeLengthMeters)
-    {
-        var offsets = riders.ToDictionary(rider => rider.RiderId, rider => rider.LateralOffsetMeters);
-        var ai = riders.Where(rider => rider.RiderId != "player")
-            .OrderBy(rider => rider.RouteDistanceMeters).ThenBy(rider => rider.RiderId).ToArray();
-        for (var i = 0; i < ai.Length; i++)
-        {
-            var neighbors = riders.Where(other => other.RiderId != ai[i].RiderId
-                && Math.Abs(RelativeDistance(ai[i].WrappedRouteDistanceMeters,
-                    other.WrappedRouteDistanceMeters, routeLengthMeters)) <= OverlapDistanceMeters).ToArray();
-            if (neighbors.Length == 0) continue;
-            var used = neighbors.Select(other => offsets[other.RiderId]).ToList();
-            var slot = OverlapSlots.FirstOrDefault(candidate => used.All(value => Math.Abs(value - candidate) > 0.001));
-            if (slot == 0) slot = OverlapSlots[i % OverlapSlots.Length];
-            offsets[ai[i].RiderId] = slot;
-        }
-        return offsets;
-    }
+        IReadOnlyList<RiderState> riders, double routeLengthMeters) =>
+        RiderTrafficSeparation.ResolveAiLaneTargets(riders, routeLengthMeters);
 
     public static IReadOnlyList<AiRiderProfile> CreateProfiles(int count, int seed = DefaultSeed)
     {
@@ -205,5 +215,8 @@ public sealed class LocalRiderStateSource : IRiderStateSource
     public LocalRiderStateSource(AiRiderPopulation aiPopulation) => _aiPopulation = aiPopulation;
     public void Update(RiderState player, double routeLengthMeters, Func<double, double> gradientAt, double deltaSeconds) =>
         _aiPopulation.Update(player, routeLengthMeters, gradientAt, deltaSeconds);
+    public void Update(RiderState player, double routeLengthMeters, Func<double, double> gradientAt,
+        double deltaSeconds, IReadOnlyList<RiderState> externalRiders) =>
+        _aiPopulation.Update(player, routeLengthMeters, gradientAt, deltaSeconds, externalRiders);
     public IReadOnlyList<RiderState> GetRiders() => _aiPopulation.GetRiders();
 }

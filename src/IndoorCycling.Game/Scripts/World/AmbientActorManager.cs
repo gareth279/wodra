@@ -16,6 +16,8 @@ public partial class AmbientActorManager : Node3D
         public required double DistanceAlongPath;
         public required float CruiseSpeedMetersPerSecond;
         public required Node3D Visual;
+        public float LaneOffsetMeters;
+        public string? OvertakingRiderId;
     }
 
     private readonly List<ActiveActor> _active = [];
@@ -49,6 +51,8 @@ public partial class AmbientActorManager : Node3D
     public int InvalidOrShortCarPaths { get; private set; }
     public int CarPathsContinuingOntoRoute { get; private set; }
     public AmbientActorState? FirstCarState => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.State;
+    public float? FirstCarLaneOffset => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.LaneOffsetMeters;
+    internal IReadOnlyList<AmbientActorState> TrafficTestStates => _active.Select(actor => actor.State).ToArray();
     public AmbientActorState? FirstPedestrianState => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Pedestrian)?.State;
     public string? FirstCarRoadClass => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.Path.SourceClass;
     public string? FirstCarRoadName => _active.FirstOrDefault(actor => actor.State.Kind == AmbientActorKind.Car)?.Path.SourceName;
@@ -56,6 +60,8 @@ public partial class AmbientActorManager : Node3D
     public bool FirstPedestrianVisible => FirstVisualVisible(AmbientActorKind.Pedestrian);
     public int ApproximateTriangleCount => ActiveCarCount * AmbientCarVisual.ApproximateTriangleCount
         + ActivePedestrianCount * AmbientPedestrianVisual.ApproximateTriangleCount;
+    internal IReadOnlyList<AmbientTrafficRider> GetTrafficReviewSamples() =>
+        _active.Where(actor => actor.State.Active).Select(ToTrafficRider).ToArray();
 
     public void Configure(VisualRoute route, RouteBackgroundStreetData streetData)
     {
@@ -116,27 +122,41 @@ public partial class AmbientActorManager : Node3D
     private void UpdateAndCull(List<ActiveActor> actors, IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds)
     {
         var playerPosition = cyclists.FirstOrDefault(rider => rider.RiderId == "player").Position;
-        var pedestrians = actors.Where(actor => actor.State.Kind == AmbientActorKind.Pedestrian && actor.State.Active)
-            .Select(actor => new AmbientTrafficRider($"pedestrian-{actor.State.ActorId}",
-                ToNumerics(actor.State.WorldPosition), ToNumerics(actor.State.Heading), actor.State.SpeedMetersPerSecond)).ToArray();
+        var activeTraffic = actors.Where(actor => actor.State.Active).Select(ToTrafficRider).ToArray();
+        var pedestrians = activeTraffic.Where(actor => actor.RiderId.StartsWith("pedestrian-", StringComparison.Ordinal)).ToArray();
+        var cars = activeTraffic.Where(actor => actor.RiderId.StartsWith("car-", StringComparison.Ordinal)).ToArray();
         for (var i = actors.Count - 1; i >= 0; i--)
         {
             var actor = actors[i];
-            var currentPosition = ToNumerics(actor.State.WorldPosition);
-            var currentHeading = ToNumerics(actor.State.Heading);
             var speed = actor.State.SpeedMetersPerSecond;
             if (actor.State.Kind == AmbientActorKind.Car)
             {
-                var targetSpeed = AmbientTrafficFollowingMath.TargetSpeed(currentPosition, currentHeading,
-                    actor.CruiseSpeedMetersPerSecond, cyclists);
+                var otherCars = cars.Where(car => car.RiderId != $"car-{actor.State.ActorId}").ToArray();
+                var obstacles = cyclists.Concat(pedestrians).Concat(otherCars).ToArray();
+                if (actor.OvertakingRiderId is { } overtakingId)
+                {
+                    var targetRider = cyclists.FirstOrDefault(rider => rider.RiderId == overtakingId);
+                    var passed = targetRider.RiderId is null || IsPastOvertakenActor(actor, targetRider);
+                    actor.LaneOffsetMeters = ApproachLane(actor.LaneOffsetMeters,
+                        passed ? actor.Path.BaseLaneOffsetMeters : OvertakeLaneOffset(actor.Path), deltaSeconds);
+                    if (passed) actor.OvertakingRiderId = null;
+                }
+                else if (FindSafeOvertakeTarget(actor, cyclists, pedestrians, otherCars) is { } overtakeTarget)
+                {
+                    actor.OvertakingRiderId = overtakeTarget;
+                }
+                var targetSpeed = AmbientTrafficFollowingMath.TargetSpeed(actor.Path, actor.DistanceAlongPath,
+                    actor.LaneOffsetMeters, actor.CruiseSpeedMetersPerSecond, obstacles);
                 speed = AmbientTrafficFollowingMath.ApproachSpeed(speed, targetSpeed, deltaSeconds);
                 speed = AmbientTrafficFollowingMath.ClampSpeedForClearance(actor.Path, actor.DistanceAlongPath,
-                    speed, deltaSeconds, cyclists, pedestrians);
+                    speed, deltaSeconds, cyclists, pedestrians, otherCars, actor.LaneOffsetMeters);
             }
             var movingState = actor.State with { SpeedMetersPerSecond = speed };
             var nextDistance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
                 speed, deltaSeconds, paused: false);
             var nextState = AmbientActorMath.Advance(movingState, actor.Path, actor.DistanceAlongPath, deltaSeconds, paused: false);
+            var lanePose = actor.Path.SampleLane(nextDistance, actor.LaneOffsetMeters);
+            nextState = nextState with { WorldPosition = lanePose.Position, Heading = lanePose.Heading };
             var visible = AmbientActorMath.IsVisible(ToNumerics(nextState.WorldPosition), playerPosition,
                 actor.State.Kind == AmbientActorKind.Car ? AmbientActorTuning.CarDespawnRadiusMeters : AmbientActorTuning.PedestrianDespawnRadiusMeters);
             if (actor.Path.LoopStartDistanceMeters is { } loopStart && actor.DistanceAlongPath < loopStart && nextDistance >= loopStart)
@@ -165,6 +185,114 @@ public partial class AmbientActorManager : Node3D
             actor.State = nextState;
             ApplyPose(actor);
         }
+    }
+
+    private static AmbientTrafficRider ToTrafficRider(ActiveActor actor)
+    {
+        var isCar = actor.State.Kind == AmbientActorKind.Car;
+        var length = isCar ? AmbientActorEnvelopeMath.CarLengthMeters : AmbientActorEnvelopeMath.PedestrianLengthMeters;
+        var width = isCar ? AmbientActorEnvelopeMath.CarWidthMeters : AmbientActorEnvelopeMath.PedestrianWidthMeters;
+        var height = isCar ? AmbientActorEnvelopeMath.CarHeightMeters : AmbientActorEnvelopeMath.PedestrianHeightMeters;
+        var predictionSamples = (int)Math.Ceiling(AmbientTrafficFollowingMath.PredictionHorizonSeconds
+            / AmbientTrafficFollowingMath.PredictionSampleSeconds);
+        var prediction = new List<AmbientTrafficPose>(predictionSamples + 1);
+        for (var sample = 0; sample <= predictionSamples; sample++)
+        {
+            var seconds = sample * AmbientTrafficFollowingMath.PredictionSampleSeconds;
+            var distance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
+                actor.State.SpeedMetersPerSecond, seconds, paused: false);
+            var (position, heading) = actor.Path.SampleLane(distance, actor.LaneOffsetMeters);
+            prediction.Add(new AmbientTrafficPose(seconds, position, heading));
+        }
+        var kind = isCar ? "car" : "pedestrian";
+        return new AmbientTrafficRider($"{kind}-{actor.State.ActorId}",
+            ToNumerics(actor.State.WorldPosition), ToNumerics(actor.State.Heading), actor.State.SpeedMetersPerSecond,
+            length, width, height, prediction);
+    }
+
+    private static string? FindSafeOvertakeTarget(ActiveActor car,
+        IReadOnlyList<AmbientTrafficRider> cyclists, IReadOnlyList<AmbientTrafficRider> pedestrians,
+        IReadOnlyList<AmbientTrafficRider> otherCars)
+    {
+        if (car.Path.RoadWidthMeters < 6.5 || !car.Path.IsUsable) return null;
+        var passLane = OvertakeLaneOffset(car.Path);
+        if (Math.Abs(passLane) + AmbientActorEnvelopeMath.CarWidthMeters * .5
+            + AmbientActorMath.RoadEdgeClearanceMeters > car.Path.RoadWidthMeters * .5 + .001) return null;
+        var (_, currentHeading) = car.Path.SampleLane(car.DistanceAlongPath, car.LaneOffsetMeters);
+        var currentPosition = ToNumerics(car.State.WorldPosition);
+        var candidate = cyclists.Select(rider =>
+            {
+                var relative = rider.Position - currentPosition;
+                var forwardGap = NVector3.Dot(relative, currentHeading);
+                var lateralGap = Math.Abs(NVector3.Dot(relative, LocalLeft(currentHeading)));
+                var passPosition = car.Path.SampleLane(car.DistanceAlongPath, passLane).Position;
+                var passLateralGap = Math.Abs(NVector3.Dot(rider.Position - passPosition,
+                    LocalLeft(currentHeading)));
+                return (Rider: rider, ForwardGap: forwardGap, LateralGap: lateralGap,
+                    PassLateralGap: passLateralGap,
+                    Direction: NVector3.Dot(NormalizeHorizontal(currentHeading), NormalizeHorizontal(rider.Forward)));
+            })
+            .Where(item => item.Direction > .65f && item.ForwardGap is >= 7 and <= 35
+                && item.LateralGap < 1.6f
+                && item.PassLateralGap >= AmbientActorEnvelopeMath.CarWidthMeters * .5f
+                    + item.Rider.WidthMeters * .5f + AmbientActorEnvelopeMath.SafetyMarginMeters
+                && car.CruiseSpeedMetersPerSecond - item.Rider.SpeedMetersPerSecond > 2.0f)
+            .OrderBy(item => item.ForwardGap).FirstOrDefault();
+        if (candidate.Rider.RiderId is null) return null;
+
+        // Refuse the pass if any other actor occupies the center-side swept corridor until
+        // the car is safely ahead. That includes oncoming traffic on the opposite lane.
+        var relativeSpeed = Math.Max(2f, car.CruiseSpeedMetersPerSecond - candidate.Rider.SpeedMetersPerSecond);
+        var duration = (candidate.ForwardGap + AmbientActorEnvelopeMath.CarLengthMeters + candidate.Rider.LengthMeters
+            + AmbientTrafficFollowingMath.MinimumFollowingGapMeters * 2 + 3f) / relativeSpeed;
+        var horizon = Math.Clamp(duration + 1.0, 1.0, 12.0);
+        var steps = Math.Max(1, (int)Math.Ceiling(horizon / .15));
+        var conflicts = pedestrians.Concat(otherCars)
+            .Concat(cyclists.Where(rider => rider.RiderId != candidate.Rider.RiderId)).ToArray();
+        for (var step = 0; step <= steps; step++)
+        {
+            var seconds = horizon * step / steps;
+            var distance = AmbientActorMath.AdvancePathDistance(car.Path, car.DistanceAlongPath,
+                Math.Max(car.CruiseSpeedMetersPerSecond, car.State.SpeedMetersPerSecond), seconds, paused: false);
+            var pose = car.Path.SampleLane(distance, passLane);
+            if (!AmbientActorMath.IsValidTransform(pose.Position, pose.Heading)) return null;
+            if (conflicts.Any(obstacle => AmbientActorEnvelopeMath.Overlaps(pose.Position, pose.Heading,
+                    AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                    AmbientActorEnvelopeMath.CarHeightMeters, obstacle.PoseAt(seconds),
+                    obstacle.LengthMeters, obstacle.WidthMeters, obstacle.HeightMeters))) return null;
+        }
+        return candidate.Rider.RiderId;
+    }
+
+    private static bool IsPastOvertakenActor(ActiveActor car, AmbientTrafficRider rider)
+    {
+        var relative = ToNumerics(car.State.WorldPosition) - rider.Position;
+        var longitudinal = NVector3.Dot(relative, NormalizeHorizontal(rider.Forward));
+        return longitudinal > AmbientActorEnvelopeMath.CarLengthMeters * .5f
+            + rider.LengthMeters * .5f + AmbientTrafficFollowingMath.MinimumFollowingGapMeters;
+    }
+
+    private static float OvertakeLaneOffset(AmbientActorPath path) =>
+        Math.Clamp(Math.Sign(path.BaseLaneOffsetMeters) * .15f,
+            (float)(-path.RoadWidthMeters * .5 + AmbientActorEnvelopeMath.CarWidthMeters * .5 + AmbientActorMath.RoadEdgeClearanceMeters),
+            (float)(path.RoadWidthMeters * .5 - AmbientActorEnvelopeMath.CarWidthMeters * .5 - AmbientActorMath.RoadEdgeClearanceMeters));
+
+    private static float ApproachLane(float current, float target, double deltaSeconds)
+    {
+        var maxStep = (float)(1.2 * Math.Clamp(deltaSeconds, 0, .25));
+        return current + Math.Clamp(target - current, -maxStep, maxStep);
+    }
+
+    private static NVector3 LocalLeft(NVector3 forward)
+    {
+        var left = NVector3.Cross(NVector3.UnitY, forward);
+        return left.LengthSquared() > 1e-8f ? NVector3.Normalize(left) : NVector3.Zero;
+    }
+
+    private static NVector3 NormalizeHorizontal(NVector3 value)
+    {
+        value.Y = 0;
+        return value.LengthSquared() > 1e-8f ? NVector3.Normalize(value) : NVector3.Zero;
     }
 
     private void EnsurePopulation(AmbientActorKind kind, IReadOnlyList<AmbientActorPath> paths,
@@ -197,8 +325,21 @@ public partial class AmbientActorManager : Node3D
                 var minimumCyclistClearance = kind == AmbientActorKind.Car ? 24f : 8f;
                 if (cyclists.Any(rider => NVector3.Distance(candidate.Position, rider.Position) < minimumCyclistClearance))
                 { tooClose++; continue; }
-                if (_active.Any(actor => actor.State.Kind != kind
-                    && NVector3.Distance(candidate.Position, ToNumerics(actor.State.WorldPosition)) < 2.2f))
+                var candidatePath = paths[candidate.PathIndex];
+                var candidatePose = candidatePath.Sample(candidate.DistanceMeters);
+                var candidateLength = kind == AmbientActorKind.Car
+                    ? AmbientActorEnvelopeMath.CarLengthMeters : AmbientActorEnvelopeMath.PedestrianLengthMeters;
+                var candidateWidth = kind == AmbientActorKind.Car
+                    ? AmbientActorEnvelopeMath.CarWidthMeters : AmbientActorEnvelopeMath.PedestrianWidthMeters;
+                var candidateHeight = kind == AmbientActorKind.Car
+                    ? AmbientActorEnvelopeMath.CarHeightMeters : AmbientActorEnvelopeMath.PedestrianHeightMeters;
+                if (_active.Any(actor =>
+                {
+                    var obstacle = ToTrafficRider(actor);
+                    return AmbientActorEnvelopeMath.Overlaps(candidatePose.Position, candidatePose.Heading,
+                        candidateLength, candidateWidth, candidateHeight, obstacle.PoseAt(0),
+                        obstacle.LengthMeters, obstacle.WidthMeters, obstacle.HeightMeters);
+                }))
                 { tooClose++; continue; }
                 selected = candidate;
                 found = true;
@@ -220,7 +361,7 @@ public partial class AmbientActorManager : Node3D
             var visual = CreateVisual(kind);
             AddChild(visual);
             var actor = new ActiveActor { State = state, Path = path, DistanceAlongPath = selected.DistanceMeters,
-                CruiseSpeedMetersPerSecond = speed, Visual = visual };
+                CruiseSpeedMetersPerSecond = speed, Visual = visual, LaneOffsetMeters = path.BaseLaneOffsetMeters };
             _active.Add(actor); ApplyPose(actor); activeCount++;
             GameLogger.Log("ambient_actor_spawned", new
             {
@@ -241,17 +382,27 @@ public partial class AmbientActorManager : Node3D
     internal void ConfigureTrafficTestFixture(AmbientActorPath path, double distanceAlongPathMeters, float speedMetersPerSecond)
     {
         _configured = true;
+        AddTrafficTestFixture(AmbientActorKind.Car, path, distanceAlongPathMeters, speedMetersPerSecond);
+    }
+
+    internal void AddTrafficTestFixture(AmbientActorKind kind, AmbientActorPath path,
+        double distanceAlongPathMeters, float speedMetersPerSecond)
+    {
         var (position, heading) = path.Sample(distanceAlongPathMeters);
-        var visual = new Node3D();
+        var state = new AmbientActorState(_nextActorId++, kind, position, heading, speedMetersPerSecond, true);
+        var visual = CreateVisual(kind);
         AddChild(visual);
-        _active.Add(new ActiveActor
+        var actor = new ActiveActor
         {
-            State = new AmbientActorState(1, AmbientActorKind.Car, position, heading, speedMetersPerSecond, true),
+            State = state,
             Path = path,
             DistanceAlongPath = distanceAlongPathMeters,
             CruiseSpeedMetersPerSecond = speedMetersPerSecond,
-            Visual = visual
-        });
+            Visual = visual,
+            LaneOffsetMeters = path.BaseLaneOffsetMeters
+        };
+        _active.Add(actor);
+        ApplyPose(actor);
     }
 
     internal void UpdateTrafficTestFixture(IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds) =>

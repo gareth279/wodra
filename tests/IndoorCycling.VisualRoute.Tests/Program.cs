@@ -713,6 +713,76 @@ var tests = new (string Name, Action Run)[]
             [new AmbientTrafficRider("adjacent-rider", new Vector3(10, 0, 4), Vector3.UnitX, 4)]);
         Near(12, otherLane);
     }),
+    ("vehicle envelopes include body dimensions, pedestrian clearance, and grade separation", () =>
+    {
+        var car = new Vector3(0, 0, 1.7f);
+        var cyclistBeside = new AmbientTrafficPose(0, new Vector3(0, 0, 1.7f), Vector3.UnitX);
+        if (!AmbientActorEnvelopeMath.Overlaps(car, Vector3.UnitX,
+                AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                AmbientActorEnvelopeMath.CarHeightMeters, cyclistBeside,
+                1.9f, .86f, 1.8f))
+            throw new Exception("The car and cyclist envelopes should overlap at the modeled shoulder clearance.");
+        car = Vector3.Zero;
+        var cyclistInSeparateLane = cyclistBeside with { Position = new Vector3(0, 0, 2.1f) };
+        if (AmbientActorEnvelopeMath.Overlaps(car, Vector3.UnitX,
+                AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                AmbientActorEnvelopeMath.CarHeightMeters, cyclistInSeparateLane,
+                1.9f, .86f, 1.8f))
+            throw new Exception("A cyclist with adequate lateral clearance was treated as a collision.");
+        var upperRoad = cyclistBeside with { Position = new Vector3(0, 4, 1.7f) };
+        if (AmbientActorEnvelopeMath.Overlaps(car, Vector3.UnitX,
+                AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                AmbientActorEnvelopeMath.CarHeightMeters, upperRoad,
+                1.9f, .86f, 1.8f))
+            throw new Exception("A separate elevated road was treated as a collision.");
+    }),
+    ("ambient cars yield to curved swept paths and low-frame-rate actor crossings", () =>
+    {
+        var bend = new AmbientActorPath(AmbientActorKind.Car, 3, 1,
+            [Vector3.Zero, new Vector3(10, 0, 0), new Vector3(10, 0, 40)], new AmbientSpeedRange(10, 10));
+        var crossingCyclist = new AmbientTrafficRider("ai-bend", new Vector3(10, 0, -10), Vector3.UnitZ, 8,
+            1.9f, .86f, 1.8f,
+            [new AmbientTrafficPose(0, new Vector3(10, 0, -10), Vector3.UnitZ),
+             new AmbientTrafficPose(1, new Vector3(10, 0, 0), Vector3.UnitZ)]);
+        var bendTarget = AmbientTrafficFollowingMath.TargetSpeed(bend, 0, 0, 10, [crossingCyclist]);
+        if (bendTarget >= 9.9f) throw new Exception($"Curved cyclist conflict was ignored: target={bendTarget:F2}.");
+
+        var straight = new AmbientActorPath(AmbientActorKind.Car, 4, 1,
+            [Vector3.Zero, new Vector3(200, 0, 0)], new AmbientSpeedRange(10, 10));
+        var stoppedRider = new AmbientTrafficRider("stopped", new Vector3(28, 0, 0), Vector3.UnitX, 0);
+        var safeSpeed = AmbientTrafficFollowingMath.ClampSpeedForClearance(straight, 0, 40, 1,
+            [stoppedRider], []);
+        if (safeSpeed >= 40 || safeSpeed <= 0)
+            throw new Exception($"Large-delta swept collision was not clamped to forward safe progress: {safeSpeed:F2}.");
+        var safePose = straight.Sample(safeSpeed);
+        if (AmbientActorEnvelopeMath.Overlaps(safePose.Position, safePose.Heading,
+                AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                AmbientActorEnvelopeMath.CarHeightMeters, stoppedRider.PoseAt(1),
+                stoppedRider.LengthMeters, stoppedRider.WidthMeters, stoppedRider.HeightMeters))
+            throw new Exception("Large-delta clamp still ended inside the cyclist model envelope.");
+    }),
+    ("ambient cars avoid another vehicle and a pedestrian using 3D envelopes", () =>
+    {
+        var path = new AmbientActorPath(AmbientActorKind.Car, 9, 1,
+            [Vector3.Zero, new Vector3(100, 0, 0)], new AmbientSpeedRange(12, 12));
+        var headOnCar = new AmbientTrafficRider("car-oncoming", new Vector3(10, 0, 0), -Vector3.UnitX, 8,
+            AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+            AmbientActorEnvelopeMath.CarHeightMeters);
+        var safeCarSpeed = AmbientTrafficFollowingMath.ClampSpeedForClearance(path, 0, 12, 1,
+            [], [], [headOnCar]);
+        if (safeCarSpeed >= 12) throw new Exception("The car was not slowed for an opposing occupied path.");
+        var pedestrian = new AmbientTrafficRider("pedestrian", new Vector3(7, 0, 0), Vector3.Zero, 0,
+            AmbientActorEnvelopeMath.PedestrianLengthMeters, AmbientActorEnvelopeMath.PedestrianWidthMeters,
+            AmbientActorEnvelopeMath.PedestrianHeightMeters);
+        if (!AmbientActorEnvelopeMath.Overlaps(new Vector3(4.4f, 0, 0), Vector3.UnitX,
+                AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                AmbientActorEnvelopeMath.CarHeightMeters, pedestrian.PoseAt(0),
+                pedestrian.LengthMeters, pedestrian.WidthMeters, pedestrian.HeightMeters))
+            throw new Exception("Fixture pedestrian was not inside the direct vehicle-envelope query.");
+        var pedestrianSpeed = AmbientTrafficFollowingMath.ClampSpeedForClearance(path, 0, 12, 1,
+            [], [pedestrian]);
+        if (pedestrianSpeed >= 12) throw new Exception($"The car was not slowed for a pedestrian in its path: {pedestrianSpeed:F2}m/s.");
+    }),
     ("ambient cars brake before pedestrian path conflicts", () =>
     {
         var path = new AmbientActorPath(AmbientActorKind.Car, 1, 1,
@@ -964,10 +1034,93 @@ var tests = new (string Name, Action Run)[]
             TestRider(100, 100, 1000) with { RiderId = "ai-a", DisplayName = "A", LateralOffsetMeters = 1.75 },
             TestRider(100, 100, 1000) with { RiderId = "ai-b", DisplayName = "B", LateralOffsetMeters = 1.75 } };
         var offsets = AiRiderPopulation.ResolveVisualOverlapOffsets(riders, 1000);
-        if (Math.Abs(offsets["ai-a"] - offsets["ai-b"]) < .001
-            || Math.Abs(offsets["ai-a"] - offsets["player"]) < .001
-            || Math.Abs(offsets["ai-b"] - offsets["player"]) < .001)
-            throw new Exception("Overlapping rider visual offsets remained stacked.");
+        var separated = riders.Select(rider => rider with
+            { LateralOffsetMeters = offsets.GetValueOrDefault(rider.RiderId, rider.LateralOffsetMeters) }).ToArray();
+        for (var first = 0; first < separated.Length; first++)
+        for (var second = first + 1; second < separated.Length; second++)
+            if (RiderTrafficSeparation.HasModelEnvelopeOverlap(separated[first], separated[second], 1000))
+                throw new Exception($"Rider model envelopes overlap after assignment: {separated[first].RiderId}/{separated[second].RiderId} ({offsets[separated[first].RiderId]:F2}/{offsets[separated[second].RiderId]:F2}m)." );
+        if (separated.Any(rider => Math.Abs(rider.LateralOffsetMeters) > RiderTrafficSeparation.MaximumRoadCentreOffsetMeters))
+            throw new Exception("AI lane assignment moved a rider outside the route road envelope.");
+    }),
+    ("three-rider groups, steering into occupied space, and remote riders use distinct presentation lanes", () =>
+    {
+        var player = TestRider(500, 500, 1000) with { LateralOffsetMeters = 1.75 };
+        var riders = new[]
+        {
+            player,
+            player with { RiderId = "ai-a", DisplayName = "A", LateralOffsetMeters = 1.75 },
+            player with { RiderId = "ai-b", DisplayName = "B", LateralOffsetMeters = 1.75 },
+            player with { RiderId = "ai-c", DisplayName = "C", LateralOffsetMeters = 1.75 }
+        };
+        var targets = RiderTrafficSeparation.ResolveAiLaneTargets(riders, 1000);
+        var placed = riders.Select(rider => rider.RiderId.StartsWith("ai-", StringComparison.Ordinal)
+            ? rider with { LateralOffsetMeters = targets[rider.RiderId] } : rider).ToArray();
+        for (var first = 0; first < placed.Length; first++)
+        for (var second = first + 1; second < placed.Length; second++)
+            if (RiderTrafficSeparation.HasModelEnvelopeOverlap(placed[first], placed[second], 1000))
+                throw new Exception($"Three-rider group overlap remains: {placed[first].RiderId}/{placed[second].RiderId}.");
+
+        var steeringIntoAi = player with { LateralOffsetMeters = targets["ai-a"] };
+        var steeredTargets = RiderTrafficSeparation.ResolveAiLaneTargets(
+            new[] { steeringIntoAi }.Concat(riders.Skip(1)).ToArray(), 1000);
+        if (Math.Abs(steeredTargets["ai-a"] - steeringIntoAi.LateralOffsetMeters)
+            < RiderTrafficSeparation.MinimumLaneCentreSeparationMeters)
+            throw new Exception("AI did not yield when steering moved the player into its occupied lane.");
+
+        var remote = player with { RiderId = "remote-human", DisplayName = "Remote", LateralOffsetMeters = 1.75 };
+        var remoteLane = RiderTrafficSeparation.RemotePresentationLaneTarget(remote, [player], 1000);
+        if (Math.Abs(remoteLane - player.LateralOffsetMeters)
+            < RiderTrafficSeparation.MinimumLaneCentreSeparationMeters)
+            throw new Exception("Remote presentation remained inside the local rider's model envelope.");
+    }),
+    ("same-speed side-by-side riders remain unaffected while stopped riders create a speed cap", () =>
+    {
+        var follower = TestRider(100, 100, 1000) with
+            { VirtualSpeedMps = 5, LateralOffsetMeters = 1.75 };
+        var sameSpeed = follower with
+            { RiderId = "ai-leader", DisplayName = "Leader", WrappedRouteDistanceMeters = 112,
+                RouteDistanceMeters = 112, VirtualSpeedMps = 5 };
+        var sameSpeedCap = RiderTrafficSeparation.FollowingSpeedCap(follower, [sameSpeed], 1000);
+        if (sameSpeedCap < follower.VirtualSpeedMps)
+            throw new Exception("Equal-speed group riding was braked without a closing conflict.");
+        var stopped = sameSpeed with { WrappedRouteDistanceMeters = 105, RouteDistanceMeters = 105, VirtualSpeedMps = 0 };
+        var stoppedCap = RiderTrafficSeparation.FollowingSpeedCap(follower, [stopped], 1000);
+        if (stoppedCap >= follower.VirtualSpeedMps)
+            throw new Exception("A stopped same-lane rider did not create a controlled deceleration cap.");
+        var adjacent = sameSpeed with { WrappedRouteDistanceMeters = 100, RouteDistanceMeters = 100,
+            LateralOffsetMeters = 2.8, VirtualSpeedMps = 4 };
+        if (RiderTrafficSeparation.FollowingSpeedCap(follower, [adjacent], 1000) < follower.VirtualSpeedMps)
+            throw new Exception("Side-by-side riders with physical handlebar clearance were treated as same-lane traffic.");
+    }),
+    ("AI riders follow a slower human through a lap seam without passing or envelope overlap", () =>
+    {
+        var leader = TestRider(995, 995, 1000) with
+            { VirtualSpeedMps = 4.5, LateralOffsetMeters = 1.75 };
+        var controller = new AiRiderController(new AiRiderProfile("Follower", 220, 85, 75,
+            .005, .32, -8, 1.75, 10));
+        controller.PlaceRelativeTo(leader, 1000);
+        var minimumGap = double.PositiveInfinity;
+        const double step = .05;
+        for (var frame = 0; frame < 1200; frame++)
+        {
+            var cap = RiderTrafficSeparation.FollowingSpeedCap(controller.State, [leader], 1000);
+            controller.Update(1000, _ => 0, step, paused: false, maximumSpeedMetersPerSecond: cap);
+            leader = leader with
+            {
+                RouteDistanceMeters = leader.RouteDistanceMeters + leader.VirtualSpeedMps * step,
+                WrappedRouteDistanceMeters = (leader.WrappedRouteDistanceMeters + leader.VirtualSpeedMps * step) % 1000
+            };
+            var gap = AiRiderPopulation.RelativeDistance(controller.State.WrappedRouteDistanceMeters,
+                leader.WrappedRouteDistanceMeters, 1000);
+            if (gap > 0) throw new Exception($"AI passed the slower rider at frame {frame}: gap={gap:F2}m.");
+            minimumGap = Math.Min(minimumGap, -gap);
+            if (RiderTrafficSeparation.HasModelEnvelopeOverlap(controller.State, leader, 1000))
+                throw new Exception($"AI rider and local rider envelopes overlapped at frame {frame}.");
+        }
+        if (minimumGap < RiderTrafficSeparation.MinimumSameLaneGapMeters - .1
+            || Math.Abs(controller.State.VirtualSpeedMps - leader.VirtualSpeedMps) > .2)
+            throw new Exception($"Follower did not settle into a safe cadence: gap={minimumGap:F2}m, speed={controller.State.VirtualSpeedMps:F2}m/s.");
     }),
     ("relative rider distance chooses the short signed path across the lap seam", () =>
     {

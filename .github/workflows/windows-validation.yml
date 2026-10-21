@@ -92,6 +92,14 @@ jobs:
               $trafficOutput -match 'SCRIPT ERROR:|\[AmbientTrafficFollowingReview\] FAIL:') {
             throw 'Production ambient traffic following scene test did not report a clean pass.'
           }
+          $riderTrafficLog = "$env:RUNNER_TEMP\wodra-rider-traffic-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RiderTrafficRideScreenReviewTest.tscn --log-file $riderTrafficLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen rider/traffic interaction review failed.' }
+          $riderTrafficOutput = Get-Content -LiteralPath $riderTrafficLog -Raw
+          if ($riderTrafficOutput -notmatch '\[RiderTrafficRideScreenReview\] PASS:' -or
+              $riderTrafficOutput -match 'SCRIPT ERROR:|\[RiderTrafficRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen rider/traffic review did not report a clean pass.'
+          }
       - name: Install PHP runtime for Strava broker checks
         if: matrix.configuration == 'Release'
         uses: shivammathur/setup-php@v2
