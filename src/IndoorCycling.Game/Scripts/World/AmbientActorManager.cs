@@ -133,20 +133,34 @@ public partial class AmbientActorManager : Node3D
             {
                 var otherCars = cars.Where(car => car.RiderId != $"car-{actor.State.ActorId}").ToArray();
                 var obstacles = cyclists.Concat(pedestrians).Concat(otherCars).ToArray();
+                // Give crossing cars a stable, deterministic order. The higher-ID car
+                // yields to the lower-ID car; without this, reciprocal look-ahead can
+                // make both vehicles brake to a stop at the edge of the same junction.
+                // Keep full geometry checks below so the priority vehicle still cannot
+                // enter an occupied envelope during an update.
+                var rightOfWayObstacles = cyclists.Concat(pedestrians)
+                    .Concat(otherCars.Where(car => !TryGetCarActorId(car.RiderId, out var otherId)
+                        || otherId < actor.State.ActorId
+                        || NVector3.Dot(NormalizeHorizontal(actor.State.Heading), NormalizeHorizontal(car.Forward)) > .55f))
+                    .ToArray();
                 if (actor.OvertakingRiderId is { } overtakingId)
                 {
                     var targetRider = cyclists.FirstOrDefault(rider => rider.RiderId == overtakingId);
                     var passed = targetRider.RiderId is null || IsPastOvertakenActor(actor, targetRider);
-                    actor.LaneOffsetMeters = ApproachLane(actor.LaneOffsetMeters,
-                        passed ? actor.Path.BaseLaneOffsetMeters : OvertakeLaneOffset(actor.Path), deltaSeconds);
-                    if (passed) actor.OvertakingRiderId = null;
+                    var laneTarget = passed ? actor.Path.BaseLaneOffsetMeters : OvertakeLaneOffset(actor.Path);
+                    actor.LaneOffsetMeters = ApproachLane(actor.LaneOffsetMeters, laneTarget, deltaSeconds);
+                    // Keep the manoeuvre active through the entire return transition. If the
+                    // target is cleared after the first 60 mm lane step, later frames have no
+                    // state that continues moving the car back to its normal travel lane.
+                    if (passed && Math.Abs(actor.LaneOffsetMeters - actor.Path.BaseLaneOffsetMeters) < .05f)
+                        actor.OvertakingRiderId = null;
                 }
                 else if (FindSafeOvertakeTarget(actor, cyclists, pedestrians, otherCars) is { } overtakeTarget)
                 {
                     actor.OvertakingRiderId = overtakeTarget;
                 }
                 var targetSpeed = AmbientTrafficFollowingMath.TargetSpeed(actor.Path, actor.DistanceAlongPath,
-                    actor.LaneOffsetMeters, actor.CruiseSpeedMetersPerSecond, obstacles);
+                    actor.LaneOffsetMeters, actor.CruiseSpeedMetersPerSecond, rightOfWayObstacles);
                 speed = AmbientTrafficFollowingMath.ApproachSpeed(speed, targetSpeed, deltaSeconds);
                 speed = AmbientTrafficFollowingMath.ClampSpeedForClearance(actor.Path, actor.DistanceAlongPath,
                     speed, deltaSeconds, cyclists, pedestrians, otherCars, actor.LaneOffsetMeters);
@@ -208,6 +222,13 @@ public partial class AmbientActorManager : Node3D
         return new AmbientTrafficRider($"{kind}-{actor.State.ActorId}",
             ToNumerics(actor.State.WorldPosition), ToNumerics(actor.State.Heading), actor.State.SpeedMetersPerSecond,
             length, width, height, prediction);
+    }
+
+    private static bool TryGetCarActorId(string riderId, out long actorId)
+    {
+        actorId = 0;
+        return riderId.StartsWith("car-", StringComparison.Ordinal)
+            && long.TryParse(riderId.AsSpan(4), out actorId);
     }
 
     private static string? FindSafeOvertakeTarget(ActiveActor car,
