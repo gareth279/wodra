@@ -1717,11 +1717,9 @@ public partial class RideSessionNode : Node
 				: "Trainer disconnected. The ride and recording continue while fresh telemetry and control recover.");
 			var reconnectGradient = GetCurrentGradient();
 			var before = _rideState.DistanceMeters;
-			var disconnectedPreviousState = _rideState;
 			_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState,
 				new SimulationTickInput(staleTelemetry.ForRiderInput(DateTimeOffset.UtcNow), reconnectGradient,
 					_pauseGate.IsPaused ? 0 : delta, CurrentRiderProfile, CurrentBikeProfile));
-			_rideState = _rideWorldView?.ConstrainLocalCarRideState(disconnectedPreviousState, _rideState, delta) ?? _rideState;
 			if (!_pauseGate.IsPaused)
 			{
 				_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - before);
@@ -1756,10 +1754,8 @@ public partial class RideSessionNode : Node
 			BikeProfile: CurrentBikeProfile
 		);
 
-		var previousState = _rideState;
 		var previousDistance = _rideState.DistanceMeters;
 		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
-		_rideState = _rideWorldView?.ConstrainLocalCarRideState(previousState, _rideState, delta) ?? _rideState;
 		_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - previousDistance);
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
@@ -1903,10 +1899,8 @@ public partial class RideSessionNode : Node
 			BikeProfile: CurrentBikeProfile
 		);
 
-		var previousState = _rideState;
 		var previousDistance = _rideState.DistanceMeters;
 		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
-		_rideState = _rideWorldView?.ConstrainLocalCarRideState(previousState, _rideState, delta) ?? _rideState;
 		_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - previousDistance);
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 

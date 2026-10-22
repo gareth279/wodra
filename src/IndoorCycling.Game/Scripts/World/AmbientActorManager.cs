@@ -62,13 +62,6 @@ public partial class AmbientActorManager : Node3D
         + ActivePedestrianCount * AmbientPedestrianVisual.ApproximateTriangleCount;
     internal IReadOnlyList<AmbientTrafficRider> GetTrafficReviewSamples() =>
         _active.Where(actor => actor.State.Active).Select(ToTrafficRider).ToArray();
-    internal IReadOnlyList<AmbientCarInteractionSample> GetLocalPlayerCarInteractionSamples(
-        NVector3 localPlayerPosition, double horizonSeconds) =>
-        _active.Where(actor => actor.State.Active && actor.State.Kind == AmbientActorKind.Car
-                && NVector3.Distance(ToNumerics(actor.State.WorldPosition), localPlayerPosition)
-                    <= Math.Max(80, Math.Max(0, actor.State.SpeedMetersPerSecond) * (float)horizonSeconds + 20))
-            .Select(actor => new AmbientCarInteractionSample(actor.State.ActorId, actor.Path.RoadWidthMeters,
-                ToTrafficRiderWithHorizon(actor, Math.Max(.25, horizonSeconds)))).ToArray();
 
     public void Configure(VisualRoute route, RouteBackgroundStreetData streetData)
     {
@@ -208,26 +201,22 @@ public partial class AmbientActorManager : Node3D
         }
     }
 
-    private static AmbientTrafficRider ToTrafficRider(ActiveActor actor) =>
-        ToTrafficRiderWithHorizon(actor, AmbientTrafficFollowingMath.PredictionHorizonSeconds);
-
-    private static AmbientTrafficRider ToTrafficRiderWithHorizon(ActiveActor actor,
-        double predictionHorizonSeconds)
+    private static AmbientTrafficRider ToTrafficRider(ActiveActor actor)
     {
         var isCar = actor.State.Kind == AmbientActorKind.Car;
         var length = isCar ? AmbientActorEnvelopeMath.CarLengthMeters : AmbientActorEnvelopeMath.PedestrianLengthMeters;
         var width = isCar ? AmbientActorEnvelopeMath.CarWidthMeters : AmbientActorEnvelopeMath.PedestrianWidthMeters;
         var height = isCar ? AmbientActorEnvelopeMath.CarHeightMeters : AmbientActorEnvelopeMath.PedestrianHeightMeters;
-        var predictionSamples = (int)Math.Ceiling(predictionHorizonSeconds
+        var predictionSamples = (int)Math.Ceiling(AmbientTrafficFollowingMath.PredictionHorizonSeconds
             / AmbientTrafficFollowingMath.PredictionSampleSeconds);
-        var prediction = new AmbientTrafficPose[predictionSamples + 1];
+        var prediction = new List<AmbientTrafficPose>(predictionSamples + 1);
         for (var sample = 0; sample <= predictionSamples; sample++)
         {
             var seconds = sample * AmbientTrafficFollowingMath.PredictionSampleSeconds;
             var distance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
                 actor.State.SpeedMetersPerSecond, seconds, paused: false);
             var (position, heading) = actor.Path.SampleLane(distance, actor.LaneOffsetMeters);
-            prediction[sample] = new AmbientTrafficPose(seconds, position, heading);
+            prediction.Add(new AmbientTrafficPose(seconds, position, heading));
         }
         var kind = isCar ? "car" : "pedestrian";
         return new AmbientTrafficRider($"{kind}-{actor.State.ActorId}",

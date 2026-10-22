@@ -27,8 +27,6 @@ public readonly record struct AmbientRoadRouteConnection(int EndIndex, double Ro
 public readonly record struct AmbientSpeedRange(float MinimumMetersPerSecond, float MaximumMetersPerSecond);
 public readonly record struct AmbientSpawnSelection(int PathIndex, double DistanceMeters, Vector3 Position);
 public readonly record struct AmbientTrafficPose(double TimeSeconds, Vector3 Position, Vector3 Forward);
-internal readonly record struct AmbientCarInteractionSample(int VehicleId, double RoadWidthMeters,
-    AmbientTrafficRider Motion);
 public readonly record struct AmbientTrafficRider(string RiderId, Vector3 Position, Vector3 Forward,
     float SpeedMetersPerSecond, float LengthMeters = 1.9f, float WidthMeters = .86f,
     float HeightMeters = 1.8f, IReadOnlyList<AmbientTrafficPose>? Prediction = null)

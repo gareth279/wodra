@@ -97,12 +97,4 @@ public sealed class SteeringLateralController
         _velocityMetersPerSecond = 0;
         _keyboardOwnsSteering = false;
     }
-
-    /// <summary>Applies a local world-space safety clamp without changing steering input ownership.</summary>
-    public void ConstrainOffset(double lateralOffsetMeters)
-    {
-        if (!double.IsFinite(lateralOffsetMeters)) return;
-        LateralOffsetMeters = lateralOffsetMeters;
-        _velocityMetersPerSecond = 0;
-    }
 }
