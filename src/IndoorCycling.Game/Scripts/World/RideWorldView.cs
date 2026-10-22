@@ -90,6 +90,9 @@ public partial class RideWorldView : Node3D
     private HudController? _hudController;
     private DeviceConnectionPanelController? _deviceConnectionPanel;
     private readonly SteeringLateralController _steering = new();
+    private double _lastRenderedLateralOffsetMeters = SteeringLateralController.NormalLineMeters;
+    private int? _activeLocalCarProgressBlockId;
+    private int? _activeLocalCarSteeringBlockId;
     private bool _steerLeftHeld;
     private bool _steerRightHeld;
     private DateTimeOffset _lastSteeringSampleAt = DateTimeOffset.MinValue;
@@ -431,6 +434,7 @@ public partial class RideWorldView : Node3D
                 SaveChallengeAttempt();
                 _routeLoadAttempt.Reset();
                 _steering.Reset();
+                _lastRenderedLateralOffsetMeters = SteeringLateralController.NormalLineMeters;
                 _steerLeftHeld = _steerRightHeld = false;
             }
             _wasActive = false;
@@ -521,6 +525,12 @@ public partial class RideWorldView : Node3D
             IsTypingIntoControl(), GameBootstrap.Settings.Steering.Sensitivity,
             GameBootstrap.Settings.Steering.DeadZoneDegrees, ProceduralRoad.WidthMeters,
             freshSterzoSample && sterzoTimestamp > _keyboardControllerSampleBaseline);
+        var lateralConstraint = ConstrainLocalCarSteering(distance, _lastRenderedLateralOffsetMeters,
+            lateralOffset, delta);
+        lateralOffset = lateralConstraint.AllowedOffsetMeters;
+        if (Math.Abs(_steering.LateralOffsetMeters - lateralOffset) > .001)
+            _steering.ConstrainOffset(lateralOffset);
+        _lastRenderedLateralOffsetMeters = lateralOffset;
         _steeringDiagnosticElapsed += delta;
         if (_steeringDiagnosticElapsed >= 1)
         {
@@ -801,6 +811,172 @@ public partial class RideWorldView : Node3D
 
     public IReadOnlyList<AmbientTrafficRider> GetAmbientTrafficCollisionReviewSamples() =>
         _ambientActorManager?.GetTrafficReviewSamples() ?? Array.Empty<AmbientTrafficRider>();
+
+    /// <summary>Constrains only local ride progress when its swept rendered envelope reaches an ambient car.</summary>
+    internal RideState ConstrainLocalCarRideState(RideState previous, RideState proposed, double deltaSeconds)
+    {
+        if (_ambientActorManager is null || _geometry is null || _loadedRoute is null
+            || proposed.DistanceMeters <= previous.DistanceMeters || deltaSeconds <= 0)
+        {
+            _activeLocalCarProgressBlockId = null;
+            return proposed;
+        }
+
+        var bounds = _rider.GetStableLocalVisualBounds();
+        var lateralOffset = (float)_steering.LateralOffsetMeters;
+        var localPosition = ToNumerics(_rider.GlobalPosition);
+        var carSamples = _ambientActorManager.GetLocalPlayerCarInteractionSamples(localPosition, deltaSeconds + .25);
+        AmbientTrafficPose PoseAt(double distance) => PlayerCarPoseAt(distance, lateralOffset);
+        var constraint = LocalPlayerCarInteractionMath.ClampRouteProgress(previous.DistanceMeters,
+            proposed.DistanceMeters, deltaSeconds, lateralOffset, bounds.Size.Z, bounds.Size.X,
+            bounds.Size.Y, (distance, _) => PoseAt(distance), carSamples);
+        var allowed = Math.Clamp(constraint.AllowedRouteDistanceMeters, previous.DistanceMeters,
+            proposed.DistanceMeters);
+        RecordLocalCarProgressConstraint(constraint.BlockingVehicleId, previous.DistanceMeters,
+            proposed.DistanceMeters, allowed, constraint.MinimumClearanceMeters,
+            constraint.BlockingVehicleId is { } id ? carSamples.FirstOrDefault(car => car.VehicleId == id) : null,
+            PoseAt(previous.DistanceMeters));
+        if (allowed >= proposed.DistanceMeters - .0001) return proposed;
+        var movedMeters = Math.Max(0, allowed - previous.DistanceMeters);
+        var actualSpeedKph = deltaSeconds > 1e-8 ? movedMeters / deltaSeconds * 3.6 : 0;
+        return proposed with { DistanceMeters = allowed, VirtualSpeedKph = Math.Min(proposed.VirtualSpeedKph, actualSpeedKph) };
+    }
+
+    internal void ReplaceAmbientActorManagerForTesting(AmbientActorManager manager)
+    {
+        if (_ambientActorManager is { } previous && GodotObject.IsInstanceValid(previous))
+        {
+            previous.GetParent()?.RemoveChild(previous);
+            previous.QueueFree();
+        }
+        _ambientActorManager = manager;
+        if (manager.GetParent() is null) AddChild(manager);
+    }
+
+    internal void SetKeyboardSteeringForTesting(bool leftHeld, bool rightHeld)
+    {
+        _steerLeftHeld = leftHeld;
+        _steerRightHeld = rightHeld;
+    }
+
+    private (double AllowedOffsetMeters, int? BlockingVehicleId, float MinimumClearanceMeters)
+        ConstrainLocalCarSteering(double distanceMeters, double fromOffsetMeters, double requestedOffsetMeters,
+            double deltaSeconds)
+    {
+        if (_ambientActorManager is null || _geometry is null || _loadedRoute is null || deltaSeconds <= 0)
+            return (requestedOffsetMeters, null, float.PositiveInfinity);
+        var bounds = _rider.GetStableLocalVisualBounds();
+        var samples = _ambientActorManager.GetLocalPlayerCarInteractionSamples(
+            ToNumerics(_rider.GlobalPosition), deltaSeconds + .25);
+        AmbientTrafficPose PoseAt(double distance, float offset) =>
+            PlayerCarPoseAt(distance, offset);
+        var result = LocalPlayerCarInteractionMath.ClampLateralOffset(distanceMeters, fromOffsetMeters,
+            requestedOffsetMeters, deltaSeconds, bounds.Size.Z, bounds.Size.X, bounds.Size.Y,
+            PoseAt, samples);
+        RecordLocalCarSteeringConstraint(result.BlockingVehicleId, distanceMeters,
+            requestedOffsetMeters, result.AllowedOffsetMeters, result.MinimumClearanceMeters,
+            result.BlockingVehicleId is { } id ? samples.FirstOrDefault(car => car.VehicleId == id) : null,
+            PoseAt(distanceMeters, (float)fromOffsetMeters));
+        return result;
+    }
+
+    private AmbientTrafficPose PlayerCarPoseAt(double distanceMeters, float lateralOffsetMeters)
+    {
+        if (_geometry is null || _loadedRoute is null)
+            return new AmbientTrafficPose(0, ToNumerics(_rider.GlobalPosition), ToNumerics(-_rider.GlobalBasis.Z));
+        var routeLength = _geometry.LengthMeters;
+        var wrapped = _geometry.WrapDistance(distanceMeters);
+        var routePose = _geometry.GetPoseAtDistance(wrapped);
+        var rider = new RiderState("player", "You", _loadedRoute.Id, distanceMeters, wrapped,
+            (int)Math.Floor(distanceMeters / routeLength) + 1, lateralOffsetMeters, 0, 0, 0, false, 0);
+        var input = RiderVisualInputMath.Create(rider, routePose, _loadedRoute.GetGradientAt(wrapped));
+        var root = ToGlobal(ProceduralRoad.ToGodot(input.Position));
+        var forward = (GlobalBasis * ProceduralRoad.ToGodot(input.Forward)).Normalized();
+        // The collision review uses the base of the complete CyclistVisual bounds,
+        // not the rider root. Transform the same local bounds center into this
+        // route pose so the predictive sweep and rendered envelope share an origin.
+        var localBounds = _rider.GetStableLocalVisualBounds();
+        var center = localBounds.Position + localBounds.Size * .5f;
+        var right = forward.Cross(Vector3.Up);
+        if (right.LengthSquared() < 1e-8f) right = Vector3.Right;
+        else right = right.Normalized();
+        var back = -forward;
+        var up = back.Cross(right).Normalized();
+        var centerOffset = right * center.X + up * center.Y + back * center.Z;
+        var position = root + centerOffset - Vector3.Up * (localBounds.Size.Y * .5f);
+        return new AmbientTrafficPose(0, ToNumerics(position), ToNumerics(forward));
+    }
+
+    internal AmbientTrafficPose GetLocalPlayerCarPoseForTesting() =>
+        PlayerCarPoseAt(_session.CurrentRideState.DistanceMeters,
+            (float)_lastRenderedLateralOffsetMeters);
+
+    private void RecordLocalCarProgressConstraint(int? vehicleId, double fromDistance,
+        double requestedDistance, double appliedDistance, float minimumClearance,
+        AmbientCarInteractionSample? car, AmbientTrafficPose riderPose)
+    {
+        if (vehicleId is { } blockedId)
+        {
+            if (_activeLocalCarProgressBlockId != blockedId)
+                GameLogger.Log("local_rider_car_clearance", new
+                {
+                    interaction = "route-progress",
+                    vehicleId = blockedId,
+                    eventName = "following-or-swept-clearance-blocked",
+                    riderRouteDistanceMeters = fromDistance,
+                    requestedRouteDistanceMeters = requestedDistance,
+                    appliedRouteDistanceMeters = appliedDistance,
+                    minimumClearanceMeters = minimumClearance,
+                    roadWidthMeters = car?.RoadWidthMeters,
+                    riderPosition = AmbientActorDiagnosticPoint.From(riderPose.Position),
+                    carPosition = car is { } value ? (AmbientActorDiagnosticPoint?)AmbientActorDiagnosticPoint.From(value.Motion.Position) : null
+                });
+            _activeLocalCarProgressBlockId = blockedId;
+        }
+        else if (_activeLocalCarProgressBlockId is { } releasedId)
+        {
+            GameLogger.Log("local_rider_car_clearance", new
+            {
+                interaction = "route-progress", vehicleId = releasedId,
+                eventName = "clearance-recovered", riderRouteDistanceMeters = fromDistance,
+                requestedRouteDistanceMeters = requestedDistance, appliedRouteDistanceMeters = appliedDistance,
+                minimumClearanceMeters = minimumClearance,
+                riderPosition = AmbientActorDiagnosticPoint.From(riderPose.Position)
+            });
+            _activeLocalCarProgressBlockId = null;
+        }
+    }
+
+    private void RecordLocalCarSteeringConstraint(int? vehicleId, double distanceMeters,
+        double requestedOffset, double allowedOffset, float minimumClearance,
+        AmbientCarInteractionSample? car, AmbientTrafficPose riderPose)
+    {
+        if (vehicleId is { } blockedId)
+        {
+            if (_activeLocalCarSteeringBlockId != blockedId)
+                GameLogger.Log("local_rider_car_clearance", new
+                {
+                    interaction = "steering", vehicleId = blockedId, eventName = "occupied-envelope-blocked",
+                    routeDistanceMeters = distanceMeters, requestedLateralOffsetMeters = requestedOffset,
+                    allowedLateralOffsetMeters = allowedOffset, minimumClearanceMeters = minimumClearance,
+                    roadWidthMeters = car?.RoadWidthMeters,
+                    riderPosition = AmbientActorDiagnosticPoint.From(riderPose.Position),
+                    carPosition = car is { } value ? (AmbientActorDiagnosticPoint?)AmbientActorDiagnosticPoint.From(value.Motion.Position) : null
+                });
+            _activeLocalCarSteeringBlockId = blockedId;
+        }
+        else if (_activeLocalCarSteeringBlockId is { } releasedId)
+        {
+            GameLogger.Log("local_rider_car_clearance", new
+            {
+                interaction = "steering", vehicleId = releasedId, eventName = "steering-clearance-recovered",
+                routeDistanceMeters = distanceMeters, appliedLateralOffsetMeters = allowedOffset,
+                minimumClearanceMeters = minimumClearance,
+                riderPosition = AmbientActorDiagnosticPoint.From(riderPose.Position)
+            });
+            _activeLocalCarSteeringBlockId = null;
+        }
+    }
 
     private IReadOnlyList<RiderState> BuildRemoteRiderStates(
         IEnumerable<MultiplayerRemoteRider> remotes, double routeLength)
@@ -1337,4 +1513,6 @@ public partial class RideWorldView : Node3D
         });
         _hudController?.SetStatus(message);
     }
+
+    private static System.Numerics.Vector3 ToNumerics(Vector3 value) => new(value.X, value.Y, value.Z);
 }
