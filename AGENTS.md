@@ -2,7 +2,16 @@
 
 Before changing Wodra code, read [docs/ARCHITECTURE_INVARIANTS.md](docs/ARCHITECTURE_INVARIANTS.md) and the affected implementation/test references. Treat the invariants as review requirements; do not change authoritative ride, measured-data, cyclist-separation, multiplayer, camera, connectivity, or release behavior to solve an unrelated issue. Keep regression coverage in the existing Windows validation workflow. Follow [docs/windows-alpha-release.md](docs/windows-alpha-release.md) for any separately authorized release work; issue #107 itself does not authorize a release.
 
-## Release execution environment
+## Agent Execution and Delivery Standards
+
+- Own the requested lifecycle: understand the existing implementation, make the smallest safe change, run relevant builds and regressions, create a PR, verify CI, and merge only when authorized and safe. Remove completed remote branches and task-created checkouts, verify the final repository state, and report what actually happened.
+- Preserve unrelated user changes. Inspect workspace, branch, and execution constraints before acting; do not overwrite a dirty checkout or create unnecessary clones, branches, workflows, or release mechanisms.
+- Diagnose failures from evidence and use the smallest recovery. GitHub access may fail in the Codex sandbox through proxy `127.0.0.1:9`; request approved outside-sandbox execution immediately when that occurs. Do not repeat the same blocked command, misdiagnose a transport restriction as invalid credentials, or request new tokens when approved authentication already exists.
+- Read and follow `docs/ARCHITECTURE_INVARIANTS.md`. Run relevant regression tests and preserve accepted physics, connectivity, steering, multiplayer, traffic, camera, and recording behavior.
+- Report outcomes distinctly: implemented, tested, merged, published (when requested), verified, and blocked or awaiting owner acceptance. A successful build, push, tag, queued workflow, or draft is not proof of merge or publication.
+- Publish only when explicitly authorized. Inspect execution capability before release work; use `publish.ps1`, approved Windows publishing infrastructure, and existing approved credentials. Never expose or copy credentials, bypass release protections, or leave competing workflows running. Verify the public release, expected assets, checksums, updater feed, and anonymous downloads.
+
+## Windows release execution
 
 - Before release work, determine whether the current command execution is sandboxed. Source-code CI and a Git push do not establish that Windows packaging or GitHub publication is available.
 - If execution is restricted, request the supported outside-sandbox execution permission with user approval before running `publish.ps1` or performing release mutations. Use `sandbox_permissions=require_escalated` or the platform equivalent, and confirm the command actually ran in the approved host context. Changing directories inside a sandbox does not remove its restrictions.
