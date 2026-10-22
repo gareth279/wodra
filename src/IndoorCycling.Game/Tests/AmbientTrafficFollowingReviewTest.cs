@@ -22,11 +22,15 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 				throw new InvalidOperationException($"Narrow road did not keep a fast car safely behind the group: {following}.");
 
 			var overtake = RunVehicleScenario(roadWidthMeters: 7.5, Bend, addGroup: false);
-			if (!overtake.Passed || overtake.MinimumClearance < -.02f)
+			if (!overtake.Passed || overtake.MinimumClearance < -.02f || Math.Abs(overtake.FinalLaneOffset - 1.7f) > .05f)
 				throw new InvalidOperationException($"Wide curved road did not complete a clear overtake: {overtake}.");
 
 			VerifyOccupiedPassLaneBlocksOvertake();
 			VerifyPredictionFollowsBend();
+			VerifyLowFrameRateFollowing();
+			VerifySameLaneCarsDoNotUseJunctionPriority();
+			VerifyCarFollowsPedestrianObstacle();
+			VerifyCrossingCarsDoNotDeadlock();
 			GD.Print($"[AmbientTrafficFollowingReview] PASS: narrow road follows group (clearance={following.MinimumClearance:F3}m, final gap={following.FinalGap:F2}m, speed={following.FinalSpeed:F2}m/s); curved 7.5m road safely overtakes (clearance={overtake.MinimumClearance:F3}m); 12s obstacle prediction follows the bend.");
 			GetTree().Quit(0);
 		}
@@ -37,7 +41,7 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 		}
 	}
 
-	private (bool Passed, float MinimumClearance, float FinalGap, float FinalSpeed) RunVehicleScenario(
+	private (bool Passed, float MinimumClearance, float FinalGap, float FinalSpeed, float FinalLaneOffset) RunVehicleScenario(
 		double roadWidthMeters, IReadOnlyList<NVector3> points, bool addGroup)
 	{
 		var manager = new AmbientActorManager { Name = $"TrafficFixture_{roadWidthMeters}" };
@@ -82,7 +86,8 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 		var finalRider = CreatePathRider(path, "player", cyclistDistance, 5, CyclistLaneOffsetMeters);
 		var forwardGap = NVector3.Dot(finalRider.Position - finalCar.WorldPosition, finalRider.Forward);
 		var passed = NVector3.Dot(finalCar.WorldPosition - finalRider.Position, finalRider.Forward) > 4;
-		return (passed, minimumClearance, forwardGap, finalCar.SpeedMetersPerSecond);
+		return (passed, minimumClearance, forwardGap, finalCar.SpeedMetersPerSecond,
+			manager.FirstCarLaneOffset ?? float.NaN);
 	}
 
 	private void VerifyPredictionFollowsBend()
@@ -133,6 +138,151 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 		}
 		if ((manager.FirstCarLaneOffset ?? 0) < 1.4f || minimumClearance < -.02f)
 			throw new InvalidOperationException($"A car entered an occupied overtake lane or lost clearance: lane={manager.FirstCarLaneOffset:F2}m, clearance={minimumClearance:F3}m.");
+	}
+
+	private void VerifyCrossingCarsDoNotDeadlock()
+	{
+		var manager = new AmbientActorManager { Name = "TrafficCrossingDeadlockFixture" };
+		AddChild(manager);
+		const float lane = 1.7f;
+		var eastWest = new AmbientActorPath(AmbientActorKind.Car, 101, 1,
+			[new NVector3(-2000, 0, -lane), new NVector3(2000, 0, -lane)],
+			new AmbientSpeedRange(12, 12), roadWidthMeters: 7, baseLaneOffsetMeters: lane);
+		var southNorth = new AmbientActorPath(AmbientActorKind.Car, 102, 1,
+			[new NVector3(lane, 0, -2000), new NVector3(lane, 0, 2000)],
+			new AmbientSpeedRange(12, 12), roadWidthMeters: 7, baseLaneOffsetMeters: lane);
+		manager.ConfigureTrafficTestFixture(eastWest, 1970, 12);
+		manager.AddTrafficTestFixture(AmbientActorKind.Car, southNorth, 1970, 12);
+		var player = new AmbientTrafficRider("player", new NVector3(100, 0, 100), NVector3.UnitX, 0);
+		var minimumClearance = float.PositiveInfinity;
+		var passedCrossingAt = new int[2];
+		for (var frame = 0; frame < 1200; frame++)
+		{
+			manager.UpdateTrafficTestFixture([player], DeltaSeconds);
+			var cars = manager.TrafficTestStates.Where(state => state.Kind == AmbientActorKind.Car)
+				.OrderBy(state => state.ActorId).ToArray();
+			if (cars.Length == 0) break;
+			if (cars.Length == 1)
+			{
+				if (cars[0].ActorId == 101 && cars[0].WorldPosition.X > 5) passedCrossingAt[0] = frame;
+				if (cars[0].ActorId == 102 && cars[0].WorldPosition.Z > 5) passedCrossingAt[1] = frame;
+				continue;
+			}
+			var clearance = AmbientActorEnvelopeMath.SignedClearance(cars[0].WorldPosition, cars[0].Heading,
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters,
+				new AmbientTrafficPose(0, cars[1].WorldPosition, cars[1].Heading),
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters);
+			minimumClearance = Math.Min(minimumClearance, clearance);
+			if (clearance < -.02f)
+				throw new InvalidOperationException($"Vehicles intersected at a junction during frame {frame}: {clearance:F3}m.");
+			if (cars[0].WorldPosition.X > 5) passedCrossingAt[0] = passedCrossingAt[0] == 0 ? frame : passedCrossingAt[0];
+			if (cars[1].WorldPosition.Z > 5) passedCrossingAt[1] = passedCrossingAt[1] == 0 ? frame : passedCrossingAt[1];
+			if (frame == 800 && passedCrossingAt.All(framePassed => framePassed == 0))
+				throw new InvalidOperationException($"Crossing traffic deadlocked before the intersection: cars={cars[0].WorldPosition}/{cars[1].WorldPosition}, speeds={cars[0].SpeedMetersPerSecond:F2}/{cars[1].SpeedMetersPerSecond:F2}m/s, clearance={minimumClearance:F3}m.");
+		}
+		if (passedCrossingAt.Any(framePassed => framePassed == 0))
+			throw new InvalidOperationException($"Crossing traffic failed to clear the intersection; minimum clearance={minimumClearance:F3}m, passed={string.Join(',', passedCrossingAt)}, remaining={string.Join(';', manager.TrafficTestStates.Select(car => $"{car.ActorId}:{car.WorldPosition}:{car.SpeedMetersPerSecond:F2}"))}.");
+		GD.Print($"[AmbientTrafficFollowingReview] crossing priority cleared in frames {passedCrossingAt[0]}/{passedCrossingAt[1]} with minimum envelope clearance={minimumClearance:F3}m.");
+	}
+
+	private void VerifyLowFrameRateFollowing()
+	{
+		var manager = new AmbientActorManager { Name = "TrafficLowFrameRateFixture" };
+		AddChild(manager);
+		var path = new AmbientActorPath(AmbientActorKind.Car, 103, 1, Straight,
+			new AmbientSpeedRange(12, 12), roadWidthMeters: 5.8, baseLaneOffsetMeters: 1.7f);
+		manager.ConfigureTrafficTestFixture(path, 0, 12);
+		var cyclistDistance = 40d;
+		var previousSpeed = 12f;
+		var minimumClearance = float.PositiveInfinity;
+		var maximumSpeedChange = 0f;
+		for (var frame = 0; frame < 120; frame++)
+		{
+			var rider = CreatePathRider(path, "player", cyclistDistance, 5, CyclistLaneOffsetMeters);
+			manager.UpdateTrafficTestFixture([rider], .25);
+			var car = manager.FirstCarState ?? throw new InvalidOperationException("Low-frame-rate fixture lost its car.");
+			var clearance = AmbientActorEnvelopeMath.SignedClearance(car.WorldPosition, car.Heading,
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters,
+				new AmbientTrafficPose(0, rider.Position, rider.Forward), rider.LengthMeters, rider.WidthMeters, rider.HeightMeters);
+			minimumClearance = Math.Min(minimumClearance, clearance);
+			maximumSpeedChange = Math.Max(maximumSpeedChange, Math.Abs(car.SpeedMetersPerSecond - previousSpeed));
+			if (clearance < -.02f)
+				throw new InvalidOperationException($"Low-frame-rate car/rider envelopes intersected at frame {frame}: clearance={clearance:F3}m.");
+			if (Math.Abs(car.SpeedMetersPerSecond - previousSpeed) > 1.26f)
+				throw new InvalidOperationException($"Car speed changed faster than the braking limit during a 250ms update: {previousSpeed:F2}->{car.SpeedMetersPerSecond:F2}m/s.");
+			previousSpeed = car.SpeedMetersPerSecond;
+			cyclistDistance += 5 * .25;
+		}
+		if (minimumClearance < -.02f || maximumSpeedChange > 1.26f)
+			throw new InvalidOperationException($"Low-frame-rate traffic did not preserve the car envelope: minimum clearance={minimumClearance:F3}m, maximum speed change={maximumSpeedChange:F3}m/s.");
+	}
+
+	private void VerifySameLaneCarsDoNotUseJunctionPriority()
+	{
+		var manager = new AmbientActorManager { Name = "TrafficStoppedCarFixture" };
+		AddChild(manager);
+		var path = new AmbientActorPath(AmbientActorKind.Car, 104, 1, Straight,
+			new AmbientSpeedRange(12, 12), roadWidthMeters: 5.8, baseLaneOffsetMeters: 0);
+		manager.ConfigureTrafficTestFixture(path, 0, 12);
+		manager.AddTrafficTestFixture(AmbientActorKind.Car, path, 35, 0);
+		var player = new AmbientTrafficRider("player", new NVector3(0, 0, 100), NVector3.UnitX, 0);
+		var minimumClearance = float.PositiveInfinity;
+		for (var frame = 0; frame < 240; frame++)
+		{
+			manager.UpdateTrafficTestFixture([player], DeltaSeconds);
+			var cars = manager.TrafficTestStates.Where(state => state.Kind == AmbientActorKind.Car)
+				.OrderBy(state => state.ActorId).ToArray();
+			if (cars.Length != 2) throw new InvalidOperationException("Same-lane stopped-car fixture lost a vehicle.");
+			var clearance = AmbientActorEnvelopeMath.SignedClearance(cars[0].WorldPosition, cars[0].Heading,
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters,
+				new AmbientTrafficPose(0, cars[1].WorldPosition, cars[1].Heading),
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters);
+			minimumClearance = Math.Min(minimumClearance, clearance);
+			if (clearance < -.02f)
+				throw new InvalidOperationException($"Same-lane car envelopes intersected at frame {frame}: {clearance:F3}m.");
+		}
+		var final = manager.TrafficTestStates.OrderBy(state => state.ActorId).ToArray();
+		var followingSpeed = final[0].SpeedMetersPerSecond;
+		var gap = final[1].WorldPosition.X - final[0].WorldPosition.X;
+		if (minimumClearance < 1.15f || followingSpeed > .2f || gap < AmbientActorEnvelopeMath.CarLengthMeters + 1)
+			throw new InvalidOperationException($"Priority ordering weakened same-lane following: clearance={minimumClearance:F3}m, speed={followingSpeed:F2}m/s, gap={gap:F2}m.");
+	}
+
+	private void VerifyCarFollowsPedestrianObstacle()
+	{
+		var manager = new AmbientActorManager { Name = "TrafficPedestrianObstacleFixture" };
+		AddChild(manager);
+		var carPath = new AmbientActorPath(AmbientActorKind.Car, 105, 1, Straight,
+			new AmbientSpeedRange(12, 12), roadWidthMeters: 5.8, baseLaneOffsetMeters: 0);
+		var footpath = new AmbientActorPath(AmbientActorKind.Pedestrian, 106, 1,
+			[new NVector3(0, 0, 0), new NVector3(1000, 0, 0)],
+			new AmbientSpeedRange(0, 0), roadWidthMeters: 5.8, baseLaneOffsetMeters: 0);
+		manager.ConfigureTrafficTestFixture(carPath, 0, 12);
+		manager.AddTrafficTestFixture(AmbientActorKind.Pedestrian, footpath, 35, 0);
+		var player = new AmbientTrafficRider("player", new NVector3(0, 0, 100), NVector3.UnitX, 0);
+		var minimumClearance = float.PositiveInfinity;
+		for (var frame = 0; frame < 240; frame++)
+		{
+			manager.UpdateTrafficTestFixture([player], DeltaSeconds);
+			var car = manager.FirstCarState ?? throw new InvalidOperationException("Pedestrian clearance fixture lost its car.");
+			var pedestrian = manager.FirstPedestrianState ?? throw new InvalidOperationException("Pedestrian clearance fixture lost its pedestrian.");
+			var clearance = AmbientActorEnvelopeMath.SignedClearance(car.WorldPosition, car.Heading,
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters,
+				new AmbientTrafficPose(0, pedestrian.WorldPosition, pedestrian.Heading),
+				AmbientActorEnvelopeMath.PedestrianLengthMeters, AmbientActorEnvelopeMath.PedestrianWidthMeters,
+				AmbientActorEnvelopeMath.PedestrianHeightMeters);
+			minimumClearance = Math.Min(minimumClearance, clearance);
+			if (clearance < -.02f)
+				throw new InvalidOperationException($"Car/pedestrian envelopes intersected at frame {frame}: {clearance:F3}m.");
+		}
+		if (minimumClearance < -.02f || manager.FirstCarState!.Value.SpeedMetersPerSecond > .2f)
+			throw new InvalidOperationException($"Car failed to stop safely for a pedestrian: clearance={minimumClearance:F3}m, speed={manager.FirstCarState!.Value.SpeedMetersPerSecond:F2}m/s.");
 	}
 
 	private static AmbientTrafficRider CreatePathRider(AmbientActorPath path, string id,

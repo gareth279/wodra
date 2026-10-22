@@ -92,6 +92,22 @@ jobs:
               $trafficOutput -match 'SCRIPT ERROR:|\[AmbientTrafficFollowingReview\] FAIL:') {
             throw 'Production ambient traffic following scene test did not report a clean pass.'
           }
+          $ambientCarRideLog = "$env:RUNNER_TEMP\wodra-ambient-car-ride-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarRideScreenReviewTest.tscn --log-file $ambientCarRideLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review failed.' }
+          $ambientCarRideOutput = Get-Content -LiteralPath $ambientCarRideLog -Raw
+          if ($ambientCarRideOutput -notmatch '\[AmbientCarRideScreenReview\] PASS:' -or
+              $ambientCarRideOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen ambient car interaction review did not report a clean pass.'
+          }
+          $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }
+          $ambientCarOvalOutput = Get-Content -LiteralPath $ambientCarOvalLog -Raw
+          if ($ambientCarOvalOutput -notmatch '\[AmbientCarRideScreenReview\] PASS: production route=dunedin-one-way-oval-gardens' -or
+              $ambientCarOvalOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen ambient car interaction review did not pass on the second Dunedin route.'
+          }
           $riderTrafficLog = "$env:RUNNER_TEMP\wodra-rider-traffic-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RiderTrafficRideScreenReviewTest.tscn --log-file $riderTrafficLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen rider/traffic interaction review failed.' }
