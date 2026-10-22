@@ -104,7 +104,7 @@ jobs:
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }
           $ambientCarOvalOutput = Get-Content -LiteralPath $ambientCarOvalLog -Raw
-          if ($ambientCarOvalOutput -notmatch '\[AmbientCarRideScreenReview\] PASS: route=dunedin-one-way-oval-gardens' -or
+          if ($ambientCarOvalOutput -notmatch '\[AmbientCarRideScreenReview\] PASS: production route=dunedin-one-way-oval-gardens' -or
               $ambientCarOvalOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
             throw 'Production RideScreen ambient car interaction review did not pass on the second Dunedin route.'
           }
