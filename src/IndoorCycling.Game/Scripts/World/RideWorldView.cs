@@ -802,6 +802,48 @@ public partial class RideWorldView : Node3D
     public IReadOnlyList<AmbientTrafficRider> GetAmbientTrafficCollisionReviewSamples() =>
         _ambientActorManager?.GetTrafficReviewSamples() ?? Array.Empty<AmbientTrafficRider>();
 
+    // Deterministic test fixture for the production RideScreen rider/traffic invariance regression.
+    // Outside this internal test seam, route traffic is configured and updated exactly as before.
+    internal void ConfigureAmbientTrafficInvariantReviewFixture(bool includeCar, double carAheadMeters,
+        float carSpeedMetersPerSecond, double roadWidthMeters)
+    {
+        if (_ambientActorManager is { } existing)
+        {
+            _ambientActorManager = null;
+            existing.QueueFree();
+        }
+        if (!includeCar) return;
+        if (_geometry is null || _routeRoot is null || _loadedRoute is null)
+            throw new InvalidOperationException("The production route must be loaded before installing the ambient-car review fixture.");
+
+        var points = _geometry.Samples.Select(sample =>
+        {
+            var global = ToGlobal(ProceduralRoad.ToGodot(sample.Position));
+            var forward = GlobalBasis * ProceduralRoad.ToGodot(sample.Forward);
+            var left = forward.Cross(Vector3.Up).Normalized();
+            global += left * 1.7f;
+            return new System.Numerics.Vector3(global.X, global.Y, global.Z);
+        }).ToArray();
+        var path = new AmbientActorPath(AmbientActorKind.Car, 10701, 1, points,
+            new AmbientSpeedRange(carSpeedMetersPerSecond, carSpeedMetersPerSecond),
+            "architecture invariant RideScreen fixture", "residential",
+            roadWidthMeters: roadWidthMeters, baseLaneOffsetMeters: 1.7f);
+        if (!path.IsUsable)
+            throw new InvalidOperationException("Could not derive the deterministic review car path from the production route.");
+
+        _ambientActorManager = new AmbientActorManager { Name = "ArchitectureInvariantReviewTraffic", RandomSeed = 10701 };
+        _routeRoot.AddChild(_ambientActorManager);
+        var startDistance = Math.Clamp(_session.CurrentRideState.DistanceMeters + carAheadMeters,
+            0, Math.Max(0, path.LengthMeters - 5));
+        _ambientActorManager.ConfigureTrafficTestFixture(path, startDistance, carSpeedMetersPerSecond);
+    }
+
+    internal void SetDeterministicSteeringInputForReview(bool left, bool right)
+    {
+        _steerLeftHeld = left;
+        _steerRightHeld = right;
+    }
+
     private IReadOnlyList<RiderState> BuildRemoteRiderStates(
         IEnumerable<MultiplayerRemoteRider> remotes, double routeLength)
     {

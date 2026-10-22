@@ -108,6 +108,14 @@ jobs:
               $ambientCarYieldOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
             throw 'Production RideScreen local-player car-yield review did not report a clean pass.'
           }
+          $physicsInvariantLog = "$env:RUNNER_TEMP\wodra-ride-physics-traffic-invariance.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RidePhysicsAmbientTrafficInvarianceReviewTest.tscn --log-file $physicsInvariantLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen rider-physics traffic-invariance review failed.' }
+          $physicsInvariantOutput = Get-Content -LiteralPath $physicsInvariantLog -Raw
+          if ($physicsInvariantOutput -notmatch '\[RidePhysicsAmbientTrafficInvarianceReview\] PASS:' -or
+              $physicsInvariantOutput -match 'SCRIPT ERROR:|\[RidePhysicsAmbientTrafficInvarianceReview\] FAIL:') {
+            throw 'Production RideScreen rider-physics traffic-invariance review did not report a clean pass.'
+          }
           $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }

@@ -68,6 +68,8 @@ public partial class RideSessionNode : Node
 	public Guid? LastCompletedActivityId { get; private set; }
 	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
 	public string? LastRecordingError { get; private set; }
+	// Read-only observation seam for the production RideScreen invariance regression.
+	internal event Action<RideState, TrainerTelemetry, double>? RecordingSampleObservedForReview;
 
 	private RideFitRecorder? _rideRecorder;
 	private double? _pendingDebugJumpDistanceMeters;
@@ -1119,8 +1121,9 @@ public partial class RideSessionNode : Node
 		_recordingSampleElapsedSeconds = 0;
 
 		var routeSample = _currentRoute?.GetSampleAt(_rideState.DistanceMeters);
-
-		_rideRecorder.RecordSample(_rideState, telemetry.ForRecording(DateTimeOffset.UtcNow), gradient, routeSample);
+		var recordingTelemetry = telemetry.ForRecording(DateTimeOffset.UtcNow);
+		RecordingSampleObservedForReview?.Invoke(_rideState, recordingTelemetry, gradient);
+		_rideRecorder.RecordSample(_rideState, recordingTelemetry, gradient, routeSample);
 	}
 
 	public override void _Process(double delta)
