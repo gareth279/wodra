@@ -19,6 +19,10 @@ var tests = new (string Name, Action Run)[]
 	("HUD telemetry uses live ride state and simulated speed", HudMetricsUseRideState),
 	("HUD marks stale rider sensors unavailable", HudMetricsMarkStaleSensors),
     ("Mass and bike resistance profile affect acceleration", ProfilesAffectPhysics),
+    ("Offline pacer selection, effort targets and assumed mass are explicit", PacerSelectionAndEffortConfiguration),
+    ("Offline pacer uses route gradient and advances through laps", PacerGradientAndLapProgress),
+    ("Player can catch and overtake a continuously progressing pacer", PacerCatchUpAndNoRecycle),
+    ("Pacer pauses, ends, changes route and restarts without moving player state", PacerPauseEndAndRestart),
     ("Ride pause freezes progress and resumes without a distance jump", RidePauseSemantics),
     ("Repeated ride pause action toggles explicit ride state", RidePauseToggle),
     ("Debug mode off emits no periodic snapshots", DebugModeOff),
@@ -1435,7 +1439,126 @@ static void PackagedRouteDirectoryResolution()
         throw new Exception("A test hosted by dotnet.exe should load package fixtures beside its test assembly.");
 }
 
+static void PacerSelectionAndEffortConfiguration()
+{
+    var presets = PacerEffortPresets.All;
+    if (presets.Count != 3 || presets[0].Id != "easy" || presets[1].Id != "moderate" || presets[2].Id != "strong")
+        throw new Exception("Offline pacer selection should expose only the three named effort presets.");
+    if (presets[0].TargetWattsPerKg != 1.5 || presets[1].TargetWattsPerKg != 2.2 || presets[2].TargetWattsPerKg != 3.0
+        || presets[0].TargetPowerWatts != 113 || presets[1].TargetPowerWatts != 165 || presets[2].TargetPowerWatts != 225)
+        throw new Exception("Pacer target watts should be rounded from the documented 75 kg assumed body mass.");
+    if (presets.Any(preset => preset.TotalMassKg != 83 || preset.RiderDisplayName != $"Pacer · {preset.Name}"))
+        throw new Exception("Pacer physics should include the assumed 8 kg bike and clearly identify the virtual rider.");
+    if (PacerEffortPresets.Find("none") is not null || PacerEffortPresets.Find("MoDeRaTe")?.Id != "moderate"
+        || PacerEffortPresets.NormalizeSelection(null) != "none"
+        || PacerEffortPresets.NormalizeSelection("invalid") != "none")
+        throw new Exception("No-pacer, case-insensitive selection and invalid-setting fallback should remain safe.");
+}
+
+static void PacerGradientAndLapProgress()
+{
+    var preset = PacerEffortPresets.Find("moderate")!;
+    var player = new RiderState("player", "You", "route", 0, 0, 1, 0, 8, 0, 0, false, 0);
+    var flat = new PacerRiderController(preset);
+    var climb = new PacerRiderController(preset);
+    var descent = new PacerRiderController(preset);
+    flat.Start(player, 100_000, 0);
+    climb.Start(player, 100_000, 0);
+    descent.Start(player, 100_000, 0);
+    for (var i = 0; i < 240; i++)
+    {
+        flat.Update(100_000, _ => 0, .25, false);
+        climb.Update(100_000, _ => 7.5, .25, false);
+        descent.Update(100_000, _ => -4.5, .25, false);
+    }
+    if (!(descent.State.VirtualSpeedMps > flat.State.VirtualSpeedMps
+        && flat.State.VirtualSpeedMps > climb.State.VirtualSpeedMps))
+        throw new Exception($"Pacer speed should respond to route grade: climb={climb.State.VirtualSpeedMps:F2}, flat={flat.State.VirtualSpeedMps:F2}, descent={descent.State.VirtualSpeedMps:F2} m/s.");
+    if (flat.State.PowerWatts != preset.TargetPowerWatts || flat.State.CadenceRpm <= 0)
+        throw new Exception("The virtual pacer should expose its target effort and cadence as AI state only.");
+
+    var shortRoutePacer = new PacerRiderController(preset);
+    shortRoutePacer.Start(player, 20, 5);
+    var initial = shortRoutePacer.State.RouteDistanceMeters;
+    shortRoutePacer.Update(20, _ => 0, 2.5, false);
+    var after = shortRoutePacer.State;
+    if (after.RouteDistanceMeters <= initial || after.WrappedRouteDistanceMeters is < 0 or >= 20 || after.LapNumber < 2)
+        throw new Exception("Pacer route progress should remain continuous while wrapped coordinates and lap count advance.");
+}
+
+static void PacerCatchUpAndNoRecycle()
+{
+    var preset = PacerEffortPresets.Find("easy")!;
+    var pacer = new PacerRiderController(preset);
+    var player = new RiderState("player", "You", "route", 0, 0, 1, 0, 0, 0, 0, false, 0);
+    pacer.Start(player, 50_000, 12);
+    var playerDistance = 0d;
+    var playerSpeed = 0d;
+    var overtook = false;
+    for (var frame = 0; frame < 3000; frame++)
+    {
+        const double delta = .1;
+        pacer.Update(50_000, _ => 0, delta, false);
+        var step = CyclingPhysicsMath.Advance(playerSpeed, 1200, 0, 83, .005, .32, delta);
+        playerSpeed = step.SpeedMetersPerSecond;
+        playerDistance += step.DistanceMeters;
+        if (playerDistance > pacer.State.RouteDistanceMeters) { overtook = true; break; }
+    }
+    if (!overtook) throw new Exception("A high-power player should be able to catch and pass the lower-effort pacer.");
+
+    var persistent = new PacerRiderController(PacerEffortPresets.Find("strong")!);
+    persistent.Start(player with { RouteDistanceMeters = 3000, VirtualSpeedMps = 6 }, 50_000, 25);
+    var startDistance = persistent.State.RouteDistanceMeters;
+    var playerFarAhead = player with { RouteDistanceMeters = startDistance + AiRiderPopulation.RecycleDistanceMeters + 5000 };
+    persistent.Update(50_000, _ => 0, .25, false);
+    var progressed = persistent.State;
+    var expectedStep = CyclingPhysicsMath.Advance(6, persistent.Preset.TargetPowerWatts, 0,
+        persistent.Preset.TotalMassKg, .005, .32, .25);
+    if (progressed.RouteDistanceMeters <= startDistance ||
+        Math.Abs(progressed.RouteDistanceMeters - startDistance - expectedStep.DistanceMeters) > 1e-9 ||
+        playerFarAhead.RouteDistanceMeters - progressed.RouteDistanceMeters <= AiRiderPopulation.RecycleDistanceMeters)
+        throw new Exception("A pacer far from the player should continue on its own absolute route position rather than recycle toward the player.");
+    var playerFarBehind = player with { RouteDistanceMeters = 0 };
+    var aheadGap = AiRiderPopulation.RecycleDistanceMeters + 5000d;
+    var pacerFarAhead = new PacerRiderController(PacerEffortPresets.Find("strong")!);
+    pacerFarAhead.Start(player with { VirtualSpeedMps = 6 }, 50_000, aheadGap);
+    var aheadStart = pacerFarAhead.State.RouteDistanceMeters;
+    var aheadExpected = CyclingPhysicsMath.Advance(6, pacerFarAhead.Preset.TargetPowerWatts, 0,
+        pacerFarAhead.Preset.TotalMassKg, .005, .32, .25);
+    pacerFarAhead.Update(50_000, _ => 0, .25, false);
+    persistent.Update(50_000, _ => 0, .25, false);
+    if (persistent.State.RouteDistanceMeters <= progressed.RouteDistanceMeters ||
+        pacerFarAhead.State.RouteDistanceMeters - playerFarBehind.RouteDistanceMeters <= AiRiderPopulation.RecycleDistanceMeters ||
+        Math.Abs(pacerFarAhead.State.RouteDistanceMeters - aheadStart - aheadExpected.DistanceMeters) > 1e-9)
+        throw new Exception("Pacer progression should remain continuous when it is far ahead of or behind the player.");
+}
+
+static void PacerPauseEndAndRestart()
+{
+    var pacer = new PacerRiderController(PacerEffortPresets.Find("moderate")!);
+    var player = new RiderState("player", "You", "route-a", 100, 100, 1, 0, 6, 0, 0, false, 20);
+    pacer.Start(player, 1000, 15);
+    pacer.Update(1000, _ => 0, 5, false);
+    var beforePause = pacer.State;
+    pacer.Update(1000, _ => 0, 10, true);
+    if (pacer.State.RouteDistanceMeters != beforePause.RouteDistanceMeters ||
+        pacer.State.VirtualSpeedMps != beforePause.VirtualSpeedMps || pacer.State.SimulationTimeSeconds != beforePause.SimulationTimeSeconds)
+        throw new Exception("A paused ride must hold pacer speed, distance and simulation time.");
+    pacer.Update(1000, _ => 0, 1, false);
+    if (pacer.State.RouteDistanceMeters <= beforePause.RouteDistanceMeters)
+        throw new Exception("The pacer should resume smoothly after ride pause.");
+
+    pacer.Reset();
+    pacer.Update(1000, _ => 0, 30, false);
+    if (pacer.IsInitialized || pacer.State.RouteDistanceMeters != 0)
+        throw new Exception("Ending a ride should stop and clear the pacer state.");
+    pacer.Start(player with { RouteId = "route-b", RouteDistanceMeters = 0, SimulationTimeSeconds = 0 }, 500, 15);
+    if (pacer.State.RouteId != "route-b" || pacer.State.RouteDistanceMeters != 15 || pacer.State.LapNumber != 1)
+        throw new Exception("A route change or restart should reset the pacer identity's route progression cleanly.");
+}
+
 sealed class TestControllerPreference
 {
     public ControllerDeviceTypePreference DeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
 }
+

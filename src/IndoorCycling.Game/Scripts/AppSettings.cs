@@ -19,6 +19,8 @@ public sealed class AppSettings
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
 	public Guid? ActiveProfileId { get; set; }
 	public DummyTrainerSettings DummyTrainer { get; set; } = new();
+	/// <summary>Offline pacer effort preset selected before a ride; "none" disables the pacer.</summary>
+	public string PacerPresetId { get; set; } = PacerEffortPreset.DisabledId;
 	public TrainerSettings Trainer { get; set; } = new();
 	public OptionalDeviceProtocolPreferences OptionalDeviceProtocols { get; set; } = new();
 	public ControllerDeviceTypePreference ControllerDeviceType { get; set; } = ControllerDeviceTypePreference.AutoDetect;
@@ -109,6 +111,7 @@ public sealed class AppSettings
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
 			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();
+			settings.PacerPresetId = PacerEffortPresets.NormalizeSelection(settings.PacerPresetId);
 			if (!Enum.IsDefined(settings.ControllerDeviceType)) settings.ControllerDeviceType = ControllerDeviceTypePreference.AutoDetect;
 			var migratedTrainerPreference = TrainerProtocolPreferencePolicy.MigrateLegacyPreference(
 				json, settings.Trainer);
@@ -223,3 +226,4 @@ public sealed class DummyTrainerSettings
 		CadenceRpm = Math.Clamp(CadenceRpm, 0, 160);
 	}
 }
+

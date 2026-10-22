@@ -84,6 +84,9 @@ public partial class RideWorldView : Node3D
     private const double RemoteVisualRadiusMeters = 300;
     private LocalRiderStateSource? _riderStateSource;
     private AiRiderPopulation? _aiPopulation;
+    private PacerRiderController? _pacerController;
+    private CyclistVisual? _pacerVisual;
+    private Label3D? _pacerNameLabel;
     private readonly Dictionary<string, CyclistVisual> _riderVisuals = new(StringComparer.Ordinal);
     private ChaseCamera _camera = default!;
     private RideMenuPanelController? _rideMenuPanel;
@@ -108,6 +111,9 @@ public partial class RideWorldView : Node3D
     private double _lastChallengeElapsed;
     private double _steeringDiagnosticElapsed;
     public string? LastChallengeSummary { get; private set; }
+    public RiderState? PacerRiderState => _pacerController?.IsInitialized == true ? _pacerController.State : null;
+    public PacerEffortPreset? SelectedPacerPreset => _pacerController?.Preset;
+    public bool PacerVisualVisible => _pacerVisual?.Visible == true;
     private double _debugElapsed;
     private bool _wasActive;
     private VisualRoutePose _lastPose;
@@ -432,7 +438,9 @@ public partial class RideWorldView : Node3D
                 _routeLoadAttempt.Reset();
                 _steering.Reset();
                 _steerLeftHeld = _steerRightHeld = false;
+                ClearPacer();
             }
+            _hudController?.SetPacerStatus(null);
             _wasActive = false;
             return;
         }
@@ -544,10 +552,27 @@ public partial class RideWorldView : Node3D
             Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
             _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
         _session.GhostRider?.Update(rideState.ElapsedSeconds, routeLength, _session.IsRidePaused);
+        if (_pacerController is { } pacer)
+        {
+            if (!pacer.IsInitialized) pacer.Start(playerState, routeLength);
+            else pacer.Update(routeLength, _loadedRoute.GetGradientAt, delta, _session.IsRidePaused);
+            var pacerState = pacer.State;
+            var laneSnapshot = _riderStateSource!.GetRiders().Where(rider => rider.RiderId != "player")
+                .Concat(BuildExternalRiderStates(routeLength))
+                .Append(playerState).ToArray();
+            var pacerLaneTargets = RiderTrafficSeparation.ResolveAiLaneTargets(laneSnapshot, routeLength);
+            if (pacerLaneTargets.TryGetValue(pacer.RiderId, out var targetOffset))
+                pacer.SetLateralOffset(targetOffset);
+            SetPacerHudStatus(playerState, pacerState, pacer.Preset);
+        }
+        else _hudController?.SetPacerStatus(null);
         _riderStateSource!.Update(playerState, routeLength, _loadedRoute.GetGradientAt, delta,
             BuildExternalRiderStates(routeLength));
         _session.UpdateGhostIndicator(distance);
-        foreach (var riderState in _riderStateSource.GetRiders().Concat(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>()))
+        var localRiders = _riderStateSource.GetRiders()
+            .Concat(PacerRiderState is { } visiblePacerState ? [visiblePacerState] : Array.Empty<RiderState>())
+            .Concat(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>());
+        foreach (var riderState in localRiders)
         {
             if (!_riderVisuals.TryGetValue(riderState.RiderId, out var visual))
             {
@@ -764,9 +789,21 @@ public partial class RideWorldView : Node3D
     private IReadOnlyList<RiderState> BuildExternalRiderStates(double routeLength)
     {
         var result = new List<RiderState>();
+        if (PacerRiderState is { } pacer) result.Add(pacer);
         result.AddRange(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>());
         result.AddRange(BuildRemoteRiderStates(_session.GetInterpolatedRemoteRiders(), routeLength));
         return result;
+    }
+
+    private void SetPacerHudStatus(RiderState player, RiderState pacer, PacerEffortPreset preset)
+    {
+        var gap = PacerRiderController.SignedGapMeters(pacer, player);
+        var direction = gap >= 0 ? "ahead" : "behind";
+        var lapDifference = pacer.LapNumber - player.LapNumber;
+        var lapText = lapDifference == 0 ? "" :
+            $" · {Math.Abs(lapDifference)} lap{(Math.Abs(lapDifference) == 1 ? "" : "s")} {direction}";
+        _hudController?.SetPacerStatus(
+            $"{preset.Name} Pacer · {preset.TargetWattsPerKg:0.0} W/kg · {Math.Abs(gap):0} m {direction}{lapText}");
     }
 
     /// <summary>Actual production CyclistVisual bounds for deterministic RideScreen collision review scenes.</summary>
@@ -783,6 +820,15 @@ public partial class RideWorldView : Node3D
             samples.Add(new RiderCollisionReviewSample(rider.RiderId, rider.RouteDistanceMeters,
                 rider.LateralOffsetMeters, modelBase, visual.GlobalBasis.Z * -1,
                 localBounds.Size.Z, localBounds.Size.X, visual.GetWorldVisualBounds(), false));
+        }
+        if (PacerRiderState is { } pacer && _pacerVisual is { Visible: true } pacerVisual)
+        {
+            var localBounds = pacerVisual.GetStableLocalVisualBounds();
+            var modelCenter = pacerVisual.GlobalTransform * (localBounds.Position + localBounds.Size * .5f);
+            var modelBase = modelCenter - Godot.Vector3.Up * (localBounds.Size.Y * .5f);
+            samples.Add(new RiderCollisionReviewSample(pacer.RiderId, pacer.RouteDistanceMeters,
+                pacer.LateralOffsetMeters, modelBase, pacerVisual.GlobalBasis.Z * -1,
+                localBounds.Size.Z, localBounds.Size.X, pacerVisual.GetWorldVisualBounds(), false));
         }
         var remoteSamples = _session.GetInterpolatedRemoteRiders().ToArray();
         foreach (var remote in BuildRemoteRiderStates(remoteSamples, _geometry.LengthMeters))
@@ -867,6 +913,7 @@ public partial class RideWorldView : Node3D
         if (_geometry is null || _loadedRoute is null) return Array.Empty<AmbientTrafficRider>();
         var result = new List<AmbientTrafficRider>();
         foreach (var rider in _riderStateSource?.GetRiders()
+                     .Concat(PacerRiderState is { } pacer ? [pacer] : Array.Empty<RiderState>())
                      .Concat(_session.GhostRider?.GetRiders() ?? Array.Empty<RiderState>()) ?? Array.Empty<RiderState>())
         {
             if (rider.RiderId == "ghost") continue;
@@ -1041,7 +1088,8 @@ public partial class RideWorldView : Node3D
     private IReadOnlyList<AiRiderDebugState> GetNearestAiDebugStates()
     {
         if (_riderStateSource is null || _geometry is null) return Array.Empty<AiRiderDebugState>();
-        var riders = _riderStateSource.GetRiders();
+        var riders = _riderStateSource.GetRiders()
+            .Concat(PacerRiderState is { } pacer ? [pacer] : Array.Empty<RiderState>()).ToArray();
         var player = riders.FirstOrDefault(rider => rider.RiderId == "player");
         if (player is null) return Array.Empty<AiRiderDebugState>();
         return riders.Where(rider => rider.RiderId != "player")
@@ -1062,6 +1110,7 @@ public partial class RideWorldView : Node3D
     private void LoadRoute(RouteDefinition route)
     {
         _collectibleLayer = null;
+        ClearPacer();
         if (_remoteVisualRoot is not null)
         {
             RemoveChild(_remoteVisualRoot);
@@ -1092,6 +1141,28 @@ public partial class RideWorldView : Node3D
             aiVisual.Build(i + 1);
             _aiVisualRoot.AddChild(aiVisual);
             _riderVisuals[controller.RiderId] = aiVisual;
+        }
+        if (PacerEffortPresets.Find(GameBootstrap.Settings.PacerPresetId) is { } selectedPacer)
+        {
+            _pacerController = new PacerRiderController(selectedPacer);
+            _pacerVisual = new CyclistVisual { Name = $"OfflinePacer_{selectedPacer.Id}" };
+            _pacerVisual.Build(4);
+            _pacerNameLabel = new Label3D
+            {
+                Name = "PacerIdentity",
+                Text = $"PACER · {selectedPacer.Name.ToUpperInvariant()} · {selectedPacer.TargetWattsPerKg:0.0} W/kg",
+                FontSize = 30,
+                PixelSize = .006f,
+                Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                NoDepthTest = true,
+                Modulate = new Color(.95f, .78f, .39f, .98f),
+                OutlineSize = 6,
+                OutlineModulate = new Color(.08f, .07f, .06f, .9f),
+                Position = new Vector3(0, 2.08f, 0)
+            };
+            _pacerVisual.AddChild(_pacerNameLabel);
+            _aiVisualRoot.AddChild(_pacerVisual);
+            _riderVisuals[_pacerController.RiderId] = _pacerVisual;
         }
         if (_routeRoot is not null)
         {
@@ -1356,6 +1427,7 @@ public partial class RideWorldView : Node3D
         _loadedRoute = null;
         _riderStateSource = null;
         _aiPopulation = null;
+        ClearPacer();
         _riderVisuals.Clear();
         _landmarkLayer = null;
         _buildingLayer = null;
@@ -1365,6 +1437,19 @@ public partial class RideWorldView : Node3D
         _backgroundStreetLayer = null;
         _ambientActorManager = null;
         _terrainLayer = null;
+    }
+
+    private void ClearPacer()
+    {
+        if (_pacerVisual is not null)
+        {
+            _riderVisuals.Remove(_pacerController?.RiderId ?? "");
+            _pacerVisual.QueueFree();
+        }
+        _pacerController = null;
+        _pacerVisual = null;
+        _pacerNameLabel = null;
+        _hudController?.SetPacerStatus(null);
     }
 
     private void ReportOptionalLayerFailure(RouteDefinition route, string layer, Exception exception)
@@ -1380,3 +1465,4 @@ public partial class RideWorldView : Node3D
         _hudController?.SetStatus(message);
     }
 }
+

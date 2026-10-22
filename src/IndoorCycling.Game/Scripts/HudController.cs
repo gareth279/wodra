@@ -27,6 +27,8 @@ public partial class HudController : Control
 	private Label? _ghostLabel;
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
+	private string? _pacerStatusText;
+	private string _nearbyHumanRidersText = "";
 	private Control? _topHudPanel;
 	private Control? _bottomHudPanel;
 	private Rect2? _cameraSafeViewportRect;
@@ -296,11 +298,7 @@ public partial class HudController : Control
 		double routeLengthMeters, double nowSeconds)
 	{
 		if (_nearbyHumanRidersLabel is null) return;
-		if (routeLengthMeters <= 0)
-		{
-			_nearbyHumanRidersLabel.Visible = false;
-			return;
-		}
+		if (routeLengthMeters <= 0) { _nearbyHumanRidersText = ""; UpdateNearbyRiderDisplay(); return; }
 		var nearby = riders.Where(rider => rider.HasState &&
 			-rider.ReceivedAtSeconds + nowSeconds <= RemoteRiderInterpolator.StaleAfterSeconds &&
 			rider.DistanceMeters is not null)
@@ -309,13 +307,29 @@ public partial class HudController : Control
 				Laps: MultiplayerRoutePosition.LapDifference(rider.DistanceMeters!.Value, localDistanceMeters, routeLengthMeters)))
 			.Where(item => Math.Abs(item.Distance) <= 300)
 			.OrderBy(item => Math.Abs(item.Distance)).Take(3).ToArray();
-		_nearbyHumanRidersLabel.Visible = nearby.Length > 0 && _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
-		_nearbyHumanRidersLabel.Text = string.Join("   ·   ", nearby.Select(item =>
+		_nearbyHumanRidersText = string.Join("   ·   ", nearby.Select(item =>
 		{
 			var distance = $"{Math.Abs(item.Distance):0} m {(item.Distance >= 0 ? "ahead" : "behind")}";
 			var lap = item.Laps == 0 ? "" : $" · {Math.Abs(item.Laps)} lap{(Math.Abs(item.Laps) == 1 ? "" : "s")} {(item.Laps > 0 ? "ahead" : "behind")}";
 			return $"{item.Rider.DisplayName}{lap} · {distance}";
 		}));
+		UpdateNearbyRiderDisplay();
+	}
+
+	public void SetPacerStatus(string? status)
+	{
+		_pacerStatusText = string.IsNullOrWhiteSpace(status) ? null : status;
+		UpdateNearbyRiderDisplay();
+	}
+
+	private void UpdateNearbyRiderDisplay()
+	{
+		if (_nearbyHumanRidersLabel is null) return;
+		var lines = new[] { _pacerStatusText, _nearbyHumanRidersText }
+			.Where(text => !string.IsNullOrWhiteSpace(text));
+		_nearbyHumanRidersLabel.Text = string.Join("\n", lines);
+		_nearbyHumanRidersLabel.Visible = !string.IsNullOrWhiteSpace(_nearbyHumanRidersLabel.Text)
+			&& _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
 	}
 
 	public void HideCatchUpOffer()
@@ -966,3 +980,4 @@ public partial class HudController : Control
 		label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
 	}
 }
+
