@@ -82,6 +82,14 @@ public partial class RouteGradientInset : Control
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : $"ROUTE · LAP {currentPose.Lap} · {rideState.DistanceMeters / 1000:0.00} km", HorizontalAlignment.Left, Size.X - 64, 11, new Color(.88f, .82f, .69f));
 		DrawString(GetThemeDefaultFont(), new Vector2(Size.X - 12, 18), "N ↑", HorizontalAlignment.Right, -1, 10, new Color(.75f, .82f, .76f));
 		if (_mapLine.Length >= 2) DrawPolyline(_mapLine, new Color(.58f, .65f, .57f), 2.2f, true);
+		if (_world?.PacerRiderState is { } pacerState)
+		{
+			var pacerPose = _overview.GetMapPose(pacerState.RouteDistanceMeters, new NVector2(Size.X, 92));
+			var pacerMarker = new Vector2(pacerPose.Position.X, pacerPose.Position.Y + 24);
+			DrawCircle(pacerMarker, 6, new Color(.95f, .69f, .28f));
+			DrawCircle(pacerMarker, 6, new Color(.1f, .1f, .09f), false, 1.3f, true);
+			DrawString(GetThemeDefaultFont(), pacerMarker + new Vector2(-3.2f, 3.1f), "P", HorizontalAlignment.Left, -1, 8, new Color(.08f, .07f, .05f));
+		}
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 141), "ELEVATION · M", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 154), $"{_overview.MaximumElevationMeters:0}", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));
 		DrawString(GetThemeDefaultFont(), new Vector2(12, _profileOrigin.Y + _profileSize.Y), $"{_overview.MinimumElevationMeters:0}", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));
@@ -109,3 +117,4 @@ public partial class RouteGradientInset : Control
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 124), $"NOW {altitude:0} m · GRADE {grade:+0.0;-0.0;0.0}%", HorizontalAlignment.Left, Size.X - 24, 10, new Color(.94f, .93f, .88f));
 	}
 }
+

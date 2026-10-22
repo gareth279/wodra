@@ -116,6 +116,14 @@ jobs:
               $physicsInvariantOutput -match 'SCRIPT ERROR:|\[RidePhysicsAmbientTrafficInvarianceReview\] FAIL:') {
             throw 'Production RideScreen rider-physics traffic-invariance review did not report a clean pass.'
           }
+          $offlinePacerLog = "$env:RUNNER_TEMP\wodra-offline-pacer-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/OfflinePacerRideScreenReviewTest.tscn --log-file $offlinePacerLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen offline pacer review failed.' }
+          $offlinePacerOutput = Get-Content -LiteralPath $offlinePacerLog -Raw
+          if ($offlinePacerOutput -notmatch '\[OfflinePacerRideScreenReview\] PASS:' -or
+              $offlinePacerOutput -match 'SCRIPT ERROR:|\[OfflinePacerRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen offline pacer review did not report a clean pass.'
+          }
           $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }
@@ -164,3 +172,4 @@ jobs:
             dotnet run --project $project -c Release -p:EnableEpicOnlineServices=false -p:NuGetAudit=false
             if ($LASTEXITCODE -ne 0) { throw "Regression suite failed: $project" }
           }
+

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using IndoorCycling.Core.Simulation;
 
 public partial class RouteSelectionPanelController : Control
 {
@@ -19,6 +20,8 @@ public partial class RouteSelectionPanelController : Control
 	private CheckButton? _gameFeaturesToggle;
 	private Label? _onlineStatusLabel;
 	private VBoxContainer? _startupOnlineControls;
+	private OptionButton? _pacerPresetPicker;
+	private readonly List<string> _pacerPresetIds = [];
 	private readonly Dictionary<string, Button> _routeButtons = new(StringComparer.Ordinal);
 	private CancellationTokenSource? _routePresenceCancellation;
 	private int _routePresenceGeneration;
@@ -101,6 +104,36 @@ public partial class RouteSelectionPanelController : Control
 		_startupOnlineControls.AddChild(_onlineStatusLabel);
 		column.AddChild(_startupOnlineControls);
 		column.MoveChild(_startupOnlineControls, 1);
+
+		var pacerControls = new VBoxContainer { Name = "OfflinePacerControls" };
+		pacerControls.AddChild(new Label { Text = "Offline pacer", HorizontalAlignment = HorizontalAlignment.Center });
+		_pacerPresetPicker = new OptionButton { Name = "PacerPresetPicker", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_pacerPresetIds.Add(PacerEffortPreset.DisabledId);
+		_pacerPresetPicker.AddItem("No pacer");
+		foreach (var preset in PacerEffortPresets.All)
+		{
+			_pacerPresetIds.Add(preset.Id);
+			_pacerPresetPicker.AddItem($"{preset.Name} · {preset.TargetWattsPerKg:0.0} W/kg · {preset.TargetPowerWatts} W target");
+		}
+		_pacerPresetPicker.Select(_pacerPresetIds.IndexOf(
+			PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)));
+		_pacerPresetPicker.ItemSelected += OnPacerPresetSelected;
+		pacerControls.AddChild(_pacerPresetPicker);
+		pacerControls.AddChild(new Label
+		{
+			Text = $"Offline AI effort uses a {PacerEffortPreset.AssumedBodyWeightKg:0} kg rider and {PacerEffortPreset.AssumedBikeWeightKg:0} kg bike.",
+			HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart
+		});
+		column.AddChild(pacerControls);
+		column.MoveChild(pacerControls, 2);
+	}
+
+	private void OnPacerPresetSelected(long index)
+	{
+		if (index < 0 || index >= _pacerPresetIds.Count) return;
+		GameBootstrap.Settings.PacerPresetId = _pacerPresetIds[(int)index];
+		GameBootstrap.Settings.Save();
 	}
 
 	public override void _Process(double delta) => UpdateOnlineStatusLabel();
@@ -290,3 +323,4 @@ public partial class RouteSelectionPanelController : Control
 		_routePresenceCancellation = null;
 	}
 }
+
