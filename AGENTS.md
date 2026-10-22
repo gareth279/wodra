@@ -1,0 +1,3 @@
+# Coding-agent guidance
+
+Before changing Wodra code, read [docs/ARCHITECTURE_INVARIANTS.md](docs/ARCHITECTURE_INVARIANTS.md) and the affected implementation/test references. Treat the invariants as review requirements; do not change authoritative ride, measured-data, cyclist-separation, multiplayer, camera, connectivity, or release behavior to solve an unrelated issue. Keep regression coverage in the existing Windows validation workflow. Follow [docs/windows-alpha-release.md](docs/windows-alpha-release.md) for any separately authorized release work; issue #107 itself does not authorize a release.
