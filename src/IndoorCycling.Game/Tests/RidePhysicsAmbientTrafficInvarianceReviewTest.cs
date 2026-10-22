@@ -10,7 +10,7 @@ using IndoorCycling.Trainer.Implementations;
 /// <summary>Runs paired deterministic traces through the production RideScreen/session path.</summary>
 public partial class RidePhysicsAmbientTrafficInvarianceReviewTest : Node
 {
-	private const string RouteId = "dunedin-rolling-loop";
+	private const string RouteId = "dunedin-one-way-oval-gardens";
 	private const int FrameCount = 144;
 	private const double NormalFrameSeconds = .05;
 	private const double LowFrameRateSeconds = .65;
