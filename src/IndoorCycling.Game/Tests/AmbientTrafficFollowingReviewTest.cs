@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 using NVector3 = System.Numerics.Vector3;
 
 /// <summary>Exercises production traffic control around cyclists on narrow and curved road paths.</summary>
@@ -31,6 +33,9 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 			VerifySameLaneCarsDoNotUseJunctionPriority();
 			VerifyCarFollowsPedestrianObstacle();
 			VerifyCrossingCarsDoNotDeadlock();
+			VerifyPlayerPhysicsIsInvariantToAmbientTraffic();
+			VerifyFasterPlayerCausesSafeCarYield();
+			VerifyCarYieldAvoidsOccupiedOpposingLane();
 			GD.Print($"[AmbientTrafficFollowingReview] PASS: narrow road follows group (clearance={following.MinimumClearance:F3}m, final gap={following.FinalGap:F2}m, speed={following.FinalSpeed:F2}m/s); curved 7.5m road safely overtakes (clearance={overtake.MinimumClearance:F3}m); 12s obstacle prediction follows the bend.");
 			GetTree().Quit(0);
 		}
@@ -39,6 +44,123 @@ public partial class AmbientTrafficFollowingReviewTest : Node
 			GD.PushError($"[AmbientTrafficFollowingReview] FAIL: {ex}");
 			GetTree().Quit(1);
 		}
+	}
+
+	private void VerifyPlayerPhysicsIsInvariantToAmbientTraffic()
+	{
+		var scenarios = new[]
+		{
+			(Width: 7.5, Points: Straight, Power: 1050, Grade: -8d, Delta: .05),
+			(Width: 5.8, Points: Straight, Power: 650, Grade: 0d, Delta: .05),
+			(Width: 7.5, Points: Bend, Power: 900, Grade: 4d, Delta: .1),
+			(Width: 5.8, Points: Bend, Power: 1200, Grade: -10d, Delta: 1.25)
+		};
+		var riderProfile = new RiderProfile("Invariant rider", 76, BikeWeightKg: 8);
+		var bikeProfile = new BikeProfile("Invariant bike", 8);
+		foreach (var scenario in scenarios)
+		{
+			var path = new AmbientActorPath(AmbientActorKind.Car, 701, 1, scenario.Points,
+				new AmbientSpeedRange(3, 3), roadWidthMeters: scenario.Width, baseLaneOffsetMeters: 1.7f);
+			var traffic = new AmbientActorManager { Name = $"PhysicsInvariantTraffic_{scenario.Width}_{scenario.Delta}" };
+			AddChild(traffic);
+			traffic.ConfigureTrafficTestFixture(path, 65, 3);
+			var withTraffic = RideState.Initial with { VirtualSpeedKph = 43 };
+			var withoutTraffic = withTraffic;
+			var withTrafficSteering = new SteeringLateralController();
+			var withoutTrafficSteering = new SteeringLateralController();
+			var engine = new SimulationEngine();
+			for (var frame = 0; frame < 96; frame++)
+			{
+				var delta = frame % 12 == 0 ? scenario.Delta : .05;
+				var watts = scenario.Power + frame % 4 * 15;
+				var cadence = 78 + frame % 3;
+				var timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(frame * 50);
+				var telemetry = new TrainerTelemetry(timestamp, watts, cadence, withTraffic.VirtualSpeedKph,
+					HeartRateBpm: 142 + frame % 2);
+				var input = new SimulationTickInput(telemetry, scenario.Grade, delta, riderProfile, bikeProfile);
+				withoutTraffic = engine.Tick(withoutTraffic, input).NewState;
+				withTraffic = engine.Tick(withTraffic, input).NewState;
+				var left = frame % 48 is >= 4 and < 11;
+				var right = frame % 48 is >= 29 and < 35;
+				var noTrafficOffset = withoutTrafficSteering.Update(delta, left, right, null, false, false,
+					roadWidthMeters: (float)scenario.Width);
+				var trafficOffset = withTrafficSteering.Update(delta, left, right, null, false, false,
+					roadWidthMeters: (float)scenario.Width);
+				if (withoutTraffic != withTraffic || Math.Abs(noTrafficOffset - trafficOffset) > 1e-12)
+					throw new InvalidOperationException($"Ambient cars changed authoritative ride state in scenario {scenario.Width}m/{scenario.Delta}s at frame {frame}: traffic={withTraffic}, none={withoutTraffic}.");
+
+				var player = CreatePathRider(path, "player", withTraffic.DistanceMeters,
+					(float)(withTraffic.VirtualSpeedKph / 3.6), (float)trafficOffset);
+				traffic.UpdateTrafficTestFixture([player], delta);
+				var recordedWithTraffic = (withTraffic.ElapsedSeconds, withTraffic.DistanceMeters,
+					withTraffic.CurrentPowerWatts, withTraffic.CurrentCadenceRpm,
+					telemetry.ForRecording(timestamp).HeartRateBpm);
+				var recordedWithoutTraffic = (withoutTraffic.ElapsedSeconds, withoutTraffic.DistanceMeters,
+					withoutTraffic.CurrentPowerWatts, withoutTraffic.CurrentCadenceRpm,
+					telemetry.ForRecording(timestamp).HeartRateBpm);
+				if (recordedWithTraffic != recordedWithoutTraffic)
+					throw new InvalidOperationException("Ambient cars changed the power/cadence/distance/heart-rate recording inputs.");
+			}
+		}
+		GD.Print("[AmbientTrafficFollowingReview] PASS: identical watts, gradient, elapsed time, bike/rider parameters and steering produced exactly identical speed, distance, lateral position, full RideState and recording inputs with a slow car active versus traffic absent (narrow road, bends, fast downhill and large frame deltas).");
+	}
+
+	private void VerifyFasterPlayerCausesSafeCarYield()
+	{
+		var manager = new AmbientActorManager { Name = "FasterPlayerYieldFixture" };
+		AddChild(manager);
+		var path = new AmbientActorPath(AmbientActorKind.Car, 702, 1, Straight,
+			new AmbientSpeedRange(4, 4), roadWidthMeters: 7.5, baseLaneOffsetMeters: 1.7f);
+		manager.ConfigureTrafficTestFixture(path, 90, 4);
+		var playerDistance = 45d;
+		var minimumClearance = float.PositiveInfinity;
+		var passed = false;
+		var returned = false;
+		for (var frame = 0; frame < 500; frame++)
+		{
+			var player = CreatePathRider(path, "player", playerDistance, 12, 1.75f);
+			manager.UpdateTrafficTestFixture([player], .05);
+			var car = manager.FirstCarState ?? throw new InvalidOperationException("Yielding car disappeared during the rider pass.");
+			var clearance = AmbientActorEnvelopeMath.SignedClearance(car.WorldPosition, car.Heading,
+				AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+				AmbientActorEnvelopeMath.CarHeightMeters, player.PoseAt(0), player.LengthMeters,
+				player.WidthMeters, player.HeightMeters);
+			minimumClearance = Math.Min(minimumClearance, clearance);
+			if (clearance < -.02f)
+				throw new InvalidOperationException($"Yielding car intersected a faster player at frame {frame} (clearance={clearance:F3}m).");
+			var forwardGap = NVector3.Dot(player.Position - car.WorldPosition, player.Forward);
+			passed |= forwardGap < -5;
+			returned |= passed && Math.Abs((manager.FirstCarLaneOffset ?? path.BaseLaneOffsetMeters)
+				- path.BaseLaneOffsetMeters) < .05f;
+			playerDistance += 12 * .05;
+		}
+		if (!passed || !returned || minimumClearance < -.02f)
+			throw new InvalidOperationException($"Car did not yield and return cleanly for a faster local rider: passed={passed}, returned={returned}, minimum clearance={minimumClearance:F3}m.");
+	}
+
+	private void VerifyCarYieldAvoidsOccupiedOpposingLane()
+	{
+		var manager = new AmbientActorManager { Name = "BlockedYieldFixture" };
+		AddChild(manager);
+		var path = new AmbientActorPath(AmbientActorKind.Car, 703, 1, Straight,
+			new AmbientSpeedRange(4, 4), roadWidthMeters: 7.5, baseLaneOffsetMeters: 1.7f);
+		var opposing = new AmbientActorPath(AmbientActorKind.Car, 704, 1,
+			new[] { new NVector3(1000, 0, 0), NVector3.Zero }, new AmbientSpeedRange(8, 8),
+			roadWidthMeters: 7.5, baseLaneOffsetMeters: 1.7f);
+		manager.ConfigureTrafficTestFixture(path, 90, 4);
+		manager.AddTrafficTestFixture(AmbientActorKind.Car, opposing, 885, 8);
+		var player = CreatePathRider(path, "player", 45, 12, 1.75f);
+		manager.UpdateTrafficTestFixture([player], .05);
+		if (Math.Abs((manager.FirstCarLaneOffset ?? path.BaseLaneOffsetMeters) - path.BaseLaneOffsetMeters) > .05f)
+			throw new InvalidOperationException("The car began a centreward yield despite an oncoming vehicle occupying the swept corridor.");
+		var immediateSpawn = path.SampleLane(80, path.BaseLaneOffsetMeters);
+		if (!AmbientActorManager.WouldSpawnIntoImmediatePlayerCatch(immediateSpawn.Position,
+			immediateSpawn.Heading, 4, [player]))
+			throw new InvalidOperationException("Car population accepted a slow spawn inside the player's immediate catch window.");
+		var distantSpawn = path.SampleLane(250, path.BaseLaneOffsetMeters);
+		if (AmbientActorManager.WouldSpawnIntoImmediatePlayerCatch(distantSpawn.Position,
+			distantSpawn.Heading, 4, [player]))
+			throw new InvalidOperationException("The catch-window spawn policy rejected a distant car unnecessarily.");
 	}
 
 	private (bool Passed, float MinimumClearance, float FinalGap, float FinalSpeed, float FinalLaneOffset) RunVehicleScenario(

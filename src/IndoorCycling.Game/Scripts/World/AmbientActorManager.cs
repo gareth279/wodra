@@ -18,6 +18,7 @@ public partial class AmbientActorManager : Node3D
         public required Node3D Visual;
         public float LaneOffsetMeters;
         public string? OvertakingRiderId;
+        public string? YieldingToPlayerId;
     }
 
     private readonly List<ActiveActor> _active = [];
@@ -62,13 +63,6 @@ public partial class AmbientActorManager : Node3D
         + ActivePedestrianCount * AmbientPedestrianVisual.ApproximateTriangleCount;
     internal IReadOnlyList<AmbientTrafficRider> GetTrafficReviewSamples() =>
         _active.Where(actor => actor.State.Active).Select(ToTrafficRider).ToArray();
-    internal IReadOnlyList<AmbientCarInteractionSample> GetLocalPlayerCarInteractionSamples(
-        NVector3 localPlayerPosition, double horizonSeconds) =>
-        _active.Where(actor => actor.State.Active && actor.State.Kind == AmbientActorKind.Car
-                && NVector3.Distance(ToNumerics(actor.State.WorldPosition), localPlayerPosition)
-                    <= Math.Max(80, Math.Max(0, actor.State.SpeedMetersPerSecond) * (float)horizonSeconds + 20))
-            .Select(actor => new AmbientCarInteractionSample(actor.State.ActorId, actor.Path.RoadWidthMeters,
-                ToTrafficRiderWithHorizon(actor, Math.Max(.25, horizonSeconds)))).ToArray();
 
     public void Configure(VisualRoute route, RouteBackgroundStreetData streetData)
     {
@@ -166,8 +160,25 @@ public partial class AmbientActorManager : Node3D
                 {
                     actor.OvertakingRiderId = overtakeTarget;
                 }
+                if (actor.YieldingToPlayerId is { } yieldingPlayerId)
+                {
+                    var player = cyclists.FirstOrDefault(rider => rider.RiderId == yieldingPlayerId);
+                    var passed = player.RiderId is null || IsCyclistPastYieldingCar(actor, player);
+                    var laneTarget = passed ? actor.Path.BaseLaneOffsetMeters : SafeYieldLaneOffset(actor.Path);
+                    actor.LaneOffsetMeters = ApproachLane(actor.LaneOffsetMeters, laneTarget, deltaSeconds);
+                    if (passed && Math.Abs(actor.LaneOffsetMeters - actor.Path.BaseLaneOffsetMeters) < .05f)
+                        actor.YieldingToPlayerId = null;
+                }
+                else if (FindSafeYieldingPlayer(actor, cyclists, pedestrians, otherCars) is { } yieldingPlayer)
+                {
+                    actor.YieldingToPlayerId = yieldingPlayer;
+                    actor.LaneOffsetMeters = ApproachLane(actor.LaneOffsetMeters,
+                        SafeYieldLaneOffset(actor.Path), deltaSeconds);
+                }
                 var targetSpeed = AmbientTrafficFollowingMath.TargetSpeed(actor.Path, actor.DistanceAlongPath,
                     actor.LaneOffsetMeters, actor.CruiseSpeedMetersPerSecond, rightOfWayObstacles);
+                if (actor.YieldingToPlayerId is not null)
+                    targetSpeed = Math.Min(targetSpeed, actor.State.SpeedMetersPerSecond);
                 speed = AmbientTrafficFollowingMath.ApproachSpeed(speed, targetSpeed, deltaSeconds);
                 speed = AmbientTrafficFollowingMath.ClampSpeedForClearance(actor.Path, actor.DistanceAlongPath,
                     speed, deltaSeconds, cyclists, pedestrians, otherCars, actor.LaneOffsetMeters);
@@ -208,26 +219,22 @@ public partial class AmbientActorManager : Node3D
         }
     }
 
-    private static AmbientTrafficRider ToTrafficRider(ActiveActor actor) =>
-        ToTrafficRiderWithHorizon(actor, AmbientTrafficFollowingMath.PredictionHorizonSeconds);
-
-    private static AmbientTrafficRider ToTrafficRiderWithHorizon(ActiveActor actor,
-        double predictionHorizonSeconds)
+    private static AmbientTrafficRider ToTrafficRider(ActiveActor actor)
     {
         var isCar = actor.State.Kind == AmbientActorKind.Car;
         var length = isCar ? AmbientActorEnvelopeMath.CarLengthMeters : AmbientActorEnvelopeMath.PedestrianLengthMeters;
         var width = isCar ? AmbientActorEnvelopeMath.CarWidthMeters : AmbientActorEnvelopeMath.PedestrianWidthMeters;
         var height = isCar ? AmbientActorEnvelopeMath.CarHeightMeters : AmbientActorEnvelopeMath.PedestrianHeightMeters;
-        var predictionSamples = (int)Math.Ceiling(predictionHorizonSeconds
+        var predictionSamples = (int)Math.Ceiling(AmbientTrafficFollowingMath.PredictionHorizonSeconds
             / AmbientTrafficFollowingMath.PredictionSampleSeconds);
-        var prediction = new AmbientTrafficPose[predictionSamples + 1];
+        var prediction = new List<AmbientTrafficPose>(predictionSamples + 1);
         for (var sample = 0; sample <= predictionSamples; sample++)
         {
             var seconds = sample * AmbientTrafficFollowingMath.PredictionSampleSeconds;
             var distance = AmbientActorMath.AdvancePathDistance(actor.Path, actor.DistanceAlongPath,
                 actor.State.SpeedMetersPerSecond, seconds, paused: false);
             var (position, heading) = actor.Path.SampleLane(distance, actor.LaneOffsetMeters);
-            prediction[sample] = new AmbientTrafficPose(seconds, position, heading);
+            prediction.Add(new AmbientTrafficPose(seconds, position, heading));
         }
         var kind = isCar ? "car" : "pedestrian";
         return new AmbientTrafficRider($"{kind}-{actor.State.ActorId}",
@@ -304,6 +311,90 @@ public partial class AmbientActorManager : Node3D
             + rider.LengthMeters * .5f + AmbientTrafficFollowingMath.MinimumFollowingGapMeters;
     }
 
+    private static string? FindSafeYieldingPlayer(ActiveActor car,
+        IReadOnlyList<AmbientTrafficRider> cyclists, IReadOnlyList<AmbientTrafficRider> pedestrians,
+        IReadOnlyList<AmbientTrafficRider> otherCars)
+    {
+        if (!car.Path.IsUsable || car.Path.RoadWidthMeters < 5.5) return null;
+        var laneTarget = SafeYieldLaneOffset(car.Path);
+        if (Math.Abs(laneTarget - car.LaneOffsetMeters) < .45f) return null;
+        var (_, heading) = car.Path.SampleLane(car.DistanceAlongPath, car.LaneOffsetMeters);
+        var candidate = cyclists.Where(rider => rider.RiderId == "player")
+            .Select(rider =>
+            {
+                var relative = rider.Position - ToNumerics(car.State.WorldPosition);
+                var behindGap = -NVector3.Dot(relative, heading);
+                var sameDirection = NVector3.Dot(NormalizeHorizontal(heading), NormalizeHorizontal(rider.Forward));
+                var closingSpeed = rider.SpeedMetersPerSecond - car.State.SpeedMetersPerSecond;
+                var timeToCatch = closingSpeed > .1f ? behindGap / closingSpeed : float.PositiveInfinity;
+                return (Rider: rider, BehindGap: behindGap, SameDirection: sameDirection,
+                    ClosingSpeed: closingSpeed, TimeToCatch: timeToCatch);
+            })
+            .Where(item => item.SameDirection > .7f && item.BehindGap is >= 8 and <= 55
+                && item.ClosingSpeed >= 2 && item.TimeToCatch <= 8)
+            .OrderBy(item => item.TimeToCatch).FirstOrDefault();
+        if (candidate.Rider.RiderId is null) return null;
+
+        // A yielding car moves only toward the road centre. Refuse the move if the
+        // entire short swept corridor is occupied by oncoming traffic or another actor.
+        var obstacles = cyclists.Where(rider => rider.RiderId != candidate.Rider.RiderId)
+            .Concat(pedestrians).Concat(otherCars).ToArray();
+        const double horizon = 2.5;
+        var steps = 10;
+        for (var step = 0; step <= steps; step++)
+        {
+            var seconds = horizon * step / steps;
+            var distance = AmbientActorMath.AdvancePathDistance(car.Path, car.DistanceAlongPath,
+                car.State.SpeedMetersPerSecond, seconds, paused: false);
+            var laneShift = Math.Clamp(laneTarget - car.LaneOffsetMeters,
+                (float)(-1.2 * seconds), (float)(1.2 * seconds));
+            var pose = car.Path.SampleLane(distance, car.LaneOffsetMeters + laneShift);
+            if (!AmbientActorMath.IsValidTransform(pose.Position, pose.Heading)
+                || obstacles.Any(obstacle => AmbientActorEnvelopeMath.Overlaps(pose.Position, pose.Heading,
+                    AmbientActorEnvelopeMath.CarLengthMeters, AmbientActorEnvelopeMath.CarWidthMeters,
+                    AmbientActorEnvelopeMath.CarHeightMeters, obstacle.PoseAt(seconds),
+                    obstacle.LengthMeters, obstacle.WidthMeters, obstacle.HeightMeters)))
+                return null;
+        }
+        return candidate.Rider.RiderId;
+    }
+
+    internal static bool WouldSpawnIntoImmediatePlayerCatch(NVector3 carPosition, NVector3 carForward,
+        float slowestCarSpeed, IReadOnlyList<AmbientTrafficRider> cyclists)
+    {
+        var forward = NormalizeHorizontal(carForward);
+        foreach (var player in cyclists.Where(rider => rider.RiderId == "player"))
+        {
+            var playerForward = NormalizeHorizontal(player.Forward);
+            if (NVector3.Dot(forward, playerForward) < .7f) continue;
+            var relative = carPosition - player.Position;
+            var ahead = NVector3.Dot(relative, playerForward);
+            var lateral = Math.Abs(NVector3.Dot(relative, LocalLeft(playerForward)));
+            var closingSpeed = player.SpeedMetersPerSecond - slowestCarSpeed;
+            if (ahead is > 8 and <= 80 && lateral < 3.2f && closingSpeed >= 2
+                && ahead / closingSpeed < 8)
+                return true;
+        }
+        return false;
+    }
+
+    private static bool IsCyclistPastYieldingCar(ActiveActor car, AmbientTrafficRider rider)
+    {
+        var longitudinal = NVector3.Dot(ToNumerics(car.State.WorldPosition) - rider.Position,
+            NormalizeHorizontal(rider.Forward));
+        return longitudinal < -(AmbientActorEnvelopeMath.CarLengthMeters * .5f
+            + rider.LengthMeters * .5f + AmbientTrafficFollowingMath.MinimumFollowingGapMeters);
+    }
+
+    private static float SafeYieldLaneOffset(AmbientActorPath path)
+    {
+        // Centreward motion gives a faster cyclist room on the road-side of the car.
+        // The swept-envelope check above rejects the move when that space is occupied.
+        var halfTravelableWidth = Math.Max(0, (float)(path.RoadWidthMeters * .5
+            - AmbientActorEnvelopeMath.CarWidthMeters * .5 - AmbientActorMath.RoadEdgeClearanceMeters));
+        return Math.Clamp(0, -halfTravelableWidth, halfTravelableWidth);
+    }
+
     private static float OvertakeLaneOffset(AmbientActorPath path) =>
         Math.Clamp(Math.Sign(path.BaseLaneOffsetMeters) * .15f,
             (float)(-path.RoadWidthMeters * .5 + AmbientActorEnvelopeMath.CarWidthMeters * .5 + AmbientActorMath.RoadEdgeClearanceMeters),
@@ -359,6 +450,10 @@ public partial class AmbientActorManager : Node3D
                 { tooClose++; continue; }
                 var candidatePath = paths[candidate.PathIndex];
                 var candidatePose = candidatePath.Sample(candidate.DistanceMeters);
+                if (kind == AmbientActorKind.Car
+                    && WouldSpawnIntoImmediatePlayerCatch(candidatePose.Position, candidatePose.Heading,
+                        candidatePath.SpeedRange.MinimumMetersPerSecond, cyclists))
+                { tooClose++; continue; }
                 var candidateLength = kind == AmbientActorKind.Car
                     ? AmbientActorEnvelopeMath.CarLengthMeters : AmbientActorEnvelopeMath.PedestrianLengthMeters;
                 var candidateWidth = kind == AmbientActorKind.Car
