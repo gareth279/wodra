@@ -11,6 +11,7 @@ public partial class AmbientCarRideScreenReviewTest : Node
 {
 	private const double StepSeconds = .05;
 	[Export] public string RouteId { get; set; } = "dunedin-rolling-loop";
+	[Export] public bool PlayerCatchesCar { get; set; }
 
 	public override async void _Ready()
 	{
@@ -25,7 +26,7 @@ public partial class AmbientCarRideScreenReviewTest : Node
 			await Settle(6);
 			GameBootstrap.Settings.DebugModeEnabled = true;
 			GameBootstrap.Settings.DummyTrainer.Mode = "Watts";
-			GameBootstrap.Settings.DummyTrainer.TargetWatts = 220;
+			GameBootstrap.Settings.DummyTrainer.TargetWatts = PlayerCatchesCar ? 750 : 220;
 			GameBootstrap.Settings.DummyTrainer.CadenceRpm = 86;
 			GameBootstrap.ConfigureFakeTrainerMode();
 			var world = screen.GetNode<RideWorldView>("RideWorldView");
@@ -67,17 +68,30 @@ public partial class AmbientCarRideScreenReviewTest : Node
 			if (!carPath.IsUsable) throw new InvalidOperationException("Could not build the close-interaction car path from the production route geometry.");
 			var manager = new AmbientActorManager { Name = "ControlledProductionRideScreenCar" };
 			world.AddChild(manager);
-			var startDistance = Math.Clamp(player.RouteDistanceMeters - 55, 0, carPath.LengthMeters - 30);
-			manager.ConfigureTrafficTestFixture(carPath, startDistance, 12);
+			var startDistance = PlayerCatchesCar
+				? Math.Clamp(player.RouteDistanceMeters + 45, 0, carPath.LengthMeters - 80)
+				: Math.Clamp(player.RouteDistanceMeters - 55, 0, carPath.LengthMeters - 30);
+			manager.ConfigureTrafficTestFixture(carPath, startDistance, PlayerCatchesCar ? 4 : 12);
 			var minimumClearance = float.PositiveInfinity;
 			var closestApproach = float.PositiveInfinity;
 			var carPassed = false;
 			var baseLane = carPath.BaseLaneOffsetMeters;
 			var captured = 0;
+			var scriptedPlayerDistance = player.RouteDistanceMeters;
 			for (var frame = 0; frame < 720; frame++)
 			{
 				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-				var trafficRiders = BuildTrafficRiders(world, manager);
+				if (PlayerCatchesCar)
+				{
+					// Move the actual RideScreen rider through production route geometry at a
+					// deterministic test pace; this changes only the fixture's route position.
+					scriptedPlayerDistance += 12 * StepSeconds;
+					session.JumpToRouteDistance(scriptedPlayerDistance.ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+					session.ConfirmDebugDistanceJump();
+					await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+				}
+				var trafficRiders = BuildTrafficRiders(world, manager, PlayerCatchesCar
+					? (float)(session.CurrentRideState.VirtualSpeedKph / 3.6) : null);
 				manager.UpdateTrafficTestFixture(trafficRiders, StepSeconds);
 				var car = manager.FirstCarState;
 				if (car is null) continue;
@@ -96,7 +110,8 @@ public partial class AmbientCarRideScreenReviewTest : Node
 				var currentPlayer = world.GetRiderCollisionReviewSamples().Single(rider => rider.RiderId == "player");
 				var riderPosition = ToNumerics(currentPlayer.WorldPosition);
 				var forwardGap = NVector3.Dot(riderPosition - car.Value.WorldPosition, ToNumerics(currentPlayer.WorldForward));
-				if (forwardGap < -6 && Math.Abs((manager.FirstCarLaneOffset ?? baseLane) - baseLane) < .05f)
+				var riderHasPassed = PlayerCatchesCar ? forwardGap > 6 : forwardGap < -6;
+				if (riderHasPassed && Math.Abs((manager.FirstCarLaneOffset ?? baseLane) - baseLane) < .05f)
 					carPassed = true;
 				if (frame % 12 == 0 && captured < 80)
 				{
@@ -118,7 +133,7 @@ public partial class AmbientCarRideScreenReviewTest : Node
 			}
 			var diagnostic = world.GetDiagnosticState();
 			if (requireRiderGroup && diagnostic.AiRiders < 3) throw new InvalidOperationException($"RideScreen AI population changed during car interaction: {diagnostic.AiRiders}.");
-			GD.Print($"[AmbientCarRideScreenReview] PASS: production route={RouteId}, controlled close car, AI={diagnostic.AiRiders}, minimum envelope clearance={minimumClearance:F3}m, player closest approach={closestApproach:F2}m, passed-and-returned={carPassed}, frames={captured}, evidence={output}");
+			GD.Print($"[AmbientCarRideScreenReview] PASS: production route={RouteId}, direction={(PlayerCatchesCar ? "player caught car" : "car caught player")}, controlled close car, AI={diagnostic.AiRiders}, minimum envelope clearance={minimumClearance:F3}m, player closest approach={closestApproach:F2}m, passed-and-returned={carPassed}, frames={captured}, evidence={output}");
 			GetTree().Quit(0);
 		}
 		catch (Exception error)
@@ -128,12 +143,13 @@ public partial class AmbientCarRideScreenReviewTest : Node
 		}
 	}
 
-	private static IReadOnlyList<AmbientTrafficRider> BuildTrafficRiders(RideWorldView world, AmbientActorManager manager)
+	private static IReadOnlyList<AmbientTrafficRider> BuildTrafficRiders(RideWorldView world, AmbientActorManager manager,
+		float? playerSpeedOverride = null)
 	{
 		var result = new List<AmbientTrafficRider>();
 		foreach (var sample in world.GetRiderCollisionReviewSamples().Where(rider => rider.RiderId != "ghost"))
 		{
-			var speed = sample.RiderId == "player" ? 5f : 4.5f;
+			var speed = sample.RiderId == "player" ? playerSpeedOverride ?? 5f : 4.5f;
 			var poses = new List<AmbientTrafficPose>(49);
 			for (var index = 0; index <= 48; index++)
 			{

@@ -100,6 +100,14 @@ jobs:
               $ambientCarRideOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
             throw 'Production RideScreen ambient car interaction review did not report a clean pass.'
           }
+          $ambientCarYieldLog = "$env:RUNNER_TEMP\wodra-ambient-car-yield-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarPlayerYieldRideScreenReviewTest.tscn --log-file $ambientCarYieldLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen local-player car-yield review failed.' }
+          $ambientCarYieldOutput = Get-Content -LiteralPath $ambientCarYieldLog -Raw
+          if ($ambientCarYieldOutput -notmatch '\[AmbientCarRideScreenReview\] PASS:.*direction=player caught car' -or
+              $ambientCarYieldOutput -match 'SCRIPT ERROR:|\[AmbientCarRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen local-player car-yield review did not report a clean pass.'
+          }
           $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }
