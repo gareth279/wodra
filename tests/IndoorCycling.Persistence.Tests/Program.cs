@@ -62,6 +62,35 @@ try
     Assert((await repository.GetRecentActivitiesForProfileAsync(dev.Id)).Single().Id == devActivity.Id, "test profile history stays separate");
     Assert(id != secondId, "activity ids are unique");
 
+    var baseDate = new DateTimeOffset(DateTime.Now.Date.AddDays(-15), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now.Date.AddDays(-15))).ToUniversalTime();
+    for (var i = 0; i < 125; i++)
+    {
+        var fixture = second with { Id = Guid.NewGuid(), RiderProfileId = rider.Id, RouteId = i % 2 == 0 ? "route-a" : "route-b", RouteName = i % 2 == 0 ? "Route A" : "Route B", StartedAtUtc = baseDate.AddHours(i), DistanceMeters = 1000 + i, DurationSeconds = 600 + i, ElevationGainMeters = i };
+        await repository.SaveCompletedActivityAsync(fixture, []);
+    }
+    var newestPage = await repository.GetHistoryPageAsync(rider.Id, null, null, null, null, RideHistorySort.Newest, 100, 25);
+    Assert(newestPage.TotalCount == 127 && newestPage.Activities.Count == 25 && (await repository.GetHistoryPageAsync(rider.Id, null, null, null, null, RideHistorySort.Newest, 125, 25)).Activities.Count == 2, "history pagination reaches records beyond the previous 100 ride limit");
+    var filtered = await repository.GetHistoryPageAsync(rider.Id, "Route A", "route-a", null, null, RideHistorySort.Distance, 0, 25);
+    Assert(filtered.TotalCount > 50 && filtered.Activities[0].DistanceMeters >= filtered.Activities[^1].DistanceMeters, "route and name search with distance sorting");
+    var dateFiltered = await repository.GetHistoryPageAsync(rider.Id, null, null, baseDate, baseDate.AddDays(1), RideHistorySort.Oldest, 0, 200);
+    Assert(dateFiltered.Activities.All(a => a.StartedAtUtc >= baseDate && a.StartedAtUtc < baseDate.AddDays(1)), "history date range uses inclusive start and exclusive end");
+    var trend = await repository.GetHistoryTrendAsync(rider.Id, baseDate.AddDays(-7), baseDate.AddDays(28), false);
+    Assert(trend.Count is >= 5 and <= 6 && trend.Sum(b => b.RideCount) >= 120, "calendar bucket totals include every matching activity independently of page size");
+    Assert((await repository.GetHistoryPageAsync(dev.Id, null, null, null, null, RideHistorySort.Newest, 0, 200)).TotalCount == 1, "history queries preserve profile isolation for explicit test profiles");
+    var boundaryRepository = new SqliteRideHistoryRepository(Path.Combine(temporaryRoot, "history-boundaries.sqlite3")); await boundaryRepository.InitializeAsync();
+    var boundaryProfile = await boundaryRepository.EnsureRiderProfileAsync("Boundary Rider");
+    var localStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    var utcStart = new DateTimeOffset(localStart, TimeZoneInfo.Local.GetUtcOffset(localStart)).ToUniversalTime();
+    var utcEnd = new DateTimeOffset(localStart.AddMonths(1), TimeZoneInfo.Local.GetUtcOffset(localStart.AddMonths(1))).ToUniversalTime();
+    var atStart = first with { Id = Guid.NewGuid(), RiderProfileId = boundaryProfile.Id, StartedAtUtc = utcStart, AveragePowerWatts = null, MaxPowerWatts = null, AverageSpeedKph = null, MaxSpeedKph = null, AverageCadenceRpm = null, MaxCadenceRpm = null };
+    var atEnd = atStart with { Id = Guid.NewGuid(), StartedAtUtc = utcEnd };
+    await boundaryRepository.SaveCompletedActivityAsync(atStart, []); await boundaryRepository.SaveCompletedActivityAsync(atEnd, []);
+    var exactMonth = await boundaryRepository.GetHistoryPageAsync(boundaryProfile.Id, null, null, utcStart, utcEnd, RideHistorySort.Oldest, 0, 25);
+    Assert(exactMonth.TotalCount == 1 && exactMonth.Activities.Single().Id == atStart.Id && exactMonth.Activities.Single().AveragePowerWatts is null,
+        "local calendar range includes its start, excludes the next boundary, and preserves unavailable metrics");
+    var restarted = new SqliteRideHistoryRepository(boundaryRepository.DatabasePath); await restarted.InitializeAsync();
+    Assert((await restarted.GetActivityAsync(atStart.Id))?.Id == atStart.Id, "history query data persists after repository restart");
+
     var beforeFailedWrite = (await repository.GetRecentActivitiesAsync()).Count;
     var invalid = second with { Id = Guid.NewGuid(), RiderProfileId = Guid.NewGuid() };
     try { await repository.SaveCompletedActivityAsync(invalid, []); throw new Exception("invalid foreign key should fail"); }
@@ -85,7 +114,7 @@ try
         try { RiderProfileRecord.Validate("Invalid", 75, 8, difficulty); throw new Exception("invalid trainer difficulty accepted"); }
         catch (ArgumentOutOfRangeException) { }
     }
-    Console.WriteLine("PASS SQLite migration/profile/activity/media/recent ordering and accumulator tests");
+    Console.WriteLine("PASS SQLite migration/profile/activity/media/recent ordering, history filtering/pagination/calendar totals and accumulator tests");
 }
 finally { try { Directory.Delete(temporaryRoot, true); } catch { } }
 
