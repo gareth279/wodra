@@ -46,14 +46,18 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			GameBootstrap.Settings.RouteFavoritesByProfile = saved;
 			GameBootstrap.Settings.Save();
 
-			search.Text = "Signal Hill";
+			var searchTarget = RouteCatalog.Routes.FirstOrDefault(route => route.Id != selector.SelectedRouteId)
+				?? RouteCatalog.Routes[0];
+			search.Text = searchTarget.Name;
 			search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text);
 			await Frames(2);
-			var filteredChoice = rows.GetChildren().OfType<HBoxContainer>().Single().GetNode<Button>("RouteChoice");
+			var filteredRows = rows.GetChildren().OfType<HBoxContainer>().ToArray();
+			Check(filteredRows.Length == 1, "search narrows to one matching installed route");
+			var filteredChoice = filteredRows.Single().GetNode<Button>("RouteChoice");
 			selectedId = selector.SelectedRouteId;
-			Check(filteredChoice.Text.Contains("Signal Hill", StringComparison.OrdinalIgnoreCase)
+			Check(filteredChoice.Text.Contains(searchTarget.Name, StringComparison.OrdinalIgnoreCase)
 				&& preview.Route?.Id == selectedId,
-				"search narrows to the matching route and updates its preview selection");
+			"search updates the selected route preview to the matching route");
 
 			search.Text = "no such route in Wodra";
 			search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text);
