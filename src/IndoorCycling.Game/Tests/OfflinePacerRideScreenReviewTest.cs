@@ -19,6 +19,7 @@ public partial class OfflinePacerRideScreenReviewTest : Node
     private bool _originalDebugModeEnabled;
     private bool _originalOnlineRidingEnabled;
     private bool _originalRideSettingsCaptured;
+    private int _rideTraceCount;
 
     public override async void _Ready()
     {
@@ -53,9 +54,8 @@ public partial class OfflinePacerRideScreenReviewTest : Node
 
             var withPacer = await RunTrace(screen, session, world, route, "moderate");
             await session.ExitToRouteSelectionAsync();
-            world.SetProcess(true);
-            await Settle(2);
-            world.SetProcess(false);
+            AssertPacerPanelHidden(screen, "after pacer ride ended");
+            await SettleWorldBetweenRides(world);
             var withoutPacer = await RunTrace(screen, session, world, route, PacerEffortPreset.DisabledId);
 
             AssertPlayerTraceEquivalent(withPacer, withoutPacer);
@@ -71,8 +71,15 @@ public partial class OfflinePacerRideScreenReviewTest : Node
                 throw new InvalidOperationException("The selected pacer should be available without online riding or multiplayer.");
 
             await session.ExitToRouteSelectionAsync();
+            AssertPacerPanelHidden(screen, "after no-pacer ride ended");
+            await SettleWorldBetweenRides(world);
+            var pacerAfterNoPacer = await RunTrace(screen, session, world, route, "moderate");
+            if (pacerAfterNoPacer.PacerFrames.Count < 3)
+                throw new InvalidOperationException("The reverse no-pacer to pacer ride transition did not initialize a fresh pacer session.");
+            await session.ExitToRouteSelectionAsync();
+            AssertPacerPanelHidden(screen, "after reverse pacer ride ended");
             RestoreGameFeaturePreferences();
-            GD.Print($"[OfflinePacerRideScreenReview] PASS: production RideScreen route={route.Id}; Moderate Pacer 2.2 W/kg ({PacerEffortPresets.Find("moderate")!.TargetPowerWatts} W at the assumed 75 kg body mass) remained visible and progressed for {withPacer.PacerFrames.Count} ticks; a 1,200 W player caught/overtook it; pausing/restarts are covered by Core tests; {FrameCount} identical player ticks and {withPacer.RecordedSamples.Count} production FIT inputs matched pacer-off exactly while offline; generic AI count={withPacer.AiRiderCount}.");
+            GD.Print($"[OfflinePacerRideScreenReview] PASS: production RideScreen route={route.Id}; pacer→no-pacer→pacer session transitions reset visibility; {FrameCount} identical player ticks and {withPacer.RecordedSamples.Count} production FIT inputs matched pacer-off exactly; rendered HUD bounds were checked at default/minimum/fullscreen with debug and dummy controls on/off; generic AI count={withPacer.AiRiderCount}.");
             GetTree().Quit(0);
         }
         catch (Exception error)
@@ -153,6 +160,8 @@ public partial class OfflinePacerRideScreenReviewTest : Node
     private async Task<TraceResult> RunTrace(Node screen, RideSessionNode session,
         RideWorldView world, RouteDefinition route, string presetId)
     {
+        _rideTraceCount++;
+        var startedWithPacer = presetId != PacerEffortPreset.DisabledId;
         GameBootstrap.Settings.PacerPresetId = presetId;
         if (!await session.StartTrainerSessionAsync(route))
             throw new InvalidOperationException("Could not start the production RideScreen pacer review session.");
@@ -163,34 +172,44 @@ public partial class OfflinePacerRideScreenReviewTest : Node
         world.SetProcess(true);
         await Settle(8);
         if (world.RouteGeometry is null) throw new InvalidOperationException("The production route geometry did not load.");
-
-        CaptureRenderedReviewFrame(presetId == PacerEffortPreset.DisabledId
-            ? "pacer-none-control" : $"pacer-{presetId}-near-debug-hidden");
-        if (presetId != PacerEffortPreset.DisabledId)
+		var hud = screen.GetNode<HudController>("HudController");
+		var scenario = startedWithPacer ? "pacer-enabled" : "pacer-disabled";
+		foreach (var debugVisible in new[] { false, true })
         {
-            var hud = screen.GetNode<HudController>("HudController");
-            hud.SetDebugDisplayEnabled(true);
-            await Settle(2);
-            CaptureRenderedReviewFrame("pacer-debug-visible-default-window");
-            DisplayServer.WindowSetSize(new Vector2I(960, 540));
-            await Settle(2);
-            CaptureRenderedReviewFrame("pacer-debug-visible-minimum-window");
-            DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
-            await Settle(2);
-            CaptureRenderedReviewFrame("pacer-debug-visible-fullscreen");
-            DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
-            DisplayServer.WindowSetSize(new Vector2I(1280, 720));
-            hud.SetDebugDisplayEnabled(false);
-            await Settle(2);
+			hud.SetDebugDisplayEnabled(debugVisible);
+			foreach (var size in new[] { (Name: "default", Size: new Vector2I(1280, 720)), (Name: "minimum", Size: new Vector2I(960, 540)) })
+			{
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+				DisplayServer.WindowSetSize(size.Size);
+				await Settle(3);
+				AssertHudLayout(screen, startedWithPacer, debugVisible, $"{scenario}/{size.Name}/debug-{debugVisible}");
+				if (_rideTraceCount <= 2)
+					CaptureRenderedReviewFrame($"{scenario}-debug-{(debugVisible ? "visible" : "hidden")}-{size.Name}");
+			}
+			DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+			await Settle(4);
+			AssertHudLayout(screen, startedWithPacer, debugVisible, $"{scenario}/fullscreen/debug-{debugVisible}");
+			if (_rideTraceCount <= 2)
+				CaptureRenderedReviewFrame($"{scenario}-debug-{(debugVisible ? "visible" : "hidden")}-fullscreen");
         }
+		DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+		DisplayServer.WindowSetSize(new Vector2I(1280, 720));
+		hud.SetDebugDisplayEnabled(false);
+		await Settle(3);
         world.SetProcess(false);
 
         if (presetId == PacerEffortPreset.DisabledId)
         {
             if (world.SelectedPacerPreset is not null || world.PacerRiderState is not null || world.PacerVisualVisible)
                 throw new InvalidOperationException("No-pacer selection should leave the production world without pacer state or model.");
-            if (!screen.GetNode<Control>("HudController/OfflinePacerPanel").IsVisibleInTree())
-                throw new InvalidOperationException("The production ride HUD must keep its pacer selector available when no pacer is selected.");
+            AssertPacerPanelHidden(screen, "no-pacer ride");
+            // A live persisted-setting mutation must not reveal the panel in a session
+            // whose start snapshot was No pacer.
+            GameBootstrap.Settings.PacerPresetId = "strong";
+            hud.SetPacerPanel(null, "Choose a pacer", world.SelectPacerPreset,
+                world.BringSelectedPacerToPlayer, world.StopFollowingPacer);
+            if (screen.GetNode<Control>("HudController/OfflinePacerPanel").IsVisibleInTree())
+                throw new InvalidOperationException("A persisted pacer change revealed the HUD panel mid-ride after starting with No pacer.");
         }
         else
         {
@@ -306,11 +325,19 @@ public partial class OfflinePacerRideScreenReviewTest : Node
         var aiCount = world.GetDiagnosticState().AiRiders;
         if (presetId != PacerEffortPreset.DisabledId && world.SelectedPacerPreset?.Id != presetId)
             throw new InvalidOperationException("The selected pacer silently changed after the player passed nearby AI riders.");
+        var pacerVisualSamples = presetId == PacerEffortPreset.DisabledId ? 0 : world.GetRiderCollisionReviewSamples()
+            .Count(sample => sample.RiderId == $"ai-pacer-{presetId}");
+        if (startedWithPacer)
+        {
+			world.StopFollowingPacer();
+			world._Process(.05);
+			if (!screen.GetNode<Control>("HudController/OfflinePacerPanel").IsVisibleInTree())
+				throw new InvalidOperationException("Stop following hid the selector during a pacer-enabled session.");
+		}
         return new TraceResult(frames, pacerFrames, samples, aiCount,
             frames.Count > 1 && pacerFrames.Count > 1 && pacerFrames[0].GapMeters > 0
                 && pacerFrames[^1].GapMeters < 0,
-            presetId == PacerEffortPreset.DisabledId ? 0 : world.GetRiderCollisionReviewSamples()
-                .Count(sample => sample.RiderId == $"ai-pacer-{presetId}"));
+            pacerVisualSamples);
     }
 
     private static void AssertPlayerTraceEquivalent(TraceResult pacer, TraceResult none)
@@ -341,9 +368,67 @@ public partial class OfflinePacerRideScreenReviewTest : Node
         for (var frame = 0; frame < frames; frame++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
     }
 
+	private async Task SettleWorldBetweenRides(RideWorldView world)
+	{
+		world.SetProcess(true);
+		await Settle(2);
+		world.SetProcess(false);
+	}
+
+	private static void AssertPacerPanelHidden(Node screen, string context)
+	{
+		if (screen.GetNode<Control>("HudController/OfflinePacerPanel").IsVisibleInTree())
+			throw new InvalidOperationException($"The pacer panel remained visible {context}.");
+	}
+
+	private static void AssertHudLayout(Node screen, bool startedWithPacer, bool debugVisible, string context)
+	{
+		var hud = screen.GetNode<HudController>("HudController");
+		var pacer = hud.GetNode<Control>("OfflinePacerPanel");
+		var bar = hud.GetNode<Control>("BottomBar");
+		var pause = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
+		var recording = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
+		var menu = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
+		var viewport = hud.GetViewportRect();
+		AssertInside(bar.GetGlobalRect(), viewport.Size, $"action bar ({context})");
+		if (bar.Size.X > 400 || pause.Size.X < 72 || pause.Size.Y < 36 || menu.Size.X < 72 || menu.Size.Y < 36)
+			throw new InvalidOperationException($"Bottom actions were not content-sized with usable controls at {context}: bar={bar.Size}, pause={pause.Size}, menu={menu.Size}.");
+		if (startedWithPacer != pacer.IsVisibleInTree())
+			throw new InvalidOperationException($"Pacer HUD visibility did not match the ride-start snapshot at {context}.");
+		if (!startedWithPacer) return;
+
+		AssertInside(pacer.GetGlobalRect(), viewport.Size, $"pacer panel ({context})");
+		if (!recording.Visible)
+			throw new InvalidOperationException($"Recording state was not visible in the compact action bar at {context}.");
+		var inset = hud.GetNode<Control>("RouteGradientInset");
+		var dummy = hud.GetNode<Control>("DummyControlPanel");
+		var top = hud.GetNode<Control>("TopHudPanel");
+		var debug = hud.GetNodeOrNull<Control>("DebugRideOverlay");
+		if (Overlaps(pacer, inset) || Overlaps(pacer, dummy) || Overlaps(pacer, bar)
+			|| Overlaps(pacer, top) || (debugVisible && debug is not null && Overlaps(pacer, debug)))
+			throw new InvalidOperationException($"Pacer panel overlaps another visible HUD surface at {context}: pacer={pacer.GetGlobalRect()}, inset={inset.GetGlobalRect()}, dummy={dummy.GetGlobalRect()}, bar={bar.GetGlobalRect()}.");
+		foreach (var childName in new[] { "PacerLayout/PacerSelection/PacerSelector", "PacerLayout/PacerSelection/PacerGap" })
+			if (!Contains(pacer.GetGlobalRect(), pacer.GetNode<Control>(childName).GetGlobalRect()))
+				throw new InvalidOperationException($"Pacer control {childName} was clipped by its panel at {context}.");
+	}
+
+	private static bool Overlaps(Control left, Control right) =>
+		left.IsVisibleInTree() && right.IsVisibleInTree() && left.GetGlobalRect().Intersects(right.GetGlobalRect());
+
+	private static bool Contains(Rect2 outer, Rect2 inner) =>
+		inner.Position.X >= outer.Position.X - .5f && inner.Position.Y >= outer.Position.Y - .5f
+		&& inner.End.X <= outer.End.X + .5f && inner.End.Y <= outer.End.Y + .5f;
+
+	private static void AssertInside(Rect2 rect, Vector2 size, string label)
+	{
+		if (rect.Position.X < -.5f || rect.Position.Y < -.5f || rect.End.X > size.X + .5f || rect.End.Y > size.Y + .5f)
+			throw new InvalidOperationException($"{label} escaped the viewport {size}: {rect}.");
+	}
+
     private void CaptureRenderedReviewFrame(string name)
     {
-        if (OS.GetCmdlineArgs().Contains("--headless"))
+		if (OS.GetCmdlineArgs().Contains("--headless")
+			|| DisplayServer.GetName().Equals("headless", StringComparison.OrdinalIgnoreCase))
         {
             GD.Print($"[OfflinePacerRideScreenReview] screenshot skipped: headless renderer ({name})");
             return;
