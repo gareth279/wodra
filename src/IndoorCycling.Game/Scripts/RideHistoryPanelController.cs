@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Core.Persistence;
 
 public partial class RideHistoryPanelController : Control
 {
@@ -21,7 +22,25 @@ public partial class RideHistoryPanelController : Control
     private Label _summaryEssentials = null!;
     private ScrollContainer _detailScroll = null!;
     private ItemList _list = null!;
+    private LineEdit _search = null!;
+    private OptionButton _routeFilter = null!;
+    private OptionButton _dateFilter = null!;
+    private OptionButton _sortFilter = null!;
+    private Label _pageStatus = null!;
+    private Label _dashboard = null!;
+    private RideHistoryTrendChart _trendChart = null!;
+    private OptionButton _trendRange = null!;
+    private Button _previousPage = null!;
+    private Button _nextPage = null!;
+    private IRideHistoryRepository? _repositoryOverride;
+    private RiderProfileRecord? _activeProfile;
+    private int _pageIndex;
+    private int _historyRefreshGeneration;
+    private int _dashboardGeneration;
+    private const int PageSize = 25;
+    private readonly List<string> _routeIds = [];
     private Button _viewButton = null!;
+    private Button _fitFolderButton = null!;
     private Button _ghostButton = null!;
     private Button _doneButton = null!;
     private Button _diagnosticExportButton = null!;
@@ -40,7 +59,7 @@ public partial class RideHistoryPanelController : Control
         _routeSelection = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
         _hud = GetNodeOrNull<HudController>("../HudController");
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        _panel = new PanelContainer { AnchorLeft = .5f, AnchorTop = .5f, AnchorRight = .5f, AnchorBottom = .5f };
+        _panel = new PanelContainer { Name = "HistoryPanel", AnchorLeft = .5f, AnchorTop = .5f, AnchorRight = .5f, AnchorBottom = .5f };
         var margin = new MarginContainer();
         margin.AddThemeConstantOverride("margin_left", 18); margin.AddThemeConstantOverride("margin_right", 18);
         margin.AddThemeConstantOverride("margin_top", 18); margin.AddThemeConstantOverride("margin_bottom", 18);
@@ -48,18 +67,34 @@ public partial class RideHistoryPanelController : Control
         _title = new Label { Text = "Ride History" }; column.AddChild(_title);
         _summaryEssentials = new Label { Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         column.AddChild(_summaryEssentials);
+        var filters = new VBoxContainer(); var filterTop = new HBoxContainer(); var filterBottom = new HBoxContainer();
+        _search = new LineEdit { Name = "HistorySearch", PlaceholderText = "Search route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(150, 0) };
+        _search.TextChanged += text => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterTop.AddChild(_search);
+        _routeFilter = new OptionButton { Name = "HistoryRouteFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _routeFilter.AddItem("All routes", 0); _routeFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterTop.AddChild(_routeFilter);
+        _dateFilter = new OptionButton { Name = "HistoryDateFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _dateFilter.AddItem("All dates", 0); _dateFilter.AddItem("Last 7 days", 1); _dateFilter.AddItem("Last 30 days", 2); _dateFilter.AddItem("This month", 3); _dateFilter.AddItem("This year", 4); _dateFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterBottom.AddChild(_dateFilter);
+        _sortFilter = new OptionButton { Name = "HistorySortFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; foreach (var text in new[] { "Newest", "Oldest", "Longest distance", "Longest duration", "Most climbing" }) _sortFilter.AddItem(text); _sortFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterBottom.AddChild(_sortFilter);
+        filters.AddChild(filterTop); filters.AddChild(filterBottom);
+        column.AddChild(filters);
         var body = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _list = new ItemList { CustomMinimumSize = new Vector2(300, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _list = new ItemList { Name = "HistoryActivityList", CustomMinimumSize = new Vector2(300, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _list.ItemSelected += OnItemSelected; body.AddChild(_list);
         _detailScroll = new ScrollContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-        _detail = new Label { Text = "Select a ride to see details.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
+        _detail = new Label { Name = "HistoryDetail", Text = "Select a ride to see details.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
         _detailColumn = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _detailColumn.AddChild(_detail);
         _stravaUploads = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Visible = false };
         _detailColumn.AddChild(_stravaUploads);
         _detailScroll.AddChild(_detailColumn); body.AddChild(_detailScroll); column.AddChild(body);
+        var pageControls = new HBoxContainer();
+        _previousPage = new Button { Name = "HistoryPreviousPage", Text = "Previous" }; _previousPage.Pressed += () => { if (_pageIndex > 0) { _pageIndex--; _ = RefreshHistoryAsync(); } }; pageControls.AddChild(_previousPage);
+        _pageStatus = new Label { Name = "HistoryPageStatus", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; pageControls.AddChild(_pageStatus);
+        _nextPage = new Button { Name = "HistoryNextPage", Text = "Next" }; _nextPage.Pressed += () => { _pageIndex++; _ = RefreshHistoryAsync(); }; pageControls.AddChild(_nextPage); column.AddChild(pageControls);
+        _dashboard = new Label { Name = "HistoryDashboard", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; column.AddChild(_dashboard);
+        var chartRow = new HBoxContainer(); _trendRange = new OptionButton { Name = "HistoryTrendRange" }; _trendRange.AddItem("6 weeks"); _trendRange.AddItem("6 months"); _trendRange.ItemSelected += index => { if (_activeProfile is not null) _ = RefreshDashboardAsync(_repositoryOverride ?? GameBootstrap.RideHistory!, _activeProfile); }; chartRow.AddChild(_trendRange);
+        _trendChart = new RideHistoryTrendChart { Name = "HistoryTrendChart", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 78) }; chartRow.AddChild(_trendChart); column.AddChild(chartRow);
         var buttons = new HBoxContainer();
         _viewButton = new Button { Text = "View selected ride" }; _viewButton.Pressed += ShowSelectedSummary; buttons.AddChild(_viewButton);
+        _fitFolderButton = new Button { Name = "OpenFitFolder", Text = "Open FIT folder", Visible = false }; _fitFolderButton.Pressed += OpenSelectedFitFolder; buttons.AddChild(_fitFolderButton);
         _ghostButton = new Button { Text = "Ride against ghost", Visible = false }; _ghostButton.Pressed += StartAgainstGhost; buttons.AddChild(_ghostButton);
         _diagnosticExportButton = new Button { Text = "Export session diagnostics", Visible = false };
         _diagnosticExportButton.Pressed += () => GetNodeOrNull<DiagnosticPanelController>("../DiagnosticPanel")?.OpenFor(this, _completedDiagnosticSessionId);
@@ -120,31 +155,103 @@ public partial class RideHistoryPanelController : Control
     public async void ShowHistory()
     {
         _completedDiagnosticSessionId = null; _diagnosticExportButton.Hide();
-        _summaryMode = false; _returnToRouteSelection = false; _selected = null; _list.Visible = true; _summaryEssentials.Visible = false; _detailScroll.Visible = true; _list.Clear(); _title.Text = "Ride History";
+        _summaryMode = false; _returnToRouteSelection = false; _selected = null; _fitFolderButton.Hide(); _list.Visible = true; _summaryEssentials.Visible = false; _detailScroll.Visible = true; _list.Clear(); _title.Text = "Ride History";
         _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false; _stravaUploads.Visible = false;
         _startPanel?.Hide(); Show(); MoveToFront();
         try
         {
-            await GameBootstrap.GetPersistentRiderAsync();
-            var profile = await GameBootstrap.GetPersistentRiderAsync();
+            var profile = _activeProfile ?? await GameBootstrap.GetPersistentRiderAsync();
+            _activeProfile = profile;
             _title.Text = $"Ride History — {profile.Name}";
-            _activities = (await GameBootstrap.RideHistory!.GetRecentActivitiesForProfileAsync(profile.Id, 100)).ToList();
-            if (_activities.Count == 0) _detail.Text = "No completed rides yet.";
-            foreach (var activity in _activities)
-            {
-                var local = activity.StartedAtUtc.ToLocalTime();
-                _list.AddItem($"{local:yyyy-MM-dd HH:mm}  {activity.RouteName}\n{activity.DistanceMeters / 1000:F2} km · {FormatDuration(activity.DurationSeconds)} · {activity.AveragePowerWatts?.ToString("F0") ?? "—"} W avg");
-            }
-            if (_activities.Count > 0) _list.Select(0);
+            await RefreshHistoryAsync();
         }
         catch (Exception ex) { _detail.Text = $"Ride history could not be loaded.\n{ex.Message}"; GD.PushWarning($"Ride history load failed: {ex.Message}"); }
     }
+
+    public void ConfigureForIsolatedReview(IRideHistoryRepository repository, RiderProfileRecord profile)
+    {
+        _repositoryOverride = repository; _activeProfile = profile;
+    }
+
+    private async Task RefreshHistoryAsync()
+    {
+        if (_list is null || _activeProfile is null || !IsInsideTree()) return;
+        var generation = Interlocked.Increment(ref _historyRefreshGeneration);
+        var repository = _repositoryOverride ?? GameBootstrap.RideHistory;
+        if (repository is null) return;
+        var keepId = _selected?.Id;
+        try
+        {
+            var (from, to) = DateFilterBounds(_dateFilter.Selected);
+            var routeIndex = _routeFilter.Selected;
+            var route = routeIndex <= 0 || routeIndex > _routeIds.Count ? null : _routeIds[routeIndex - 1];
+            var sort = (RideHistorySort)Math.Clamp(_sortFilter.Selected, 0, 4);
+            var result = await repository.GetHistoryPageAsync(_activeProfile.Id, _search.Text, route, from, to, sort, _pageIndex * PageSize, PageSize);
+            if (!IsInsideTree() || generation != Volatile.Read(ref _historyRefreshGeneration)) return;
+            if (result.Activities.Count == 0 && _pageIndex > 0) { _pageIndex = Math.Max(0, (result.TotalCount - 1) / PageSize); await RefreshHistoryAsync(); return; }
+            var routes = await repository.GetHistoryRoutesAsync(_activeProfile.Id);
+            if (!IsInsideTree() || generation != Volatile.Read(ref _historyRefreshGeneration)) return;
+            _activities = result.Activities.ToList(); _list.Clear();
+            PopulateRouteFilter(routes, route);
+            foreach (var activity in _activities)
+            {
+                var local = activity.StartedAtUtc.ToLocalTime();
+                _list.AddItem($"{local:yyyy-MM-dd HH:mm} · {activity.RouteName} · {activity.DistanceMeters / 1000:F1} km · {FormatDuration(activity.DurationSeconds)} active · {activity.AveragePowerWatts?.ToString("F0") ?? "—"} W");
+            }
+            _pageStatus.Text = result.TotalCount == 0 ? "No rides match these filters." : $"{_pageIndex * PageSize + 1}–{Math.Min((_pageIndex + 1) * PageSize, result.TotalCount)} of {result.TotalCount}";
+            _previousPage.Disabled = _pageIndex == 0; _nextPage.Disabled = (_pageIndex + 1) * PageSize >= result.TotalCount;
+            if (_activities.Count == 0) { _selected = null; _viewButton.Hide(); _ghostButton.Hide(); _detail.Text = "No completed rides match these filters."; }
+            else { var target = _activities.FindIndex(a => a.Id == keepId); target = target >= 0 ? target : 0; _list.Select(target); OnItemSelected(target); }
+            await RefreshDashboardAsync(repository, _activeProfile);
+        }
+        catch (Exception ex) { _detail.Text = $"Ride history could not be loaded.\n{ex.Message}"; GD.PushWarning($"Ride history load failed: {ex.Message}"); }
+    }
+
+    private void PopulateRouteFilter(IReadOnlyList<(string RouteId, string RouteName)> routes, string? selectedRoute)
+    {
+        _routeFilter.Clear(); _routeFilter.AddItem("All routes", 0);
+        _routeIds.Clear();
+        foreach (var route in routes) { _routeIds.Add(route.RouteId); _routeFilter.AddItem(route.RouteName); }
+        var selected = selectedRoute is null ? -1 : _routeIds.IndexOf(selectedRoute);
+        _routeFilter.Select(selected >= 0 ? selected + 1 : 0);
+    }
+
+    private (DateTimeOffset? From, DateTimeOffset? To) DateFilterBounds(int selected)
+    {
+        var now = DateTime.Now;
+        var start = selected switch { 1 => now.Date.AddDays(-6), 2 => now.Date.AddDays(-29), 3 => new DateTime(now.Year, now.Month, 1), 4 => new DateTime(now.Year, 1, 1), _ => (DateTime?)null };
+        return start is null ? (null, null) : (new DateTimeOffset(start.Value, TimeZoneInfo.Local.GetUtcOffset(start.Value)).ToUniversalTime(), new DateTimeOffset(now.Date.AddDays(1), TimeZoneInfo.Local.GetUtcOffset(now.Date.AddDays(1))).ToUniversalTime());
+    }
+
+    private async Task RefreshDashboardAsync(IRideHistoryRepository repository, RiderProfileRecord profile)
+    {
+        var generation = Interlocked.Increment(ref _dashboardGeneration);
+        if (profile.IsTestProfile) { _dashboard.Text = "Test profile · excluded from real profile totals"; return; }
+        var now = DateTime.Now; var monthStart = new DateTime(now.Year, now.Month, 1); var weekStart = now.Date.AddDays(-(((int)now.DayOfWeek + 6) % 7));
+        static DateTimeOffset Utc(DateTime d) => new DateTimeOffset(d, TimeZoneInfo.Local.GetUtcOffset(d)).ToUniversalTime();
+        var routeIndex = _routeFilter.Selected;
+        var route = routeIndex <= 0 || routeIndex > _routeIds.Count ? null : _routeIds[routeIndex - 1];
+        var (filterFrom, filterTo) = DateFilterBounds(_dateFilter.Selected);
+        var weekRange = LimitRange(Utc(weekStart.AddDays(-42)), Utc(weekStart.AddDays(7)), filterFrom, filterTo);
+        var monthRange = LimitRange(Utc(monthStart.AddMonths(-5)), Utc(monthStart.AddMonths(1)), filterFrom, filterTo);
+        var weekly = await repository.GetHistoryTrendAsync(profile.Id, weekRange.From, weekRange.To, false, _search.Text, route);
+        var monthly = await repository.GetHistoryTrendAsync(profile.Id, monthRange.From, monthRange.To, true, _search.Text, route);
+        if (!IsInsideTree() || generation != Volatile.Read(ref _dashboardGeneration)) return;
+        var w = weekly.LastOrDefault(b => b.StartUtc.ToLocalTime().Date == weekStart);
+        var m = monthly.LastOrDefault(b => b.StartUtc.ToLocalTime().Year == now.Year && b.StartUtc.ToLocalTime().Month == now.Month);
+        _dashboard.Text = $"This week (Mon–Sun): {w?.RideCount ?? 0} rides · {((w?.DistanceMeters ?? 0) / 1000):F1} km · {FormatDuration(w?.DurationSeconds ?? 0)} active · {(w?.ElevationGainMeters ?? 0):F0} m climb\nThis month: {m?.RideCount ?? 0} rides · {((m?.DistanceMeters ?? 0) / 1000):F1} km · {FormatDuration(m?.DurationSeconds ?? 0)} active · {(m?.ElevationGainMeters ?? 0):F0} m climb";
+        _trendChart.SetBuckets(_trendRange.Selected == 0 ? weekly : monthly, _trendRange.Selected == 0 ? "6 weeks · km / hours / m" : "6 months · km / hours / m");
+    }
+
+    private static (DateTimeOffset From, DateTimeOffset To) LimitRange(DateTimeOffset from, DateTimeOffset to, DateTimeOffset? filterFrom, DateTimeOffset? filterTo) =>
+        (filterFrom is { } lower && lower > from ? lower : from, filterTo is { } upper && upper < to ? upper : to);
+
 
     public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId, string? fitRecordingError = null, string? challengeSummary = null)
     {
         _completedDiagnosticSessionId = GameLogger.SessionId;
         _diagnosticExportButton.Visible = true;
-        _summaryMode = true; _selected = null; _list.Visible = false; _summaryEssentials.Visible = true; _detailScroll.Visible = true; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;
+        _summaryMode = true; _selected = null; _fitFolderButton.Hide(); _list.Visible = false; _summaryEssentials.Visible = true; _detailScroll.Visible = true; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;
         _returnToRouteSelection = GameBootstrap.TrainerClient is not null;
         _startPanel?.Hide(); Show(); MoveToFront();
         _title.Text = "Ride Summary";
@@ -154,7 +261,7 @@ public partial class RideHistoryPanelController : Control
         _summaryEssentials.Text = FormatSummaryEssentials(draft) + (string.IsNullOrWhiteSpace(challengeSummary) ? "" : $"\n{challengeSummary}");
         _detail.Text = $"{fit}\n\nScreenshots: loading…";
         IReadOnlyList<RideActivityMedia> media = Array.Empty<RideActivityMedia>();
-        if (activityId is { } id && GameBootstrap.RideHistory is { } repository)
+        if (activityId is { } id && (_repositoryOverride ?? GameBootstrap.RideHistory) is { } repository)
         {
             try { media = await repository.GetActivityMediaAsync(id); }
             catch (Exception ex) { GD.PushWarning($"Ride media list could not be loaded: {ex.Message}"); }
@@ -176,6 +283,16 @@ public partial class RideHistoryPanelController : Control
         _summaryEssentials.Visible = false;
         _stravaUploads.Visible = false;
         _detail.Text = FormatHistoryDetail(_selected);
+        _fitFolderButton.Visible = true;
+        _fitFolderButton.Disabled = string.IsNullOrWhiteSpace(_selected.FitFilePath) || !File.Exists(_selected.FitFilePath);
+        _fitFolderButton.Text = string.IsNullOrWhiteSpace(_selected.FitFilePath) ? "FIT not saved" : _fitFolderButton.Disabled ? "FIT file unavailable" : "Open FIT folder";
+    }
+
+    private void OpenSelectedFitFolder()
+    {
+        var path = _selected?.FitFilePath;
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) { _fitFolderButton.Disabled = true; _fitFolderButton.Text = "FIT file unavailable"; return; }
+        OS.ShellOpen(Path.GetDirectoryName(Path.GetFullPath(path))!);
     }
 
     private static bool CanOfferGhost(RideActivity activity)
@@ -227,8 +344,9 @@ public partial class RideHistoryPanelController : Control
             a.DurationSeconds, a.DistanceMeters, a.CompletedLaps, a.AverageSpeedKph, a.MaxSpeedKph,
             a.AveragePowerWatts, a.MaxPowerWatts, a.AverageCadenceRpm, a.MaxCadenceRpm, a.ElevationGainMeters, a.FitFilePath);
         IReadOnlyList<RideActivityMedia> media = Array.Empty<RideActivityMedia>();
-        try { media = await GameBootstrap.RideHistory!.GetActivityMediaAsync(a.Id); } catch { }
-        var fit = a.FitFilePath is null ? "FIT: not saved" : $"FIT: {a.FitFilePath}";
+        try { media = await (_repositoryOverride ?? GameBootstrap.RideHistory)!.GetActivityMediaAsync(a.Id); } catch { }
+        var fit = a.FitFilePath is null ? "FIT: not saved" : File.Exists(a.FitFilePath) ? $"FIT: {a.FitFilePath}" : $"FIT: file unavailable · {a.FitFilePath}";
+        _fitFolderButton.Visible = !string.IsNullOrWhiteSpace(a.FitFilePath); _fitFolderButton.Disabled = string.IsNullOrWhiteSpace(a.FitFilePath) || !File.Exists(a.FitFilePath); _fitFolderButton.Text = string.IsNullOrWhiteSpace(a.FitFilePath) ? "FIT not saved" : _fitFolderButton.Disabled ? "FIT file unavailable" : "Open FIT folder";
         _summaryEssentials.Text = FormatSummaryEssentials(draft);
         _detail.Text = FormatSummaryDetails(draft, fit, media);
         BuildStravaUploadControls(a.Id, a.RiderProfileId, a.FitFilePath);
@@ -362,7 +480,7 @@ public partial class RideHistoryPanelController : Control
 
     private static string FormatSummaryEssentials(RideActivityDraft a) =>
         $"{a.RouteName}\n{a.StartedAtUtc.ToLocalTime():f}\n" +
-        $"Duration: {FormatDuration(a.DurationSeconds)} · Distance: {a.DistanceMeters / 1000:F2} km · Laps: {a.CompletedLaps}";
+        $"Active duration: {FormatDuration(a.DurationSeconds)} · Distance: {a.DistanceMeters / 1000:F2} km · Laps: {a.CompletedLaps}";
 
     private static string FormatSummaryDetails(RideActivityDraft a, string fit, IReadOnlyList<RideActivityMedia> media) =>
         $"Average speed: {a.AverageSpeedKph?.ToString("F1") ?? "—"} km/h · Max: {a.MaxSpeedKph?.ToString("F1") ?? "—"} km/h\n" +
@@ -373,7 +491,10 @@ public partial class RideHistoryPanelController : Control
 
     private static string FormatHistoryDetail(RideActivity a) =>
         $"{a.RouteName}\n{a.StartedAtUtc.ToLocalTime():f}\n\nDistance: {a.DistanceMeters / 1000:F2} km\n" +
-        $"Duration: {FormatDuration(a.DurationSeconds)}\nLaps: {a.CompletedLaps}\nAverage power: {a.AveragePowerWatts?.ToString("F0") ?? "—"} W\n" +
+        $"Active duration: {FormatDuration(a.DurationSeconds)}\nLaps: {a.CompletedLaps}\n" +
+        $"Speed: avg {a.AverageSpeedKph?.ToString("F1") ?? "—"} / max {a.MaxSpeedKph?.ToString("F1") ?? "—"} km/h\n" +
+        $"Power: avg {a.AveragePowerWatts?.ToString("F0") ?? "—"} / max {a.MaxPowerWatts?.ToString("F0") ?? "—"} W\n" +
+        $"Cadence: avg {a.AverageCadenceRpm?.ToString("F0") ?? "—"} / max {a.MaxCadenceRpm?.ToString("F0") ?? "—"} rpm\nElevation gain: {a.ElevationGainMeters:F0} m\n" +
         $"FIT: {(a.FitFilePath is null ? "not saved" : a.FitFilePath)}";
 
     private static string FormatDuration(double seconds)

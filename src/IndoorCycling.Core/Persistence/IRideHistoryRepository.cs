@@ -6,7 +6,14 @@ public interface IRideHistoryRepository
     : IProfileRepository, IRideRepository, IMediaRepository
 {
     Task InitializeAsync(CancellationToken cancellationToken = default);
+    Task<RideHistoryPage> GetHistoryPageAsync(Guid profileId, string? search, string? routeId, DateTimeOffset? fromUtc, DateTimeOffset? toUtcExclusive, RideHistorySort sort, int offset, int pageSize, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RideHistoryBucket>> GetHistoryTrendAsync(Guid profileId, DateTimeOffset fromUtc, DateTimeOffset toUtcExclusive, bool monthly, string? search = null, string? routeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string RouteId, string RouteName)>> GetHistoryRoutesAsync(Guid profileId, CancellationToken cancellationToken = default);
 }
+
+public enum RideHistorySort { Newest, Oldest, Distance, Duration, Elevation }
+public sealed record RideHistoryPage(IReadOnlyList<RideActivity> Activities, int TotalCount);
+public sealed record RideHistoryBucket(DateTimeOffset StartUtc, int RideCount, double DistanceMeters, double DurationSeconds, double ElevationGainMeters);
 
 public interface IProfileRepository
 {

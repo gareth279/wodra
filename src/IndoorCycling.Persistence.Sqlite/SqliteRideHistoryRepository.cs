@@ -187,6 +187,72 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
         return result;
     }
 
+    public async Task<RideHistoryPage> GetHistoryPageAsync(Guid profileId, string? search, string? routeId, DateTimeOffset? fromUtc, DateTimeOffset? toUtcExclusive, RideHistorySort sort, int offset, int pageSize, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken);
+        var where = "rider_profile_id=$profile AND status='Completed'" +
+            (string.IsNullOrWhiteSpace(search) ? "" : " AND route_name LIKE $search COLLATE NOCASE") +
+            (string.IsNullOrWhiteSpace(routeId) ? "" : " AND route_id=$route") +
+            (fromUtc is null ? "" : " AND started_utc >= $from") + (toUtcExclusive is null ? "" : " AND started_utc < $to");
+        await using var count = db.CreateCommand(); count.CommandText = $"SELECT COUNT(*) FROM ride_activities WHERE {where}";
+        Bind(count, profileId, search, routeId, fromUtc, toUtcExclusive);
+        var total = Convert.ToInt32(await count.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
+        var order = sort switch { RideHistorySort.Oldest => "started_utc ASC", RideHistorySort.Distance => "distance_meters DESC,started_utc DESC", RideHistorySort.Duration => "duration_seconds DESC,started_utc DESC", RideHistorySort.Elevation => "elevation_gain_meters DESC,started_utc DESC", _ => "started_utc DESC" };
+        await using var query = db.CreateCommand(); query.CommandText = $"SELECT {Columns} FROM ride_activities WHERE {where} ORDER BY {order} LIMIT $limit OFFSET $offset";
+        Bind(query, profileId, search, routeId, fromUtc, toUtcExclusive); query.Parameters.AddWithValue("$limit", Math.Clamp(pageSize, 1, 100)); query.Parameters.AddWithValue("$offset", Math.Max(0, offset));
+        await using var reader = await query.ExecuteReaderAsync(cancellationToken); var activities = new List<RideActivity>();
+        while (await reader.ReadAsync(cancellationToken)) activities.Add(ReadActivity(reader));
+        return new(activities, total);
+    }
+
+    public async Task<IReadOnlyList<RideHistoryBucket>> GetHistoryTrendAsync(Guid profileId, DateTimeOffset fromUtc, DateTimeOffset toUtcExclusive, bool monthly, string? search = null, string? routeId = null, CancellationToken cancellationToken = default)
+    {
+        // Buckets are grouped against local calendar keys supplied in timestamps; callers choose consistent local boundaries.
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = $"SELECT started_utc,distance_meters,duration_seconds,elevation_gain_meters FROM ride_activities WHERE rider_profile_id=$profile AND status='Completed' AND started_utc >= $from AND started_utc < $to" +
+            (string.IsNullOrWhiteSpace(search) ? "" : " AND route_name LIKE $search COLLATE NOCASE") + (string.IsNullOrWhiteSpace(routeId) ? "" : " AND route_id=$route") + " ORDER BY started_utc";
+        command.Parameters.AddWithValue("$profile", profileId.ToString("D")); command.Parameters.AddWithValue("$from", Time(fromUtc)); command.Parameters.AddWithValue("$to", Time(toUtcExclusive));
+        if (!string.IsNullOrWhiteSpace(search)) command.Parameters.AddWithValue("$search", "%" + search.Trim() + "%");
+        if (!string.IsNullOrWhiteSpace(routeId)) command.Parameters.AddWithValue("$route", routeId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var grouped = new SortedDictionary<DateTime, (int Count, double Distance, double Duration, double Elevation)>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var local = ParseTime(reader.GetString(0)).ToLocalTime().Date;
+            var start = monthly ? new DateTime(local.Year, local.Month, 1) : local.AddDays(-(((int)local.DayOfWeek + 6) % 7));
+            var current = grouped.GetValueOrDefault(start); grouped[start] = (current.Count + 1, current.Distance + reader.GetDouble(1), current.Duration + reader.GetDouble(2), current.Elevation + reader.GetDouble(3));
+        }
+        var cursor = fromUtc.ToLocalTime().Date;
+        if (monthly) cursor = new DateTime(cursor.Year, cursor.Month, 1);
+        else cursor = cursor.AddDays(-(((int)cursor.DayOfWeek + 6) % 7));
+        var endLocal = toUtcExclusive.ToLocalTime().Date;
+        var buckets = new List<RideHistoryBucket>();
+        while (cursor < endLocal)
+        {
+            var value = grouped.GetValueOrDefault(cursor);
+            buckets.Add(new RideHistoryBucket(new DateTimeOffset(cursor, TimeZoneInfo.Local.GetUtcOffset(cursor)).ToUniversalTime(), value.Count, value.Distance, value.Duration, value.Elevation));
+            cursor = monthly ? cursor.AddMonths(1) : cursor.AddDays(7);
+        }
+        return buckets;
+    }
+
+    public async Task<IReadOnlyList<(string RouteId, string RouteName)>> GetHistoryRoutesAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = "SELECT route_id,MIN(route_name) FROM ride_activities WHERE rider_profile_id=$profile AND status='Completed' GROUP BY route_id ORDER BY MIN(route_name) COLLATE NOCASE";
+        command.Parameters.AddWithValue("$profile", profileId.ToString("D")); await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var result = new List<(string, string)>(); while (await reader.ReadAsync(cancellationToken)) result.Add((reader.GetString(0), reader.GetString(1))); return result;
+    }
+
+    private static void Bind(SqliteCommand command, Guid profileId, string? search, string? routeId, DateTimeOffset? fromUtc, DateTimeOffset? toUtc)
+    {
+        command.Parameters.AddWithValue("$profile", profileId.ToString("D"));
+        if (!string.IsNullOrWhiteSpace(search)) command.Parameters.AddWithValue("$search", "%" + search.Trim() + "%");
+        if (!string.IsNullOrWhiteSpace(routeId)) command.Parameters.AddWithValue("$route", routeId);
+        if (fromUtc is not null) command.Parameters.AddWithValue("$from", Time(fromUtc.Value));
+        if (toUtc is not null) command.Parameters.AddWithValue("$to", Time(toUtc.Value));
+    }
+
     public async Task<RideActivity?> GetActivityAsync(Guid activityId, CancellationToken cancellationToken = default)
     {
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
