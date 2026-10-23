@@ -23,6 +23,7 @@ var tests = new (string Name, Action Run)[]
     ("Offline pacer uses route gradient and advances through laps", PacerGradientAndLapProgress),
     ("Player can catch and overtake a continuously progressing pacer", PacerCatchUpAndNoRecycle),
     ("Pacer pauses, ends, changes route and restarts without moving player state", PacerPauseEndAndRestart),
+    ("Pacer rendezvous preserves route direction, laps and player authority", PacerRendezvousPreservesPlayerAuthority),
     ("Ride pause freezes progress and resumes without a distance jump", RidePauseSemantics),
     ("Repeated ride pause action toggles explicit ride state", RidePauseToggle),
     ("Debug mode off emits no periodic snapshots", DebugModeOff),
@@ -1555,6 +1556,43 @@ static void PacerPauseEndAndRestart()
     pacer.Start(player with { RouteId = "route-b", RouteDistanceMeters = 0, SimulationTimeSeconds = 0 }, 500, 15);
     if (pacer.State.RouteId != "route-b" || pacer.State.RouteDistanceMeters != 15 || pacer.State.LapNumber != 1)
         throw new Exception("A route change or restart should reset the pacer identity's route progression cleanly.");
+}
+
+static void PacerRendezvousPreservesPlayerAuthority()
+{
+    var player = new RiderState("player", "You", "loop", 995, 995, 1, -.4, 5, 237, 91, false, 71);
+    var before = player;
+    var pacer = new PacerRiderController(PacerEffortPresets.Find("moderate")!);
+    pacer.Start(player, 1000, -800);
+    pacer.BringTo(player.RouteDistanceMeters, player.LateralOffsetMeters);
+    var rendezvous = pacer.State;
+    if (rendezvous.RouteDistanceMeters != 1007 || rendezvous.WrappedRouteDistanceMeters != 7
+        || rendezvous.LapNumber != 2
+        || Math.Abs(rendezvous.LateralOffsetMeters - player.LateralOffsetMeters)
+            < RiderTrafficSeparation.MinimumLaneCentreSeparationMeters - 0.01
+        || rendezvous.RouteId != player.RouteId || rendezvous.VirtualSpeedMps != player.VirtualSpeedMps)
+        throw new Exception($"Rendezvous must place only the local pacer 12 m ahead on the same route and direction, including across a lap seam: {rendezvous}.");
+    if (player != before)
+        throw new Exception("Rendezvous changed the player's measured/recorded ride state.");
+    pacer.BringTo(player.RouteDistanceMeters, player.LateralOffsetMeters);
+    if (pacer.State.RouteDistanceMeters != rendezvous.RouteDistanceMeters)
+        throw new Exception("Repeated rendezvous activation should be idempotent while the pacer is already nearby.");
+    var edgePlayer = player with { RouteDistanceMeters = 210, WrappedRouteDistanceMeters = 210, LateralOffsetMeters = 2.7 };
+    var edgePacer = new PacerRiderController(PacerEffortPresets.Find("easy")!);
+    edgePacer.Start(edgePlayer, 1000, -300);
+    edgePacer.BringTo(edgePlayer.RouteDistanceMeters, edgePlayer.LateralOffsetMeters);
+    if (Math.Abs(edgePacer.State.LateralOffsetMeters - edgePlayer.LateralOffsetMeters)
+        < RiderTrafficSeparation.MinimumLaneCentreSeparationMeters - 0.01
+        || Math.Abs(edgePacer.State.LateralOffsetMeters) > RiderTrafficSeparation.MaximumRoadCentreOffsetMeters)
+        throw new Exception("Rendezvous should choose a legal opposite-side lane when the player is near a road edge.");
+    pacer.Update(1000, _ => 0, .5, true);
+    if (pacer.State.RouteDistanceMeters != rendezvous.RouteDistanceMeters
+        || pacer.State.SimulationTimeSeconds != rendezvous.SimulationTimeSeconds)
+        throw new Exception("A synced pacer moved while the ride was paused.");
+    pacer.Update(1000, _ => 0, .5, false);
+    if (pacer.State.RouteDistanceMeters <= rendezvous.RouteDistanceMeters
+        || pacer.State.RiderId != rendezvous.RiderId)
+        throw new Exception("The synced pacer did not resume its own effort simulation with stable selection identity.");
 }
 
 sealed class TestControllerPreference

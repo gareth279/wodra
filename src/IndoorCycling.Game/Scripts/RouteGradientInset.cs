@@ -82,13 +82,24 @@ public partial class RouteGradientInset : Control
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : $"ROUTE · LAP {currentPose.Lap} · {rideState.DistanceMeters / 1000:0.00} km", HorizontalAlignment.Left, Size.X - 64, 11, new Color(.88f, .82f, .69f));
 		DrawString(GetThemeDefaultFont(), new Vector2(Size.X - 12, 18), "N ↑", HorizontalAlignment.Right, -1, 10, new Color(.75f, .82f, .76f));
 		if (_mapLine.Length >= 2) DrawPolyline(_mapLine, new Color(.58f, .65f, .57f), 2.2f, true);
-		if (_world?.PacerRiderState is { } pacerState)
+		if (_world is not null)
 		{
-			var pacerPose = _overview.GetMapPose(pacerState.RouteDistanceMeters, new NVector2(Size.X, 92));
-			var pacerMarker = new Vector2(pacerPose.Position.X, pacerPose.Position.Y + 24);
-			DrawCircle(pacerMarker, 6, new Color(.95f, .69f, .28f));
-			DrawCircle(pacerMarker, 6, new Color(.1f, .1f, .09f), false, 1.3f, true);
-			DrawString(GetThemeDefaultFont(), pacerMarker + new Vector2(-3.2f, 3.1f), "P", HorizontalAlignment.Left, -1, 8, new Color(.08f, .07f, .05f));
+			foreach (var pacerState in _world.PacerRiderStates)
+			{
+				var presetId = pacerState.RiderId["ai-pacer-".Length..];
+				var selected = _world.SelectedPacerPreset?.Id == presetId;
+				var pacerPose = _overview.GetMapPose(pacerState.RouteDistanceMeters, new NVector2(Size.X, 92));
+				var pacerMarker = new Vector2(pacerPose.Position.X, pacerPose.Position.Y + 24);
+				var pacerColor = presetId switch
+				{
+					"easy" => new Color(.38f, .77f, 1f),
+					"strong" => new Color(1f, .43f, .39f),
+					_ => new Color(1f, .82f, .27f)
+				};
+				if (selected) DrawCircle(pacerMarker, 8, Colors.White);
+				DrawCircle(pacerMarker, selected ? 6 : 5, pacerColor);
+				DrawCircle(pacerMarker, selected ? 6 : 5, new Color(.1f, .1f, .09f), false, 1.3f, true);
+			}
 		}
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 141), "ELEVATION · M", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));
 		DrawString(GetThemeDefaultFont(), new Vector2(12, 154), $"{_overview.MaximumElevationMeters:0}", HorizontalAlignment.Left, -1, 9, new Color(.75f, .78f, .74f));

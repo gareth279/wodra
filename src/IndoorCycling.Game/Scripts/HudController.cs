@@ -28,6 +28,13 @@ public partial class HudController : Control
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
 	private string? _pacerStatusText;
+	private PanelContainer? _pacerPanel;
+	private OptionButton? _pacerPicker;
+	private Label? _pacerGapLabel;
+	private Action<string>? _selectPacer;
+	private Action? _syncPacer;
+	private Action? _stopPacer;
+	public string PacerGapText => _pacerGapLabel?.Text ?? string.Empty;
 	private string _nearbyHumanRidersText = "";
 	private Control? _topHudPanel;
 	private Control? _bottomHudPanel;
@@ -153,6 +160,7 @@ public partial class HudController : Control
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
+		BuildPacerPanel();
 		_routeGradientInset = new RouteGradientInset
 		{
 			Name = "RouteGradientInset",
@@ -319,7 +327,66 @@ public partial class HudController : Control
 	public void SetPacerStatus(string? status)
 	{
 		_pacerStatusText = string.IsNullOrWhiteSpace(status) ? null : status;
+		if (_pacerStatusText is null && _pacerPanel is not null && _rideSessionNode?.IsRideActive != true)
+			_pacerPanel.Visible = false;
 		UpdateNearbyRiderDisplay();
+	}
+
+	private void BuildPacerPanel()
+	{
+		_pacerPanel = new PanelContainer
+		{
+			Name = "OfflinePacerPanel", Visible = false,
+			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -170, OffsetRight = 170, OffsetTop = 12, OffsetBottom = 96,
+			MouseFilter = Control.MouseFilterEnum.Stop
+		};
+		var column = new VBoxContainer();
+		_pacerPicker = new OptionButton { Name = "PacerSelector", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_pacerPicker.AddItem("No pacer");
+		foreach (var preset in PacerEffortPresets.All)
+		{
+			var swatch = preset.Id switch { "easy" => "🔵", "strong" => "🔴", _ => "🟡" };
+			_pacerPicker.AddItem($"{swatch} {preset.Name} Cat  ·  {preset.TargetWattsPerKg:0.0} W/kg");
+		}
+		_pacerPicker.ItemSelected += index =>
+		{
+			var id = index == 0 ? PacerEffortPreset.DisabledId : PacerEffortPresets.All[(int)index - 1].Id;
+			_selectPacer?.Invoke(id);
+		};
+		column.AddChild(_pacerPicker);
+		_pacerGapLabel = new Label { Name = "PacerGap", HorizontalAlignment = HorizontalAlignment.Center };
+		_pacerGapLabel.AddThemeFontSizeOverride("font_size", 13);
+		column.AddChild(_pacerGapLabel);
+		var actions = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+		var sync = new Button { Text = "Bring pacer to me", CustomMinimumSize = new Vector2(150, 30) };
+		sync.Pressed += () => _syncPacer?.Invoke();
+		actions.AddChild(sync);
+		var stop = new Button { Text = "Stop following", CustomMinimumSize = new Vector2(118, 30) };
+		stop.Pressed += () => _stopPacer?.Invoke();
+		actions.AddChild(stop);
+		column.AddChild(actions);
+		_pacerPanel.AddChild(column);
+		AddChild(_pacerPanel);
+	}
+
+	public void SetPacerPanel(PacerEffortPreset? preset, string gap, Action<string> select,
+		Action sync, Action stop)
+	{
+		_selectPacer = select;
+		_syncPacer = sync;
+		_stopPacer = stop;
+		if (_pacerPicker is not null)
+		{
+			var index = preset is null ? 0 : PacerEffortPresets.All.ToList().FindIndex(item => item.Id == preset.Id) + 1;
+			if (_pacerPicker.Selected != index) _pacerPicker.Select(index);
+		}
+		if (_pacerGapLabel is not null) _pacerGapLabel.Text = preset is null ? gap : $"{preset.Name} · {gap}";
+		if (_pacerPanel?.GetChild(0).GetChild(2) is HBoxContainer actions)
+			foreach (var child in actions.GetChildren())
+				if (child is Button button) button.Disabled = preset is null;
+		if (_pacerPanel is not null)
+			_pacerPanel.Visible = _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
 	}
 
 	private void UpdateNearbyRiderDisplay()
