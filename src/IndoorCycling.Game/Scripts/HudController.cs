@@ -29,6 +29,7 @@ public partial class HudController : Control
 	private Label? _nearbyHumanRidersLabel;
 	private string? _pacerStatusText;
 	private PanelContainer? _pacerPanel;
+	private bool? _showPacerPanelForRide;
 	private OptionButton? _pacerPicker;
 	private Label? _pacerGapLabel;
 	private Action<string>? _selectPacer;
@@ -207,6 +208,7 @@ public partial class HudController : Control
 		SetRecordingState(false, false);
 		EnsureDebugOverlay();
 		UpdateHudVisibility();
+		CallDeferred(nameof(UpdateDebugOverlayLayout));
 	}
 
 	public override void _Notification(int what)
@@ -327,9 +329,16 @@ public partial class HudController : Control
 	public void SetPacerStatus(string? status)
 	{
 		_pacerStatusText = string.IsNullOrWhiteSpace(status) ? null : status;
-		if (_pacerStatusText is null && _pacerPanel is not null && _rideSessionNode?.IsRideActive != true)
-			_pacerPanel.Visible = false;
+		UpdatePacerPanelVisibility();
 		UpdateNearbyRiderDisplay();
+	}
+
+	/// <summary>Captures pacer-panel availability once when a ride starts.</summary>
+	public void BeginRideHudSession(bool startedWithPacer)
+	{
+		_showPacerPanelForRide = startedWithPacer;
+		UpdatePacerPanelVisibility();
+		CallDeferred(nameof(UpdateDebugOverlayLayout));
 	}
 
 	private void BuildPacerPanel()
@@ -337,36 +346,57 @@ public partial class HudController : Control
 		_pacerPanel = new PanelContainer
 		{
 			Name = "OfflinePacerPanel", Visible = false,
-			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 0, AnchorBottom = 0,
-			OffsetLeft = -170, OffsetRight = 170, OffsetTop = 12, OffsetBottom = 96,
+			AnchorLeft = 0, AnchorRight = 0, AnchorTop = 0, AnchorBottom = 0,
 			MouseFilter = Control.MouseFilterEnum.Stop
 		};
-		var column = new VBoxContainer();
-		_pacerPicker = new OptionButton { Name = "PacerSelector", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var panelStyle = new StyleBoxFlat
+		{
+			BgColor = new Color(.045f, .055f, .06f, .94f),
+			BorderColor = new Color(.48f, .38f, .22f, .9f),
+			BorderWidthLeft = 1, BorderWidthTop = 1, BorderWidthRight = 1, BorderWidthBottom = 1,
+			CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6
+		};
+		panelStyle.ContentMarginLeft = panelStyle.ContentMarginRight = 6;
+		panelStyle.ContentMarginTop = panelStyle.ContentMarginBottom = 6;
+		_pacerPanel.AddThemeStyleboxOverride("panel", panelStyle);
+		var row = new HBoxContainer { Name = "PacerLayout" };
+		row.AddThemeConstantOverride("separation", 6);
+		var selection = new VBoxContainer { Name = "PacerSelection" };
+		selection.AddThemeConstantOverride("separation", 2);
+		_pacerPicker = new OptionButton
+		{
+			Name = "PacerSelector",
+			CustomMinimumSize = new Vector2(176, 28),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			FocusMode = Control.FocusModeEnum.All
+		};
 		_pacerPicker.AddItem("No pacer");
 		foreach (var preset in PacerEffortPresets.All)
 		{
 			var swatch = preset.Id switch { "easy" => "🔵", "strong" => "🔴", _ => "🟡" };
-			_pacerPicker.AddItem($"{swatch} {preset.Name} Cat  ·  {preset.TargetWattsPerKg:0.0} W/kg");
+			_pacerPicker.AddItem($"{swatch} {preset.Name} · {preset.TargetWattsPerKg:0.0} W/kg");
 		}
 		_pacerPicker.ItemSelected += index =>
 		{
 			var id = index == 0 ? PacerEffortPreset.DisabledId : PacerEffortPresets.All[(int)index - 1].Id;
 			_selectPacer?.Invoke(id);
 		};
-		column.AddChild(_pacerPicker);
-		_pacerGapLabel = new Label { Name = "PacerGap", HorizontalAlignment = HorizontalAlignment.Center };
-		_pacerGapLabel.AddThemeFontSizeOverride("font_size", 13);
-		column.AddChild(_pacerGapLabel);
-		var actions = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-		var sync = new Button { Text = "Bring pacer to me", CustomMinimumSize = new Vector2(150, 30) };
+		selection.AddChild(_pacerPicker);
+		_pacerGapLabel = new Label { Name = "PacerGap", CustomMinimumSize = new Vector2(0, 18) };
+		_pacerGapLabel.AddThemeFontSizeOverride("font_size", 12);
+		ConfigureClippedLabel(_pacerGapLabel);
+		selection.AddChild(_pacerGapLabel);
+		row.AddChild(selection);
+		var actions = new VBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+		actions.AddThemeConstantOverride("separation", 2);
+		var sync = new Button { Text = "Bring pacer to me", CustomMinimumSize = new Vector2(148, 28), FocusMode = Control.FocusModeEnum.All };
 		sync.Pressed += () => _syncPacer?.Invoke();
 		actions.AddChild(sync);
-		var stop = new Button { Text = "Stop following", CustomMinimumSize = new Vector2(118, 30) };
+		var stop = new Button { Text = "Stop following", CustomMinimumSize = new Vector2(148, 28), FocusMode = Control.FocusModeEnum.All };
 		stop.Pressed += () => _stopPacer?.Invoke();
 		actions.AddChild(stop);
-		column.AddChild(actions);
-		_pacerPanel.AddChild(column);
+		row.AddChild(actions);
+		_pacerPanel.AddChild(row);
 		AddChild(_pacerPanel);
 	}
 
@@ -382,11 +412,17 @@ public partial class HudController : Control
 			if (_pacerPicker.Selected != index) _pacerPicker.Select(index);
 		}
 		if (_pacerGapLabel is not null) _pacerGapLabel.Text = preset is null ? gap : $"{preset.Name} · {gap}";
-		if (_pacerPanel?.GetChild(0).GetChild(2) is HBoxContainer actions)
+		if (_pacerPanel?.GetChild(0).GetChild(1) is VBoxContainer actions)
 			foreach (var child in actions.GetChildren())
 				if (child is Button button) button.Disabled = preset is null;
+		UpdatePacerPanelVisibility();
+		CallDeferred(nameof(UpdateDebugOverlayLayout));
+	}
+
+	private void UpdatePacerPanelVisibility()
+	{
 		if (_pacerPanel is not null)
-			_pacerPanel.Visible = _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
+			_pacerPanel.Visible = _showPacerPanelForRide == true && _hudDisplayEnabled && _rideSessionNode?.IsRideActive == true;
 	}
 
 	private void UpdateNearbyRiderDisplay()
@@ -447,6 +483,7 @@ public partial class HudController : Control
 		_recordingIndicator.Text = _recordingFailed ? "FIT SAVE ERROR"
 			: _debugInspectionWithoutRecording ? "DEBUG · NOT RECORDING"
 			: paused ? "REC PAUSED" : "● REC";
+		if (IsInsideTree()) CallDeferred(nameof(UpdateDebugOverlayLayout));
 	}
 
 	public void SetDebugMode(bool enabled)
@@ -664,11 +701,35 @@ public partial class HudController : Control
 	{
 		var viewport = GetViewportRect().Size;
 		if (viewport.X <= 0 || viewport.Y <= 0) return;
+		ResizeBottomBar();
+		if (_pacerPanel is not null) _pacerPanel.Size = _pacerPanel.GetCombinedMinimumSize();
+		if (_bottomHudPanel is not null) _bottomHudPanel.Size = _bottomHudPanel.GetCombinedMinimumSize();
 		var layout = RideHudOverlayLayoutPolicy.ForViewport(viewport.X, viewport.Y,
-			_routeGradientInset?.Visible == true);
+			_routeGradientInset?.Visible == true,
+			_pacerPanel?.Visible == true,
+			_pacerPanel?.GetCombinedMinimumSize().X ?? 0,
+			_pacerPanel?.GetCombinedMinimumSize().Y ?? 0,
+			_dummyControlPanel?.Visible == true,
+			_bottomHudPanel?.GetCombinedMinimumSize().X ?? 0,
+			_bottomHudPanel?.GetCombinedMinimumSize().Y ?? 0);
 		SetAnchoredBounds(_debugOverlay, layout.DebugPanel);
 		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
 		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
+		if (_pacerPanel?.Visible == true) SetAnchoredBounds(_pacerPanel, layout.PacerPanel);
+		SetAnchoredBounds(_bottomHudPanel, layout.BottomBar);
+	}
+
+	private void ResizeBottomBar()
+	{
+		if (_bottomHudPanel is null) return;
+		var size = _bottomHudPanel.GetCombinedMinimumSize();
+		_bottomHudPanel.AnchorLeft = _bottomHudPanel.AnchorRight = 0;
+		_bottomHudPanel.AnchorTop = _bottomHudPanel.AnchorBottom = 1;
+		_bottomHudPanel.OffsetLeft = RideHudOverlayLayoutPolicy.ViewportMargin;
+		_bottomHudPanel.OffsetTop = -RideHudOverlayLayoutPolicy.BottomPanelMargin - size.Y;
+		_bottomHudPanel.OffsetRight = RideHudOverlayLayoutPolicy.ViewportMargin + size.X;
+		_bottomHudPanel.OffsetBottom = -RideHudOverlayLayoutPolicy.BottomPanelMargin;
+		_bottomHudPanel.Size = size;
 	}
 
 	private static void SetAnchoredBounds(Control? control, RideHudOverlayBounds bounds)
@@ -869,6 +930,8 @@ public partial class HudController : Control
 
 	public void ResetHud()
 	{
+		_showPacerPanelForRide = null;
+		_pacerPanel?.Hide();
 		UpdateHudVisibility();
 		SetRidePaused(false);
 		SetModeText("-");
@@ -1014,6 +1077,7 @@ public partial class HudController : Control
 		if (_dummyWkgPowerRow is not null) _dummyWkgPowerRow.Visible = wkgMode;
 		if (_dummyWattsPowerRow is not null) _dummyWattsPowerRow.Visible = !wkgMode;
 		if (_debugOverlay is not null) _debugOverlay.Visible = _debugEnabled;
+		UpdatePacerPanelVisibility();
 		UpdateDebugOverlayLayout();
 		if (_cameraInspectionLabel is not null)
 		{

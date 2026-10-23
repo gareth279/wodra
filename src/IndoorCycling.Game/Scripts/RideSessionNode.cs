@@ -217,6 +217,8 @@ public partial class RideSessionNode : Node
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
 		_sessionStarted = true;
+		_hudController?.BeginRideHudSession(
+			PacerEffortPresets.Find(PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) is not null);
 		_trainerSessionActive = true;
 		_trainerCommandWarningSessionId = _trainerCommandWarningPolicy.BeginSession();
 		_trainerCommandWarningText = null;
@@ -294,6 +296,7 @@ public partial class RideSessionNode : Node
 		_currentActivityId = null;
 		_currentRiderProfileId = null;
 		_sessionStarted = true;
+		_hudController?.BeginRideHudSession(startedWithPacer: false);
 		_trainerSessionActive = false;
 		_fitReplaySessionActive = true;
 		_rideState = RideState.Initial;

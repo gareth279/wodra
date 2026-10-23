@@ -478,10 +478,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 3.0
-offset_top = 16.0
-offset_right = 3.0
-offset_bottom = 16.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_qpsp1")
@@ -651,27 +651,34 @@ theme_override_font_sizes/font_size = 14
 layout_mode = 2
 
 [node name="BottomBar" type="PanelContainer" parent="HudController" unique_id=236134331]
-custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12
+anchor_left = 0.0
+anchor_right = 0.0
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -2.0
-offset_top = -96.0
-offset_right = -553.0
-offset_bottom = -36.0
-grow_horizontal = 2
+offset_left = 12.0
+offset_top = -64.0
+offset_right = 292.0
+offset_bottom = -12.0
+grow_horizontal = 0
 grow_vertical = 0
 
 [node name="MarginContainer" type="MarginContainer" parent="HudController/BottomBar" unique_id=662509860]
 layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HudController/BottomBar/MarginContainer" unique_id=1547907366]
 layout_mode = 2
+theme_override_constants/separation = 6
 
 [node name="PauseRideButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=165903913]
 layout_mode = 2
+custom_minimum_size = Vector2(84, 40)
+focus_mode = 2
 text = "Pause"
 
 [node name="RecordingIndicator" type="Label" parent="HudController/BottomBar/MarginContainer/HBoxContainer"]
@@ -682,6 +689,8 @@ theme_override_colors/font_color = Color(0.83, 0.63, 0.31, 1)
 
 [node name="MenuButton" type="Button" parent="HudController/BottomBar/MarginContainer/HBoxContainer" unique_id=1255797073]
 layout_mode = 2
+custom_minimum_size = Vector2(78, 40)
+focus_mode = 2
 text = "Menu"
 
 [node name="DummyControlPanel" type="Control" parent="HudController"]
