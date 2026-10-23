@@ -64,6 +64,8 @@ var tests = new (string Name, Action Run)[]
     ,("EOS client configuration loads file values and environment overrides", EosConfigurationPrecedence)
     ,("EOS client configuration reports missing and malformed sources safely", EosConfigurationValidation)
     ,("Packaged route directory resolves relative to the exported application", PackagedRouteDirectoryResolution)
+    ,("Route browser filters and sorts actual route metadata", RouteBrowseFiltersAndSorts)
+    ,("Route favourites persist by stable ID and isolate profiles", RouteFavoritesPersistAndIsolateProfiles)
     ,("Controller preference defaults to auto-detect and round-trips in settings JSON", ControllerDevicePreferencePersists)
     ,("Settings returns to its connection caller only before an active ride", SettingsReturnRespectsEntryContext)
     ,("Lateral steering applies dead zone and holds on neutral input", SteeringDeadZoneAndNeutralHold)
@@ -1408,6 +1410,47 @@ static void EosConfigurationValidation()
         catch (InvalidOperationException ex) when (ex.Message.Contains("WODRA_EOS_CLIENT_SECRET", StringComparison.Ordinal)) { }
     }
     finally { Directory.Delete(root, recursive: true); }
+}
+
+static RouteDefinition BrowseTestRoute(string id, string name, double distance, double ascent, string type, string difficulty = "Unrated") =>
+    new(id, name, "test route", distance, [new RouteSegment(0, distance, 0, name)],
+        [new RoutePoint(0, 0, 0, 10), new RoutePoint(distance, 0, 0, 10 + ascent)]) { RouteType = type, Difficulty = difficulty, PublishedTotalAscentMeters = ascent };
+
+static void RouteBrowseFiltersAndSorts()
+{
+    var routes = new[]
+    {
+        BrowseTestRoute("loop-short", "Harbour Loop", 4000, 30, "Loop"),
+        BrowseTestRoute("out-long", "Coastal Return", 12000, 120, "Out-and-Back"),
+        BrowseTestRoute("loop-steep", "Signal Hill", 7000, 400, "Loop", "Challenging")
+    };
+    if (!RouteBrowsePolicy.Apply(routes, new RouteBrowseFilter("signal" )).Single().Id.Equals("loop-steep"))
+        throw new Exception("Case-insensitive route search should match names.");
+    if (!RouteBrowsePolicy.Apply(routes, new RouteBrowseFilter(RouteType: "Loop", Sort: RouteBrowseSort.Shortest)).Select(r => r.Id).SequenceEqual(["loop-short", "loop-steep"]))
+        throw new Exception("Route type filtering and shortest-first sorting should use route definitions.");
+    if (!RouteBrowsePolicy.Apply(routes, new RouteBrowseFilter(Difficulty: "Challenging")).Single().Id.Equals("loop-steep"))
+        throw new Exception("Difficulty filtering should only use explicit route package metadata.");
+    if (!RouteBrowsePolicy.Apply(routes, new RouteBrowseFilter(Sort: RouteBrowseSort.MostAscent)).Select(r => r.Id).SequenceEqual(["loop-steep", "out-long", "loop-short"]))
+        throw new Exception("Ascent sorting should use actual route ascent metadata.");
+    if (RouteBrowsePolicy.Apply(routes, new RouteBrowseFilter("no match")).Count != 0)
+        throw new Exception("Unmatched route search should produce an empty result.");
+}
+
+static void RouteFavoritesPersistAndIsolateProfiles()
+{
+    var first = Guid.NewGuid(); var second = Guid.NewGuid();
+    var saved = new Dictionary<Guid, List<string>>();
+    RouteFavoritesPolicy.Toggle(saved, first, "route-stable-id");
+    var restored = JsonSerializer.Deserialize<Dictionary<Guid, List<string>>>(JsonSerializer.Serialize(saved))!;
+    if (!RouteFavoritesPolicy.ForProfile(restored, first).Contains("route-stable-id")
+        || RouteFavoritesPolicy.ForProfile(restored, second).Count != 0)
+        throw new Exception("Favourite IDs should round-trip and remain isolated by profile.");
+    RouteFavoritesPolicy.Toggle(restored, first, "route-removed-from-install");
+    if (!RouteFavoritesPolicy.ForProfile(restored, first).Contains("route-removed-from-install"))
+        throw new Exception("Uninstalled route IDs should remain stored instead of being silently discarded.");
+    RouteFavoritesPolicy.Toggle(restored, first, "route-stable-id");
+    if (RouteFavoritesPolicy.ForProfile(restored, first).Contains("route-stable-id"))
+        throw new Exception("Toggling a favourite should remove the same stable route ID.");
 }
 
 static void PackagedRouteDirectoryResolution()
