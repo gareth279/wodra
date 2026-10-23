@@ -13,6 +13,13 @@ public sealed record PacerEffortPreset(string Id, string Name, double TargetWatt
         MidpointRounding.AwayFromZero);
     public double TotalMassKg => AssumedBodyWeightKg + AssumedBikeWeightKg;
     public string RiderDisplayName => $"Pacer · {Name}";
+    public static string CatTexturePath(string? id) => id?.ToLowerInvariant() switch
+    {
+        "easy" => "res://Data/Cats/blue-cat.png",
+        "moderate" => "res://Data/Cats/gold-cat.png",
+        "strong" => "res://Data/Cats/gold-cat.png",
+        _ => "res://Data/Cats/blue-cat.png"
+    };
 }
 
 public static class PacerEffortPresets
@@ -30,6 +37,8 @@ public static class PacerEffortPresets
         string.Equals(preset.Id, id, StringComparison.OrdinalIgnoreCase));
 
     public static string NormalizeSelection(string? id) => Find(id)?.Id ?? PacerEffortPreset.DisabledId;
+
+    public static string CatTexturePath(string? id) => PacerEffortPreset.CatTexturePath(id);
 }
 
 /// <summary>
@@ -93,6 +102,27 @@ public sealed class PacerRiderController
             _targetLateralOffsetMeters = Math.Clamp(targetMeters,
                 -RiderTrafficSeparation.MaximumRoadCentreOffsetMeters,
                 RiderTrafficSeparation.MaximumRoadCentreOffsetMeters);
+    }
+
+    /// <summary>One-time local rendezvous. The route direction and lap count remain continuous.</summary>
+    public void BringTo(double playerDistanceMeters, double playerLateralMeters, double aheadMeters = 12)
+    {
+        if (!IsInitialized || !double.IsFinite(playerDistanceMeters) || !double.IsFinite(playerLateralMeters)) return;
+        var target = playerDistanceMeters + Math.Clamp(aheadMeters, 8, 20);
+        if (Math.Abs(_routeDistanceMeters - target) <= 2) return;
+        var minimumSeparation = RiderTrafficSeparation.MinimumLaneCentreSeparationMeters;
+        _routeDistanceMeters = Math.Max(0, target);
+        _wrappedDistanceMeters = ((_routeDistanceMeters % _routeLengthMeters) + _routeLengthMeters) % _routeLengthMeters;
+        var maximumOffset = RiderTrafficSeparation.MaximumRoadCentreOffsetMeters;
+        var safeLanes = new[] { playerLateralMeters + minimumSeparation, playerLateralMeters - minimumSeparation,
+            -2.55, -1.53, -0.51, 0.51, 1.53, 2.55 }
+            .Where(offset => Math.Abs(offset) <= maximumOffset
+                && Math.Abs(offset - playerLateralMeters) >= minimumSeparation - 0.01)
+            .OrderBy(offset => Math.Abs(offset - playerLateralMeters))
+            .ThenBy(offset => offset < playerLateralMeters ? 1 : 0).ToArray();
+        _lateralOffsetMeters = safeLanes.Length > 0 ? safeLanes[0]
+            : Math.Clamp(playerLateralMeters, -maximumOffset, maximumOffset);
+        _targetLateralOffsetMeters = _lateralOffsetMeters;
     }
 
     public void Update(double routeLengthMeters, Func<double, double> gradientAt,
