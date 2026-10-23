@@ -126,13 +126,9 @@ text = "Choose how you want to start"
 layout_mode = 2
 text = "Debug mode"
 
-[node name="OnlineRidingCheckButton" type="CheckButton" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
+[node name="OptionsButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
-text = "Online Riding"
-
-[node name="OnlineStatusLabel" type="Label" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
-layout_mode = 2
-text = "Offline · local rides are always available"
+text = "Options"
 
 [node name="ConnectTrainerButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=1036208023]
 layout_mode = 2
@@ -850,7 +846,7 @@ grow_vertical = 2
 script = ExtResource("7_05hhs")
 
 [node name="PanelContainer" type="PanelContainer" parent="RouteSelectionPanel" unique_id=619640184]
-custom_minimum_size = Vector2(800, 600)
+custom_minimum_size = Vector2(980, 600)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -863,31 +859,3 @@ offset_right = 400.0
 offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="RouteSelectionPanel/PanelContainer" unique_id=20280134]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 16
-
-[node name="VBoxContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer" unique_id=1636506050]
-layout_mode = 2
-
-[node name="TitleLabel" type="Label" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1609611295]
-layout_mode = 2
-text = "Route Selection"
-
-[node name="RoutesScroll" type="ScrollContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="RouteButtonsContainer" type="VBoxContainer" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer/RoutesScroll" unique_id=1044305618]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="BackButton" type="Button" parent="RouteSelectionPanel/PanelContainer/MarginContainer/VBoxContainer" unique_id=1373868971]
-layout_mode = 2
-text = "Back"

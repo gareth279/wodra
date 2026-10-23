@@ -2,325 +2,221 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using IndoorCycling.Core.Simulation;
 
 public partial class RouteSelectionPanelController : Control
 {
-	private RideSessionNode? _rideSessionNode;
-	private Control? _hudController;
-	private Control? _deviceConnectionPanel;
-	private Control? _startPanel;
-
-	private VBoxContainer? _routeButtonsContainer;
-	private PanelContainer? _selectionPanel;
-	private Button? _backButton;
-	private CheckButton? _onlineRidingToggle;
-	private CheckButton? _gameFeaturesToggle;
-	private Label? _onlineStatusLabel;
-	private VBoxContainer? _startupOnlineControls;
-	private OptionButton? _pacerPresetPicker;
-	private readonly List<string> _pacerPresetIds = [];
+	private RideSessionNode? _session;
+	private Control? _hud, _device, _start;
+	private PanelContainer? _panel;
+	private VBoxContainer? _rows;
+	private LineEdit? _search;
+	private OptionButton? _sort, _type;
+	private OptionButton? _difficulty;
+	private CheckButton? _favoritesOnly;
+	private Label? _count, _previewTitle, _metadata, _description, _routeEnds, _empty;
+	private Button? _favoriteButton, _startButton;
+	private RouteElevationPreview? _map, _elevation;
+	private OptionButton? _pacerPicker;
+	private string _selectedId = RouteCatalog.Routes.FirstOrDefault()?.Id ?? "";
 	private readonly Dictionary<string, Button> _routeButtons = new(StringComparer.Ordinal);
-	private CancellationTokenSource? _routePresenceCancellation;
-	private int _routePresenceGeneration;
+	private bool _returnToRouteAfterOptions;
+	public string SelectedRouteId => _selectedId;
 
 	public override void _Ready()
 	{
-		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
-		_hudController = GetNodeOrNull<Control>("../HudController");
-		_deviceConnectionPanel = GetNodeOrNull<Control>("../DeviceConnectionPanel");
-		_startPanel = GetNodeOrNull<Control>("../StartPanel");
-
-		_routeButtonsContainer = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer/RoutesScroll/RouteButtonsContainer");
-		_selectionPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
-		Resized += FitSelectionPanel;
+		_session = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+		_hud = GetNodeOrNull<Control>("../HudController");
+		_device = GetNodeOrNull<Control>("../DeviceConnectionPanel");
+		_start = GetNodeOrNull<Control>("../StartPanel");
+		_panel = GetNodeOrNull<PanelContainer>("PanelContainer");
+		BuildBrowser();
 		FitSelectionPanel();
-		_backButton = GetNodeOrNull<Button>("PanelContainer/MarginContainer/VBoxContainer/BackButton");
-		BuildOnlineControls();
-
-		if (_backButton is not null)
-			_backButton.Pressed += OnBackPressed;
-
-		BuildRouteButtons();
-
 		Hide();
 	}
-
+	public override void _Notification(int what)
+	{
+		if (what == NotificationResized) FitSelectionPanel();
+	}
 	private void FitSelectionPanel()
 	{
-		if (_selectionPanel is null || !IsInsideTree()) return;
+		if (_panel is null || !IsInsideTree()) return;
 		var viewport = GetViewportRect().Size;
-		var width = Math.Min(1100, Math.Max(320, viewport.X - 32));
-		var height = Math.Min(620, Math.Max(280, viewport.Y - 32));
-		_selectionPanel.CustomMinimumSize = new Vector2(width, height);
-		_selectionPanel.OffsetLeft = -width / 2; _selectionPanel.OffsetRight = width / 2;
-		_selectionPanel.OffsetTop = -height / 2; _selectionPanel.OffsetBottom = height / 2;
+		var width = Math.Min(1100, Math.Max(600, viewport.X - 32));
+		var height = Math.Min(620, Math.Max(420, viewport.Y - 32));
+		_panel.CustomMinimumSize = new Vector2(width, height);
+		_panel.OffsetLeft = -width / 2; _panel.OffsetRight = width / 2;
+		_panel.OffsetTop = -height / 2; _panel.OffsetBottom = height / 2;
 	}
 
-	public void ShowRouteSelection()
+	private void BuildBrowser()
 	{
-		RefreshGameFeaturesToggle();
-		_hudController?.Hide();
-		_deviceConnectionPanel?.Hide();
-		_startPanel?.Hide();
-
-		Show();
-		MoveToFront();
-		_ = RefreshStartupOnlineStatusAsync();
+		if (_panel is null) return;
+		_panel.CustomMinimumSize = new Vector2(980, 600);
+		var margin = new MarginContainer { Name = "RouteBrowserMargin" };
+		margin.AddThemeConstantOverride("margin_left", 20); margin.AddThemeConstantOverride("margin_right", 20);
+		margin.AddThemeConstantOverride("margin_top", 16); margin.AddThemeConstantOverride("margin_bottom", 16);
+		_panel.AddChild(margin);
+		var root = new VBoxContainer { Name = "RouteBrowserLayout" }; root.AddThemeConstantOverride("separation", 10); margin.AddChild(root);
+		var header = new HBoxContainer { Name = "TopBar" }; root.AddChild(header);
+		var title = new Label { Text = "Choose a route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+		title.AddThemeFontSizeOverride("font_size", 24); header.AddChild(title);
+		var options = new Button { Text = "Options" }; options.Pressed += OpenOptions; header.AddChild(options);
+		var filters = new HBoxContainer { Name = "Filters" }; filters.AddThemeConstantOverride("separation", 8); root.AddChild(filters);
+		_search = new LineEdit { Name = "RouteSearch", PlaceholderText = "Search routes", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_search.TextChanged += _ => RefreshRows(); filters.AddChild(_search);
+		_type = new OptionButton { Name = "RouteTypeFilter", CustomMinimumSize = new Vector2(140, 0) };
+		_type.AddItem("All route types"); _type.AddItem("Loops"); _type.AddItem("Out-and-back"); _type.ItemSelected += _ => RefreshRows(); filters.AddChild(_type);
+		_difficulty = new OptionButton { Name = "RouteDifficultyFilter", CustomMinimumSize = new Vector2(130, 0) };
+		_difficulty.AddItem("Any effort");
+		foreach (var difficulty in RouteCatalog.Routes.Select(route => route.Difficulty).Where(value => !string.IsNullOrWhiteSpace(value)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value, StringComparer.CurrentCultureIgnoreCase))
+			_difficulty.AddItem(difficulty);
+		_difficulty.ItemSelected += _ => RefreshRows(); filters.AddChild(_difficulty);
+		_sort = new OptionButton { Name = "RouteSort", CustomMinimumSize = new Vector2(150, 0) };
+		_sort.AddItem("Name A–Z"); _sort.AddItem("Shortest"); _sort.AddItem("Longest"); _sort.AddItem("Least ascent"); _sort.AddItem("Most ascent");
+		_sort.ItemSelected += _ => RefreshRows(); filters.AddChild(_sort);
+		_favoritesOnly = new CheckButton { Name = "FavoritesFilter", Text = "Favourites" }; _favoritesOnly.Toggled += _ => RefreshRows(); filters.AddChild(_favoritesOnly);
+		var content = new HBoxContainer { Name = "Content", SizeFlagsVertical = Control.SizeFlags.ExpandFill }; content.AddThemeConstantOverride("separation", 18); root.AddChild(content);
+		var listColumn = new VBoxContainer { Name = "RouteList", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 0.95f };
+		content.AddChild(listColumn);
+		_count = new Label { Text = "Routes" }; listColumn.AddChild(_count);
+		var scroll = new ScrollContainer { Name = "RouteScroll", SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+		listColumn.AddChild(scroll); _rows = new VBoxContainer { Name = "RouteRows", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _rows.AddThemeConstantOverride("separation", 5); scroll.AddChild(_rows);
+		_empty = new Label { Name = "NoResults", Text = "No routes match these filters.", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+		var previewColumn = new VBoxContainer { Name = "Preview", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.15f };
+		content.AddChild(previewColumn);
+		var detailHeader = new HBoxContainer { Name = "PreviewHeader" }; previewColumn.AddChild(detailHeader);
+		_previewTitle = new Label { Text = "Route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+		_previewTitle.AddThemeFontSizeOverride("font_size", 20); detailHeader.AddChild(_previewTitle);
+		_favoriteButton = new Button { Name = "FavoriteRoute", Text = "☆ Favourite" }; _favoriteButton.Pressed += ToggleFavorite; detailHeader.AddChild(_favoriteButton);
+		_metadata = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_metadata);
+		_description = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsVertical = Control.SizeFlags.ShrinkBegin }; previewColumn.AddChild(_description);
+		_map = new RouteElevationPreview { Name = "RouteOverview", ShowRoute = true, CustomMinimumSize = new Vector2(0, 150), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		previewColumn.AddChild(_map);
+		_elevation = new RouteElevationPreview { Name = "ElevationProfile", CustomMinimumSize = new Vector2(0, 92), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		previewColumn.AddChild(_elevation);
+		_routeEnds = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_routeEnds);
+		var spacer = new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill }; previewColumn.AddChild(spacer);
+		var footer = new HBoxContainer { Name = "Footer" }; footer.AddThemeConstantOverride("separation", 8); root.AddChild(footer);
+		var back = new Button { Text = "Back" }; back.Pressed += OnBackPressed; footer.AddChild(back);
+		var pacerLabel = new Label { Text = "Offline pacer", VerticalAlignment = VerticalAlignment.Center }; footer.AddChild(pacerLabel);
+		_pacerPicker = new OptionButton { Name = "PacerPresetPicker", CustomMinimumSize = new Vector2(270, 0) };
+		_pacerPicker.AddItem("No pacer"); foreach (var preset in PacerEffortPresets.All) _pacerPicker.AddItem($"{preset.Name} · {preset.TargetWattsPerKg:0.0} W/kg");
+		_pacerPicker.Select(Math.Max(0, PacerEffortPresets.All.ToList().FindIndex(p => p.Id == PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) + 1));
+		_pacerPicker.ItemSelected += index => SavePacerSelection((int)index); footer.AddChild(_pacerPicker);
+		_startButton = new Button { Name = "StartRide", Text = "Start Ride", CustomMinimumSize = new Vector2(150, 42), SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd };
+		_startButton.Pressed += StartSelectedRoute; footer.AddChild(_startButton);
+		RefreshRows();
 	}
 
-	private void BuildOnlineControls()
+	private void SavePacerSelection(int index)
 	{
-		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/VBoxContainer");
-		if (column is null) return;
-		_startupOnlineControls = new VBoxContainer { Name = "OnlineRidingControls" };
-		var gameFeatures = new VBoxContainer { Name = "GameFeaturesControls" };
-		_gameFeaturesToggle = new CheckButton { Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
-		_gameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled);
-		gameFeatures.AddChild(_gameFeaturesToggle);
-		gameFeatures.AddChild(new Label { Text = CollectibleUiText.HelperText, HorizontalAlignment = HorizontalAlignment.Center,
-			AutowrapMode = TextServer.AutowrapMode.WordSmart });
-		column.AddChild(gameFeatures);
-		column.MoveChild(gameFeatures, 1);
-		_onlineRidingToggle = new CheckButton
-		{
-			Text = "Online Riding",
-			ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled
-		};
-		_onlineRidingToggle.Toggled += OnOnlineRidingToggled;
-		_startupOnlineControls.AddChild(_onlineRidingToggle);
-		_onlineStatusLabel = new Label
-		{
-			Name = "OnlineServiceStatus",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			HorizontalAlignment = HorizontalAlignment.Center,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			ClipText = true,
-			Modulate = new Color(0.78f, 0.78f, 0.72f, 0.9f)
-		};
-		_onlineStatusLabel.AddThemeFontSizeOverride("font_size", 14);
-		_startupOnlineControls.AddChild(_onlineStatusLabel);
-		column.AddChild(_startupOnlineControls);
-		column.MoveChild(_startupOnlineControls, 1);
-
-		var pacerControls = new VBoxContainer { Name = "OfflinePacerControls" };
-		pacerControls.AddChild(new Label { Text = "Offline pacer", HorizontalAlignment = HorizontalAlignment.Center });
-		_pacerPresetPicker = new OptionButton { Name = "PacerPresetPicker", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		_pacerPresetIds.Add(PacerEffortPreset.DisabledId);
-		_pacerPresetPicker.AddItem("No pacer");
-		foreach (var preset in PacerEffortPresets.All)
-		{
-			_pacerPresetIds.Add(preset.Id);
-			_pacerPresetPicker.AddItem($"{preset.Name} · {preset.TargetWattsPerKg:0.0} W/kg · {preset.TargetPowerWatts} W target");
-		}
-		_pacerPresetPicker.Select(_pacerPresetIds.IndexOf(
-			PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)));
-		_pacerPresetPicker.ItemSelected += OnPacerPresetSelected;
-		pacerControls.AddChild(_pacerPresetPicker);
-		pacerControls.AddChild(new Label
-		{
-			Text = $"Offline AI effort uses a {PacerEffortPreset.AssumedBodyWeightKg:0} kg rider and {PacerEffortPreset.AssumedBikeWeightKg:0} kg bike.",
-			HorizontalAlignment = HorizontalAlignment.Center,
-			AutowrapMode = TextServer.AutowrapMode.WordSmart
-		});
-		column.AddChild(pacerControls);
-		column.MoveChild(pacerControls, 2);
-	}
-
-	private void OnPacerPresetSelected(long index)
-	{
-		if (index < 0 || index >= _pacerPresetIds.Count) return;
-		GameBootstrap.Settings.PacerPresetId = _pacerPresetIds[(int)index];
+		GameBootstrap.Settings.PacerPresetId = index == 0 ? PacerEffortPreset.DisabledId : PacerEffortPresets.All[index - 1].Id;
 		GameBootstrap.Settings.Save();
 	}
 
-	public override void _Process(double delta) => UpdateOnlineStatusLabel();
-
-	public void RefreshGameFeaturesToggle()
+	private Guid? ActiveProfileId => GameBootstrap.Settings.ActiveProfileId;
+	private HashSet<string> Favorites => RouteFavoritesPolicy.ForProfile(GameBootstrap.Settings.RouteFavoritesByProfile, ActiveProfileId);
+	private bool IsFavorite(string id) => Favorites.Contains(id);
+	private void ToggleFavorite()
 	{
-		if (_gameFeaturesToggle is not null) _gameFeaturesToggle.ButtonPressed = GameFeaturesPreference.Enabled;
+		if (ActiveProfileId is not { } profile || string.IsNullOrEmpty(_selectedId)) return;
+		RouteFavoritesPolicy.Toggle(GameBootstrap.Settings.RouteFavoritesByProfile, profile, _selectedId);
+		GameBootstrap.Settings.Save(); RefreshRows(); UpdatePreview();
 	}
 
-	private void UpdateOnlineStatusLabel()
+	private void RefreshRows()
 	{
-		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
-		_onlineStatusLabel.Text = !_rideSessionNode.OnlineRidingEnabled
-			? "Online Riding: Off"
-			: _rideSessionNode.IsMultiplayerConnected
-				? "Online"
-				: _rideSessionNode.OnlineServiceAvailable == true
-					? "Online ready"
-					: _rideSessionNode.OnlineServiceAvailable == false
-						? OnlineStatusText.ForStartup(true, false, false,
-							EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration,
-							OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider),
-							EosNativeLibraryLoader.LoadFailed,
-							EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid)
-						: OnlineStatusText.ForStartup(true, false, null,
-							EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration,
-							OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider),
-							EosNativeLibraryLoader.LoadFailed,
-							EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid);
-	}
-
-	private async void OnOnlineRidingToggled(bool enabled)
-	{
-		if (_rideSessionNode is null || _onlineRidingToggle is null) return;
-		_onlineRidingToggle.Disabled = true;
-		_routePresenceCancellation?.Cancel();
-		try { await _rideSessionNode.SetOnlineRidingEnabledAsync(enabled); }
-		catch (Exception ex)
-		{
-			GameLogger.Log("multiplayer_startup_toggle_failed", new { message = ex.Message });
-			_onlineStatusLabel!.Text = "Online unavailable";
-		}
-		finally
-		{
-			_onlineRidingToggle.Disabled = false;
-			UpdateOnlineStatusLabel();
-			_ = RefreshRoutePresenceAsync();
-		}
-	}
-
-	private async Task RefreshStartupOnlineStatusAsync()
-	{
-		if (_rideSessionNode is null || !_rideSessionNode.OnlineRidingEnabled) return;
-		try
-		{
-			await _rideSessionNode.RefreshOnlineAvailabilityAsync();
-			UpdateOnlineStatusLabel();
-			await RefreshRoutePresenceAsync();
-		}
-		catch (Exception ex)
-		{
-			GameLogger.Log("multiplayer_startup_availability_failed", new { message = ex.Message });
-			_onlineStatusLabel!.Text = "Online unavailable";
-		}
-	}
-
-	private async Task RefreshRoutePresenceAsync()
-	{
-		_routePresenceCancellation?.Cancel();
-		_routePresenceCancellation?.Dispose();
-		var generation = ++_routePresenceGeneration;
-		if (_rideSessionNode is null) return;
-		if (!_rideSessionNode.OnlineRidingEnabled)
-		{
-			SetRoutePresenceSuffix("online off");
-			return;
-		}
-		_routePresenceCancellation = new CancellationTokenSource();
-		var token = _routePresenceCancellation.Token;
-		SetRoutePresenceSuffix("checking…");
-		var available = _rideSessionNode.OnlineServiceAvailable ??
-			await _rideSessionNode.RefreshOnlineAvailabilityAsync(token);
-		if (token.IsCancellationRequested || generation != _routePresenceGeneration) return;
-		if (!available)
-		{
-			SetRoutePresenceSuffix("presence unavailable");
-			return;
-		}
-		var routes = RouteCatalog.Routes.ToArray();
-		var results = await Task.WhenAll(routes.Select(async route =>
-			(route.Id, Result: await _rideSessionNode.GetRoutePresenceAsync(route, token))));
-		if (token.IsCancellationRequested || generation != _routePresenceGeneration) return;
-		foreach (var route in routes)
-		{
-			var result = results.First(item => item.Id == route.Id).Result;
-			if (_routeButtons.TryGetValue(route.Id, out var button))
-				button.Text = RouteButtonText(route, result.IsAvailable
-					? result.ActiveRiders is { } count ? $"{count} riding" : "rider count unavailable"
-					: "presence unavailable");
-		}
-	}
-
-	private void SetRoutePresenceSuffix(string suffix)
-	{
-		foreach (var route in RouteCatalog.Routes)
-			if (_routeButtons.TryGetValue(route.Id, out var button)) button.Text = RouteButtonText(route, suffix);
-	}
-
-	private static string RouteButtonText(RouteDefinition route, string? presence = null) =>
-		$"{route.Name} · {route.DistanceMeters / 1000.0:0.0} km · {route.RouteType} · {route.Difficulty} · {route.TotalAscentMeters:0} m ↑" +
-		(presence is null ? "" : $" · {presence}");
-
-	private void BuildRouteButtons()
-	{
-		if (_routeButtonsContainer is null)
-			return;
-		foreach (var error in RouteCatalog.PackageErrors)
-			GD.PushWarning($"Route package ignored: {error}");
-
-		foreach (var child in _routeButtonsContainer.GetChildren())
-		{
-			child.QueueFree();
-		}
+		if (_rows is null) return;
+		foreach (var child in _rows.GetChildren().Where(child => child != _empty)) { _rows.RemoveChild(child); child.QueueFree(); }
 		_routeButtons.Clear();
-
-		foreach (var route in RouteCatalog.Routes)
+		var query = _search?.Text.Trim() ?? "";
+		var routeType = _type?.Selected switch { 1 => "Loop", 2 => "Out-and-Back", _ => "" };
+		var sort = (_sort?.Selected ?? 0) switch { 1 => RouteBrowseSort.Shortest, 2 => RouteBrowseSort.Longest, 3 => RouteBrowseSort.LeastAscent, 4 => RouteBrowseSort.MostAscent, _ => RouteBrowseSort.Name };
+		var difficulty = _difficulty is { Selected: > 0 } ? _difficulty.GetItemText(_difficulty.Selected) : "";
+		var list = RouteBrowsePolicy.Apply(RouteCatalog.Routes,
+			new RouteBrowseFilter(query, routeType, _favoritesOnly?.ButtonPressed == true, sort, difficulty), Favorites).ToList();
+		var installedIds = RouteCatalog.Routes.Select(route => route.Id).ToHashSet(StringComparer.Ordinal);
+		var unavailable = _favoritesOnly?.ButtonPressed == true
+			? Favorites.Where(id => !installedIds.Contains(id)).OrderBy(id => id, StringComparer.Ordinal).ToArray()
+			: [];
+		if (_count is not null) _count.Text = $"{list.Count} route{(list.Count == 1 ? "" : "s")}" + (unavailable.Length > 0 ? $" · {unavailable.Length} unavailable favourite{(unavailable.Length == 1 ? "" : "s")}" : "");
+		if (_empty is not null && list.Count == 0 && unavailable.Length == 0) _rows.AddChild(_empty);
+		else if (_empty is not null && _empty.GetParent() == _rows) _rows.RemoveChild(_empty);
+		foreach (var route in list)
 		{
-			var button = new Button
-			{
-				Text = RouteButtonText(route),
-				TooltipText = $"Route ID: {route.Id}\n{route.SourceAttribution}\nRoute data version: {route.RouteDataVersion}\nGeometry SHA-256: {route.GeometryFingerprint}",
-				CustomMinimumSize = new Vector2(0, 58)
-			};
-
-			button.Pressed += () => OnRouteSelected(route);
-
-			_routeButtonsContainer.AddChild(button);
-			_routeButtons[route.Id] = button;
+			var row = new HBoxContainer(); row.AddThemeConstantOverride("separation", 5); _rows.AddChild(row);
+			var button = new Button { Name = "RouteChoice", Text = $"{route.Name}\n{route.DistanceMeters / 1000:0.0} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}", Alignment = HorizontalAlignment.Left, CustomMinimumSize = new Vector2(0, 58), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ToggleMode = true, ButtonPressed = route.Id == _selectedId };
+			button.Pressed += () => { _selectedId = route.Id; UpdateSelection(); };
+			row.AddChild(button); _routeButtons[route.Id] = button;
+			var star = new Button { Text = IsFavorite(route.Id) ? "★" : "☆", TooltipText = IsFavorite(route.Id) ? "Remove favourite" : "Add favourite", CustomMinimumSize = new Vector2(42, 58) };
+			star.Pressed += () => { _selectedId = route.Id; ToggleFavorite(); };
+			row.AddChild(star);
 		}
-		if (GameBootstrap.Settings.OnlineRidingEnabled) _ = RefreshRoutePresenceAsync();
+		foreach (var missingId in unavailable)
+		{
+			var row = new HBoxContainer(); row.AddThemeConstantOverride("separation", 5); _rows.AddChild(row);
+			row.AddChild(new Label { Text = $"Unavailable route · {missingId}", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
+			var remove = new Button { Text = "☆", TooltipText = "Remove unavailable favourite", CustomMinimumSize = new Vector2(42, 58) };
+			remove.Pressed += () => { if (ActiveProfileId is { } profile) { var values = Favorites; values.Remove(missingId); GameBootstrap.Settings.RouteFavoritesByProfile[profile] = values.ToList(); GameBootstrap.Settings.Save(); RefreshRows(); } };
+			row.AddChild(remove);
+		}
+		if (list.Count > 0 && !list.Any(r => r.Id == _selectedId)) _selectedId = list[0].Id;
+		UpdatePreview(); UpdateSelection();
 	}
 
-	private async void OnRouteSelected(RouteDefinition route)
+	private void UpdateSelection()
 	{
-		if (_rideSessionNode is null)
-			return;
-		_routePresenceCancellation?.Cancel();
-
-		GameLogger.Log("route_selected", new
-		{
-			route.Id,
-			route.Name,
-			route.DistanceMeters
-		});
-
-		Hide();
-		_hudController?.Show();
-
-		var started = await _rideSessionNode.StartTrainerSessionAsync(route);
-		if (!started)
-		{
-			_hudController?.Hide();
-			(_deviceConnectionPanel as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen();
-		}
+		foreach (var pair in _routeButtons)
+			pair.Value.ButtonPressed = pair.Key == _selectedId;
+		UpdatePreview();
 	}
 
+	private void UpdatePreview()
+	{
+		var route = RouteCatalog.GetById(_selectedId);
+		if (route is null) { if (_previewTitle is not null) _previewTitle.Text = "Route unavailable"; if (_startButton is not null) _startButton.Disabled = true; return; }
+		if (_previewTitle is not null) _previewTitle.Text = route.Name;
+		if (_metadata is not null) _metadata.Text = $"{route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
+		if (_description is not null) _description.Text = route.Description;
+		if (_favoriteButton is not null) _favoriteButton.Text = IsFavorite(route.Id) ? "★ Favourited" : "☆ Favourite";
+		if (_map is not null) { _map.Route = route; _map.QueueRedraw(); }
+		if (_elevation is not null) { _elevation.Route = route; _elevation.QueueRedraw(); }
+		var first = route.GetSampleAt(0);
+		if (_routeEnds is not null) _routeEnds.Text = $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
+		if (_startButton is not null) _startButton.Disabled = false;
+	}
+
+	private async void StartSelectedRoute()
+	{
+		if (_session is null || RouteCatalog.GetById(_selectedId) is not { } route) return;
+		Hide(); _hud?.Show();
+		if (!await _session.StartTrainerSessionAsync(route)) { _hud?.Hide(); (_device as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen(); }
+	}
+
+	private void OpenOptions()
+	{
+		_returnToRouteAfterOptions = true;
+		_start?.Call("ShowOptions", true);
+		Hide();
+	}
+	public void ReturnFromOptions()
+	{
+		if (!_returnToRouteAfterOptions) return;
+		_returnToRouteAfterOptions = false;
+		ShowRouteSelection();
+	}
+	public void ShowRouteSelection()
+	{
+		_hud?.Hide(); _device?.Hide(); _start?.Hide(); Show(); MoveToFront();
+		if (_pacerPicker is not null)
+			_pacerPicker.Select(Math.Max(0, PacerEffortPresets.All.ToList().FindIndex(p => p.Id == PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) + 1));
+		RefreshRows();
+	}
 	private void OnBackPressed()
 	{
-		_routePresenceCancellation?.Cancel();
-		_rideSessionNode?.ClearPendingGhost();
 		Hide();
-
-		if (GameBootstrap.TrainerClient is not null)
-		{
-			_deviceConnectionPanel?.Show();
-		}
-		else
-		{
-			_startPanel?.Show();
-		}
-	}
-
-	public override void _ExitTree()
-	{
-		_routePresenceCancellation?.Cancel();
-		_routePresenceCancellation?.Dispose();
-		_routePresenceCancellation = null;
+		if (GameBootstrap.TrainerClient is not null) _device?.Show(); else _start?.Show();
 	}
 }
-

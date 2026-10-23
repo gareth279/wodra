@@ -28,6 +28,8 @@ public sealed class AppSettings
 	public SteeringControlSettings Steering { get; set; } = new();
 	/// <summary>Per-profile opt-in. Missing profiles default to OFF.</summary>
 	public System.Collections.Generic.Dictionary<string, bool> GameFeaturesByProfile { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+	/// <summary>Favourite routes keyed by rider profile and stable route package ID.</summary>
+	public System.Collections.Generic.Dictionary<Guid, System.Collections.Generic.List<string>> RouteFavoritesByProfile { get; set; } = new();
 	public int SteeringSensitivityPreferenceVersion { get; set; }
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
@@ -103,6 +105,7 @@ public sealed class AppSettings
 			}
 			settings.Display ??= new RideDisplayPreferences();
 			settings.GameFeaturesByProfile ??= new System.Collections.Generic.Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+			settings.RouteFavoritesByProfile ??= new System.Collections.Generic.Dictionary<Guid, System.Collections.Generic.List<string>>();
 			settings.Steering ??= new SteeringControlSettings();
 			var migratedSteeringSensitivity = SteeringSensitivityPreferencePolicy.Migrate(
 				json, settings.Steering, settings.SteeringSensitivityPreferenceVersion);

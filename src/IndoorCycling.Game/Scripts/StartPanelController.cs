@@ -23,7 +23,6 @@ public partial class StartPanelController : Control
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
 	private CheckButton? _debugModeCheckButton;
-	private CheckButton? _onlineRidingCheckButton;
 	private Label? _onlineStatusLabel;
 	private HudController? _typedHudController;
 	private RideHistoryPanelController? _rideHistoryPanel;
@@ -50,6 +49,10 @@ public partial class StartPanelController : Control
 	private VelopackUpdatePanel? _updatePanel;
 	private PanelContainer? _startupPanel;
 	private DiagnosticPanelController? _diagnosticPanel;
+	private Window? _optionsWindow;
+	private CheckButton? _optionsOnlineToggle;
+	private CheckButton? _optionsGameFeaturesToggle;
+	private bool _optionsReturnToRoutes;
 
 	public override void _Ready()
 	{
@@ -70,10 +73,7 @@ public partial class StartPanelController : Control
 		_debugModeCheckButton.ButtonPressed = GameBootstrap.DebugModeEnabled;
 		_debugModeCheckButton.Toggled += OnDebugModeToggled;
 		_typedHudController?.SetDebugMode(GameBootstrap.DebugModeEnabled);
-		_onlineRidingCheckButton = GetNodeOrNull<CheckButton>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/OnlineRidingCheckButton");
-		_onlineStatusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/OnlineStatusLabel");
 		ConfigureStartupStatusLabel(_statusLabel);
-		ConfigureStartupStatusLabel(_onlineStatusLabel);
 		var startupColumn = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer");
 		if (startupColumn is not null)
 		{
@@ -92,15 +92,11 @@ public partial class StartPanelController : Control
 				startupColumn.MoveChild(_updatePanel, quitButton.GetIndex());
 			_updatePanel.Attach();
 		}
-		if (_onlineRidingCheckButton is not null)
-		{
-			_onlineRidingCheckButton.ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled;
-			_onlineRidingCheckButton.Toggled += OnOnlineRidingToggled;
-			if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null)
-				_ = _rideSessionNode.SetOnlineRidingEnabledAsync(true);
-		}
+		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null)
+			_ = _rideSessionNode.SetOnlineRidingEnabledAsync(true);
 		_hudController?.Hide();
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/ConnectTrainerButton").Pressed += OnConnectTrainerPressed;
+		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/OptionsButton").Pressed += () => ShowOptions(false);
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/Test with Fake Trainer").Pressed += OnQuickFakeTrainerPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/HistoryButton").Pressed += () => _rideHistoryPanel?.ShowHistory();
@@ -113,6 +109,42 @@ public partial class StartPanelController : Control
 	}
 
 
+
+	public void ShowOptions(bool returnToRoutes)
+	{
+		_optionsReturnToRoutes = returnToRoutes;
+		if (_optionsWindow is null)
+		{
+			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(440, 320), MinSize = new Vector2I(380, 280), Exclusive = true };
+			var margin = new MarginContainer { Name = "OptionsMargin" };
+			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 16), ("margin_bottom", 16) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
+			_optionsWindow.AddChild(margin);
+			var column = new VBoxContainer { Name = "OptionsLayout" }; column.AddThemeConstantOverride("separation", 10); margin.AddChild(column);
+			var title = new Label { Text = "Options", HorizontalAlignment = HorizontalAlignment.Center }; title.AddThemeFontSizeOverride("font_size", 22); column.AddChild(title);
+			_optionsGameFeaturesToggle = new CheckButton { Name = "GameFeaturesToggle", Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
+			_optionsGameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled); column.AddChild(_optionsGameFeaturesToggle);
+			column.AddChild(new Label { Text = CollectibleUiText.HelperText, AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			_optionsOnlineToggle = new CheckButton { Name = "OnlineRidingToggle", Text = "Online Riding", ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled };
+			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; column.AddChild(_optionsOnlineToggle);
+			_onlineStatusLabel = new Label { Name = "OnlineStatusLabel", Text = "Online Riding: Off", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+			ConfigureStartupStatusLabel(_onlineStatusLabel); column.AddChild(_onlineStatusLabel);
+			var close = new Button { Text = "Done", CustomMinimumSize = new Vector2(0, 40) }; close.Pressed += CloseOptions; column.AddChild(close);
+			_optionsWindow.CloseRequested += CloseOptions;
+			GetParent().AddChild(_optionsWindow);
+		}
+		_optionsGameFeaturesToggle!.SetPressedNoSignal(GameFeaturesPreference.Enabled);
+		_optionsOnlineToggle!.SetPressedNoSignal(GameBootstrap.Settings.OnlineRidingEnabled);
+		if (_optionsReturnToRoutes) Hide(); else Show();
+		_optionsWindow.PopupCentered();
+		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
+	}
+
+	private void CloseOptions()
+	{
+		_optionsWindow?.Hide();
+		if (_optionsReturnToRoutes) _routeSelectionPanel?.ReturnFromOptions();
+		else Show();
+	}
 
 	private void FitStartupPanel()
 	{
@@ -135,7 +167,9 @@ public partial class StartPanelController : Control
 	{
 		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
 		var usingEos = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
-		_onlineStatusLabel.Text = OnlineStatusText.ForStartup(_rideSessionNode.OnlineRidingEnabled,
+		_onlineStatusLabel.Text = !_rideSessionNode.OnlineRidingEnabled
+			? "Local rides are always available"
+			: OnlineStatusText.ForStartup(_rideSessionNode.OnlineRidingEnabled,
 			_rideSessionNode.IsMultiplayerConnected, _rideSessionNode.OnlineServiceAvailable,
 			EpicOnlineServicesMultiplayerProvider.HasRequiredConfiguration, usingEos,
 			EosNativeLibraryLoader.LoadFailed, EpicOnlineServicesMultiplayerProvider.ConfigurationInvalid);
@@ -384,14 +418,14 @@ public partial class StartPanelController : Control
 	private async void OnOnlineRidingToggled(bool enabled)
 	{
 		if (_rideSessionNode is null) return;
-		if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = true;
+		if (_optionsOnlineToggle is not null) _optionsOnlineToggle.Disabled = true;
 		try { await _rideSessionNode.SetOnlineRidingEnabledAsync(enabled); }
 		catch (Exception ex)
 		{
 			GameLogger.Log("multiplayer_startup_toggle_failed", new { message = ex.Message });
 			if (_onlineStatusLabel is not null) _onlineStatusLabel.Text = "Online unavailable";
 		}
-		finally { if (_onlineRidingCheckButton is not null) _onlineRidingCheckButton.Disabled = false; }
+		finally { if (_optionsOnlineToggle is not null) _optionsOnlineToggle.Disabled = false; }
 	}
 
 	private void OnConnectTrainerPressed()

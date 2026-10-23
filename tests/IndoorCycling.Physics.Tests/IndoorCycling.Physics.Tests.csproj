@@ -25,6 +25,11 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosReceiveBufferPolicy.cs" Link="EosReceiveBufferPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Multiplayer/EosClientConfiguration.cs" Link="EosClientConfiguration.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RoutePackageFiles.cs" Link="RoutePackageFiles.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RouteBrowsePolicy.cs" Link="RouteBrowsePolicy.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RouteDefinition.cs" Link="RouteDefinition.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RouteSegment.cs" Link="RouteSegment.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RoutePoint.cs" Link="RoutePoint.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/RouteSample.cs" Link="RouteSample.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/ScreenshotCaptureMetadata.cs" Link="ScreenshotCaptureMetadata.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingVisualStyle.cs" Link="BuildingVisualStyle.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/BuildingMeshGeometry.cs" Link="BuildingMeshGeometry.cs" />

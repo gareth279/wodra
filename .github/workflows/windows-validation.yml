@@ -124,6 +124,14 @@ jobs:
               $offlinePacerOutput -match 'SCRIPT ERROR:|\[OfflinePacerRideScreenReview\] FAIL:') {
             throw 'Production RideScreen offline pacer review did not report a clean pass.'
           }
+          $routeCatalogueLog = "$env:RUNNER_TEMP\wodra-route-catalogue-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RouteCatalogueRideScreenReviewTest.tscn --log-file $routeCatalogueLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen route catalogue review failed.' }
+          $routeCatalogueOutput = Get-Content -LiteralPath $routeCatalogueLog -Raw
+          if ($routeCatalogueOutput -notmatch '\[RouteCatalogueReview\] PASS:.*Options navigation preserves the selected pacer' -or
+              $routeCatalogueOutput -match 'SCRIPT ERROR:|\[RouteCatalogueReview\] FAIL:') {
+            throw 'Production RideScreen route catalogue review did not report a clean pass.'
+          }
           $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ambient car interaction review on the second Dunedin route failed.' }
