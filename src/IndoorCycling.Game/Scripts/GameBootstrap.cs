@@ -39,8 +39,8 @@ public partial class GameBootstrap : Node
 	private static Task<RiderProfileRecord>? _persistentRiderTask;
 	private static Task? _pendingProfileSelectionTask;
 	private double _windowSaveCountdown = -1;
-	private static bool IsWindowPersistenceSuppressed => OS.GetCmdlineArgs().Contains("--headless")
-		|| OS.GetCmdlineUserArgs().Contains("--layout-smoke-test");
+	private static bool IsLayoutSmokeTest => OS.GetCmdlineUserArgs().Contains("--layout-smoke-test");
+	private static bool IsWindowPersistenceSuppressed => OS.GetCmdlineArgs().Contains("--headless") || IsLayoutSmokeTest;
 
 	public static SessionMode Mode { get; private set; } = SessionMode.None;
 	public static string? FitReplayPath { get; private set; }
@@ -49,7 +49,7 @@ public partial class GameBootstrap : Node
 	{
 		var userDataDirectory = OS.GetUserDataDir();
 		var userDataParent = Directory.GetParent(userDataDirectory)?.FullName;
-		if (userDataParent is not null)
+		if (userDataParent is not null && !IsLayoutSmokeTest)
 		{
 			try
 			{

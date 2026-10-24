@@ -183,6 +183,10 @@ jobs:
         if: matrix.configuration == 'Release'
         shell: pwsh
         run: php hosting/wodra-strava-broker/tests/run.php
+      - name: Check web companion PHP relay
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: hosting/wodra-companion/tests/run.ps1
       - name: Run regression suites
         if: matrix.configuration == 'Release'
         shell: pwsh

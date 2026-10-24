@@ -16,6 +16,9 @@ public sealed class AppSettings
 	public bool DebugModeEnabled { get; set; }
 	/// <summary>Optional in-ride controls for the Windows OS-selected media session. Disabled by default.</summary>
 	public bool InRideMediaControlsEnabled { get; set; }
+	/// <summary>Optional read-only phone companion; disabled by default, with no relay configured.</summary>
+	public bool CompanionEnabled { get; set; }
+	public string CompanionRelayBaseUrl { get; set; } = "";
 	public bool OnlineRidingEnabled { get; set; }
 	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
@@ -117,6 +120,7 @@ public sealed class AppSettings
 			settings.Steering.Normalize();
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
+			settings.CompanionRelayBaseUrl ??= "";
 			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();
 			settings.PacerPresetId = PacerEffortPresets.NormalizeSelection(settings.PacerPresetId);
 			if (!Enum.IsDefined(settings.ControllerDeviceType)) settings.ControllerDeviceType = ControllerDeviceTypePreference.AutoDetect;
