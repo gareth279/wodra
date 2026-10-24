@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Velopack;
@@ -10,7 +9,7 @@ using Velopack.Sources;
 public partial class VelopackUpdatePanel : Control
 {
 	private const string RepositoryUrl = "https://github.com/gareth279/wodra";
-	private const string UpdateChannel = "alpha";
+	private static string UpdateChannel => BuildIdentity.UpdateChannelForChecks;
 	private UpdateManager? _manager;
 	private UpdateInfo? _availableUpdate;
 	private VelopackAsset? _pendingUpdate;
@@ -96,7 +95,7 @@ public partial class VelopackUpdatePanel : Control
 			GameLogger.Log("update_manager_ready", new
 			{
 				installedPackageVersion = manager.CurrentVersion?.ToString(),
-				applicationVersion = GetApplicationVersion(),
+				applicationVersion = BuildIdentity.Current.ApplicationVersion,
 				channel = UpdateChannel,
 				feedSource = RepositoryUrl,
 				isInstalled = manager.IsInstalled,
@@ -126,7 +125,7 @@ public partial class VelopackUpdatePanel : Control
 		if (_manager is null || _checking) return;
 		_checking = true;
 		var installed = _manager.CurrentVersion;
-		var appVersion = GetApplicationVersion();
+		var appVersion = BuildIdentity.Current.ApplicationVersion;
 		GameLogger.Log("update_check_started", new
 		{
 			installedPackageVersion = installed?.ToString(),
@@ -334,14 +333,6 @@ public partial class VelopackUpdatePanel : Control
 			_checkButton.Text = showRetry ? "Retry" : _availableUpdate is null ? "Check for Updates" : "Review Update";
 			_checkButton.Visible = showRetry || _availableUpdate is not null;
 		}
-	}
-
-	private static string GetApplicationVersion()
-	{
-		var assembly = Assembly.GetExecutingAssembly();
-		return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-			?? assembly.GetName().Version?.ToString()
-			?? "unknown";
 	}
 
 	private static string FormatReleaseNotes(string? markdown)
