@@ -25,6 +25,8 @@ public partial class HudController : Control
 	private Label? _distanceLabel;
 	private Label? _elapsedLabel;
 	private Label? _ghostLabel;
+	private Label? _trackEffortLabel;
+	private Button? _trackRetryButton;
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
 	private string? _pacerStatusText;
@@ -121,6 +123,18 @@ public partial class HudController : Control
 		_nearbyHumanRidersLabel.AddThemeColorOverride("font_color", new Color(.87f, .84f, .73f, .96f));
 		_nearbyHumanRidersLabel.AddThemeFontSizeOverride("font_size", 12);
 		topHudLayout?.AddChild(_nearbyHumanRidersLabel);
+		_trackEffortLabel = new Label { Name = "TrackEffortStatus", Visible = false,
+			HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_trackEffortLabel.AddThemeColorOverride("font_color", new Color(.96f, .9f, .72f));
+		_trackEffortLabel.AddThemeFontSizeOverride("font_size", 14);
+		topHudLayout?.AddChild(_trackEffortLabel);
+		_trackRetryButton = new Button { Name = "RetryTrackEffort", Text = "Retry effort", Visible = false,
+			SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+		_trackRetryButton.Pressed += async () =>
+		{
+			if (_rideSessionNode is not null) await _rideSessionNode.RetryTrackEffortAsync();
+		};
+		topHudLayout?.AddChild(_trackRetryButton);
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
 		_gameScoreLabel = new Label { Name = "GameScore", Visible = false, HorizontalAlignment = HorizontalAlignment.Center };
 		_gameScoreLabel.AddThemeColorOverride("font_color", new Color(.9f, .78f, .44f));
@@ -1032,6 +1046,15 @@ public partial class HudController : Control
 		if (_ghostLabel is null) return;
 		_ghostLabel.Visible = !string.IsNullOrWhiteSpace(text);
 		_ghostLabel.Text = text ?? string.Empty;
+	}
+
+	public void SetTrackEffortStatus(string? text, bool completed = false)
+	{
+		if (_trackEffortLabel is null) return;
+		_trackEffortLabel.Visible = !string.IsNullOrWhiteSpace(text);
+		_trackEffortLabel.Text = text ?? string.Empty;
+		if (_segmentLabel is not null) _segmentLabel.Visible = !completed;
+		if (_trackRetryButton is not null) _trackRetryButton.Visible = completed;
 	}
 
 	private void ConnectDummyControls()

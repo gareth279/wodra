@@ -6,7 +6,10 @@ using System.Numerics;
 public readonly record struct VisualRouteSample(double DistanceMeters, Vector3 Position, Vector3 Forward);
 public readonly record struct VisualRoutePose(
     Vector3 Position, Vector3 Forward, double LoopDistanceMeters,
-    int SampleIndexBefore, int SampleIndexAfter, float Interpolation);
+    int SampleIndexBefore, int SampleIndexAfter, float Interpolation)
+{
+    public float BankSlope { get; init; }
+}
 
 /// <summary>Canonical sampled visual centreline shared by route rendering and rider pose sampling.
 /// Coordinates: +X east, +Y up, -Z north. One unit is one metre.
@@ -46,6 +49,7 @@ public sealed class VisualRoute
             throw new ArgumentOutOfRangeException(nameof(route), "Visual routes require a positive length.");
         if (!double.IsFinite(spacingMeters) || spacingMeters <= 0)
             throw new ArgumentOutOfRangeException(nameof(spacingMeters));
+        _trackBanked = route.Environment == RouteEnvironment.Velodrome;
         LengthMeters = route.DistanceMeters;
         var distances = new SortedSet<double> { 0, LengthMeters };
         for (double d = spacingMeters; d < LengthMeters; d += spacingMeters) distances.Add(d);
@@ -166,7 +170,32 @@ public sealed class VisualRoute
         var t = (float)((distance - a.DistanceMeters) / (b.DistanceMeters - a.DistanceMeters));
         var forward = Vector3.Lerp(a.Forward, b.Forward, t);
         if (forward.LengthSquared() < 0.000001f) forward = b.Position - a.Position;
-        return new VisualRoutePose(Vector3.Lerp(a.Position, b.Position, t), Vector3.Normalize(forward),
-            distance, low, high, t);
+        var normalizedForward = Vector3.Normalize(forward);
+        var bankSlope = 0f;
+        if (_trackBanked)
+        {
+            var before = GetCenterTangent(WrapDistance(distance - 4));
+            var after = GetCenterTangent(WrapDistance(distance + 4));
+            var turn = Vector3.Cross(before, after).Y;
+            // The reference lane banks visually toward the outer side through turns.
+            // Positive lane offset is left of travel, so this right-turn oval rises left.
+            var bankAmount = Math.Clamp(Math.Abs(turn) / .28f, 0, 1);
+            if (bankAmount > .002f) bankSlope = Math.Sign(turn) * _trackBankTangent * bankAmount;
+        }
+        return new VisualRoutePose(Vector3.Lerp(a.Position, b.Position, t), normalizedForward,
+            distance, low, high, t) { BankSlope = bankSlope };
+    }
+
+    private readonly bool _trackBanked;
+    private const float _trackBankTangent = .21255656f; // 12 degrees, visual only.
+
+    private Vector3 GetCenterTangent(double distance)
+    {
+        var d = WrapDistance(distance);
+        var upper = Array.FindIndex(_samples, sample => sample.DistanceMeters >= d);
+        if (upper <= 0) return _samples[0].Forward;
+        return Vector3.Normalize(Vector3.Lerp(_samples[upper - 1].Forward, _samples[upper].Forward,
+            (float)((d - _samples[upper - 1].DistanceMeters) /
+                (_samples[upper].DistanceMeters - _samples[upper - 1].DistanceMeters))));
     }
 }

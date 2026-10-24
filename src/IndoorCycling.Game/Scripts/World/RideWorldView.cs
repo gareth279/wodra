@@ -131,6 +131,7 @@ public partial class RideWorldView : Node3D
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
     public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
+    public int LocalAiRiderCount => _riderStateSource?.GetRiders().Count(rider => rider.RiderId != "player") ?? 0;
 
     public override void _Ready()
     {
@@ -542,7 +543,7 @@ public partial class RideWorldView : Node3D
                 keyboardLeft = _steerLeftHeld, keyboardRight = _steerRightHeld, sterzoConnected = _deviceConnectionPanel?.HasSteeringController == true,
                 sterzoFresh = hasFreshSterzo, paused = _session.IsRidePaused });
         }
-        var gameEnabled = GameFeaturesPreference.Enabled;
+        var gameEnabled = GameFeaturesPreference.Enabled && _loadedRoute?.Capabilities.SupportsCollectibles == true;
         if (gameEnabled) EnsureCollectibleLayer();
         _collectibleLayer?.Attempt.MarkPractice(toggled: _gameFeatureToggledDuringAttempt);
         _collectibleLayer?.UpdateRide(distance, lateralOffset, gameEnabled,
@@ -651,7 +652,8 @@ public partial class RideWorldView : Node3D
 
     private void EnsureCollectibleLayer()
     {
-        if (_collectibleLayer is not null || _routeRoot is null || _loadedRoute is null || _geometry is null) return;
+        if (_collectibleLayer is not null || _routeRoot is null || _loadedRoute is null || _geometry is null ||
+            !_loadedRoute.Capabilities.SupportsCollectibles) return;
         _collectibleLayer = new CollectibleCatLayer { Name = "CollectibleCats" };
         _routeRoot.AddChild(_collectibleLayer);
         _collectibleLayer.Configure(_loadedRoute.Id, _geometry);
@@ -1173,7 +1175,12 @@ public partial class RideWorldView : Node3D
 
     private void LoadRoute(RouteDefinition route)
     {
-        _collectibleLayer = null;
+        if (_collectibleLayer is not null)
+        {
+            _routeRoot?.RemoveChild(_collectibleLayer);
+            _collectibleLayer.QueueFree();
+            _collectibleLayer = null;
+        }
         ClearPacer();
         if (_remoteVisualRoot is not null)
         {
@@ -1192,7 +1199,8 @@ public partial class RideWorldView : Node3D
         }
         _riderVisuals.Clear();
         _riderVisuals["player"] = _rider;
-        _aiPopulation = new AiRiderPopulation(AiRiderTargetCount, AiRiderMaximumCount, AiRiderRandomSeed);
+        var localAiCount = route.Capabilities.SupportsTraffic ? AiRiderTargetCount : 0;
+        _aiPopulation = new AiRiderPopulation(localAiCount, AiRiderMaximumCount, AiRiderRandomSeed);
         _riderStateSource = new LocalRiderStateSource(_aiPopulation);
         _aiVisualRoot = new Node3D { Name = "AiRiderVisuals" };
         AddChild(_aiVisualRoot);
@@ -1206,7 +1214,8 @@ public partial class RideWorldView : Node3D
             _aiVisualRoot.AddChild(aiVisual);
             _riderVisuals[controller.RiderId] = aiVisual;
         }
-        if (PacerEffortPresets.Find(GameBootstrap.Settings.PacerPresetId) is { } selectedPacer)
+        if (route.Capabilities.SupportsPacer &&
+            PacerEffortPresets.Find(GameBootstrap.Settings.PacerPresetId) is { } selectedPacer)
             CreatePacers(selectedPacer);
         if (_routeRoot is not null)
         {
@@ -1217,6 +1226,26 @@ public partial class RideWorldView : Node3D
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
+        if (route.Environment == RouteEnvironment.Velodrome)
+        {
+            // Track environments own their markings, banking and surrounds. They do not
+            // load road traffic, terrain, street scenery, collectibles, pacers or ghosts.
+            _routeRoot.AddChild(VelodromeTrackBuilder.Build(_geometry));
+            _collectibleLayer = null;
+            _landmarkLayer = null;
+            _buildingLayer = null;
+            _vegetationLayer = null;
+            _streetFurnitureLayer = null;
+            _roadMarkingLayer = null;
+            _backgroundStreetLayer = null;
+            _ambientActorManager = null;
+            _terrainLayer = null;
+            _loadedRoute = route;
+            GameLogger.Log("visual_route_loaded", new { route.Id, route.DistanceMeters,
+                environment = route.Environment.ToString(), referenceLine = "250 m", bankDegrees = 12,
+                traffic = false, collectibles = false });
+            return;
+        }
         var asphalt = WodraWorldStyle.Asphalt;
         _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
         var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);

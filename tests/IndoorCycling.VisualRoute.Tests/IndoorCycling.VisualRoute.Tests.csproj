@@ -16,6 +16,8 @@
     <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/World/VisualRoute.cs" Link="VisualRoute.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/TrackEffortTimingController.cs" Link="TrackEffortTimingController.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/VelodromePersonalBestPolicy.cs" Link="VelodromePersonalBestPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/RideSummaryLayoutPolicy.cs" Link="RideSummaryLayoutPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/RideDisplayPreferences.cs" Link="RideDisplayPreferences.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/RideHudOverlayLayoutPolicy.cs" Link="RideHudOverlayLayoutPolicy.cs" />

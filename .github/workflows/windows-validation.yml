@@ -132,6 +132,14 @@ jobs:
               $routeCatalogueOutput -match 'SCRIPT ERROR:|\[RouteCatalogueReview\] FAIL:') {
             throw 'Production RideScreen route catalogue review did not report a clean pass.'
           }
+          $velodromeReviewLog = "$env:RUNNER_TEMP\wodra-velodrome-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/VelodromeRideScreenReviewTest.tscn --log-file $velodromeReviewLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen velodrome review failed.' }
+          $velodromeReviewOutput = Get-Content -LiteralPath $velodromeReviewLog -Raw
+          if ($velodromeReviewOutput -notmatch '\[VelodromeRideScreenReview\] PASS:' -or
+              $velodromeReviewOutput -match 'SCRIPT ERROR:|\[VelodromeRideScreenReview\] FAIL:') {
+            throw 'Production RideScreen velodrome review did not report a clean pass.'
+          }
           $rideHistoryLog = "$env:RUNNER_TEMP\wodra-ride-history-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RideHistoryReviewTest.tscn --log-file $rideHistoryLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen ride-history review failed.' }

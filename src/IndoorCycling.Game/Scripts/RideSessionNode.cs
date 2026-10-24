@@ -20,6 +20,10 @@ public partial class RideSessionNode : Node
 	private DeviceConnectionPanelController? _deviceConnectionPanel;
 
 	private RouteDefinition? _currentRoute;
+	private TrackEffortTimingController? _trackEffort;
+	private bool _trackBestSaved;
+	public RideActivityMode CurrentActivityMode { get; private set; } = RideActivityMode.FreeRide;
+	public TrackEffortResult? TrackEffortResult => _trackEffort?.Result;
 	private bool _sessionStarted;
 	private bool _trainerSessionActive;
 	private bool _fitReplaySessionActive;
@@ -147,7 +151,7 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 
-	public async Task<bool> StartTrainerSessionAsync(RouteDefinition? route = null)
+	public async Task<bool> StartTrainerSessionAsync(RouteDefinition? route = null, RideActivityMode? activityMode = null)
 	{
 		if (GameBootstrap.TrainerClient is null)
 		{
@@ -177,8 +181,15 @@ public partial class RideSessionNode : Node
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
 		_currentRoute = route ?? RouteCatalog.Routes[0];
+		var supportedModes = _currentRoute.SupportedModes;
+		CurrentActivityMode = activityMode is { } requested && supportedModes.Contains(requested)
+			? requested : RideActivityMode.FreeRide;
+		_trackEffort = _currentRoute.Environment == RouteEnvironment.Velodrome
+			? new TrackEffortTimingController(CurrentActivityMode) : null;
+		_trackBestSaved = false;
 		_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
-		if (GhostRider is not null && GhostRider.RouteId != _currentRoute?.Id)
+		if (!_currentRoute.Capabilities.SupportsGhost ||
+			(GhostRider is not null && GhostRider.RouteId != _currentRoute?.Id))
 		{ GhostRider = null; GhostActivityId = null; }
 		_currentActivityId = Guid.NewGuid();
 		_currentRiderProfileId = null;
@@ -201,6 +212,8 @@ public partial class RideSessionNode : Node
 				dummy.SetDummyOutput(GameBootstrap.Settings.DummyTrainer.CalculateWatts(rider.BodyWeightKg),
 					GameBootstrap.Settings.DummyTrainer.CadenceRpm);
 			_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
+			if (GameBootstrap.DebugModeEnabled || GameBootstrap.TrainerClient is FakeTrainerClient || rider.IsTestProfile)
+				_trackEffort?.MarkPractice("dummy, debug or test-profile ride");
 		}
 		catch (Exception ex)
 		{
@@ -217,8 +230,9 @@ public partial class RideSessionNode : Node
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
 		_sessionStarted = true;
-		_hudController?.BeginRideHudSession(
+		_hudController?.BeginRideHudSession(_currentRoute.Capabilities.SupportsPacer &&
 			PacerEffortPresets.Find(PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) is not null);
+		_hudController?.SetTrackEffortStatus(_trackEffort?.DisplayStatusText);
 		_trainerSessionActive = true;
 		_trainerCommandWarningSessionId = _trainerCommandWarningPolicy.BeginSession();
 		_trainerCommandWarningText = null;
@@ -338,6 +352,16 @@ public partial class RideSessionNode : Node
 		_hudController?.ResetHud();
 		_hudController?.SetStatus("Choose a route.");
 		GameLogger.Log("returned_to_route_selection", new { });
+	}
+
+	public async Task RetryTrackEffortAsync()
+	{
+		if (!_sessionStarted || _currentRoute is not { Environment: RouteEnvironment.Velodrome } route ||
+			_trackEffort?.Result?.Completed != true)
+			return;
+		var mode = CurrentActivityMode;
+		await EndRideAsync(disconnectTrainer: false);
+		await StartTrainerSessionAsync(route, mode);
 	}
 
 	/// <summary>Stops a ride cleanly when the required route road cannot be constructed.</summary>
@@ -460,6 +484,9 @@ public partial class RideSessionNode : Node
 				_currentRideStravaAthleteId = null;
 				_activeRideRiderProfile = null;
 				_activeRideBikeProfile = null;
+				_trackEffort = null;
+				CurrentActivityMode = RideActivityMode.FreeRide;
+				_hudController?.SetTrackEffortStatus(null);
 				_trainerGradeTransition.Cancel();
 			}
 		}
@@ -736,6 +763,20 @@ public partial class RideSessionNode : Node
 
 	private void LogLapWraps(double previousDistance, double newDistance)
 	{
+		if (_trackEffort is not null)
+		{
+			_trackEffort.Advance(newDistance, _rideState.ElapsedSeconds, _pauseGate.IsPaused);
+			if (!_trackBestSaved && _trackEffort.Result is { } result && _currentRoute is { } track &&
+				VelodromePersonalBestPolicy.TrySave(GameBootstrap.Settings.TrackPersonalBests, _currentRiderProfileId,
+					track, CurrentActivityMode, result, _activeRideRiderProfile?.IsTestProfile == true,
+					GameBootstrap.DebugModeEnabled, GameBootstrap.TrainerClient is FakeTrainerClient))
+			{
+				GameBootstrap.Settings.Save();
+				_trackBestSaved = true;
+				_hudController?.SetTrackEffortStatus($"New personal best · {result.ElapsedSeconds:0.00} s");
+			}
+			_hudController?.SetTrackEffortStatus(_trackEffort.DisplayStatusText, _trackEffort.Result?.Completed == true);
+		}
 		if (!_debugDiagnostics.Enabled || _currentRoute is null || _currentRoute.DistanceMeters <= 0) return;
 		var lap = (int)Math.Floor(Math.Max(0, newDistance) / _currentRoute.DistanceMeters) + 1;
 		while (_lastLoggedLapNumber < lap)
@@ -1013,6 +1054,7 @@ public partial class RideSessionNode : Node
 		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance, out var jumped)) return;
 		_rideWorldView?.MarkChallengePractice(debugJump: true);
 		var before = _rideState.DistanceMeters;
+		_trackEffort?.Invalidate("debug reposition");
 		_rideState = jumped;
 		_recordingSampleElapsedSeconds = 0;
 		if (_currentRoute?.DistanceMeters > 0)
@@ -1057,6 +1099,7 @@ public partial class RideSessionNode : Node
 			ResumeRide();
 			return;
 		}
+		_trackEffort?.MarkPractice("pause invalidated the timed attempt");
 		if (_rideRecorder?.IsRecording == true)
 		{
 			RecordCurrentSample();
@@ -1244,6 +1287,8 @@ public partial class RideSessionNode : Node
 	public async Task<RoutePresenceResult> GetRoutePresenceAsync(RouteDefinition route,
 		CancellationToken cancellationToken = default)
 	{
+		if (!route.Capabilities.SupportsMultiplayer)
+			return RoutePresenceResult.Unavailable("This activity is currently solo on this route.");
 		if (!OnlineRidingEnabled) return RoutePresenceResult.Unavailable("Online Riding is off.");
 		var provider = CreateOnlineProvider();
 		try
@@ -1257,6 +1302,7 @@ public partial class RideSessionNode : Node
 	private void StartAutomaticRouteJoin()
 	{
 		if (!OnlineRidingEnabled || !_sessionStarted || !_trainerSessionActive || _currentRoute is null ||
+			!_currentRoute.Capabilities.SupportsMultiplayer ||
 			_automaticJoinTask is { IsCompleted: false } || _multiplayerProvider is not null) return;
 		if (OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider) && EosNativeLibraryLoader.LoadFailed)
 		{
@@ -1381,6 +1427,8 @@ public partial class RideSessionNode : Node
 	{
 		if (!_sessionStarted || _currentRoute is null)
 			throw new InvalidOperationException("Start a ride and select a route before joining multiplayer.");
+		if (!_currentRoute.Capabilities.SupportsMultiplayer)
+			throw new InvalidOperationException("Multiplayer is not supported for this route and activity mode.");
 		await LeaveMultiplayerAsync();
 		GameBootstrap.Settings.MultiplayerServerAddress = address.Trim();
 		GameBootstrap.Settings.Save();
@@ -1650,6 +1698,7 @@ public partial class RideSessionNode : Node
 			MonotonicSeconds() - remote.ReceivedAtSeconds, remote.Paused);
 		var destination = MultiplayerRoutePosition.PositionBehind(absoluteDistance);
 		var routeSample = route.GetSampleAt(destination);
+		_trackEffort?.MarkPractice("repositioning invalidated the timed attempt");
 		_catchUpResumeSpeedKph = wasPaused ? matchedSpeedKph : null;
 		_rideState = _rideState with { DistanceMeters = destination,
 			VirtualSpeedKph = wasPaused ? 0 : matchedSpeedKph,
