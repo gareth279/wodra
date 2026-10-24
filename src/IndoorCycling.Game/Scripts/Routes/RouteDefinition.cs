@@ -20,6 +20,8 @@ public sealed record RouteDefinition(
 	public IReadOnlyList<RideActivityMode> SupportedModes { get; init; } = [];
 	/// <summary>Optional feature support. Legacy routes retain the existing road feature set.</summary>
 	public RouteCapabilities Capabilities { get; init; } = RouteCapabilities.LegacyRoad;
+	/// <summary>True only when the route has a continuous reference loop and may award a verified full-route badge.</summary>
+	public bool SupportsVerifiedCompletionAchievement { get; init; }
 	/// <summary>Route geometry type shown in the route catalogue.</summary>
 	public string RouteType { get; init; } = "Loop";
 	public string Difficulty { get; init; } = "Unrated";

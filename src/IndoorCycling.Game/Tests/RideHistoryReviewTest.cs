@@ -1,5 +1,6 @@
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Progress;
 using IndoorCycling.Persistence.Sqlite;
 using System;
 using System.IO;
@@ -32,7 +33,7 @@ public partial class RideHistoryReviewTest : Node
             var ride = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate<Control>();
             var controller = ride.GetNode<RideHistoryPanelController>("RideHistoryPanel");
             controller.ConfigureForIsolatedReview(repository, profile);
-            AddChild(ride); await Frames(8); controller.ShowHistory(); await Frames(20);
+            AddChild(ride); await Frames(8); HideTransientWindows(ride); controller.ShowHistory(); await Frames(20);
             var list = Find<ItemList>(controller, "HistoryActivityList");
             var search = Find<LineEdit>(controller, "HistorySearch");
             var panel = controller.GetNode<PanelContainer>("HistoryPanel");
@@ -58,6 +59,38 @@ public partial class RideHistoryReviewTest : Node
             Check(list.ItemCount == 0 && Find<Label>(controller, "HistoryPageStatus").Text.Contains("No rides"), "empty filters produce a clear state");
             search.Text = ""; search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text); await Frames(12);
 
+            var achievementRide = new RideActivityDraft(Guid.NewGuid(), profile.Id,
+                AchievementCatalog.DunedinRoadRouteIds[0], "Oval to Gardens", now.AddMinutes(5),
+                RideActivityStatus.Completed, 3600, 100_000, 3, null, null, 180, 900, 90, 160, 500, null);
+            await repository.SaveCompletedActivityWithAchievementsAsync(achievementRide, [],
+                new AchievementRideEvidence(true, "Road", 1, "FreeRide", true, true));
+            Find<Button>(controller, "AchievementsGoalsButton").EmitSignal(Button.SignalName.Pressed); await Frames(12);
+            Check(Find<Label>(controller, "AchievementTotals").Text.Contains("100 km") &&
+                Find<VBoxContainer>(controller, "AchievementsList").GetChildren().OfType<Label>().Any(label => label.Text.Contains("Oval to Gardens Loop complete") && label.Text.Contains("Earned")),
+                "production profile history exposes earned route badges and cumulative progress");
+            var goalTarget = Find<LineEdit>(controller, "PersonalGoalTarget"); goalTarget.Text = "10";
+            Find<Button>(controller, "SetPersonalGoal").EmitSignal(Button.SignalName.Pressed); await Frames(15);
+            Check(Find<Label>(controller, "PersonalGoalStatus").Text.Contains("Current goal") &&
+                Find<Button>(controller, "CancelPersonalGoal").Disabled == false,
+                "production achievements view creates a per-profile goal with explicit reset start date");
+            if (!IsHeadless)
+            {
+                Capture("achievements-goals-default.png");
+                foreach (var size in new[] { new Vector2I(960, 540), new Vector2I(1280, 720) })
+                {
+                    DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(size); await Frames(8);
+                    CheckWithin(panel, size, $"achievements {size.X}x{size.Y}"); Capture($"achievements-{size.X}x{size.Y}.png");
+                }
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen); await Frames(8);
+                var achievementsFullscreen = DisplayServer.WindowGetSize();
+                CheckWithin(panel, achievementsFullscreen, "achievements fullscreen"); Capture("achievements-fullscreen.png");
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(new Vector2I(1280, 720)); await Frames(8);
+            }
+            Find<Button>(controller, "CancelPersonalGoal").EmitSignal(Button.SignalName.Pressed); await Frames(12);
+            Check(Find<Label>(controller, "PersonalGoalStatus").Text.Contains("No active goal"),
+                "production achievements view cancels a goal without affecting earned badges");
+            Find<Button>(controller, "AchievementsBackButton").EmitSignal(Button.SignalName.Pressed); await Frames(10);
+
             if (!IsHeadless)
             {
                 Capture("history-default.png");
@@ -76,6 +109,14 @@ public partial class RideHistoryReviewTest : Node
     }
 
     private static T Find<T>(Node root, string name) where T : Node => root.FindChildren(name, "", true, false).OfType<T>().Single();
+    private static void HideTransientWindows(Node root)
+    {
+        foreach (var child in root.GetChildren())
+        {
+            if (child is Window window) window.Hide();
+            HideTransientWindows(child);
+        }
+    }
     private void Check(bool result, string message) { _assertions++; if (!result) throw new InvalidOperationException(message); GD.Print("[RideHistoryReview] PASS " + message); }
     private void CheckWithin(Control panel, Vector2I window, string label)
     {

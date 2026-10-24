@@ -105,6 +105,7 @@ public static class RouteDataLoader
 			Difficulty = difficulty,
 			SourceAttribution = attribution,
 			RouteDataVersion = dataVersion,
+			SupportsVerifiedCompletionAchievement = string.Equals(routeType, "loop", StringComparison.OrdinalIgnoreCase),
 			PublishedTotalAscentMeters = publishedAscentMeters
 		};
 		if (!string.IsNullOrWhiteSpace(source.GeometryFingerprint)

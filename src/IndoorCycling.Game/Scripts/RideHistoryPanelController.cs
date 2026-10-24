@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Core.Persistence;
+using IndoorCycling.Core.Progress;
 
 public partial class RideHistoryPanelController : Control
 {
@@ -44,6 +46,21 @@ public partial class RideHistoryPanelController : Control
     private Button _ghostButton = null!;
     private Button _doneButton = null!;
     private Button _diagnosticExportButton = null!;
+    private Button _achievementsButton = null!;
+    private Button _achievementsBackButton = null!;
+    private Control _filters = null!;
+    private Control _historyBody = null!;
+    private Control _pageControls = null!;
+    private Control _dashboardChart = null!;
+    private VBoxContainer _achievementsView = null!;
+    private VBoxContainer _achievementsList = null!;
+    private Label _achievementsTotals = null!;
+    private Label _goalStatus = null!;
+    private OptionButton _goalMetric = null!;
+    private LineEdit _goalTarget = null!;
+    private Button _setGoalButton = null!;
+    private Button _cancelGoalButton = null!;
+    private bool _achievementsMode;
     private string? _completedDiagnosticSessionId;
     private List<RideActivity> _activities = [];
     private RideActivity? _selected;
@@ -67,15 +84,16 @@ public partial class RideHistoryPanelController : Control
         _title = new Label { Text = "Ride History" }; column.AddChild(_title);
         _summaryEssentials = new Label { Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         column.AddChild(_summaryEssentials);
-        var filters = new VBoxContainer(); var filterTop = new HBoxContainer(); var filterBottom = new HBoxContainer();
+        _filters = new VBoxContainer(); var filterTop = new HBoxContainer(); var filterBottom = new HBoxContainer();
         _search = new LineEdit { Name = "HistorySearch", PlaceholderText = "Search route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(150, 0) };
         _search.TextChanged += text => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterTop.AddChild(_search);
         _routeFilter = new OptionButton { Name = "HistoryRouteFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _routeFilter.AddItem("All routes", 0); _routeFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterTop.AddChild(_routeFilter);
         _dateFilter = new OptionButton { Name = "HistoryDateFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _dateFilter.AddItem("All dates", 0); _dateFilter.AddItem("Last 7 days", 1); _dateFilter.AddItem("Last 30 days", 2); _dateFilter.AddItem("This month", 3); _dateFilter.AddItem("This year", 4); _dateFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterBottom.AddChild(_dateFilter);
         _sortFilter = new OptionButton { Name = "HistorySortFilter", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; foreach (var text in new[] { "Newest", "Oldest", "Longest distance", "Longest duration", "Most climbing" }) _sortFilter.AddItem(text); _sortFilter.ItemSelected += index => { _pageIndex = 0; _ = RefreshHistoryAsync(); }; filterBottom.AddChild(_sortFilter);
-        filters.AddChild(filterTop); filters.AddChild(filterBottom);
-        column.AddChild(filters);
+        _filters.AddChild(filterTop); _filters.AddChild(filterBottom);
+        column.AddChild(_filters);
         var body = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _historyBody = body;
         _list = new ItemList { Name = "HistoryActivityList", CustomMinimumSize = new Vector2(300, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _list.ItemSelected += OnItemSelected; body.AddChild(_list);
         _detailScroll = new ScrollContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
@@ -88,11 +106,27 @@ public partial class RideHistoryPanelController : Control
         var pageControls = new HBoxContainer();
         _previousPage = new Button { Name = "HistoryPreviousPage", Text = "Previous" }; _previousPage.Pressed += () => { if (_pageIndex > 0) { _pageIndex--; _ = RefreshHistoryAsync(); } }; pageControls.AddChild(_previousPage);
         _pageStatus = new Label { Name = "HistoryPageStatus", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; pageControls.AddChild(_pageStatus);
-        _nextPage = new Button { Name = "HistoryNextPage", Text = "Next" }; _nextPage.Pressed += () => { _pageIndex++; _ = RefreshHistoryAsync(); }; pageControls.AddChild(_nextPage); column.AddChild(pageControls);
+        _nextPage = new Button { Name = "HistoryNextPage", Text = "Next" }; _nextPage.Pressed += () => { _pageIndex++; _ = RefreshHistoryAsync(); }; pageControls.AddChild(_nextPage); column.AddChild(pageControls); _pageControls = pageControls;
         _dashboard = new Label { Name = "HistoryDashboard", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; column.AddChild(_dashboard);
         var chartRow = new HBoxContainer(); _trendRange = new OptionButton { Name = "HistoryTrendRange" }; _trendRange.AddItem("6 weeks"); _trendRange.AddItem("6 months"); _trendRange.ItemSelected += index => { if (_activeProfile is not null) _ = RefreshDashboardAsync(_repositoryOverride ?? GameBootstrap.RideHistory!, _activeProfile); }; chartRow.AddChild(_trendRange);
         _trendChart = new RideHistoryTrendChart { Name = "HistoryTrendChart", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 78) }; chartRow.AddChild(_trendChart); column.AddChild(chartRow);
+        _dashboardChart = chartRow;
+        _achievementsView = new VBoxContainer { Name = "AchievementsGoalsView", Visible = false, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        _achievementsTotals = new Label { Name = "AchievementTotals", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _goalStatus = new Label { Name = "PersonalGoalStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var goalRow = new HBoxContainer();
+        _goalMetric = new OptionButton { Name = "PersonalGoalMetric", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _goalMetric.AddItem("Distance goal · km"); _goalMetric.AddItem("Climbing goal · m"); goalRow.AddChild(_goalMetric);
+        _goalTarget = new LineEdit { Name = "PersonalGoalTarget", PlaceholderText = "Target", CustomMinimumSize = new Vector2(110, 0), Text = "100" }; goalRow.AddChild(_goalTarget);
+        _setGoalButton = new Button { Name = "SetPersonalGoal", Text = "Set / reset goal" }; _setGoalButton.Pressed += SetPersonalGoal; goalRow.AddChild(_setGoalButton);
+        _cancelGoalButton = new Button { Name = "CancelPersonalGoal", Text = "Cancel goal" }; _cancelGoalButton.Pressed += ClearPersonalGoal; goalRow.AddChild(_cancelGoalButton);
+        _achievementsView.AddChild(_achievementsTotals); _achievementsView.AddChild(_goalStatus); _achievementsView.AddChild(goalRow);
+        var achievementScroll = new ScrollContainer { Name = "AchievementsScroll", SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        _achievementsList = new VBoxContainer { Name = "AchievementsList", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        achievementScroll.AddChild(_achievementsList); _achievementsView.AddChild(achievementScroll); column.AddChild(_achievementsView);
         var buttons = new HBoxContainer();
+        _achievementsButton = new Button { Name = "AchievementsGoalsButton", Text = "Achievements & Goals" }; _achievementsButton.Pressed += ToggleAchievements; buttons.AddChild(_achievementsButton);
+        _achievementsBackButton = new Button { Name = "AchievementsBackButton", Text = "Back to history", Visible = false }; _achievementsBackButton.Pressed += () => ShowHistory(); buttons.AddChild(_achievementsBackButton);
         _viewButton = new Button { Text = "View selected ride" }; _viewButton.Pressed += ShowSelectedSummary; buttons.AddChild(_viewButton);
         _fitFolderButton = new Button { Name = "OpenFitFolder", Text = "Open FIT folder", Visible = false }; _fitFolderButton.Pressed += OpenSelectedFitFolder; buttons.AddChild(_fitFolderButton);
         _ghostButton = new Button { Text = "Ride against ghost", Visible = false }; _ghostButton.Pressed += StartAgainstGhost; buttons.AddChild(_ghostButton);
@@ -154,6 +188,7 @@ public partial class RideHistoryPanelController : Control
 
     public async void ShowHistory()
     {
+        SetAchievementsLayout(false);
         _completedDiagnosticSessionId = null; _diagnosticExportButton.Hide();
         _summaryMode = false; _returnToRouteSelection = false; _selected = null; _fitFolderButton.Hide(); _list.Visible = true; _summaryEssentials.Visible = false; _detailScroll.Visible = true; _list.Clear(); _title.Text = "Ride History";
         _detail.Text = "Loading ride history…"; _viewButton.Visible = false; _ghostButton.Visible = false; _stravaUploads.Visible = false;
@@ -171,6 +206,134 @@ public partial class RideHistoryPanelController : Control
     public void ConfigureForIsolatedReview(IRideHistoryRepository repository, RiderProfileRecord profile)
     {
         _repositoryOverride = repository; _activeProfile = profile;
+    }
+
+    private void ToggleAchievements()
+    {
+        if (_achievementsMode) { SetAchievementsLayout(false); return; }
+        _ = LoadAchievementsAsync();
+    }
+
+    private async Task LoadAchievementsAsync()
+    {
+        try
+        {
+            var profile = _activeProfile ?? await GameBootstrap.GetPersistentRiderAsync();
+            _activeProfile = profile;
+            var repository = _repositoryOverride ?? GameBootstrap.RideHistory ?? throw new InvalidOperationException("Ride history is unavailable.");
+            BuildAchievementsView(profile, await repository.GetAchievementProgressAsync(profile.Id));
+            SetAchievementsLayout(true);
+        }
+        catch (Exception ex)
+        {
+            GameLogger.Log("achievements_progress_load_failed", new { message = ex.Message });
+            _goalStatus.Text = "Achievements could not be loaded. Try again later.";
+            SetAchievementsLayout(true);
+        }
+    }
+
+    private void SetAchievementsLayout(bool visible)
+    {
+        _achievementsMode = visible;
+        _title.Text = visible ? "Achievements & Goals" : "Ride History";
+        _filters.Visible = !visible; _historyBody.Visible = !visible; _pageControls.Visible = !visible;
+        _dashboard.Visible = !visible; _dashboardChart.Visible = !visible; _achievementsView.Visible = visible;
+        _achievementsBackButton.Visible = visible; _achievementsButton.Visible = !visible;
+        _viewButton.Visible = !visible && _selected is not null;
+        _fitFolderButton.Visible = !visible && _selected is not null && !string.IsNullOrWhiteSpace(_selected.FitFilePath);
+        _ghostButton.Visible = !visible && _selected is not null && CanOfferGhost(_selected);
+        _stravaUploads.Visible = false;
+    }
+
+    private void BuildAchievementsView(RiderProfileRecord profile, AchievementProgressSnapshot snapshot)
+    {
+        var totals = snapshot.Totals;
+        _achievementsTotals.Text = $"{profile.Name} · {totals.DistanceMeters / 1000d:0.#} km · " +
+            $"{TimeSpan.FromSeconds(totals.RidingSeconds).TotalHours:0.#} h riding · {totals.ClimbingMeters:0} m climbing";
+        var awards = snapshot.Awards.ToDictionary(item => item.AchievementId, StringComparer.Ordinal);
+        if (snapshot.Goal is { } goal)
+        {
+            var (progress, target, unit) = goal.Metric == PersonalGoalMetric.DistanceMeters
+                ? (goal.ProgressValue / 1000d, goal.TargetValue / 1000d, "km")
+                : (goal.ProgressValue, goal.TargetValue, "m climbing");
+            _goalStatus.Text = $"Current goal · {progress:0.#} / {target:0.#} {unit} · started {goal.CreatedAtUtc.ToLocalTime():d}";
+        }
+        else _goalStatus.Text = "No active goal · setting a new goal starts progress from that date.";
+        _cancelGoalButton.Disabled = snapshot.Goal is null;
+
+        foreach (var child in _achievementsList.GetChildren()) { _achievementsList.RemoveChild(child); child.QueueFree(); }
+        var routes = RouteCatalog.Routes.Where(route => route.SupportsVerifiedCompletionAchievement)
+            .Select(route => (route.Id, route.Name)).ToList();
+        foreach (var award in snapshot.Awards.Where(item => item.AchievementId.StartsWith("route.first-complete.", StringComparison.Ordinal)))
+        {
+            var routeId = award.AchievementId["route.first-complete.".Length..];
+            if (routes.All(route => route.Id != routeId)) routes.Add((routeId, routeId));
+        }
+        foreach (var definition in AchievementCatalog.DisplayDefinitions(routes))
+        {
+            awards.TryGetValue(definition.Id, out var award);
+            var progressText = GetAchievementProgressText(definition, totals, awards);
+            var earnedText = award is null ? "Not yet earned" : $"Earned {award.EarnedAtUtc.ToLocalTime():d}";
+            var supportingText = definition.Metric == AchievementMetric.RouteCompletion
+                ? progressText : $"{definition.Description} · {progressText}";
+            var label = new Label
+            {
+                Name = "Achievement_" + definition.Id.Replace('.', '_').Replace('-', '_'),
+                Text = $"{(award is null ? "○" : "✓")}  {definition.Title}\n{supportingText}{(award is null ? "" : $" · {earnedText}")}",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            };
+            if (award is not null) label.AddThemeColorOverride("font_color", new Color(.96f, .84f, .58f));
+            _achievementsList.AddChild(label);
+        }
+    }
+
+    private static string GetAchievementProgressText(AchievementDefinition definition, AchievementTotals totals,
+        IReadOnlyDictionary<string, AchievementAwardRecord> awards)
+    {
+        if (definition.Metric == AchievementMetric.Collection)
+        {
+            var count = AchievementCatalog.DunedinRoadRouteIds.Count(id => awards.ContainsKey(AchievementCatalog.RouteCompletionId(id)));
+            return $"{count} / {AchievementCatalog.DunedinRoadRouteIds.Count} routes";
+        }
+        if (definition.Threshold is not { } threshold) return "Complete one full route";
+        var (value, target, unit) = definition.Metric switch
+        {
+            AchievementMetric.DistanceMeters => (totals.DistanceMeters / 1000d, threshold / 1000d, "km"),
+            AchievementMetric.RidingSeconds => (totals.RidingSeconds / 3600d, threshold / 3600d, "h"),
+            AchievementMetric.ClimbingMeters => (totals.ClimbingMeters, threshold, "m"),
+            _ => (0d, threshold, "")
+        };
+        return $"{Math.Min(value, target):0.#} / {target:0.#} {unit}";
+    }
+
+    private async void SetPersonalGoal()
+    {
+        try
+        {
+            if (_activeProfile is null) _activeProfile = await GameBootstrap.GetPersistentRiderAsync();
+            if (!double.TryParse(_goalTarget.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out var target) ||
+                !double.IsFinite(target) || target <= 0)
+            { _goalStatus.Text = "Enter a positive goal target."; return; }
+            var metric = _goalMetric.Selected == 0 ? PersonalGoalMetric.DistanceMeters : PersonalGoalMetric.ClimbingMeters;
+            if (metric == PersonalGoalMetric.DistanceMeters) target *= 1000;
+            await (_repositoryOverride ?? GameBootstrap.RideHistory!).SetPersonalGoalAsync(_activeProfile.Id, metric, target, DateTimeOffset.UtcNow);
+            _goalStatus.Text = "Goal reset · progress starts with rides begun from now onward.";
+            await LoadAchievementsAsync();
+        }
+        catch (Exception ex) { GameLogger.Log("personal_goal_save_failed", new { message = ex.Message }); _goalStatus.Text = "Goal could not be saved. Try again."; }
+    }
+
+    private async void ClearPersonalGoal()
+    {
+        try
+        {
+            if (_activeProfile is null) return;
+            await (_repositoryOverride ?? GameBootstrap.RideHistory!).ClearPersonalGoalAsync(_activeProfile.Id);
+            _goalStatus.Text = "Goal cancelled.";
+            await LoadAchievementsAsync();
+        }
+        catch (Exception ex) { GameLogger.Log("personal_goal_cancel_failed", new { message = ex.Message }); _goalStatus.Text = "Goal could not be cancelled. Try again."; }
     }
 
     private async Task RefreshHistoryAsync()
@@ -249,6 +412,8 @@ public partial class RideHistoryPanelController : Control
 
     public async void ShowCompletedSummary(RideActivityDraft draft, Guid? activityId, string? fitRecordingError = null, string? challengeSummary = null)
     {
+        SetAchievementsLayout(false);
+        _achievementsButton.Hide(); _achievementsBackButton.Hide();
         _completedDiagnosticSessionId = GameLogger.SessionId;
         _diagnosticExportButton.Visible = true;
         _summaryMode = true; _selected = null; _fitFolderButton.Hide(); _list.Visible = false; _summaryEssentials.Visible = true; _detailScroll.Visible = true; _list.Clear(); _viewButton.Visible = false; _ghostButton.Visible = false;

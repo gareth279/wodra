@@ -1,6 +1,7 @@
 using System.Globalization;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Persistence;
+using IndoorCycling.Core.Progress;
 using Microsoft.Data.Sqlite;
 
 namespace IndoorCycling.Persistence.Sqlite;
@@ -42,7 +43,7 @@ public sealed class SqliteRideHistoryRepository : IRideHistoryRepository
             query.CommandText = "SELECT version FROM schema_info LIMIT 1";
             version = Convert.ToInt32(await query.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
         }
-        if (version > 3) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
+        if (version > 4) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
         if (version == 0)
         {
             using var transaction = db.BeginTransaction();
@@ -83,6 +84,30 @@ UPDATE schema_info SET version=2;";
             await using var migrate = db.CreateCommand();
             migrate.CommandText = @"ALTER TABLE rider_profiles ADD COLUMN trainer_difficulty_percent INTEGER NOT NULL DEFAULT 50;
 UPDATE schema_info SET version=3;";
+            await migrate.ExecuteNonQueryAsync(cancellationToken);
+            version = 3;
+        }
+        if (version == 3)
+        {
+            await using var migrate = db.CreateCommand();
+            migrate.CommandText = @"
+CREATE TABLE achievement_activity_contributions (
+ activity_id TEXT PRIMARY KEY REFERENCES ride_activities(id) ON DELETE CASCADE,
+ rider_profile_id TEXT NOT NULL REFERENCES rider_profiles(id), route_id TEXT NOT NULL, route_name TEXT NOT NULL,
+ environment_id TEXT NOT NULL, route_definition_version INTEGER NOT NULL, activity_mode_id TEXT NOT NULL,
+ eligible_for_progress INTEGER NOT NULL, route_completion_eligible INTEGER NOT NULL, full_route_completed INTEGER NOT NULL,
+ started_utc TEXT NOT NULL, distance_meters REAL NOT NULL, riding_seconds REAL NOT NULL, climbing_meters REAL NOT NULL);
+CREATE INDEX ix_achievement_activity_profile_started ON achievement_activity_contributions(rider_profile_id, eligible_for_progress, started_utc);
+CREATE INDEX ix_achievement_activity_profile_route ON achievement_activity_contributions(rider_profile_id, route_id, full_route_completed);
+CREATE TABLE achievement_awards (
+ rider_profile_id TEXT NOT NULL REFERENCES rider_profiles(id) ON DELETE CASCADE,
+ achievement_id TEXT NOT NULL, earned_utc TEXT NOT NULL,
+ activity_id TEXT REFERENCES ride_activities(id) ON DELETE SET NULL,
+ PRIMARY KEY(rider_profile_id, achievement_id));
+CREATE TABLE personal_goals (
+ rider_profile_id TEXT PRIMARY KEY REFERENCES rider_profiles(id) ON DELETE CASCADE,
+ metric TEXT NOT NULL, target_value REAL NOT NULL, created_utc TEXT NOT NULL);
+UPDATE schema_info SET version=4;";
             await migrate.ExecuteNonQueryAsync(cancellationToken);
         }
     }
@@ -164,6 +189,190 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
         transaction.Commit();
+    }
+
+    public async Task<AchievementActivityResult> SaveCompletedActivityWithAchievementsAsync(RideActivityDraft a,
+        IReadOnlyCollection<RideActivityMedia> media, AchievementRideEvidence evidence,
+        CancellationToken cancellationToken = default)
+    {
+        if (a.Status != RideActivityStatus.Completed)
+            throw new ArgumentException("Only saved completed activities can contribute to progress.", nameof(a));
+        if (string.IsNullOrWhiteSpace(evidence.EnvironmentId) || string.IsNullOrWhiteSpace(evidence.ActivityModeId) ||
+            evidence.RouteDefinitionVersion < 1)
+            throw new ArgumentException("Achievement evidence must identify its environment, activity mode and route version.", nameof(evidence));
+
+        await using var db = await OpenAsync(cancellationToken);
+        using var transaction = db.BeginTransaction();
+        await using (var command = db.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = @"INSERT OR IGNORE INTO ride_activities(id,rider_profile_id,route_id,route_name,started_utc,completed_utc,created_utc,status,duration_seconds,moving_seconds,distance_meters,completed_laps,
+average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path)
+VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,NULL,$distance,$laps,$avgSpeed,$maxSpeed,$avgPower,$maxPower,$avgCadence,$maxCadence,$elevation,$fit)";
+            Add(command, "$id", a.Id.ToString("D")); Add(command, "$profile", a.RiderProfileId.ToString("D")); Add(command, "$route", a.RouteId); Add(command, "$name", a.RouteName);
+            Add(command, "$started", Time(a.StartedAtUtc)); Add(command, "$completed", Time(DateTimeOffset.UtcNow)); Add(command, "$created", Time(DateTimeOffset.UtcNow)); Add(command, "$status", a.Status.ToString());
+            Add(command, "$duration", Math.Max(0, FiniteOrZero(a.DurationSeconds))); Add(command, "$distance", Math.Max(0, FiniteOrZero(a.DistanceMeters))); Add(command, "$laps", Math.Max(0, a.CompletedLaps));
+            Add(command, "$avgSpeed", a.AverageSpeedKph); Add(command, "$maxSpeed", a.MaxSpeedKph); Add(command, "$avgPower", a.AveragePowerWatts); Add(command, "$maxPower", a.MaxPowerWatts);
+            Add(command, "$avgCadence", a.AverageCadenceRpm); Add(command, "$maxCadence", a.MaxCadenceRpm); Add(command, "$elevation", Math.Max(0, FiniteOrZero(a.ElevationGainMeters))); Add(command, "$fit", a.FitFilePath);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var verify = db.CreateCommand())
+        {
+            verify.Transaction = transaction;
+            verify.CommandText = "SELECT rider_profile_id,route_id FROM ride_activities WHERE id=$id";
+            Add(verify, "$id", a.Id.ToString("D"));
+            await using var reader = await verify.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken) || reader.GetString(0) != a.RiderProfileId.ToString("D") || reader.GetString(1) != a.RouteId)
+                throw new InvalidOperationException("Saved activity ID already belongs to a different profile or route.");
+        }
+
+        foreach (var item in media.Where(item => item.ActivityId == a.Id))
+        {
+            await using var command = db.CreateCommand(); command.Transaction = transaction;
+            command.CommandText = "INSERT OR IGNORE INTO activity_media(id,activity_id,image_path,sidecar_path,captured_utc,media_type,capture_mode,marker_number) VALUES($id,$activity,$image,$sidecar,$captured,$type,$mode,$marker)";
+            Add(command, "$id", item.Id.ToString("D")); Add(command, "$activity", a.Id.ToString("D")); Add(command, "$image", item.ImagePath);
+            Add(command, "$sidecar", item.SidecarPath); Add(command, "$captured", Time(item.CapturedAtUtc)); Add(command, "$type", item.MediaType);
+            Add(command, "$mode", item.CaptureMode); Add(command, "$marker", item.MarkerNumber);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var routeCompletionEligible = evidence.RouteCompletionEligible &&
+            string.Equals(evidence.EnvironmentId, "Road", StringComparison.OrdinalIgnoreCase);
+        await using (var contribution = db.CreateCommand())
+        {
+            contribution.Transaction = transaction;
+            contribution.CommandText = @"INSERT OR IGNORE INTO achievement_activity_contributions(activity_id,rider_profile_id,route_id,route_name,environment_id,route_definition_version,activity_mode_id,
+eligible_for_progress,route_completion_eligible,full_route_completed,started_utc,distance_meters,riding_seconds,climbing_meters)
+SELECT $activity,$profile,$route,$name,$environment,$version,$mode,$eligible,$routeEligible,$full,$started,$distance,$time,$climbing
+WHERE EXISTS(SELECT 1 FROM rider_profiles WHERE id=$profile)";
+            Add(contribution, "$activity", a.Id.ToString("D")); Add(contribution, "$profile", a.RiderProfileId.ToString("D"));
+            Add(contribution, "$route", a.RouteId); Add(contribution, "$name", a.RouteName); Add(contribution, "$environment", evidence.EnvironmentId);
+            Add(contribution, "$version", evidence.RouteDefinitionVersion); Add(contribution, "$mode", evidence.ActivityModeId);
+            Add(contribution, "$eligible", evidence.EligibleForProgress ? 1 : 0); Add(contribution, "$routeEligible", routeCompletionEligible ? 1 : 0);
+            Add(contribution, "$full", routeCompletionEligible && evidence.FullRouteCompleted ? 1 : 0); Add(contribution, "$started", Time(a.StartedAtUtc));
+            Add(contribution, "$distance", Math.Max(0, FiniteOrZero(a.DistanceMeters)));
+            Add(contribution, "$time", Math.Max(0, FiniteOrZero(a.DurationSeconds)));
+            // Elevation gain is authoritative route elevation; the visual velodrome bank has a zero-grade profile.
+            Add(contribution, "$climbing", Math.Max(0, FiniteOrZero(a.ElevationGainMeters)));
+            await contribution.ExecuteNonQueryAsync(cancellationToken);
+        }
+        bool inserted;
+        await using (var changes = db.CreateCommand())
+        {
+            changes.Transaction = transaction; changes.CommandText = "SELECT changes()";
+            inserted = Convert.ToInt64(await changes.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) == 1;
+        }
+
+        var newlyEarned = new List<AchievementDefinition>();
+        if (inserted && evidence.EligibleForProgress)
+        {
+            var snapshot = await ReadAchievementProgressAsync(db, a.RiderProfileId, transaction, cancellationToken);
+            var eligibleRoutes = await ReadRouteCompletionRowsAsync(db, a.RiderProfileId, transaction, completedOnly: false, cancellationToken);
+            var completedRoutes = await ReadRouteCompletionRowsAsync(db, a.RiderProfileId, transaction, completedOnly: true, cancellationToken);
+            var definitions = AchievementCatalog.Evaluate(snapshot.Totals,
+                completedRoutes.Select(route => route.Id).ToArray(), eligibleRoutes.Select(route => route.Id).ToArray());
+            var awardsById = snapshot.Awards.Select(award => award.AchievementId).ToHashSet(StringComparer.Ordinal);
+            var now = DateTimeOffset.UtcNow;
+            foreach (var definition in definitions.Where(item => !awardsById.Contains(item.Id)))
+            {
+                var displayDefinition = definition;
+                if (definition.Metric == AchievementMetric.RouteCompletion &&
+                    eligibleRoutes.FirstOrDefault(route => route.Id == definition.RouteId) is { } route)
+                    displayDefinition = AchievementCatalog.RouteCompletion(route.Id, route.Name);
+                await using var award = db.CreateCommand(); award.Transaction = transaction;
+                award.CommandText = "INSERT OR IGNORE INTO achievement_awards(rider_profile_id,achievement_id,earned_utc,activity_id) VALUES($profile,$achievement,$earned,$activity)";
+                Add(award, "$profile", a.RiderProfileId.ToString("D")); Add(award, "$achievement", displayDefinition.Id);
+                Add(award, "$earned", Time(now)); Add(award, "$activity", a.Id.ToString("D"));
+                if (await award.ExecuteNonQueryAsync(cancellationToken) == 1) newlyEarned.Add(displayDefinition);
+            }
+        }
+
+        var finalSnapshot = await ReadAchievementProgressAsync(db, a.RiderProfileId, transaction, cancellationToken);
+        transaction.Commit();
+        return new AchievementActivityResult(newlyEarned, finalSnapshot);
+    }
+
+    public async Task<AchievementProgressSnapshot> GetAchievementProgressAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken);
+        return await ReadAchievementProgressAsync(db, profileId, null, cancellationToken);
+    }
+
+    public async Task SetPersonalGoalAsync(Guid profileId, PersonalGoalMetric metric, double targetValue,
+        DateTimeOffset createdAtUtc, CancellationToken cancellationToken = default)
+    {
+        if (!Enum.IsDefined(metric) || !double.IsFinite(targetValue) || targetValue <= 0 || targetValue > 100_000_000)
+            throw new ArgumentOutOfRangeException(nameof(targetValue), "Goal target must be positive and within the supported range.");
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = @"INSERT INTO personal_goals(rider_profile_id,metric,target_value,created_utc) VALUES($profile,$metric,$target,$created)
+ON CONFLICT(rider_profile_id) DO UPDATE SET metric=excluded.metric,target_value=excluded.target_value,created_utc=excluded.created_utc";
+        Add(command, "$profile", profileId.ToString("D")); Add(command, "$metric", metric.ToString());
+        Add(command, "$target", targetValue); Add(command, "$created", Time(createdAtUtc));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task ClearPersonalGoalAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
+        command.CommandText = "DELETE FROM personal_goals WHERE rider_profile_id=$profile";
+        Add(command, "$profile", profileId.ToString("D")); await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static double FiniteOrZero(double value) => double.IsFinite(value) ? value : 0;
+
+    private static async Task<AchievementProgressSnapshot> ReadAchievementProgressAsync(SqliteConnection db,
+        Guid profileId, SqliteTransaction? transaction, CancellationToken cancellationToken)
+    {
+        AchievementTotals totals;
+        await using (var command = db.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = @"SELECT COALESCE(SUM(distance_meters),0),COALESCE(SUM(riding_seconds),0),COALESCE(SUM(climbing_meters),0)
+FROM achievement_activity_contributions WHERE rider_profile_id=$profile AND eligible_for_progress=1";
+            Add(command, "$profile", profileId.ToString("D")); await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken); totals = new(reader.GetDouble(0), reader.GetDouble(1), reader.GetDouble(2));
+        }
+        var awards = new List<AchievementAwardRecord>();
+        await using (var command = db.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = "SELECT achievement_id,earned_utc,activity_id FROM achievement_awards WHERE rider_profile_id=$profile ORDER BY earned_utc,achievement_id";
+            Add(command, "$profile", profileId.ToString("D")); await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken)) awards.Add(new(reader.GetString(0), ParseTime(reader.GetString(1)), reader.IsDBNull(2) ? null : Guid.Parse(reader.GetString(2))));
+        }
+
+        PersonalGoalRecord? goal = null;
+        await using (var command = db.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = "SELECT metric,target_value,created_utc FROM personal_goals WHERE rider_profile_id=$profile";
+            Add(command, "$profile", profileId.ToString("D")); await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var metric = Enum.Parse<PersonalGoalMetric>(reader.GetString(0)); var target = reader.GetDouble(1); var created = ParseTime(reader.GetString(2));
+                await reader.DisposeAsync();
+                await using var progress = db.CreateCommand(); progress.Transaction = transaction;
+                var column = metric == PersonalGoalMetric.DistanceMeters ? "distance_meters" : "climbing_meters";
+                progress.CommandText = $"SELECT COALESCE(SUM({column}),0) FROM achievement_activity_contributions WHERE rider_profile_id=$profile AND eligible_for_progress=1 AND started_utc >= $created";
+                Add(progress, "$profile", profileId.ToString("D")); Add(progress, "$created", Time(created));
+                var amount = Convert.ToDouble(await progress.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
+                goal = new(profileId, metric, target, created, amount);
+            }
+        }
+        return new AchievementProgressSnapshot(profileId, totals, awards, goal);
+    }
+
+    private static async Task<IReadOnlyList<(string Id, string Name)>> ReadRouteCompletionRowsAsync(SqliteConnection db,
+        Guid profileId, SqliteTransaction transaction, bool completedOnly, CancellationToken cancellationToken)
+    {
+        await using var command = db.CreateCommand(); command.Transaction = transaction;
+        command.CommandText = $@"SELECT route_id,MIN(route_name) FROM achievement_activity_contributions
+WHERE rider_profile_id=$profile AND eligible_for_progress=1 AND environment_id='Road' AND route_completion_eligible=1 {(completedOnly ? "AND full_route_completed=1" : "")}
+GROUP BY route_id ORDER BY route_id";
+        Add(command, "$profile", profileId.ToString("D")); await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<(string Id, string Name)>(); while (await reader.ReadAsync(cancellationToken)) rows.Add((reader.GetString(0), reader.GetString(1)));
+        return rows;
     }
 
     public async Task<IReadOnlyList<RideActivity>> GetRecentActivitiesAsync(int limit = 50, CancellationToken cancellationToken = default)

@@ -1,6 +1,7 @@
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Core.Progress;
 using IndoorCycling.Trainer.Models;
 using IndoorCycling.Trainer.Implementations;
 using IndoorCycling.Trainer.Windows;
@@ -64,6 +65,9 @@ public partial class RideSessionNode : Node
 	private DateTimeOffset _activityStartedAtUtc;
 	private string? _currentActivityFitPath;
 	private readonly RideActivityAccumulator _activityAccumulator = new();
+	private readonly RouteCompletionCoverageTracker _routeCompletionCoverage = new();
+	private AchievementRideNotificationTracker? _achievementNotificationTracker;
+	private bool _achievementProgressEligible;
 	private double _actualRiddenDistanceMeters;
 	private readonly List<FitSegmentManifestEntry> _fitSegments = new();
 	private double _recordingSegmentStartDistanceMeters;
@@ -71,6 +75,7 @@ public partial class RideSessionNode : Node
 	public Guid? CurrentActivityId => _currentActivityId;
 	public Guid? LastCompletedActivityId { get; private set; }
 	public RideActivityDraft? LastCompletedActivityDraft { get; private set; }
+	public string? LastAchievementSummary { get; private set; }
 	public string? LastRecordingError { get; private set; }
 	// Read-only observation seam for the production RideScreen invariance regression.
 	internal event Action<RideState, TrainerTelemetry, double>? RecordingSampleObservedForReview;
@@ -181,12 +186,15 @@ public partial class RideSessionNode : Node
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
 		_currentRoute = route ?? RouteCatalog.Routes[0];
+		_routeCompletionCoverage.Reset(_currentRoute.DistanceMeters, 0);
 		var supportedModes = _currentRoute.SupportedModes;
 		CurrentActivityMode = activityMode is { } requested && supportedModes.Contains(requested)
 			? requested : RideActivityMode.FreeRide;
 		_trackEffort = _currentRoute.Environment == RouteEnvironment.Velodrome
 			? new TrackEffortTimingController(CurrentActivityMode) : null;
 		_trackBestSaved = false;
+		_achievementNotificationTracker = null;
+		_achievementProgressEligible = false;
 		_hudController?.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
 		if (!_currentRoute.Capabilities.SupportsGhost ||
 			(GhostRider is not null && GhostRider.RouteId != _currentRoute?.Id))
@@ -199,6 +207,10 @@ public partial class RideSessionNode : Node
 			var rider = await GameBootstrap.GetPersistentRiderAsync();
 			_currentRiderProfileId = rider.Id;
 			SetActiveRideProfile(rider);
+			_achievementProgressEligible = !GameBootstrap.DebugModeEnabled && GameBootstrap.TrainerClient is not FakeTrainerClient;
+			if (_achievementProgressEligible && GameBootstrap.RideHistory is { } progressRepository)
+				_achievementNotificationTracker = new AchievementRideNotificationTracker(
+					await progressRepository.GetAchievementProgressAsync(rider.Id));
 			_currentRideStravaAthleteId = StravaIntegrationClient.Shared.GetLink(rider.Id)?.AthleteId;
 			GameLogger.Log("ride_profile_snapshot_created", new
 			{
@@ -229,6 +241,7 @@ public partial class RideSessionNode : Node
 		_fitSegments.Clear();
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
+		LastAchievementSummary = null;
 		_sessionStarted = true;
 		_hudController?.BeginRideHudSession(_currentRoute.Capabilities.SupportsPacer &&
 			PacerEffortPresets.Find(PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) is not null);
@@ -296,6 +309,16 @@ public partial class RideSessionNode : Node
 			sample.LoopDistanceMeters,
 			_currentRoute.DistanceMeters
 		);
+	}
+
+	private void NotifyAchievementProgress()
+	{
+		if (!_achievementProgressEligible || _achievementNotificationTracker is null || _currentRoute is not { } route) return;
+		var newlyEligible = _achievementNotificationTracker.Observe(_actualRiddenDistanceMeters, _elapsedSeconds,
+			_rideState.ElevationGainMeters, route.Id, route.Name, route.Environment.ToString(),
+			route.SupportsVerifiedCompletionAchievement, _routeCompletionCoverage.CompletedFullRoute);
+		if (newlyEligible.Count > 0 && GameFeaturesPreference.Enabled)
+			_hudController?.ShowAchievementNotification(string.Join(" · ", newlyEligible.Select(item => item.Title)));
 	}
 
 	public async Task StartFitReplaySessionAsync(string fitPath)
@@ -424,7 +447,18 @@ public partial class RideSessionNode : Node
 						.Select(s => new RideActivityMedia(Guid.NewGuid(), activityId, s.ImagePath, s.SidecarPath,
 							s.CapturedAt.ToUniversalTime(), s.Mode.ToString(), s.MarkerNumber)).ToArray();
 					var historySaved = false;
-					try { await history.SaveCompletedActivityAsync(draft, media); historySaved = true; }
+					try
+					{
+						var evidence = new AchievementRideEvidence(
+							EligibleForProgress: _achievementProgressEligible && _activeRideRiderProfile is not null && !_debugDiagnostics.Enabled,
+							EnvironmentId: route.Environment.ToString(), RouteDefinitionVersion: route.RouteDataVersion,
+							ActivityModeId: CurrentActivityMode.ToString(),
+							RouteCompletionEligible: route.SupportsVerifiedCompletionAchievement,
+							FullRouteCompleted: _routeCompletionCoverage.CompletedFullRoute);
+						var progress = await history.SaveCompletedActivityWithAchievementsAsync(draft, media, evidence);
+						LastAchievementSummary = BuildAchievementSummary(progress);
+						historySaved = true;
+					}
 					catch (Exception ex) { GameLogger.Log("ride_history_save_failed", new { activityId, message = ex.Message }); GD.PushWarning($"Ride finished, but ride history could not be saved: {ex.Message}"); }
 					var recordingLink = StravaIntegrationClient.Shared.GetLink(riderId);
 					var hasFinalizedFit = LastRecordingError is null && fitPath is not null &&
@@ -482,6 +516,8 @@ public partial class RideSessionNode : Node
 				_currentActivityId = null;
 				_currentRiderProfileId = null;
 				_currentRideStravaAthleteId = null;
+				_achievementNotificationTracker = null;
+				_achievementProgressEligible = false;
 				_activeRideRiderProfile = null;
 				_activeRideBikeProfile = null;
 				_trackEffort = null;
@@ -490,6 +526,21 @@ public partial class RideSessionNode : Node
 				_trainerGradeTransition.Cancel();
 			}
 		}
+	}
+
+	private static string? BuildAchievementSummary(AchievementActivityResult progress)
+	{
+		var lines = new List<string>();
+		if (progress.NewlyEarned.Count > 0)
+			lines.Add($"New badges: {string.Join(", ", progress.NewlyEarned.Select(item => item.Title))}");
+		if (progress.Snapshot.Goal is { } goal)
+		{
+			var (amount, target, unit) = goal.Metric == PersonalGoalMetric.DistanceMeters
+				? (goal.ProgressValue / 1000d, goal.TargetValue / 1000d, "km")
+				: (goal.ProgressValue, goal.TargetValue, "m climbing");
+			lines.Add($"Goal progress: {amount:0.#} / {target:0.#} {unit}");
+		}
+		return lines.Count == 0 ? null : string.Join("\n", lines);
 	}
 
 	public async Task QuitAsync()
@@ -1056,6 +1107,7 @@ public partial class RideSessionNode : Node
 		var before = _rideState.DistanceMeters;
 		_trackEffort?.Invalidate("debug reposition");
 		_rideState = jumped;
+		_routeCompletionCoverage.MarkDiscontinuity(_rideState.DistanceMeters);
 		_recordingSampleElapsedSeconds = 0;
 		if (_currentRoute?.DistanceMeters > 0)
 			_lastLoggedLapNumber = (int)Math.Floor(distance / _currentRoute.DistanceMeters) + 1;
@@ -1703,6 +1755,7 @@ public partial class RideSessionNode : Node
 		_rideState = _rideState with { DistanceMeters = destination,
 			VirtualSpeedKph = wasPaused ? 0 : matchedSpeedKph,
 			CurrentGradientPercent = routeSample.GradientPercent + _manualGradientOffsetPercent };
+		_routeCompletionCoverage.MarkDiscontinuity(destination);
 		_trainerTargetGradePercent = GetTrainerGradeTarget(routeSample.GradientPercent + _manualGradientOffsetPercent);
 		_trainerGradeTransition.Start(previousTrainerGrade, _trainerTargetGradePercent);
 		_effectiveTrainerGradePercent = previousTrainerGrade;
@@ -1778,6 +1831,8 @@ public partial class RideSessionNode : Node
 			if (!_pauseGate.IsPaused)
 			{
 				_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - before);
+				_routeCompletionCoverage.Observe(_rideState.DistanceMeters, active: true);
+				NotifyAchievementProgress();
 				LogLapWraps(before, _rideState.DistanceMeters);
 				RecordRideSampleIfNeeded(delta, staleTelemetry, reconnectGradient);
 			}
@@ -1812,6 +1867,8 @@ public partial class RideSessionNode : Node
 		var previousDistance = _rideState.DistanceMeters;
 		_rideState = _pauseGate.Tick(GameBootstrap.SimulationEngine, _rideState, input);
 		_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - previousDistance);
+		_routeCompletionCoverage.Observe(_rideState.DistanceMeters, active: true);
+		NotifyAchievementProgress();
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
 		_trainerCommandElapsedSeconds += delta;

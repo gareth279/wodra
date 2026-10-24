@@ -1,4 +1,5 @@
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Progress;
 
 namespace IndoorCycling.Core.Persistence;
 
@@ -9,6 +10,13 @@ public interface IRideHistoryRepository
     Task<RideHistoryPage> GetHistoryPageAsync(Guid profileId, string? search, string? routeId, DateTimeOffset? fromUtc, DateTimeOffset? toUtcExclusive, RideHistorySort sort, int offset, int pageSize, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<RideHistoryBucket>> GetHistoryTrendAsync(Guid profileId, DateTimeOffset fromUtc, DateTimeOffset toUtcExclusive, bool monthly, string? search = null, string? routeId = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string RouteId, string RouteName)>> GetHistoryRoutesAsync(Guid profileId, CancellationToken cancellationToken = default);
+    Task<AchievementActivityResult> SaveCompletedActivityWithAchievementsAsync(RideActivityDraft activity,
+        IReadOnlyCollection<RideActivityMedia> media, AchievementRideEvidence evidence,
+        CancellationToken cancellationToken = default);
+    Task<AchievementProgressSnapshot> GetAchievementProgressAsync(Guid profileId, CancellationToken cancellationToken = default);
+    Task SetPersonalGoalAsync(Guid profileId, PersonalGoalMetric metric, double targetValue,
+        DateTimeOffset createdAtUtc, CancellationToken cancellationToken = default);
+    Task ClearPersonalGoalAsync(Guid profileId, CancellationToken cancellationToken = default);
 }
 
 public enum RideHistorySort { Newest, Oldest, Distance, Duration, Elevation }

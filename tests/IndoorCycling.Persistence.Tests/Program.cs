@@ -1,6 +1,7 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Persistence;
 using IndoorCycling.Persistence.Sqlite;
+using IndoorCycling.Core.Progress;
 using System.Text.Json;
 
 var temporaryRoot = Path.Combine(Path.GetTempPath(), "wodra-persistence-tests-" + Guid.NewGuid().ToString("N"));
@@ -10,6 +11,7 @@ try
     TestRiderProfileStartupSelection();
     await TestBrandRenameMigration(temporaryRoot);
     await TestProfileSchemaUpgrade(temporaryRoot);
+    await TestAchievementProgress(temporaryRoot);
     TestNewProductPaths(temporaryRoot);
 
     var repository = new SqliteRideHistoryRepository(Path.Combine(temporaryRoot, "history.sqlite3"));
@@ -101,7 +103,7 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 3, "0 to 3 profile schema migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 4, "0 to 4 achievement/profile schema migration");
     }
     RiderProfileRecord.Validate("Valid", 75, 8);
     foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })
@@ -121,6 +123,98 @@ finally { try { Directory.Delete(temporaryRoot, true); } catch { } }
 static void Assert(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAIL " + name);
+}
+
+static async Task TestAchievementProgress(string root)
+{
+    var repository = new SqliteRideHistoryRepository(Path.Combine(root, "achievement-history.sqlite3"));
+    await repository.InitializeAsync();
+    var now = DateTimeOffset.UtcNow;
+    var fixtureProfile = new RiderProfileRecord(Guid.NewGuid(), "Achievement Fixture", now, now, IsTestProfile: true);
+    var otherProfile = new RiderProfileRecord(Guid.NewGuid(), "Isolated Profile", now, now);
+    await repository.SaveProfileAsync(fixtureProfile); await repository.SaveProfileAsync(otherProfile);
+
+    var routeId = AchievementCatalog.DunedinRoadRouteIds[0];
+    var firstRide = Draft(fixtureProfile.Id, routeId, "Oval to Gardens", now.AddDays(-2), 36_000, 100_000, 1_000);
+    var evidence = new AchievementRideEvidence(true, "Road", 1, "FreeRide", true, true);
+    var firstResult = await repository.SaveCompletedActivityWithAchievementsAsync(firstRide, [], evidence);
+    Assert(firstResult.NewlyEarned.Select(item => item.Id).ToHashSet().SetEquals([
+        AchievementCatalog.RouteCompletionId(routeId), "milestone.distance.100km", "milestone.time.10h", "milestone.climbing.1km"]),
+        "exact distance/time/climbing thresholds and route completion can award together");
+    var duplicate = await repository.SaveCompletedActivityWithAchievementsAsync(firstRide, [], evidence);
+    Assert(duplicate.NewlyEarned.Count == 0 && duplicate.Snapshot.Totals == new AchievementTotals(100_000, 36_000, 1_000),
+        "same activity ID retry neither duplicates awards nor cumulative progress");
+
+    var unknownHistorical = Draft(fixtureProfile.Id, "legacy-road", "Legacy", now.AddDays(-10), 10_000, 900_000, 90_000);
+    await repository.SaveCompletedActivityAsync(unknownHistorical, []);
+    var afterLegacy = await repository.GetAchievementProgressAsync(fixtureProfile.Id);
+    Assert(afterLegacy.Totals == duplicate.Snapshot.Totals,
+        "historical rides without saved eligibility provenance are not backfilled");
+
+    var goalCreated = now.AddDays(-1);
+    await repository.SetPersonalGoalAsync(fixtureProfile.Id, PersonalGoalMetric.DistanceMeters, 20_000, goalCreated);
+    var partialRoute = Draft(fixtureProfile.Id, "dunedin-south-coastal-loop", "South Coast", now.AddHours(-12), 1_800, 4_000, 30);
+    var partial = await repository.SaveCompletedActivityWithAchievementsAsync(partialRoute, [],
+        new AchievementRideEvidence(true, "Road", 1, "FreeRide", true, false));
+    Assert(partial.NewlyEarned.All(item => item.Id != AchievementCatalog.RouteCompletionId(partialRoute.RouteId)),
+        "partial actual distance contributes without full-route award");
+    Assert(partial.Snapshot.Goal is { ProgressValue: 4_000, IsComplete: false },
+        "goal progress starts from its creation date and excludes earlier rides");
+
+    foreach (var collectionRoute in AchievementCatalog.DunedinRoadRouteIds.Skip(1))
+    {
+        var ride = Draft(fixtureProfile.Id, collectionRoute, collectionRoute, now.AddHours(-1), 60, 100, 0);
+        var version = collectionRoute == AchievementCatalog.DunedinRoadRouteIds[1] ? 2 : 1;
+        await repository.SaveCompletedActivityWithAchievementsAsync(ride, [], evidence with { RouteDefinitionVersion = version });
+    }
+    var afterCollection = await repository.GetAchievementProgressAsync(fixtureProfile.Id);
+    Assert(afterCollection.Awards.Any(item => item.AchievementId == AchievementCatalog.DunedinRoadCollectionId),
+        "fixed Dunedin road-route collection awards after all v1 members are completed");
+    var changedVersion = Draft(fixtureProfile.Id, routeId, "Oval updated", now, 1, 100, 0);
+    var versionRetry = await repository.SaveCompletedActivityWithAchievementsAsync(changedVersion, [], evidence with { RouteDefinitionVersion = 2 });
+    Assert(versionRetry.NewlyEarned.All(item => item.Id != AchievementCatalog.RouteCompletionId(routeId)) &&
+        versionRetry.Snapshot.Awards.Any(item => item.AchievementId == AchievementCatalog.DunedinRoadCollectionId),
+        "geometry version changes preserve stable route awards and earned collection");
+
+    var dummy = Draft(fixtureProfile.Id, routeId, "Dummy", now, 10_000, 50_000, 500);
+    var dummyResult = await repository.SaveCompletedActivityWithAchievementsAsync(dummy, [], evidence with { EligibleForProgress = false, FullRouteCompleted = true });
+    Assert(dummyResult.NewlyEarned.Count == 0 && dummyResult.Snapshot.Totals == versionRetry.Snapshot.Totals,
+        "explicit dummy/debug evidence contributes neither totals nor real-profile awards");
+    var track = Draft(fixtureProfile.Id, "wodra-velodrome-250", "250 m Velodrome", now.AddMinutes(1), 600, 5_000, 0);
+    var trackResult = await repository.SaveCompletedActivityWithAchievementsAsync(track, [],
+        new AchievementRideEvidence(true, "Velodrome", 1, "LapTiming", false, true));
+    Assert(trackResult.Snapshot.Totals.DistanceMeters == afterCollection.Totals.DistanceMeters + 5_100 &&
+        trackResult.Snapshot.Awards.All(item => item.AchievementId != AchievementCatalog.RouteCompletionId(track.RouteId)),
+        "eligible track activity counts general totals but never a Dunedin road route badge");
+
+    var otherSnapshot = await repository.GetAchievementProgressAsync(otherProfile.Id);
+    Assert(otherSnapshot.Totals == new AchievementTotals(0, 0, 0) && otherSnapshot.Awards.Count == 0,
+        "achievement totals and awards are isolated by profile");
+    await repository.SetPersonalGoalAsync(fixtureProfile.Id, PersonalGoalMetric.ClimbingMeters, 500, now.AddMinutes(2));
+    Assert((await repository.GetAchievementProgressAsync(fixtureProfile.Id)).Goal is { Metric: PersonalGoalMetric.ClimbingMeters, ProgressValue: 0 },
+        "changing goal type resets its start date and progress");
+    var goalRide = Draft(fixtureProfile.Id, routeId, "Goal climb", now.AddMinutes(3), 600, 0, 500);
+    await repository.SaveCompletedActivityWithAchievementsAsync(goalRide, [], evidence with { RouteCompletionEligible = false, FullRouteCompleted = false });
+    Assert((await repository.GetAchievementProgressAsync(fixtureProfile.Id)).Goal is { ProgressValue: 500, IsComplete: true },
+        "new goal completes at its exact climbing threshold");
+    await repository.ClearPersonalGoalAsync(fixtureProfile.Id);
+    Assert((await repository.GetAchievementProgressAsync(fixtureProfile.Id)).Goal is null,
+        "cancelling the goal removes only its current progress");
+
+    var tracker = new RouteCompletionCoverageTracker(); tracker.Reset(1_000);
+    tracker.Observe(600, active: true); tracker.Observe(600, active: false); tracker.MarkDiscontinuity(5_000);
+    tracker.Observe(5_500, active: true);
+    Assert(!tracker.CompletedFullRoute, "partial start, pause and reposition do not join into a false route completion");
+    tracker.Observe(6_000, active: true);
+    Assert(tracker.CompletedFullRoute, "continuous movement over a full reference lap establishes route coverage");
+    var reopened = new SqliteRideHistoryRepository(repository.DatabasePath); await reopened.InitializeAsync();
+    var persisted = await reopened.GetAchievementProgressAsync(fixtureProfile.Id);
+    Assert(persisted.Awards.Any(item => item.AchievementId == AchievementCatalog.DunedinRoadCollectionId) && persisted.Goal is null,
+        "awards and goal cancellation survive repository restart");
+
+    static RideActivityDraft Draft(Guid profileId, string routeId, string routeName, DateTimeOffset started,
+        double seconds, double meters, double climbing) => new(Guid.NewGuid(), profileId, routeId, routeName, started,
+        RideActivityStatus.Completed, seconds, meters, 0, null, null, null, null, null, null, climbing, null);
 }
 
 static void TestRiderProfileStartupSelection()

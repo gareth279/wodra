@@ -30,7 +30,6 @@ public partial class VelodromeRideScreenReviewTest : Node
                 DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 74, 9, true, 50);
             await GameBootstrap.SaveProfileAsync(testProfile);
             await GameBootstrap.SetActiveProfileAsync(testProfile.Id);
-
             var session = ride.GetNode<RideSessionNode>("RideSessionNode");
             var world = ride.GetNode<RideWorldView>("RideWorldView");
             var hud = ride.GetNode<HudController>("HudController");
@@ -48,6 +47,13 @@ public partial class VelodromeRideScreenReviewTest : Node
             if (!await session.StartTrainerSessionAsync(track, RideActivityMode.Flying200))
                 throw new InvalidOperationException("Could not start the production velodrome dummy ride.");
             ShowRide(ride, hud);
+            GameFeaturesPreference.Set(false);
+            var achievementToast = hud.GetNode<Control>("AchievementNotification");
+            hud.ShowAchievementNotification("Must respect the disabled preference");
+            Assert(!achievementToast.IsVisibleInTree(), "achievement tracking display remains hidden when Game features are disabled");
+            GameFeaturesPreference.Set(true);
+            hud.ShowAchievementNotification("First 100 km");
+            Assert(achievementToast.IsVisibleInTree(), "achievement notification can appear with track HUD when Game features are enabled");
             await Settle(2);
             var geometry = world.RouteGeometry ?? throw new InvalidOperationException("Velodrome route did not load.");
             Assert(session.CurrentActivityMode == RideActivityMode.Flying200, "selected route activity mode reaches the production ride");
@@ -83,6 +89,7 @@ public partial class VelodromeRideScreenReviewTest : Node
                     hud.SetDebugDisplayEnabled(debug);
                     await Settle(.4);
                     Capture($"velodrome-{size.X}x{size.Y}-debug-{debug}-start.png");
+                    if (size.X == 1152 && !debug) Capture("velodrome-achievement-notification.png");
                 }
                 DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
                 hud.SetDebugDisplayEnabled(false);
