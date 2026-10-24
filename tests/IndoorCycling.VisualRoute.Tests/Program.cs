@@ -2778,6 +2778,98 @@ var tests = new (string Name, Action Run)[]
         foreach(var size in new[]{new Vector3(.11f,4,.11f),new Vector3(.30f,.92f,.24f),new Vector3(.105f,.105f,.045f)})
             Equal(true,RoadsidePrimitiveMath.IsPlausibleStreetFurnitureSize(size));
     }),
+    ("velodrome lap timing interpolates the 250 m line at low and high frame rates", () =>
+    {
+        foreach (var step in new[] { .02, .5, 4.0 })
+        {
+            var timing = new TrackEffortTimingController(RideActivityMode.LapTiming);
+            TrackEffortResult? result = null;
+            for (var t = step; t <= 40.01 && result is null; t += step)
+                result = timing.Advance(Math.Min(250, 6.25 * t), t);
+            if (result is null || !result.Completed || !result.Eligible) throw new Exception($"Lap did not complete for step {step}.");
+            NearD(250, result.DistanceMeters, 1e-9); NearD(40, result.ElapsedSeconds, 1e-8);
+        }
+    }),
+    ("velodrome flying 200 m records run-up split and interpolated elapsed time", () =>
+    {
+        var timing = new TrackEffortTimingController(RideActivityMode.Flying200);
+        TrackEffortResult? result = null;
+        for (var t = .3; t <= 50 && result is null; t += .3)
+            result = timing.Advance(Math.Min(300, 6.0 * t), t);
+        if (result is null || !result.Eligible) throw new Exception("Flying 200 m did not finish cleanly.");
+        NearD(200, result.DistanceMeters, 1e-8); NearD(200d / 6, result.ElapsedSeconds, .31);
+    }),
+    ("standing 500 m and 1 km complete exact distance with interpolated splits", () =>
+    {
+        foreach (var (mode, target) in new[] { (RideActivityMode.Standing500, 500d), (RideActivityMode.Standing1000, 1000d) })
+        {
+            var timing = new TrackEffortTimingController(mode);
+            TrackEffortResult? result = null;
+            for (var frame = 1; frame <= 501 && result is null; frame++)
+            {
+                var t = frame * .4;
+                result = timing.Advance(Math.Min(target, 5.0 * t), t);
+            }
+            if (result is null || !result.Eligible) throw new Exception($"Standing effort {mode} did not finish cleanly.");
+            NearD(target, result.DistanceMeters, 1e-8);
+            if (mode == RideActivityMode.Standing1000 && result.Splits.Count != 3)
+                throw new Exception("The 1 km effort must provide 250 m, 500 m and 750 m intermediate splits.");
+        }
+    }),
+    ("paused and repositioned efforts remain practice attempts", () =>
+    {
+        var paused = new TrackEffortTimingController(RideActivityMode.Standing500);
+        paused.Advance(10, 2, paused: true);
+        var pausedResult = paused.Advance(500, 100);
+        if (pausedResult?.Eligible != false) throw new Exception("A pause produced an eligible effort.");
+        var jumped = new TrackEffortTimingController(RideActivityMode.Flying200);
+        jumped.MarkPractice("debug reposition");
+        var jumpResult = jumped.Advance(300, 30);
+        if (jumpResult?.Eligible != false) throw new Exception("A repositioned attempt produced an eligible effort.");
+    }),
+    ("velodrome personal bests are keyed by profile, route version and mode", () =>
+    {
+        var route = GpsRoute() with { Environment = RouteEnvironment.Velodrome, RouteDataVersion = 2 };
+        var values = new Dictionary<string, double>(); var a = Guid.NewGuid(); var b = Guid.NewGuid();
+        var result = new TrackEffortResult("Flying200", 200, 25, true, true, [], null);
+        if (!VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result, false, false, false))
+            throw new Exception("First eligible profile result was not saved.");
+        if (VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result with { ElapsedSeconds = 26 }, false, false, false))
+            throw new Exception("A slower effort replaced the PB.");
+        VelodromePersonalBestPolicy.TrySave(values, b, route, RideActivityMode.Flying200, result, false, false, false);
+        var otherVersion = route with { RouteDataVersion = 3 };
+        VelodromePersonalBestPolicy.TrySave(values, a, otherVersion, RideActivityMode.Flying200, result, false, false, false);
+        if (values.Count != 3) throw new Exception("PBs leaked between profiles or track versions.");
+        if (VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result, true, false, false))
+            throw new Exception("Test profile effort was saved as a PB.");
+    }),
+    ("visual track banking does not create route elevation or gradient", () =>
+    {
+        var route = GpsRoute() with { Environment = RouteEnvironment.Velodrome,
+            Points = GpsRoute().Points!.Select(p => p with { ElevationMeters = 0, GradientPercent = 0 }).ToArray() };
+        var visual = new VisualRoute(route);
+        if (visual.GetPoseAtDistance(100).BankSlope == 0) throw new Exception("Banked route has no visual slope.");
+        if (route.GetGradientAt(100) != 0 || route.TotalAscentMeters != 0)
+            throw new Exception("Visual bank changed authoritative route elevation.");
+    }),
+    ("250 m velodrome reference line remains lap-stable across repeated wraps", () =>
+    {
+        var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
+        if (Math.Abs(route.DistanceMeters - 250) > 1e-9 || route.Points?.Last().DistanceMeters != 250)
+            throw new Exception("Track definition does not end at its authoritative 250 m line.");
+        var visual = new VisualRoute(route);
+        var reference = visual.GetPoseAtDistance(137.25);
+        for (var lap = 1; lap <= 10_000; lap++)
+        {
+            var repeated = visual.GetPoseAtDistance(137.25 + 250 * lap);
+            if (Vector3.Distance(reference.Position, repeated.Position) > 1e-5f)
+                throw new Exception($"Route position drifted at lap {lap}.");
+        }
+        var before = visual.GetPoseAtDistance(249.99);
+        var after = visual.GetPoseAtDistance(0.01);
+        if (Vector3.Distance(before.Position, after.Position) > .05f)
+            throw new Exception("Lap seam is discontinuous.");
+    }),
     ("Zero length route is rejected", () =>
     {
         try { _ = new VisualRoute(GpsRoute() with { DistanceMeters = 0 }); }

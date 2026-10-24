@@ -20,6 +20,8 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			var ride = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate<Control>();
 			AddChild(ride);
 			await Frames(8);
+			foreach (var profileWindow in ride.GetNode<StartPanelController>("StartPanel").GetChildren().OfType<Window>())
+				profileWindow.Hide();
 			var selector = ride.GetNode<RouteSelectionPanelController>("RouteSelectionPanel");
 			selector.ShowRouteSelection();
 			await Frames(6);
@@ -34,6 +36,28 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			Check(preview.Route?.Id == selectedId, "route preview uses the selected route definition");
 			Check(selector.GetNode<Button>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Footer/StartRide").Disabled == false,
 				"Start Ride is enabled for the selected installed route");
+			var roadSelectionId = selectedId;
+			var trackRoute = RouteCatalog.GetById("wodra-velodrome-250")
+				?? throw new InvalidOperationException("Built-in velodrome route is missing from the production catalogue.");
+			var trackChoice = rows.GetChildren().OfType<HBoxContainer>().Select(row => row.GetNode<Button>("RouteChoice"))
+				.FirstOrDefault(button => button.Text.Contains(trackRoute.Name, StringComparison.OrdinalIgnoreCase))
+				?? throw new InvalidOperationException("Velodrome route is not visible in the route browser.");
+			trackChoice.EmitSignal(Button.SignalName.Pressed);
+			await Frames(2);
+			var activityPicker = selector.GetNode<OptionButton>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Footer/TrackActivityMode");
+			var pacerPicker = selector.GetNode<OptionButton>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Footer/PacerPresetPicker");
+			Check(selector.SelectedRouteId == trackRoute.Id && preview.Route?.Id == trackRoute.Id,
+				"velodrome route and its selected preview use the same definition");
+			Check(activityPicker.IsVisibleInTree() && activityPicker.ItemCount == trackRoute.SupportedModes.Count,
+				"track mode selector exposes exactly the route's supported activities");
+			Check(!pacerPicker.IsVisibleInTree(), "unsupported pacer selector is hidden for the solo track");
+			if (!IsHeadless) Capture("velodrome-route-selection.png");
+			var roadChoice = rows.GetChildren().OfType<HBoxContainer>().Select(row => row.GetNode<Button>("RouteChoice"))
+				.First(button => button.Name == "RouteChoice" && button.Text.Contains(RouteCatalog.GetById(roadSelectionId)!.Name,
+					StringComparison.OrdinalIgnoreCase));
+			roadChoice.EmitSignal(Button.SignalName.Pressed);
+			await Frames(2);
+			selectedId = roadSelectionId;
 
 			var saved = GameBootstrap.Settings.RouteFavoritesByProfile.ToDictionary(pair => pair.Key, pair => pair.Value.ToList());
 			var activeProfile = GameBootstrap.Settings.ActiveProfileId;

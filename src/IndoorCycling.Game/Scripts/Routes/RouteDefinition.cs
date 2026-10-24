@@ -14,6 +14,12 @@ public sealed record RouteDefinition(
 	IReadOnlyList<RoutePoint>? Points = null
 )
 {
+	/// <summary>Route environment is independent of the activity mode selected for a ride.</summary>
+	public RouteEnvironment Environment { get; init; } = RouteEnvironment.Road;
+	/// <summary>Modes explicitly supported by this environment. An empty value preserves legacy route behavior.</summary>
+	public IReadOnlyList<RideActivityMode> SupportedModes { get; init; } = [];
+	/// <summary>Optional feature support. Legacy routes retain the existing road feature set.</summary>
+	public RouteCapabilities Capabilities { get; init; } = RouteCapabilities.LegacyRoad;
 	/// <summary>Route geometry type shown in the route catalogue.</summary>
 	public string RouteType { get; init; } = "Loop";
 	public string Difficulty { get; init; } = "Unrated";
@@ -133,4 +139,13 @@ public sealed record RouteDefinition(
 	{
 		return a + ((b - a) * t);
 	}
+}
+
+public enum RouteEnvironment { Road, Velodrome, MountainBike }
+public enum RideActivityMode { FreeRide, LapTiming, Flying200, Standing500, Standing1000 }
+public sealed record RouteCapabilities(bool SupportsPacer, bool SupportsGhost, bool SupportsCollectibles,
+	bool SupportsTraffic, bool SupportsMultiplayer)
+{
+	public static RouteCapabilities LegacyRoad { get; } = new(true, true, true, true, true);
+	public static RouteCapabilities SoloVelodrome { get; } = new(false, false, false, false, false);
 }

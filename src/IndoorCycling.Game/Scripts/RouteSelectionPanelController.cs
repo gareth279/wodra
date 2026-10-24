@@ -19,6 +19,9 @@ public partial class RouteSelectionPanelController : Control
 	private Button? _favoriteButton, _startButton;
 	private RouteElevationPreview? _map, _elevation;
 	private OptionButton? _pacerPicker;
+	private OptionButton? _activityModePicker;
+	private Label? _activityModeLabel;
+	private Label? _pacerLabel;
 	private string _selectedId = RouteCatalog.Routes.FirstOrDefault()?.Id ?? "";
 	private readonly Dictionary<string, Button> _routeButtons = new(StringComparer.Ordinal);
 	private bool _returnToRouteAfterOptions;
@@ -100,7 +103,16 @@ public partial class RouteSelectionPanelController : Control
 		var spacer = new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill }; previewColumn.AddChild(spacer);
 		var footer = new HBoxContainer { Name = "Footer" }; footer.AddThemeConstantOverride("separation", 8); root.AddChild(footer);
 		var back = new Button { Text = "Back" }; back.Pressed += OnBackPressed; footer.AddChild(back);
-		var pacerLabel = new Label { Text = "Offline pacer", VerticalAlignment = VerticalAlignment.Center }; footer.AddChild(pacerLabel);
+		_pacerLabel = new Label { Text = "Offline pacer", VerticalAlignment = VerticalAlignment.Center }; footer.AddChild(_pacerLabel);
+		_activityModeLabel = new Label { Name = "TrackEffortLabel", Text = "Track mode", Visible = false, VerticalAlignment = VerticalAlignment.Center }; footer.AddChild(_activityModeLabel);
+		_activityModePicker = new OptionButton { Name = "TrackActivityMode", Visible = false, CustomMinimumSize = new Vector2(190, 0) };
+		_activityModePicker.AddItem("Free ride");
+		_activityModePicker.AddItem("Lap timing");
+		_activityModePicker.AddItem("Flying 200 m");
+		_activityModePicker.AddItem("Standing 500 m");
+		_activityModePicker.AddItem("Standing 1 km");
+		_activityModePicker.ItemSelected += _ => UpdatePreview();
+		footer.AddChild(_activityModePicker);
 		_pacerPicker = new OptionButton { Name = "PacerPresetPicker", CustomMinimumSize = new Vector2(270, 0) };
 		_pacerPicker.AddItem("No pacer"); foreach (var preset in PacerEffortPresets.All) _pacerPicker.AddItem($"{preset.Name} · {preset.TargetWattsPerKg:0.0} W/kg");
 		_pacerPicker.Select(Math.Max(0, PacerEffortPresets.All.ToList().FindIndex(p => p.Id == PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) + 1));
@@ -179,12 +191,29 @@ public partial class RouteSelectionPanelController : Control
 		if (route is null) { if (_previewTitle is not null) _previewTitle.Text = "Route unavailable"; if (_startButton is not null) _startButton.Disabled = true; return; }
 		if (_previewTitle is not null) _previewTitle.Text = route.Name;
 		if (_metadata is not null) _metadata.Text = $"{route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
+		if (_metadata is not null && route.Environment == RouteEnvironment.Velodrome &&
+			GameBootstrap.Settings.ActiveProfileId is { } profile)
+		{
+			var selectedMode = (RideActivityMode)Math.Clamp((int)(_activityModePicker?.Selected ?? 0), 0, 4);
+			var key = VelodromePersonalBestPolicy.Key(profile, route, selectedMode);
+			if (GameBootstrap.Settings.TrackPersonalBests.TryGetValue(key, out var pb))
+				_metadata.Text += $"  ·  PB {pb:0.00} s";
+		}
 		if (_description is not null) _description.Text = route.Description;
+		var isTrack = route.Environment == RouteEnvironment.Velodrome;
+		var hasEffortModes = route.SupportedModes.Count > 0;
+		if (_activityModeLabel is not null) _activityModeLabel.Visible = hasEffortModes;
+		if (_activityModePicker is not null) _activityModePicker.Visible = hasEffortModes;
+		if (_pacerPicker is not null) _pacerPicker.Visible = route.Capabilities.SupportsPacer;
+		if (_pacerLabel is not null) _pacerLabel.Visible = route.Capabilities.SupportsPacer;
+		if (_startButton is not null) _startButton.Text = isTrack ? "Start Track Ride" : "Start Ride";
 		if (_favoriteButton is not null) _favoriteButton.Text = IsFavorite(route.Id) ? "★ Favourited" : "☆ Favourite";
 		if (_map is not null) { _map.Route = route; _map.QueueRedraw(); }
 		if (_elevation is not null) { _elevation.Route = route; _elevation.QueueRedraw(); }
 		var first = route.GetSampleAt(0);
-		if (_routeEnds is not null) _routeEnds.Text = $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
+		if (_routeEnds is not null) _routeEnds.Text = isTrack
+			? "Reference line: 250 m per lap · start/finish line on the main straight\nChoose an effort below. Flying 200 m has a 50 m run-up; 500 m and 1 km begin from a standing start."
+			: $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
 		if (_startButton is not null) _startButton.Disabled = false;
 	}
 
@@ -192,7 +221,13 @@ public partial class RouteSelectionPanelController : Control
 	{
 		if (_session is null || RouteCatalog.GetById(_selectedId) is not { } route) return;
 		Hide(); _hud?.Show();
-		if (!await _session.StartTrainerSessionAsync(route)) { _hud?.Hide(); (_device as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen(); }
+		RideActivityMode? mode = null;
+		if (route.SupportedModes.Count > 0)
+		{
+			var index = Math.Clamp((int)(_activityModePicker?.Selected ?? 0), 0, route.SupportedModes.Count - 1);
+			mode = route.SupportedModes[index];
+		}
+		if (!await _session.StartTrainerSessionAsync(route, mode)) { _hud?.Hide(); (_device as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen(); }
 	}
 
 	private void OpenOptions()

@@ -522,6 +522,8 @@ public partial class CyclistVisual : Node3D
         UpdateFromRideState(new Vector3(position.X, position.Y, position.Z),
             new Vector3(input.Forward.X, input.Forward.Y, input.Forward.Z), input.SpeedKph,
             input.CadenceRpm, input.GradientPercent, input.Paused, deltaSeconds);
+        if (routePose.BankSlope != 0)
+            RotateObjectLocal(Vector3.Back, MathF.Atan(routePose.BankSlope));
     }
 
     public void UpdateFromRideState(Vector3 routePosition, Vector3 routeForward, double virtualSpeedKph,

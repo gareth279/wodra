@@ -11,7 +11,7 @@ public static class RiderVisualInputMath
     public static RiderVisualInput Create(RiderState rider, VisualRoutePose routePose, double gradientPercent)
     {
         var position = RiderLaneMath.OffsetPosition(routePose.Position, routePose.Forward,
-            (float)rider.LateralOffsetMeters) + Vector3.UnitY * 0.04f;
+            (float)rider.LateralOffsetMeters) + Vector3.UnitY * (0.04f + (float)rider.LateralOffsetMeters * routePose.BankSlope);
         return new RiderVisualInput(position, routePose.Forward, Math.Max(0, rider.VirtualSpeedMps) * 3.6,
             Math.Max(0, rider.CadenceRpm), gradientPercent, rider.Paused);
     }
