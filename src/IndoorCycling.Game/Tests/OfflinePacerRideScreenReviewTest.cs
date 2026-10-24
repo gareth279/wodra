@@ -43,6 +43,11 @@ public partial class OfflinePacerRideScreenReviewTest : Node
             GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(
                 ProjectSettings.GlobalizePath("user://"), "offline-pacer-fit");
             GameBootstrap.ConfigureFakeTrainerMode();
+            var reviewProfile = new RiderProfileRecord(Guid.NewGuid(), "Offline Pacer Review",
+                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 74, 9, true, 50);
+            await GameBootstrap.SaveProfileAsync(reviewProfile);
+            await GameBootstrap.SetActiveProfileAsync(reviewProfile.Id);
+            GameFeaturesPreference.Set(true);
 
             var session = screen.GetNode<RideSessionNode>("RideSessionNode");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
@@ -69,6 +74,9 @@ public partial class OfflinePacerRideScreenReviewTest : Node
                 throw new InvalidOperationException($"Pacer integration changed the accepted generic AI population or failed to create a visible rider model: AI={withPacer.AiRiderCount}, pacer visuals={withPacer.PacerVisualSamples}.");
             if (GameBootstrap.Settings.OnlineRidingEnabled || session.IsMultiplayerConnected)
                 throw new InvalidOperationException("The selected pacer should be available without online riding or multiplayer.");
+            var dummyProgress = await GameBootstrap.RideHistory!.GetAchievementProgressAsync(reviewProfile.Id);
+            if (dummyProgress.Totals != new IndoorCycling.Core.Progress.AchievementTotals(0, 0, 0) || dummyProgress.Awards.Count != 0)
+                throw new InvalidOperationException("Fake-trainer production RideScreen rides must not contribute to achievements or real-profile progress.");
 
             await session.ExitToRouteSelectionAsync();
             AssertPacerPanelHidden(screen, "after no-pacer ride ended");
@@ -174,6 +182,20 @@ public partial class OfflinePacerRideScreenReviewTest : Node
         if (world.RouteGeometry is null) throw new InvalidOperationException("The production route geometry did not load.");
 		var hud = screen.GetNode<HudController>("HudController");
 		var scenario = startedWithPacer ? "pacer-enabled" : "pacer-disabled";
+		if (startedWithPacer && _rideTraceCount == 1)
+		{
+			hud.ShowAchievementNotification("First 100 km");
+			if (!hud.GetNode<Control>("AchievementNotification").IsVisibleInTree())
+				throw new InvalidOperationException("The enabled achievement preference did not display a production RideScreen badge notification.");
+			await Settle(3);
+			CaptureRenderedReviewFrame("pacer-with-achievement-notification");
+			GameFeaturesPreference.Set(false);
+			hud.GetNode<Control>("AchievementNotification").Hide();
+			hud.ShowAchievementNotification("Must remain hidden");
+			if (hud.GetNode<Control>("AchievementNotification").IsVisibleInTree())
+				throw new InvalidOperationException("Achievement notification ignored the disabled Game features preference.");
+			GameFeaturesPreference.Set(true);
+		}
 		foreach (var debugVisible in new[] { false, true })
         {
 			hud.SetDebugDisplayEnabled(debugVisible);

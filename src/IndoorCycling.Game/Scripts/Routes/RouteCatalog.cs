@@ -82,6 +82,7 @@ public static class RouteCatalog
 			Difficulty = "Easy",
 			SourceAttribution = "© OpenStreetMap contributors, ODbL 1.0; elevation: LINZ hosted Otago Regional Council LiDAR DEM, CC-BY-4.0",
 			RouteDataVersion = 1,
+			SupportsVerifiedCompletionAchievement = true,
 			PublishedTotalAscentMeters = 18.164954589432845
 		};
 	}

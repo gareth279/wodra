@@ -796,8 +796,10 @@ public partial class RideMenuPanelController : Control
 		_hudController?.Hide();
 		if (_rideSessionNode?.LastCompletedActivityDraft is { } draft)
 		{
+			var summaryLines = new[] { _rideWorldView?.LastChallengeSummary, _rideSessionNode.LastAchievementSummary }
+				.Where(value => !string.IsNullOrWhiteSpace(value));
 			_rideHistoryPanel?.ShowCompletedSummary(draft, _rideSessionNode.LastCompletedActivityId,
-				_rideSessionNode.LastRecordingError, _rideWorldView?.LastChallengeSummary);
+				_rideSessionNode.LastRecordingError, string.Join("\n", summaryLines));
 			return;
 		}
 		_startPanel?.Show();

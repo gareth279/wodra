@@ -68,6 +68,9 @@ public partial class HudController : Control
 	private bool? _debugEnabledBeforeCapture;
 	private ScreenshotCaptureService? _screenshotCapture;
 	private Label? _screenshotToast;
+	private PanelContainer? _achievementToastPanel;
+	private Label? _achievementToastLabel;
+	private Timer? _achievementToastTimer;
 	private PanelContainer? _catchUpOfferPanel;
 	private Label? _catchUpOfferText;
 	private string _catchUpOfferRiderId = "";
@@ -195,6 +198,7 @@ public partial class HudController : Control
 			HorizontalAlignment = HorizontalAlignment.Center
 		};
 		AddChild(_screenshotToast);
+		BuildAchievementToast();
 		BuildCatchUpOffer();
 		BuildTrainerRecoveryAction();
 		_cameraInspectionLabel = new Label
@@ -944,6 +948,8 @@ public partial class HudController : Control
 
 	public void ResetHud()
 	{
+		_achievementToastTimer?.Stop();
+		_achievementToastPanel?.Hide();
 		_showPacerPanelForRide = null;
 		_pacerPanel?.Hide();
 		UpdateHudVisibility();
@@ -963,6 +969,42 @@ public partial class HudController : Control
 		_shownSpeed = _shownGradient = _shownDistance = double.NaN;
 		_shownPower = _shownCadence = null;
 		_shownElapsedSecond = -1;
+	}
+
+	private void BuildAchievementToast()
+	{
+		_achievementToastPanel = new PanelContainer
+		{
+			Name = "AchievementNotification",
+			Visible = false,
+			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 1, AnchorBottom = 1,
+			OffsetLeft = -205, OffsetRight = 205, OffsetTop = -166, OffsetBottom = -108,
+			MouseFilter = Control.MouseFilterEnum.Stop,
+			ZIndex = 80
+		};
+		var row = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+		_achievementToastLabel = new Label { Name = "AchievementNotificationText", AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+		row.AddChild(_achievementToastLabel);
+		var dismiss = new Button { Name = "DismissAchievementNotification", Text = "×", CustomMinimumSize = new Vector2(34, 34) };
+		dismiss.Pressed += DismissAchievementNotification;
+		row.AddChild(dismiss); _achievementToastPanel.AddChild(row); AddChild(_achievementToastPanel);
+		_achievementToastTimer = new Timer { OneShot = true, WaitTime = 6 };
+		_achievementToastTimer.Timeout += DismissAchievementNotification;
+		AddChild(_achievementToastTimer);
+	}
+
+	public void ShowAchievementNotification(string message)
+	{
+		if (!GameFeaturesPreference.Enabled || string.IsNullOrWhiteSpace(message) || _achievementToastPanel is null) return;
+		_achievementToastLabel!.Text = $"Badge earned\n{message}";
+		_achievementToastPanel.Show(); _achievementToastPanel.MoveToFront();
+		_achievementToastTimer?.Start(6);
+	}
+
+	private void DismissAchievementNotification()
+	{
+		_achievementToastTimer?.Stop(); _achievementToastPanel?.Hide();
 	}
 
 	public void SetRouteInfo(string routeName, string segmentName, double loopDistanceMeters, double routeDistanceMeters)
