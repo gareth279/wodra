@@ -1,6 +1,8 @@
 <Project Sdk="Godot.NET.Sdk/4.6.2">
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <WindowsSdkPackageVersion>10.0.19041.57</WindowsSdkPackageVersion>
+    <CsWinRTWindowsMetadata>$(NuGetPackageRoot)microsoft.windows.sdk.net.ref\$(WindowsSdkPackageVersion)\winmd</CsWinRTWindowsMetadata>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <Nullable>enable</Nullable>
     <AssemblyName>IndoorCycling.Game</AssemblyName>
@@ -14,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Velopack" Version="1.2.161" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
     <Content Include="Data\Cats\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />

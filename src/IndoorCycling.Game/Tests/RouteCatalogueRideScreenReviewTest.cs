@@ -114,13 +114,27 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			var options = ride.GetNode<Window>("OptionsWindow");
 			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/GameFeaturesToggle");
 			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OnlineRidingToggle");
+			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/MediaControlsToggle");
 			Check(gamingToggle is not null,
 				"Options window contains the moved gaming toggle");
 			Check(onlineToggle is not null,
 				"Options window contains the moved Online Riding toggle");
+			Check(mediaToggle is not null && new AppSettings().InRideMediaControlsEnabled == false,
+				"pre-ride Options exposes optional Windows media controls, disabled by default");
 			Check(gamingToggle?.ButtonPressed == GameFeaturesPreference.Enabled
-				&& onlineToggle?.ButtonPressed == GameBootstrap.Settings.OnlineRidingEnabled,
+				&& onlineToggle?.ButtonPressed == GameBootstrap.Settings.OnlineRidingEnabled
+				&& mediaToggle?.ButtonPressed == GameBootstrap.Settings.InRideMediaControlsEnabled,
 				"Options initializes from saved settings without changing their values");
+			var previousMediaPreference = GameBootstrap.Settings.InRideMediaControlsEnabled;
+			mediaToggle!.ButtonPressed = !previousMediaPreference;
+			mediaToggle.EmitSignal(CheckButton.SignalName.Toggled, mediaToggle.ButtonPressed);
+			await Frames(3);
+			Check(GameBootstrap.Settings.InRideMediaControlsEnabled == !previousMediaPreference
+				&& AppSettings.LoadOrCreate().InRideMediaControlsEnabled == !previousMediaPreference,
+				"media preference is saved and survives settings reload");
+			mediaToggle.ButtonPressed = previousMediaPreference;
+			mediaToggle.EmitSignal(CheckButton.SignalName.Toggled, mediaToggle.ButtonPressed);
+			await Frames(3);
 			if (!IsHeadless) Capture(options, "options.png");
 			var pacerBefore = GameBootstrap.Settings.PacerPresetId;
 			options.EmitSignal(Window.SignalName.CloseRequested);
