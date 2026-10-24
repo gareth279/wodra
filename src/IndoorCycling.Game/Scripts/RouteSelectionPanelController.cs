@@ -23,6 +23,7 @@ public partial class RouteSelectionPanelController : Control
 	private OptionButton? _routeGhostPicker;
 	private RouteEffortRecord? _bestRouteEffort, _previousRouteEffort;
 	private string _effortHistoryRouteId = "";
+	private Guid? _effortHistoryProfileId;
 	private int _effortHistoryGeneration;
 	private OptionButton? _activityModePicker;
 	private Label? _activityModeLabel;
@@ -98,7 +99,7 @@ public partial class RouteSelectionPanelController : Control
 		_previewTitle = new Label { Text = "Route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
 		_previewTitle.AddThemeFontSizeOverride("font_size", 20); detailHeader.AddChild(_previewTitle);
 		_favoriteButton = new Button { Name = "FavoriteRoute", Text = "☆ Favourite" }; _favoriteButton.Pressed += ToggleFavorite; detailHeader.AddChild(_favoriteButton);
-		_metadata = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_metadata);
+		_metadata = new Label { Name = "RouteMetadata", Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_metadata);
 		_description = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsVertical = Control.SizeFlags.ShrinkBegin }; previewColumn.AddChild(_description);
 		_map = new RouteElevationPreview { Name = "RouteOverview", ShowRoute = true, CustomMinimumSize = new Vector2(0, 150), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		previewColumn.AddChild(_map);
@@ -200,7 +201,13 @@ public partial class RouteSelectionPanelController : Control
 		var route = RouteCatalog.GetById(_selectedId);
 		if (route is null) { if (_previewTitle is not null) _previewTitle.Text = "Route unavailable"; if (_startButton is not null) _startButton.Disabled = true; return; }
 		if (_previewTitle is not null) _previewTitle.Text = route.Name;
-		if (_metadata is not null) _metadata.Text = $"{route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
+		if (_metadata is not null)
+		{
+			_metadata.Text = $"{route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
+			if (route.Environment == RouteEnvironment.Road &&
+				_effortHistoryRouteId == route.Id && _effortHistoryProfileId == ActiveProfileId)
+				_metadata.Text += $"  ·  Route PB {FormatEffort(_bestRouteEffort)}  ·  Previous {FormatEffort(_previousRouteEffort)}";
+		}
 		if (_metadata is not null && route.Environment == RouteEnvironment.Velodrome &&
 			GameBootstrap.Settings.ActiveProfileId is { } profile)
 		{
@@ -226,7 +233,8 @@ public partial class RouteSelectionPanelController : Control
 			? "Reference line: 250 m per lap · start/finish line on the main straight\nChoose an effort below. Flying 200 m has a 50 m run-up; 500 m and 1 km begin from a standing start."
 			: $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
 		if (_startButton is not null) _startButton.Disabled = false;
-		if (route.Environment == RouteEnvironment.Road && _effortHistoryRouteId != route.Id)
+		if (route.Environment == RouteEnvironment.Road &&
+			(_effortHistoryRouteId != route.Id || _effortHistoryProfileId != ActiveProfileId))
 			_ = RefreshRouteEffortChoicesAsync(route);
 	}
 
@@ -234,9 +242,10 @@ public partial class RouteSelectionPanelController : Control
 	{
 		var generation = ++_effortHistoryGeneration;
 		_effortHistoryRouteId = route.Id;
+		var profileId = ActiveProfileId;
+		_effortHistoryProfileId = profileId;
 		_bestRouteEffort = _previousRouteEffort = null;
 		if (_routeGhostPicker is not null) { _routeGhostPicker.Select(0); _routeGhostPicker.SetItemDisabled(1, true); _routeGhostPicker.SetItemDisabled(2, true); }
-		var profileId = ActiveProfileId;
 		var repository = GameBootstrap.RideHistory;
 		if (profileId is null || repository is null || !route.Capabilities.SupportsGhost) return;
 		RouteEffortHistory history;
@@ -250,11 +259,10 @@ public partial class RouteSelectionPanelController : Control
 			GameLogger.Log("route_effort_history_load_failed", new { routeId = route.Id, message = ex.Message });
 			return;
 		}
-		if (generation != _effortHistoryGeneration || route.Id != _selectedId) return;
+		if (generation != _effortHistoryGeneration || route.Id != _selectedId || profileId != ActiveProfileId) return;
 		_bestRouteEffort = history.PersonalBest;
 		_previousRouteEffort = history.Previous;
-		if (_metadata is not null)
-			_metadata.Text += $"  ·  Route PB {FormatEffort(_bestRouteEffort)}  ·  Previous {FormatEffort(_previousRouteEffort)}";
+		UpdatePreview();
 		if (_routeGhostPicker is not null)
 		{
 			_routeGhostPicker.SetItemDisabled(1, !HasGhostFile(_bestRouteEffort));

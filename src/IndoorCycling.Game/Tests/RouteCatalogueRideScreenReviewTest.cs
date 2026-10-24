@@ -1,4 +1,6 @@
 using Godot;
+using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Progress;
 using System;
 using System.IO;
 using System.Linq;
@@ -20,6 +22,16 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			var ride = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate<Control>();
 			AddChild(ride);
 			await Frames(8);
+			var originalProfileId = GameBootstrap.Settings.ActiveProfileId;
+			var reviewProfile = new RiderProfileRecord(Guid.NewGuid(), "Route PB Review Test",
+				DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 74, 9, true, 50);
+			await GameBootstrap.SaveProfileAsync(reviewProfile);
+			await GameBootstrap.SetActiveProfileAsync(reviewProfile.Id);
+			var routeForEffort = RouteCatalog.GetById("dunedin-one-way-oval-gardens")
+				?? throw new InvalidOperationException("Oval-to-Gardens road route is missing.");
+			var fixtureFit = Path.Combine(_output, "eligible-route-pb.fit");
+			await File.WriteAllBytesAsync(fixtureFit, [0x0, 0x0, 0x0, 0x0]);
+			await SeedRouteEffortChoicesAsync(reviewProfile.Id, routeForEffort, fixtureFit);
 			foreach (var profileWindow in ride.GetNode<StartPanelController>("StartPanel").GetChildren().OfType<Window>())
 				profileWindow.Hide();
 			var selector = ride.GetNode<RouteSelectionPanelController>("RouteSelectionPanel");
@@ -61,6 +73,14 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			var routeGhostChoice = selector.GetNode<OptionButton>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Content/Preview/RouteGhostChoiceRow/RouteGhostChoice");
 			Check(routeGhostChoice.IsVisibleInTree() && routeGhostChoice.ItemCount == 3 && routeGhostChoice.Selected == 0,
 				"road preview offers no-ghost, best-lap and previous-lap comparison choices");
+			var routeMetadataText = selector.GetNode<Label>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Content/Preview/RouteMetadata").Text;
+			Check(routeMetadataText.Contains("Route PB 8:00.00", StringComparison.Ordinal)
+				&& routeMetadataText.Contains("Previous 8:20.00", StringComparison.Ordinal),
+				$"route preview shows the profile's eligible best and previous efforts ({routeMetadataText})");
+			Check(!routeGhostChoice.IsItemDisabled(1) && !routeGhostChoice.IsItemDisabled(2),
+				"best and previous ghost choices are enabled when compatible FIT traces exist");
+			routeGhostChoice.Select(1);
+			await Frames(2);
 			if (!IsHeadless)
 			{
 				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
@@ -68,6 +88,7 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				await Frames(8);
 				CheckPanelWithinWindow(panel, "road preview minimum window");
 				Capture("route-catalogue-road-ghost-choice.png");
+				Capture("route-catalogue-road-best-lap-choice.png");
 			}
 			var routeGhostBeforeOptions = routeGhostChoice.Selected;
 
@@ -102,6 +123,12 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				"empty search state is shown clearly");
 			search.Text = ""; search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text);
 			await Frames(2);
+			var effortRouteChoice = rows.GetChildren().OfType<HBoxContainer>()
+				.Select(row => row.GetNode<Button>("RouteChoice"))
+				.First(button => button.Text.Contains(routeForEffort.Name, StringComparison.OrdinalIgnoreCase));
+			effortRouteChoice.EmitSignal(Button.SignalName.Pressed);
+			await Frames(4);
+			selectedId = selector.SelectedRouteId;
 
 			if (!IsHeadless)
 			{
@@ -192,8 +219,14 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				"Options returns to route selection without changing the selected route");
 			Check(routeGhostChoice.Selected == routeGhostBeforeOptions,
 				"Options navigation preserves route ghost comparison selection");
+			routeMetadataText = selector.GetNode<Label>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Content/Preview/RouteMetadata").Text;
+			Check(routeMetadataText.Split("Route PB", StringSplitOptions.None).Length == 2
+				&& routeMetadataText.Split("Previous", StringSplitOptions.None).Length == 2,
+				$"route personal-best metadata remains single and stable after preview refreshes ({routeMetadataText})");
 			Check(GameBootstrap.Settings.PacerPresetId == pacerBefore,
 				"Options navigation preserves the selected pacer");
+			if (originalProfileId is { } originalProfile) await GameBootstrap.SetActiveProfileAsync(originalProfile);
+			else { GameBootstrap.Settings.ActiveProfileId = null; GameBootstrap.Settings.Save(); }
 			if (_assertions == 0) throw new InvalidOperationException("Review test did not run assertions.");
 			GD.Print($"[RouteCatalogueReview] PASS: {_assertions} assertions; screenshots={_output}");
 			GetTree().Quit(0);
@@ -210,6 +243,27 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 		_assertions++;
 		if (!condition) throw new InvalidOperationException(message);
 		GD.Print($"[RouteCatalogueReview] PASS: {message}");
+	}
+	private static async Task SeedRouteEffortChoicesAsync(Guid profileId, RouteDefinition route, string fitFile)
+	{
+		var repository = GameBootstrap.RideHistory ?? throw new InvalidOperationException("Ride history repository is unavailable.");
+		var startedAt = DateTimeOffset.UtcNow.AddDays(-2);
+		foreach (var (attemptIndex, elapsedSeconds, at) in new[]
+		{
+			(0, 480d, startedAt), (1, 500d, startedAt.AddDays(1))
+		})
+		{
+			var activityId = Guid.NewGuid();
+			var activity = new RideActivityDraft(activityId, profileId, route.Id, route.Name, at,
+				RideActivityStatus.Completed, elapsedSeconds, route.DistanceMeters, 1,
+				null, null, null, null, null, null, 0, fitFile);
+			var effort = new RouteEffortRecord(Guid.NewGuid(), activityId, profileId, route.Id, route.Name,
+				route.GeometryFingerprint, route.RouteDataVersion, RouteEffortCatalog.ForwardDirection,
+				RouteEffortCatalog.FullRouteEffortId, 1, "Full route", RouteEffortKind.FullRoute,
+				attemptIndex, 0, route.DistanceMeters, at, elapsedSeconds, true, true, null, fitFile);
+			await repository.SaveCompletedActivityWithAchievementsAsync(activity, [],
+				new AchievementRideEvidence(false, "Road", route.RouteDataVersion, "FreeRide", false, false), [effort]);
+		}
 	}
 	private void CheckPanelWithinWindow(Control panel, string context)
 	{

@@ -8,6 +8,8 @@ The elapsed ride clock is used without subtracting pauses. A pause invalidates t
 
 Only completed efforts with matching profile, route ID, route version, direction and geometry fingerprint are returned as PB candidates. Legacy ride history has no such provenance and is not backfilled. Its saved FIT can still be replayed through the existing history action, explicitly labelled as an unverified saved replay. A missing or unreadable FIT prevents a route PB from being selected as a ghost but does not erase its time.
 
+No drafting or wind-shadow assist state is currently recorded in the local ride simulation or activity history, so route efforts do not claim a draft-assisted category or try to normalize for one. Existing multiplayer Catch Up and AI-pacer sync are repositioning actions, not drafting mechanics; Catch Up invalidates an active route effort while bringing an AI pacer to the player does not affect the player's effort.
+
 ## Authored segments (catalog version 1)
 
 | Stable ID | Route | Direction | Chainage | Distance | Boundary rationale |
