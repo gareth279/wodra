@@ -3,7 +3,6 @@ using System.IO;
 
 using System.Text.Json;
 using System;
-using System.Reflection;
 using Godot;
 
 public static class GameLogger
@@ -25,13 +24,13 @@ public static class GameLogger
 
 		var sessionId = Guid.NewGuid().ToString("N");
 		LogPath = Path.Combine(logDir, $"wodra-{System.DateTime.Now:yyyyMMdd-HHmmss}-{sessionId}.jsonl");
-		var version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-			?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+		var buildIdentity = BuildIdentity.Current;
+		var version = buildIdentity.ApplicationVersion;
 		CurrentSession = DiagnosticSessionCatalog.Start(OS.GetUserDataDir(), Path.GetFileName(LogPath), version,
 			GameBootstrap.Settings?.DebugModeEnabled == true, DateTimeOffset.UtcNow);
 		_initialised = true;
 
-		Log("logger_started", new { sessionId = CurrentSession.Id, appVersion = version, logPath = LogPath });
+		Log("logger_started", new { sessionId = CurrentSession.Id, appVersion = version, buildInformation = buildIdentity.ToPlainText(), logPath = LogPath });
 		GD.Print($"Wodra log: {LogPath}");
 	}
 

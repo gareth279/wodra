@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Velopack" Version="1.2.161" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/UpdateVersionPolicy.cs" Link="UpdateVersionPolicy.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/BuildIdentity.cs" Link="BuildIdentity.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/VelopackStartup.cs" Link="VelopackStartup.cs" />
   </ItemGroup>
 </Project>

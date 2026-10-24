@@ -53,6 +53,8 @@ public partial class StartPanelController : Control
 	private CheckButton? _optionsOnlineToggle;
 	private CheckButton? _optionsGameFeaturesToggle;
 	private CheckButton? _optionsMediaControlsToggle;
+	private Label? _aboutBuildInformation;
+	private Label? _aboutCopyStatus;
 	private bool _optionsReturnToRoutes;
 
 	public override void _Ready()
@@ -116,27 +118,58 @@ public partial class StartPanelController : Control
 		_optionsReturnToRoutes = returnToRoutes;
 		if (_optionsWindow is null)
 		{
-			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(440, 390), MinSize = new Vector2I(380, 340), Exclusive = true };
+			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(460, 500), MinSize = new Vector2I(400, 460), Exclusive = true };
 			var margin = new MarginContainer { Name = "OptionsMargin" };
-			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 16), ("margin_bottom", 16) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
+			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 12), ("margin_bottom", 12) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
+			margin.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 			_optionsWindow.AddChild(margin);
-			var column = new VBoxContainer { Name = "OptionsLayout" }; column.AddThemeConstantOverride("separation", 10); margin.AddChild(column);
+			var column = new VBoxContainer { Name = "OptionsLayout", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+			column.AddThemeConstantOverride("separation", 8); margin.AddChild(column);
 			var title = new Label { Text = "Options", HorizontalAlignment = HorizontalAlignment.Center }; title.AddThemeFontSizeOverride("font_size", 22); column.AddChild(title);
+			var optionsScroll = new ScrollContainer
+			{
+				Name = "OptionsScroll",
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+				HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
+			};
+			column.AddChild(optionsScroll);
+			var content = new VBoxContainer { Name = "OptionsContent", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			content.AddThemeConstantOverride("separation", 6);
+			optionsScroll.AddChild(content);
 			_optionsGameFeaturesToggle = new CheckButton { Name = "GameFeaturesToggle", Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
-			_optionsGameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled); column.AddChild(_optionsGameFeaturesToggle);
-			column.AddChild(new Label { Text = CollectibleUiText.HelperText, AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			_optionsGameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled); content.AddChild(_optionsGameFeaturesToggle);
+			content.AddChild(new Label { Text = CollectibleUiText.HelperText, AutowrapMode = TextServer.AutowrapMode.WordSmart });
 			_optionsOnlineToggle = new CheckButton { Name = "OnlineRidingToggle", Text = "Online Riding", ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled };
-			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; column.AddChild(_optionsOnlineToggle);
+			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; content.AddChild(_optionsOnlineToggle);
 			_onlineStatusLabel = new Label { Name = "OnlineStatusLabel", Text = "Online Riding: Off", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-			ConfigureStartupStatusLabel(_onlineStatusLabel); column.AddChild(_onlineStatusLabel);
+			ConfigureStartupStatusLabel(_onlineStatusLabel); content.AddChild(_onlineStatusLabel);
 			_optionsMediaControlsToggle = new CheckButton { Name = "MediaControlsToggle", Text = "In-ride media controls", ButtonPressed = GameBootstrap.Settings.InRideMediaControlsEnabled };
 			_optionsMediaControlsToggle.Toggled += enabled =>
 			{
 				GameBootstrap.Settings.InRideMediaControlsEnabled = enabled;
 				GameBootstrap.Settings.Save();
 			};
-			column.AddChild(_optionsMediaControlsToggle);
-			column.AddChild(new Label { Text = "Show and control the current Windows media session during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(_optionsMediaControlsToggle);
+			content.AddChild(new Label { Text = "Show and control the current Windows media session during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(new HSeparator());
+			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
+			_aboutBuildInformation = new Label
+			{
+				Name = "AboutBuildInformation",
+				Text = BuildIdentity.Current.ToPlainText(),
+				AutowrapMode = TextServer.AutowrapMode.WordSmart,
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+			};
+			_aboutBuildInformation.AddThemeFontSizeOverride("font_size", 12);
+			content.AddChild(_aboutBuildInformation);
+			var aboutActions = new HBoxContainer { Name = "AboutActions" }; content.AddChild(aboutActions);
+			var copyBuildInformation = new Button { Name = "CopyBuildInformationButton", Text = "Copy build information" };
+			copyBuildInformation.Pressed += CopyBuildInformation;
+			aboutActions.AddChild(copyBuildInformation);
+			_aboutCopyStatus = new Label { Name = "BuildInformationCopyStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_aboutCopyStatus.AddThemeFontSizeOverride("font_size", 12);
+			aboutActions.AddChild(_aboutCopyStatus);
 			var close = new Button { Text = "Done", CustomMinimumSize = new Vector2(0, 40) }; close.Pressed += CloseOptions; column.AddChild(close);
 			_optionsWindow.CloseRequested += CloseOptions;
 			GetParent().AddChild(_optionsWindow);
@@ -144,9 +177,18 @@ public partial class StartPanelController : Control
 		_optionsGameFeaturesToggle!.SetPressedNoSignal(GameFeaturesPreference.Enabled);
 		_optionsOnlineToggle!.SetPressedNoSignal(GameBootstrap.Settings.OnlineRidingEnabled);
 		_optionsMediaControlsToggle!.SetPressedNoSignal(GameBootstrap.Settings.InRideMediaControlsEnabled);
+		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
+		_aboutCopyStatus!.Text = string.Empty;
 		if (_optionsReturnToRoutes) Hide(); else Show();
 		_optionsWindow.PopupCentered();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
+	}
+
+	private void CopyBuildInformation()
+	{
+		var information = BuildIdentity.Current.ToPlainText();
+		DisplayServer.ClipboardSet(information);
+		if (_aboutCopyStatus is not null) _aboutCopyStatus.Text = "Copied.";
 	}
 
 	private void CloseOptions()

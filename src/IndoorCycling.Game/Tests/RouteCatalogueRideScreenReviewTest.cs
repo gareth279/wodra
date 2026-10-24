@@ -112,9 +112,9 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			selector.Call("OpenOptions");
 			await Frames(8);
 			var options = ride.GetNode<Window>("OptionsWindow");
-			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/GameFeaturesToggle");
-			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OnlineRidingToggle");
-			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/MediaControlsToggle");
+			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggle");
+			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineRidingToggle");
+			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggle");
 			Check(gamingToggle is not null,
 				"Options window contains the moved gaming toggle");
 			Check(onlineToggle is not null,
@@ -125,6 +125,20 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				&& onlineToggle?.ButtonPressed == GameBootstrap.Settings.OnlineRidingEnabled
 				&& mediaToggle?.ButtonPressed == GameBootstrap.Settings.InRideMediaControlsEnabled,
 				"Options initializes from saved settings without changing their values");
+			var aboutBuildInformation = options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/AboutBuildInformation");
+			var expectedBuildInformation = BuildIdentity.Current.ToPlainText();
+			Check(aboutBuildInformation.Text == expectedBuildInformation &&
+				aboutBuildInformation.Text.Contains(BuildIdentity.Current.ApplicationVersion, StringComparison.Ordinal) &&
+				aboutBuildInformation.Text.Contains(BuildIdentity.Current.SourceCommit, StringComparison.Ordinal),
+				"About shows the shared application, channel, configuration and source identity");
+			var copyBuildInformation = options.GetNode<Button>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/AboutActions/CopyBuildInformationButton");
+			copyBuildInformation.EmitSignal(Button.SignalName.Pressed);
+			await Frames(2);
+			Check(options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/AboutActions/BuildInformationCopyStatus").Text == "Copied.",
+				"Copy build information confirms the action");
+			if (!IsHeadless)
+				Check(DisplayServer.ClipboardGet().Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd('\r', '\n') == expectedBuildInformation,
+					"clipboard text exactly matches the displayed build identity");
 			var previousMediaPreference = GameBootstrap.Settings.InRideMediaControlsEnabled;
 			mediaToggle!.ButtonPressed = !previousMediaPreference;
 			mediaToggle.EmitSignal(CheckButton.SignalName.Toggled, mediaToggle.ButtonPressed);
@@ -135,7 +149,30 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			mediaToggle.ButtonPressed = previousMediaPreference;
 			mediaToggle.EmitSignal(CheckButton.SignalName.Toggled, mediaToggle.ButtonPressed);
 			await Frames(3);
-			if (!IsHeadless) Capture(options, "options.png");
+			if (!IsHeadless)
+			{
+				var optionsScroll = options.GetNode<ScrollContainer>("OptionsMargin/OptionsLayout/OptionsScroll");
+				foreach (var (size, label) in new[] { (new Vector2I(960, 540), "minimum"), (new Vector2I(1152, 648), "default") })
+				{
+					DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+					DisplayServer.WindowSetSize(size);
+					await Frames(6);
+					optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
+					await Frames(3);
+					Check(options.Size.Y <= size.Y - 24,
+						$"Options About panel fits the {label} window height");
+					Capture(options, $"options-about-{label}.png");
+					optionsScroll.ScrollVertical = 0;
+					await Frames(3);
+					Capture(options, $"options-{label}.png");
+				}
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+				await Frames(8);
+				optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
+				await Frames(3);
+				Capture(options, "options-about-fullscreen.png");
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+			}
 			var pacerBefore = GameBootstrap.Settings.PacerPresetId;
 			options.EmitSignal(Window.SignalName.CloseRequested);
 			await Frames(6);
