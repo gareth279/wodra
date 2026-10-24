@@ -12,11 +12,17 @@ public interface IRideHistoryRepository
     Task<IReadOnlyList<(string RouteId, string RouteName)>> GetHistoryRoutesAsync(Guid profileId, CancellationToken cancellationToken = default);
     Task<AchievementActivityResult> SaveCompletedActivityWithAchievementsAsync(RideActivityDraft activity,
         IReadOnlyCollection<RideActivityMedia> media, AchievementRideEvidence evidence,
+        IReadOnlyCollection<RouteEffortRecord>? routeEfforts = null,
         CancellationToken cancellationToken = default);
     Task<AchievementProgressSnapshot> GetAchievementProgressAsync(Guid profileId, CancellationToken cancellationToken = default);
     Task SetPersonalGoalAsync(Guid profileId, PersonalGoalMetric metric, double targetValue,
         DateTimeOffset createdAtUtc, CancellationToken cancellationToken = default);
     Task ClearPersonalGoalAsync(Guid profileId, CancellationToken cancellationToken = default);
+    Task<RouteEffortHistory> GetRouteEffortHistoryAsync(Guid profileId, string routeId,
+        string geometryFingerprint, string direction, string effortId, int limit = 100,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RouteEffortRecord>> GetRouteEffortsForActivityAsync(Guid activityId,
+        bool eligibleOnly = false, CancellationToken cancellationToken = default);
 }
 
 public enum RideHistorySort { Newest, Oldest, Distance, Duration, Elevation }

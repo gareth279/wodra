@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Implementations;
 
 /// <summary>Runs paired deterministic traces through the production RideScreen/session path.</summary>
@@ -31,6 +33,10 @@ public partial class RidePhysicsAmbientTrafficInvarianceReviewTest : Node
 			GameBootstrap.Settings.DummyTrainer.CadenceRpm = 92;
 			GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(ProjectSettings.GlobalizePath("user://"), "invariance-fit");
 			GameBootstrap.ConfigureFakeTrainerMode();
+			var reviewProfile = new RiderProfileRecord(Guid.NewGuid(), "Route Effort Invariance Test",
+				DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 74, 9, true, 50);
+			await GameBootstrap.SaveProfileAsync(reviewProfile);
+			await GameBootstrap.SetActiveProfileAsync(reviewProfile.Id);
 
 			var session = screen.GetNode<RideSessionNode>("RideSessionNode");
 			var world = screen.GetNode<RideWorldView>("RideWorldView");
@@ -43,6 +49,32 @@ public partial class RidePhysicsAmbientTrafficInvarianceReviewTest : Node
 			var withoutTraffic = await RunTrace(screen, session, world, route, includeCar: false);
 
 			AssertEquivalent(withTraffic, withoutTraffic);
+			await session.ExitToRouteSelectionAsync();
+			world.SetProcess(true); await Settle(2); world.SetProcess(false);
+			var withoutEffortInstrumentation = await RunTrace(screen, session, world, route, includeCar: false,
+				includeGhost: false, enableRouteEfforts: false);
+			await session.ExitToRouteSelectionAsync();
+			world.SetProcess(true); await Settle(2); world.SetProcess(false);
+			var withGhostAndEfforts = await RunTrace(screen, session, world, route, includeCar: false,
+				includeGhost: true, enableRouteEfforts: true);
+			AssertEquivalent(withoutEffortInstrumentation, withGhostAndEfforts);
+			if (withoutEffortInstrumentation.RecordedSamples.Count != withGhostAndEfforts.RecordedSamples.Count)
+				throw new InvalidOperationException("Ghost/segment instrumentation changed production FIT input sample count.");
+			for (var index = 0; index < withoutEffortInstrumentation.RecordedSamples.Count; index++)
+			{
+				var a = withoutEffortInstrumentation.RecordedSamples[index];
+				var b = withGhostAndEfforts.RecordedSamples[index];
+				if (a.State != b.State || a.Gradient != b.Gradient
+					|| a.Telemetry.PowerWatts != b.Telemetry.PowerWatts
+					|| a.Telemetry.CadenceRpm != b.Telemetry.CadenceRpm
+					|| a.Telemetry.HeartRateBpm != b.Telemetry.HeartRateBpm
+					|| a.Telemetry.SpeedKph != b.Telemetry.SpeedKph
+					|| a.Telemetry.HasPowerMeasurement != b.Telemetry.HasPowerMeasurement
+					|| a.Telemetry.HasCadenceMeasurement != b.Telemetry.HasCadenceMeasurement
+					|| a.Telemetry.HasReceivedMeasurement != b.Telemetry.HasReceivedMeasurement
+					|| a.Telemetry.HasSpeedMeasurement != b.Telemetry.HasSpeedMeasurement)
+					throw new InvalidOperationException($"Ghost/segment instrumentation changed FIT input sample {index}: baseline={a}, observed={b}.");
+			}
 			var routeGeometry = world.RouteGeometry ?? throw new InvalidOperationException("Production route geometry disappeared during the paired trace.");
 			double accumulatedTurnRadians = 0;
 			var previousForward = routeGeometry.GetPoseAtDistance(withTraffic.Frames[0].State.DistanceMeters).Forward;
@@ -67,7 +99,7 @@ public partial class RidePhysicsAmbientTrafficInvarianceReviewTest : Node
 			}
 
 			await session.ExitToRouteSelectionAsync();
-			GD.Print($"[RidePhysicsAmbientTrafficInvarianceReview] PASS: actual RideScreen/RideSession path; traffic car started 18 m ahead at 2 m/s on a {NarrowRoadMeters:F1} m fixture road; {withTraffic.Frames.Count} identical production ticks traversed {accumulatedTurnRadians:F3} rad of route bends with 1,200 W catch-up, steering inputs and {LowFrameRateSeconds:F2} s frame hitches; RideState, HUD-authoritative distance, lateral steering, power/cadence, trainer grade commands and {withTraffic.RecordedSamples.Count} FIT inputs matched traffic-off exactly.");
+			GD.Print($"[RidePhysicsAmbientTrafficInvarianceReview] PASS: actual RideScreen/RideSession path; road traces, ghost display and route-effort tracking preserved player progress, telemetry, trainer grade commands and {withTraffic.RecordedSamples.Count} FIT inputs across identical power/steering samples and {LowFrameRateSeconds:F2} s frame hitches.");
 			GetTree().Quit(0);
 		}
 		catch (Exception error)
@@ -78,10 +110,20 @@ public partial class RidePhysicsAmbientTrafficInvarianceReviewTest : Node
 	}
 
 	private async Task<TraceResult> RunTrace(Node screen, RideSessionNode session, RideWorldView world,
-		RouteDefinition route, bool includeCar)
+		RouteDefinition route, bool includeCar, bool includeGhost = false, bool enableRouteEfforts = true)
 	{
+		if (includeGhost)
+		{
+			var trace = new GhostRideTrace(Enumerable.Range(0, 601).Select(index => new GhostRideSample(index,
+				route.DistanceMeters * index / 600d, route.DistanceMeters / 600d, 500, 90)));
+			session.SetPendingGhost(new GhostRiderStateSource(trace, route.Id, "Best lap", true, repeatRouteLap: true), Guid.NewGuid());
+		}
+		else session.ClearPendingGhost();
 		if (!await session.StartTrainerSessionAsync(route))
 			throw new InvalidOperationException("Could not start the production RideScreen trainer session.");
+		if (!enableRouteEfforts)
+			typeof(RideSessionNode).GetField("_routeEffortTracker", BindingFlags.Instance | BindingFlags.NonPublic)!
+				.SetValue(session, null);
 		screen.GetNode<HudController>("HudController").Show();
 		screen.GetNode<StartPanelController>("StartPanel").Hide();
 		session.SetProcess(false);

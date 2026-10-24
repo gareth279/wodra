@@ -42,6 +42,31 @@ public partial class VelodromeRideScreenReviewTest : Node
             await Settle(1.5);
             Assert(world.RouteGeometry is not null && session.CurrentRoute?.Id == road.Id, "production road route starts from its existing definition");
             Capture("road-before-track.png");
+            hud.SetRouteEffortStatus("Signal Hill climb · 2:31.0 · 0.8s behind PB", true);
+            hud.SetGhostIndicator("Best lap ghost · you 1.2s ahead");
+            if (!IsHeadless)
+            {
+                foreach (var (size, debug) in new[]
+                {
+                    (new Vector2I(960, 540), false), (new Vector2I(1152, 648), true),
+                    (new Vector2I(1152, 648), false), (new Vector2I(1920, 1080), true)
+                })
+                {
+                    DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                    DisplayServer.WindowSetSize(size);
+                    hud.SetDebugDisplayEnabled(debug);
+                    await Settle(.4);
+                    Capture($"road-segment-ghost-{size.X}x{size.Y}-debug-{debug}.png");
+                }
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+                hud.SetDebugDisplayEnabled(false);
+                await Settle(.5);
+                Capture("road-segment-ghost-fullscreen.png");
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                DisplayServer.WindowSetSize(new Vector2I(1152, 648));
+            }
+            hud.SetRouteEffortStatus(null, false);
+            hud.SetGhostIndicator(null);
             await session.ExitToRouteSelectionAsync();
 
             if (!await session.StartTrainerSessionAsync(track, RideActivityMode.Flying200))

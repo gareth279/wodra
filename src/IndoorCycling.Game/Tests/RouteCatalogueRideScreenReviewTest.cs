@@ -56,8 +56,20 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				.First(button => button.Name == "RouteChoice" && button.Text.Contains(RouteCatalog.GetById(roadSelectionId)!.Name,
 					StringComparison.OrdinalIgnoreCase));
 			roadChoice.EmitSignal(Button.SignalName.Pressed);
-			await Frames(2);
+		await Frames(6);
 			selectedId = roadSelectionId;
+			var routeGhostChoice = selector.GetNode<OptionButton>("PanelContainer/RouteBrowserMargin/RouteBrowserLayout/Content/Preview/RouteGhostChoiceRow/RouteGhostChoice");
+			Check(routeGhostChoice.IsVisibleInTree() && routeGhostChoice.ItemCount == 3 && routeGhostChoice.Selected == 0,
+				"road preview offers no-ghost, best-lap and previous-lap comparison choices");
+			if (!IsHeadless)
+			{
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+				DisplayServer.WindowSetSize(new Vector2I(960, 540));
+				await Frames(8);
+				CheckPanelWithinWindow(panel, "road preview minimum window");
+				Capture("route-catalogue-road-ghost-choice.png");
+			}
+			var routeGhostBeforeOptions = routeGhostChoice.Selected;
 
 			var saved = GameBootstrap.Settings.RouteFavoritesByProfile.ToDictionary(pair => pair.Key, pair => pair.Value.ToList());
 			var activeProfile = GameBootstrap.Settings.ActiveProfileId;
@@ -178,6 +190,8 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			await Frames(6);
 			Check(selector.IsVisibleInTree() && selector.SelectedRouteId == selectedId,
 				"Options returns to route selection without changing the selected route");
+			Check(routeGhostChoice.Selected == routeGhostBeforeOptions,
+				"Options navigation preserves route ghost comparison selection");
 			Check(GameBootstrap.Settings.PacerPresetId == pacerBefore,
 				"Options navigation preserves the selected pacer");
 			if (_assertions == 0) throw new InvalidOperationException("Review test did not run assertions.");

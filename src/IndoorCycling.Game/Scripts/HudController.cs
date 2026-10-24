@@ -28,6 +28,8 @@ public partial class HudController : Control
 	private Label? _elapsedLabel;
 	private Label? _ghostLabel;
 	private Label? _trackEffortLabel;
+	private Label? _routeEffortLabel;
+	private double _routeEffortStatusSeconds;
 	private Button? _trackRetryButton;
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
@@ -172,6 +174,11 @@ public partial class HudController : Control
 		_trackEffortLabel.AddThemeColorOverride("font_color", new Color(.96f, .9f, .72f));
 		_trackEffortLabel.AddThemeFontSizeOverride("font_size", 14);
 		topHudLayout?.AddChild(_trackEffortLabel);
+		_routeEffortLabel = new Label { Name = "RouteEffortStatus", Visible = false,
+			HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+		_routeEffortLabel.AddThemeColorOverride("font_color", new Color(.96f, .9f, .72f));
+		_routeEffortLabel.AddThemeFontSizeOverride("font_size", 13);
+		topHudLayout?.AddChild(_routeEffortLabel);
 		_trackRetryButton = new Button { Name = "RetryTrackEffort", Text = "Retry effort", Visible = false,
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
 		_trackRetryButton.Pressed += async () =>
@@ -1333,6 +1340,14 @@ public partial class HudController : Control
 		_ghostLabel.Text = text ?? string.Empty;
 	}
 
+	public void SetRouteEffortStatus(string? text, bool active)
+	{
+		if (_routeEffortLabel is null) return;
+		_routeEffortLabel.Visible = !string.IsNullOrWhiteSpace(text);
+		_routeEffortLabel.Text = text ?? string.Empty;
+		_routeEffortStatusSeconds = active ? double.PositiveInfinity : 5.0;
+	}
+
 	public void SetTrackEffortStatus(string? text, bool completed = false)
 	{
 		if (_trackEffortLabel is null) return;
@@ -1405,6 +1420,8 @@ public partial class HudController : Control
 
 	public override void _Process(double delta)
 	{
+		if (_routeEffortLabel?.Visible == true && !double.IsPositiveInfinity(_routeEffortStatusSeconds) &&
+			(_routeEffortStatusSeconds -= delta) <= 0) _routeEffortLabel.Visible = false;
 		UpdateMediaControls(delta);
 		if (Interlocked.Exchange(ref _mediaUiRefreshRequested, 0) != 0)
 		{

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using IndoorCycling.Core.Simulation;
+using IndoorCycling.Core.Models;
 
 public partial class RouteSelectionPanelController : Control
 {
@@ -19,6 +20,10 @@ public partial class RouteSelectionPanelController : Control
 	private Button? _favoriteButton, _startButton;
 	private RouteElevationPreview? _map, _elevation;
 	private OptionButton? _pacerPicker;
+	private OptionButton? _routeGhostPicker;
+	private RouteEffortRecord? _bestRouteEffort, _previousRouteEffort;
+	private string _effortHistoryRouteId = "";
+	private int _effortHistoryGeneration;
 	private OptionButton? _activityModePicker;
 	private Label? _activityModeLabel;
 	private Label? _pacerLabel;
@@ -100,6 +105,11 @@ public partial class RouteSelectionPanelController : Control
 		_elevation = new RouteElevationPreview { Name = "ElevationProfile", CustomMinimumSize = new Vector2(0, 92), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		previewColumn.AddChild(_elevation);
 		_routeEnds = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_routeEnds);
+		var ghostChoiceRow = new HBoxContainer { Name = "RouteGhostChoiceRow" };
+		ghostChoiceRow.AddChild(new Label { Text = "Compare with", VerticalAlignment = VerticalAlignment.Center });
+		_routeGhostPicker = new OptionButton { Name = "RouteGhostChoice", CustomMinimumSize = new Vector2(160, 0), TooltipText = "Compare against an eligible route lap" };
+		_routeGhostPicker.AddItem("No route ghost"); _routeGhostPicker.AddItem("Best lap"); _routeGhostPicker.AddItem("Previous lap");
+		ghostChoiceRow.AddChild(_routeGhostPicker); previewColumn.AddChild(ghostChoiceRow);
 		var spacer = new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill }; previewColumn.AddChild(spacer);
 		var footer = new HBoxContainer { Name = "Footer" }; footer.AddThemeConstantOverride("separation", 8); root.AddChild(footer);
 		var back = new Button { Text = "Back" }; back.Pressed += OnBackPressed; footer.AddChild(back);
@@ -206,6 +216,7 @@ public partial class RouteSelectionPanelController : Control
 		if (_activityModePicker is not null) _activityModePicker.Visible = hasEffortModes;
 		if (_pacerPicker is not null) _pacerPicker.Visible = route.Capabilities.SupportsPacer;
 		if (_pacerLabel is not null) _pacerLabel.Visible = route.Capabilities.SupportsPacer;
+		if (_routeGhostPicker is not null) _routeGhostPicker.Visible = route.Environment == RouteEnvironment.Road && route.Capabilities.SupportsGhost;
 		if (_startButton is not null) _startButton.Text = isTrack ? "Start Track Ride" : "Start Ride";
 		if (_favoriteButton is not null) _favoriteButton.Text = IsFavorite(route.Id) ? "★ Favourited" : "☆ Favourite";
 		if (_map is not null) { _map.Route = route; _map.QueueRedraw(); }
@@ -215,11 +226,53 @@ public partial class RouteSelectionPanelController : Control
 			? "Reference line: 250 m per lap · start/finish line on the main straight\nChoose an effort below. Flying 200 m has a 50 m run-up; 500 m and 1 km begin from a standing start."
 			: $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
 		if (_startButton is not null) _startButton.Disabled = false;
+		if (route.Environment == RouteEnvironment.Road && _effortHistoryRouteId != route.Id)
+			_ = RefreshRouteEffortChoicesAsync(route);
 	}
+
+	private async Task RefreshRouteEffortChoicesAsync(RouteDefinition route)
+	{
+		var generation = ++_effortHistoryGeneration;
+		_effortHistoryRouteId = route.Id;
+		_bestRouteEffort = _previousRouteEffort = null;
+		if (_routeGhostPicker is not null) { _routeGhostPicker.Select(0); _routeGhostPicker.SetItemDisabled(1, true); _routeGhostPicker.SetItemDisabled(2, true); }
+		var profileId = ActiveProfileId;
+		var repository = GameBootstrap.RideHistory;
+		if (profileId is null || repository is null || !route.Capabilities.SupportsGhost) return;
+		RouteEffortHistory history;
+		try
+		{
+			history = await repository.GetRouteEffortHistoryAsync(profileId.Value, route.Id, route.GeometryFingerprint,
+				RouteEffortCatalog.ForwardDirection, RouteEffortCatalog.FullRouteEffortId);
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("route_effort_history_load_failed", new { routeId = route.Id, message = ex.Message });
+			return;
+		}
+		if (generation != _effortHistoryGeneration || route.Id != _selectedId) return;
+		_bestRouteEffort = history.PersonalBest;
+		_previousRouteEffort = history.Previous;
+		if (_metadata is not null)
+			_metadata.Text += $"  ·  Route PB {FormatEffort(_bestRouteEffort)}  ·  Previous {FormatEffort(_previousRouteEffort)}";
+		if (_routeGhostPicker is not null)
+		{
+			_routeGhostPicker.SetItemDisabled(1, !HasGhostFile(_bestRouteEffort));
+			_routeGhostPicker.SetItemDisabled(2, !HasGhostFile(_previousRouteEffort));
+		}
+	}
+
+	private static bool HasGhostFile(RouteEffortRecord? effort) => effort?.FitFilePath is { Length: > 0 } path && System.IO.File.Exists(path);
+
+	private static string FormatEffort(RouteEffortRecord? effort) => effort is null
+		? "—" : TimeSpan.FromSeconds(effort.ElapsedSeconds).ToString(effort.ElapsedSeconds >= 3600 ? @"h\:mm\:ss" : @"m\:ss\.ff");
 
 	private async void StartSelectedRoute()
 	{
 		if (_session is null || RouteCatalog.GetById(_selectedId) is not { } route) return;
+		if (route.Environment == RouteEnvironment.Road && _routeGhostPicker?.Selected is 1 or 2)
+			await PrepareSelectedRouteGhostAsync(route, _routeGhostPicker.Selected == 1 ? _bestRouteEffort : _previousRouteEffort);
+		else _session.ClearPendingGhost();
 		Hide(); _hud?.Show();
 		RideActivityMode? mode = null;
 		if (route.SupportedModes.Count > 0)
@@ -228,6 +281,32 @@ public partial class RouteSelectionPanelController : Control
 			mode = route.SupportedModes[index];
 		}
 		if (!await _session.StartTrainerSessionAsync(route, mode)) { _hud?.Hide(); (_device as DeviceConnectionPanelController)?.ShowTrainerConnectionScreen(); }
+	}
+
+	private async Task PrepareSelectedRouteGhostAsync(RouteDefinition route, RouteEffortRecord? effort)
+	{
+		if (effort is null || GameBootstrap.RideHistory is not { } history)
+		{ _session?.ClearPendingGhost(); return; }
+		try
+		{
+			var activity = await history.GetActivityAsync(effort.ActivityId);
+			if (activity?.FitFilePath is not { Length: > 0 } fitPath || !System.IO.File.Exists(fitPath))
+			{ _session?.ClearPendingGhost(); _hud?.Call("SetStatus", "The selected comparison FIT is unavailable; the ride will start without a ghost."); return; }
+			var trace = await Task.Run(() => new GhostRideTraceLoader().Load(fitPath));
+			var cropped = trace.SliceByDistance(effort.StartRouteDistanceMeters, effort.EndRouteDistanceMeters);
+			var splits = (await history.GetRouteEffortsForActivityAsync(effort.ActivityId, eligibleOnly: true))
+				.Where(item => item.Kind == RouteEffortKind.Segment && item.AttemptIndex == effort.AttemptIndex &&
+					item.GeometryFingerprint == route.GeometryFingerprint && item.Direction == effort.Direction)
+				.ToDictionary(item => item.EffortId, item => item.ElapsedSeconds, StringComparer.Ordinal);
+			_session?.SetPendingGhost(new GhostRiderStateSource(cropped, route.Id,
+				effort == _bestRouteEffort ? "Best lap" : "Previous lap", true, repeatRouteLap: true, splits), effort.ActivityId);
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("route_ghost_load_failed", new { activityId = effort.ActivityId, routeId = route.Id, message = ex.Message });
+			_session?.ClearPendingGhost();
+			_hud?.Call("SetStatus", "The selected comparison could not be loaded; the ride will start without a ghost.");
+		}
 	}
 
 	private void OpenOptions()

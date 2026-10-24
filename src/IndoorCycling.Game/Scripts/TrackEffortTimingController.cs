@@ -133,7 +133,8 @@ public sealed class TrackEffortTimingController
         _splits.Add(split);
         StatusText = $"Split {split.Number} · {split.DistanceMeters:0} m · {split.ElapsedSeconds:0.00} s";
     }
-    private static bool Crossed(double before, double after, double line) => before < line && after >= line;
+    private static bool Crossed(double before, double after, double line) =>
+        IndoorCycling.Core.Simulation.DistanceBoundaryMath.Crossed(before, after, line);
     private static double Interpolate(double beforeD, double afterD, double beforeT, double afterT, double line) =>
-        afterD <= beforeD ? afterT : beforeT + (afterT - beforeT) * Math.Clamp((line - beforeD) / (afterD - beforeD), 0, 1);
+        IndoorCycling.Core.Simulation.DistanceBoundaryMath.InterpolateElapsed(beforeD, afterD, beforeT, afterT, line);
 }

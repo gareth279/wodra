@@ -557,7 +557,7 @@ public partial class RideWorldView : Node3D
             (int)Math.Floor(distance / routeLength) + 1, lateralOffset,
             Math.Max(0, rideState.VirtualSpeedKph) / 3.6, rideState.CurrentPowerWatts,
             _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, rideState.ElapsedSeconds);
-        _session.GhostRider?.Update(rideState.ElapsedSeconds, routeLength, _session.IsRidePaused);
+        _session.GhostRider?.Update(rideState.ElapsedSeconds, routeLength, _session.IsRidePaused, rideState.DistanceMeters);
         if (_pacers.Count > 0)
         {
             var index = 0;

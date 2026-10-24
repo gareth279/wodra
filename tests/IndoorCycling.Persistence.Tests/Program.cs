@@ -53,6 +53,33 @@ try
     Assert((await repository.GetActivityMediaAsync(id)).Single().ImagePath == media.ImagePath, "media association persists without copying");
     Assert(saved!.RouteId == "route-a" && Math.Abs(saved.DurationSeconds - 4) < .001 && saved.ElevationGainMeters == 33, "activity fields roundtrip");
 
+    var routeFingerprint = new string('a', 64);
+    var effortBase = new RouteEffortRecord(Guid.NewGuid(), id, rider.Id, "route-a", "Route A", routeFingerprint, 1,
+        "forward", "segment.test.v1", 1, "Test segment", RouteEffortKind.Segment, 0, 100, 200,
+        started.AddMinutes(1), 22, true, true, null, null);
+    var effortLater = effortBase with { Id = Guid.NewGuid(), AttemptIndex = 1, StartRouteDistanceMeters = 1100,
+        EndRouteDistanceMeters = 1200, StartedAtUtc = started.AddMinutes(2), ElapsedSeconds = 19 };
+    var effortEvidence = new AchievementRideEvidence(true, "Road", 1, "FreeRide", false, false);
+    await repository.SaveCompletedActivityWithAchievementsAsync(first, [], effortEvidence, [effortBase, effortLater]);
+    await repository.SaveCompletedActivityWithAchievementsAsync(first, [], effortEvidence, [effortBase, effortLater]);
+    var routeEfforts = await repository.GetRouteEffortHistoryAsync(rider.Id, "route-a", routeFingerprint, "forward", "segment.test.v1");
+    Assert(routeEfforts.Attempts.Count == 2 && routeEfforts.PersonalBest?.ElapsedSeconds == 19 &&
+        routeEfforts.Previous?.AttemptIndex == 1, "route PB and previous efforts persist per profile and remain idempotent across retries");
+    Assert((await repository.GetRouteEffortHistoryAsync(dev.Id, "route-a", routeFingerprint, "forward", "segment.test.v1")).Attempts.Count == 0 &&
+        (await repository.GetRouteEffortHistoryAsync(rider.Id, "route-a", new string('b', 64), "forward", "segment.test.v1")).Attempts.Count == 0,
+        "route effort history isolates profiles and geometry fingerprints");
+    var manyAttempts = Enumerable.Range(2, 105).Select(index => effortBase with
+    {
+        Id = Guid.NewGuid(), AttemptIndex = index, StartRouteDistanceMeters = index * 100,
+        EndRouteDistanceMeters = index * 100 + 100, StartedAtUtc = started.AddMinutes(index + 2), ElapsedSeconds = 30 + index
+    }).ToArray();
+    await repository.SaveCompletedActivityWithAchievementsAsync(first, [], effortEvidence, manyAttempts);
+    var recentEfforts = await repository.GetRouteEffortHistoryAsync(rider.Id, "route-a", routeFingerprint, "forward", "segment.test.v1", limit: 100);
+    Assert(recentEfforts.Attempts.Count == 101 && recentEfforts.PersonalBest?.AttemptIndex == 1 &&
+        recentEfforts.Previous?.AttemptIndex == 106,
+        "bounded effort history always includes the global best and most recent eligible attempt");
+    Assert((await repository.GetRouteEffortsForActivityAsync(id)).Count == 107, "multiple segment attempts remain linked to one saved activity");
+
     var secondId = Guid.NewGuid();
     var second = first with { Id = secondId, RouteId = "route-b", RouteName = "Route B", StartedAtUtc = started.AddMinutes(1) };
     await repository.SaveCompletedActivityAsync(second, []);
@@ -103,7 +130,7 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 4, "0 to 4 achievement/profile schema migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 5, "0 to 5 achievement/profile/route-effort schema migration");
     }
     RiderProfileRecord.Validate("Valid", 75, 8);
     foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })
