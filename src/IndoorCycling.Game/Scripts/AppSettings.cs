@@ -14,6 +14,8 @@ public sealed class AppSettings
 	public RecordingSettings Recording { get; set; } = new();
 	public StravaClientSettings StravaClient { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
+	/// <summary>Optional in-ride controls for the Windows OS-selected media session. Disabled by default.</summary>
+	public bool InRideMediaControlsEnabled { get; set; }
 	public bool OnlineRidingEnabled { get; set; }
 	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";

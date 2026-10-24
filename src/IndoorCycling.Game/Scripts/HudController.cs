@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Media;
 using IndoorCycling.Core.Simulation;
 
 public partial class HudController : Control
@@ -70,7 +72,7 @@ public partial class HudController : Control
 	private Label? _screenshotToast;
 	private PanelContainer? _achievementToastPanel;
 	private Label? _achievementToastLabel;
-	private Timer? _achievementToastTimer;
+	private Godot.Timer? _achievementToastTimer;
 	private PanelContainer? _catchUpOfferPanel;
 	private Label? _catchUpOfferText;
 	private string _catchUpOfferRiderId = "";
@@ -95,6 +97,45 @@ public partial class HudController : Control
 	private Button? _dummyCadenceMinusFive;
 	private Button? _dummyCadencePlusFive;
 	private bool _dummyActive;
+	private PanelContainer? _mediaPanel;
+	private Label? _mediaTitleLabel;
+	private Label? _mediaArtistLabel;
+	private Button? _mediaPreviousButton;
+	private Button? _mediaPlaybackButton;
+	private Button? _mediaNextButton;
+	private ISystemMediaSessionProvider? _mediaSessionProvider;
+	private SystemMediaSessionSnapshot _mediaSnapshot = SystemMediaSessionSnapshot.Unavailable;
+	private SystemMediaSessionSnapshot? _pendingMediaSnapshot;
+	private CancellationTokenSource? _mediaSessionCancellation;
+	private int _mediaPollInFlight;
+	private int _mediaCommandInFlight;
+	private int _mediaUiRefreshRequested;
+	private int _mediaLifecycleGeneration;
+	private double _mediaPollCountdown;
+	private ISystemMediaSessionProvider? _mediaSessionProviderOverride;
+
+	/// <summary>Injectable before entering the scene tree for deterministic production-scene review tests.</summary>
+	public ISystemMediaSessionProvider? MediaSessionProviderOverride
+	{
+		get => _mediaSessionProviderOverride;
+		set
+		{
+			_mediaSessionProviderOverride = value;
+			if (!IsInsideTree()) return;
+			var old = _mediaSessionProvider;
+			Interlocked.Increment(ref _mediaLifecycleGeneration);
+			_mediaSessionProvider = value ?? (OperatingSystem.IsWindows() ? new WindowsMediaSessionProvider() : null);
+			_mediaSnapshot = SystemMediaSessionSnapshot.Unavailable;
+			Interlocked.Exchange(ref _pendingMediaSnapshot, null);
+			_mediaPollCountdown = 0;
+			_mediaSessionCancellation?.Cancel();
+			_mediaSessionCancellation?.Dispose();
+			_mediaSessionCancellation = null;
+			RefreshMediaPanel();
+			CallDeferred(nameof(UpdateDebugOverlayLayout));
+			if (old is not null) _ = old.DisposeAsync();
+		}
+	}
 
 	public override void _Ready()
 	{
@@ -178,7 +219,9 @@ public partial class HudController : Control
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
+		_mediaSessionProvider = _mediaSessionProviderOverride ?? (OperatingSystem.IsWindows() ? new WindowsMediaSessionProvider() : null);
 		BuildPacerPanel();
+		BuildMediaPanel();
 		_routeGradientInset = new RouteGradientInset
 		{
 			Name = "RouteGradientInset",
@@ -722,6 +765,7 @@ public partial class HudController : Control
 		ResizeBottomBar();
 		if (_pacerPanel is not null) _pacerPanel.Size = _pacerPanel.GetCombinedMinimumSize();
 		if (_bottomHudPanel is not null) _bottomHudPanel.Size = _bottomHudPanel.GetCombinedMinimumSize();
+		if (_mediaPanel is not null) _mediaPanel.Size = _mediaPanel.GetCombinedMinimumSize();
 		var layout = RideHudOverlayLayoutPolicy.ForViewport(viewport.X, viewport.Y,
 			_routeGradientInset?.Visible == true,
 			_pacerPanel?.Visible == true,
@@ -729,12 +773,209 @@ public partial class HudController : Control
 			_pacerPanel?.GetCombinedMinimumSize().Y ?? 0,
 			_dummyControlPanel?.Visible == true,
 			_bottomHudPanel?.GetCombinedMinimumSize().X ?? 0,
-			_bottomHudPanel?.GetCombinedMinimumSize().Y ?? 0);
+			_bottomHudPanel?.GetCombinedMinimumSize().Y ?? 0,
+			_mediaPanel?.Visible == true,
+			_mediaPanel?.GetCombinedMinimumSize().X ?? 0,
+			_mediaPanel?.GetCombinedMinimumSize().Y ?? 0,
+			_debugOverlay?.Visible == true);
 		SetAnchoredBounds(_debugOverlay, layout.DebugPanel);
 		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
 		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
 		if (_pacerPanel?.Visible == true) SetAnchoredBounds(_pacerPanel, layout.PacerPanel);
 		SetAnchoredBounds(_bottomHudPanel, layout.BottomBar);
+		if (_mediaPanel?.Visible == true) SetAnchoredBounds(_mediaPanel, layout.MediaPanel);
+		PositionAchievementToast(viewport, layout);
+	}
+
+	private void PositionAchievementToast(Vector2 viewport, RideHudOverlayLayout layout)
+	{
+		if (_achievementToastPanel?.Visible != true) return;
+		var toastWidth = 410f;
+		var toastHeight = 58f;
+		var left = _debugOverlay?.Visible == true
+			? layout.DebugPanel.Right + RideHudOverlayLayoutPolicy.PanelGap
+			: MathF.Max(RideHudOverlayLayoutPolicy.ViewportMargin, (viewport.X - toastWidth) / 2);
+		if (_routeGradientInset?.Visible == true && left < layout.RouteInset.Right && left + toastWidth > layout.RouteInset.X)
+			toastWidth = MathF.Min(toastWidth, MathF.Max(230, layout.RouteInset.X - left - RideHudOverlayLayoutPolicy.PanelGap));
+		if (left + toastWidth > viewport.X - RideHudOverlayLayoutPolicy.ViewportMargin)
+			left = MathF.Max(RideHudOverlayLayoutPolicy.ViewportMargin, (viewport.X - toastWidth) / 2);
+		var top = viewport.Y - 166;
+		var toast = new RideHudOverlayBounds(left, top, MathF.Min(toastWidth, viewport.X - left - RideHudOverlayLayoutPolicy.ViewportMargin), toastHeight);
+		foreach (var reserved in new[]
+		{
+			_mediaPanel?.Visible == true ? layout.MediaPanel : default,
+			_dummyControlPanel?.Visible == true ? layout.DummyPanel : default
+		})
+		{
+			if (reserved.Width <= 0 || reserved.Height <= 0) continue;
+			var intersectsHorizontally = toast.X < reserved.Right && toast.Right > reserved.X;
+			if (intersectsHorizontally && toast.Bottom > reserved.Y - RideHudOverlayLayoutPolicy.PanelGap)
+			{
+				toast = toast with { Y = reserved.Y - RideHudOverlayLayoutPolicy.PanelGap - toast.Height };
+			}
+		}
+		toast = toast with { Y = MathF.Max(RideHudOverlayLayoutPolicy.ViewportMargin, toast.Y) };
+		SetAnchoredBounds(_achievementToastPanel, toast);
+	}
+
+	private void BuildMediaPanel()
+	{
+		_mediaPanel = new PanelContainer
+		{
+			Name = "MediaControlsPanel", Visible = false,
+			CustomMinimumSize = new Vector2(RideHudOverlayLayoutPolicy.MediaPanelMinimumWidth, RideHudOverlayLayoutPolicy.MediaPanelHeight),
+			MouseFilter = Control.MouseFilterEnum.Stop, ZIndex = 20
+		};
+		var panelStyle = new StyleBoxFlat
+		{
+			BgColor = new Color(.045f, .055f, .06f, .94f),
+			BorderColor = new Color(.34f, .39f, .38f, .85f),
+			BorderWidthLeft = 1, BorderWidthTop = 1, BorderWidthRight = 1, BorderWidthBottom = 1,
+			CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6
+		};
+		panelStyle.ContentMarginLeft = panelStyle.ContentMarginRight = 6;
+		panelStyle.ContentMarginTop = panelStyle.ContentMarginBottom = 5;
+		_mediaPanel.AddThemeStyleboxOverride("panel", panelStyle);
+		var row = new HBoxContainer { Name = "MediaControlsLayout", Alignment = BoxContainer.AlignmentMode.Center };
+		row.AddThemeConstantOverride("separation", 4);
+		var metadata = new VBoxContainer { Name = "MediaMetadata", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			Alignment = BoxContainer.AlignmentMode.Center };
+		metadata.AddThemeConstantOverride("separation", 1);
+		_mediaTitleLabel = new Label { Name = "MediaTitle", CustomMinimumSize = new Vector2(112, 0),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+			TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, VerticalAlignment = VerticalAlignment.Center };
+		_mediaTitleLabel.AddThemeFontSizeOverride("font_size", 13);
+		_mediaArtistLabel = new Label { Name = "MediaArtist", CustomMinimumSize = new Vector2(112, 0),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+			TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, VerticalAlignment = VerticalAlignment.Center };
+		_mediaArtistLabel.AddThemeFontSizeOverride("font_size", 11);
+		_mediaArtistLabel.AddThemeColorOverride("font_color", new Color(.72f, .75f, .72f, 1));
+		metadata.AddChild(_mediaTitleLabel);
+		metadata.AddChild(_mediaArtistLabel);
+		row.AddChild(metadata);
+		_mediaPreviousButton = BuildMediaButton("MediaPreviousButton", "‹", "Previous track", SystemMediaCommand.Previous);
+		_mediaPlaybackButton = BuildMediaButton("MediaPlaybackButton", "▶", "Play", SystemMediaCommand.TogglePlayback);
+		_mediaNextButton = BuildMediaButton("MediaNextButton", "›", "Next track", SystemMediaCommand.Next);
+		row.AddChild(_mediaPreviousButton);
+		row.AddChild(_mediaPlaybackButton);
+		row.AddChild(_mediaNextButton);
+		_mediaPanel.AddChild(row);
+		AddChild(_mediaPanel);
+	}
+
+	private Button BuildMediaButton(string name, string text, string tooltip, SystemMediaCommand command)
+	{
+		var button = new Button { Name = name, Text = text, TooltipText = tooltip,
+			CustomMinimumSize = new Vector2(30, 34), FocusMode = Control.FocusModeEnum.All };
+		button.AddThemeFontSizeOverride("font_size", 16);
+		button.Pressed += () => QueueMediaCommand(command);
+		return button;
+	}
+
+	private void UpdateMediaControls(double delta)
+	{
+		var enabled = GameBootstrap.Settings?.InRideMediaControlsEnabled == true &&
+			_rideSessionNode?.IsRideActive == true && _hudDisplayEnabled && _mediaSessionProvider is not null;
+		if (!enabled)
+		{
+			if (_mediaSessionCancellation is not null)
+				Interlocked.Increment(ref _mediaLifecycleGeneration);
+			_mediaSessionCancellation?.Cancel();
+			_mediaSessionCancellation?.Dispose();
+			_mediaSessionCancellation = null;
+			_mediaPollCountdown = 0;
+			_mediaSnapshot = SystemMediaSessionSnapshot.Unavailable;
+			Interlocked.Exchange(ref _pendingMediaSnapshot, null);
+			RefreshMediaPanel();
+			return;
+		}
+
+		_mediaSessionCancellation ??= new CancellationTokenSource();
+		var incoming = Interlocked.Exchange(ref _pendingMediaSnapshot, null);
+		if (incoming is not null && incoming != _mediaSnapshot)
+		{
+			_mediaSnapshot = incoming;
+			RefreshMediaPanel();
+			CallDeferred(nameof(UpdateDebugOverlayLayout));
+		}
+		_mediaPollCountdown -= delta;
+		if (_mediaPollCountdown <= 0)
+		{
+			_mediaPollCountdown = 1.0;
+			if (Interlocked.CompareExchange(ref _mediaPollInFlight, 1, 0) == 0)
+				_ = ReadMediaSnapshotAsync(_mediaSessionCancellation.Token, Volatile.Read(ref _mediaLifecycleGeneration));
+		}
+	}
+
+	private async Task ReadMediaSnapshotAsync(CancellationToken cancellationToken, int generation)
+	{
+		try
+		{
+			var snapshot = await _mediaSessionProvider!.ReadCurrentAsync(cancellationToken).WaitAsync(TimeSpan.FromMilliseconds(1200));
+			if (!cancellationToken.IsCancellationRequested && generation == Volatile.Read(ref _mediaLifecycleGeneration))
+				Interlocked.Exchange(ref _pendingMediaSnapshot, snapshot);
+		}
+		catch
+		{
+			if (!cancellationToken.IsCancellationRequested && generation == Volatile.Read(ref _mediaLifecycleGeneration))
+				Interlocked.Exchange(ref _pendingMediaSnapshot, SystemMediaSessionSnapshot.Unavailable);
+		}
+		finally { Interlocked.Exchange(ref _mediaPollInFlight, 0); }
+	}
+
+	private void RefreshMediaPanel()
+	{
+		if (_mediaPanel is null) return;
+		var visible = _mediaSnapshot.IsAvailable && GameBootstrap.Settings?.InRideMediaControlsEnabled == true &&
+			_rideSessionNode?.IsRideActive == true && _hudDisplayEnabled;
+		_mediaPanel.Visible = visible;
+		if (!visible)
+		{
+			_mediaTitleLabel!.Text = string.Empty;
+			_mediaTitleLabel.TooltipText = string.Empty;
+			_mediaArtistLabel!.Text = string.Empty;
+			_mediaArtistLabel.TooltipText = string.Empty;
+			_mediaPreviousButton!.Visible = _mediaPlaybackButton!.Visible = _mediaNextButton!.Visible = false;
+			return;
+		}
+
+		var hasTitle = !string.IsNullOrWhiteSpace(_mediaSnapshot.Title);
+		_mediaTitleLabel!.Text = hasTitle ? _mediaSnapshot.Title! : _mediaSnapshot.Artist ?? "Media session";
+		_mediaTitleLabel.TooltipText = hasTitle ? _mediaSnapshot.Title! : _mediaSnapshot.Artist ?? string.Empty;
+		var state = _mediaSnapshot.PlaybackState == SystemMediaPlaybackState.Paused ? "Paused" :
+			_mediaSnapshot.PlaybackState == SystemMediaPlaybackState.Playing ? "Playing" : "Ready";
+		_mediaArtistLabel!.Text = !hasTitle || string.IsNullOrWhiteSpace(_mediaSnapshot.Artist)
+			? state : $"{_mediaSnapshot.Artist} · {state}";
+		_mediaArtistLabel.TooltipText = _mediaSnapshot.Artist ?? string.Empty;
+		var commandBusy = Volatile.Read(ref _mediaCommandInFlight) != 0;
+		_mediaPreviousButton!.Visible = _mediaSnapshot.CanSkipPrevious;
+		_mediaPreviousButton.Disabled = commandBusy || !_mediaSnapshot.CanSkipPrevious;
+		_mediaNextButton!.Visible = _mediaSnapshot.CanSkipNext;
+		_mediaNextButton.Disabled = commandBusy || !_mediaSnapshot.CanSkipNext;
+		_mediaPlaybackButton!.Visible = _mediaSnapshot.CanTogglePlayback;
+		_mediaPlaybackButton.Disabled = commandBusy || !_mediaSnapshot.CanTogglePlayback;
+		var pause = _mediaSnapshot.PlaybackState == SystemMediaPlaybackState.Playing;
+		_mediaPlaybackButton.Text = pause ? "Ⅱ" : "▶";
+		_mediaPlaybackButton.TooltipText = pause ? "Pause" : "Play";
+	}
+
+	private void QueueMediaCommand(SystemMediaCommand command)
+	{
+		if (_mediaSessionProvider is null || !GameBootstrap.Settings.InRideMediaControlsEnabled ||
+			Interlocked.CompareExchange(ref _mediaCommandInFlight, 1, 0) != 0) return;
+		RefreshMediaPanel();
+		_ = ExecuteMediaCommandAsync(command, _mediaSessionCancellation?.Token ?? CancellationToken.None);
+	}
+
+	private async Task ExecuteMediaCommandAsync(SystemMediaCommand command, CancellationToken cancellationToken)
+	{
+		try { _ = await _mediaSessionProvider!.TryExecuteAsync(command, cancellationToken).WaitAsync(TimeSpan.FromMilliseconds(1200)); }
+		catch { }
+		finally
+		{
+			Interlocked.Exchange(ref _mediaCommandInFlight, 0);
+			Interlocked.Exchange(ref _mediaUiRefreshRequested, 1);
+		}
 	}
 
 	private void ResizeBottomBar()
@@ -977,6 +1218,7 @@ public partial class HudController : Control
 		{
 			Name = "AchievementNotification",
 			Visible = false,
+			CustomMinimumSize = new Vector2(230, 58),
 			AnchorLeft = .5f, AnchorRight = .5f, AnchorTop = 1, AnchorBottom = 1,
 			OffsetLeft = -205, OffsetRight = 205, OffsetTop = -166, OffsetBottom = -108,
 			MouseFilter = Control.MouseFilterEnum.Stop,
@@ -989,7 +1231,7 @@ public partial class HudController : Control
 		var dismiss = new Button { Name = "DismissAchievementNotification", Text = "×", CustomMinimumSize = new Vector2(34, 34) };
 		dismiss.Pressed += DismissAchievementNotification;
 		row.AddChild(dismiss); _achievementToastPanel.AddChild(row); AddChild(_achievementToastPanel);
-		_achievementToastTimer = new Timer { OneShot = true, WaitTime = 6 };
+		_achievementToastTimer = new Godot.Timer { OneShot = true, WaitTime = 6 };
 		_achievementToastTimer.Timeout += DismissAchievementNotification;
 		AddChild(_achievementToastTimer);
 	}
@@ -999,6 +1241,7 @@ public partial class HudController : Control
 		if (!GameFeaturesPreference.Enabled || string.IsNullOrWhiteSpace(message) || _achievementToastPanel is null) return;
 		_achievementToastLabel!.Text = $"Badge earned\n{message}";
 		_achievementToastPanel.Show(); _achievementToastPanel.MoveToFront();
+		UpdateDebugOverlayLayout();
 		_achievementToastTimer?.Start(6);
 	}
 
@@ -1144,6 +1387,7 @@ public partial class HudController : Control
 		if (_debugOverlay is not null) _debugOverlay.Visible = _debugEnabled;
 		UpdatePacerPanelVisibility();
 		UpdateDebugOverlayLayout();
+		RefreshMediaPanel();
 		if (_cameraInspectionLabel is not null)
 		{
 			if (!rideIsActive) _cameraInspectionLabelSeconds = 0;
@@ -1161,11 +1405,25 @@ public partial class HudController : Control
 
 	public override void _Process(double delta)
 	{
+		UpdateMediaControls(delta);
+		if (Interlocked.Exchange(ref _mediaUiRefreshRequested, 0) != 0)
+		{
+			RefreshMediaPanel();
+			CallDeferred(nameof(UpdateDebugOverlayLayout));
+		}
 		if (_catFeedbackLabel?.Visible == true && (_catFeedbackSeconds -= delta) <= 0) _catFeedbackLabel.Visible = false;
-		if (_cameraInspectionLabelSeconds <= 0) return;
-		_cameraInspectionLabelSeconds = Math.Max(0, _cameraInspectionLabelSeconds - delta);
+		if (_cameraInspectionLabelSeconds > 0) _cameraInspectionLabelSeconds = Math.Max(0, _cameraInspectionLabelSeconds - delta);
 		if (_cameraInspectionLabelSeconds == 0 && _cameraInspectionLabel is not null)
 			_cameraInspectionLabel.Visible = false;
+	}
+
+	public override void _ExitTree()
+	{
+		Interlocked.Increment(ref _mediaLifecycleGeneration);
+		_mediaSessionCancellation?.Cancel();
+		_mediaSessionCancellation?.Dispose();
+		_mediaSessionCancellation = null;
+		if (_mediaSessionProvider is not null) _ = _mediaSessionProvider.DisposeAsync();
 	}
 
 	private static void ConfigureClippedLabel(Label? label)

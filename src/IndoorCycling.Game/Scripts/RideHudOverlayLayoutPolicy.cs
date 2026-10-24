@@ -12,7 +12,8 @@ public readonly record struct RideHudOverlayLayout(
 	RideHudOverlayBounds RouteInset,
 	RideHudOverlayBounds DummyPanel,
 	RideHudOverlayBounds PacerPanel,
-	RideHudOverlayBounds BottomBar);
+	RideHudOverlayBounds BottomBar,
+	RideHudOverlayBounds MediaPanel);
 
 public static class RideHudOverlayLayoutPolicy
 {
@@ -26,10 +27,13 @@ public static class RideHudOverlayLayoutPolicy
 	public const float DummyPanelWidth = RouteInsetWidth;
 	public const float DummyPanelHeight = 144;
 	public const float BottomPanelMargin = 12;
+	public const float MediaPanelHeight = 58;
+	public const float MediaPanelMinimumWidth = 246;
 
 	public static RideHudOverlayLayout ForViewport(float width, float height, bool showRouteInset,
 		bool showPacerPanel = false, float pacerWidth = 0, float pacerHeight = 0,
-		bool showDummyPanel = false, float bottomBarWidth = 0, float bottomBarHeight = 0)
+		bool showDummyPanel = false, float bottomBarWidth = 0, float bottomBarHeight = 0,
+		bool showMediaPanel = false, float mediaWidth = 0, float mediaHeight = 0, bool showDebugPanel = false)
 	{
 		width = MathF.Max(width, ViewportMargin * 2 + 1);
 		height = MathF.Max(height, ViewportMargin * 2 + 1);
@@ -65,6 +69,24 @@ public static class RideHudOverlayLayoutPolicy
 			dummy = new RideHudOverlayBounds(dummyLeft, height - BottomPanelMargin - dummyHeight,
 				dummyWidth, dummyHeight);
 		}
-		return new(debug, inset, dummy, pacer, bar);
+		var media = new RideHudOverlayBounds(ViewportMargin, bar.Y - PanelGap - mediaHeight, 0, mediaHeight);
+		if (showMediaPanel)
+		{
+			var mediaLeft = showDebugPanel ? debug.Right + PanelGap : ViewportMargin;
+			var mediaRight = showPacerPanel ? pacer.X - PanelGap : width - ViewportMargin;
+			var mediaTop = bar.Y - PanelGap - mediaHeight;
+			if (showDummyPanel && mediaTop + mediaHeight > dummy.Y - PanelGap)
+				mediaTop = dummy.Y - PanelGap - mediaHeight;
+
+			var availableRight = mediaRight;
+			if (showRouteInset && mediaTop < inset.Bottom && mediaTop + mediaHeight > inset.Y &&
+				mediaLeft < inset.Right && availableRight > inset.X)
+				availableRight = MathF.Min(availableRight, inset.X - PanelGap);
+
+			var availableWidth = MathF.Max(0, availableRight - mediaLeft);
+			var fittedWidth = MathF.Min(mediaWidth, availableWidth);
+			media = new RideHudOverlayBounds(mediaLeft, mediaTop, fittedWidth, mediaHeight);
+		}
+		return new(debug, inset, dummy, pacer, bar, media);
 	}
 }

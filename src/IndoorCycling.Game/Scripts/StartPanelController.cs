@@ -52,6 +52,7 @@ public partial class StartPanelController : Control
 	private Window? _optionsWindow;
 	private CheckButton? _optionsOnlineToggle;
 	private CheckButton? _optionsGameFeaturesToggle;
+	private CheckButton? _optionsMediaControlsToggle;
 	private bool _optionsReturnToRoutes;
 
 	public override void _Ready()
@@ -115,7 +116,7 @@ public partial class StartPanelController : Control
 		_optionsReturnToRoutes = returnToRoutes;
 		if (_optionsWindow is null)
 		{
-			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(440, 320), MinSize = new Vector2I(380, 280), Exclusive = true };
+			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(440, 390), MinSize = new Vector2I(380, 340), Exclusive = true };
 			var margin = new MarginContainer { Name = "OptionsMargin" };
 			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 16), ("margin_bottom", 16) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
 			_optionsWindow.AddChild(margin);
@@ -128,12 +129,21 @@ public partial class StartPanelController : Control
 			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; column.AddChild(_optionsOnlineToggle);
 			_onlineStatusLabel = new Label { Name = "OnlineStatusLabel", Text = "Online Riding: Off", AutowrapMode = TextServer.AutowrapMode.WordSmart };
 			ConfigureStartupStatusLabel(_onlineStatusLabel); column.AddChild(_onlineStatusLabel);
+			_optionsMediaControlsToggle = new CheckButton { Name = "MediaControlsToggle", Text = "In-ride media controls", ButtonPressed = GameBootstrap.Settings.InRideMediaControlsEnabled };
+			_optionsMediaControlsToggle.Toggled += enabled =>
+			{
+				GameBootstrap.Settings.InRideMediaControlsEnabled = enabled;
+				GameBootstrap.Settings.Save();
+			};
+			column.AddChild(_optionsMediaControlsToggle);
+			column.AddChild(new Label { Text = "Show and control the current Windows media session during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
 			var close = new Button { Text = "Done", CustomMinimumSize = new Vector2(0, 40) }; close.Pressed += CloseOptions; column.AddChild(close);
 			_optionsWindow.CloseRequested += CloseOptions;
 			GetParent().AddChild(_optionsWindow);
 		}
 		_optionsGameFeaturesToggle!.SetPressedNoSignal(GameFeaturesPreference.Enabled);
 		_optionsOnlineToggle!.SetPressedNoSignal(GameBootstrap.Settings.OnlineRidingEnabled);
+		_optionsMediaControlsToggle!.SetPressedNoSignal(GameBootstrap.Settings.InRideMediaControlsEnabled);
 		if (_optionsReturnToRoutes) Hide(); else Show();
 		_optionsWindow.PopupCentered();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
