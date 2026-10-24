@@ -43,7 +43,7 @@ public sealed class SqliteRideHistoryRepository : IRideHistoryRepository
             query.CommandText = "SELECT version FROM schema_info LIMIT 1";
             version = Convert.ToInt32(await query.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
         }
-        if (version > 4) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
+        if (version > 5) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
         if (version == 0)
         {
             using var transaction = db.BeginTransaction();
@@ -108,6 +108,28 @@ CREATE TABLE personal_goals (
  rider_profile_id TEXT PRIMARY KEY REFERENCES rider_profiles(id) ON DELETE CASCADE,
  metric TEXT NOT NULL, target_value REAL NOT NULL, created_utc TEXT NOT NULL);
 UPDATE schema_info SET version=4;";
+            await migrate.ExecuteNonQueryAsync(cancellationToken);
+            version = 4;
+        }
+        if (version == 4)
+        {
+            await using var migrate = db.CreateCommand();
+            migrate.CommandText = @"
+CREATE TABLE IF NOT EXISTS route_effort_results (
+ id TEXT PRIMARY KEY,
+ activity_id TEXT NOT NULL REFERENCES ride_activities(id) ON DELETE CASCADE,
+ rider_profile_id TEXT NOT NULL REFERENCES rider_profiles(id) ON DELETE CASCADE,
+ route_id TEXT NOT NULL, route_name TEXT NOT NULL, geometry_fingerprint TEXT NOT NULL,
+ route_definition_version INTEGER NOT NULL, direction TEXT NOT NULL,
+ effort_id TEXT NOT NULL, effort_version INTEGER NOT NULL, effort_name TEXT NOT NULL, kind TEXT NOT NULL,
+ attempt_index INTEGER NOT NULL, start_route_distance_meters REAL NOT NULL, end_route_distance_meters REAL NOT NULL,
+ started_utc TEXT NOT NULL, elapsed_seconds REAL NOT NULL, completed INTEGER NOT NULL, eligible INTEGER NOT NULL,
+ invalid_reason TEXT, fit_file_path TEXT,
+ UNIQUE(activity_id,effort_id,effort_version,attempt_index));
+CREATE INDEX IF NOT EXISTS ix_route_effort_lookup ON route_effort_results(
+ rider_profile_id,route_id,geometry_fingerprint,direction,effort_id,eligible,started_utc DESC);
+CREATE INDEX IF NOT EXISTS ix_route_effort_activity ON route_effort_results(activity_id,effort_id,attempt_index);
+UPDATE schema_info SET version=5;";
             await migrate.ExecuteNonQueryAsync(cancellationToken);
         }
     }
@@ -193,6 +215,7 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
 
     public async Task<AchievementActivityResult> SaveCompletedActivityWithAchievementsAsync(RideActivityDraft a,
         IReadOnlyCollection<RideActivityMedia> media, AchievementRideEvidence evidence,
+        IReadOnlyCollection<RouteEffortRecord>? routeEfforts = null,
         CancellationToken cancellationToken = default)
     {
         if (a.Status != RideActivityStatus.Completed)
@@ -234,6 +257,31 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
             Add(command, "$id", item.Id.ToString("D")); Add(command, "$activity", a.Id.ToString("D")); Add(command, "$image", item.ImagePath);
             Add(command, "$sidecar", item.SidecarPath); Add(command, "$captured", Time(item.CapturedAtUtc)); Add(command, "$type", item.MediaType);
             Add(command, "$mode", item.CaptureMode); Add(command, "$marker", item.MarkerNumber);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        foreach (var effort in routeEfforts ?? Array.Empty<RouteEffortRecord>())
+        {
+            ValidateEffortForActivity(effort, a);
+            await using var command = db.CreateCommand(); command.Transaction = transaction;
+            command.CommandText = @"INSERT OR IGNORE INTO route_effort_results(
+id,activity_id,rider_profile_id,route_id,route_name,geometry_fingerprint,route_definition_version,direction,
+effort_id,effort_version,effort_name,kind,attempt_index,start_route_distance_meters,end_route_distance_meters,
+started_utc,elapsed_seconds,completed,eligible,invalid_reason,fit_file_path)
+VALUES($id,$activity,$profile,$route,$routeName,$fingerprint,$routeVersion,$direction,
+$effort,$effortVersion,$effortName,$kind,$attempt,$startDistance,$endDistance,
+$started,$elapsed,$completed,$eligible,$reason,$fit)";
+            Add(command, "$id", effort.Id.ToString("D")); Add(command, "$activity", a.Id.ToString("D"));
+            Add(command, "$profile", a.RiderProfileId.ToString("D")); Add(command, "$route", effort.RouteId);
+            Add(command, "$routeName", effort.RouteName); Add(command, "$fingerprint", effort.GeometryFingerprint);
+            Add(command, "$routeVersion", effort.RouteDefinitionVersion); Add(command, "$direction", effort.Direction);
+            Add(command, "$effort", effort.EffortId); Add(command, "$effortVersion", effort.EffortVersion);
+            Add(command, "$effortName", effort.EffortName); Add(command, "$kind", effort.Kind.ToString());
+            Add(command, "$attempt", effort.AttemptIndex); Add(command, "$startDistance", effort.StartRouteDistanceMeters);
+            Add(command, "$endDistance", effort.EndRouteDistanceMeters); Add(command, "$started", Time(effort.StartedAtUtc));
+            Add(command, "$elapsed", effort.ElapsedSeconds); Add(command, "$completed", effort.Completed ? 1 : 0);
+            Add(command, "$eligible", effort.Eligible ? 1 : 0); Add(command, "$reason", effort.InvalidReason);
+            Add(command, "$fit", effort.FitFilePath);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -317,6 +365,72 @@ ON CONFLICT(rider_profile_id) DO UPDATE SET metric=excluded.metric,target_value=
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
         command.CommandText = "DELETE FROM personal_goals WHERE rider_profile_id=$profile";
         Add(command, "$profile", profileId.ToString("D")); await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<RouteEffortHistory> GetRouteEffortHistoryAsync(Guid profileId, string routeId,
+        string geometryFingerprint, string direction, string effortId, int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        if (limit is < 1 or > 500) throw new ArgumentOutOfRangeException(nameof(limit));
+        await using var db = await OpenAsync(cancellationToken);
+        await using var command = db.CreateCommand();
+        command.CommandText = @"SELECT id,activity_id,rider_profile_id,route_id,route_name,geometry_fingerprint,
+route_definition_version,direction,effort_id,effort_version,effort_name,kind,attempt_index,
+start_route_distance_meters,end_route_distance_meters,started_utc,elapsed_seconds,completed,eligible,invalid_reason,fit_file_path
+FROM route_effort_results WHERE rider_profile_id=$profile AND route_id=$route AND geometry_fingerprint=$fingerprint
+AND direction=$direction AND effort_id=$effort AND completed=1 AND eligible=1 AND (
+ id IN (SELECT id FROM route_effort_results WHERE rider_profile_id=$profile AND route_id=$route AND geometry_fingerprint=$fingerprint
+ AND direction=$direction AND effort_id=$effort AND completed=1 AND eligible=1 ORDER BY started_utc DESC,attempt_index DESC LIMIT $limit)
+ OR id=(SELECT id FROM route_effort_results WHERE rider_profile_id=$profile AND route_id=$route AND geometry_fingerprint=$fingerprint
+ AND direction=$direction AND effort_id=$effort AND completed=1 AND eligible=1 ORDER BY elapsed_seconds ASC,started_utc ASC LIMIT 1))
+ORDER BY started_utc DESC,attempt_index DESC";
+        Add(command, "$profile", profileId.ToString("D")); Add(command, "$route", routeId);
+        Add(command, "$fingerprint", geometryFingerprint); Add(command, "$direction", direction);
+        Add(command, "$effort", effortId); Add(command, "$limit", limit);
+        var rows = new List<RouteEffortRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken)) rows.Add(ReadRouteEffortRecord(reader));
+        return new RouteEffortHistory(rows);
+    }
+
+    public async Task<IReadOnlyList<RouteEffortRecord>> GetRouteEffortsForActivityAsync(Guid activityId,
+        bool eligibleOnly = false, CancellationToken cancellationToken = default)
+    {
+        await using var db = await OpenAsync(cancellationToken);
+        await using var command = db.CreateCommand();
+        command.CommandText = @"SELECT id,activity_id,rider_profile_id,route_id,route_name,geometry_fingerprint,
+route_definition_version,direction,effort_id,effort_version,effort_name,kind,attempt_index,
+start_route_distance_meters,end_route_distance_meters,started_utc,elapsed_seconds,completed,eligible,invalid_reason,fit_file_path
+FROM route_effort_results WHERE activity_id=$activity AND completed=1" + (eligibleOnly ? " AND eligible=1" : "") +
+" ORDER BY start_route_distance_meters,effort_id,attempt_index";
+        Add(command, "$activity", activityId.ToString("D"));
+        var rows = new List<RouteEffortRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken)) rows.Add(ReadRouteEffortRecord(reader));
+        return rows;
+    }
+
+    private static RouteEffortRecord ReadRouteEffortRecord(SqliteDataReader reader) => new(
+        Guid.Parse(reader.GetString(0)), Guid.Parse(reader.GetString(1)), Guid.Parse(reader.GetString(2)),
+        reader.GetString(3), reader.GetString(4), reader.GetString(5), reader.GetInt32(6), reader.GetString(7),
+        reader.GetString(8), reader.GetInt32(9), reader.GetString(10), Enum.Parse<RouteEffortKind>(reader.GetString(11)),
+        reader.GetInt32(12), reader.GetDouble(13), reader.GetDouble(14), ParseTime(reader.GetString(15)),
+        reader.GetDouble(16), reader.GetInt32(17) != 0, reader.GetInt32(18) != 0,
+        reader.IsDBNull(19) ? null : reader.GetString(19), reader.IsDBNull(20) ? null : reader.GetString(20));
+
+    private static void ValidateEffortForActivity(RouteEffortRecord effort, RideActivityDraft activity)
+    {
+        if (effort.ActivityId != activity.Id || effort.RiderProfileId != activity.RiderProfileId ||
+            !string.Equals(effort.RouteId, activity.RouteId, StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(effort.RouteName) || string.IsNullOrWhiteSpace(effort.GeometryFingerprint) ||
+            effort.GeometryFingerprint.Length != 64 || !effort.GeometryFingerprint.All(Uri.IsHexDigit) ||
+            effort.RouteDefinitionVersion < 1 || effort.Direction is not ("forward" or "reverse") ||
+            string.IsNullOrWhiteSpace(effort.EffortId) || effort.EffortVersion < 1 ||
+            string.IsNullOrWhiteSpace(effort.EffortName) || !Enum.IsDefined(effort.Kind) || effort.AttemptIndex < 0 ||
+            !double.IsFinite(effort.StartRouteDistanceMeters) || !double.IsFinite(effort.EndRouteDistanceMeters) ||
+            effort.StartRouteDistanceMeters < 0 || effort.EndRouteDistanceMeters <= effort.StartRouteDistanceMeters ||
+            !double.IsFinite(effort.ElapsedSeconds) || effort.ElapsedSeconds <= 0 || !effort.Completed)
+            throw new ArgumentException("Route effort result does not match its completed ride or contains invalid timing metadata.", nameof(effort));
     }
 
     private static double FiniteOrZero(double value) => double.IsFinite(value) ? value : 0;

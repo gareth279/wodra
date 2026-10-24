@@ -27,7 +27,10 @@ public partial class HudController : Control
 	private Label? _distanceLabel;
 	private Label? _elapsedLabel;
 	private Label? _ghostLabel;
+	private string? _ghostIndicatorText;
 	private Label? _trackEffortLabel;
+	private string? _routeEffortStatusText;
+	private double _routeEffortStatusSeconds;
 	private Button? _trackRetryButton;
 	private Label? _multiplayerStatusLabel;
 	private Label? _nearbyHumanRidersLabel;
@@ -150,7 +153,11 @@ public partial class HudController : Control
 		_gradientLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/GradientMetric/Value");
 		_distanceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/DistanceMetric/Value");
 		_elapsedLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SecondaryMetrics/ElapsedMetric/Value");
-		_ghostLabel = new Label { Name = "GhostIndicator", Visible = false };
+		_ghostLabel = new Label { Name = "GhostIndicator", Visible = false,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			HorizontalAlignment = HorizontalAlignment.Center };
+		_ghostLabel.AddThemeColorOverride("font_color", new Color(.96f, .9f, .72f));
+		_ghostLabel.AddThemeFontSizeOverride("font_size", 11);
 		GetNodeOrNull<VBoxContainer>("TopHudPanel/MarginContainer/VBoxContainer")?.AddChild(_ghostLabel);
 		_routeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/RouteLabel");
 		_multiplayerStatusLabel = new Label { Name = "MultiplayerStatus", Visible = false };
@@ -762,6 +769,14 @@ public partial class HudController : Control
 	{
 		var viewport = GetViewportRect().Size;
 		if (viewport.X <= 0 || viewport.Y <= 0) return;
+		var topHudBottom = 0f;
+		if (_topHudPanel is not null)
+		{
+			var minimum = _topHudPanel.GetCombinedMinimumSize();
+			if (Math.Abs(_topHudPanel.Size.Y - minimum.Y) > 1)
+				_topHudPanel.Size = new Vector2(_topHudPanel.Size.X, minimum.Y);
+			if (_topHudPanel.Visible) topHudBottom = _topHudPanel.Position.Y + _topHudPanel.Size.Y;
+		}
 		ResizeBottomBar();
 		if (_pacerPanel is not null) _pacerPanel.Size = _pacerPanel.GetCombinedMinimumSize();
 		if (_bottomHudPanel is not null) _bottomHudPanel.Size = _bottomHudPanel.GetCombinedMinimumSize();
@@ -777,7 +792,7 @@ public partial class HudController : Control
 			_mediaPanel?.Visible == true,
 			_mediaPanel?.GetCombinedMinimumSize().X ?? 0,
 			_mediaPanel?.GetCombinedMinimumSize().Y ?? 0,
-			_debugOverlay?.Visible == true);
+			_debugOverlay?.Visible == true, topHudBottom);
 		SetAnchoredBounds(_debugOverlay, layout.DebugPanel);
 		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
 		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
@@ -1328,9 +1343,29 @@ public partial class HudController : Control
 
 	public void SetGhostIndicator(string? text)
 	{
+		var next = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+		if (string.Equals(_ghostIndicatorText, next, StringComparison.Ordinal)) return;
+		_ghostIndicatorText = next;
+		RefreshRouteEffortIndicator();
+	}
+
+	public void SetRouteEffortStatus(string? text, bool active)
+	{
+		var next = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+		var changed = !string.Equals(_routeEffortStatusText, next, StringComparison.Ordinal);
+		_routeEffortStatusText = next;
+		_routeEffortStatusSeconds = _routeEffortStatusText is null ? 0 : active ? double.PositiveInfinity : 5.0;
+		if (changed) RefreshRouteEffortIndicator();
+	}
+
+	private void RefreshRouteEffortIndicator()
+	{
 		if (_ghostLabel is null) return;
-		_ghostLabel.Visible = !string.IsNullOrWhiteSpace(text);
-		_ghostLabel.Text = text ?? string.Empty;
+		var lines = new[] { _ghostIndicatorText, _routeEffortStatusText }
+			.Where(value => !string.IsNullOrWhiteSpace(value));
+		_ghostLabel.Text = string.Join("\n", lines);
+		_ghostLabel.Visible = !string.IsNullOrWhiteSpace(_ghostLabel.Text);
+		UpdateDebugOverlayLayout();
 	}
 
 	public void SetTrackEffortStatus(string? text, bool completed = false)
@@ -1405,6 +1440,8 @@ public partial class HudController : Control
 
 	public override void _Process(double delta)
 	{
+		if (_routeEffortStatusText is not null && !double.IsPositiveInfinity(_routeEffortStatusSeconds) &&
+			(_routeEffortStatusSeconds -= delta) <= 0) SetRouteEffortStatus(null, false);
 		UpdateMediaControls(delta);
 		if (Interlocked.Exchange(ref _mediaUiRefreshRequested, 0) != 0)
 		{

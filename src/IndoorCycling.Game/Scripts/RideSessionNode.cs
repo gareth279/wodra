@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 using IndoorCycling.Game.Multiplayer;
 using Wodra.Multiplayer.Protocol;
 
@@ -22,6 +24,10 @@ public partial class RideSessionNode : Node
 
 	private RouteDefinition? _currentRoute;
 	private TrackEffortTimingController? _trackEffort;
+	private RouteEffortTimingTracker? _routeEffortTracker;
+	private readonly List<RouteEffortTimingResult> _routeEffortResults = new();
+	private readonly Dictionary<string, double> _routeEffortPersonalBests = new(StringComparer.Ordinal);
+	private bool _routeEffortsInvalidatedByReposition;
 	private bool _trackBestSaved;
 	public RideActivityMode CurrentActivityMode { get; private set; } = RideActivityMode.FreeRide;
 	public TrackEffortResult? TrackEffortResult => _trackEffort?.Result;
@@ -91,10 +97,17 @@ public partial class RideSessionNode : Node
 	public void UpdateGhostIndicator(double playerTotalDistanceMeters)
 	{
 		if (GhostRider is null || GhostRider.Sample is null) { _hudController?.SetGhostIndicator(null); return; }
-		var relative = GhostRider.Sample.DistanceMeters - playerTotalDistanceMeters;
-		_hudController?.SetGhostIndicator(GhostRider.Finished
-			? $"Ghost: Finished {relative:+0;-0;0} m"
-			: $"Ghost: {relative:+0;-0;0} m");
+		if (_currentRoute is { } route && GhostRider.TryGetSignedTimeGap(playerTotalDistanceMeters,
+			_rideState.ElapsedSeconds, route.DistanceMeters, out var gap))
+		{
+			var text = gap >= 0 ? $"{GhostRider.ComparisonLabel} ghost · you {gap:0.0}s ahead"
+				: $"{GhostRider.ComparisonLabel} ghost · {Math.Abs(gap):0.0}s ahead";
+			_hudController?.SetGhostIndicator(text);
+			return;
+		}
+		_hudController?.SetGhostIndicator(GhostRider.TimeComparisonAvailable
+			? $"{GhostRider.ComparisonLabel} ghost · time gap unavailable"
+			: "Saved replay ghost · course/time eligibility unverified");
 	}
 
 	private string? _lastStoppedRecordingPath;
@@ -192,6 +205,12 @@ public partial class RideSessionNode : Node
 			? requested : RideActivityMode.FreeRide;
 		_trackEffort = _currentRoute.Environment == RouteEnvironment.Velodrome
 			? new TrackEffortTimingController(CurrentActivityMode) : null;
+		_routeEffortTracker = _currentRoute.Environment == RouteEnvironment.Road
+			? new RouteEffortTimingTracker(_currentRoute.DistanceMeters, RouteEffortCatalog.ForwardDirection,
+				RouteEffortCatalog.ForRoute(_currentRoute!)) : null;
+		_routeEffortResults.Clear();
+		_routeEffortPersonalBests.Clear();
+		_routeEffortsInvalidatedByReposition = false;
 		_trackBestSaved = false;
 		_achievementNotificationTracker = null;
 		_achievementProgressEligible = false;
@@ -207,6 +226,15 @@ public partial class RideSessionNode : Node
 			var rider = await GameBootstrap.GetPersistentRiderAsync();
 			_currentRiderProfileId = rider.Id;
 			SetActiveRideProfile(rider);
+			_routeEffortPersonalBests.Clear();
+			if (_routeEffortTracker is not null && GameBootstrap.RideHistory is { } effortRepository)
+				foreach (var effortDefinition in RouteEffortCatalog.ForRoute(_currentRoute!))
+				{
+					var history = await effortRepository.GetRouteEffortHistoryAsync(rider.Id, _currentRoute!.Id,
+						_currentRoute.GeometryFingerprint, effortDefinition.Direction, effortDefinition.Id);
+					if (history.PersonalBest is { } personalBest)
+						_routeEffortPersonalBests[effortDefinition.Id] = personalBest.ElapsedSeconds;
+				}
 			_achievementProgressEligible = !GameBootstrap.DebugModeEnabled && GameBootstrap.TrainerClient is not FakeTrainerClient;
 			if (_achievementProgressEligible && GameBootstrap.RideHistory is { } progressRepository)
 				_achievementNotificationTracker = new AchievementRideNotificationTracker(
@@ -238,12 +266,13 @@ public partial class RideSessionNode : Node
 		LastRecordingError = null;
 		_activityAccumulator.Reset();
 		_actualRiddenDistanceMeters = 0;
+		_routeEffortResults.Clear();
 		_fitSegments.Clear();
 		LastCompletedActivityId = null;
 		LastCompletedActivityDraft = null;
 		LastAchievementSummary = null;
 		_sessionStarted = true;
-		_hudController?.BeginRideHudSession(_currentRoute.Capabilities.SupportsPacer &&
+		_hudController?.BeginRideHudSession(_currentRoute!.Capabilities.SupportsPacer &&
 			PacerEffortPresets.Find(PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) is not null);
 		_hudController?.SetTrackEffortStatus(_trackEffort?.DisplayStatusText);
 		_trainerSessionActive = true;
@@ -455,7 +484,8 @@ public partial class RideSessionNode : Node
 							ActivityModeId: CurrentActivityMode.ToString(),
 							RouteCompletionEligible: route.SupportsVerifiedCompletionAchievement,
 							FullRouteCompleted: _routeCompletionCoverage.CompletedFullRoute);
-						var progress = await history.SaveCompletedActivityWithAchievementsAsync(draft, media, evidence);
+						var routeEfforts = BuildRouteEffortRecords(activityId, riderId, route, draft.FitFilePath);
+						var progress = await history.SaveCompletedActivityWithAchievementsAsync(draft, media, evidence, routeEfforts);
 						LastAchievementSummary = BuildAchievementSummary(progress);
 						historySaved = true;
 					}
@@ -812,8 +842,35 @@ public partial class RideSessionNode : Node
 			GameLogger.Log("debug_session_started", new { debugSessionId = _debugDiagnostics.SessionId, mode });
 	}
 
-	private void LogLapWraps(double previousDistance, double newDistance)
+	private void LogLapWraps(double previousDistance, double newDistance, bool movementEligible = true)
 	{
+		if (_routeEffortTracker is not null)
+		{
+			var eligible = movementEligible && !_routeEffortsInvalidatedByReposition && _achievementProgressEligible &&
+				_activeRideRiderProfile is { IsTestProfile: false } && !_debugDiagnostics.Enabled;
+			var reason = !movementEligible ? "trainer telemetry unavailable during this effort"
+				: _routeEffortsInvalidatedByReposition ? "ride was repositioned" : "dummy, debug or test-profile ride";
+			var completedThisTick = _routeEffortTracker.Advance(newDistance, _rideState.ElapsedSeconds,
+				_pauseGate.IsPaused, eligible, reason);
+			_routeEffortResults.AddRange(completedThisTick);
+			var active = _routeEffortTracker.ActiveAttempts.FirstOrDefault(attempt => attempt.Definition.Kind == RouteEffortKind.Segment);
+			if (active is not null)
+			{
+				var comparison = _routeEffortPersonalBests.TryGetValue(active.Definition.Id, out var pb)
+					? $" · {Math.Abs(active.ElapsedSeconds - pb):0.0}s {(active.ElapsedSeconds <= pb ? "ahead of" : "behind")} PB" : "";
+				_hudController?.SetRouteEffortStatus($"{active.Definition.Name} · {active.ElapsedSeconds:0.0}s{comparison}", true);
+			}
+			else if (completedThisTick.LastOrDefault(result => result.Completed && result.Definition.Kind == RouteEffortKind.Segment) is { } result)
+			{
+				var comparisons = new List<string>();
+				if (_routeEffortPersonalBests.TryGetValue(result.Definition.Id, out var pb))
+					comparisons.Add($"{Math.Abs(result.ElapsedSeconds - pb):0.00}s {(result.ElapsedSeconds <= pb ? "ahead of" : "behind")} PB");
+				if (GhostRider?.TryGetSegmentTime(result.Definition.Id, out var ghostTime) == true)
+					comparisons.Add($"{result.ElapsedSeconds - ghostTime:+0.00;-0.00;0.00}s vs ghost");
+				var comparison = comparisons.Count > 0 ? " · " + string.Join(" · ", comparisons) : "";
+				_hudController?.SetRouteEffortStatus($"{result.Definition.Name} · {result.ElapsedSeconds:0.00}s{comparison}", false);
+			}
+		}
 		if (_trackEffort is not null)
 		{
 			_trackEffort.Advance(newDistance, _rideState.ElapsedSeconds, _pauseGate.IsPaused);
@@ -841,6 +898,24 @@ public partial class RideSessionNode : Node
 				routeLengthMeters = _currentRoute.DistanceMeters
 			});
 		}
+	}
+
+	private IReadOnlyCollection<RouteEffortRecord> BuildRouteEffortRecords(Guid activityId, Guid profileId,
+		RouteDefinition route, string? fitPath)
+	{
+		return _routeEffortResults.Where(result => result.Completed).Select(result => new RouteEffortRecord(
+			StableEffortRecordId(activityId, result.Definition.Id, result.AttemptIndex), activityId, profileId,
+			route.Id, route.Name, route.GeometryFingerprint, route.RouteDataVersion, result.Definition.Direction,
+			result.Definition.Id, result.Definition.Version, result.Definition.Name, result.Definition.Kind,
+			result.AttemptIndex, result.StartRouteDistanceMeters, result.EndRouteDistanceMeters,
+			_activityStartedAtUtc.AddSeconds(result.StartElapsedSeconds), result.ElapsedSeconds, true,
+			result.Eligible, result.InvalidReason, fitPath)).ToArray();
+	}
+
+	private static Guid StableEffortRecordId(Guid activityId, string effortId, int attemptIndex)
+	{
+		var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{activityId:N}|{effortId}|{attemptIndex}"));
+		return new Guid(bytes.AsSpan(0, 16));
 	}
 
 	private RideDebugSnapshot BuildDebugSnapshot(int? marker = null)
@@ -1105,6 +1180,8 @@ public partial class RideSessionNode : Node
 		if (!_debugDiagnostics.TryApplyDistanceJump(_rideState, distance, out var jumped)) return;
 		_rideWorldView?.MarkChallengePractice(debugJump: true);
 		var before = _rideState.DistanceMeters;
+		_routeEffortsInvalidatedByReposition = true;
+		_routeEffortTracker?.MarkDiscontinuity(distance, _rideState.ElapsedSeconds);
 		_trackEffort?.Invalidate("debug reposition");
 		_rideState = jumped;
 		_routeCompletionCoverage.MarkDiscontinuity(_rideState.DistanceMeters);
@@ -1152,6 +1229,7 @@ public partial class RideSessionNode : Node
 			return;
 		}
 		_trackEffort?.MarkPractice("pause invalidated the timed attempt");
+		_routeEffortTracker?.InvalidateActive("pause occurred during this effort");
 		if (_rideRecorder?.IsRecording == true)
 		{
 			RecordCurrentSample();
@@ -1751,6 +1829,8 @@ public partial class RideSessionNode : Node
 		var destination = MultiplayerRoutePosition.PositionBehind(absoluteDistance);
 		var routeSample = route.GetSampleAt(destination);
 		_trackEffort?.MarkPractice("repositioning invalidated the timed attempt");
+		_routeEffortsInvalidatedByReposition = true;
+		_routeEffortTracker?.MarkDiscontinuity(destination, _rideState.ElapsedSeconds);
 		_catchUpResumeSpeedKph = wasPaused ? matchedSpeedKph : null;
 		_rideState = _rideState with { DistanceMeters = destination,
 			VirtualSpeedKph = wasPaused ? 0 : matchedSpeedKph,
@@ -1833,7 +1913,7 @@ public partial class RideSessionNode : Node
 				_actualRiddenDistanceMeters += Math.Max(0, _rideState.DistanceMeters - before);
 				_routeCompletionCoverage.Observe(_rideState.DistanceMeters, active: true);
 				NotifyAchievementProgress();
-				LogLapWraps(before, _rideState.DistanceMeters);
+				LogLapWraps(before, _rideState.DistanceMeters, movementEligible: false);
 				RecordRideSampleIfNeeded(delta, staleTelemetry, reconnectGradient);
 			}
 			UpdateRouteHud();

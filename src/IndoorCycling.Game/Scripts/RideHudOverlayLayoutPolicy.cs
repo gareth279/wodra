@@ -33,7 +33,8 @@ public static class RideHudOverlayLayoutPolicy
 	public static RideHudOverlayLayout ForViewport(float width, float height, bool showRouteInset,
 		bool showPacerPanel = false, float pacerWidth = 0, float pacerHeight = 0,
 		bool showDummyPanel = false, float bottomBarWidth = 0, float bottomBarHeight = 0,
-		bool showMediaPanel = false, float mediaWidth = 0, float mediaHeight = 0, bool showDebugPanel = false)
+		bool showMediaPanel = false, float mediaWidth = 0, float mediaHeight = 0, bool showDebugPanel = false,
+		float topHudBottom = 0)
 	{
 		width = MathF.Max(width, ViewportMargin * 2 + 1);
 		height = MathF.Max(height, ViewportMargin * 2 + 1);
@@ -42,8 +43,9 @@ public static class RideHudOverlayLayoutPolicy
 			MathF.Max(200, height - DebugBottomClearance - ViewportMargin));
 		var insetWidth = MathF.Min(RouteInsetWidth, width - ViewportMargin * 2);
 		var insetHeight = showPacerPanel ? RouteInsetHeight - PanelGap : RouteInsetHeight;
+		var insetTop = MathF.Max(RouteInsetTop, topHudBottom + PanelGap);
 		var inset = new RideHudOverlayBounds(
-			width - ViewportMargin - insetWidth, RouteInsetTop, insetWidth, insetHeight);
+			width - ViewportMargin - insetWidth, insetTop, insetWidth, insetHeight);
 		// Reserve the inset's complete rectangle even when it is hidden so the dummy controls
 		// never drift into the riding view when the inset visibility changes.
 		var dummyWidth = MathF.Min(DummyPanelWidth, width - ViewportMargin * 2);

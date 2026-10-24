@@ -78,6 +78,9 @@ var tests = new (string Name, Action Run)[]
     ,("Collectible layout is deterministic and includes blue and rare gold cats", CollectibleLayoutIsDeterministic)
     ,("Collectible swept hit catches frame crossing and rejects lateral misses", CollectibleSweptDetection)
     ,("Collectible attempts prevent duplicate awards and flag practice eligibility", CollectibleAttemptEligibility)
+    ,("Route effort boundary timing is frame-rate independent and repeats per lap", RouteEffortBoundaryTiming)
+    ,("Paused route effort attempts are ineligible and jumps reset crossings", RouteEffortInvalidation)
+    ,("Ghost time comparisons use recorded progress across stationary sections", GhostTimeGapUsesRecordedProgress)
 	,("Collectible user-facing text uses artwork-agnostic token wording", CollectibleUiUsesTokenWording)
     ,("Diagnostic log sanitizer removes tokens secrets keys and local paths", DiagnosticLogSanitization)
     ,("Diagnostic archive includes selected files without changing sources and enforces its bound", DiagnosticArchiveWriting)
@@ -1636,6 +1639,67 @@ static void PacerRendezvousPreservesPlayerAuthority()
     if (pacer.State.RouteDistanceMeters <= rendezvous.RouteDistanceMeters
         || pacer.State.RiderId != rendezvous.RiderId)
         throw new Exception("The synced pacer did not resume its own effort simulation with stable selection identity.");
+}
+
+static void RouteEffortBoundaryTiming()
+{
+    var definition = new RouteEffortDefinition("segment.test", 1, "Test segment", RouteEffortKind.Segment, 20, 40);
+    var durations = new List<double>();
+    foreach (var fps in new[] { 30, 60, 120 })
+    {
+        var tracker = new RouteEffortTimingTracker(100, "forward", [definition]);
+        for (var frame = 1; frame <= fps * 15; frame++)
+            tracker.Advance(frame * 10d / fps, frame / (double)fps);
+        var attempts = tracker.CompletedAttempts;
+        if (attempts.Count != 2 || attempts[0].AttemptIndex != 0 || attempts[1].AttemptIndex != 1)
+            throw new Exception($"Expected two distinct segment attempts at {fps} Hz; got {attempts.Count}.");
+        durations.Add(attempts[0].ElapsedSeconds);
+        if (Math.Abs(attempts[0].ElapsedSeconds - 2) > 1e-8 || Math.Abs(attempts[1].ElapsedSeconds - 2) > 1e-8)
+            throw new Exception($"Interpolated segment times drifted at {fps} Hz: {string.Join(",", attempts.Select(a => a.ElapsedSeconds))}.");
+    }
+    if (durations.Max() - durations.Min() > 1e-8) throw new Exception("Frame rate changed effort time.");
+}
+
+static void RouteEffortInvalidation()
+{
+    var definition = new RouteEffortDefinition("segment.test", 1, "Test segment", RouteEffortKind.Segment, 20, 40);
+    var tracker = new RouteEffortTimingTracker(100, "forward", [definition]);
+    tracker.Advance(30, 3);
+    tracker.Advance(30, 3, paused: true);
+    tracker.Advance(40, 4);
+    if (tracker.CompletedAttempts.Single().Eligible || tracker.CompletedAttempts.Single().InvalidReason is null)
+        throw new Exception("Pausing during an effort must permanently invalidate that attempt.");
+    tracker.MarkDiscontinuity(150, 5);
+    tracker.Advance(220, 12);
+    tracker.Advance(240, 14, movementEligible: false, ineligibilityReason: "repositioned recording segment");
+    if (tracker.CompletedAttempts.Count != 2 || tracker.CompletedAttempts[^1].Eligible)
+        throw new Exception("A distance jump must not turn missing crossings into an eligible attempt.");
+    var reverse = new RouteEffortTimingTracker(100, "reverse", [definition]);
+    reverse.Advance(100, 10);
+    if (reverse.CompletedAttempts.Count != 0) throw new Exception("Forward-authored segment ran in reverse.");
+}
+
+static void GhostTimeGapUsesRecordedProgress()
+{
+    var trace = new GhostRideTrace([
+        new GhostRideSample(0, 0, 10, 100, 80),
+        new GhostRideSample(10, 100, 10, 100, 80),
+        new GhostRideSample(20, 100, 0, 0, 0),
+        new GhostRideSample(30, 200, 10, 100, 80)]);
+    var ghost = new GhostRiderStateSource(trace, "loop", "Best lap", timeComparisonAvailable: true, repeatRouteLap: true);
+    ghost.Update(0, 200, false, 0);
+    ghost.Update(11, 200, false, 100);
+    if (!ghost.TryGetSignedTimeGap(100, 11, 200, out var behind) || Math.Abs(behind + 1) > 1e-8)
+        throw new Exception($"Stationary ghost time was not compared at equal progress: {behind}.");
+    ghost.Update(23, 200, false, 210);
+    if (!ghost.TryGetSignedTimeGap(210, 23, 200, out var secondLapGap) || Math.Abs(secondLapGap) > .11)
+        throw new Exception($"Repeated-lap comparison did not reset to the interpolated start-line crossing: {secondLapGap}.");
+    var singleLap = new GhostRiderStateSource(trace, "loop", "Best lap", timeComparisonAvailable: true);
+    if (singleLap.TryGetSignedTimeGap(250, 11, 200, out _))
+        throw new Exception("Ghost comparison should be unavailable beyond recorded route coverage.");
+    var gapTrace = new GhostRideTrace([new GhostRideSample(0, 0, 5, 100, 80), new GhostRideSample(20, 100, 5, 100, 80)]);
+    if (gapTrace.TryGetElapsedAtDistance(50, out _))
+        throw new Exception("A missing recorded interval larger than the interpolation bound must remain unavailable.");
 }
 
 sealed class TestControllerPreference

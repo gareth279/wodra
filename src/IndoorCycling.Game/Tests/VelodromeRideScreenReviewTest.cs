@@ -1,6 +1,8 @@
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,11 +39,52 @@ public partial class VelodromeRideScreenReviewTest : Node
             var track = RouteCatalog.GetById("wodra-velodrome-250")
                 ?? throw new InvalidOperationException("Built-in velodrome route is missing.");
 
+            var ghostTrace = new GhostRideTrace(Enumerable.Range(0, (int)Math.Ceiling(road.DistanceMeters / 8) + 1)
+                .Select(index =>
+                {
+                    var distance = Math.Min(road.DistanceMeters, index * 8d);
+                    return new GhostRideSample(distance / 8, distance, 8, 120, 90);
+                }));
+            session.SetPendingGhost(new GhostRiderStateSource(ghostTrace, road.Id, "Best lap",
+                timeComparisonAvailable: true, repeatRouteLap: true,
+                segmentTimes: new Dictionary<string, double>(StringComparer.Ordinal)
+                {
+                    ["segment.dunedin.cumberland-northbound.v1"] = 115.8
+                }), Guid.NewGuid());
             if (!await session.StartTrainerSessionAsync(road)) throw new InvalidOperationException("Could not start the production road dummy ride.");
             ShowRide(ride, hud);
             await Settle(1.5);
             Assert(world.RouteGeometry is not null && session.CurrentRoute?.Id == road.Id, "production road route starts from its existing definition");
+            var ghostIndicator = hud.GetNode<Label>("TopHudPanel/MarginContainer/VBoxContainer/GhostIndicator");
+            Assert(session.GhostRider?.Sample is not null && ghostIndicator.Visible && ghostIndicator.Text.Contains("s ahead", StringComparison.Ordinal),
+                "production ghost playback displays an equal-progress signed time comparison");
             Capture("road-before-track.png");
+            hud.SetRouteEffortStatus("Cumberland Street northbound · 2:31.0 · 0.8s behind PB · 3.2s vs ghost", true);
+            if (!IsHeadless)
+            {
+                foreach (var (size, debug) in new[]
+                {
+                    (new Vector2I(960, 540), false), (new Vector2I(1152, 648), true),
+                    (new Vector2I(1152, 648), false), (new Vector2I(1920, 1080), true)
+                })
+                {
+                    DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                    DisplayServer.WindowSetSize(size);
+                    hud.SetDebugDisplayEnabled(debug);
+                    await Settle(.4);
+                    AssertHudContentWithinWindow(ride, hud, $"{size.X}x{size.Y} ghost and segment status");
+                    Capture($"road-segment-ghost-{size.X}x{size.Y}-debug-{debug}.png");
+                }
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+                hud.SetDebugDisplayEnabled(false);
+                await Settle(.5);
+                AssertHudContentWithinWindow(ride, hud, "fullscreen ghost and segment status");
+                Capture("road-segment-ghost-fullscreen.png");
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                DisplayServer.WindowSetSize(new Vector2I(1152, 648));
+            }
+            hud.SetRouteEffortStatus(null, false);
+            hud.SetGhostIndicator(null);
             await session.ExitToRouteSelectionAsync();
 
             if (!await session.StartTrainerSessionAsync(track, RideActivityMode.Flying200))
@@ -173,6 +216,19 @@ public partial class VelodromeRideScreenReviewTest : Node
         _assertions++;
         if (!condition) throw new InvalidOperationException(message);
         GD.Print($"[VelodromeRideScreenReview] PASS: {message}");
+    }
+    private void AssertHudContentWithinWindow(Control screen, HudController hud, string context)
+    {
+        var viewport = screen.GetViewportRect();
+        var panel = hud.GetNode<Control>("TopHudPanel").GetGlobalRect();
+        var route = hud.GetNode<Control>("RouteGradientInset").GetGlobalRect();
+		var ghostControl = hud.GetNode<Label>("TopHudPanel/MarginContainer/VBoxContainer/GhostIndicator");
+		var ghost = ghostControl.GetGlobalRect();
+		Assert(panel.Position.Y >= viewport.Position.Y && panel.End.Y <= viewport.End.Y + 1,
+			$"top HUD panel fits the window at {context}: panel={panel}, viewport={viewport}");
+        Assert(!panel.Intersects(route), $"top HUD and route inset do not overlap at {context}");
+		Assert(!ghostControl.Visible || (ghost.Position.Y >= panel.Position.Y && ghost.End.Y <= panel.End.Y + 1),
+            $"combined ghost and segment feedback stays inside the top HUD at {context}");
     }
     private async Task Settle(double seconds) => await ToSignal(GetTree().CreateTimer(seconds), SceneTreeTimer.SignalName.Timeout);
     private void Capture(string name)
