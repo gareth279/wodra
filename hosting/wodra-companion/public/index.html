@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17211e"><meta name="referrer" content="no-referrer">
+  <title>Wodra Companion</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="brand"><div class="mark" aria-hidden="true">W</div><div><p class="eyebrow">RIDE COMPANION</p><h1>Wodra</h1></div><span id="connection" class="pill">Not connected</span></header>
+    <section id="pair-view" class="card pair-view">
+      <h2>Connect to your ride</h2><p>Enter the temporary code shown in Wodra Options → Companion. Pairing requires approval on your desktop.</p>
+      <form id="pair-form"><label for="pair-code">Pairing code</label><div class="join"><input id="pair-code" name="code" autocomplete="one-time-code" maxlength="10" autocapitalize="characters" required placeholder="AB12CD34EF"><button type="submit">Request pairing</button></div></form>
+      <p id="pair-message" class="message" role="status"></p>
+      <p class="privacy">Read-only live ride metrics. Your phone never controls the trainer.</p>
+    </section>
+    <section id="ride-view" hidden>
+      <div class="ride-heading card"><div><p class="eyebrow">CURRENT RIDE</p><h2 id="route-name">Waiting for ride</h2></div><button id="disconnect" class="quiet">Disconnect</button></div>
+      <div id="ride-state" class="state-banner">Waiting for Wodra</div>
+      <div class="metrics">
+        <article class="metric primary"><span>Power</span><strong id="power">—</strong><small>W</small></article>
+        <article class="metric primary"><span>Speed</span><strong id="speed">—</strong><small>km/h</small></article>
+        <article class="metric"><span>Cadence</span><strong id="cadence">—</strong><small>rpm</small></article>
+        <article class="metric"><span>Heart rate</span><strong id="heart">—</strong><small>bpm</small></article>
+        <article class="metric"><span>Distance</span><strong id="distance">—</strong><small>km</small></article>
+        <article class="metric"><span>Ride time</span><strong id="elapsed">—</strong><small>h:mm:ss</small></article>
+        <article class="metric"><span>Gradient</span><strong id="gradient">—</strong><small>%</small></article>
+        <article class="metric status"><span>Trainer</span><strong id="trainer">—</strong></article>
+      </div>
+      <p id="updated" class="updated" aria-live="polite"></p>
+      <p class="privacy">Live snapshot only. Ride history and FIT files are not sent to this service.</p>
+    </section>
+  </main>
+  <script src="app.js" defer></script>
+</body>
+</html>

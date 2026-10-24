@@ -53,6 +53,17 @@ public partial class StartPanelController : Control
 	private CheckButton? _optionsOnlineToggle;
 	private CheckButton? _optionsGameFeaturesToggle;
 	private CheckButton? _optionsMediaControlsToggle;
+	private CheckButton? _optionsCompanionToggle;
+	private LineEdit? _optionsCompanionUrl;
+	private Label? _optionsCompanionStatus;
+	private Label? _optionsCompanionCode;
+	private TextureRect? _optionsCompanionQr;
+	private Button? _optionsCompanionApprove;
+	private Button? _optionsCompanionReject;
+	private Button? _optionsCompanionStart;
+	private Button? _optionsCompanionCancel;
+	private VBoxContainer? _optionsCompanionControls;
+	private CompanionRelayClient? _companionClient;
 	private Label? _aboutBuildInformation;
 	private Label? _aboutCopyStatus;
 	private bool _optionsReturnToRoutes;
@@ -60,6 +71,9 @@ public partial class StartPanelController : Control
 	public override void _Ready()
 	{
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+		_companionClient = new CompanionRelayClient { Name = "CompanionRelayClient" };
+		AddChild(_companionClient);
+		_companionClient.Configure(_rideSessionNode, GameBootstrap.Settings.CompanionEnabled, GameBootstrap.Settings.CompanionRelayBaseUrl);
 		_fileDialog = GetNodeOrNull<FileDialog>("FileDialog");
 		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/StatusLabel");
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
@@ -153,6 +167,46 @@ public partial class StartPanelController : Control
 			content.AddChild(_optionsMediaControlsToggle);
 			content.AddChild(new Label { Text = "Show and control the current Windows media session during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
 			content.AddChild(new HSeparator());
+			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
+			_optionsCompanionToggle = new CheckButton { Name = "CompanionEnabledToggle", Text = "Enable read-only phone companion", ButtonPressed = GameBootstrap.Settings.CompanionEnabled };
+			_optionsCompanionToggle.Toggled += enabled =>
+			{
+				GameBootstrap.Settings.CompanionEnabled = enabled;
+				GameBootstrap.Settings.Save();
+				ConfigureCompanion();
+			};
+			content.AddChild(_optionsCompanionToggle);
+			_optionsCompanionControls = new VBoxContainer { Name = "CompanionControls", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionControls.AddThemeConstantOverride("separation", 5);
+			content.AddChild(_optionsCompanionControls);
+			_optionsCompanionControls.AddChild(new Label { Text = "Deployed relay HTTPS address", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			_optionsCompanionUrl = new LineEdit { Name = "CompanionRelayUrl", PlaceholderText = "https://your-companion-domain/", Text = GameBootstrap.Settings.CompanionRelayBaseUrl, CustomMinimumSize = new Vector2(0, 40) };
+			_optionsCompanionControls.AddChild(_optionsCompanionUrl);
+			var companionActions = new HBoxContainer { Name = "CompanionActions" };
+			_optionsCompanionStart = new Button { Name = "StartCompanionPairing", Text = "Create pairing code", CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionStart.Pressed += async () => await StartCompanionPairingAsync();
+			companionActions.AddChild(_optionsCompanionStart);
+			_optionsCompanionCancel = new Button { Name = "CancelCompanionPairing", Text = "Cancel", CustomMinimumSize = new Vector2(0, 40) };
+			_optionsCompanionCancel.Pressed += async () => { if (_companionClient is not null) await _companionClient.CancelAsync(); UpdateCompanionUi(); };
+			companionActions.AddChild(_optionsCompanionCancel);
+			_optionsCompanionControls.AddChild(companionActions);
+			_optionsCompanionQr = new TextureRect { Name = "CompanionQr", CustomMinimumSize = new Vector2(150, 150), ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+			_optionsCompanionControls.AddChild(_optionsCompanionQr);
+			_optionsCompanionCode = new Label { Name = "CompanionManualCode", HorizontalAlignment = HorizontalAlignment.Center, Text = "" }; _optionsCompanionCode.AddThemeFontSizeOverride("font_size", 20);
+			_optionsCompanionControls.AddChild(_optionsCompanionCode);
+			_optionsCompanionStatus = new Label { Name = "CompanionStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+			_optionsCompanionControls.AddChild(_optionsCompanionStatus);
+			var approvalRow = new HBoxContainer();
+			_optionsCompanionApprove = new Button { Name = "ApproveCompanion", Text = "Approve phone", CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionApprove.Pressed += async () => { if (_companionClient is not null) await _companionClient.DecideAsync(true); UpdateCompanionUi(); };
+			_optionsCompanionReject = new Button { Name = "RejectCompanion", Text = "Decline", CustomMinimumSize = new Vector2(0, 40) };
+			_optionsCompanionReject.Pressed += async () => { if (_companionClient is not null) await _companionClient.DecideAsync(false); UpdateCompanionUi(); };
+			approvalRow.AddChild(_optionsCompanionApprove); approvalRow.AddChild(_optionsCompanionReject);
+			_optionsCompanionControls.AddChild(approvalRow);
+			_optionsCompanionUrl.TextSubmitted += _ => SaveCompanionUrl();
+			_optionsCompanionUrl.FocusExited += SaveCompanionUrl;
+			content.AddChild(new Label { Text = "Pairing uses a temporary code. Ride data is shared only after desktop approval.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
 			{
@@ -177,10 +231,14 @@ public partial class StartPanelController : Control
 		_optionsGameFeaturesToggle!.SetPressedNoSignal(GameFeaturesPreference.Enabled);
 		_optionsOnlineToggle!.SetPressedNoSignal(GameBootstrap.Settings.OnlineRidingEnabled);
 		_optionsMediaControlsToggle!.SetPressedNoSignal(GameBootstrap.Settings.InRideMediaControlsEnabled);
+		_optionsCompanionToggle!.SetPressedNoSignal(GameBootstrap.Settings.CompanionEnabled);
+		_optionsCompanionUrl!.Text = GameBootstrap.Settings.CompanionRelayBaseUrl;
+		ConfigureCompanion();
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
 		if (_optionsReturnToRoutes) Hide(); else Show();
 		_optionsWindow.PopupCentered();
+		UpdateCompanionUi();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
 	}
 
@@ -217,6 +275,7 @@ public partial class StartPanelController : Control
 
 	public override void _Process(double delta)
 	{
+		UpdateCompanionUi();
 		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
 		var usingEos = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
 		_onlineStatusLabel.Text = !_rideSessionNode.OnlineRidingEnabled
@@ -228,6 +287,55 @@ public partial class StartPanelController : Control
 		if (usingEos && _rideSessionNode.OnlineRidingEnabled)
 			_onlineStatusLabel.Text += "\nWindows may request network access if direct peer connections need it.";
 	}
+
+	private void SaveCompanionUrl()
+	{
+		if (_optionsCompanionUrl is null) return;
+		GameBootstrap.Settings.CompanionRelayBaseUrl = _optionsCompanionUrl.Text.Trim();
+		GameBootstrap.Settings.Save();
+		ConfigureCompanion();
+	}
+
+	private void ConfigureCompanion()
+	{
+		_companionClient?.Configure(_rideSessionNode, GameBootstrap.Settings.CompanionEnabled, GameBootstrap.Settings.CompanionRelayBaseUrl ?? "");
+	}
+
+	private async Task StartCompanionPairingAsync()
+	{
+		SaveCompanionUrl();
+		if (_companionClient is not null && await _companionClient.CreateInvitationAsync())
+		{
+			UpdateCompanionUi();
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			var scroll = _optionsCompanionControls?.GetParent()?.GetParent() as ScrollContainer;
+			if (scroll is not null)
+				scroll.GetVScrollBar().Value = scroll.GetVScrollBar().MaxValue;
+		}
+		UpdateCompanionUi();
+	}
+
+	private void UpdateCompanionUi()
+	{
+		if (_optionsCompanionControls is null || _companionClient is null) return;
+		_optionsCompanionControls.Visible = GameBootstrap.Settings?.CompanionEnabled == true;
+		if (!_optionsCompanionControls.Visible) return;
+		if (_optionsCompanionStatus is not null) _optionsCompanionStatus.Text = _companionClient.StatusText;
+		if (_optionsCompanionCode is not null) _optionsCompanionCode.Text = _companionClient.ManualCode;
+		if (_optionsCompanionQr is not null) _optionsCompanionQr.Texture = _companionClient.QrTexture;
+		if (_optionsCompanionApprove is not null) _optionsCompanionApprove.Visible = _companionClient.PhonePending;
+		if (_optionsCompanionReject is not null) _optionsCompanionReject.Visible = _companionClient.PhonePending;
+		if (_optionsCompanionStart is not null) _optionsCompanionStart.Disabled = !_optionsCompanionClientReady();
+		if (_optionsCompanionCancel is not null)
+		{
+			_optionsCompanionCancel.Visible = _companionClient.HasInvitation;
+			_optionsCompanionCancel.Text = _companionClient.IsPaired ? "Disconnect phone" : "Cancel";
+		}
+	}
+
+	private bool _optionsCompanionClientReady() => _companionClient is not null && GameBootstrap.Settings.CompanionEnabled &&
+		Uri.TryCreate(GameBootstrap.Settings.CompanionRelayBaseUrl, UriKind.Absolute, out var uri) &&
+		(uri.Scheme == Uri.UriSchemeHttps || (GameBootstrap.DebugModeEnabled && uri.IsLoopback && uri.Scheme == Uri.UriSchemeHttp));
 
 	private static void ConfigureStartupStatusLabel(Label? label)
 	{
