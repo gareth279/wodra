@@ -350,7 +350,7 @@ public partial class RouteSelectionPanelController : Control
 	private void OpenOptions()
 	{
 		_returnToRouteAfterOptions = true;
-		_start?.Call("ShowOptions", true);
+		if (_start is StartPanelController start) start.ShowOptions(true);
 		Hide();
 	}
 	public void ReturnFromOptions()
