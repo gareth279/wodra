@@ -16,6 +16,7 @@ $ErrorActionPreference = 'Stop'
 $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
 . (Join-Path $RepoDir 'tools\GitHubReleaseAuth.ps1')
 . (Join-Path $RepoDir 'tools\PublisherSmokeIsolation.ps1')
+. (Join-Path $RepoDir 'tools\WodraBuiltInRoutePackages.ps1')
 $githubToken = $null
 $repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
@@ -438,17 +439,10 @@ try {
         throw "Visual C++ redistribution notice was not found: $vcRedistList"
     }
 
-    $routesRoot = Join-Path $RepoDir 'routes\generated'
-    $routeSources = [ordered]@{
-        'dunedin-one-way-oval-gardens' = $routesRoot
-        'dunedin-south-coastal-loop' = Join-Path $routesRoot 'additional'
-        'dunedin-rolling-loop' = Join-Path $routesRoot 'additional'
-        'dunedin-signal-hill-climbing-loop' = Join-Path $routesRoot 'additional'
-    }
-    $routeFiles = @('route-points', 'buildings', 'landmarks', 'street-furniture', 'streets', 'terrain', 'vegetation')
-    foreach ($routeId in $routeSources.Keys) {
-        foreach ($kind in $routeFiles) {
-            $source = Join-Path $routeSources[$routeId] "$routeId.$kind.json"
+    $routePackages = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepoDir)
+    foreach ($package in $routePackages) {
+        foreach ($kind in $package.Files) {
+            $source = Join-Path $package.SourceDirectory "$($package.Id).$kind.json"
             if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Built-in route dependency is missing: $source" }
         }
     }
@@ -563,7 +557,7 @@ try {
 
     # The standalone EOS runtime and its supplied third-party legal notices are
     # the only files copied from the installed proprietary SDK package.
-    Write-Phase 5 'Packaging four routes and EOS...'
+    Write-Phase 5 'Packaging five built-in routes and EOS...'
     $noticesTarget = Join-Path $PublishDirStage 'ThirdPartyNotices\EOS'
     New-Item -ItemType Directory -Path $noticesTarget -Force | Out-Null
     Copy-Item -LiteralPath $EosSdkNotices -Destination (Join-Path $noticesTarget 'ThirdPartySoftwareNotice.txt')
@@ -583,47 +577,7 @@ try {
     }
 
     $builtInRoot = Join-Path $PublishDirStage 'Routes'
-    foreach ($routeId in $routeSources.Keys) {
-        $destination = Join-Path $builtInRoot $routeId
-        New-Item -ItemType Directory -Path $destination -Force | Out-Null
-        foreach ($kind in $routeFiles) {
-            Copy-Item -LiteralPath (Join-Path $routeSources[$routeId] "$routeId.$kind.json") -Destination $destination
-        }
-    }
-
-    $invariant = [Globalization.CultureInfo]::InvariantCulture
-    $routeManifest = foreach ($routeId in $routeSources.Keys) {
-        $routePath = Join-Path (Join-Path $builtInRoot $routeId) "$routeId.route-points.json"
-        $route = Get-Content -LiteralPath $routePath -Raw | ConvertFrom-Json -ErrorAction Stop
-        $canonicalLines = foreach ($point in $route.points) {
-            @(
-                ([double]$point.distanceMeters).ToString('F3', $invariant),
-                ([double]$point.latitude).ToString('F7', $invariant),
-                ([double]$point.longitude).ToString('F7', $invariant),
-                ([double]$point.elevationMeters).ToString('F3', $invariant)
-            ) -join ','
-        }
-        $canonical = [string]::Join("`n", [string[]]$canonicalLines)
-        $fingerprint = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
-            [Text.Encoding]::UTF8.GetBytes($canonical))).ToLowerInvariant()
-        if (-not [string]::IsNullOrWhiteSpace([string]$route.geometryFingerprint) -and
-            $route.geometryFingerprint -ne $fingerprint) {
-            throw "Built-in route '$routeId' geometry fingerprint validation failed."
-        }
-        $attribution = if (-not [string]::IsNullOrWhiteSpace([string]$route.sourceAttribution)) {
-            [string]$route.sourceAttribution
-        } elseif ($routeId -eq 'dunedin-one-way-oval-gardens') {
-            '© OpenStreetMap contributors, ODbL 1.0; elevation: LINZ hosted Otago Regional Council LiDAR DEM, CC-BY-4.0'
-        } else { throw "Built-in route '$routeId' has no source attribution." }
-        [pscustomobject]@{
-            Id = $routeId
-            Name = [string]$route.name
-            GeometryFingerprint = $fingerprint
-            SourceAttribution = $attribution
-        }
-    }
-    [pscustomobject]@{ Version = $PackageVersion; Routes = @($routeManifest) } |
-        ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $builtInRoot 'builtin-route-manifest.json')
+    [void](Write-WodraBuiltInRouteBundle -RepositoryRoot $RepoDir -DestinationRoot $builtInRoot -Version $PackageVersion)
 
     # Symbols are development artifacts and can expose local source paths.
     Get-ChildItem -LiteralPath $PublishDirStage -Filter '*.pdb' -File -Recurse | Remove-Item -Force
