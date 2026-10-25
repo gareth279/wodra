@@ -116,6 +116,12 @@ public partial class HudController : Control
 	private int _mediaLifecycleGeneration;
 	private double _mediaPollCountdown;
 	private ISystemMediaSessionProvider? _mediaSessionProviderOverride;
+	private PanelContainer? _workoutPanel;
+	private Label? _workoutTitleLabel, _workoutDetailLabel, _workoutNextLabel, _workoutControlLabel;
+	private ProgressBar? _workoutProgress;
+	private Button? _workoutSkipButton, _workoutIntensityDown, _workoutIntensityUp;
+	private Action? _skipWorkout;
+	private Action<double>? _adjustWorkout;
 
 	/// <summary>Injectable before entering the scene tree for deterministic production-scene review tests.</summary>
 	public ISystemMediaSessionProvider? MediaSessionProviderOverride
@@ -228,6 +234,7 @@ public partial class HudController : Control
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
 		_mediaSessionProvider = _mediaSessionProviderOverride ?? (OperatingSystem.IsWindows() ? new WindowsMediaSessionProvider() : null);
 		BuildPacerPanel();
+		BuildWorkoutPanel();
 		BuildMediaPanel();
 		_routeGradientInset = new RouteGradientInset
 		{
@@ -404,8 +411,70 @@ public partial class HudController : Control
 	/// <summary>Captures pacer-panel availability once when a ride starts.</summary>
 	public void BeginRideHudSession(bool startedWithPacer)
 	{
+		EndWorkoutHudSession();
 		_showPacerPanelForRide = startedWithPacer;
+		UpdateHudVisibility();
 		UpdatePacerPanelVisibility();
+		CallDeferred(nameof(UpdateDebugOverlayLayout));
+	}
+
+	private void BuildWorkoutPanel()
+	{
+		_workoutPanel = new PanelContainer { Name = "WorkoutHudPanel", Visible = false,
+			AnchorLeft = 1, AnchorRight = 1, AnchorTop = 0, AnchorBottom = 0,
+			OffsetLeft = -372, OffsetRight = -12, OffsetTop = 202, OffsetBottom = 384,
+			CustomMinimumSize = new Vector2(350, 170), MouseFilter = Control.MouseFilterEnum.Stop };
+		var style = new StyleBoxFlat { BgColor = new Color(.045f, .055f, .06f, .94f),
+			BorderColor = new Color(.28f, .62f, .66f, .9f), BorderWidthLeft = 1, BorderWidthTop = 1,
+			BorderWidthRight = 1, BorderWidthBottom = 1, CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8,
+			CornerRadiusBottomLeft = 8, CornerRadiusBottomRight = 8 };
+		style.ContentMarginLeft = style.ContentMarginRight = style.ContentMarginTop = style.ContentMarginBottom = 10;
+		_workoutPanel.AddThemeStyleboxOverride("panel", style);
+		var column = new VBoxContainer(); column.AddThemeConstantOverride("separation", 4); _workoutPanel.AddChild(column);
+		_workoutTitleLabel = new Label { Text = "Workout", ClipText = true }; _workoutTitleLabel.AddThemeFontSizeOverride("font_size", 15); column.AddChild(_workoutTitleLabel);
+		_workoutDetailLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart }; column.AddChild(_workoutDetailLabel);
+		_workoutProgress = new ProgressBar { MinValue = 0, MaxValue = 1, ShowPercentage = false, CustomMinimumSize = new Vector2(0, 10) }; column.AddChild(_workoutProgress);
+		_workoutNextLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart }; _workoutNextLabel.AddThemeFontSizeOverride("font_size", 12); column.AddChild(_workoutNextLabel);
+		_workoutControlLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart }; _workoutControlLabel.AddThemeFontSizeOverride("font_size", 11); column.AddChild(_workoutControlLabel);
+		var actions = new HBoxContainer(); actions.AddThemeConstantOverride("separation", 5); column.AddChild(actions);
+		_workoutIntensityDown = new Button { Text = "−5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityDown.Pressed += () => _adjustWorkout?.Invoke(-.05); actions.AddChild(_workoutIntensityDown);
+		_workoutIntensityUp = new Button { Text = "+5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityUp.Pressed += () => _adjustWorkout?.Invoke(.05); actions.AddChild(_workoutIntensityUp);
+		_workoutSkipButton = new Button { Text = "Skip interval", CustomMinimumSize = new Vector2(110, 29) }; _workoutSkipButton.Pressed += () => _skipWorkout?.Invoke(); actions.AddChild(_workoutSkipButton);
+		AddChild(_workoutPanel);
+	}
+
+	public void BeginWorkoutHudSession(Action skip, Action<double> adjust)
+	{
+		_skipWorkout = skip; _adjustWorkout = adjust; _showPacerPanelForRide = false;
+		_pacerPanel?.Hide(); _routeGradientInset?.Hide(); _trackEffortLabel?.Hide(); _trackRetryButton?.Hide();
+		_nearbyHumanRidersLabel?.Hide(); _gameScoreLabel?.Hide(); _gameSteeringHint?.Hide(); _catFeedbackLabel?.Hide();
+		_workoutPanel?.Show(); CallDeferred(nameof(UpdateDebugOverlayLayout));
+	}
+
+	public void EndWorkoutHudSession()
+	{
+		_workoutPanel?.Hide(); _skipWorkout = null; _adjustWorkout = null;
+	}
+
+	public void UpdateWorkoutHud(IndoorCycling.Core.Workouts.WorkoutIntervalSnapshot snapshot, int? actualPower,
+		string controlStatus, bool visible, bool paused)
+	{
+		if (_workoutPanel is null) return;
+		_workoutPanel.Visible = visible && _hudDisplayEnabled;
+		if (visible) _routeGradientInset?.Hide();
+		if (!visible) return;
+		_workoutTitleLabel!.Text = snapshot.IsComplete ? $"{snapshot.Step.Name} · Complete" : snapshot.Step.Name;
+		var target = snapshot.IsComplete ? "—" : $"{snapshot.TargetWatts} W";
+		var actual = actualPower.HasValue ? $"{actualPower.Value} W" : "—";
+		var remaining = TimeSpan.FromSeconds(snapshot.RemainingInStepSeconds).ToString(@"m\:ss");
+		var cadence = snapshot.Step.CadenceCueRpm is { } cue ? $" · cadence {cue} rpm" : "";
+		_workoutDetailLabel!.Text = $"{(paused ? "Paused · " : "")}{remaining} left · target {target} · actual {actual}{cadence}";
+		_workoutProgress!.Value = snapshot.Progress;
+		_workoutNextLabel!.Text = snapshot.NextName is { } next ? $"Next: {next} · {snapshot.NextTargetWatts} W" : "Final interval";
+		_workoutControlLabel!.Text = controlStatus;
+		_workoutSkipButton!.Disabled = paused || snapshot.IsComplete;
+		_workoutIntensityDown!.Disabled = snapshot.IntensityFactor <= .7;
+		_workoutIntensityUp!.Disabled = snapshot.IntensityFactor >= 1.3;
 		CallDeferred(nameof(UpdateDebugOverlayLayout));
 	}
 
@@ -635,7 +704,8 @@ public partial class HudController : Control
 		GameBootstrap.Settings.Display.RouteGradientInsetVisible = enabled;
 		GameBootstrap.Settings.Save();
 		if (_routeGradientInset is not null)
-			_routeGradientInset.Visible = enabled && _rideSessionNode?.IsRideActive == true;
+			_routeGradientInset.Visible = enabled && _rideSessionNode?.IsRideActive == true &&
+				_rideSessionNode.IsWorkoutSession != true;
 	}
 
 	public void SetDebugDisplayEnabled(bool enabled)
@@ -1204,6 +1274,7 @@ public partial class HudController : Control
 
 	public void ResetHud()
 	{
+		EndWorkoutHudSession();
 		_achievementToastTimer?.Stop();
 		_achievementToastPanel?.Hide();
 		_showPacerPanelForRide = null;
@@ -1430,9 +1501,10 @@ public partial class HudController : Control
 	private void UpdateHudVisibility()
 	{
 		var rideIsActive = _rideSessionNode?.IsRideActive == true;
+		var workoutIsActive = _rideSessionNode?.IsWorkoutSession == true;
 		if (_topHudPanel is not null) _topHudPanel.Visible = rideIsActive && _hudDisplayEnabled;
 		if (_routeGradientInset is not null)
-			_routeGradientInset.Visible = rideIsActive && (GameBootstrap.Settings?.Display.RouteGradientInsetVisible ?? true);
+			_routeGradientInset.Visible = rideIsActive && !workoutIsActive && (GameBootstrap.Settings?.Display.RouteGradientInsetVisible ?? true);
 		var dummyVisible = rideIsActive && _dummyActive && _debugEnabled;
 		if (_dummyControlPanel is not null) _dummyControlPanel.Visible = dummyVisible;
 		var wkgMode = GameBootstrap.Settings?.DummyTrainer?.Mode == "W/kg";

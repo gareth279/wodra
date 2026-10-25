@@ -20,6 +20,9 @@ public sealed class RideFitRecorder
 
 	private RecordingProgress _progress = new();
 	private ushort _recordCount;
+	private readonly bool _indoorWorkout;
+
+	public RideFitRecorder(bool indoorWorkout = false) => _indoorWorkout = indoorWorkout;
 
 	public bool IsRecording { get; private set; }
 	public bool IsPaused { get; private set; }
@@ -145,8 +148,8 @@ public sealed class RideFitRecorder
 		record.SetTimestamp(ToFitTime(now));
 		record.SetDistance((float)_progress.DistanceMeters);
 		record.SetSpeed((float)(rideState.VirtualSpeedKph / 3.6));
-		record.SetPower(ToUShort(telemetry.PowerWatts));
-		record.SetCadence(ToByte(telemetry.CadenceRpm));
+		if (!_indoorWorkout || telemetry.HasPowerMeasurement) record.SetPower(ToUShort(telemetry.PowerWatts));
+		if (!_indoorWorkout || telemetry.HasCadenceMeasurement) record.SetCadence(ToByte(telemetry.CadenceRpm));
 		record.SetGrade((float)gradientPercent);
 		record.SetAltitude((float)_progress.AltitudeMeters);
 
@@ -276,7 +279,7 @@ public sealed class RideFitRecorder
 		session.SetEvent(Event.Lap);
 		session.SetEventType(EventType.Stop);
 		session.SetSport(Sport.Cycling);
-		session.SetSubSport(SubSport.Generic);
+		session.SetSubSport(_indoorWorkout ? SubSport.IndoorCycling : SubSport.Generic);
 		session.SetFirstLapIndex(0);
 		session.SetNumLaps(1);
 		session.SetTotalElapsedTime((float)totalElapsedTime.TotalSeconds);

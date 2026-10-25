@@ -1,0 +1,17 @@
+# Workouts MVP
+
+Workouts are a separate `RideActivityKind.Workout` session. The workout definition and interval clock live in `IndoorCycling.Core.Workouts`; `RouteEnvironment.TrainingStudio` selects a fictional local-coordinate circuit. Activity mode, environment, and workout content remain separate. The current studio is a flat 800 m loop with no latitude/longitude, route catalogue identity, road traffic, route effort tracking, pacers, collectibles, or route ghosts.
+
+The workout engine owns interval time and targets only. It never changes measured telemetry. Its supported blocks are warm-up, work, recovery, and cool-down; targets use watts or an explicitly configured per-profile FTP fraction. Ramps interpolate targets, repeats expand to individual steps, pause freezes the clock, and intensity adjustment is bounded to 70–130%.
+
+The local ZWO subset accepts `Warmup`, `Cooldown`, `SteadyState`, `Ramp`, and `IntervalsT`. It rejects unsupported timed blocks rather than changing their duration or meaning. XML DTDs and external entities are disabled; files are limited to 512 KiB, expanded to at most 256 steps, and total duration is limited to four hours. Accepted imports are copied under `user://Workouts` and revalidated when loaded.
+
+ERG remains a single downstream trainer command path. FTMS ERG is offered only when the trainer advertises Target Power; the client requests control, waits for the target acknowledgement, and sends Release Control at pause, completion, or ride end. FE-C ERG requires advertised target-power and simulation capabilities so Wodra can request its supported grade-simulation mode when leaving ERG. Transport acknowledgements are not proof of applied physical resistance. Unsupported or unknown capabilities present targets-only guidance and do not issue grade commands. Reconnect never reapplies the old target; the rider must pause and deliberately resume.
+
+Workout FIT files use indoor-cycling session metadata and omit position fields. Power, cadence, heart rate, simulated speed/distance, and elapsed time continue through the shared recorder. Simulated cycling distance is not a geographic route. Existing activity IDs and SQLite history are extended with workout identity, captured FTP, completion, and optional target-adherence fields. The current MVP leaves adherence unavailable rather than deriving it from targets as if it were measured power. Workouts may contribute actual distance, time, and climbing to cumulative achievements on eligible real profiles; they cannot satisfy route-completion awards or geographical collections.
+
+## Validation boundaries
+
+`tools/RunWorkoutRideScreenReview.ps1` sets disposable `APPDATA`, `LOCALAPPDATA`, and temporary paths, verifies Godot's resolved `user://` is within that disposable root, then starts the production `RideScreen` review scene. Its profile is explicitly marked as a test profile and recording output stays under the review artifacts directory. Automated review does not use or reconstruct owner settings or history.
+
+Fresh measured zero cadence releases the active ERG request and requires a deliberate pause/resume after pedalling before control is requested again. The policy is covered with synthetic telemetry; real trainer ERG response, release confirmation, device reconnection, and owner acceptance still need physical hardware review. Strava's classification of these FIT files has not been asserted; this MVP does not automatically upload workouts.

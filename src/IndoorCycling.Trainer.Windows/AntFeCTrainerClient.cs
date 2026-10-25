@@ -8,7 +8,7 @@ using IndoorCycling.Trainer.Models;
 namespace IndoorCycling.Trainer.Windows;
 
 /// <summary>ANT+ FE-C controller implemented through the Windows ANT PC SDK.</summary>
-public sealed class AntFeCTrainerClient : ITrainerClient
+public sealed class AntFeCTrainerClient : ITrainerClient, IWorkoutTrainerControl
 {
     private const byte NetworkNumber = 0;
     private readonly TrainerSettings? _settings;
@@ -43,6 +43,10 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     private TimeSpan _nextConnectionSearchTimeout = TimeSpan.FromSeconds(40);
     private double? _lastRequestedGrade;
     private double? _lastTransportAcknowledgedGrade;
+    private long _workoutSessionId;
+    private readonly SemaphoreSlim _workoutCommandLock = new(1, 1);
+    private double _lastRiderWeightKg = 75;
+    private double _lastBikeWeightKg = 8;
     private CancellationTokenSource? _telemetryWatchdogCancellation;
 
     public bool IsConnected { get; private set; }
@@ -78,6 +82,19 @@ public sealed class AntFeCTrainerClient : ITrainerClient
     public double? LastRequestedSimulationGradePercent => _lastRequestedGrade;
     public double? LastAppliedSimulationGradePercent => _lastTransportAcknowledgedGrade;
     public double? LastTransportAcknowledgedSimulationGradePercent => _lastTransportAcknowledgedGrade;
+    public WorkoutTrainerControlStatus WorkoutControlStatus
+    {
+        get
+        {
+            var flags = _capabilities.GetValueOrDefault();
+            if (_capabilities.HasValue && (flags & 0x02) != 0 && (flags & 0x04) != 0)
+                return new(WorkoutTrainerControlKind.Erg, "FE-C target power and simulation release are advertised.", 0, 1000, 1);
+            return new(WorkoutTrainerControlKind.TargetsOnly, !_capabilities.HasValue
+                ? "FE-C target-power capability is unknown; targets only."
+                : (flags & 0x02) == 0 ? "FE-C target power is unsupported; targets only."
+                : "FE-C simulation mode is unsupported, so ERG cannot be released safely; targets only.");
+        }
+    }
     public event Action? Disconnected;
 
     public AntFeCTrainerClient(TrainerSettings? settings = null, AntFeCDeviceIdentity? targetDevice = null,
@@ -400,6 +417,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
+        Interlocked.Exchange(ref _workoutSessionId, 0);
         if (_session is not null) await DisconnectAsync(cancellationToken).ConfigureAwait(false);
         var connectionAttemptId = Interlocked.Increment(ref _connectionAttemptId);
         _ready = NewSignal();
@@ -524,6 +542,7 @@ public sealed class AntFeCTrainerClient : ITrainerClient
 
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
+        Interlocked.Exchange(ref _workoutSessionId, 0);
         Interlocked.Increment(ref _connectionAttemptId);
         _telemetryWatchdogCancellation?.Cancel();
         _telemetryWatchdogCancellation?.Dispose();
@@ -568,9 +587,50 @@ public sealed class AntFeCTrainerClient : ITrainerClient
             Emit(_diagnostic, new("trainer_control", "capability_unknown_compatibility_attempt",
                 _connectionTimer.Elapsed.TotalMilliseconds, DataPage: 51, Outcome: "simulation_control_will_be_attempted"));
         _lastRequestedGrade = command.GradePercent;
+        _lastRiderWeightKg = command.RiderWeightKg;
+        _lastBikeWeightKg = command.BikeWeightKg;
         await SendControlAsync(AntFeCProtocol.BuildTrackResistance(command.GradePercent), cancellationToken,
             AntFeCProtocol.BuildUserConfiguration(command.RiderWeightKg, command.BikeWeightKg)).ConfigureAwait(false);
         _lastTransportAcknowledgedGrade = Math.Clamp(command.GradePercent, -200, 200);
+    }
+
+    public Task BeginWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    {
+        if (!_isReady || sessionId <= 0) throw new InvalidOperationException("FE-C trainer is not ready for a workout.");
+        Interlocked.Exchange(ref _workoutSessionId, sessionId); return Task.CompletedTask;
+    }
+
+    public async Task SetWorkoutTargetPowerAsync(int watts, long sessionId, CancellationToken cancellationToken = default)
+    {
+        await _workoutCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (sessionId != Interlocked.Read(ref _workoutSessionId) || !_isReady)
+                throw new OperationCanceledException("The queued FE-C target belongs to an inactive workout or connection.");
+            if (!WorkoutControlStatus.CanControlPower) throw new NotSupportedException(WorkoutControlStatus.Message);
+            if (watts is < 0 or > 1000) throw new ArgumentOutOfRangeException(nameof(watts));
+            await SendControlAsync(AntFeCProtocol.BuildTargetPower(watts), cancellationToken).ConfigureAwait(false);
+            if (sessionId != Interlocked.Read(ref _workoutSessionId))
+                throw new OperationCanceledException("Workout ended before the FE-C target completed.");
+            Emit(_diagnostic, new("workout_erg", "transport_acknowledged", _connectionTimer.Elapsed.TotalMilliseconds,
+                DataPage: AntFeCProtocol.PageTargetPower, Outcome: "ANT acknowledged-data accepted; trainer target status may be unknown"));
+        }
+        finally { _workoutCommandLock.Release(); }
+    }
+
+    public async Task ReleaseWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    {
+        await _workoutCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (sessionId != Interlocked.Read(ref _workoutSessionId)) return;
+            if (!_isReady) throw new IOException("FE-C trainer disconnected; ERG release was requested but not confirmed.");
+            if (_state.SimulationSupport != AntFeCCapabilitySupport.Supported)
+                throw new NotSupportedException("FE-C simulation mode cannot be confirmed as the ERG exit path.");
+            await SetSimulationAsync(new SimulationCommand(0, _lastRiderWeightKg, _lastBikeWeightKg), cancellationToken).ConfigureAwait(false);
+            Interlocked.CompareExchange(ref _workoutSessionId, 0, sessionId);
+        }
+        finally { _workoutCommandLock.Release(); }
     }
 
     public async Task SetResistanceAsync(ResistanceCommand command, CancellationToken cancellationToken = default)

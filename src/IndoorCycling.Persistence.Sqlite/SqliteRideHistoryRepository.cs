@@ -43,7 +43,7 @@ public sealed class SqliteRideHistoryRepository : IRideHistoryRepository
             query.CommandText = "SELECT version FROM schema_info LIMIT 1";
             version = Convert.ToInt32(await query.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
         }
-        if (version > 5) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
+        if (version > 6) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
         if (version == 0)
         {
             using var transaction = db.BeginTransaction();
@@ -131,6 +131,20 @@ CREATE INDEX IF NOT EXISTS ix_route_effort_lookup ON route_effort_results(
 CREATE INDEX IF NOT EXISTS ix_route_effort_activity ON route_effort_results(activity_id,effort_id,attempt_index);
 UPDATE schema_info SET version=5;";
             await migrate.ExecuteNonQueryAsync(cancellationToken);
+            version = 5;
+        }
+        if (version == 5)
+        {
+            await using var migrate = db.CreateCommand();
+            migrate.CommandText = @"ALTER TABLE ride_activities ADD COLUMN activity_kind TEXT NOT NULL DEFAULT 'Route';
+ALTER TABLE ride_activities ADD COLUMN workout_definition_id TEXT;
+ALTER TABLE ride_activities ADD COLUMN workout_name TEXT;
+ALTER TABLE ride_activities ADD COLUMN workout_ftp_watts INTEGER;
+ALTER TABLE ride_activities ADD COLUMN workout_completed INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ride_activities ADD COLUMN workout_target_adherence_percent REAL;
+UPDATE schema_info SET version=6;";
+            await migrate.ExecuteNonQueryAsync(cancellationToken);
+            version = 6;
         }
     }
 
@@ -192,13 +206,14 @@ UPDATE schema_info SET version=5;";
         {
             command.Transaction = transaction;
             command.CommandText = @"INSERT INTO ride_activities(id,rider_profile_id,route_id,route_name,started_utc,completed_utc,created_utc,status,duration_seconds,moving_seconds,distance_meters,completed_laps,
-average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path)
-VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,NULL,$distance,$laps,$avgSpeed,$maxSpeed,$avgPower,$maxPower,$avgCadence,$maxCadence,$elevation,$fit)";
+average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path,activity_kind,workout_definition_id,workout_name,workout_ftp_watts,workout_completed,workout_target_adherence_percent)
+VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,NULL,$distance,$laps,$avgSpeed,$maxSpeed,$avgPower,$maxPower,$avgCadence,$maxCadence,$elevation,$fit,$kind,$workoutId,$workoutName,$ftp,$workoutCompleted,$adherence)";
             Add(command, "$id", a.Id.ToString("D")); Add(command, "$profile", a.RiderProfileId.ToString("D")); Add(command, "$route", a.RouteId); Add(command, "$name", a.RouteName);
             Add(command, "$started", Time(a.StartedAtUtc)); Add(command, "$completed", Time(DateTimeOffset.UtcNow)); Add(command, "$created", Time(DateTimeOffset.UtcNow)); Add(command, "$status", a.Status.ToString());
             Add(command, "$duration", a.DurationSeconds); Add(command, "$distance", a.DistanceMeters); Add(command, "$laps", a.CompletedLaps);
             Add(command, "$avgSpeed", a.AverageSpeedKph); Add(command, "$maxSpeed", a.MaxSpeedKph); Add(command, "$avgPower", a.AveragePowerWatts); Add(command, "$maxPower", a.MaxPowerWatts);
             Add(command, "$avgCadence", a.AverageCadenceRpm); Add(command, "$maxCadence", a.MaxCadenceRpm); Add(command, "$elevation", a.ElevationGainMeters); Add(command, "$fit", a.FitFilePath);
+            AddWorkoutMetadata(command, a);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
         foreach (var m in media.Where(m => m.ActivityId == a.Id))
@@ -230,13 +245,14 @@ VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,
         {
             command.Transaction = transaction;
             command.CommandText = @"INSERT OR IGNORE INTO ride_activities(id,rider_profile_id,route_id,route_name,started_utc,completed_utc,created_utc,status,duration_seconds,moving_seconds,distance_meters,completed_laps,
-average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path)
-VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,NULL,$distance,$laps,$avgSpeed,$maxSpeed,$avgPower,$maxPower,$avgCadence,$maxCadence,$elevation,$fit)";
+average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path,activity_kind,workout_definition_id,workout_name,workout_ftp_watts,workout_completed,workout_target_adherence_percent)
+VALUES($id,$profile,$route,$name,$started,$completed,$created,$status,$duration,NULL,$distance,$laps,$avgSpeed,$maxSpeed,$avgPower,$maxPower,$avgCadence,$maxCadence,$elevation,$fit,$kind,$workoutId,$workoutName,$ftp,$workoutCompleted,$adherence)";
             Add(command, "$id", a.Id.ToString("D")); Add(command, "$profile", a.RiderProfileId.ToString("D")); Add(command, "$route", a.RouteId); Add(command, "$name", a.RouteName);
             Add(command, "$started", Time(a.StartedAtUtc)); Add(command, "$completed", Time(DateTimeOffset.UtcNow)); Add(command, "$created", Time(DateTimeOffset.UtcNow)); Add(command, "$status", a.Status.ToString());
             Add(command, "$duration", Math.Max(0, FiniteOrZero(a.DurationSeconds))); Add(command, "$distance", Math.Max(0, FiniteOrZero(a.DistanceMeters))); Add(command, "$laps", Math.Max(0, a.CompletedLaps));
             Add(command, "$avgSpeed", a.AverageSpeedKph); Add(command, "$maxSpeed", a.MaxSpeedKph); Add(command, "$avgPower", a.AveragePowerWatts); Add(command, "$maxPower", a.MaxPowerWatts);
             Add(command, "$avgCadence", a.AverageCadenceRpm); Add(command, "$maxCadence", a.MaxCadenceRpm); Add(command, "$elevation", Math.Max(0, FiniteOrZero(a.ElevationGainMeters))); Add(command, "$fit", a.FitFilePath);
+            AddWorkoutMetadata(command, a);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -604,8 +620,17 @@ GROUP BY route_id ORDER BY route_id";
         return result;
     }
 
-    private const string Columns = "id,rider_profile_id,route_id,route_name,started_utc,completed_utc,created_utc,status,duration_seconds,moving_seconds,distance_meters,completed_laps,average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path";
-    private static RideActivity ReadActivity(SqliteDataReader r) => new(Guid.Parse(r.GetString(0)), Guid.Parse(r.GetString(1)), r.GetString(2), r.GetString(3), ParseTime(r.GetString(4)), r.IsDBNull(5) ? null : ParseTime(r.GetString(5)), Enum.Parse<RideActivityStatus>(r.GetString(7)), r.GetDouble(8), N(r,9), r.GetDouble(10), r.GetInt32(11), N(r,12), N(r,13), N(r,14), N(r,15), N(r,16), N(r,17), r.GetDouble(18), NullableString(r,19), ParseTime(r.GetString(6)));
+    private const string Columns = "id,rider_profile_id,route_id,route_name,started_utc,completed_utc,created_utc,status,duration_seconds,moving_seconds,distance_meters,completed_laps,average_speed_kph,max_speed_kph,average_power_watts,max_power_watts,average_cadence_rpm,max_cadence_rpm,elevation_gain_meters,fit_file_path,activity_kind,workout_definition_id,workout_name,workout_ftp_watts,workout_completed,workout_target_adherence_percent";
+    private static RideActivity ReadActivity(SqliteDataReader r) => new(Guid.Parse(r.GetString(0)), Guid.Parse(r.GetString(1)), r.GetString(2), r.GetString(3), ParseTime(r.GetString(4)), r.IsDBNull(5) ? null : ParseTime(r.GetString(5)), Enum.Parse<RideActivityStatus>(r.GetString(7)), r.GetDouble(8), N(r,9), r.GetDouble(10), r.GetInt32(11), N(r,12), N(r,13), N(r,14), N(r,15), N(r,16), N(r,17), r.GetDouble(18), NullableString(r,19), ParseTime(r.GetString(6)))
+    { Kind = Enum.Parse<RideActivityKind>(r.GetString(20)), WorkoutDefinitionId = NullableString(r,21), WorkoutName = NullableString(r,22), WorkoutFtpWatts = r.IsDBNull(23) ? null : r.GetInt32(23), WorkoutCompleted = r.GetInt32(24) != 0, WorkoutTargetAdherencePercent = N(r,25) };
+
+    private static void AddWorkoutMetadata(SqliteCommand command, RideActivityDraft activity)
+    {
+        Add(command, "$kind", activity.Kind.ToString()); Add(command, "$workoutId", activity.WorkoutDefinitionId);
+        Add(command, "$workoutName", activity.WorkoutName); Add(command, "$ftp", activity.WorkoutFtpWatts);
+        Add(command, "$workoutCompleted", activity.WorkoutCompleted ? 1 : 0);
+        Add(command, "$adherence", activity.WorkoutTargetAdherencePercent);
+    }
     private static double? N(SqliteDataReader r, int i) => r.IsDBNull(i) ? null : r.GetDouble(i);
     private static string? NullableString(SqliteDataReader r, int i) => r.IsDBNull(i) ? null : r.GetString(i);
     private static DateTimeOffset ParseTime(string value) => DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);

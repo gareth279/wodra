@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://bvhod3tfngrgo" path="res://Scripts/RouteSelectionPanelController.cs" id="7_05hhs"]
 [ext_resource type="Script" path="res://Scripts/World/RideWorldView.cs" id="8_world"]
 [ext_resource type="Script" path="res://Scripts/RideHistoryPanelController.cs" id="9_history"]
+[ext_resource type="Script" path="res://Scripts/WorkoutSelectionPanelController.cs" id="10_workouts"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
 bg_color = Color(0.055, 0.07, 0.078, 0.84)
@@ -844,6 +845,15 @@ offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("7_05hhs")
+
+[node name="WorkoutSelectionPanel" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10_workouts")
 
 [node name="PanelContainer" type="PanelContainer" parent="RouteSelectionPanel" unique_id=619640184]
 custom_minimum_size = Vector2(980, 600)

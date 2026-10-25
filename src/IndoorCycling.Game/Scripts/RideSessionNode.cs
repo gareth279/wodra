@@ -16,6 +16,8 @@ using System.Security.Cryptography;
 using System.Text;
 using IndoorCycling.Game.Multiplayer;
 using Wodra.Multiplayer.Protocol;
+using IndoorCycling.Core.Workouts;
+using IndoorCycling.Trainer.Abstractions;
 
 public partial class RideSessionNode : Node
 {
@@ -34,6 +36,20 @@ public partial class RideSessionNode : Node
 	private bool _sessionStarted;
 	private bool _trainerSessionActive;
 	private bool _fitReplaySessionActive;
+	private WorkoutSessionEngine? _workoutEngine;
+	private WorkoutDefinition? _workoutDefinition;
+	private int? _workoutFtpWatts;
+	private bool _isWorkoutSession;
+	private bool _workoutErgRequested;
+	private bool _workoutControlStarted;
+	private bool _workoutControlReleased = true;
+	private Task _workoutReleaseTask = Task.CompletedTask;
+	private bool _workoutCompletionStarted;
+	private bool _workoutTargetDirty = true;
+	private int? _lastWorkoutTargetSent;
+	private double _workoutTargetSendElapsed;
+	private string _workoutControlMessage = "Targets only · trainer resistance remains at its current setting.";
+	private long _workoutControlSessionId;
 
 	private FakeTrainerClient? _fitReplayClient;
 
@@ -53,6 +69,7 @@ public partial class RideSessionNode : Node
 	public RouteDefinition? CurrentRoute => _currentRoute;
 	public bool IsRideActive => _sessionStarted;
 	public bool IsRidePaused => _pauseGate.IsPaused;
+	public bool IsWorkoutSession => _isWorkoutSession;
 	public bool HasRideRecording => _rideRecorder is not null;
 	public int SavedRideSegmentCount => _fitSegments.Count;
 	public double ActiveRiderBodyWeightKg => CurrentRiderProfile.WeightKg;
@@ -169,8 +186,22 @@ public partial class RideSessionNode : Node
 		_hudController?.SetStatus("Choose a mode to begin.");
 	}
 
+	public async Task<bool> StartWorkoutSessionAsync(WorkoutDefinition definition, int? ftpWatts, bool useErg)
+	{
+		try { definition.Validate(ftpWatts); }
+		catch (Exception ex) { _hudController?.SetStatus(ex.Message); return false; }
+		_workoutDefinition = definition;
+		_workoutFtpWatts = ftpWatts;
+		_workoutErgRequested = useErg;
+		var started = await StartTrainerSessionAsync(WorkoutStudioRoute.Create(), null);
+		if (!started) { ResetWorkoutState(); return false; }
+		return true;
+	}
+
 	public async Task<bool> StartTrainerSessionAsync(RouteDefinition? route = null, RideActivityMode? activityMode = null)
 	{
+		var isWorkoutRequest = _workoutDefinition is not null && route?.Environment == RouteEnvironment.TrainingStudio;
+		if (!isWorkoutRequest) ResetWorkoutState();
 		if (GameBootstrap.TrainerClient is null)
 		{
 			_hudController?.SetStatus("No trainer client configured.");
@@ -198,6 +229,8 @@ public partial class RideSessionNode : Node
 		}
 		if (GameBootstrap.DebugModeEnabled)
 			GameLogger.Log("trainer_connected", new { mode = DebugTrainerMode, connected = GameBootstrap.TrainerClient.IsConnected });
+		_isWorkoutSession = isWorkoutRequest;
+		if (_isWorkoutSession) _workoutEngine = new WorkoutSessionEngine(_workoutDefinition!, _workoutFtpWatts);
 		_currentRoute = route ?? RouteCatalog.Routes[0];
 		_routeCompletionCoverage.Reset(_currentRoute.DistanceMeters, 0);
 		var supportedModes = _currentRoute.SupportedModes;
@@ -272,9 +305,23 @@ public partial class RideSessionNode : Node
 		LastCompletedActivityDraft = null;
 		LastAchievementSummary = null;
 		_sessionStarted = true;
-		_hudController?.BeginRideHudSession(_currentRoute!.Capabilities.SupportsPacer &&
+		_hudController?.BeginRideHudSession(!_isWorkoutSession && _currentRoute!.Capabilities.SupportsPacer &&
 			PacerEffortPresets.Find(PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) is not null);
 		_hudController?.SetTrackEffortStatus(_trackEffort?.DisplayStatusText);
+		if (_isWorkoutSession)
+		{
+			_workoutControlSessionId++;
+			_workoutControlStarted = false;
+			_workoutControlReleased = !_workoutErgRequested;
+			_workoutCompletionStarted = false;
+			_workoutTargetDirty = true;
+			_lastWorkoutTargetSent = null;
+			_workoutTargetSendElapsed = 1;
+			_workoutControlMessage = _workoutErgRequested
+				? "Starting ERG target control…" : "Targets only · trainer resistance remains at its current setting.";
+			_hudController?.BeginWorkoutHudSession(SkipWorkoutInterval, AdjustWorkoutIntensity);
+			if (_workoutErgRequested) _ = BeginWorkoutControlAsync(_workoutControlSessionId);
+		}
 		_trainerSessionActive = true;
 		_trainerCommandWarningSessionId = _trainerCommandWarningPolicy.BeginSession();
 		_trainerCommandWarningText = null;
@@ -313,6 +360,14 @@ public partial class RideSessionNode : Node
 		if (!_trainerCommandWarningPolicy.IsCurrentSession(commandSessionId) ||
 			!_sessionStarted || !_trainerSessionActive || GameBootstrap.TrainerClient?.IsConnected != true)
 			return;
+		if (_isWorkoutSession)
+		{
+			// A reconnect never reapplies an old ERG target. The rider must deliberately resume.
+			_workoutControlStarted = false;
+			_workoutControlMessage = "Trainer reconnected · pause and resume to re-enable ERG.";
+			UpdateWorkoutHud();
+			return;
+		}
 		var gradient = GetTrainerGradeTarget(GetCurrentGradient());
 		await GameBootstrap.TrainerClient.SetSimulationAsync(new SimulationCommand(
 			GradePercent: gradient,
@@ -323,6 +378,128 @@ public partial class RideSessionNode : Node
 		HandleTrainerCommandAcknowledged(commandSessionId, gradient);
 		GameLogger.Log("trainer_current_settings_transport_acknowledged", new { gradientPercent = gradient,
 			physicalResistanceVerified = false });
+	}
+
+	private void ResetWorkoutState()
+	{
+		_workoutEngine = null; _workoutDefinition = null; _workoutFtpWatts = null;
+		_isWorkoutSession = false; _workoutErgRequested = false; _workoutControlStarted = false;
+		_workoutControlReleased = true; _workoutReleaseTask = Task.CompletedTask;
+		_workoutCompletionStarted = false; _workoutTargetDirty = true; _lastWorkoutTargetSent = null;
+		_hudController?.EndWorkoutHudSession();
+	}
+
+	private async Task BeginWorkoutControlAsync(long sessionId)
+	{
+		if (GameBootstrap.TrainerClient is not IWorkoutTrainerControl control || !control.WorkoutControlStatus.CanControlPower)
+		{
+			_workoutControlMessage = "Targets only · trainer resistance remains at its current setting.";
+			UpdateWorkoutHud(); return;
+		}
+		try
+		{
+			await control.BeginWorkoutControlAsync(sessionId).WaitAsync(TimeSpan.FromSeconds(5));
+			if (!_isWorkoutSession || sessionId != _workoutControlSessionId || _pauseGate.IsPaused) return;
+			_workoutControlStarted = true; _workoutControlReleased = false; _workoutTargetDirty = true;
+			_workoutControlMessage = control.WorkoutControlStatus.Kind == WorkoutTrainerControlKind.SimulatedErg
+				? "Dummy ERG simulation active · no physical resistance is controlled."
+				: control.WorkoutControlStatus.Message.Contains("FE-C", StringComparison.OrdinalIgnoreCase)
+					? "FE-C control active · waiting for target acknowledgement; physical resistance remains unverified."
+					: "FTMS control acquired · waiting for target acknowledgement; measured power remains telemetry.";
+		}
+		catch (Exception ex)
+		{
+			_workoutControlStarted = false;
+			_workoutControlMessage = $"ERG unavailable · targets only. {ex.Message}";
+		}
+		UpdateWorkoutHud();
+	}
+
+	public void SkipWorkoutInterval()
+	{
+		if (!_isWorkoutSession || _workoutEngine is null || _pauseGate.IsPaused || !_workoutEngine.SkipInterval()) return;
+		_workoutTargetDirty = true; UpdateWorkoutHud();
+	}
+
+	public void AdjustWorkoutIntensity(double delta)
+	{
+		if (!_isWorkoutSession || _workoutEngine is null) return;
+		_workoutEngine.AdjustIntensity(delta); _workoutTargetDirty = true; UpdateWorkoutHud();
+	}
+
+	private void UpdateWorkoutHud()
+	{
+		if (_workoutEngine is null) return;
+		int? actual = _lastTelemetry?.IsFreshAt(DateTimeOffset.UtcNow) == true && _lastTelemetry.HasPowerMeasurement
+			? _lastTelemetry.PowerWatts : null;
+		var snapshot = _workoutEngine.Snapshot();
+		if (_workoutErgRequested && GameBootstrap.TrainerClient is IWorkoutTrainerControl control &&
+			control.WorkoutControlStatus.CanControlPower)
+		{
+			var minimum = Math.Clamp(control.WorkoutControlStatus.MinimumWatts, 0, 1000);
+			var maximum = Math.Clamp(control.WorkoutControlStatus.MaximumWatts, minimum, 1000);
+			snapshot = snapshot with { TargetWatts = Math.Clamp(snapshot.TargetWatts, minimum, maximum),
+				NextTargetWatts = snapshot.NextTargetWatts is { } next ? Math.Clamp(next, minimum, maximum) : null };
+		}
+		_hudController?.UpdateWorkoutHud(snapshot, actual, _workoutControlMessage,
+			_isWorkoutSession && _sessionStarted, _pauseGate.IsPaused);
+	}
+
+	private async Task ReleaseWorkoutControlAsync(long sessionId, string? reason = null)
+	{
+		_workoutControlStarted = false;
+		if (GameBootstrap.TrainerClient is not IWorkoutTrainerControl control || !control.WorkoutControlStatus.CanControlPower) return;
+		try
+		{
+			await control.ReleaseWorkoutControlAsync(sessionId).WaitAsync(TimeSpan.FromSeconds(5));
+			_workoutControlReleased = true;
+			var releaseMessage = control.WorkoutControlStatus.Message.Contains("FE-C", StringComparison.OrdinalIgnoreCase)
+				? "ERG exit requested · FE-C level-course command transport acknowledged; physical trainer response unverified."
+				: control.WorkoutControlStatus.Kind == WorkoutTrainerControlKind.SimulatedErg
+					? "Dummy ERG simulation stopped · physical resistance was not controlled."
+					: "FTMS Release Control acknowledged by the trainer; physical resistance remains unverified.";
+			_workoutControlMessage = reason is null ? releaseMessage : reason + releaseMessage;
+		}
+		catch (Exception ex) { _workoutControlMessage = $"{reason ?? ""}ERG release could not be confirmed: {ex.Message}"; }
+		UpdateWorkoutHud();
+	}
+
+	private async Task ResumeWorkoutControlAfterReleaseAsync(Task releaseTask, long sessionId)
+	{
+		try { await releaseTask; }
+		catch { /* The release helper reports failure; the new acquire attempt remains bounded. */ }
+		if (!_isWorkoutSession || sessionId != _workoutControlSessionId || _pauseGate.IsPaused) return;
+		await BeginWorkoutControlAsync(sessionId);
+	}
+
+	private async Task SendWorkoutTargetAsync(long sessionId, int requestedWatts)
+	{
+		if (GameBootstrap.TrainerClient is not IWorkoutTrainerControl control || !_workoutControlStarted ||
+			_pauseGate.IsPaused || !_isWorkoutSession) return;
+		var capability = control.WorkoutControlStatus;
+		var maximum = Math.Clamp(capability.MaximumWatts, 0, 1000);
+		var watts = Math.Clamp(requestedWatts, Math.Clamp(capability.MinimumWatts, 0, maximum), maximum);
+		var increment = Math.Max(1, (int)Math.Round(capability.MinimumIncrementWatts ?? 1));
+		if (!_workoutTargetDirty && _lastWorkoutTargetSent is { } previous && Math.Abs(watts - previous) < increment) return;
+		_workoutTargetDirty = false; _workoutTargetSendElapsed = 0;
+		try
+		{
+			await control.SetWorkoutTargetPowerAsync(watts, sessionId).WaitAsync(TimeSpan.FromSeconds(5));
+			if (!_isWorkoutSession || sessionId != _workoutControlSessionId) return;
+			_lastWorkoutTargetSent = watts;
+			_workoutControlMessage = capability.Kind == WorkoutTrainerControlKind.SimulatedErg
+				? $"Dummy target {watts} W · measured power remains dummy input."
+				: capability.Message.Contains("FE-C", StringComparison.OrdinalIgnoreCase)
+					? $"FE-C target {watts} W transport acknowledged; trainer acceptance and physical resistance remain unverified."
+					: $"FTMS target {watts} W acknowledged; actual power remains measured telemetry.";
+		}
+		catch (Exception ex)
+		{
+			_workoutControlStarted = false;
+			_workoutControlMessage = $"ERG command failed · targets only. {ex.Message}";
+			_workoutReleaseTask = ReleaseWorkoutControlAsync(sessionId, "ERG command failed · ");
+		}
+		UpdateWorkoutHud();
 	}
 
 	private void UpdateRouteHud()
@@ -449,6 +626,12 @@ public partial class RideSessionNode : Node
 	{
 		var wasActiveTrainerRide = _sessionStarted && _trainerSessionActive;
 		_sessionStarted = false;
+		if (_isWorkoutSession)
+		{
+			await _trainerCommandTask;
+			await _workoutReleaseTask;
+			if (!_workoutControlReleased) await ReleaseWorkoutControlAsync(_workoutControlSessionId);
+		}
 		_trainerCommandWarningPolicy.EndSession(_trainerCommandWarningSessionId);
 		string? fitPath = null;
 		try
@@ -464,9 +647,14 @@ public partial class RideSessionNode : Node
 			{
 				if (_hudController is not null) await _hudController.FlushScreenshotCapturesAsync();
 				var draft = _activityAccumulator.CreateDraft(activityId, _currentRiderProfileId ?? Guid.Empty,
-					route.Id, route.Name, _activityStartedAtUtc, _actualRiddenDistanceMeters, route.DistanceMeters,
+					_isWorkoutSession ? $"workout:{_workoutDefinition!.Id}" : route.Id,
+					_isWorkoutSession ? _workoutDefinition!.Name : route.Name, _activityStartedAtUtc, _actualRiddenDistanceMeters, route.DistanceMeters,
 					_rideState.ElevationGainMeters,
 					fitPath is not null && File.Exists(fitPath) ? fitPath : _currentActivityFitPath is not null && File.Exists(_currentActivityFitPath) ? _currentActivityFitPath : null);
+				if (_isWorkoutSession && _workoutDefinition is { } workout)
+					draft = draft with { Kind = RideActivityKind.Workout, WorkoutDefinitionId = workout.Id,
+						WorkoutName = workout.Name, WorkoutFtpWatts = _workoutFtpWatts,
+						WorkoutCompleted = _workoutEngine?.IsComplete == true };
 				LastCompletedActivityDraft = draft;
 				LastCompletedActivityId = activityId;
 				if (_currentRiderProfileId is { } riderId && GameBootstrap.RideHistory is { } history)
@@ -493,7 +681,7 @@ public partial class RideSessionNode : Node
 					var recordingLink = StravaIntegrationClient.Shared.GetLink(riderId);
 					var hasFinalizedFit = LastRecordingError is null && fitPath is not null &&
 						StravaIntegrationClient.GetFitSegments(activityId, fitPath).Any(segment => segment.IsValid);
-					var realRide = StravaPolicies.ShouldAutomaticallyUpload(recordingLink?.AutomaticUploadEnabled == true,
+					var realRide = !_isWorkoutSession && StravaPolicies.ShouldAutomaticallyUpload(recordingLink?.AutomaticUploadEnabled == true,
 						recordingLink is not null && recordingLink.AthleteId == _currentRideStravaAthleteId,
 						_activeRideRiderProfile?.IsTestProfile == true,
 						GameBootstrap.TrainerClient is FakeTrainerClient,
@@ -546,6 +734,7 @@ public partial class RideSessionNode : Node
 				_currentActivityId = null;
 				_currentRiderProfileId = null;
 				_currentRideStravaAthleteId = null;
+				ResetWorkoutState();
 				_achievementNotificationTracker = null;
 				_achievementProgressEligible = false;
 				_activeRideRiderProfile = null;
@@ -621,7 +810,7 @@ public partial class RideSessionNode : Node
 		var trainer = _trainerSessionActive ? GameBootstrap.TrainerClient : _fitReplayClient;
 		if (trainer is null) return;
 		_rideRecorder.RecordSample(_rideState, trainer.GetLatestTelemetry().ForRecording(DateTimeOffset.UtcNow),
-			GetCurrentGradient(), _currentRoute?.GetSampleAt(_rideState.DistanceMeters));
+			GetCurrentGradient(), _isWorkoutSession ? null : _currentRoute?.GetSampleAt(_rideState.DistanceMeters));
 	}
 
 	private string? FinaliseRecording()
@@ -683,7 +872,7 @@ public partial class RideSessionNode : Node
 	{
 		try
 		{
-			_rideRecorder = new RideFitRecorder();
+			_rideRecorder = new RideFitRecorder(_isWorkoutSession);
 			_recordingSegmentStartDistanceMeters = _rideState.DistanceMeters;
 			_recordingSegmentStartActualDistanceMeters = _actualRiddenDistanceMeters;
 			_rideRecorder.StartOrResume(_rideState.DistanceMeters,
@@ -1235,6 +1424,7 @@ public partial class RideSessionNode : Node
 			RecordCurrentSample();
 			_rideRecorder.Pause();
 		}
+		if (_isWorkoutSession) _workoutReleaseTask = ReleaseWorkoutControlAsync(_workoutControlSessionId);
 		_rideState = _pauseGate.Pause(_rideState);
 		if (_debugDiagnostics.Enabled) GameLogger.Log("ride_paused", new { distanceMeters = _rideState.DistanceMeters, elapsedSeconds = _elapsedSeconds });
 		_hudController?.SetRidePaused(true);
@@ -1250,6 +1440,12 @@ public partial class RideSessionNode : Node
 			_catchUpResumeSpeedKph = null;
 		}
 		else _pauseGate.Resume();
+		if (_isWorkoutSession && _workoutErgRequested)
+		{
+			_workoutControlSessionId++;
+			_workoutControlMessage = "Resuming ERG target control…";
+			_ = ResumeWorkoutControlAfterReleaseAsync(_workoutReleaseTask, _workoutControlSessionId);
+		}
 		_hudController?.SetRidePaused(false);
 		if (_rideRecorder?.IsPaused == true)
 		{
@@ -1296,7 +1492,7 @@ public partial class RideSessionNode : Node
 
 		_recordingSampleElapsedSeconds = 0;
 
-		var routeSample = _currentRoute?.GetSampleAt(_rideState.DistanceMeters);
+		var routeSample = _isWorkoutSession ? null : _currentRoute?.GetSampleAt(_rideState.DistanceMeters);
 		var recordingTelemetry = telemetry.ForRecording(DateTimeOffset.UtcNow);
 		RecordingSampleObservedForReview?.Invoke(_rideState, recordingTelemetry, gradient);
 		_rideRecorder.RecordSample(_rideState, recordingTelemetry, gradient, routeSample);
@@ -1311,13 +1507,34 @@ public partial class RideSessionNode : Node
 
 		var activeDelta = _pauseGate.IsPaused ? 0 : delta;
 		if (activeDelta > 0) _elapsedSeconds += activeDelta;
-
+		if (_isWorkoutSession && _workoutEngine is not null && activeDelta > 0)
+		{
+			if (_workoutEngine.Advance(activeDelta) > 0) _workoutTargetDirty = true;
+			if (_workoutEngine.IsComplete && !_workoutCompletionStarted)
+			{
+				_workoutCompletionStarted = true;
+				_workoutControlMessage = "Workout complete · ride metrics remain based on measured data.";
+				_workoutTargetDirty = false;
+				_ = ReleaseWorkoutControlAsync(_workoutControlSessionId);
+			}
+			UpdateWorkoutHud();
+		}
 		if (_trainerSessionActive) ProcessTrainerMode(delta);
 		else if (_fitReplaySessionActive) ProcessFitReplayMode(delta);
 		ProcessMultiplayer(delta);
 
 		if (_trainerSessionActive || _fitReplaySessionActive)
-			_activityAccumulator.AddFrame(activeDelta, _rideState.VirtualSpeedKph, _lastTelemetry?.PowerWatts, _lastTelemetry?.CadenceRpm, _rideState.ElevationGainMeters);
+		{
+			var power = _lastTelemetry?.PowerWatts;
+			var cadence = _lastTelemetry?.CadenceRpm;
+			if (_isWorkoutSession && _lastTelemetry is { } workoutTelemetry)
+			{
+				var measured = workoutTelemetry.ForRecording(DateTimeOffset.UtcNow);
+				power = measured.HasPowerMeasurement ? measured.PowerWatts : null;
+				cadence = measured.HasCadenceMeasurement ? measured.CadenceRpm : null;
+			}
+			_activityAccumulator.AddFrame(activeDelta, _rideState.VirtualSpeedKph, power, cadence, _rideState.ElevationGainMeters);
+		}
 		if (_debugDiagnostics.Enabled && _debugDiagnostics.SnapshotDue(delta)) WriteDebugSnapshot();
 	}
 
@@ -1933,6 +2150,13 @@ public partial class RideSessionNode : Node
 			_hudController?.UpdateFromRideState(_rideState, telemetry, _elapsedSeconds);
 			return;
 		}
+		if (_isWorkoutSession && WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, _workoutErgRequested,
+			_workoutControlStarted, telemetry, DateTimeOffset.UtcNow))
+		{
+			_workoutControlMessage = "Measured cadence is zero · releasing ERG; pause and resume after pedalling to re-enable it.";
+			_workoutReleaseTask = ReleaseWorkoutControlAsync(_workoutControlSessionId,
+				"Measured cadence is zero · ");
+		}
 		//var gradient = GetGradientForCurrentDistance(_rideState.DistanceMeters);
 		var gradient = GetCurrentGradient();
 
@@ -1951,13 +2175,20 @@ public partial class RideSessionNode : Node
 		NotifyAchievementProgress();
 		LogLapWraps(previousDistance, _rideState.DistanceMeters);
 
-		_trainerCommandElapsedSeconds += delta;
-		_trainerTargetGradePercent = GetTrainerGradeTarget(gradient);
-		_effectiveTrainerGradePercent = _trainerGradeTransition.Advance(delta, _trainerTargetGradePercent);
-
-		if (_trainerCommandTask.IsCompleted && ShouldSendTrainerSimulationCommand(_effectiveTrainerGradePercent))
+		if (_isWorkoutSession)
 		{
-			_trainerCommandTask = SendTrainerSimulationCommandAsync(_effectiveTrainerGradePercent);
+			_workoutTargetSendElapsed += delta;
+			if (_workoutErgRequested && _workoutControlStarted && _trainerCommandTask.IsCompleted &&
+				(_workoutTargetDirty || _workoutTargetSendElapsed >= 1.0))
+				_trainerCommandTask = SendWorkoutTargetAsync(_workoutControlSessionId, _workoutEngine?.Snapshot().TargetWatts ?? 0);
+		}
+		else
+		{
+			_trainerCommandElapsedSeconds += delta;
+			_trainerTargetGradePercent = GetTrainerGradeTarget(gradient);
+			_effectiveTrainerGradePercent = _trainerGradeTransition.Advance(delta, _trainerTargetGradePercent);
+			if (_trainerCommandTask.IsCompleted && ShouldSendTrainerSimulationCommand(_effectiveTrainerGradePercent))
+				_trainerCommandTask = SendTrainerSimulationCommandAsync(_effectiveTrainerGradePercent);
 		}
 		RecordRideSampleIfNeeded(delta, telemetry, gradient);
 		UpdateRouteHud();

@@ -22,6 +22,7 @@ public partial class StartPanelController : Control
 	private DeviceConnectionPanelController? _deviceConnectionPanel;
 
 	private RouteSelectionPanelController? _routeSelectionPanel;
+	private WorkoutSelectionPanelController? _workoutSelectionPanel;
 	private CheckButton? _debugModeCheckButton;
 	private Label? _onlineStatusLabel;
 	private HudController? _typedHudController;
@@ -67,6 +68,7 @@ public partial class StartPanelController : Control
 	private Label? _aboutBuildInformation;
 	private Label? _aboutCopyStatus;
 	private bool _optionsReturnToRoutes;
+	private bool _optionsReturnToWorkouts;
 
 	public override void _Ready()
 	{
@@ -78,6 +80,7 @@ public partial class StartPanelController : Control
 		_statusLabel = GetNodeOrNull<Label>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/StatusLabel");
 		_deviceConnectionPanel = GetNodeOrNull<DeviceConnectionPanelController>("../DeviceConnectionPanel");
 		_routeSelectionPanel = GetNodeOrNull<RouteSelectionPanelController>("../RouteSelectionPanel");
+		_workoutSelectionPanel = GetNodeOrNull<WorkoutSelectionPanelController>("../WorkoutSelectionPanel");
 		_hudController = GetNodeOrNull<Control>("../HudController");
 		_typedHudController = _hudController as HudController;
 		_rideHistoryPanel = GetNodeOrNull<RideHistoryPanelController>("../RideHistoryPanel");
@@ -127,9 +130,10 @@ public partial class StartPanelController : Control
 
 
 
-	public void ShowOptions(bool returnToRoutes)
+	public void ShowOptions(bool returnToRoutes, bool returnToWorkouts = false)
 	{
 		_optionsReturnToRoutes = returnToRoutes;
+		_optionsReturnToWorkouts = returnToWorkouts;
 		if (_optionsWindow is null)
 		{
 			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(460, 500), MinSize = new Vector2I(400, 460), Exclusive = true };
@@ -236,7 +240,7 @@ public partial class StartPanelController : Control
 		ConfigureCompanion();
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
-		if (_optionsReturnToRoutes) Hide(); else Show();
+		if (_optionsReturnToRoutes || _optionsReturnToWorkouts) Hide(); else Show();
 		_optionsWindow.PopupCentered();
 		UpdateCompanionUi();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
@@ -253,6 +257,7 @@ public partial class StartPanelController : Control
 	{
 		_optionsWindow?.Hide();
 		if (_optionsReturnToRoutes) _routeSelectionPanel?.ReturnFromOptions();
+		else if (_optionsReturnToWorkouts) _workoutSelectionPanel?.ShowSelection();
 		else Show();
 	}
 

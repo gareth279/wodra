@@ -1,6 +1,7 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Core.Simulation;
 using IndoorCycling.Trainer.Models;
+using IndoorCycling.Core.Workouts;
 using System.Globalization;
 using System.Text.Json;
 
@@ -92,6 +93,9 @@ var tests = new (string Name, Action Run)[]
 	,("Explorer navigation normalizes mixed Windows separators", ExplorerPathNormalization)
     ,("Game features default off and persist independently per profile", GameFeaturesPersistPerProfile)
     ,("Publisher smoke user-data guard rejects missing roots and path-prefix escapes", PublisherUserDataIsolationGuard)
+    ,("Workout engine handles FTP ramps, pause, skip and bounded intensity", WorkoutEngineLifecycle)
+    ,("Workout ZWO importer accepts bounded intervals and rejects unsafe or unsupported timing", WorkoutZwoImport)
+    ,("Workout ERG releases on fresh measured zero cadence, not stale or unavailable cadence", WorkoutErgZeroCadenceSafety)
 };
 
 var failed = 0;
@@ -101,6 +105,59 @@ foreach (var test in tests)
     catch (Exception ex) { failed++; Console.Error.WriteLine($"FAIL: {test.Name}: {ex.Message}"); }
 }
 return failed == 0 ? 0 : 1;
+
+static void WorkoutEngineLifecycle()
+{
+    var ramp = new WorkoutDefinition("ramp-test", "Ramp", "Test", [
+        new("up", "Build", WorkoutBlockKind.WarmUp, 10, new(.5, WorkoutTargetUnit.FtpPercent), new(1, WorkoutTargetUnit.FtpPercent)),
+        new("work", "Work", WorkoutBlockKind.Work, 5, new(200, WorkoutTargetUnit.Watts))]);
+    AssertThrows<InvalidOperationException>(() => new WorkoutSessionEngine(ramp, null), "percentage workouts require an explicit FTP");
+    var engine = new WorkoutSessionEngine(ramp, 200);
+    Assert(engine.Snapshot().TargetWatts == 100, "ramp begins at 50% FTP");
+    engine.Advance(5, paused: true);
+    Assert(engine.Snapshot().RemainingInStepSeconds == 10, "paused time does not advance interval");
+    engine.Advance(5);
+    Assert(engine.Snapshot().TargetWatts == 150, "mid-ramp target interpolates at elapsed midpoint");
+    engine.Advance(5);
+    Assert(engine.Snapshot().TargetWatts == 200 && engine.Snapshot().Index == 1, "interval boundary is crossed once");
+    engine.AdjustIntensity(1);
+    Assert(engine.Snapshot().IntensityFactor == 1.3 && engine.Snapshot().TargetWatts == 260, "intensity clamps and scales target");
+    engine.SkipInterval(); Assert(engine.IsComplete && engine.Snapshot().Progress == 1, "skip completes deterministically");
+}
+
+static void WorkoutZwoImport()
+{
+    static MemoryStream Xml(string body) => new(System.Text.Encoding.UTF8.GetBytes(body));
+    var valid = Xml("<workout_file><name>Intervals</name><workout><Warmup Duration='60' PowerLow='0.4' PowerHigh='0.7'/><IntervalsT Repeat='3' OnDuration='30' OffDuration='20' OnPower='1.0' OffPower='0.5'/><Ramp Duration='40' PowerLow='0.5' PowerHigh='0.8'/></workout></workout_file>");
+    var parsed = ZwoWorkoutImporter.Import(valid, "fixture");
+    Assert(parsed.CanImport && parsed.Workout!.Steps.Count == 8 && parsed.Workout.DurationSeconds == 250, "repeated steps expand to explicit intervals");
+    var entity = Xml("<!DOCTYPE x [<!ENTITY e SYSTEM 'file:///windows/win.ini'>]><workout_file><name>&e;</name><workout><SteadyState Duration='60' Power='0.7'/></workout></workout_file>");
+    Assert(!ZwoWorkoutImporter.Import(entity).CanImport, "DTD and external entity input is rejected");
+    var unsupported = Xml("<workout_file><workout><FreeRide Duration='60'/></workout></workout_file>");
+    Assert(!ZwoWorkoutImporter.Import(unsupported).CanImport, "unsupported timed steps are not reinterpreted");
+}
+
+static void WorkoutErgZeroCadenceSafety()
+{
+    var now = DateTimeOffset.UtcNow;
+    var stopped = new TrainerTelemetry(now, 0, 0, 0, HasPowerMeasurement: true, HasCadenceMeasurement: true);
+    Assert(WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, true, true, stopped, now),
+        "fresh measured zero cadence releases active workout ERG control");
+    Assert(!WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, true, true,
+        stopped with { HasCadenceMeasurement = false }, now), "unavailable cadence does not trigger release");
+    Assert(!WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, true, true,
+        stopped with { Timestamp = now.AddSeconds(-6) }, now), "stale cadence does not trigger release");
+    Assert(!WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, false, true, stopped, now) &&
+        !WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(false, true, true, stopped, now) &&
+        !WorkoutErgSafetyPolicy.ShouldReleaseOnZeroCadence(true, true, false, stopped, now),
+        "inactive sessions, targets-only sessions and already-released control do not resend release");
+}
+
+static void AssertThrows<T>(Action action, string message) where T : Exception
+{
+    try { action(); } catch (T) { return; }
+    throw new InvalidOperationException(message);
+}
 
 static void ControllerDevicePreferencePersists()
 {

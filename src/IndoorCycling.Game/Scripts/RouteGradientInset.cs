@@ -39,7 +39,7 @@ public partial class RouteGradientInset : Control
 	{
 		var active = _session?.IsRideActive == true;
 		var visiblePreference = GameBootstrap.Settings?.Display.RouteGradientInsetVisible ?? true;
-		var visible = active && visiblePreference;
+		var visible = active && _session?.IsWorkoutSession != true && visiblePreference;
 		if (Visible != visible) Visible = visible;
 		if (!visible || _session is null || _world?.RouteGeometry is null || _session.CurrentRoute is null) return;
 		if (!ReferenceEquals(_route, _session.CurrentRoute) || _overview is null)

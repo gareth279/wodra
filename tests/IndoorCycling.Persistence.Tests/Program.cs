@@ -52,6 +52,13 @@ try
     Assert(saved is not null && saved.Status == RideActivityStatus.Completed && saved.FitFilePath is null, "activity and optional FIT path persist");
     Assert((await repository.GetActivityMediaAsync(id)).Single().ImagePath == media.ImagePath, "media association persists without copying");
     Assert(saved!.RouteId == "route-a" && Math.Abs(saved.DurationSeconds - 4) < .001 && saved.ElevationGainMeters == 33, "activity fields roundtrip");
+    var workoutActivity = first with { Id = Guid.NewGuid(), RouteId = "workout:steady-30", RouteName = "Steady Endurance",
+        Kind = RideActivityKind.Workout, WorkoutDefinitionId = "steady-30", WorkoutName = "Steady Endurance",
+        WorkoutFtpWatts = 220, WorkoutCompleted = true };
+    await repository.SaveCompletedActivityAsync(workoutActivity, []);
+    var savedWorkout = await repository.GetActivityAsync(workoutActivity.Id);
+    Assert(savedWorkout is { Kind: RideActivityKind.Workout, WorkoutDefinitionId: "steady-30", WorkoutFtpWatts: 220, WorkoutCompleted: true },
+        "workout metadata roundtrips using the existing activity ID and database");
 
     var routeFingerprint = new string('a', 64);
     var effortBase = new RouteEffortRecord(Guid.NewGuid(), id, rider.Id, "route-a", "Route A", routeFingerprint, 1,
@@ -85,9 +92,9 @@ try
     await repository.SaveCompletedActivityAsync(second, []);
     var devActivity = second with { Id = Guid.NewGuid(), RiderProfileId = dev.Id, RouteId = "route-a", RouteName = "Route A" };
     await repository.SaveCompletedActivityAsync(devActivity, []);
-    Assert((await repository.GetRecentActivitiesAsync()).Count == 3, "recent activities include rides from every profile");
+    Assert((await repository.GetRecentActivitiesAsync()).Count == 4, "recent activities include rides from every profile");
     Assert((await repository.GetActivitiesForRouteAsync("route-a")).Count == 2, "route-filtered rides");
-    Assert((await repository.GetRecentActivitiesForProfileAsync(rider.Id)).Select(a => a.Id).SequenceEqual([secondId, id]), "history is scoped by profile id");
+    Assert((await repository.GetRecentActivitiesForProfileAsync(rider.Id)).Select(a => a.Id).ToHashSet().SetEquals([secondId, workoutActivity.Id, id]), "history is scoped by profile id");
     Assert((await repository.GetRecentActivitiesForProfileAsync(dev.Id)).Single().Id == devActivity.Id, "test profile history stays separate");
     Assert(id != secondId, "activity ids are unique");
 
@@ -98,7 +105,7 @@ try
         await repository.SaveCompletedActivityAsync(fixture, []);
     }
     var newestPage = await repository.GetHistoryPageAsync(rider.Id, null, null, null, null, RideHistorySort.Newest, 100, 25);
-    Assert(newestPage.TotalCount == 127 && newestPage.Activities.Count == 25 && (await repository.GetHistoryPageAsync(rider.Id, null, null, null, null, RideHistorySort.Newest, 125, 25)).Activities.Count == 2, "history pagination reaches records beyond the previous 100 ride limit");
+    Assert(newestPage.TotalCount == 128 && newestPage.Activities.Count == 25 && (await repository.GetHistoryPageAsync(rider.Id, null, null, null, null, RideHistorySort.Newest, 125, 25)).Activities.Count == 3, "history pagination reaches records beyond the previous 100 ride limit");
     var filtered = await repository.GetHistoryPageAsync(rider.Id, "Route A", "route-a", null, null, RideHistorySort.Distance, 0, 25);
     Assert(filtered.TotalCount > 50 && filtered.Activities[0].DistanceMeters >= filtered.Activities[^1].DistanceMeters, "route and name search with distance sorting");
     var dateFiltered = await repository.GetHistoryPageAsync(rider.Id, null, null, baseDate, baseDate.AddDays(1), RideHistorySort.Oldest, 0, 200);
@@ -130,7 +137,7 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 5, "0 to 5 achievement/profile/route-effort schema migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 6, "0 to 6 achievement/profile/route-effort/workout metadata schema migration");
     }
     RiderProfileRecord.Validate("Valid", 75, 8);
     foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })
