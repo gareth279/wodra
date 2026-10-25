@@ -19,6 +19,9 @@ public sealed class SteeringLateralController
 
     private double _velocityMetersPerSecond;
     private bool _keyboardOwnsSteering;
+    private double _previousMinimumOffset;
+    private double _previousMaximumOffset;
+    private bool _hasPreviousBounds;
 
     public double LateralOffsetMeters { get; private set; } = NormalLineMeters;
     public bool KeyboardOwnsSteering => _keyboardOwnsSteering;
@@ -27,7 +30,7 @@ public sealed class SteeringLateralController
         float? centeredControllerAngleDegrees, bool controllerInputFresh, bool paused,
         bool textInputFocused = false, double sensitivity = DefaultSensitivity,
         double deadZoneDegrees = DefaultDeadZoneDegrees, double? roadWidthMeters = null,
-        bool controllerInputIsNew = true)
+        bool controllerInputIsNew = true, double defaultLateralOffsetMeters = NormalLineMeters)
     {
         if (!double.IsFinite(deltaSeconds) || deltaSeconds < 0) throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
         sensitivity = double.IsFinite(sensitivity) ? Math.Clamp(sensitivity, MinimumSensitivity, MaximumSensitivity) : DefaultSensitivity;
@@ -36,6 +39,10 @@ public sealed class SteeringLateralController
             ? supplied : FallbackRoadWidthMeters;
         var maximumOffset = Math.Max(0, width / 2 - RiderMarginMeters);
         var minimumOffset = -maximumOffset;
+        var corridorExpandingLeft = _hasPreviousBounds && maximumOffset > _previousMaximumOffset + 1e-9;
+        var corridorExpandingRight = _hasPreviousBounds && minimumOffset < _previousMinimumOffset - 1e-9;
+        defaultLateralOffsetMeters = double.IsFinite(defaultLateralOffsetMeters)
+            ? Math.Clamp(defaultLateralOffsetMeters, minimumOffset, maximumOffset) : NormalLineMeters;
         var step = Math.Min(deltaSeconds, 0.1);
 
         if (paused)
@@ -76,7 +83,7 @@ public sealed class SteeringLateralController
         else
         {
             // No fresh source: return gradually to the normal line.
-            var difference = NormalLineMeters - LateralOffsetMeters;
+            var difference = defaultLateralOffsetMeters - LateralOffsetMeters;
             targetVelocity = Math.Sign(difference) * MaximumLateralSpeedMetersPerSecond
                 * Math.Min(1, Math.Abs(difference) / 0.75);
         }
@@ -84,10 +91,15 @@ public sealed class SteeringLateralController
         var smoothing = 1 - Math.Exp(-step / VelocitySmoothingSeconds);
         _velocityMetersPerSecond += (targetVelocity - _velocityMetersPerSecond) * smoothing;
         var next = Math.Clamp(LateralOffsetMeters + _velocityMetersPerSecond * step, minimumOffset, maximumOffset);
-        if (next == minimumOffset || next == maximumOffset) _velocityMetersPerSecond = 0;
+        if ((next == maximumOffset && !corridorExpandingLeft)
+            || (next == minimumOffset && !corridorExpandingRight))
+            _velocityMetersPerSecond = 0;
         if (targetVelocity == 0 && (controllerFresh || _keyboardOwnsSteering))
             next = LateralOffsetMeters; // Neutral steering is a hold command.
         LateralOffsetMeters = next;
+        _previousMinimumOffset = minimumOffset;
+        _previousMaximumOffset = maximumOffset;
+        _hasPreviousBounds = true;
         return next;
     }
 
@@ -96,5 +108,6 @@ public sealed class SteeringLateralController
         LateralOffsetMeters = double.IsFinite(lateralOffsetMeters) ? lateralOffsetMeters : NormalLineMeters;
         _velocityMetersPerSecond = 0;
         _keyboardOwnsSteering = false;
+        _hasPreviousBounds = false;
     }
 }

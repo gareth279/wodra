@@ -68,6 +68,13 @@ public partial class CollectibleCatLayer : Node3D
 
 	public void SuppressNextSweep() => _hasPrevious = false;
 
+	public bool AwardFeatureLine(string featureId, int lapNumber, int points)
+	{
+		if (!_attempt.AwardFeatureLine(featureId, lapNumber, points)) return false;
+		Score = _attempt.Score;
+		return true;
+	}
+
 	public void UpdateRide(double distance, double lateral, bool enabled, bool looping = true)
 	{
 		if (_route is null) return;

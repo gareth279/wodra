@@ -6,6 +6,86 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("fictional XC loop has closed local geometry, truthful climb, and three scored line choices", () =>
+    {
+        var route = RouteCatalog.GetById("wodra-xc-skills-loop")
+            ?? throw new Exception("Fictional XC route was not loaded.");
+        if (route.DistanceMeters is < 1000 or > 2000 || route.TotalAscentMeters is < 10 or > 80
+            || route.Points is not { Count: > 500 } points || route.TrailFeatures.Count != 3
+            || route.TrailBerms.Count != 3 || route.TrailRollers.Count != 2
+            || route.Capabilities.DefaultLateralOffsetMeters != 0
+            || !route.Capabilities.SupportsTrailFeatures || route.Capabilities.SupportsPacer
+            || route.Capabilities.SupportsMultiplayer || route.Capabilities.SupportsGhost
+            || route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("XC metadata, unsupported combinations, or geometry are incomplete.");
+        if (points.Any(point => point.Latitude.HasValue || point.Longitude.HasValue
+                || !point.LocalXMeters.HasValue || !point.LocalZMeters.HasValue)
+            || Math.Abs(points[0].LocalXMeters!.Value - points[^1].LocalXMeters!.Value) > 1e-6
+            || Math.Abs(points[0].LocalZMeters!.Value - points[^1].LocalZMeters!.Value) > 1e-6
+            || route.GeometryFingerprint.Length != 64 || !route.SourceAttribution.Contains("Fictional", StringComparison.Ordinal))
+            throw new Exception("Fictional local coordinates, closed seam, fingerprint, or attribution are invalid.");
+        var bypassRun = new TrailFeatureChallenge(route.TrailFeatures, route.DistanceMeters, route.TrailRollers);
+        bypassRun.Update(0, 0, 22, false, true);
+        TrailFeatureFrame bypassResult = new();
+        for (double distance = 5; distance <= route.DistanceMeters; distance += 5)
+            bypassResult = bypassRun.Update(distance, 0, 22, false, true);
+        if (bypassRun.TotalScore != 0 || bypassRun.CompletedLines != 0
+            || bypassResult.CompletedLap is not { Lap: 1, CompletedLines: 0 })
+            throw new Exception("The centerline must naturally bypass every feature without scoring.");
+
+        foreach (var feature in route.TrailFeatures)
+        {
+            var corridor = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+            if (corridor.LateralCorridorHalfWidth(feature.StartMeters, 1.55 / 2) != 1.55 / 2
+                || corridor.LateralCorridorHalfWidth(feature.TakeoffMeters, 1.55 / 2) < Math.Abs(feature.RequiredLateralMeters)
+                || corridor.LateralCorridorHalfWidth(feature.EndMeters, 1.55 / 2) != 1.55 / 2)
+                throw new Exception($"{feature.Id} steering corridor does not open and close with its authored line.");
+            var slowApproach = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+            slowApproach.Update(feature.StartMeters - 2, 0, 10, false, false);
+            slowApproach.Update(feature.StartMeters + 35, feature.RequiredLateralMeters, 10, false, false);
+            var grounded = slowApproach.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, 10, false, false);
+            if (grounded.AirHeightMeters != 0 || grounded.SurfaceLiftMeters <= 0)
+                throw new Exception($"{feature.Id} low-speed traversal must follow the raised line while staying grounded.");
+
+            foreach (var speed in new[] { 19.0, 20.0, 35.0, 55.0 })
+            {
+                var approach = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+                approach.Update(feature.StartMeters - 2, 0, speed, false, false);
+                approach.Update(feature.StartMeters + 20, feature.RequiredLateralMeters, speed, false, false);
+                approach.Update(feature.StartMeters + 45, feature.RequiredLateralMeters, speed, false, false);
+                var takeoff = approach.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, speed, false, false);
+                if ((speed < feature.MinimumSpeedKph && takeoff.AirHeightMeters != 0)
+                    || (speed >= feature.MinimumSpeedKph && takeoff.AirHeightMeters <= 0))
+                    throw new Exception($"{feature.Id} take-off behavior is wrong at {speed:F0} km/h.");
+            }
+
+            var challenge = new TrailFeatureChallenge(route.TrailFeatures, route.DistanceMeters, route.TrailRollers);
+            challenge.Update(feature.StartMeters - 2, 0, 22, false, true);
+            challenge.Update(feature.StartMeters + 35, feature.RequiredLateralMeters, 22, false, true);
+            challenge.Update(feature.TakeoffMeters - 2, feature.RequiredLateralMeters, 22, false, true);
+            var launch = challenge.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, 22, false, true);
+            var pause = challenge.Update(feature.TakeoffMeters + 8, feature.RequiredLateralMeters, 22, true, true);
+            if (launch.Feedback is null || pause.AirHeightMeters <= 0 || challenge.TotalScore != 0)
+                throw new Exception($"{feature.Id} did not produce a pause-stable, non-scoring take-off presentation.");
+            var landing = challenge.Update(feature.LandingMeters + 1, feature.RequiredLateralMeters, 22, false, true);
+            if (landing.Award?.FeatureId != feature.Id || landing.Award.TotalScore != feature.ScorePoints
+                || landing.AirHeightMeters < 0)
+                throw new Exception($"{feature.Id} did not score once at its landing boundary.");
+            var duplicate = challenge.Update(feature.EndMeters + 1, 0, 22, false, true);
+            if (duplicate.Award is not null || challenge.TotalScore != feature.ScorePoints)
+                throw new Exception($"{feature.Id} scored more than once in a lap.");
+
+            challenge.SuppressNextSweep(feature.EndMeters + 5, 0);
+            challenge.Update(feature.StartMeters, 0, 22, false, true);
+            challenge.Update(feature.TakeoffMeters + 1, feature.RequiredLateralMeters, 22, false, true);
+            if (challenge.TotalScore != feature.ScorePoints)
+                throw new Exception("A repositioned or reverse traversal awarded duplicate points.");
+        }
+        var visual = new VisualRoute(route, spacingMeters: 2);
+        if (visual.LengthMeters != route.DistanceMeters
+            || Vector3.Distance(visual.GetPoseAtDistance(0).Position, visual.GetPoseAtDistance(route.DistanceMeters).Position) > .001f)
+            throw new Exception("The XC visual centreline does not meet at its lap seam.");
+    }),
     ("north-up inset projection keeps north above, east right, and heading aligned", () =>
     {
         var origin = RouteOverviewGeometry.ProjectNorthUp(Vector3.Zero);
@@ -431,7 +511,7 @@ var tests = new (string Name, Action Run)[]
             var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
             foreach (var tree in vegetation.Trees)
             {
-                var position = routeVisual.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
+                var position = routeVisual.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value, tree.ElevationMeters!.Value);
                 var nearest = routeIndex.Nearest(position);
                 var horizontalDistance = Math.Sqrt(nearest.DistanceSquared);
                 var verticalDifference = Math.Abs(position.Y - nearest.Position.Y);
@@ -1843,9 +1923,9 @@ var tests = new (string Name, Action Run)[]
         var point = building.Footprint[0];
         var converted = geometry.GetPositionForCoordinate(point.Latitude, point.Longitude, building.BaseElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
-        var expected = new Vector3((float)((point.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected = new Vector3((float)((point.Longitude-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(building.BaseElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(point.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(point.Latitude-origin.Latitude!.Value)*radians*earth));
         NearVector(expected, converted);
     }),
     ("building extrusion creates wall and flat roof triangles at configured height", () =>
@@ -2031,9 +2111,9 @@ var tests = new (string Name, Action Run)[]
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id).Items[0];
         var converted=geometry.GetPositionForCoordinate(item.Latitude,item.Longitude,item.ElevationMeters!.Value);
         var origin=route.Points![0]; const double radians=Math.PI/180; const double earth=6371000;
-        var expected=new Vector3((float)((item.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected=new Vector3((float)((item.Longitude-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(item.ElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(item.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(item.Latitude-origin.Latitude!.Value)*radians*earth));
         NearVector(expected,converted);
     }),
     ("vegetation coordinates use VisualRoute mapping and area surfaces triangulate", () =>
@@ -2043,11 +2123,11 @@ var tests = new (string Name, Action Run)[]
         var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
         var tree = vegetation.Trees[0];
-        var localTree = geometry.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
+        var localTree = geometry.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value, tree.ElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
-        var expected = new Vector3((float)((tree.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected = new Vector3((float)((tree.Longitude.Value-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(tree.ElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(tree.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(tree.Latitude.Value-origin.Latitude!.Value)*radians*earth));
         NearVector(expected, localTree);
         var triangleCount = 0;
         foreach (var area in vegetation.Areas.Where(item => item.RenderGround))
@@ -2483,7 +2563,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route=new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var origin=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!.Points![0];
-        var mapped=BackgroundStreetGeometry.ConvertPoints(route,[new RouteBackgroundStreetPoint(origin.Latitude,origin.Longitude,origin.ElevationMeters)]);
+        var mapped=BackgroundStreetGeometry.ConvertPoints(route,[new RouteBackgroundStreetPoint(origin.Latitude!.Value,origin.Longitude!.Value,origin.ElevationMeters)]);
         if(mapped.Length!=1||mapped[0].Length()>0.001f)throw new Exception("Street coordinates do not share the route geographic origin.");
     }),
     ("bundled Dunedin side-street endpoints resolve to deterministic route junctions", () =>
@@ -2549,7 +2629,7 @@ var tests = new (string Name, Action Run)[]
         var routeDefinition = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var visual = new VisualRoute(routeDefinition);
         var origin = routeDefinition.Points![0];
-        NearVector(Vector3.Zero, visual.GetPositionForCoordinate(origin.Latitude, origin.Longitude, origin.ElevationMeters));
+        NearVector(Vector3.Zero, visual.GetPositionForCoordinate(origin.Latitude!.Value, origin.Longitude!.Value, origin.ElevationMeters));
     }),
     ("terrain cell is cut out when a diagonal road crosses between unadjusted grid vertices", () =>
     {
@@ -2714,8 +2794,8 @@ var tests = new (string Name, Action Run)[]
         const string id="dunedin-one-way-oval-gardens";
         var definition=RouteCatalog.GetById(id)!;var route=new VisualRoute(definition);var origin=definition.Points![0];
         var street=new RouteBackgroundStreet(9,"test",null,"residential",false,6,"test",
-            [new RouteBackgroundStreetPoint(origin.Latitude-.00015,origin.Longitude,origin.ElevationMeters),
-             new RouteBackgroundStreetPoint(origin.Latitude-.00006,origin.Longitude,origin.ElevationMeters)],0,0);
+            [new RouteBackgroundStreetPoint(origin.Latitude!.Value-.00015,origin.Longitude!.Value,origin.ElevationMeters),
+             new RouteBackgroundStreetPoint(origin.Latitude!.Value-.00006,origin.Longitude!.Value,origin.ElevationMeters)],0,0);
         var corridors=BackgroundStreetGeometry.BuildTerrainCorridors(route,new RouteBackgroundStreetData(id,[street]));
         Equal(1,corridors.Length);
         var rendered=BackgroundStreetGeometry.ConnectRouteEnds(
@@ -2803,7 +2883,7 @@ var tests = new (string Name, Action Run)[]
         var minimumDistance = double.PositiveInfinity;
         foreach (var point in route.Points!)
         {
-            var p = Local(point.Latitude, point.Longitude);
+            var p = Local(point.Latitude!.Value, point.Longitude!.Value);
             var fraction = edge.LengthSquared() > 1e-8f
                 ? Math.Clamp(Vector2.Dot(p - a, edge) / edge.LengthSquared(), 0, 1) : 0;
             minimumDistance = Math.Min(minimumDistance, Vector2.Distance(p, a + edge * fraction));

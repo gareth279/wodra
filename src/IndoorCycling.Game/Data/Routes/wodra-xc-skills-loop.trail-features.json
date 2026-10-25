@@ -1,0 +1,1233 @@
+{
+  "id": "wodra-xc-skills-loop",
+  "version": 1,
+  "features": [
+    {
+      "id": "north-tabletop",
+      "name": "North tabletop",
+      "startMeters": 210.0,
+      "takeoffMeters": 280.0,
+      "landingMeters": 305.0,
+      "endMeters": 360.0,
+      "requiredLateralMeters": 2.65,
+      "halfWidthMeters": 0.86,
+      "minimumSpeedKph": 20.0,
+      "maximumAirHeightMeters": 0.58,
+      "scorePoints": 75,
+      "path": [
+        {
+          "routeDistanceMeters": 210.0,
+          "lateralMeters": 0.0,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 212.0,
+          "lateralMeters": 0.021249453273071872,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 214.0,
+          "lateralMeters": 0.08190698352529523,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 216.0,
+          "lateralMeters": 0.17733634640618162,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 218.0,
+          "lateralMeters": 0.3029012975652427,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 220.0,
+          "lateralMeters": 0.45396559265199005,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 222.0,
+          "lateralMeters": 0.6258929873159351,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 224.0,
+          "lateralMeters": 0.8140472372065898,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 226.0,
+          "lateralMeters": 1.0137920979734654,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 228.0,
+          "lateralMeters": 1.2204913252660736,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 230.0,
+          "lateralMeters": 1.429508674733926,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 232.0,
+          "lateralMeters": 1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 234.0,
+          "lateralMeters": 1.8359527627934098,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 236.0,
+          "lateralMeters": 2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 238.0,
+          "lateralMeters": 2.1960344073480096,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 240.0,
+          "lateralMeters": 2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 242.0,
+          "lateralMeters": 2.472663653593818,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 244.0,
+          "lateralMeters": 2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 246.0,
+          "lateralMeters": 2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 248.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 250.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 252.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 254.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 256.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 258.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 260.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 262.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 264.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 266.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 268.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 270.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 272.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.014403292181069956
+        },
+        {
+          "routeDistanceMeters": 274.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.10888888888888888
+        },
+        {
+          "routeDistanceMeters": 276.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.24485596707818932
+        },
+        {
+          "routeDistanceMeters": 278.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.3669958847736625
+        },
+        {
+          "routeDistanceMeters": 280.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.42
+        },
+        {
+          "routeDistanceMeters": 282.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.41781888
+        },
+        {
+          "routeDistanceMeters": 284.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.41176704
+        },
+        {
+          "routeDistanceMeters": 286.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.40258176
+        },
+        {
+          "routeDistanceMeters": 288.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.39100032
+        },
+        {
+          "routeDistanceMeters": 290.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.37776
+        },
+        {
+          "routeDistanceMeters": 292.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.36359808
+        },
+        {
+          "routeDistanceMeters": 294.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.34925184
+        },
+        {
+          "routeDistanceMeters": 296.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.33545855999999996
+        },
+        {
+          "routeDistanceMeters": 298.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.32295552
+        },
+        {
+          "routeDistanceMeters": 300.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.31248
+        },
+        {
+          "routeDistanceMeters": 302.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.30476928
+        },
+        {
+          "routeDistanceMeters": 304.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.30056064
+        },
+        {
+          "routeDistanceMeters": 306.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.29409722222222223
+        },
+        {
+          "routeDistanceMeters": 308.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.253125
+        },
+        {
+          "routeDistanceMeters": 310.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.18715277777777775
+        },
+        {
+          "routeDistanceMeters": 312.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.1128472222222222
+        },
+        {
+          "routeDistanceMeters": 314.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.046875
+        },
+        {
+          "routeDistanceMeters": 316.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0059027777777777785
+        },
+        {
+          "routeDistanceMeters": 318.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 320.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 322.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 324.0,
+          "lateralMeters": 2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 326.0,
+          "lateralMeters": 2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 328.0,
+          "lateralMeters": 2.4726636535938185,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 330.0,
+          "lateralMeters": 2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 332.0,
+          "lateralMeters": 2.19603440734801,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 334.0,
+          "lateralMeters": 2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 336.0,
+          "lateralMeters": 1.8359527627934102,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 338.0,
+          "lateralMeters": 1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 340.0,
+          "lateralMeters": 1.4295086747339263,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 342.0,
+          "lateralMeters": 1.2204913252660738,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 344.0,
+          "lateralMeters": 1.0137920979734656,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 346.0,
+          "lateralMeters": 0.81404723720659,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 348.0,
+          "lateralMeters": 0.6258929873159352,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 350.0,
+          "lateralMeters": 0.4539655926519903,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 352.0,
+          "lateralMeters": 0.3029012975652426,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 354.0,
+          "lateralMeters": 0.17733634640618184,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 356.0,
+          "lateralMeters": 0.08190698352529516,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 358.0,
+          "lateralMeters": 0.021249453273071983,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 360.0,
+          "lateralMeters": 0.0,
+          "surfaceLiftMeters": 0.0
+        }
+      ]
+    },
+    {
+      "id": "ridge-tabletop",
+      "name": "Ridge tabletop",
+      "startMeters": 730.0,
+      "takeoffMeters": 800.0,
+      "landingMeters": 825.0,
+      "endMeters": 880.0,
+      "requiredLateralMeters": -2.65,
+      "halfWidthMeters": 0.86,
+      "minimumSpeedKph": 20.0,
+      "maximumAirHeightMeters": 0.58,
+      "scorePoints": 75,
+      "path": [
+        {
+          "routeDistanceMeters": 730.0,
+          "lateralMeters": -0.0,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 732.0,
+          "lateralMeters": -0.021249453273071872,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 734.0,
+          "lateralMeters": -0.08190698352529523,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 736.0,
+          "lateralMeters": -0.17733634640618162,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 738.0,
+          "lateralMeters": -0.3029012975652427,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 740.0,
+          "lateralMeters": -0.45396559265199005,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 742.0,
+          "lateralMeters": -0.6258929873159351,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 744.0,
+          "lateralMeters": -0.8140472372065898,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 746.0,
+          "lateralMeters": -1.0137920979734654,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 748.0,
+          "lateralMeters": -1.2204913252660736,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 750.0,
+          "lateralMeters": -1.429508674733926,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 752.0,
+          "lateralMeters": -1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 754.0,
+          "lateralMeters": -1.8359527627934098,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 756.0,
+          "lateralMeters": -2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 758.0,
+          "lateralMeters": -2.1960344073480096,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 760.0,
+          "lateralMeters": -2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 762.0,
+          "lateralMeters": -2.472663653593818,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 764.0,
+          "lateralMeters": -2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 766.0,
+          "lateralMeters": -2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 768.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 770.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 772.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 774.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 776.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 778.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 780.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 782.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 784.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 786.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 788.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 790.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 792.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.014403292181069956
+        },
+        {
+          "routeDistanceMeters": 794.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.10888888888888888
+        },
+        {
+          "routeDistanceMeters": 796.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.24485596707818932
+        },
+        {
+          "routeDistanceMeters": 798.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.3669958847736625
+        },
+        {
+          "routeDistanceMeters": 800.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.42
+        },
+        {
+          "routeDistanceMeters": 802.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.41781888
+        },
+        {
+          "routeDistanceMeters": 804.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.41176704
+        },
+        {
+          "routeDistanceMeters": 806.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.40258176
+        },
+        {
+          "routeDistanceMeters": 808.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.39100032
+        },
+        {
+          "routeDistanceMeters": 810.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.37776
+        },
+        {
+          "routeDistanceMeters": 812.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.36359808
+        },
+        {
+          "routeDistanceMeters": 814.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.34925184
+        },
+        {
+          "routeDistanceMeters": 816.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.33545855999999996
+        },
+        {
+          "routeDistanceMeters": 818.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.32295552
+        },
+        {
+          "routeDistanceMeters": 820.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.31248
+        },
+        {
+          "routeDistanceMeters": 822.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.30476928
+        },
+        {
+          "routeDistanceMeters": 824.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.30056064
+        },
+        {
+          "routeDistanceMeters": 826.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.29409722222222223
+        },
+        {
+          "routeDistanceMeters": 828.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.253125
+        },
+        {
+          "routeDistanceMeters": 830.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.18715277777777775
+        },
+        {
+          "routeDistanceMeters": 832.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.1128472222222222
+        },
+        {
+          "routeDistanceMeters": 834.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.046875
+        },
+        {
+          "routeDistanceMeters": 836.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0059027777777777785
+        },
+        {
+          "routeDistanceMeters": 838.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 840.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 842.0,
+          "lateralMeters": -2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 844.0,
+          "lateralMeters": -2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 846.0,
+          "lateralMeters": -2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 848.0,
+          "lateralMeters": -2.4726636535938185,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 850.0,
+          "lateralMeters": -2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 852.0,
+          "lateralMeters": -2.19603440734801,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 854.0,
+          "lateralMeters": -2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 856.0,
+          "lateralMeters": -1.8359527627934102,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 858.0,
+          "lateralMeters": -1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 860.0,
+          "lateralMeters": -1.4295086747339263,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 862.0,
+          "lateralMeters": -1.2204913252660738,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 864.0,
+          "lateralMeters": -1.0137920979734656,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 866.0,
+          "lateralMeters": -0.81404723720659,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 868.0,
+          "lateralMeters": -0.6258929873159352,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 870.0,
+          "lateralMeters": -0.4539655926519903,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 872.0,
+          "lateralMeters": -0.3029012975652426,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 874.0,
+          "lateralMeters": -0.17733634640618184,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 876.0,
+          "lateralMeters": -0.08190698352529516,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 878.0,
+          "lateralMeters": -0.021249453273071983,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 880.0,
+          "lateralMeters": -0.0,
+          "surfaceLiftMeters": 0.0
+        }
+      ]
+    },
+    {
+      "id": "lower-tabletop",
+      "name": "Lower tabletop",
+      "startMeters": 1250.0,
+      "takeoffMeters": 1320.0,
+      "landingMeters": 1345.0,
+      "endMeters": 1400.0,
+      "requiredLateralMeters": 2.65,
+      "halfWidthMeters": 0.86,
+      "minimumSpeedKph": 20.0,
+      "maximumAirHeightMeters": 0.58,
+      "scorePoints": 75,
+      "path": [
+        {
+          "routeDistanceMeters": 1250.0,
+          "lateralMeters": 0.0,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1252.0,
+          "lateralMeters": 0.021249453273071872,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1254.0,
+          "lateralMeters": 0.08190698352529523,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1256.0,
+          "lateralMeters": 0.17733634640618162,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1258.0,
+          "lateralMeters": 0.3029012975652427,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1260.0,
+          "lateralMeters": 0.45396559265199005,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1262.0,
+          "lateralMeters": 0.6258929873159351,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1264.0,
+          "lateralMeters": 0.8140472372065898,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1266.0,
+          "lateralMeters": 1.0137920979734654,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1268.0,
+          "lateralMeters": 1.2204913252660736,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1270.0,
+          "lateralMeters": 1.429508674733926,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1272.0,
+          "lateralMeters": 1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1274.0,
+          "lateralMeters": 1.8359527627934098,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1276.0,
+          "lateralMeters": 2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1278.0,
+          "lateralMeters": 2.1960344073480096,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1280.0,
+          "lateralMeters": 2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1282.0,
+          "lateralMeters": 2.472663653593818,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1284.0,
+          "lateralMeters": 2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1286.0,
+          "lateralMeters": 2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1288.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1290.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1292.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1294.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1296.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1298.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1300.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1302.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1304.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1306.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1308.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1310.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1312.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.014403292181069956
+        },
+        {
+          "routeDistanceMeters": 1314.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.10888888888888888
+        },
+        {
+          "routeDistanceMeters": 1316.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.24485596707818932
+        },
+        {
+          "routeDistanceMeters": 1318.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.3669958847736625
+        },
+        {
+          "routeDistanceMeters": 1320.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.42
+        },
+        {
+          "routeDistanceMeters": 1322.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.41781888
+        },
+        {
+          "routeDistanceMeters": 1324.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.41176704
+        },
+        {
+          "routeDistanceMeters": 1326.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.40258176
+        },
+        {
+          "routeDistanceMeters": 1328.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.39100032
+        },
+        {
+          "routeDistanceMeters": 1330.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.37776
+        },
+        {
+          "routeDistanceMeters": 1332.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.36359808
+        },
+        {
+          "routeDistanceMeters": 1334.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.34925184
+        },
+        {
+          "routeDistanceMeters": 1336.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.33545855999999996
+        },
+        {
+          "routeDistanceMeters": 1338.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.32295552
+        },
+        {
+          "routeDistanceMeters": 1340.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.31248
+        },
+        {
+          "routeDistanceMeters": 1342.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.30476928
+        },
+        {
+          "routeDistanceMeters": 1344.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.30056064
+        },
+        {
+          "routeDistanceMeters": 1346.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.29409722222222223
+        },
+        {
+          "routeDistanceMeters": 1348.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.253125
+        },
+        {
+          "routeDistanceMeters": 1350.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.18715277777777775
+        },
+        {
+          "routeDistanceMeters": 1352.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.1128472222222222
+        },
+        {
+          "routeDistanceMeters": 1354.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.046875
+        },
+        {
+          "routeDistanceMeters": 1356.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0059027777777777785
+        },
+        {
+          "routeDistanceMeters": 1358.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1360.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1362.0,
+          "lateralMeters": 2.65,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1364.0,
+          "lateralMeters": 2.628750546726928,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1366.0,
+          "lateralMeters": 2.568093016474705,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1368.0,
+          "lateralMeters": 2.4726636535938185,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1370.0,
+          "lateralMeters": 2.3470987024347574,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1372.0,
+          "lateralMeters": 2.19603440734801,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1374.0,
+          "lateralMeters": 2.024107012684065,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1376.0,
+          "lateralMeters": 1.8359527627934102,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1378.0,
+          "lateralMeters": 1.6362079020265343,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1380.0,
+          "lateralMeters": 1.4295086747339263,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1382.0,
+          "lateralMeters": 1.2204913252660738,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1384.0,
+          "lateralMeters": 1.0137920979734656,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1386.0,
+          "lateralMeters": 0.81404723720659,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1388.0,
+          "lateralMeters": 0.6258929873159352,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1390.0,
+          "lateralMeters": 0.4539655926519903,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1392.0,
+          "lateralMeters": 0.3029012975652426,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1394.0,
+          "lateralMeters": 0.17733634640618184,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1396.0,
+          "lateralMeters": 0.08190698352529516,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1398.0,
+          "lateralMeters": 0.021249453273071983,
+          "surfaceLiftMeters": 0.0
+        },
+        {
+          "routeDistanceMeters": 1400.0,
+          "lateralMeters": 0.0,
+          "surfaceLiftMeters": 0.0
+        }
+      ]
+    }
+  ],
+  "berms": [
+    {
+      "id": "upper-left-berm",
+      "startMeters": 430.0,
+      "endMeters": 478.0,
+      "side": -1.0,
+      "widthMeters": 2.4,
+      "heightMeters": 0.62
+    },
+    {
+      "id": "ridge-right-berm",
+      "startMeters": 970.0,
+      "endMeters": 1024.0,
+      "side": 1.0,
+      "widthMeters": 2.6,
+      "heightMeters": 0.7
+    },
+    {
+      "id": "lower-left-berm",
+      "startMeters": 1082.0,
+      "endMeters": 1128.0,
+      "side": -1.0,
+      "widthMeters": 2.2,
+      "heightMeters": 0.55
+    }
+  ],
+  "rollers": [
+    {
+      "id": "flow-roller-one",
+      "startMeters": 520.0,
+      "peakMeters": 530.0,
+      "endMeters": 540.0,
+      "heightMeters": 0.2
+    },
+    {
+      "id": "flow-roller-two",
+      "startMeters": 1150.0,
+      "peakMeters": 1161.0,
+      "endMeters": 1172.0,
+      "heightMeters": 0.24
+    }
+  ]
+}

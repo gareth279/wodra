@@ -25,6 +25,10 @@
     <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.route-points.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.route-points.json" />
     <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.terrain.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.terrain.json" />
     <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.vegetation.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.vegetation.json" />
+    <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.route-points.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.route-points.json" />
+    <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.terrain.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.terrain.json" />
+    <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.vegetation.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.vegetation.json" />
+    <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.trail-features.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.trail-features.json" />
     <Content Include="Data\Cats\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />

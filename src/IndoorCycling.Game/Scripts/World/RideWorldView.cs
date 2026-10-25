@@ -109,12 +109,14 @@ public partial class RideWorldView : Node3D
     private AmbientActorManager? _ambientActorManager;
     private TerrainLayer? _terrainLayer;
     private CollectibleCatLayer? _collectibleLayer;
+    private TrailCourseLayer? _trailCourseLayer;
     private bool _gameFeatureToggledDuringAttempt;
     private bool _automaticTrailCompletionRequested;
     private double _lastChallengeDistance;
     private double _lastChallengeElapsed;
     private double _steeringDiagnosticElapsed;
     public string? LastChallengeSummary { get; private set; }
+    public double PlayerLateralOffsetMeters => _steering.LateralOffsetMeters;
     public RiderState? PacerRiderState => _pacerController?.IsInitialized == true ? _pacerController.State : null;
     public IReadOnlyList<RiderState> PacerRiderStates => _pacers.Values
         .Where(pacer => pacer.IsInitialized).Select(pacer => pacer.State).ToArray();
@@ -138,6 +140,14 @@ public partial class RideWorldView : Node3D
         capabilities?.MaximumLateralOffsetMeters is { } maximumOffset
             ? 2 * (maximumOffset + SteeringLateralController.RiderMarginMeters)
             : ProceduralRoad.WidthMeters;
+
+    private double SteeringWidthForRoute(RouteCapabilities? capabilities, double distanceMeters)
+    {
+        if (capabilities?.SupportsTrailFeatures == true && _trailCourseLayer is { } trailCourse)
+            return 2 * (trailCourse.LateralCorridorHalfWidth(distanceMeters)
+                + SteeringLateralController.RiderMarginMeters);
+        return SteeringWidthForRoute(capabilities);
+    }
 
     public override void _Ready()
     {
@@ -414,7 +424,9 @@ public partial class RideWorldView : Node3D
 
         foreach (var tree in vegetation.Trees.Select(item =>
         {
-            var point = _geometry.GetPositionForCoordinate(item.Latitude, item.Longitude, item.ElevationMeters ?? 0);
+            var point = item.LocalXMeters is { } localX && item.LocalZMeters is { } localZ
+                ? _geometry.GetPositionForLocalCoordinate(localX, localZ, item.ElevationMeters ?? 0)
+                : _geometry.GetPositionForCoordinate(item.Latitude!.Value, item.Longitude!.Value, item.ElevationMeters ?? 0);
             var distance = Math.Min(new Vector3(point.X, point.Y, point.Z).DistanceTo(rider),
                 new Vector3(point.X, point.Y, point.Z).DistanceTo(camera));
             return (Item: item, Position: point, Distance: distance);
@@ -540,8 +552,9 @@ public partial class RideWorldView : Node3D
             hasFreshSterzo ? sterzoAngle : null, hasFreshSterzo, _session.IsRidePaused,
             IsTypingIntoControl(), GameBootstrap.Settings.Steering.Sensitivity,
             GameBootstrap.Settings.Steering.DeadZoneDegrees,
-            SteeringWidthForRoute(_loadedRoute?.Capabilities),
-            freshSterzoSample && sterzoTimestamp > _keyboardControllerSampleBaseline);
+            SteeringWidthForRoute(_loadedRoute?.Capabilities, _session.CurrentRideState.DistanceMeters),
+            freshSterzoSample && sterzoTimestamp > _keyboardControllerSampleBaseline,
+            _loadedRoute?.Capabilities.DefaultLateralOffsetMeters ?? SteeringLateralController.NormalLineMeters);
         _steeringDiagnosticElapsed += delta;
         if (_steeringDiagnosticElapsed >= 1)
         {
@@ -551,12 +564,25 @@ public partial class RideWorldView : Node3D
                 sterzoFresh = hasFreshSterzo, paused = _session.IsRidePaused });
         }
         var gameEnabled = GameFeaturesPreference.Enabled && _loadedRoute?.Capabilities.SupportsCollectibles == true;
-        if (gameEnabled) EnsureCollectibleLayer();
+        if (gameEnabled || _loadedRoute?.Capabilities.SupportsTrailFeatures == true) EnsureCollectibleLayer();
         _collectibleLayer?.Attempt.MarkPractice(toggled: _gameFeatureToggledDuringAttempt);
+        var trailFeatureFrame = _trailCourseLayer?.UpdateRide(distance, lateralOffset,
+            Math.Max(0, rideState.VirtualSpeedKph), _session.IsRidePaused, gameEnabled);
+        if (trailFeatureFrame?.Award is { } trailAward && _collectibleLayer?.AwardFeatureLine(
+                trailAward.FeatureId, trailAward.Lap, trailAward.Points) == true)
+        {
+            _hudController?.ShowTrailFeatureFeedback(trailAward.Name, trailAward.Points, _collectibleLayer.Score);
+            GameLogger.Log("trail_feature_awarded", new { trailAward.FeatureId, trailAward.Lap, trailAward.Points,
+                score = _collectibleLayer.Score });
+        }
+        if (gameEnabled && trailFeatureFrame?.CompletedLap is { } lapSummary)
+            _hudController?.ShowTrailLapSummary(lapSummary.Lap, lapSummary.CompletedLines, lapSummary.Score);
         _collectibleLayer?.UpdateRide(distance, lateralOffset, gameEnabled,
             _loadedRoute?.RouteType == "Loop");
         _hudController?.SetGameScore(gameEnabled, _collectibleLayer?.Score ?? 0,
-            _collectibleLayer?.Collected ?? 0, _collectibleLayer?.Available ?? 0);
+            _collectibleLayer?.Collected ?? 0, _collectibleLayer?.Available ?? 0,
+            _collectibleLayer?.Attempt.FeatureLinesCompleted ?? 0,
+            _loadedRoute?.Capabilities.SupportsTrailFeatures == true);
         _hudController?.SetGameSteeringHint(gameEnabled && _deviceConnectionPanel?.HasSteeringController != true);
         var routeLength = _geometry.LengthMeters;
         var wrappedDistance = _geometry.WrapDistance(distance);
@@ -616,6 +642,9 @@ public partial class RideWorldView : Node3D
             }
             var riderPose = _geometry.GetPoseAtDistance(riderState.WrappedRouteDistanceMeters);
             visual.UpdateFromRiderState(riderState, riderPose, _loadedRoute.GetGradientAt(riderState.WrappedRouteDistanceMeters), delta);
+            if (riderState.RiderId == "player" && trailFeatureFrame is { } featureFrame)
+                visual.ApplyTrailFeaturePresentation(featureFrame.SurfaceLiftMeters + featureFrame.AirHeightMeters,
+                    featureFrame.PitchRadians);
         }
         UpdateRemoteRiders(delta, routeLength);
         var position = _rider.GlobalPosition;
@@ -726,7 +755,7 @@ public partial class RideWorldView : Node3D
                 if (GameFeaturesPreference.Enabled)
                     LastChallengeSummary = CollectibleUiText.ResultSummary(result.Score, result.PickupsCollected,
                         result.PickupsAvailable, (result.Completed ? "completed" : "partial") + (isBest ? " · personal best" : "") +
-                        (result.EligibleForPersonalBest ? "" : " · practice attempt"));
+                        (result.EligibleForPersonalBest ? "" : " · practice attempt"), result.FeatureLinesCompleted);
                 GameLogger.Log("collectible_attempt_saved", new { result.RouteId, result.Score, result.PickupsCollected,
                     result.PickupsAvailable, result.Completed, result.EligibleForPersonalBest, personalBest = isBest });
             }
@@ -1056,11 +1085,14 @@ public partial class RideWorldView : Node3D
         var wrapped = _geometry.WrapDistance(distance);
         var pose = _geometry.GetPoseAtDistance(distance);
         _lastPose = pose;
+        _trailCourseLayer?.SuppressNextSweep(distance, _steering.LateralOffsetMeters);
         var state = _session.CurrentRideState;
         var rider = new RiderState("player", "You", _loadedRoute.Id, distance, wrapped,
             (int)Math.Floor(distance / _geometry.LengthMeters) + 1, _steering.LateralOffsetMeters,
             0, state.CurrentPowerWatts, _session.CurrentAnimationCadenceRpm, _session.IsRidePaused, state.ElapsedSeconds);
         _rider!.UpdateFromRiderState(rider, pose, _loadedRoute.GetGradientAt(wrapped), 0);
+        if (_trailCourseLayer is { } course) _rider.ApplyTrailFeaturePresentation(
+            course.LastFrame.SurfaceLiftMeters + course.LastFrame.AirHeightMeters, course.LastFrame.PitchRadians);
         UpdateSceneryCollisionForDistance(distance);
         _camera!.Follow(_rider.GlobalPosition, ProceduralRoad.ToGodot(pose.Forward), 1);
     }
@@ -1192,8 +1224,9 @@ public partial class RideWorldView : Node3D
     private void LoadRoute(RouteDefinition route)
     {
         _automaticTrailCompletionRequested = false;
-        _steering.Reset(route.Capabilities.MaximumLateralOffsetMeters is null
-            ? SteeringLateralController.NormalLineMeters : 0);
+        _steering.Reset(route.Capabilities.DefaultLateralOffsetMeters ??
+            (route.Capabilities.MaximumLateralOffsetMeters is null ? SteeringLateralController.NormalLineMeters : 0));
+        _trailCourseLayer = null;
         if (_collectibleLayer is not null)
         {
             _routeRoot?.RemoveChild(_collectibleLayer);
@@ -1269,7 +1302,13 @@ public partial class RideWorldView : Node3D
         var isTrail = route.Environment is RouteEnvironment.Trail or RouteEnvironment.MountainBike;
         if (isTrail)
         {
-            foreach (var surface in TrailEnvironmentBuilder.Build(_geometry, route.Discipline)) _routeRoot.AddChild(surface);
+            foreach (var surface in TrailEnvironmentBuilder.Build(_geometry, route.Discipline, route.TrailRollers)) _routeRoot.AddChild(surface);
+            if (route.Capabilities.SupportsTrailFeatures)
+            {
+                _trailCourseLayer = new TrailCourseLayer { Name = "TrailCourseFeatures" };
+                _routeRoot.AddChild(_trailCourseLayer);
+                _trailCourseLayer.Configure(_geometry, route);
+            }
         }
         else
         {

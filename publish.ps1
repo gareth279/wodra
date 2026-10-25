@@ -557,7 +557,7 @@ try {
 
     # The standalone EOS runtime and its supplied third-party legal notices are
     # the only files copied from the installed proprietary SDK package.
-    Write-Phase 5 'Packaging five built-in routes and EOS...'
+    Write-Phase 5 'Packaging six built-in routes and EOS...'
     $noticesTarget = Join-Path $PublishDirStage 'ThirdPartyNotices\EOS'
     New-Item -ItemType Directory -Path $noticesTarget -Force | Out-Null
     Copy-Item -LiteralPath $EosSdkNotices -Destination (Join-Path $noticesTarget 'ThirdPartySoftwareNotice.txt')
@@ -609,7 +609,8 @@ try {
             $smokeLog = Join-Path $workRoot "offline-smoke-$safeVersion.log"
             $rejectedSmokeLog = Join-Path $workRoot "offline-smoke-rejected-$safeVersion.log"
             $smokeEnvironment = @('WODRA_EOS_PRODUCT_ID', 'WODRA_EOS_SANDBOX_ID',
-                'WODRA_EOS_DEPLOYMENT_ID', 'WODRA_EOS_CLIENT_ID', 'WODRA_EOS_CLIENT_SECRET', 'WODRA_EOS_CACHE_DIR')
+                'WODRA_EOS_DEPLOYMENT_ID', 'WODRA_EOS_CLIENT_ID', 'WODRA_EOS_CLIENT_SECRET', 'WODRA_EOS_CACHE_DIR',
+                'WODRA_PACKAGED_ROUTES_DIR')
 
             # Deliberately give the packaged app a wrong expected root once.
             # It must reject user:// before settings, diagnostics, migration,
@@ -655,6 +656,31 @@ try {
                 (Select-String -LiteralPath $smokeLog -Pattern 'UnauthorizedAccessException|readonly database' -Quiet)) {
                 throw 'The isolated packaged smoke could not write its disposable Godot user data.'
             }
+
+            $routeSmokeLog = Join-Path $workRoot "packaged-xc-assets-$safeVersion.log"
+            $routeSmoke = Invoke-WithWodraSmokeIsolation -Isolation $smokeIsolation -Action {
+                param($isolation)
+                Invoke-TrackedProcess -FilePath $smokeExe `
+                    -ArgumentList @('--headless', '--scene', 'res://Tests/PackagedXcRouteAssetsSmokeTest.tscn',
+                        '--quit-after', '20', '--log-file', $routeSmokeLog, '--',
+                        '--require-userdata-under', $isolation.UserDataRoot) `
+                    -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "packaged-xc-process-$safeVersion.log") `
+                    -TimeoutSeconds 45 -Label 'Extracted Wodra packaged XC asset smoke test' `
+                    -RemoveEnvironmentVariables $smokeEnvironment
+            }
+            $routeSmokeEngineLog = if (Test-Path -LiteralPath $routeSmokeLog) {
+                Get-Content -LiteralPath $routeSmokeLog -Raw
+            } else { '' }
+            $routeSmokeOutput = [string]$routeSmoke.StdOut + [string]$routeSmoke.StdErr + [string]$routeSmokeEngineLog
+            $routeIsolationMatch = [regex]::Match($routeSmokeOutput, 'USER DATA ISOLATION VERIFIED: user:// = (.+)')
+            if ($routeSmoke.ExitCode -ne 0 -or
+                $routeSmokeOutput -notmatch '\[PackagedXcRouteAssetsSmoke\] PASS:' -or
+                $routeSmokeOutput -match '\[PackagedXcRouteAssetsSmoke\] FAIL:|SCRIPT ERROR:' -or
+                -not $routeIsolationMatch.Success -or
+                -not (Test-WodraPathInside -Path $routeIsolationMatch.Groups[1].Value.Trim() -Root $smokeIsolation.UserDataRoot)) {
+                throw "Extracted Wodra did not load the packaged XC route assets under disposable user data. Log: $routeSmokeLog"
+            }
+            Write-Host "Extracted Wodra XC asset smoke passed; embedded terrain/vegetation/features and all four portable route sidecars loaded from '$extractDir'."
         }
         finally {
             Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue

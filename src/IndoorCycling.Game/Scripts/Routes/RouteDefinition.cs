@@ -4,6 +4,7 @@ using System;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using IndoorCycling.Core.Simulation;
 
 public sealed record RouteDefinition(
 	string Id,
@@ -20,6 +21,10 @@ public sealed record RouteDefinition(
 	public RouteDiscipline Discipline { get; init; } = RouteDiscipline.Road;
 	/// <summary>Source-authored route-relative surface classifications; empty retains legacy route behavior.</summary>
 	public IReadOnlyList<RouteSurfaceSegment> SurfaceSegments { get; init; } = [];
+	/// <summary>Authored, route-relative optional trail line choices. These affect presentation and challenge scoring only.</summary>
+	public IReadOnlyList<TrailFeatureDefinition> TrailFeatures { get; init; } = [];
+	public IReadOnlyList<TrailBermDefinition> TrailBerms { get; init; } = [];
+	public IReadOnlyList<TrailRollerDefinition> TrailRollers { get; init; } = [];
 	/// <summary>Modes explicitly supported by this environment. An empty value preserves legacy route behavior.</summary>
 	public IReadOnlyList<RideActivityMode> SupportedModes { get; init; } = [];
 	/// <summary>Optional feature support. Legacy routes retain the existing road feature set.</summary>
@@ -42,8 +47,9 @@ public sealed record RouteDefinition(
 			if (Points is not { Count: >= 2 } points) return "";
 			var canonical = string.Join("\n", points.Select(p => string.Join(",",
 				p.DistanceMeters.ToString("F3", CultureInfo.InvariantCulture),
-				p.Latitude.ToString("F7", CultureInfo.InvariantCulture),
-				p.Longitude.ToString("F7", CultureInfo.InvariantCulture),
+				p.LocalXMeters is { } x && p.LocalZMeters is { } z
+					? $"local:{x.ToString("F3", CultureInfo.InvariantCulture)},{z.ToString("F3", CultureInfo.InvariantCulture)}"
+					: $"{p.Latitude?.ToString("F7", CultureInfo.InvariantCulture)},{p.Longitude?.ToString("F7", CultureInfo.InvariantCulture)}",
 				p.ElevationMeters.ToString("F3", CultureInfo.InvariantCulture))));
 			return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
 		}
@@ -133,13 +139,17 @@ public sealed record RouteDefinition(
 
 		return new RoutePoint(
 			DistanceMeters: loopDistanceMeters,
-			Latitude: Lerp(before.Latitude, after.Latitude, ratio),
-			Longitude: Lerp(before.Longitude, after.Longitude, ratio),
+			Latitude: LerpNullable(before.Latitude, after.Latitude, ratio),
+			Longitude: LerpNullable(before.Longitude, after.Longitude, ratio),
 			ElevationMeters: Lerp(before.ElevationMeters, after.ElevationMeters, ratio),
 			RawElevationMeters: before.RawElevationMeters.HasValue && after.RawElevationMeters.HasValue
 				? Lerp(before.RawElevationMeters.Value, after.RawElevationMeters.Value, ratio) : null,
 			GradientPercent: before.GradientPercent.HasValue && after.GradientPercent.HasValue
-				? Lerp(before.GradientPercent.Value, after.GradientPercent.Value, ratio) : null
+				? Lerp(before.GradientPercent.Value, after.GradientPercent.Value, ratio) : null,
+			LocalXMeters: before.LocalXMeters.HasValue && after.LocalXMeters.HasValue
+				? Lerp(before.LocalXMeters.Value, after.LocalXMeters.Value, ratio) : null,
+			LocalZMeters: before.LocalZMeters.HasValue && after.LocalZMeters.HasValue
+				? Lerp(before.LocalZMeters.Value, after.LocalZMeters.Value, ratio) : null
 		);
 	}
 
@@ -147,11 +157,15 @@ public sealed record RouteDefinition(
 	{
 		return a + ((b - a) * t);
 	}
+
+	private static double? LerpNullable(double? a, double? b, double t) => a.HasValue && b.HasValue
+		? Lerp(a.Value, b.Value, t) : null;
 }
 
 public enum RouteEnvironment { Road, Trail, Velodrome, MountainBike }
 public enum RouteDiscipline { Road, Gravel, MountainBike, Track }
-public sealed record RouteSurfaceSegment(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId);
+public sealed record RouteSurfaceSegment(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId,
+	string? SourceName = null);
 
 /// <summary>Explicit ambient-world policy, independent of local/AI/remote cyclist capabilities.</summary>
 public sealed record RouteEnvironmentPolicy(bool SupportsAmbientCars, bool SupportsAmbientPedestrians,
@@ -171,6 +185,10 @@ public sealed record RouteCapabilities(bool SupportsPacer, bool SupportsGhost, b
 {
 	/// <summary>Optional maximum lateral steering extent for a narrow environment, in metres.</summary>
 	public float? MaximumLateralOffsetMeters { get; init; }
+	/// <summary>Default rider line when no steering input is active. Null retains the legacy route line.</summary>
+	public float? DefaultLateralOffsetMeters { get; init; }
+	/// <summary>Route-content-driven MTB line choices and visual-only jump presentation.</summary>
+	public bool SupportsTrailFeatures { get; init; }
 	public static RouteCapabilities LegacyRoad { get; } = new(true, true, true, true, true);
 	public static RouteCapabilities SoloVelodrome { get; } = new(false, false, false, false, false);
 	public static RouteCapabilities SoloTrail { get; } = new(false, true, true, false, false);

@@ -9,13 +9,15 @@ using System.Text.Json;
 public static class RouteDataLoader
 {
 	private sealed record RoutePointsFile(string? Id, string? Name, bool IsValid,
-		double ActualOsmDistanceMeters, IReadOnlyList<RoutePointData>? Points,
+		double? ActualOsmDistanceMeters, IReadOnlyList<RoutePointData>? Points,
 		string? RouteType, string? Difficulty, int? RouteDataVersion, string? GeometryFingerprint,
 		string? SourceAttribution, double? TotalAscentMeters, string? Environment, string? Discipline,
-		IReadOnlyList<RouteSurfaceSegmentData>? SurfaceSegments);
-	private sealed record RoutePointData(double DistanceMeters, double Latitude, double Longitude,
-		double? ElevationMeters, double? RawElevationMeters, double? GradientPercent);
-	private sealed record RouteSurfaceSegmentData(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId);
+		IReadOnlyList<RouteSurfaceSegmentData>? SurfaceSegments, double? ActualRouteDistanceMeters);
+	private sealed record RoutePointData(double DistanceMeters, double? Latitude, double? Longitude,
+		double? ElevationMeters, double? RawElevationMeters, double? GradientPercent,
+		double? LocalXMeters, double? LocalZMeters);
+	private sealed record RouteSurfaceSegmentData(double StartMeters, double EndMeters, string Surface,
+		long SourceOsmWayId, string? SourceName);
 
 	private static readonly JsonSerializerOptions JsonOptions = new()
 	{
@@ -32,9 +34,16 @@ public static class RouteDataLoader
 			?? throw new InvalidDataException($"Embedded route data resource '{resourceName}' was not found.");
 		var source = JsonSerializer.Deserialize<RoutePointsFile>(stream, JsonOptions)
 			?? throw new InvalidDataException($"Embedded route data resource '{resourceName}' is empty.");
-		return Load(source, id, name, description, segments, resourceName,
+		var route = Load(source, id, name, description, segments, resourceName,
 			source.RouteType ?? "Loop", source.Difficulty ?? "Unrated",
 			source.RouteDataVersion ?? 1, source.SourceAttribution ?? "", source.TotalAscentMeters);
+		var featureResource = $"Wodra.GameData.Routes.{id}.trail-features.json";
+		if (RoutePackageFiles.Exists(assembly, featureResource, id))
+		{
+			var course = TrailFeatureDataLoader.Load(assembly, featureResource, id, route.DistanceMeters);
+			return route with { TrailFeatures = course.Features, TrailBerms = course.Berms, TrailRollers = course.Rollers };
+		}
+		return route;
 	}
 
 	/// <summary>Loads a reviewed route package installed in the per-user Wodra Routes directory.</summary>
@@ -66,29 +75,47 @@ public static class RouteDataLoader
 			throw new InvalidDataException($"Route data '{sourceName}' is not a valid route.");
 
 		var routeLengthMeters = points[^1].DistanceMeters;
+		var storedRouteLengthMeters = source.ActualRouteDistanceMeters ?? source.ActualOsmDistanceMeters ?? 0;
 		if (!double.IsFinite(routeLengthMeters) || routeLengthMeters <= 0
-			|| !double.IsFinite(source.ActualOsmDistanceMeters)
-			|| Math.Abs(source.ActualOsmDistanceMeters - routeLengthMeters) > 0.001)
+			|| !double.IsFinite(storedRouteLengthMeters)
+			|| Math.Abs(storedRouteLengthMeters - routeLengthMeters) > 0.001)
 			throw new InvalidDataException($"Route data '{sourceName}' has inconsistent route length metadata.");
 		for (var i = 0; i < points.Count; i++)
 		{
 			var point = points[i];
-			if (!double.IsFinite(point.DistanceMeters) || !double.IsFinite(point.Latitude)
-				|| !double.IsFinite(point.Longitude) || point.Latitude is < -90 or > 90
-				|| point.Longitude is < -180 or > 180
+			var hasGps = point.Latitude is not null && point.Longitude is not null;
+			var hasLocal = point.LocalXMeters is not null && point.LocalZMeters is not null;
+			if (!double.IsFinite(point.DistanceMeters) || (!hasGps && !hasLocal)
+				|| (hasGps && (!double.IsFinite(point.Latitude!.Value) || !double.IsFinite(point.Longitude!.Value)
+					|| point.Latitude is < -90 or > 90 || point.Longitude is < -180 or > 180))
+				|| (hasLocal && (!double.IsFinite(point.LocalXMeters!.Value) || !double.IsFinite(point.LocalZMeters!.Value)))
+				|| (i > 0 && ((points[i - 1].Latitude is not null) != (point.Latitude is not null)
+					|| (points[i - 1].LocalXMeters is not null) != (point.LocalXMeters is not null)))
 				|| (i > 0 && point.DistanceMeters <= points[i - 1].DistanceMeters))
 				throw new InvalidDataException($"Route data '{sourceName}' contains invalid or unordered points.");
 		}
 		if (points[0].DistanceMeters != 0)
 			throw new InvalidDataException($"Route data '{sourceName}' must start at chainage zero.");
-		if (routeType is "loop" or "outAndBack"
-			&& (Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
-				|| Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9))
+		if (points.Any(point => (point.Latitude is not null || point.Longitude is not null)
+			&& (point.LocalXMeters is not null || point.LocalZMeters is not null)))
+			throw new InvalidDataException($"Route data '{sourceName}' must use either geographic or local coordinates, not both.");
+		if ((routeType is "loop" or "outAndBack") && points.All(point => point.Latitude is not null && point.Longitude is not null)
+			&& (Math.Abs(points[0].Latitude!.Value - points[^1].Latitude!.Value) > 1e-9
+				|| Math.Abs(points[0].Longitude!.Value - points[^1].Longitude!.Value) > 1e-9))
 			throw new InvalidDataException($"Route data '{sourceName}' does not close at the lap seam.");
+		if ((routeType is "loop" or "outAndBack") && points.All(point => point.LocalXMeters is not null && point.LocalZMeters is not null)
+			&& (Math.Abs(points[0].LocalXMeters!.Value - points[^1].LocalXMeters!.Value) > 1e-6
+				|| Math.Abs(points[0].LocalZMeters!.Value - points[^1].LocalZMeters!.Value) > 1e-6))
+			throw new InvalidDataException($"Local route data '{sourceName}' does not close at the lap seam.");
 		if (routeType == "pointToPoint"
-			&& Math.Abs(points[0].Latitude - points[^1].Latitude) < 1e-9
-			&& Math.Abs(points[0].Longitude - points[^1].Longitude) < 1e-9)
+			&& points.All(point => point.Latitude is not null && point.Longitude is not null)
+			&& Math.Abs(points[0].Latitude!.Value - points[^1].Latitude!.Value) < 1e-9
+			&& Math.Abs(points[0].Longitude!.Value - points[^1].Longitude!.Value) < 1e-9)
 			throw new InvalidDataException($"Point-to-point route data '{sourceName}' must have distinct natural endpoints.");
+		if (routeType == "pointToPoint" && points.All(point => point.LocalXMeters is not null && point.LocalZMeters is not null)
+			&& Math.Abs(points[0].LocalXMeters!.Value - points[^1].LocalXMeters!.Value) < 1e-6
+			&& Math.Abs(points[0].LocalZMeters!.Value - points[^1].LocalZMeters!.Value) < 1e-6)
+			throw new InvalidDataException($"Local point-to-point route data '{sourceName}' must have distinct endpoints.");
 		if (points.Any(point => point.ElevationMeters is not { } elevation || !double.IsFinite(elevation)
 			|| point.RawElevationMeters is not { } raw || !double.IsFinite(raw)
 			|| point.GradientPercent is not { } gradient || !double.IsFinite(gradient)))
@@ -96,7 +123,7 @@ public static class RouteDataLoader
 		var environment = ParseEnvironment(source.Environment);
 		var discipline = ParseDiscipline(source.Discipline);
 		var surfaces = (source.SurfaceSegments ?? []).Select(item => new RouteSurfaceSegment(
-			item.StartMeters, item.EndMeters, item.Surface, item.SourceOsmWayId)).ToArray();
+			item.StartMeters, item.EndMeters, item.Surface, item.SourceOsmWayId, item.SourceName)).ToArray();
 		if (environment == RouteEnvironment.Trail
 			&& discipline is not (RouteDiscipline.Gravel or RouteDiscipline.MountainBike))
 			throw new InvalidDataException($"Trail environment '{id}' must declare its riding discipline separately as Gravel or MountainBike.");
@@ -117,7 +144,8 @@ public static class RouteDataLoader
 				var surface = surfaces[i];
 				if (!double.IsFinite(surface.StartMeters + surface.EndMeters) || surface.StartMeters < 0
 					|| surface.EndMeters <= surface.StartMeters || surface.EndMeters > routeLengthMeters + 0.05
-					|| string.IsNullOrWhiteSpace(surface.Surface) || surface.SourceOsmWayId <= 0
+					|| string.IsNullOrWhiteSpace(surface.Surface)
+					|| (surface.SourceOsmWayId <= 0 && string.IsNullOrWhiteSpace(surface.SourceName))
 					|| (i > 0 && Math.Abs(surface.StartMeters - surfaces[i - 1].EndMeters) > 0.05))
 					throw new InvalidDataException($"Surface sections for '{id}' contain invalid or gapped source chainage.");
 			}
@@ -138,7 +166,8 @@ public static class RouteDataLoader
 				throw new InvalidDataException($"Route segments for '{id}' contain invalid or gapped chainage.");
 		}
 		var routePoints = points.Select(point => new RoutePoint(point.DistanceMeters,
-			point.Latitude, point.Longitude, point.ElevationMeters!.Value, point.RawElevationMeters, point.GradientPercent)).ToArray();
+			point.Latitude, point.Longitude, point.ElevationMeters!.Value, point.RawElevationMeters,
+			point.GradientPercent, point.LocalXMeters, point.LocalZMeters)).ToArray();
 		var route = new RouteDefinition(id, name, description, routeLengthMeters, segments, routePoints)
 		{
 			RouteType = routeType switch
