@@ -37,6 +37,8 @@ public sealed class AppSettings
 	public System.Collections.Generic.Dictionary<Guid, System.Collections.Generic.List<string>> RouteFavoritesByProfile { get; set; } = new();
 	/// <summary>Track effort bests keyed by profile, stable route ID, geometry version and effort mode.</summary>
 	public System.Collections.Generic.Dictionary<string, double> TrackPersonalBests { get; set; } = new(StringComparer.Ordinal);
+	/// <summary>Explicit per-profile FTP entries; absence means unconfigured.</summary>
+	public System.Collections.Generic.Dictionary<Guid, int> WorkoutFtpWattsByProfile { get; set; } = new();
 	public int SteeringSensitivityPreferenceVersion { get; set; }
 	/// <summary>Last successfully used Bluetooth identity; never matched against an ANT device number.</summary>
 	public ulong? LastTrainerBluetoothAddress { get; set; }
@@ -113,6 +115,9 @@ public sealed class AppSettings
 			settings.Display ??= new RideDisplayPreferences();
 			settings.GameFeaturesByProfile ??= new System.Collections.Generic.Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 			settings.RouteFavoritesByProfile ??= new System.Collections.Generic.Dictionary<Guid, System.Collections.Generic.List<string>>();
+			settings.WorkoutFtpWattsByProfile ??= new System.Collections.Generic.Dictionary<Guid, int>();
+			foreach (var profileId in settings.WorkoutFtpWattsByProfile.Where(pair => pair.Value is < 50 or > 1000).Select(pair => pair.Key).ToArray())
+				settings.WorkoutFtpWattsByProfile.Remove(profileId);
 			settings.Steering ??= new SteeringControlSettings();
 			var migratedSteeringSensitivity = SteeringSensitivityPreferencePolicy.Migrate(
 				json, settings.Steering, settings.SteeringSensitivityPreferenceVersion);

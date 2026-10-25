@@ -87,6 +87,7 @@ var tests = new (string Name, Action Run)[]
     ("Consecutive rides create separate FIT files", ConsecutiveRidesCreateSeparateFiles),
     ("Catch-up closes the old FIT and starts a rebased segment without jump distance", CatchUpCreatesIndependentRecordingSegments),
     ("Empty recording finalizes as a valid FIT file", EmptyRecording)
+    ,("Indoor workout FIT is tagged indoors and contains no GPS coordinates", IndoorWorkoutFitHasNoGps)
 };
 
 var failed = 0;
@@ -150,6 +151,32 @@ static void EmptyRecording() => InTemporaryFolder(() =>
     recorder.StartOrResume(0);
     var path = recorder.Stop()!;
     Near(0, new FitRideLoader().Load(path).Count);
+});
+
+static void IndoorWorkoutFitHasNoGps() => InTemporaryFolder(() =>
+{
+    var recorder = new RideFitRecorder(indoorWorkout: true);
+    recorder.StartOrResume(0, 0);
+    recorder.RecordSample(State(0), Telemetry() with { HasPowerMeasurement = false, HasCadenceMeasurement = false }, 0, routeSample: null);
+    recorder.RecordSample(State(12), Telemetry(), 0, routeSample: null);
+    var path = recorder.Stop()!;
+    var decoded = new Decode(); var broadcaster = new MesgBroadcaster();
+    SessionMesg? session = null; var located = false; var missingSensorSampleOmitted = false; var measuredPower = false; var measuredCadence = false;
+    broadcaster.SessionMesgEvent += (_, e) => session = new SessionMesg(e.mesg);
+    broadcaster.RecordMesgEvent += (_, e) =>
+    {
+        var record = new RecordMesg(e.mesg);
+        located |= record.GetPositionLat().HasValue || record.GetPositionLong().HasValue;
+        missingSensorSampleOmitted |= !record.GetPower().HasValue && !record.GetCadence().HasValue;
+        measuredPower |= record.GetPower() == 180;
+        measuredCadence |= record.GetCadence() == 85;
+    };
+    decoded.MesgEvent += broadcaster.OnMesg; decoded.MesgDefinitionEvent += broadcaster.OnMesgDefinition;
+    using (var stream = System.IO.File.OpenRead(path)) decoded.Read(stream);
+    if (session?.GetSubSport() != SubSport.IndoorCycling) throw new Exception("Workout FIT did not identify indoor cycling.");
+    if (located) throw new Exception("Workout FIT contains a fabricated position sample.");
+    if (!missingSensorSampleOmitted || !measuredPower || !measuredCadence)
+        throw new Exception("Workout FIT replaced unavailable sensors with zero or did not preserve measured values.");
 });
 
 static void RidePauseResumesSameRecording() => InTemporaryFolder(() =>

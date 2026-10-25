@@ -9,6 +9,7 @@ using IndoorCycling.Core.Models;
 public partial class RouteSelectionPanelController : Control
 {
 	private RideSessionNode? _session;
+	private WorkoutSelectionPanelController? _workoutSelection;
 	private Control? _hud, _device, _start;
 	private PanelContainer? _panel;
 	private VBoxContainer? _rows;
@@ -37,6 +38,7 @@ public partial class RouteSelectionPanelController : Control
 	public override void _Ready()
 	{
 		_session = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
+		_workoutSelection = GetNodeOrNull<WorkoutSelectionPanelController>("../WorkoutSelectionPanel");
 		_hud = GetNodeOrNull<Control>("../HudController");
 		_device = GetNodeOrNull<Control>("../DeviceConnectionPanel");
 		_start = GetNodeOrNull<Control>("../StartPanel");
@@ -90,6 +92,7 @@ public partial class RouteSelectionPanelController : Control
 		var header = new HBoxContainer { Name = "TopBar" }; root.AddChild(header);
 		var title = new Label { Text = "Choose a route", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
 		title.AddThemeFontSizeOverride("font_size", 24); header.AddChild(title);
+		var workouts = new Button { Text = "Workouts" }; workouts.Pressed += ShowWorkouts; header.AddChild(workouts);
 		var options = new Button { Text = "Options" }; options.Pressed += OpenOptions; header.AddChild(options);
 		var filters = new HBoxContainer { Name = "Filters" }; filters.AddThemeConstantOverride("separation", 8); root.AddChild(filters);
 		_search = new LineEdit { Name = "RouteSearch", PlaceholderText = "Search routes", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -347,7 +350,7 @@ public partial class RouteSelectionPanelController : Control
 	private void OpenOptions()
 	{
 		_returnToRouteAfterOptions = true;
-		_start?.Call("ShowOptions", true);
+		if (_start is StartPanelController start) start.ShowOptions(true);
 		Hide();
 	}
 	public void ReturnFromOptions()
@@ -358,10 +361,15 @@ public partial class RouteSelectionPanelController : Control
 	}
 	public void ShowRouteSelection()
 	{
+		_workoutSelection?.Hide();
 		_hud?.Hide(); _device?.Hide(); _start?.Hide(); Show(); MoveToFront();
 		if (_pacerPicker is not null)
 			_pacerPicker.Select(Math.Max(0, PacerEffortPresets.All.ToList().FindIndex(p => p.Id == PacerEffortPresets.NormalizeSelection(GameBootstrap.Settings.PacerPresetId)) + 1));
 		RefreshRows();
+	}
+	public void ShowWorkouts()
+	{
+		Hide(); _workoutSelection?.ShowSelection();
 	}
 	private void OnBackPressed()
 	{

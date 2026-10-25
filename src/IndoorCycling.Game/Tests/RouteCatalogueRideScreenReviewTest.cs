@@ -148,7 +148,8 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
 			}
 
-			selector.Call("OpenOptions");
+			selector.FindChildren("", "Button", true, false).OfType<Button>()
+				.Single(button => button.Text == "Options").EmitSignal(BaseButton.SignalName.Pressed);
 			await Frames(8);
 			var options = ride.GetNode<Window>("OptionsWindow");
 			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggle");

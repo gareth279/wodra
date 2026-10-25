@@ -1,6 +1,7 @@
 namespace IndoorCycling.Core.Models;
 
 public enum RideActivityStatus { InProgress, Completed, Abandoned }
+public enum RideActivityKind { Route, Workout, FitReplay }
 
 public sealed record RiderProfileRecord(Guid Id, string Name, DateTimeOffset CreatedAtUtc, DateTimeOffset UpdatedAtUtc,
     double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false, int TrainerDifficultyPercent = 50)
@@ -23,7 +24,15 @@ public sealed record RideActivity(
     double? AverageSpeedKph, double? MaxSpeedKph,
     double? AveragePowerWatts, double? MaxPowerWatts,
     double? AverageCadenceRpm, double? MaxCadenceRpm,
-    double ElevationGainMeters, string? FitFilePath, DateTimeOffset CreatedAtUtc);
+    double ElevationGainMeters, string? FitFilePath, DateTimeOffset CreatedAtUtc)
+{
+    public RideActivityKind Kind { get; init; } = RideActivityKind.Route;
+    public string? WorkoutDefinitionId { get; init; }
+    public string? WorkoutName { get; init; }
+    public int? WorkoutFtpWatts { get; init; }
+    public bool WorkoutCompleted { get; init; }
+    public double? WorkoutTargetAdherencePercent { get; init; }
+}
 
 public sealed record RideActivityMedia(
     Guid Id, Guid ActivityId, string ImagePath, string? SidecarPath,
@@ -36,7 +45,10 @@ public sealed record RideActivityDraft(
     double? AverageSpeedKph, double? MaxSpeedKph,
     double? AveragePowerWatts, double? MaxPowerWatts,
     double? AverageCadenceRpm, double? MaxCadenceRpm,
-    double ElevationGainMeters, string? FitFilePath);
+    double ElevationGainMeters, string? FitFilePath,
+    RideActivityKind Kind = RideActivityKind.Route, string? WorkoutDefinitionId = null,
+    string? WorkoutName = null, int? WorkoutFtpWatts = null, bool WorkoutCompleted = false,
+    double? WorkoutTargetAdherencePercent = null);
 
 /// <summary>Accumulates time weighted metrics from live ride frames without changing simulation state.</summary>
 public sealed class RideActivityAccumulator

@@ -162,8 +162,8 @@ public sealed record RouteDefinition(
 		? Lerp(a.Value, b.Value, t) : null;
 }
 
-public enum RouteEnvironment { Road, Trail, Velodrome, MountainBike }
-public enum RouteDiscipline { Road, Gravel, MountainBike, Track }
+public enum RouteEnvironment { Road, Trail, Velodrome, MountainBike, TrainingStudio }
+public enum RouteDiscipline { Road, Gravel, MountainBike, Track, IndoorTraining }
 public sealed record RouteSurfaceSegment(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId,
 	string? SourceName = null);
 
@@ -175,7 +175,7 @@ public sealed record RouteEnvironmentPolicy(bool SupportsAmbientCars, bool Suppo
 	public static RouteEnvironmentPolicy For(RouteEnvironment environment) => environment switch
 	{
 		RouteEnvironment.Road => new(true, true, true),
-		RouteEnvironment.Trail or RouteEnvironment.MountainBike or RouteEnvironment.Velodrome => new(false, false, false),
+		RouteEnvironment.Trail or RouteEnvironment.MountainBike or RouteEnvironment.Velodrome or RouteEnvironment.TrainingStudio => new(false, false, false),
 		_ => throw new ArgumentOutOfRangeException(nameof(environment))
 	};
 }

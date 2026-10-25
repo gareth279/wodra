@@ -1278,6 +1278,18 @@ public partial class RideWorldView : Node3D
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
+        if (route.Environment == RouteEnvironment.TrainingStudio)
+        {
+            // Workout-only fictional local geometry: no route scenery, traffic, actors, collectibles or online riders.
+            _routeRoot.AddChild(WorkoutStudioBuilder.Build(_geometry));
+            _collectibleLayer = null; _landmarkLayer = null; _buildingLayer = null; _vegetationLayer = null;
+            _streetFurnitureLayer = null; _roadMarkingLayer = null; _backgroundStreetLayer = null;
+            _ambientActorManager = null; _terrainLayer = null;
+            _loadedRoute = route;
+            GameLogger.Log("visual_route_loaded", new { route.Id, route.DistanceMeters, environment = route.Environment.ToString(),
+                geographicCoordinates = false, traffic = false, collectibles = false });
+            return;
+        }
         if (route.Environment == RouteEnvironment.Velodrome)
         {
             // Track environments own their markings, banking and surrounds. They do not

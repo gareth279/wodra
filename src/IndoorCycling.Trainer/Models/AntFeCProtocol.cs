@@ -295,6 +295,7 @@ public static class AntFeCProtocol
     public const byte PageCapabilities = 54;
     public const byte PageCommandStatus = 71;
     public const byte PageRequest = 70;
+    public const byte PageTargetPower = 49;
     public const byte PageManufacturerInfo = 80;
     public const byte PageProductInfo = 81;
     public const int MaximumCapabilityRequestAttempts = 3;
@@ -342,7 +343,7 @@ public static class AntFeCProtocol
     {
         if (!double.IsFinite(watts)) throw new ArgumentOutOfRangeException(nameof(watts));
         var raw = (ushort)Math.Clamp((int)Math.Round(Math.Clamp(watts, 0, 1000) * 4), 0, 4000);
-        return [49, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, (byte)raw, (byte)(raw >> 8)];
+        return [PageTargetPower, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, (byte)raw, (byte)(raw >> 8)];
     }
 
     public static byte[] BuildUserConfiguration(double riderWeightKg, double bicycleWeightKg)

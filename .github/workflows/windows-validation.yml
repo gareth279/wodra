@@ -131,12 +131,22 @@ jobs:
             throw 'Production RideScreen offline pacer review did not report a clean pass.'
           }
           $routeCatalogueLog = "$env:RUNNER_TEMP\wodra-route-catalogue-review.log"
-          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RouteCatalogueRideScreenReviewTest.tscn --log-file $routeCatalogueLog
+          & .\tools\RunRouteCatalogueRideScreenReview.ps1 -GodotExe $env:GODOT_PATH -Headless *> $routeCatalogueLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen route catalogue review failed.' }
           $routeCatalogueOutput = Get-Content -LiteralPath $routeCatalogueLog -Raw
           if ($routeCatalogueOutput -notmatch '\[RouteCatalogueReview\] PASS:.*Options navigation preserves the selected pacer' -or
+              $routeCatalogueOutput -notmatch 'ISOLATION PREFLIGHT PASS:' -or
               $routeCatalogueOutput -match 'SCRIPT ERROR:|\[RouteCatalogueReview\] FAIL:') {
             throw 'Production RideScreen route catalogue review did not report a clean pass.'
+          }
+          $workoutReviewLog = "$env:RUNNER_TEMP\wodra-workout-review.log"
+          & .\tools\RunWorkoutRideScreenReview.ps1 -GodotExe $env:GODOT_PATH -Headless *> $workoutReviewLog
+          if ($LASTEXITCODE -ne 0) { throw 'Isolated production RideScreen workout review failed.' }
+          $workoutReviewOutput = Get-Content -LiteralPath $workoutReviewLog -Raw
+          if ($workoutReviewOutput -notmatch 'WORKOUT REVIEW PASS:' -or
+              $workoutReviewOutput -notmatch 'ISOLATION PREFLIGHT PASS:' -or
+              $workoutReviewOutput -match 'SCRIPT ERROR:|WORKOUT REVIEW FAIL:') {
+            throw 'Isolated production RideScreen workout review did not report a clean isolated pass.'
           }
           $gravelReviewLog = "$env:RUNNER_TEMP\wodra-gravel-review.log"
           & .\tools\RunGravelRideScreenReview.ps1 -GodotExe $env:GODOT_PATH -Headless *> $gravelReviewLog

@@ -9,7 +9,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 namespace IndoorCycling.Trainer.Windows
 {
 
-public class WindowsBleTrainerClient : ITrainerClient
+public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
 {
     private BluetoothLEAdvertisementWatcher? _watcher;
     private BluetoothLEAdvertisementWatcher? _activeScanWatcher;
@@ -61,11 +61,22 @@ public class WindowsBleTrainerClient : ITrainerClient
     private GattCharacteristic? _ftmsFitnessMachineStatusCharacteristic; // 2ADA notify
     private GattCharacteristic? _ftmsControlPointCharacteristic;     // 2AD9 write/indicate
     private (double Minimum, double Maximum)? _supportedInclinationRangePercent;
+    private FtmsWorkoutCapabilities _workoutCapabilities = FtmsWorkoutCapabilities.Unknown;
     private TaskCompletionSource<byte[]>? _pendingControlPointResponse;
     public double? LastRequestedSimulationGradePercent { get; private set; }
     public double? LastAppliedSimulationGradePercent { get; private set; }
     private readonly SemaphoreSlim _controlPointWriteLock = new(1, 1);
     private readonly SemaphoreSlim _connectionSetupLock = new(1, 1);
+    private readonly SemaphoreSlim _workoutCommandLock = new(1, 1);
+    private long _workoutSessionId;
+
+    public WorkoutTrainerControlStatus WorkoutControlStatus => _workoutCapabilities.HasFeatureData &&
+        _workoutCapabilities.SupportsTargetPower
+        ? new(WorkoutTrainerControlKind.Erg, "FTMS power target and Release Control are advertised.",
+            _workoutCapabilities.MinimumPowerWatts, _workoutCapabilities.MaximumPowerWatts, _workoutCapabilities.PowerIncrementWatts)
+        : new(WorkoutTrainerControlKind.TargetsOnly,
+            !_workoutCapabilities.HasFeatureData ? "FTMS control features were not discovered; targets only." :
+            "Trainer does not advertise power target control; targets only.");
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
@@ -94,6 +105,8 @@ public class WindowsBleTrainerClient : ITrainerClient
         _ftmsFitnessMachineStatusCharacteristic = null;
         _ftmsControlPointCharacteristic = null;
         _supportedInclinationRangePercent = null;
+        _workoutCapabilities = FtmsWorkoutCapabilities.Unknown;
+        Interlocked.Exchange(ref _workoutSessionId, 0);
         LastRequestedSimulationGradePercent = null;
         LastAppliedSimulationGradePercent = null;
         LastConnectionFailureStage = null;
@@ -440,6 +453,8 @@ public class WindowsBleTrainerClient : ITrainerClient
         var fitnessMachineStatusUuid = Guid.Parse("00002ada-0000-1000-8000-00805f9b34fb");
         var fitnessMachineControlPointUuid = Guid.Parse("00002ad9-0000-1000-8000-00805f9b34fb");
         var supportedInclinationRangeUuid = Guid.Parse("00002ad5-0000-1000-8000-00805f9b34fb");
+        var fitnessMachineFeatureUuid = Guid.Parse("00002acc-0000-1000-8000-00805f9b34fb");
+        var supportedPowerRangeUuid = Guid.Parse("00002ad8-0000-1000-8000-00805f9b34fb");
 
         GattDeviceServicesResult servicesResult;
         _operationStage = "ftms_gatt_service_discovery";
@@ -495,7 +510,12 @@ public class WindowsBleTrainerClient : ITrainerClient
         _ftmsFitnessMachineStatusCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineStatusUuid);
         _ftmsControlPointCharacteristic = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineControlPointUuid);
         var supportedInclinationRange = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == supportedInclinationRangeUuid);
+        var fitnessMachineFeature = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == fitnessMachineFeatureUuid);
+        var supportedPowerRange = charsResult.Characteristics.FirstOrDefault(c => c.Uuid == supportedPowerRangeUuid);
         _supportedInclinationRangePercent = await ReadSupportedInclinationRangeAsync(supportedInclinationRange, cancellationToken);
+        var featureBytes = await ReadCharacteristicBytesAsync(fitnessMachineFeature, cancellationToken);
+        var powerRangeBytes = await ReadCharacteristicBytesAsync(supportedPowerRange, cancellationToken);
+        _workoutCapabilities = FtmsWorkoutCapabilities.Parse(featureBytes, powerRangeBytes);
 
         EmitDebug("ftms_required_characteristics", new
         {
@@ -520,7 +540,98 @@ public class WindowsBleTrainerClient : ITrainerClient
             fitnessMachineStatus = _ftmsFitnessMachineStatusCharacteristic is not null,
             controlPoint = _ftmsControlPointCharacteristic is not null,
             supportedInclinationRangePercent = _supportedInclinationRangePercent
+            , workoutControl = WorkoutControlStatus.Message,
+            targetPowerMinimumWatts = _workoutCapabilities.MinimumPowerWatts,
+            targetPowerMaximumWatts = _workoutCapabilities.MaximumPowerWatts
         });
+    }
+
+    private async Task<byte[]> ReadCharacteristicBytesAsync(GattCharacteristic? characteristic, CancellationToken cancellationToken)
+    {
+        if (characteristic is null) return [];
+        try
+        {
+            var result = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached)
+                .AsTask(cancellationToken).WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            if (result.Status != GattCommunicationStatus.Success) return [];
+            var data = global::Windows.Storage.Streams.DataReader.FromBuffer(result.Value);
+            var bytes = new byte[checked((int)data.UnconsumedBufferLength)]; data.ReadBytes(bytes); data.Dispose(); return bytes;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        { EmitDebug("ftms_optional_capability_read_failed", new { characteristic = characteristic.Uuid.ToString(), message = ex.Message }); return []; }
+    }
+
+    public Task BeginWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    {
+        if (!IsReady || sessionId <= 0) throw new InvalidOperationException("Trainer is not ready for a workout session.");
+        Interlocked.Exchange(ref _workoutSessionId, sessionId);
+        return AcquireWorkoutControlAsync(sessionId, cancellationToken);
+    }
+
+    private async Task AcquireWorkoutControlAsync(long sessionId, CancellationToken cancellationToken)
+    {
+        await _workoutCommandLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (sessionId != Interlocked.Read(ref _workoutSessionId) || !IsReady)
+                throw new OperationCanceledException("The workout control request belongs to an inactive session.");
+            await ExecuteWorkoutControlPointAsync([0x00], 0x00, cancellationToken);
+        }
+        catch
+        {
+            Interlocked.CompareExchange(ref _workoutSessionId, 0, sessionId);
+            throw;
+        }
+        finally { _workoutCommandLock.Release(); }
+    }
+
+    public async Task SetWorkoutTargetPowerAsync(int watts, long sessionId, CancellationToken cancellationToken = default)
+    {
+        await _workoutCommandLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (!IsReady || sessionId != Interlocked.Read(ref _workoutSessionId))
+                throw new OperationCanceledException("The queued ERG target belongs to an inactive workout session.");
+            var status = WorkoutControlStatus;
+            if (!status.CanControlPower) throw new NotSupportedException(status.Message);
+            if (watts < status.MinimumWatts || watts > status.MaximumWatts)
+                throw new ArgumentOutOfRangeException(nameof(watts), $"Target must be {status.MinimumWatts}–{status.MaximumWatts} W for this trainer.");
+            var increment = (int)Math.Max(1, Math.Round(status.MinimumIncrementWatts ?? 1));
+            var actualWatts = status.MinimumWatts + (int)Math.Round((watts - status.MinimumWatts) / (double)increment) * increment;
+            await ExecuteWorkoutControlPointAsync([0x05, (byte)(actualWatts & 0xFF), (byte)(actualWatts >> 8)], 0x05, cancellationToken);
+            EmitDebug("ftms_workout_target_acknowledged", new { requestedWatts = watts, appliedWatts = actualWatts, sessionId, physicalResistanceVerified = false });
+        }
+        finally { _workoutCommandLock.Release(); }
+    }
+
+    public async Task ReleaseWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    {
+        await _workoutCommandLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (sessionId != Interlocked.Read(ref _workoutSessionId))
+                throw new OperationCanceledException("The FTMS Release Control belongs to an inactive workout or connection; release was not confirmed.");
+            if (!IsReady) throw new IOException("Trainer is disconnected; ERG release was requested but could not be confirmed.");
+            await ExecuteWorkoutControlPointAsync([0x08], 0x08, cancellationToken);
+            Interlocked.CompareExchange(ref _workoutSessionId, 0, sessionId);
+        }
+        finally { _workoutCommandLock.Release(); }
+    }
+
+    private async Task ExecuteWorkoutControlPointAsync(byte[] payload, byte expectedOpcode, CancellationToken cancellationToken)
+    {
+        var response = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingControlPointResponse = response;
+        try
+        {
+            await WriteControlPointAsync(payload, cancellationToken);
+            byte[] data;
+            try { data = await response.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken); }
+            catch (TimeoutException ex) { throw new InvalidOperationException($"Trainer did not acknowledge FTMS workout command 0x{expectedOpcode:X2}.", ex); }
+            if (data.Length < 3 || data[0] != 0x80 || data[1] != expectedOpcode || data[2] != 0x01)
+                throw new InvalidOperationException($"Trainer rejected FTMS workout command 0x{expectedOpcode:X2} ({BitConverter.ToString(data)}).");
+        }
+        finally { if (ReferenceEquals(_pendingControlPointResponse, response)) _pendingControlPointResponse = null; }
     }
 
     private static async Task<(double Minimum, double Maximum)?> ReadSupportedInclinationRangeAsync(

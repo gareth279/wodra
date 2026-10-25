@@ -359,7 +359,8 @@ public partial class RideHistoryPanelController : Control
             foreach (var activity in _activities)
             {
                 var local = activity.StartedAtUtc.ToLocalTime();
-                _list.AddItem($"{local:yyyy-MM-dd HH:mm} · {activity.RouteName} · {activity.DistanceMeters / 1000:F1} km · {FormatDuration(activity.DurationSeconds)} active · {activity.AveragePowerWatts?.ToString("F0") ?? "—"} W");
+                var activityLabel = activity.Kind == RideActivityKind.Workout ? $"Workout · {activity.WorkoutName ?? activity.RouteName}" : activity.RouteName;
+                _list.AddItem($"{local:yyyy-MM-dd HH:mm} · {activityLabel} · {activity.DistanceMeters / 1000:F1} km · {FormatDuration(activity.DurationSeconds)} active · {activity.AveragePowerWatts?.ToString("F0") ?? "—"} W");
             }
             _pageStatus.Text = result.TotalCount == 0 ? "No rides match these filters." : $"{_pageIndex * PageSize + 1}–{Math.Min((_pageIndex + 1) * PageSize, result.TotalCount)} of {result.TotalCount}";
             _previousPage.Disabled = _pageIndex == 0; _nextPage.Disabled = (_pageIndex + 1) * PageSize >= result.TotalCount;
@@ -507,7 +508,8 @@ public partial class RideHistoryPanelController : Control
         var a = _selected;
         var draft = new RideActivityDraft(a.Id, a.RiderProfileId, a.RouteId, a.RouteName, a.StartedAtUtc, a.Status,
             a.DurationSeconds, a.DistanceMeters, a.CompletedLaps, a.AverageSpeedKph, a.MaxSpeedKph,
-            a.AveragePowerWatts, a.MaxPowerWatts, a.AverageCadenceRpm, a.MaxCadenceRpm, a.ElevationGainMeters, a.FitFilePath);
+            a.AveragePowerWatts, a.MaxPowerWatts, a.AverageCadenceRpm, a.MaxCadenceRpm, a.ElevationGainMeters, a.FitFilePath,
+            a.Kind, a.WorkoutDefinitionId, a.WorkoutName, a.WorkoutFtpWatts, a.WorkoutCompleted, a.WorkoutTargetAdherencePercent);
         IReadOnlyList<RideActivityMedia> media = Array.Empty<RideActivityMedia>();
         try { media = await (_repositoryOverride ?? GameBootstrap.RideHistory)!.GetActivityMediaAsync(a.Id); } catch { }
         var fit = a.FitFilePath is null ? "FIT: not saved" : File.Exists(a.FitFilePath) ? $"FIT: {a.FitFilePath}" : $"FIT: file unavailable · {a.FitFilePath}";
@@ -644,10 +646,12 @@ public partial class RideHistoryPanelController : Control
     }
 
     private static string FormatSummaryEssentials(RideActivityDraft a) =>
-        $"{a.RouteName}\n{a.StartedAtUtc.ToLocalTime():f}\n" +
-        $"Active duration: {FormatDuration(a.DurationSeconds)} · Distance: {a.DistanceMeters / 1000:F2} km · Laps: {a.CompletedLaps}";
+        $"{(a.Kind == RideActivityKind.Workout ? $"Workout · {a.WorkoutName ?? a.RouteName}" : a.RouteName)}\n{a.StartedAtUtc.ToLocalTime():f}\n" +
+        $"Active duration: {FormatDuration(a.DurationSeconds)} · Distance: {a.DistanceMeters / 1000:F2} km" +
+        (a.Kind == RideActivityKind.Workout ? $" · {(a.WorkoutCompleted ? "Completed" : "Partial workout")}" : $" · Laps: {a.CompletedLaps}");
 
     private static string FormatSummaryDetails(RideActivityDraft a, string fit, IReadOnlyList<RideActivityMedia> media) =>
+        (a.Kind == RideActivityKind.Workout ? $"FTP captured: {a.WorkoutFtpWatts?.ToString() ?? "Not used"} W · Target adherence: {FormatTargetAdherence(a.WorkoutTargetAdherencePercent)}\nTargets were guidance; recorded power remains measured.\n" : "") +
         $"Average speed: {a.AverageSpeedKph?.ToString("F1") ?? "—"} km/h · Max: {a.MaxSpeedKph?.ToString("F1") ?? "—"} km/h\n" +
         $"Average power: {a.AveragePowerWatts?.ToString("F0") ?? "—"} W · Max: {a.MaxPowerWatts?.ToString("F0") ?? "—"} W\n" +
         $"Average cadence: {a.AverageCadenceRpm?.ToString("F0") ?? "—"} rpm · Max: {a.MaxCadenceRpm?.ToString("F0") ?? "—"} rpm\n" +
@@ -655,12 +659,15 @@ public partial class RideHistoryPanelController : Control
         RideSummaryLayoutPolicy.ScreenshotList(media.Select(m => m.ImagePath));
 
     private static string FormatHistoryDetail(RideActivity a) =>
-        $"{a.RouteName}\n{a.StartedAtUtc.ToLocalTime():f}\n\nDistance: {a.DistanceMeters / 1000:F2} km\n" +
-        $"Active duration: {FormatDuration(a.DurationSeconds)}\nLaps: {a.CompletedLaps}\n" +
+        $"{(a.Kind == RideActivityKind.Workout ? $"Workout · {a.WorkoutName ?? a.RouteName}" : a.RouteName)}\n{a.StartedAtUtc.ToLocalTime():f}\n\nDistance: {a.DistanceMeters / 1000:F2} km\n" +
+        $"Active duration: {FormatDuration(a.DurationSeconds)}\n" +
+        (a.Kind == RideActivityKind.Workout ? $"FTP captured: {a.WorkoutFtpWatts?.ToString() ?? "Not used"} W · {(a.WorkoutCompleted ? "Completed" : "Partial workout")}\nTarget adherence: {FormatTargetAdherence(a.WorkoutTargetAdherencePercent)}\nTargets were separate from measured power.\n" : $"Laps: {a.CompletedLaps}\n") +
         $"Speed: avg {a.AverageSpeedKph?.ToString("F1") ?? "—"} / max {a.MaxSpeedKph?.ToString("F1") ?? "—"} km/h\n" +
         $"Power: avg {a.AveragePowerWatts?.ToString("F0") ?? "—"} / max {a.MaxPowerWatts?.ToString("F0") ?? "—"} W\n" +
         $"Cadence: avg {a.AverageCadenceRpm?.ToString("F0") ?? "—"} / max {a.MaxCadenceRpm?.ToString("F0") ?? "—"} rpm\nElevation gain: {a.ElevationGainMeters:F0} m\n" +
         $"FIT: {(a.FitFilePath is null ? "not saved" : a.FitFilePath)}";
+
+    private static string FormatTargetAdherence(double? percent) => percent is { } value ? $"{value:F0}%" : "Not recorded";
 
     private static string FormatDuration(double seconds)
     {

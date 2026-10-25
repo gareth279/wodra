@@ -4,7 +4,7 @@ using IndoorCycling.Trainer.Models;
 
 namespace IndoorCycling.Trainer.Implementations;
 
-public sealed class FakeTrainerClient : ITrainerClient
+public sealed class FakeTrainerClient : ITrainerClient, IWorkoutTrainerControl
 {
     private readonly Random _random = new();
     private bool _isConnected;
@@ -16,9 +16,29 @@ public sealed class FakeTrainerClient : ITrainerClient
     private double _speedKph = 30.0;
     private int? _controlledPower;
     private int? _controlledCadence;
+    private int? _workoutTargetPowerWatts;
     public bool HasLiveDummyControls => _controlledPower.HasValue;
     public int TargetPowerWatts => _controlledPower ?? _power;
+    public int? WorkoutTargetPowerWatts => _workoutTargetPowerWatts;
     public int TargetCadenceRpm => _controlledCadence ?? _cadence;
+    private long _workoutSessionId;
+    public WorkoutTrainerControlStatus WorkoutControlStatus => new(WorkoutTrainerControlKind.SimulatedErg,
+        "Dummy trainer · target response simulated; no physical resistance is controlled.", 0, 1000, 1);
+    public Task BeginWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    { if (sessionId <= 0) throw new ArgumentOutOfRangeException(nameof(sessionId)); Interlocked.Exchange(ref _workoutSessionId, sessionId); return Task.CompletedTask; }
+    public Task SetWorkoutTargetPowerAsync(int watts, long sessionId, CancellationToken cancellationToken = default)
+    {
+        if (sessionId != Interlocked.Read(ref _workoutSessionId)) throw new OperationCanceledException("Stale dummy workout target.");
+        _workoutTargetPowerWatts = Math.Clamp(watts, 0, 1000); return Task.CompletedTask;
+    }
+    public Task ReleaseWorkoutControlAsync(long sessionId, CancellationToken cancellationToken = default)
+    {
+        if (sessionId != Interlocked.Read(ref _workoutSessionId))
+            throw new OperationCanceledException("The dummy workout control belongs to an inactive session; release was not confirmed.");
+        _workoutTargetPowerWatts = null;
+        Interlocked.CompareExchange(ref _workoutSessionId, 0, sessionId);
+        return Task.CompletedTask;
+    }
 
     public void SetDummyOutput(int powerWatts, int cadenceRpm)
     {
@@ -39,6 +59,8 @@ public sealed class FakeTrainerClient : ITrainerClient
     public Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
         _isConnected = false;
+        Interlocked.Exchange(ref _workoutSessionId, 0);
+        _workoutTargetPowerWatts = null;
         return Task.CompletedTask;
     }
 

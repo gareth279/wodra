@@ -1,5 +1,6 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
+using IndoorCycling.Trainer.Implementations;
 using System.Text;
 using System.Text.Json;
 
@@ -8,6 +9,29 @@ static void Check(bool condition, string message)
     if (!condition) throw new InvalidOperationException(message);
     Console.WriteLine($"PASS {message}");
 }
+
+var dummyWorkout = new FakeTrainerClient();
+await dummyWorkout.ConnectAsync();
+dummyWorkout.SetDummyOutput(190, 90);
+await dummyWorkout.BeginWorkoutControlAsync(11);
+await dummyWorkout.SetWorkoutTargetPowerAsync(240, 11);
+var independentMeasurement = dummyWorkout.GetLatestTelemetry();
+Check(independentMeasurement.PowerWatts == 190 && dummyWorkout.TargetPowerWatts == 190 &&
+      dummyWorkout.WorkoutTargetPowerWatts == 240,
+    "dummy ERG target remains separate from actual dummy power telemetry");
+await dummyWorkout.ReleaseWorkoutControlAsync(11);
+Check(dummyWorkout.WorkoutTargetPowerWatts is null, "dummy workout target clears on control release");
+await dummyWorkout.BeginWorkoutControlAsync(12);
+await dummyWorkout.SetWorkoutTargetPowerAsync(310, 12);
+await dummyWorkout.DisconnectAsync();
+Check(dummyWorkout.WorkoutTargetPowerWatts is null, "disconnect clears the simulated workout target");
+await dummyWorkout.ConnectAsync();
+await dummyWorkout.BeginWorkoutControlAsync(13);
+var staleReleaseRejected = false;
+try { await dummyWorkout.ReleaseWorkoutControlAsync(12); }
+catch (OperationCanceledException) { staleReleaseRejected = true; }
+Check(staleReleaseRejected && dummyWorkout.WorkoutTargetPowerWatts is null,
+    "an old workout release after reconnect is rejected and cannot clear or claim the new control session");
 
 var commandWarningPolicy = new TrainerCommandWarningPolicy();
 var warningSession = commandWarningPolicy.BeginSession();
@@ -247,6 +271,18 @@ Check(Math.Abs(fecGeneral.SpeedKph - 28.8) < 0.001 && !fecGeneral.HasPowerMeasur
 var fecSimulation = AntFeCProtocol.BuildTrackResistance(12.34);
 Check(fecSimulation[0] == 51 && fecSimulation[5] == 0xF2 && fecSimulation[6] == 0x52,
     "FE-C simulation command encodes grade using the profile offset");
+var fecTargetPower = AntFeCProtocol.BuildTargetPower(200);
+Check(fecTargetPower[0] == AntFeCProtocol.PageTargetPower && fecTargetPower[6] == 0x20 && fecTargetPower[7] == 0x03,
+    "FE-C target-power command uses quarter-watt units and the documented data page");
+var ftmsFeatures = new byte[8]; ftmsFeatures[4] = 0x08; ftmsFeatures[5] = 0x20;
+var ftmsPowerRange = new byte[] { 50, 0, 0xB8, 0x0B, 5, 0 };
+var ftmsCapabilities = FtmsWorkoutCapabilities.Parse(ftmsFeatures, ftmsPowerRange);
+Check(ftmsCapabilities.SupportsTargetPower && ftmsCapabilities.SupportsSimulation &&
+      ftmsCapabilities.MinimumPowerWatts == 50 && ftmsCapabilities.MaximumPowerWatts == 3000 && ftmsCapabilities.PowerIncrementWatts == 5,
+    "FTMS target-setting bits and supported power range are parsed from their advertised fields");
+ftmsFeatures[4] = 0;
+Check(!FtmsWorkoutCapabilities.Parse(ftmsFeatures, ftmsPowerRange).SupportsTargetPower,
+    "FTMS target-power ERG is unavailable when the trainer does not advertise the capability");
 var fecRequest = AntFeCProtocol.BuildPageRequest(AntFeCProtocol.PageCapabilities);
 Check(fecRequest.SequenceEqual(new byte[] { 0x46, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x36, 0x01 }),
     "FE-C page 70 matches the profile wire vector for a one-response slave-to-master request");
