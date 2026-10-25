@@ -207,14 +207,15 @@ public partial class TrailCourseLayer : Node3D
         var pose = route.GetPoseAtDistance(Math.Max(0, feature.StartMeters - 36));
         var forward = ToGodot(pose.Forward).Normalized();
         var side = ToGodot(RiderLaneMath.LocalLeft(pose.Forward));
-        root.Position = ToGodot(pose.Position) - side * 3.5f;
+        // Keep the sign on the camera-left shoulder so the persistent route/elevation inset does not cover it.
+        root.Position = ToGodot(pose.Position) + side * 3.5f;
         root.Basis = Basis.LookingAt(forward, Vector3.Up);
         var postMaterial = Material(new Color(.24f, .20f, .14f));
         root.AddChild(new MeshInstance3D { Name = "Post", Mesh = new BoxMesh { Size = new Vector3(.09f, 1.45f, .09f) },
             Position = new Vector3(0, .72f, 0), MaterialOverride = postMaterial });
         root.AddChild(new MeshInstance3D { Name = "Board", Mesh = new BoxMesh { Size = new Vector3(1.6f, .48f, .08f) },
             Position = new Vector3(0, 1.25f, 0), MaterialOverride = Material(new Color(.72f, .50f, .22f)) });
-        root.AddChild(new Label3D { Name = "LineChoice", Text = "JUMP  →  BYPASS", Position = new Vector3(0, 1.25f, -.055f),
+        root.AddChild(new Label3D { Name = "LineChoice", Text = "JUMP  |  ROLL", Position = new Vector3(0, 1.25f, -.055f),
             PixelSize = .0035f, FontSize = 22, OutlineSize = 4, Modulate = new Color(.1f, .08f, .05f),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
             NoDepthTest = true });

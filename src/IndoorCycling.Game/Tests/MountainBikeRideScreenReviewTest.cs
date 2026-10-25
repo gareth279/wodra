@@ -393,7 +393,6 @@ public partial class MountainBikeRideScreenReviewTest : Node
                     if (ride.DistanceMeters >= featureBase + captureAtDistance
                         && capturedFeatureMoments.Add(captureKey))
                     {
-                        await Settle(.04);
                         Capture($"xc-lap-{lap}-{selected.Id}-{moment}.png");
                     }
                 }
