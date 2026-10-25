@@ -95,8 +95,11 @@ public partial class VegetationLayer : Node3D
         var treeGroups = data.Trees.GroupBy(item => Chunk(item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
         foreach (var group in treeGroups)
         {
-            var transforms = group.Select(tree => (Tree: tree, Position: ToGodot(visualRoute.GetPositionForCoordinate(
-                tree.Latitude, tree.Longitude, tree.ElevationMeters ?? originElevation)))).ToArray();
+            var transforms = group.Select(tree => (Tree: tree, Position: ToGodot(
+                tree.LocalXMeters is { } x && tree.LocalZMeters is { } z
+                    ? visualRoute.GetPositionForLocalCoordinate(x, z, tree.ElevationMeters ?? originElevation)
+                    : visualRoute.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value,
+                        tree.ElevationMeters ?? originElevation)))).ToArray();
             var nodes = new List<Node3D>();
             var trunkTransforms = transforms.Select(item => ScaledTransform(item.Position + Vector3.Up * (float)(item.Tree.HeightMeters * .15),
                 new Vector3(1, (float)(item.Tree.HeightMeters * .3), 1))).ToArray();

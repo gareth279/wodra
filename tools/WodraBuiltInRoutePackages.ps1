@@ -10,7 +10,8 @@ function Get-WodraBuiltInRouteDefinitions {
         [pscustomobject]@{ Id = 'dunedin-south-coastal-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-rolling-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-signal-hill-climbing-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
-        [pscustomobject]@{ Id = 'signal-hill-big-easy-mtb'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation') }
+        [pscustomobject]@{ Id = 'signal-hill-big-easy-mtb'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation') },
+        [pscustomobject]@{ Id = 'wodra-xc-skills-loop'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation', 'trail-features') }
     )
 }
 
@@ -21,8 +22,11 @@ function Get-WodraRouteGeometryFingerprint {
     $canonicalLines = foreach ($point in $Route.points) {
         @(
             ([double]$point.distanceMeters).ToString('F3', $invariant),
-            ([double]$point.latitude).ToString('F7', $invariant),
-            ([double]$point.longitude).ToString('F7', $invariant),
+            $(if ($null -ne $point.localXMeters -and $null -ne $point.localZMeters) {
+                'local:' + ([double]$point.localXMeters).ToString('F3', $invariant) + ',' + ([double]$point.localZMeters).ToString('F3', $invariant)
+            } else {
+                ([double]$point.latitude).ToString('F7', $invariant) + ',' + ([double]$point.longitude).ToString('F7', $invariant)
+            }),
             ([double]$point.elevationMeters).ToString('F3', $invariant)
         ) -join ','
     }
@@ -83,6 +87,19 @@ function Write-WodraBuiltInRouteBundle {
             ($route.routeType -ne 'pointToPoint' -or $route.environment -ne 'MountainBike' -or
                 $route.discipline -ne 'MountainBike' -or @($route.surfaceSegments).Count -lt 1)) {
             throw 'The bundled MTB route is missing point-to-point, MountainBike, or surface metadata.'
+        }
+        if ($definition.Id -eq 'wodra-xc-skills-loop') {
+            if ($route.routeType -ne 'loop' -or $route.environment -ne 'MountainBike' -or
+                $route.discipline -ne 'MountainBike' -or @($route.surfaceSegments).Count -lt 1 -or
+                $route.sourceAttribution -notlike 'Fictional Wodra-authored*') {
+                throw 'The fictional XC route is missing loop, MountainBike, authored-surface, or provenance metadata.'
+            }
+            $featurePath = Join-Path $destination "$($definition.Id).trail-features.json"
+            $features = Get-Content -LiteralPath $featurePath -Raw | ConvertFrom-Json -ErrorAction Stop
+            if ($features.id -ne $definition.Id -or $features.version -ne 1 -or @($features.features).Count -ne 3 -or
+                @($features.berms).Count -lt 2 -or @($features.rollers).Count -lt 1) {
+                throw 'The fictional XC feature package must include three optional jump lines, berms, and rollers.'
+            }
         }
 
         [pscustomobject]@{

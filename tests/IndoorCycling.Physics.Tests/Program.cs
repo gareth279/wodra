@@ -75,6 +75,7 @@ var tests = new (string Name, Action Run)[]
     ,("Steering sensitivity and dead zone persist with bounded settings", SteeringSettingsPersist)
     ,("Window placement is clamped to a visible display and chooses a remaining monitor", WindowPlacementRestoresSafely)
     ,("Shared steering sensitivity persists and scales keyboard and Sterzo response", SteeringSensitivityIsShared)
+    ,("Steering continues as a route-authored trail corridor widens", SteeringFollowsWideningTrailCorridor)
     ,("Collectible layout is deterministic and includes blue and rare gold cats", CollectibleLayoutIsDeterministic)
     ,("Collectible swept hit catches frame crossing and rejects lateral misses", CollectibleSweptDetection)
     ,("Collectible attempts prevent duplicate awards and flag practice eligibility", CollectibleAttemptEligibility)
@@ -604,6 +605,28 @@ static void SteeringSensitivityIsShared()
     Assert(controllerEdge.LateralOffsetMeters >= -(5 / 2.0 - SteeringLateralController.RiderMarginMeters) - 1e-9 &&
         controllerEdge.LateralOffsetMeters <= 5 / 2.0 - SteeringLateralController.RiderMarginMeters + 1e-9,
         "10× Sterzo steering must remain within the road edges.");
+}
+
+static void SteeringFollowsWideningTrailCorridor()
+{
+    var steering = new SteeringLateralController();
+    const int frames = 185;
+    var widestCorridor = .75;
+    for (var frame = 0; frame <= frames; frame++)
+    {
+        var progress = frame / (double)frames;
+        var allowedOffset = .75 + 2.5 * progress;
+        widestCorridor = allowedOffset;
+        steering.Update(1.0 / 60.0, leftKeyDown: true, rightKeyDown: false,
+            centeredControllerAngleDegrees: null, controllerInputFresh: false, paused: false,
+            sensitivity: SteeringLateralController.DefaultSensitivity,
+            roadWidthMeters: 2 * (allowedOffset + SteeringLateralController.RiderMarginMeters),
+            defaultLateralOffsetMeters: 0);
+        Assert(steering.LateralOffsetMeters <= allowedOffset + 1e-9,
+            "Steering must remain within the currently authored trail corridor while it opens for a feature line.");
+    }
+    Assert(steering.LateralOffsetMeters >= widestCorridor - .2,
+        "A held steering input should be able to follow an expanding branch corridor instead of stalling at its former edge.");
 }
 
 static void Assert(bool condition, string message)

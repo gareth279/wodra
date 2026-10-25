@@ -110,16 +110,13 @@ try {
                 $route.discipline -ne 'MountainBike' -or @($route.surfaceSegments).Count -lt 1)) {
             throw 'Packaged MTB route is missing point-to-point, MountainBike, or surface metadata.'
         }
-
-        $canonicalLines = foreach ($point in $route.points) {
-            @(
-                ([double]$point.distanceMeters).ToString('F3', $invariant),
-                ([double]$point.latitude).ToString('F7', $invariant),
-                ([double]$point.longitude).ToString('F7', $invariant),
-                ([double]$point.elevationMeters).ToString('F3', $invariant)
-            ) -join ','
+        if ($routeId -eq 'wodra-xc-skills-loop' -and
+            ($route.routeType -ne 'loop' -or $route.environment -ne 'MountainBike' -or
+                $route.discipline -ne 'MountainBike' -or @($route.surfaceSegments).Count -lt 1 -or
+                $route.sourceAttribution -notlike 'Fictional Wodra-authored*')) {
+            throw 'Packaged fictional XC route is missing loop, MountainBike, authored-surface, or provenance metadata.'
         }
-        $canonical = [string]::Join("`n", [string[]]$canonicalLines)
+
         $actualFingerprint = Get-WodraRouteGeometryFingerprint -Route $route
         if (-not [string]::IsNullOrWhiteSpace([string]$route.geometryFingerprint) -and
             $route.geometryFingerprint -ne $actualFingerprint) {
@@ -135,6 +132,6 @@ try {
     Remove-Variable manifest
 
     Write-Host "Release archive verified: $ZipPath"
-    Write-Host "Validated executable, managed runtime, EOS client config, notices, and five route packages."
+    Write-Host "Validated executable, managed runtime, EOS client config, notices, and six route packages."
 }
 finally { $archive.Dispose() }

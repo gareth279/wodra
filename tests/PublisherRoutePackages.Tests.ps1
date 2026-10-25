@@ -7,8 +7,8 @@ $releaseRoot = Join-Path $temporaryRoot 'release'
 $zipPath = Join-Path $temporaryRoot 'fixture.zip'
 New-Item -ItemType Directory -Path $temporaryRoot, $releaseRoot | Out-Null
 try {
-    $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.69'
-    if ($manifest.Routes.Count -ne 5) { throw "Expected five built-in route entries, got $($manifest.Routes.Count)." }
+    $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.70'
+    if ($manifest.Routes.Count -ne 6) { throw "Expected six built-in route entries, got $($manifest.Routes.Count)." }
     $mtbId = 'signal-hill-big-easy-mtb'
     $mtb = @($manifest.Routes | Where-Object Id -eq $mtbId | Select-Object -First 1)[0]
     if ($null -eq $mtb -or [string]::IsNullOrWhiteSpace($mtb.GeometryFingerprint) -or
@@ -24,6 +24,38 @@ try {
     ) | Sort-Object
     if (($mtbFiles -join '|') -ne ($expectedMtbFiles -join '|')) {
         throw "The MTB package contains an unexpected sidecar set: $($mtbFiles -join ', ')"
+    }
+    $xcId = 'wodra-xc-skills-loop'
+    $xc = @($manifest.Routes | Where-Object Id -eq $xcId | Select-Object -First 1)[0]
+    if ($null -eq $xc -or $xc.SourceAttribution -notlike 'Fictional Wodra-authored*') {
+        throw 'The fictional XC route manifest entry is missing its attribution.'
+    }
+    $xcDirectory = Join-Path $routeRoot $xcId
+    $xcFiles = @(Get-ChildItem -LiteralPath $xcDirectory -File | Select-Object -ExpandProperty Name | Sort-Object)
+    $expectedXcFiles = @("$xcId.route-points.json", "$xcId.terrain.json", "$xcId.vegetation.json", "$xcId.trail-features.json") | Sort-Object
+    if (($xcFiles -join '|') -ne ($expectedXcFiles -join '|')) {
+        throw "The fictional XC package contains an unexpected sidecar set: $($xcFiles -join ', ')"
+    }
+    $xcFeatures = Get-Content -LiteralPath (Join-Path $xcDirectory "$xcId.trail-features.json") -Raw | ConvertFrom-Json
+    if (@($xcFeatures.features).Count -ne 3 -or @($xcFeatures.berms).Count -lt 2 -or @($xcFeatures.rollers).Count -lt 1) {
+        throw 'The fictional XC feature package does not contain its three line choices, berms and rollers.'
+    }
+    foreach ($feature in $xcFeatures.features) {
+        if ([math]::Abs($feature.path[0].routeDistanceMeters - $feature.startMeters) -gt 0.01 -or
+            [math]::Abs($feature.path[-1].routeDistanceMeters - $feature.endMeters) -gt 0.01 -or
+            [math]::Abs($feature.path[0].lateralMeters) -gt 0.01 -or
+            [math]::Abs($feature.path[-1].lateralMeters) -gt 0.01 -or
+            [math]::Abs($feature.path[0].surfaceLiftMeters) -gt 0.01 -or
+            [math]::Abs($feature.path[-1].surfaceLiftMeters) -gt 0.01) {
+            throw "XC line '$($feature.id)' does not make a level, centerline join at both ends."
+        }
+    }
+    $xcRoute = Get-Content -LiteralPath (Join-Path $xcDirectory "$xcId.route-points.json") -Raw | ConvertFrom-Json
+    $xcVegetation = Get-Content -LiteralPath (Join-Path $xcDirectory "$xcId.vegetation.json") -Raw | ConvertFrom-Json
+    if ([math]::Abs($xcRoute.actualRouteDistanceMeters - 1600) -gt 0.01 -or
+        [math]::Abs($xcRoute.totalAscentMeters - 26) -gt 1 -or
+        @($xcVegetation.trees | ForEach-Object { [math]::Floor($_.nearestRouteDistanceMeters / 200) } | Sort-Object -Unique).Count -lt 6) {
+        throw 'The XC package must retain its complete loop profile and route-spaced vegetation chunks.'
     }
 
     $requiredFiles = @(
@@ -61,7 +93,7 @@ try {
     [System.IO.Compression.ZipFile]::CreateFromDirectory($releaseRoot, $zipPath)
 
     & (Join-Path $repositoryRoot 'tools\Verify-WodraRelease.ps1') -ZipPath $zipPath
-    Write-Host 'PASS: release package includes and verifies the MTB point-to-point route and its route-specific sidecars.'
+    Write-Host 'PASS: release package includes and verifies all six routes, including MTB and fictional XC sidecars.'
 }
 finally {
     if (Test-Path -LiteralPath $temporaryRoot) { Remove-Item -LiteralPath $temporaryRoot -Recurse -Force }

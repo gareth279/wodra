@@ -1,5 +1,6 @@
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Core.Simulation;
 using System;
 using System.IO;
 using System.Linq;
@@ -41,6 +42,8 @@ public partial class MountainBikeRideScreenReviewTest : Node
                 ?? throw new InvalidOperationException("Bundled road route is unavailable.");
             var mountainBike = RouteCatalog.GetById("signal-hill-big-easy-mtb")
                 ?? throw new InvalidOperationException("Bundled Signal Hill MTB route is unavailable.");
+            var xcRoute = RouteCatalog.GetById("wodra-xc-skills-loop")
+                ?? throw new InvalidOperationException("The fictional XC skills loop is unavailable.");
             var gravel = RouteCatalog.GetById("otago-central-rail-trail-clyde-alexandra")
                 ?? throw new InvalidOperationException("Bundled gravel route is unavailable.");
             var velodrome = RouteCatalog.GetById("wodra-velodrome-250")
@@ -89,6 +92,35 @@ public partial class MountainBikeRideScreenReviewTest : Node
             Assert(!selection.FindChildren("PacerPresetPicker", "OptionButton", true, false).OfType<OptionButton>().Any(c => c.IsVisibleInTree())
                 && !selection.FindChildren("RouteGhostChoiceRow", "HBoxContainer", true, false).OfType<Control>().Any(c => c.IsVisibleInTree()),
                 "the singletrack selector does not offer pacers or a blank route-ghost row");
+            var xcChoice = selection.FindChildren("RouteChoice", "Button", true, false).OfType<Button>()
+                .SingleOrDefault(button => button.Text.StartsWith(xcRoute.Name + "\n", StringComparison.Ordinal))
+                ?? throw new InvalidOperationException("The fictional XC route is missing from the route catalogue.");
+            xcChoice.EmitSignal(BaseButton.SignalName.Pressed); await Frames(3);
+            Assert(selection.SelectedRouteId == xcRoute.Id
+                && ReferenceEquals(preview.GetNode<RouteElevationPreview>("RouteOverview").Route, xcRoute)
+                && ReferenceEquals(preview.GetNode<RouteElevationPreview>("ElevationProfile").Route, xcRoute)
+                && !selection.FindChildren("PacerPresetPicker", "OptionButton", true, false).OfType<OptionButton>().Any(c => c.IsVisibleInTree())
+                && !selection.FindChildren("RouteGhostChoiceRow", "HBoxContainer", true, false).OfType<Control>().Any(c => c.IsVisibleInTree())
+                && selection.FindChildren("StartRide", "Button", true, false).OfType<Button>().Single().Disabled == false,
+                "the fictional XC route shares its exact preview definition and exposes Start Ride without pacer or ghost comparisons");
+            if (!IsHeadless)
+            {
+                foreach (var (size, fullscreen) in new[]
+                {
+                    (new Vector2I(960, 540), false), (new Vector2I(1152, 648), false), (new Vector2I(0, 0), true)
+                })
+                {
+                    if (fullscreen) DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+                    else { DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(size); }
+                    await Settle(.25); Capture($"xc-selector-{(fullscreen ? "fullscreen" : $"{size.X}x{size.Y}")}.png");
+                    var panel = selection.GetNode<Control>("PanelContainer").GetGlobalRect();
+                    var viewport = GetViewport().GetVisibleRect().Size;
+                    Assert(panel.Position.X >= 0 && panel.Position.Y >= 0 && panel.End.X <= viewport.X && panel.End.Y <= viewport.Y,
+                        $"XC route browser and its selected preview fit the {(fullscreen ? "fullscreen" : $"{size.X}x{size.Y}")} viewport");
+                }
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(new Vector2I(1152, 648));
+            }
+            choice.EmitSignal(BaseButton.SignalName.Pressed); await Frames(3);
             Assert(RouteGradientInset.FormatRouteHeader(mountainBike, 1234, 1) == "ROUTE · 1.23 km",
                 "the point-to-point inset does not present the climb as a lap");
 
@@ -112,6 +144,8 @@ public partial class MountainBikeRideScreenReviewTest : Node
                 DisplayServer.WindowSetSize(new Vector2I(1152, 648));
             }
 
+            if (!IsXcVisualReviewOnly)
+            {
             var start = selection.FindChildren("StartRide", "Button", true, false).OfType<Button>().Single();
             Assert(!start.Disabled, "the point-to-point MTB route exposes an enabled Start Ride action");
             start.EmitSignal(BaseButton.SignalName.Pressed);
@@ -217,6 +251,74 @@ public partial class MountainBikeRideScreenReviewTest : Node
             GD.Print($"[MountainBikeRideScreenReview] motion trace={motionPath}; distance={completed.DistanceMeters:F2} m; duration={completed.DurationSeconds:F1} s");
 
             await session.ExitToRouteSelectionAsync();
+            }
+            var xc = RouteCatalog.GetById("wodra-xc-skills-loop")
+                ?? throw new InvalidOperationException("The fictional XC skills loop is not in the production catalogue.");
+            GameFeaturesPreference.Set(false);
+            if (!await session.StartTrainerSessionAsync(xc)) throw new InvalidOperationException("Could not start fictional XC route after MTB.");
+            ShowRide(screen, hud); await Settle(1.5);
+            var xcGeometry = world.RouteGeometry ?? throw new InvalidOperationException("XC visual route failed to load.");
+            var course = world.GetNodeOrNull<TrailCourseLayer>("RouteGeometry/TrailCourseFeatures")
+                ?? throw new InvalidOperationException("XC authored feature layer did not load in the production scene.");
+            Assert(xc.DistanceMeters is >= 1000 and <= 2000 && xc.TotalAscentMeters is > 10 and < 80
+                && xc.Difficulty == "Unrated" && xc.SourceAttribution.Contains("Fictional", StringComparison.Ordinal)
+                && !xc.SupportsVerifiedCompletionAchievement,
+                "the fictional course exposes accurate local distance and climbing without real-world attribution or road-route badges");
+            Assert(course.JumpLineCount == 3 && world.GetNodeOrNull<Node3D>("RouteGeometry/MountainBikeSingletrackSurface") is not null
+                && world.GetNodeOrNull<Node3D>("RouteGeometry/AmbientActors") is null
+                && world.LocalAiRiderCount == 0 && world.PacerRiderState is null,
+                "the XC production scene loads all three jump lines on singletrack with no ambient, pacer, or AI actors");
+            if (!IsHeadless)
+            {
+                foreach (var (size, fullscreen, debug) in new[]
+                {
+                    (new Vector2I(960, 540), false, false), (new Vector2I(1152, 648), false, false),
+                    (new Vector2I(1152, 648), false, true), (new Vector2I(0, 0), true, false)
+                })
+                {
+                    if (fullscreen) DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+                    else { DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(size); }
+                    hud.SetDebugDisplayEnabled(debug); await Settle(.35);
+                    Capture($"xc-start-gaming-off-{(fullscreen ? "fullscreen" : $"{size.X}x{size.Y}")}-debug-{debug}.png");
+                }
+                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed); DisplayServer.WindowSetSize(new Vector2I(1152, 648));
+            }
+            hud.SetDebugDisplayEnabled(false);
+            var xcMotion = Path.Combine(_output, "fictional-xc-motion.csv");
+            File.WriteAllText(xcMotion, "elapsed_seconds,ride_distance_m,route_chainage_m,lateral_m,grade_percent,speed_kph,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z,air_height_m,score,completed_lines" + System.Environment.NewLine);
+            await DriveXcReferenceLap(session, world, course, xcGeometry, xc, 1, false, xcMotion);
+            Assert(course.TotalScore == 0 && course.CompletedLines == 0,
+                "Gaming-disabled centerline riding completes a whole lap using all three natural bypasses without scoring");
+            var beforePauseDistance = session.CurrentRideState.DistanceMeters;
+            session.ToggleRidePause(); await Settle(.25);
+            Assert(session.IsRidePaused && Math.Abs(session.CurrentRideState.DistanceMeters - beforePauseDistance) < .01,
+                "pausing the XC ride freezes authoritative distance during feature observation");
+            session.ResumeRide(); await Frames(3);
+            Assert(!session.IsRidePaused && Math.Abs(session.CurrentRideState.DistanceMeters - beforePauseDistance) < 4,
+                "resuming XC preserves route progress and lets the next lap continue from the same point");
+            GameFeaturesPreference.Set(true);
+            await DriveXcReferenceLap(session, world, course, xcGeometry, xc, 2, true, xcMotion);
+            Assert(course.TotalScore == 225 && course.CompletedLines == 3,
+                "steering selects and scores each optional jump line once, with score separate from cycling distance and elevation");
+            var xcState = session.CurrentRideState;
+            Assert(Math.Abs(xcState.DistanceMeters - xc.DistanceMeters * 2) < 45
+                && Math.Abs(xcGeometry.GetPoseAtDistance(xc.DistanceMeters).Position.Y - xcGeometry.GetPoseAtDistance(0).Position.Y) < .01f,
+                "two XC laps return to the same route seam with monotonic reference distance and no jump-added climb");
+            if (!IsHeadless)
+            {
+                hud.SetDebugDisplayEnabled(true); await Settle(.35); Capture("xc-feature-score-gaming-on-debug.png");
+                hud.SetDebugDisplayEnabled(false); await Settle(.25); Capture("xc-feature-score-gaming-on.png");
+            }
+            world.SetDeterministicSteeringInputForReview(false, false);
+            GD.Print($"[MountainBikeRideScreenReview] XC motion trace={xcMotion}; distance={xcState.DistanceMeters:F1} m; score={course.TotalScore}; optional lines={course.CompletedLines}");
+            GameFeaturesPreference.Set(false);
+            await session.ExitToRouteSelectionAsync();
+            var xcActivity = session.LastCompletedActivityDraft
+                ?? throw new InvalidOperationException("The isolated XC ride did not produce its saved activity draft.");
+            Assert(xcActivity.RouteId == xc.Id && Math.Abs(xcActivity.DistanceMeters - xc.DistanceMeters * 2) < 45
+                && xcActivity.ElevationGainMeters is > 40 and < 65
+                && xcActivity.FitFilePath is { } xcFit && File.Exists(xcFit),
+                "XC ride distance, truthful course climbing, and the finalized FIT file agree after the feature-scored laps");
             if (!await session.StartTrainerSessionAsync(gravel)) throw new InvalidOperationException("Could not start gravel after MTB.");
             ShowRide(screen, hud); await Settle(1.5);
             Assert(world.GetNodeOrNull<Node3D>("RouteGeometry/GravelTrailSurface") is not null
@@ -259,9 +361,73 @@ public partial class MountainBikeRideScreenReviewTest : Node
         }
     }
 
+    private async Task DriveXcReferenceLap(RideSessionNode session, RideWorldView world, TrailCourseLayer course,
+        VisualRoute geometry, RouteDefinition route, int lap, bool selectJumpLines, string tracePath)
+    {
+        var targetDistance = route.DistanceMeters * lap;
+        var featureIndex = 0;
+        var priorCamera = world.InspectionCamera?.GlobalPosition ?? Vector3.Zero;
+        var maxCameraStep = 0f;
+        ulong lastSampleTicks = Time.GetTicksMsec();
+        TrailFeatureLapSummary? completedLapSummary = null;
+        var timeout = Time.GetTicksMsec() + 300_000;
+        while (session.CurrentRideState.DistanceMeters < targetDistance)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            var ride = session.CurrentRideState;
+            var selected = selectJumpLines && featureIndex < route.TrailFeatures.Count
+                ? route.TrailFeatures[featureIndex] : null;
+            var featureBase = (lap - 1) * route.DistanceMeters;
+            var pressWindowStart = selected is null ? double.PositiveInfinity
+                : featureBase + selected.StartMeters - 55;
+            var lineEntryEnds = selected is null ? double.NegativeInfinity
+                : featureBase + selected.TakeoffMeters;
+            var lineReturnStarts = selected is null ? double.PositiveInfinity
+                : featureBase + selected.LandingMeters + 5;
+            var mergeEnds = selected is null ? double.NegativeInfinity
+                : featureBase + selected.EndMeters + 5;
+            var steeringOut = selected is not null && ride.DistanceMeters >= pressWindowStart
+                && ride.DistanceMeters <= lineEntryEnds;
+            var steeringBack = selected is not null && ride.DistanceMeters > lineReturnStarts
+                && ride.DistanceMeters <= mergeEnds;
+            var steerTowardBranch = steeringOut && selected!.RequiredLateralMeters > 0
+                || steeringBack && selected!.RequiredLateralMeters < 0;
+            var steerAwayFromBranch = steeringOut && selected!.RequiredLateralMeters < 0
+                || steeringBack && selected!.RequiredLateralMeters > 0;
+            world.SetDeterministicSteeringInputForReview(steerTowardBranch, steerAwayFromBranch);
+            if (selected is not null && ride.DistanceMeters > mergeEnds) featureIndex++;
+            var camera = world.InspectionCamera?.GlobalPosition ?? Vector3.Zero;
+            maxCameraStep = Math.Max(maxCameraStep, priorCamera.DistanceTo(camera)); priorCamera = camera;
+            if (course.LastFrame.CompletedLap is { } lapReport && lapReport.Lap == lap)
+                completedLapSummary = lapReport;
+            var rider = world.PlayerRider?.GlobalPosition ?? Vector3.Zero;
+            if (Math.Abs(world.CurrentLateralOffsetMeters) > course.LateralCorridorHalfWidth(ride.DistanceMeters) + .05)
+                throw new InvalidOperationException($"Steering escaped the XC trail corridor at {ride.DistanceMeters:F1} m: lateral={world.CurrentLateralOffsetMeters:F2} m.");
+            var now = Time.GetTicksMsec();
+            if (now - lastSampleTicks >= 1_000)
+            {
+                File.AppendAllText(tracePath,
+                    $"{ride.ElapsedSeconds:F3},{ride.DistanceMeters:F3},{geometry.WrapDistance(ride.DistanceMeters):F3},{world.PlayerLateralOffsetMeters:F3},{ride.CurrentGradientPercent:F3},{ride.VirtualSpeedKph:F3},{rider.X:F3},{rider.Y:F3},{rider.Z:F3},{camera.X:F3},{camera.Y:F3},{camera.Z:F3},{course.LastFrame.AirHeightMeters:F3},{course.TotalScore},{course.CompletedLines}{System.Environment.NewLine}");
+                lastSampleTicks = now;
+            }
+            if (ride.DistanceMeters % 260 < 3 && !IsHeadless) Capture($"xc-lap-{lap}-approach-{ride.DistanceMeters:F0}.png");
+            if (Time.GetTicksMsec() > timeout)
+                throw new TimeoutException($"Dummy XC lap {lap} did not advance to {targetDistance:F0} m.");
+        }
+        world.SetDeterministicSteeringInputForReview(false, false);
+        Assert(maxCameraStep < 18, $"XC lap {lap} follow-camera movement remains continuous (maximum frame step {maxCameraStep:F1} m)");
+        Assert(completedLapSummary is { } summary && summary.Lap == lap
+            && summary.CompletedLines == (selectJumpLines ? 3 : 0)
+            && summary.Score == (selectJumpLines ? 225 : 0),
+            $"XC lap {lap} summary reports its actual feature lines and score at the seam");
+    }
+
     private static bool IsHeadless => RenderingServer.GetCurrentRenderingDriverName().Contains("headless", StringComparison.OrdinalIgnoreCase)
         || RenderingServer.GetCurrentRenderingDriverName().Contains("dummy", StringComparison.OrdinalIgnoreCase)
         || DisplayServer.GetName().Contains("headless", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsXcVisualReviewOnly => string.Equals(
+        System.Environment.GetEnvironmentVariable("WODRA_REVIEW_XC_VISUAL_ONLY"), "1", StringComparison.Ordinal);
 
     private static void ShowRide(Control screen, HudController hud)
     {
@@ -270,6 +436,7 @@ public partial class MountainBikeRideScreenReviewTest : Node
         start.Hide();
         screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").Hide();
         screen.GetNode<RouteSelectionPanelController>("RouteSelectionPanel").Hide();
+        screen.GetNode<RideHistoryPanelController>("RideHistoryPanel").Hide();
         hud.Show();
     }
 

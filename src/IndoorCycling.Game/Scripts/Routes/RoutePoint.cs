@@ -1,8 +1,10 @@
 public sealed record RoutePoint(
 	double DistanceMeters,
-	double Latitude,
-	double Longitude,
+	double? Latitude,
+	double? Longitude,
 	double ElevationMeters,
 	double? RawElevationMeters = null,
-	double? GradientPercent = null
+	double? GradientPercent = null,
+	double? LocalXMeters = null,
+	double? LocalZMeters = null
 );

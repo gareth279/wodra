@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string] $GodotExe,
-    [switch] $Headless
+    [switch] $Headless,
+    [switch] $XcVisualOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,6 +21,7 @@ $old = @{
     TMP = $env:TMP
     WODRA_REVIEW_ROOT = $env:WODRA_REVIEW_ROOT
     WODRA_REVIEW_OUTPUT = $env:WODRA_REVIEW_OUTPUT
+    WODRA_REVIEW_XC_VISUAL_ONLY = $env:WODRA_REVIEW_XC_VISUAL_ONLY
 }
 try {
     $env:APPDATA = $appData
@@ -28,6 +30,7 @@ try {
     $env:TMP = $tempRoot
     $env:WODRA_REVIEW_ROOT = $reviewRoot
     $env:WODRA_REVIEW_OUTPUT = Join-Path $reviewRoot 'artifacts'
+    if ($XcVisualOnly) { $env:WODRA_REVIEW_XC_VISUAL_ONLY = '1' }
     New-Item -ItemType Directory -Path $env:WODRA_REVIEW_OUTPUT | Out-Null
 
     & $godot --headless --path $project --script 'res://Tests/VerifyReviewUserData.gd'

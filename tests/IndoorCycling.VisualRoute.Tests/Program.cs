@@ -6,6 +6,85 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("fictional XC loop has closed local geometry, truthful climb, and three scored line choices", () =>
+    {
+        var route = RouteCatalog.GetById("wodra-xc-skills-loop")
+            ?? throw new Exception("Fictional XC route was not loaded.");
+        if (route.DistanceMeters is < 1000 or > 2000 || route.TotalAscentMeters is < 10 or > 80
+            || route.Points is not { Count: > 500 } points || route.TrailFeatures.Count != 3
+            || route.TrailBerms.Count != 3 || route.TrailRollers.Count != 2
+            || route.Capabilities.DefaultLateralOffsetMeters != 0
+            || !route.Capabilities.SupportsTrailFeatures || route.Capabilities.SupportsPacer
+            || route.Capabilities.SupportsMultiplayer || route.Capabilities.SupportsGhost
+            || route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("XC metadata, unsupported combinations, or geometry are incomplete.");
+        if (points.Any(point => point.Latitude.HasValue || point.Longitude.HasValue
+                || !point.LocalXMeters.HasValue || !point.LocalZMeters.HasValue)
+            || Math.Abs(points[0].LocalXMeters!.Value - points[^1].LocalXMeters!.Value) > 1e-6
+            || Math.Abs(points[0].LocalZMeters!.Value - points[^1].LocalZMeters!.Value) > 1e-6
+            || route.GeometryFingerprint.Length != 64 || !route.SourceAttribution.Contains("Fictional", StringComparison.Ordinal))
+            throw new Exception("Fictional local coordinates, closed seam, fingerprint, or attribution are invalid.");
+        var bypassRun = new TrailFeatureChallenge(route.TrailFeatures, route.DistanceMeters, route.TrailRollers);
+        bypassRun.Update(0, 0, 22, false, true);
+        TrailFeatureFrame bypassResult = new();
+        for (double distance = 5; distance <= route.DistanceMeters; distance += 5)
+            bypassResult = bypassRun.Update(distance, 0, 22, false, true);
+        if (bypassRun.TotalScore != 0 || bypassRun.CompletedLines != 0
+            || bypassResult.CompletedLap is not { Lap: 1, CompletedLines: 0 })
+            throw new Exception("The centerline must naturally bypass every feature without scoring.");
+
+        foreach (var feature in route.TrailFeatures)
+        {
+            var corridor = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+            if (corridor.LateralCorridorHalfWidth(feature.StartMeters, 1.55 / 2) != 1.55 / 2
+                || corridor.LateralCorridorHalfWidth(feature.TakeoffMeters, 1.55 / 2) < Math.Abs(feature.RequiredLateralMeters)
+                || corridor.LateralCorridorHalfWidth(feature.EndMeters, 1.55 / 2) != 1.55 / 2)
+                throw new Exception($"{feature.Id} steering corridor does not open and close with its authored line.");
+            var slowApproach = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+            slowApproach.Update(feature.StartMeters - 2, 0, 10, false, false);
+            slowApproach.Update(feature.StartMeters + 35, feature.RequiredLateralMeters, 10, false, false);
+            var grounded = slowApproach.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, 10, false, false);
+            if (grounded.AirHeightMeters != 0 || grounded.SurfaceLiftMeters <= 0)
+                throw new Exception($"{feature.Id} low-speed traversal must follow the raised line while staying grounded.");
+
+            foreach (var speed in new[] { 19.0, 20.0, 35.0, 55.0 })
+            {
+                var approach = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
+                approach.Update(feature.StartMeters - 2, 0, speed, false, false);
+                approach.Update(feature.StartMeters + 20, feature.RequiredLateralMeters, speed, false, false);
+                approach.Update(feature.StartMeters + 45, feature.RequiredLateralMeters, speed, false, false);
+                var takeoff = approach.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, speed, false, false);
+                if ((speed < feature.MinimumSpeedKph && takeoff.AirHeightMeters != 0)
+                    || (speed >= feature.MinimumSpeedKph && takeoff.AirHeightMeters <= 0))
+                    throw new Exception($"{feature.Id} take-off behavior is wrong at {speed:F0} km/h.");
+            }
+
+            var challenge = new TrailFeatureChallenge(route.TrailFeatures, route.DistanceMeters, route.TrailRollers);
+            challenge.Update(feature.StartMeters - 2, 0, 22, false, true);
+            challenge.Update(feature.StartMeters + 35, feature.RequiredLateralMeters, 22, false, true);
+            var launch = challenge.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, 22, false, true);
+            var pause = challenge.Update(feature.TakeoffMeters + 8, feature.RequiredLateralMeters, 22, true, true);
+            if (launch.Feedback is null || pause.AirHeightMeters <= 0 || challenge.TotalScore != 0)
+                throw new Exception($"{feature.Id} did not produce a pause-stable, non-scoring take-off presentation.");
+            var landing = challenge.Update(feature.LandingMeters + 1, feature.RequiredLateralMeters, 22, false, true);
+            if (landing.Award?.FeatureId != feature.Id || landing.Award.TotalScore != feature.ScorePoints
+                || landing.AirHeightMeters < 0)
+                throw new Exception($"{feature.Id} did not score once at its landing boundary.");
+            var duplicate = challenge.Update(feature.EndMeters + 1, 0, 22, false, true);
+            if (duplicate.Award is not null || challenge.TotalScore != feature.ScorePoints)
+                throw new Exception($"{feature.Id} scored more than once in a lap.");
+
+            challenge.SuppressNextSweep(feature.EndMeters + 5, 0);
+            challenge.Update(feature.StartMeters, 0, 22, false, true);
+            challenge.Update(feature.TakeoffMeters + 1, feature.RequiredLateralMeters, 22, false, true);
+            if (challenge.TotalScore != feature.ScorePoints)
+                throw new Exception("A repositioned or reverse traversal awarded duplicate points.");
+        }
+        var visual = new VisualRoute(route, spacingMeters: 2);
+        if (visual.LengthMeters != route.DistanceMeters
+            || Vector3.Distance(visual.GetPoseAtDistance(0).Position, visual.GetPoseAtDistance(route.DistanceMeters).Position) > .001f)
+            throw new Exception("The XC visual centreline does not meet at its lap seam.");
+    }),
     ("north-up inset projection keeps north above, east right, and heading aligned", () =>
     {
         var origin = RouteOverviewGeometry.ProjectNorthUp(Vector3.Zero);

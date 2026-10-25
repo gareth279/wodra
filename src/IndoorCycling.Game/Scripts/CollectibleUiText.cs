@@ -6,6 +6,7 @@ public static class CollectibleUiText
 
 	public static string PickupFeedback(string kind, int points, int score) => $"{kind} token +{points} · {score} points";
 
-	public static string ResultSummary(int score, int collected, int available, string result) =>
-		$"Game features · {score} points · {collected}/{available} tokens · {result}";
+	public static string ResultSummary(int score, int collected, int available, string result, int featureLines = 0) =>
+		$"Game features · {score} points · {collected}/{available} tokens" +
+		(featureLines > 0 ? $" · {featureLines} jump lines" : "") + $" · {result}";
 }

@@ -526,6 +526,14 @@ public partial class CyclistVisual : Node3D
             RotateObjectLocal(Vector3.Back, MathF.Atan(routePose.BankSlope));
     }
 
+    /// <summary>Applies route-authored surface lift and virtual airtime to rendering only.</summary>
+    public void ApplyTrailFeaturePresentation(double verticalOffsetMeters, float pitchRadians)
+    {
+        if (!double.IsFinite(verticalOffsetMeters) || !float.IsFinite(pitchRadians)) return;
+        GlobalPosition += Vector3.Up * (float)Math.Clamp(verticalOffsetMeters, 0, 2);
+        if (Math.Abs(pitchRadians) > 0.001f) RotateObjectLocal(Vector3.Right, pitchRadians);
+    }
+
     public void UpdateFromRideState(Vector3 routePosition, Vector3 routeForward, double virtualSpeedKph,
         int cadenceRpm, double gradientPercent, bool paused, double deltaSeconds)
     {

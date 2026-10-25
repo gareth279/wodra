@@ -66,6 +66,14 @@ Implementation: `src/IndoorCycling.Game/Scripts/World/ChaseCamera.cs`, `RideWorl
 
 Automated enforcement: camera/framing and obstruction recovery review scenes in the Windows workflow. The accepted owner framing/visual result remains subject to in-game review; CI is not visual approval.
 
+## Optional trail lines are presentation observers
+
+Authored MTB feature lines are route-relative content attached only to routes that explicitly enable `SupportsTrailFeatures`. Their surfaces, rollers, berms, visual airtime, feedback, and optional Gaming score are downstream observers. They cannot change authoritative route distance, elevation, gradient resistance, telemetry, trainer commands, FIT inputs, or camera defaults. The default zero steering line on the fictional XC course is the rollable bypass at every jump; steering chooses the authored side line. Lap progress remains on the canonical route reference chainage, line transitions interpolate inside their authored windows, and each feature can score at most once per route lap. Since the current shared route progress does not encode branch identity and exact branch-specific timing, this course disables ghosts, route PBs, pacers, AI cyclists, and multiplayer. Do not enable competitive comparisons until branch-aware progress is implemented and validated.
+
+Implementation: `TrailFeatureDataLoader`, `TrailFeatureChallenge`, `TrailCourseLayer`, and `RideWorldView`. New route features must define their supported geometry and scoring in route content, retain natural joins, and keep visual lift out of route grade and recording.
+
+Automated enforcement: VisualRoute tests cover the closed local-coordinate route, its authored feature content and idempotent line scoring; production RideScreen review covers rideable bypasses/branches and route transitions. Actual steering-device and owner acceptance remain external.
+
 ## Device connectivity is recoverable and optional where specified
 
 Trainer readiness is required to start a trainer ride; optional heart-rate and steering devices must not block riding. Discovery, reconnect, cancellation, retry and recovery must not leak handlers, duplicate callbacks or leave stale actions. ANT+ FE-C behavior remains conditional on selected mode and available hardware.

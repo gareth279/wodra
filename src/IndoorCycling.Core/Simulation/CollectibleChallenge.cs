@@ -19,21 +19,32 @@ public sealed record CollectiblePlacement(string Id, double RouteDistanceMeters,
 public sealed record CollectibleChallengeResult(int SchemaVersion, string RouteId, string RouteContentIdentity,
 	int ChallengeVersion, string AttemptId, int LapNumber, int Score, int PickupsCollected, int PickupsAvailable,
 	bool Completed, double ElapsedSeconds, bool EligibleForPersonalBest, bool DummyRider, bool DebugJump,
-	bool CatchUpUsed, bool GameFeatureToggledDuringRide, DateTimeOffset SavedAtUtc);
+	bool CatchUpUsed, bool GameFeatureToggledDuringRide, DateTimeOffset SavedAtUtc)
+{
+	public int FeatureLinesCompleted { get; init; }
+}
 
 /// <summary>Per-attempt identity, scoring and practice eligibility. Local flags are not anti-cheat validation.</summary>
 public sealed class CollectibleAttemptState
 {
 	private readonly HashSet<string> _awarded = new(StringComparer.Ordinal);
+	private readonly HashSet<string> _awardedFeatures = new(StringComparer.Ordinal);
 	public Guid AttemptId { get; } = Guid.NewGuid();
 	public int Score { get; private set; }
 	public int PickupsCollected => _awarded.Count;
+	public int FeatureLinesCompleted => _awardedFeatures.Count;
 	public bool DummyRider { get; private set; }
 	public bool DebugJump { get; private set; }
 	public bool CatchUpUsed { get; private set; }
 	public bool GameFeatureToggledDuringRide { get; private set; }
 	public bool Eligible => !DummyRider && !DebugJump && !CatchUpUsed && !GameFeatureToggledDuringRide;
 	public bool Award(CollectiblePlacement pickup, int lapNumber) => _awarded.Add($"{lapNumber}:{pickup.Id}") && Add(pickup.Points);
+	public bool AwardFeatureLine(string featureId, int lapNumber, int points)
+	{
+		if (string.IsNullOrWhiteSpace(featureId) || points < 0 || points > 500
+			|| !_awardedFeatures.Add($"{lapNumber}:{featureId}")) return false;
+		return Add(points);
+	}
 	private bool Add(int points) { Score += points; return true; }
 	public void MarkPractice(bool dummy = false, bool debugJump = false, bool catchUp = false, bool toggled = false)
 	{ DummyRider |= dummy; DebugJump |= debugJump; CatchUpUsed |= catchUp; GameFeatureToggledDuringRide |= toggled; }
@@ -41,7 +52,7 @@ public sealed class CollectibleAttemptState
 		int lap, int available, bool completed, double elapsedSeconds) => new(1, routeId, contentIdentity,
 		challengeVersion, AttemptId.ToString("D"), lap, Score, PickupsCollected, available, completed,
 		Math.Max(0, elapsedSeconds), Eligible && completed, DummyRider, DebugJump, CatchUpUsed,
-		GameFeatureToggledDuringRide, DateTimeOffset.UtcNow);
+		GameFeatureToggledDuringRide, DateTimeOffset.UtcNow) { FeatureLinesCompleted = FeatureLinesCompleted };
 }
 
 /// <summary>Deterministic, route relative pickup layout and swept hit detection.</summary>

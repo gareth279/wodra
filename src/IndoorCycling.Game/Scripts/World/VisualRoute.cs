@@ -19,6 +19,7 @@ public sealed class VisualRoute
     private const double EarthRadiusMeters = 6371000;
     private readonly VisualRouteSample[] _samples;
     private readonly RoutePoint? _geographicOrigin;
+    private readonly RoutePoint? _localOrigin;
     public IReadOnlyList<VisualRouteSample> Samples => _samples;
     // Compatibility alias; this is the same canonical sample array, not a second path.
     public IReadOnlyList<VisualRouteSample> Vertices => _samples;
@@ -39,9 +40,17 @@ public sealed class VisualRoute
             ?? throw new InvalidOperationException("Geographic landmark positions require a route with GPS points.");
         const double radians = Math.PI / 180;
         return new Vector3(
-            (float)((longitude - origin.Longitude) * radians * EarthRadiusMeters * Math.Cos(origin.Latitude * radians)),
+            (float)((longitude - origin.Longitude!.Value) * radians * EarthRadiusMeters * Math.Cos(origin.Latitude!.Value * radians)),
             (float)(elevationMeters - origin.ElevationMeters),
-            (float)(-(latitude - origin.Latitude) * radians * EarthRadiusMeters));
+            (float)(-(latitude - origin.Latitude.Value) * radians * EarthRadiusMeters));
+    }
+
+    /// <summary>Maps fictional route-local scenery coordinates without inventing GPS positions.</summary>
+    public Vector3 GetPositionForLocalCoordinate(double xMeters, double zMeters, double elevationMeters)
+    {
+        var origin = _localOrigin ?? throw new InvalidOperationException("Local scenery coordinates require a local-coordinate route.");
+        return new Vector3((float)(xMeters - origin.LocalXMeters!.Value),
+            (float)(elevationMeters - origin.ElevationMeters), (float)(zMeters - origin.LocalZMeters!.Value));
     }
 
     public VisualRoute(RouteDefinition route, double spacingMeters = 10)
@@ -61,7 +70,10 @@ public sealed class VisualRoute
             distances.Add(Math.Clamp(segment.EndMeters, 0, LengthMeters));
         }
         var gps = route.Points?.OrderBy(p => p.DistanceMeters).ToArray();
-        _geographicOrigin = gps is { Length: >= 2 } ? gps[0] : null;
+        var usesLocalCoordinates = gps is { Length: >= 2 } && gps.All(point => point.LocalXMeters.HasValue && point.LocalZMeters.HasValue);
+        _geographicOrigin = gps is { Length: >= 2 } && !usesLocalCoordinates
+            && gps.All(point => point.Latitude.HasValue && point.Longitude.HasValue) ? gps[0] : null;
+        _localOrigin = usesLocalCoordinates ? gps![0] : null;
         if (gps is { Length: >= 2 })
             foreach (var point in gps) distances.Add(Math.Clamp(point.DistanceMeters, 0, LengthMeters));
 
@@ -71,8 +83,10 @@ public sealed class VisualRoute
         foreach (var d in distances)
         {
             Vector3 position;
-            if (gps is { Length: >= 2 })
-                position = GpsPosition(gps, d);
+            if (usesLocalCoordinates)
+                position = LocalPosition(gps!, d);
+            else if (_geographicOrigin is not null)
+                position = GpsPosition(gps!, d);
             else
             {
                 // A closed circle provides a usable road for routes with only grades.
@@ -147,14 +161,28 @@ public sealed class VisualRoute
         var after = points.FirstOrDefault(p => p.DistanceMeters >= distance) ?? points[^1];
         var t = after.DistanceMeters > before.DistanceMeters
             ? (distance - before.DistanceMeters) / (after.DistanceMeters - before.DistanceMeters) : 0;
-        var lat = before.Latitude + (after.Latitude - before.Latitude) * t;
-        var lon = before.Longitude + (after.Longitude - before.Longitude) * t;
+        var lat = before.Latitude!.Value + (after.Latitude!.Value - before.Latitude.Value) * t;
+        var lon = before.Longitude!.Value + (after.Longitude!.Value - before.Longitude.Value) * t;
         var altitude = before.ElevationMeters + (after.ElevationMeters - before.ElevationMeters) * t;
         const double radians = Math.PI / 180;
         return new Vector3(
-            (float)((lon - origin.Longitude) * radians * EarthRadiusMeters * Math.Cos(origin.Latitude * radians)),
+            (float)((lon - origin.Longitude!.Value) * radians * EarthRadiusMeters * Math.Cos(origin.Latitude!.Value * radians)),
             (float)(altitude - origin.ElevationMeters),
-            (float)(-(lat - origin.Latitude) * radians * EarthRadiusMeters));
+            (float)(-(lat - origin.Latitude.Value) * radians * EarthRadiusMeters));
+    }
+
+    private static Vector3 LocalPosition(RoutePoint[] points, double distance)
+    {
+        var origin = points[0];
+        var before = points.LastOrDefault(p => p.DistanceMeters <= distance) ?? origin;
+        var after = points.FirstOrDefault(p => p.DistanceMeters >= distance) ?? points[^1];
+        var t = after.DistanceMeters > before.DistanceMeters
+            ? (distance - before.DistanceMeters) / (after.DistanceMeters - before.DistanceMeters) : 0;
+        var x = before.LocalXMeters!.Value + (after.LocalXMeters!.Value - before.LocalXMeters.Value) * t;
+        var z = before.LocalZMeters!.Value + (after.LocalZMeters!.Value - before.LocalZMeters.Value) * t;
+        var altitude = before.ElevationMeters + (after.ElevationMeters - before.ElevationMeters) * t;
+        return new Vector3((float)(x - origin.LocalXMeters!.Value), (float)(altitude - origin.ElevationMeters),
+            (float)(z - origin.LocalZMeters!.Value));
     }
 
     public double WrapDistance(double distance)

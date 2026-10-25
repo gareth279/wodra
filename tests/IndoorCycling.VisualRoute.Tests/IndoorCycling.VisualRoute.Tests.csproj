@@ -55,6 +55,14 @@
                       LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.terrain.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/signal-hill-big-easy-mtb.vegetation.json"
                       LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.vegetation.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/wodra-xc-skills-loop.route-points.json"
+                      LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.route-points.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/wodra-xc-skills-loop.trail-features.json"
+                      LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.trail-features.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/wodra-xc-skills-loop.terrain.json"
+                      LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.terrain.json" />
+    <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/wodra-xc-skills-loop.vegetation.json"
+                      LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.vegetation.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.landmarks.json"
                       LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="../../src/IndoorCycling.Game/Data/Routes/dunedin-one-way-oval-gardens.buildings.json"

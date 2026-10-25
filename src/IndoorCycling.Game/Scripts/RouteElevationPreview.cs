@@ -11,10 +11,15 @@ public partial class RouteElevationPreview : Control
 		var size = Size;
 		DrawRect(new Rect2(Vector2.Zero, size), new Color(.06f,.085f,.09f,.88f));
 		if (Route?.Points is not { Count: > 1 } points) { DrawString(ThemeDB.FallbackFont, new Vector2(10, 22), "Route preview unavailable", HorizontalAlignment.Left, -1, 14, Colors.LightGray); return; }
-		var longitudeScale = Math.Cos(points.Average(p => p.Latitude) * Math.PI / 180);
+		var local = points.All(point => point.LocalXMeters.HasValue && point.LocalZMeters.HasValue);
+		var longitudeScale = local ? 1 : Math.Cos(points.Average(p => p.Latitude ?? 0) * Math.PI / 180);
 		// Put north/south on the horizontal axis and retain geographic proportions;
 		// stretching degrees independently turns compact tracks into flat ellipses.
-		var values = ShowRoute ? points.Select(p => (X: p.Latitude, Y: p.Longitude * longitudeScale)).ToArray() : points.Select(p => (X: p.DistanceMeters, Y: p.ElevationMeters)).ToArray();
+		(double X, double Y)[] values = ShowRoute
+			? local
+				? points.Select(p => (X: p.LocalXMeters!.Value, Y: p.LocalZMeters!.Value)).ToArray()
+				: points.Select(p => (X: p.Latitude ?? 0, Y: (p.Longitude ?? 0) * longitudeScale)).ToArray()
+			: points.Select(p => (X: p.DistanceMeters, Y: p.ElevationMeters)).ToArray();
 		var minX = values.Min(p => p.X); var maxX = values.Max(p => p.X); var minY = values.Min(p => p.Y); var maxY = values.Max(p => p.Y);
 		var pad = 12f; var spanX = Math.Max(1e-9, maxX-minX); var spanY = Math.Max(1e-9, maxY-minY);
 		var line = new Vector2[values.Length];

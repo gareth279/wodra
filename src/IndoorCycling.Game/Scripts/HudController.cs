@@ -1279,11 +1279,14 @@ public partial class HudController : Control
 		}
 	}
 
-	public void SetGameScore(bool enabled, int score, int collected, int available)
+	public void SetGameScore(bool enabled, int score, int collected, int available,
+		int featureLinesCompleted = 0, bool trailCourse = false)
 	{
 		if (_gameScoreLabel is null) return;
 		_gameScoreLabel.Visible = enabled;
-		_gameScoreLabel.Text = enabled ? CollectibleUiText.Score(score, collected, available) : "";
+		_gameScoreLabel.Text = enabled ? trailCourse
+			? $"Trail score · {score} pts · {featureLinesCompleted}/3 lines · {collected}/{available} tokens"
+			: CollectibleUiText.Score(score, collected, available) : "";
 		if (!enabled && _catFeedbackLabel is not null) _catFeedbackLabel.Visible = false;
 	}
 
@@ -1295,6 +1298,22 @@ public partial class HudController : Control
 		_catFeedbackLabel.Text = CollectibleUiText.PickupFeedback(kind, points, score);
 		_catFeedbackLabel.Visible = true;
 		_catFeedbackSeconds = 2;
+	}
+
+	public void ShowTrailFeatureFeedback(string name, int points, int score)
+	{
+		if (_catFeedbackLabel is null) return;
+		_catFeedbackLabel.Text = $"{name} +{points} · {score} trail points";
+		_catFeedbackLabel.Visible = true;
+		_catFeedbackSeconds = 2.5;
+	}
+
+	public void ShowTrailLapSummary(int lap, int lines, int score)
+	{
+		if (_catFeedbackLabel is null) return;
+		_catFeedbackLabel.Text = $"Lap {lap} · {lines}/3 jump lines · {score} trail points";
+		_catFeedbackLabel.Visible = true;
+		_catFeedbackSeconds = 4;
 	}
 
 	public void UpdateFromRideState(RideState rideState, TrainerTelemetry? telemetry, double elapsedSeconds)

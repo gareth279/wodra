@@ -16,7 +16,8 @@ public static class RouteCatalog
 
 	private static IReadOnlyList<RouteDefinition> LoadRoutes()
 	{
-		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute(), CreateGravelTrailRoute(), CreateSignalHillMountainBikeRoute() };
+		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute(), CreateGravelTrailRoute(),
+			CreateSignalHillMountainBikeRoute(), CreateFictionalXcSkillsLoop() };
 		var reservedTestIds = new HashSet<string>(System.StringComparer.Ordinal)
 			{ "test-route", "flat-test-route", "climb-test-route" };
 		foreach (var packageRoot in RoutePackageFiles.PackageDirectories.Distinct(System.StringComparer.OrdinalIgnoreCase))
@@ -174,6 +175,34 @@ public static class RouteCatalog
 			Discipline = RouteDiscipline.MountainBike,
 			Capabilities = RouteCapabilities.SoloMountainBike,
 			RouteType = "Point-to-Point",
+			SupportsVerifiedCompletionAchievement = false
+		};
+	}
+
+	private static RouteDefinition CreateFictionalXcSkillsLoop()
+	{
+		var route = RouteDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+			"Wodra.GameData.Routes.wodra-xc-skills-loop.route-points.json",
+			"wodra-xc-skills-loop", "Wodra XC Skills Loop (fictional)",
+			"A fictional 1.6 km closed XC course with gentle climbing and descending, flowing singletrack, berms, rollers, and three optional jump lines with natural rollable bypasses. No real-world trail or geographic fidelity is implied.", []);
+		var length = route.DistanceMeters;
+		var segments = new[] { "Trailhead flow", "Upper ridge climb", "Bermed forest descent", "Lower rollers" };
+		var segmentLength = length / segments.Length;
+		return route with
+		{
+			Segments = segments.Select((label, index) => new RouteSegment(index * segmentLength,
+				index == segments.Length - 1 ? length : (index + 1) * segmentLength, 0, label)).ToArray(),
+			RouteType = "Loop",
+			Difficulty = "Unrated",
+			Environment = RouteEnvironment.MountainBike,
+			Discipline = RouteDiscipline.MountainBike,
+			Capabilities = RouteCapabilities.SoloMountainBike with
+			{
+				SupportsCollectibles = true,
+				SupportsTrailFeatures = true,
+				MaximumLateralOffsetMeters = 3.25f,
+				DefaultLateralOffsetMeters = 0
+			},
 			SupportsVerifiedCompletionAchievement = false
 		};
 	}

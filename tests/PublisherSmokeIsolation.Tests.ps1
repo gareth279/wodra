@@ -8,7 +8,8 @@ $guard = Get-Content -LiteralPath (Join-Path $repoRoot 'src\IndoorCycling.Game\S
 
 if ($publisher -notmatch "PublisherSmokeIsolation\.ps1" -or
     $publisher -notmatch "New-WodraSmokeIsolation" -or
-    ([regex]::Matches($publisher, 'Invoke-WithWodraSmokeIsolation').Count -lt 2) -or
+    ([regex]::Matches($publisher, 'Invoke-WithWodraSmokeIsolation').Count -lt 3) -or
+    $publisher -notmatch 'PackagedXcRouteAssetsSmokeTest\.tscn' -or
     $publisher -notmatch "--require-userdata-under" -or
     $publisher -notmatch "AllowedExitCodes @\(41\)") {
     throw 'The extracted-app publisher smoke no longer establishes and verifies disposable user-data isolation.'

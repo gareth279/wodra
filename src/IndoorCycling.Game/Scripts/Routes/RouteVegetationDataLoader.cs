@@ -9,9 +9,9 @@ public sealed record RouteVegetationAreaData(string OsmType, long OsmId, string?
     double[][] Polygon, double? BaseElevationMeters, double ElevationVariationMeters, bool RenderGround,
     double AreaSquareMeters, double DistanceFromRouteMeters, double NearestRouteDistanceMeters,
     int GeneratedTreeCount, int OriginalVertexCount, int ElevationSampleCount);
-public sealed record RouteVegetationTreeData(string Source, long OsmId, double Latitude, double Longitude,
+public sealed record RouteVegetationTreeData(string Source, long OsmId, double? Latitude, double? Longitude,
     double? ElevationMeters, string TreeType, double HeightMeters, double CanopyRadiusMeters,
-    double NearestRouteDistanceMeters);
+    double NearestRouteDistanceMeters, double? LocalXMeters = null, double? LocalZMeters = null);
 public sealed record RouteVegetationData(string Id, IReadOnlyList<RouteVegetationAreaData> Areas,
     IReadOnlyList<RouteVegetationTreeData> Trees);
 
@@ -34,8 +34,10 @@ public static class RouteVegetationDataLoader
                 || area.BaseElevationMeters is not { } elevation || !double.IsFinite(elevation)
                 || area.Polygon.Any(point => point.Length != 2 || !double.IsFinite(point[0]) || !double.IsFinite(point[1])
                     || point[0] is < -180 or > 180 || point[1] is < -90 or > 90))
-            || file.Trees.Any(tree => !double.IsFinite(tree.Latitude) || !double.IsFinite(tree.Longitude)
-                || tree.Latitude is < -90 or > 90 || tree.Longitude is < -180 or > 180
+            || file.Trees.Any(tree =>
+                !((tree.Latitude is { } latitude && tree.Longitude is { } longitude
+                    && double.IsFinite(latitude) && double.IsFinite(longitude) && latitude is >= -90 and <= 90 && longitude is >= -180 and <= 180)
+                  || (tree.LocalXMeters is { } x && tree.LocalZMeters is { } z && double.IsFinite(x) && double.IsFinite(z)))
                 || tree.ElevationMeters is not { } treeElevation || !double.IsFinite(treeElevation)
                 || !double.IsFinite(tree.HeightMeters) || tree.HeightMeters <= 0))
             throw new InvalidDataException($"Embedded vegetation resource '{resourceName}' contains invalid feature data.");
