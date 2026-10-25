@@ -11,7 +11,7 @@ public static class PbfRoadGraphLoader
 {
     public static GraphLoadResult Load(string pbfPath, RouteAuthoringConfig config, string? cacheDirectory = null)
     {
-        if (!File.Exists(pbfPath)) throw new FileNotFoundException("OSM PBF file was not found.", pbfPath);
+        if (!File.Exists(pbfPath)) throw new FileNotFoundException("OSM PBF or XML file was not found.", pbfPath);
         config.Validate();
         var cacheKey = RoadGraphCache.GetCacheKey(pbfPath, config);
         if (!string.IsNullOrWhiteSpace(cacheDirectory))
@@ -36,7 +36,7 @@ public static class PbfRoadGraphLoader
         var nodeTimer = Stopwatch.StartNew();
         var coordinates = new Dictionary<long, GeoPoint>();
         using (var stream = File.OpenRead(pbfPath))
-        foreach (var item in new PBFOsmStreamSource(stream))
+        foreach (var item in OsmSource.Open(stream, pbfPath))
         {
             if (item is not Node node || node.Id is not long nodeId
                 || node.Latitude is not double latitude || node.Longitude is not double longitude) continue;
@@ -49,7 +49,7 @@ public static class PbfRoadGraphLoader
         var wayTimer = Stopwatch.StartNew();
         var wayRecords = new List<WayRecord>();
         using (var stream = File.OpenRead(pbfPath))
-        foreach (var item in new PBFOsmStreamSource(stream))
+        foreach (var item in OsmSource.Open(stream, pbfPath))
         {
             if (item is not Way way || way.Id is not long wayId || way.Nodes is null || way.Tags is null) continue;
             var tags = way.Tags.ToDictionary(tag => tag.Key, tag => tag.Value, StringComparer.OrdinalIgnoreCase);

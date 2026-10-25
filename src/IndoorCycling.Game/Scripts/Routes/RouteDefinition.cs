@@ -16,6 +16,10 @@ public sealed record RouteDefinition(
 {
 	/// <summary>Route environment is independent of the activity mode selected for a ride.</summary>
 	public RouteEnvironment Environment { get; init; } = RouteEnvironment.Road;
+	/// <summary>Riding discipline is independent of environment and per-section surface.</summary>
+	public RouteDiscipline Discipline { get; init; } = RouteDiscipline.Road;
+	/// <summary>Source-authored route-relative surface classifications; empty retains legacy route behavior.</summary>
+	public IReadOnlyList<RouteSurfaceSegment> SurfaceSegments { get; init; } = [];
 	/// <summary>Modes explicitly supported by this environment. An empty value preserves legacy route behavior.</summary>
 	public IReadOnlyList<RideActivityMode> SupportedModes { get; init; } = [];
 	/// <summary>Optional feature support. Legacy routes retain the existing road feature set.</summary>
@@ -143,11 +147,27 @@ public sealed record RouteDefinition(
 	}
 }
 
-public enum RouteEnvironment { Road, Velodrome, MountainBike }
+public enum RouteEnvironment { Road, Trail, Velodrome, MountainBike }
+public enum RouteDiscipline { Road, Gravel, MountainBike, Track }
+public sealed record RouteSurfaceSegment(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId);
+
+/// <summary>Explicit ambient-world policy, independent of local/AI/remote cyclist capabilities.</summary>
+public sealed record RouteEnvironmentPolicy(bool SupportsAmbientCars, bool SupportsAmbientPedestrians,
+	bool SupportsUrbanStreetScenery)
+{
+	public bool SupportsAmbientActors => SupportsAmbientCars || SupportsAmbientPedestrians;
+	public static RouteEnvironmentPolicy For(RouteEnvironment environment) => environment switch
+	{
+		RouteEnvironment.Road => new(true, true, true),
+		RouteEnvironment.Trail or RouteEnvironment.MountainBike or RouteEnvironment.Velodrome => new(false, false, false),
+		_ => throw new ArgumentOutOfRangeException(nameof(environment))
+	};
+}
 public enum RideActivityMode { FreeRide, LapTiming, Flying200, Standing500, Standing1000 }
 public sealed record RouteCapabilities(bool SupportsPacer, bool SupportsGhost, bool SupportsCollectibles,
 	bool SupportsTraffic, bool SupportsMultiplayer)
 {
 	public static RouteCapabilities LegacyRoad { get; } = new(true, true, true, true, true);
 	public static RouteCapabilities SoloVelodrome { get; } = new(false, false, false, false, false);
+	public static RouteCapabilities SoloTrail { get; } = new(false, true, true, false, false);
 }

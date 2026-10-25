@@ -14,7 +14,6 @@ from rasterio.windows import Window, from_bounds
 from raster_priority import prefer_highest_resolution
 
 EARTH_RADIUS_METERS = 6371000.0
-SOURCE_NAME = "Otago – Dunedin and Mosgiel LiDAR 1 m DEM (2021)"
 ELEVATION_SAMPLER_VERSION = 2
 
 
@@ -329,7 +328,13 @@ def generate(args):
     all_valid_elevations = valid_elevations + far_valid_elevations
     if not chunks or not valid_elevations:
         raise ValueError("No usable terrain cells were covered by cached LINZ DEM data.")
-    terrain = {"id": route_file["id"], "sourceDataset": SOURCE_NAME,
+    elevation_metadata = report.get("elevation", {})
+    source_dataset = elevation_metadata.get("collection")
+    if not isinstance(source_dataset, str) or not source_dataset.strip():
+        raise ValueError("Terrain generation requires the source LINZ collection title in the elevation report.")
+    terrain = {"id": route_file["id"], "sourceDataset": source_dataset,
+               "sourceAttribution": elevation_metadata.get("attribution"),
+               "sourceLicense": elevation_metadata.get("license"),
                "elevationSamplerVersion": ELEVATION_SAMPLER_VERSION,
                "elevationSamplingMethod": "finest-valid LINZ DEM raster; bilinear pixel-centred samples",
                "sourceCrs": samplers[0].dataset.crs.to_string(),
@@ -352,9 +357,9 @@ def generate(args):
     z_coords = [z0+key[1]*spacing for key in referenced]
     x_coords.extend(far_x0+x*far_spacing for x,y in far_referenced)
     z_coords.extend(far_z0+y*far_spacing for x,y in far_referenced)
-    report["terrain"] = {"sourceDataset": SOURCE_NAME,
-        "sourceAttribution": report.get("elevation", {}).get("attribution"),
-        "sourceLicense": report.get("elevation", {}).get("license"),
+    report["terrain"] = {"sourceDataset": source_dataset,
+        "sourceAttribution": elevation_metadata.get("attribution"),
+        "sourceLicense": elevation_metadata.get("license"),
         "sourceAssets": [p.name for p in files],
         "sourceCrs": terrain["sourceCrs"], "spacingMeters": spacing,
         "corridorRadiusMeters": radius, "chunkSizeMeters": chunk_size,

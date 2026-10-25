@@ -619,7 +619,9 @@ public partial class RideWorldView : Node3D
             ? _hudController?.GetCameraSafeViewportRect() ?? new Rect2(0, 0, 1, 1)
             : new Rect2(0, 0, 1, 1);
         _camera.Follow(position, forward, delta, inspectionBounds, _rider.GlobalTransform, cameraSafeRect);
-        _ambientActorManager?.UpdateForCyclists(BuildAmbientTrafficRiders(position), delta, _session.IsRidePaused);
+        if (_loadedRoute is { } activeRoute
+            && RouteEnvironmentPolicy.For(activeRoute.Environment).SupportsAmbientActors)
+            _ambientActorManager?.UpdateForCyclists(BuildAmbientTrafficRiders(position), delta, _session.IsRidePaused);
         _debugElapsed += delta;
         if (DebugPoseLogging && _debugElapsed >= 1)
         {
@@ -1246,19 +1248,29 @@ public partial class RideWorldView : Node3D
                 traffic = false, collectibles = false });
             return;
         }
-        var asphalt = WodraWorldStyle.Asphalt;
-        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
-        var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
-        if (junctionFill is not null) _routeRoot.AddChild(junctionFill);
-        _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
-        foreach (float offset in new[] { -3.25f, 3.25f })
-            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+        var environmentPolicy = RouteEnvironmentPolicy.For(route.Environment);
+        var isTrail = route.Environment == RouteEnvironment.Trail;
+        if (isTrail)
+        {
+            foreach (var surface in TrailEnvironmentBuilder.Build(_geometry)) _routeRoot.AddChild(surface);
+        }
+        else
+        {
+            var asphalt = WodraWorldStyle.Asphalt;
+            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
+            var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
+            if (junctionFill is not null) _routeRoot.AddChild(junctionFill);
+            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
+            foreach (float offset in new[] { -3.25f, 3.25f })
+                _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+        }
         var assembly = typeof(RouteCatalog).Assembly;
         var resourcePrefix = $"Wodra.GameData.Routes.{route.Id}.";
         RouteBackgroundStreetData? backgroundStreetData = null;
         try
         {
-            backgroundStreetData = RouteBackgroundStreetDataLoader.TryLoadEmbedded(assembly,
+            if (environmentPolicy.SupportsUrbanStreetScenery)
+                backgroundStreetData = RouteBackgroundStreetDataLoader.TryLoadEmbedded(assembly,
                 resourcePrefix + "streets.json", route.Id);
         }
         catch (Exception ex)
@@ -1279,7 +1291,8 @@ public partial class RideWorldView : Node3D
                 ReportOptionalLayerFailure(route, "background street junction connections", ex);
             }
         }
-        _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry,true,true,junctionOpenings));
+        if (environmentPolicy.SupportsUrbanStreetScenery)
+            _routeRoot.AddChild(ProceduralRoad.BuildKerbsAndFootpaths(_geometry,true,true,junctionOpenings));
         // Route data has no road-class evidence for continuous delineators.
         // Render only explicit OSM furniture from StreetFurnitureLayer below.
         _landmarkLayer = null;
@@ -1320,7 +1333,8 @@ public partial class RideWorldView : Node3D
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
             IReadOnlyList<RouteBuildingData> buildings = [];
             var buildingResource = resourcePrefix + "buildings.json";
-            if (RoutePackageFiles.Exists(assembly, buildingResource, route.Id))
+            if (environmentPolicy.SupportsUrbanStreetScenery
+                && RoutePackageFiles.Exists(assembly, buildingResource, route.Id))
             {
                 buildings = RouteBuildingDataLoader.LoadEmbedded(assembly, buildingResource, route.Id);
 #if DEBUG
@@ -1335,7 +1349,8 @@ public partial class RideWorldView : Node3D
                 _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var landmarkResource = resourcePrefix + "landmarks.json";
-            if (RoutePackageFiles.Exists(assembly, landmarkResource, route.Id))
+            if (environmentPolicy.SupportsUrbanStreetScenery
+                && RoutePackageFiles.Exists(assembly, landmarkResource, route.Id))
             {
                 var landmarks = RouteLandmarkDataLoader.LoadEmbedded(assembly, landmarkResource, route.Id);
                 _landmarkLayer = new LandmarkLayer { Name = "RouteLandmarks" };
@@ -1360,7 +1375,8 @@ public partial class RideWorldView : Node3D
                 _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var furnitureResource = resourcePrefix + "street-furniture.json";
-            if (RoutePackageFiles.Exists(assembly, furnitureResource, route.Id))
+            if (environmentPolicy.SupportsUrbanStreetScenery
+                && RoutePackageFiles.Exists(assembly, furnitureResource, route.Id))
             {
                 var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(assembly, furnitureResource, route.Id);
                 _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
@@ -1372,7 +1388,7 @@ public partial class RideWorldView : Node3D
                 _roadMarkingLayer.Configure(_geometry, furniture);
                 _roadMarkingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
-            if(streets is not null)
+            if(environmentPolicy.SupportsAmbientActors && streets is not null)
             {
                 try
                 {
@@ -1382,7 +1398,7 @@ public partial class RideWorldView : Node3D
                     _backgroundStreetLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
                     _ambientActorManager = new AmbientActorManager { Name = "AmbientActors", RandomSeed = AmbientActorTuning.DefaultSeed };
                     _routeRoot.AddChild(_ambientActorManager);
-                    _ambientActorManager.Configure(_geometry, streets);
+                    _ambientActorManager.Configure(_geometry, streets, route.Environment);
                 }
                 catch (Exception ex)
                 {

@@ -4,7 +4,8 @@ public sealed record RoadNode(long Id, GeoPoint Coordinate);
 public sealed record RoadEdge(long FromNodeId, long ToNodeId, double LengthMeters, double CostMeters,
     long WayId, string Highway, string? Name, string? Ref, string? Bridge = null, string? Tunnel = null,
     string? Layer = null, string? Oneway = null, string? Access = null, string? Bicycle = null,
-    string? Vehicle = null, string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null);
+    string? Vehicle = null, string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null,
+    string? Surface = null);
 
 public sealed class RoadGraph
 {
@@ -49,7 +50,8 @@ public sealed class RoadGraph
                 highway, name, reference, bridge, tunnel, layer, tags.GetValueOrDefault("oneway"),
                 tags.GetValueOrDefault("access"), tags.GetValueOrDefault("bicycle"),
                 tags.GetValueOrDefault("vehicle"), tags.GetValueOrDefault("motor_vehicle"),
-                tags.GetValueOrDefault("motorcar"), tags.GetValueOrDefault("oneway:bicycle"));
+                tags.GetValueOrDefault("motorcar"), tags.GetValueOrDefault("oneway:bicycle"),
+                tags.GetValueOrDefault("surface"));
         }
     }
 

@@ -42,6 +42,14 @@ Implementation: `src/IndoorCycling.Game/Scripts/RideSessionNode.cs`, `src/Indoor
 
 Automated enforcement: multiplayer protocol/integration tests under `tests/Wodra.Multiplayer.*.Tests`. The boundary between visual smoothing and authoritative multiplayer state remains an architectural review requirement.
 
+## Environment policy is explicit
+
+Route environment and riding discipline are separate from activity mode. Environments declare whether ambient cars, pedestrians, urban road furniture, and shared cyclist features are supported. Trail and track environments must not instantiate or process ambient cars or pedestrians; road routes retain their existing traffic behavior. Gravel routes may contain per-section sealed or unsealed surface metadata without changing the environment or authoritative physics. MTB can reuse trail surface and terrain foundations while selecting its own presentation and capabilities.
+
+Implementation: `RouteDefinition.cs`, `RouteDataLoader.cs`, `RouteCatalog.cs`, `RideWorldView.cs`, and `AmbientActorManager.cs`. New environments must declare their policy and capabilities centrally rather than adding route-ID checks to shared controllers.
+
+Automated enforcement: route policy tests and production RideScreen reviews verify Trail/MTB/Track ambient exclusion and retain Road traffic behavior.
+
 ## Ride display and recorded activity agree
 
 HUD progress, lap/elapsed summaries, actual ridden distance, FIT samples and uploaded activity inputs must derive from the authoritative session state and truthful telemetry. Presentation or scenery cannot introduce a second progression value. FIT finalization/segmentation must preserve recorded ride data across normal stop and recovery paths.

@@ -60,7 +60,7 @@ public static class VegetationExtractor
         var explicitTrees = new List<(long Id, GeoPoint Point)>();
         var skipped = 0; var considered = 0;
         using var stream = File.OpenRead(pbfPath);
-        foreach (var element in new PBFOsmStreamSource(stream))
+        foreach (var element in OsmSource.Open(stream, pbfPath))
         {
             if (element is Node node && node.Id is long nodeId && node.Latitude is double lat && node.Longitude is double lon)
             {

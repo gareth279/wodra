@@ -24,7 +24,8 @@ public static class BuildOutputs
         GraphBuildStats graphStats, RouteBuildResult result, double routeSolveSeconds,
         LandmarkExtractionResult? landmarks = null, BuildingExtractionResult? buildings = null,
         VegetationExtractionResult? vegetation = null, StreetFurnitureExtractionResult? streetFurniture = null,
-        BackgroundStreetExtractionResult? backgroundStreets = null, bool bundleBackgroundStreets = true)
+        BackgroundStreetExtractionResult? backgroundStreets = null, bool bundleBackgroundStreets = true,
+        string? vegetationSourcePath = null)
     {
         Directory.CreateDirectory(outputDirectory);
         var generatedAt = DateTimeOffset.UtcNow;
@@ -40,6 +41,22 @@ public static class BuildOutputs
         var furniturePath = Path.Combine(outputDirectory, $"{stem}.street-furniture.json");
         var streetsPath = Path.Combine(outputDirectory, $"{stem}.streets.json");
         var geometryFingerprint = GeometryFingerprint(result.RoutePoints);
+        var surfaceSections = config.SurfaceSegments;
+        if (surfaceSections.Count > 0 && (Math.Abs(surfaceSections[0].StartMeters) > 0.001
+            || Math.Abs(surfaceSections[^1].EndMeters - result.RawDistanceMeters) > 0.05))
+            throw new InvalidDataException("Authored surface sections must cover the generated route from 0 to its measured end within 5 cm.");
+        var publishedSurfaceSections = surfaceSections.Select((section, index) => new
+        {
+            startMeters = section.StartMeters,
+            endMeters = index == surfaceSections.Count - 1 ? result.RawDistanceMeters : section.EndMeters,
+            surface = section.Surface,
+            sourceOsmWayId = section.SourceOsmWayId
+        }).ToArray();
+        if (config.BridgeSections.Any(section => section.EndMeters > result.RawDistanceMeters + 0.05))
+            throw new InvalidDataException("Authored mapped bridge sections must end within the generated route.");
+        var mappedBridgeSections = config.BridgeSections.Select(section => new RoutedRoadSegment(
+            section.StartMeters, section.EndMeters, section.SourceOsmWayId, "cycleway",
+            "Otago Central Rail Trail", null, "yes", null, null, Surface: "unpaved")).ToArray();
         var routeType = config.RouteType switch
         {
             "" when config.Loop => "loop",
@@ -55,6 +72,9 @@ public static class BuildOutputs
             routeType,
             difficulty = config.Difficulty,
             routeDataVersion = config.RouteDataVersion,
+            environment = config.Environment,
+            discipline = config.Discipline,
+            surfaceSegments = publishedSurfaceSections,
             geometryFingerprint,
             source = "OpenStreetMap",
             isValid = result.IsValid,
@@ -103,7 +123,7 @@ public static class BuildOutputs
             Anchors = result.Snaps,
             Legs = result.Legs,
             RouteRefSummary = result.RouteRefSummary,
-            RoadSegments = result.RoadSegments ?? [],
+            RoadSegments = (result.RoadSegments ?? []).Concat(mappedBridgeSections).OrderBy(section => section.StartDistanceMeters).ToArray(),
             TurnaroundWidthMeters = config.TurnaroundWidthMeters,
             TurnaroundWidthSource = config.TurnaroundWidthSource,
             GeneratedTurnarounds = result.Turnarounds ?? [],
@@ -128,7 +148,8 @@ public static class BuildOutputs
             NearbyLandmarkCandidatesConsidered = landmarks?.NearbyCandidatesConsidered ?? 0,
             SelectedLandmarkCount = landmarks?.Landmarks.Count ?? 0,
             Buildings = buildings is null ? null : ToBuildingReport(buildings, pbfPath, result.RawDistanceMeters, result.RoutePoints[0]),
-            Vegetation = vegetation is null ? null : ToVegetationReport(vegetation, pbfPath, result.RawDistanceMeters),
+            Vegetation = vegetation is null ? null : ToVegetationReport(vegetation,
+                vegetationSourcePath ?? pbfPath, result.RawDistanceMeters),
             StreetFurniture = streetFurniture is null ? null : ToStreetFurnitureReport(streetFurniture, pbfPath, result.RawDistanceMeters),
             Timings = timings,
             GeneratedAtUtc = generatedAt
@@ -164,9 +185,9 @@ public static class BuildOutputs
             var vegetationData = new
             {
                 id = config.Id, routeName = config.Name, source = "OpenStreetMap",
-                sourcePbfFilename = Path.GetFileName(pbfPath), attribution = "© OpenStreetMap contributors, ODbL 1.0",
+                sourcePbfFilename = Path.GetFileName(vegetationSourcePath ?? pbfPath), attribution = "© OpenStreetMap contributors, ODbL 1.0",
                 searchRadiusMeters = config.Vegetation?.SearchRadiusMeters ?? VegetationExtractor.DefaultSearchRadiusMeters,
-                statistics = ToVegetationReport(vegetation, pbfPath, result.RawDistanceMeters),
+                statistics = ToVegetationReport(vegetation, vegetationSourcePath ?? pbfPath, result.RawDistanceMeters),
                 areas = vegetation.Areas.Select(area => new
                 {
                     osmType = area.OsmType, osmId = area.OsmId, name = area.Name, category = area.Category,

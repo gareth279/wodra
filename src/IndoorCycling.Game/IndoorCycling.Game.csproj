@@ -19,6 +19,9 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.route-points.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.route-points.json" />
+    <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.route-points.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.route-points.json" />
+    <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.terrain.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.terrain.json" />
+    <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.vegetation.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.vegetation.json" />
     <Content Include="Data\Cats\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />

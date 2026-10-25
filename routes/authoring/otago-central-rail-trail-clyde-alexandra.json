@@ -1,0 +1,70 @@
+{
+  "id": "otago-central-rail-trail-clyde-alexandra",
+  "name": "Otago Central Rail Trail: Clyde to Alexandra",
+  "loop": true,
+  "routeType": "loop",
+  "routeDataVersion": 1,
+  "difficulty": "Unrated",
+  "environment": "Trail",
+  "discipline": "Gravel",
+  "turnaroundWidthMeters": 3.0,
+  "turnaroundWidthSource": "Authored 3 m turn-envelope fallback at the two mapped rail-trail endpoints, constrained within the visual trail width; not a surveyed trail-width value.",
+  "routingMode": "anchors",
+  "profile": "cycling",
+  "bbox": { "minLatitude": -45.253, "minLongitude": 169.333, "maxLatitude": -45.192, "maxLongitude": 169.404 },
+  "marginMeters": 30,
+  "maxSnapDistanceMeters": 35,
+  "routeCorridorMeters": 250,
+  "maxOutputSpacingMeters": 30,
+  "surfaceSegments": [
+    { "startMeters": 0, "endMeters": 3818.993458, "surface": "gravel", "sourceOsmWayId": 852195887 },
+    { "startMeters": 3818.993458, "endMeters": 4065.582902, "surface": "unpaved", "sourceOsmWayId": 44362734 },
+    { "startMeters": 4065.582902, "endMeters": 4314.3838, "surface": "unpaved", "sourceOsmWayId": 44362734 },
+    { "startMeters": 4314.3838, "endMeters": 8133.3719, "surface": "gravel", "sourceOsmWayId": 852195887 },
+    { "startMeters": 8133.3719, "endMeters": 10499.9979, "surface": "gravel", "sourceOsmWayId": 852195887 },
+    { "startMeters": 10499.9979, "endMeters": 10610.0159, "surface": "unpaved", "sourceOsmWayId": 852195886 },
+    { "startMeters": 10610.0159, "endMeters": 12133.374, "surface": "unpaved", "sourceOsmWayId": 133729829 },
+    { "startMeters": 12133.374, "endMeters": 13658.9468, "surface": "unpaved", "sourceOsmWayId": 133729829 },
+    { "startMeters": 13658.9468, "endMeters": 13768.9648, "surface": "unpaved", "sourceOsmWayId": 852195886 },
+    { "startMeters": 13768.9648, "endMeters": 16135.5909, "surface": "gravel", "sourceOsmWayId": 852195887 }
+  ],
+  "bridgeSections": [
+    { "startMeters": 10499.9979, "endMeters": 10610.0159, "sourceOsmWayId": 852195886 },
+    { "startMeters": 13658.9468, "endMeters": 13768.9648, "sourceOsmWayId": 852195886 }
+  ],
+  "anchors": [
+    { "name": "4 km section start", "sourceDistanceMeters": 0, "latitude": -45.221945473435994, "longitude": 169.36843904476305 },
+    { "name": "6 km toward Alexandra", "sourceDistanceMeters": 2000, "latitude": -45.23608459860609, "longitude": 169.38422439548927 },
+    { "name": "Alexandra railhead turnaround", "sourceDistanceMeters": 4065.57747949798, "latitude": -45.2500092, "longitude": 169.4012398 },
+    { "name": "6 km back toward Clyde", "sourceDistanceMeters": 6131.15495899596, "latitude": -45.23608459860609, "longitude": 169.38422439548927 },
+    { "name": "4 km section crossing", "sourceDistanceMeters": 8131.15495899596, "latitude": -45.221945473435994, "longitude": 169.36843904476305 },
+    { "name": "2 km toward Clyde", "sourceDistanceMeters": 10131.15495899596, "latitude": -45.2084092128692, "longitude": 169.35162763687896 },
+    { "name": "Clyde railhead turnaround", "sourceDistanceMeters": 12131.15495899596, "latitude": -45.1948515, "longitude": 169.3356561 },
+    { "name": "2 km back toward Alexandra", "sourceDistanceMeters": 14131.15495899596, "latitude": -45.2084092128692, "longitude": 169.35162763687896 },
+    { "name": "4 km section finish", "sourceDistanceMeters": 16131.15495899596, "latitude": -45.221945473435994, "longitude": 169.36843904476305 }
+  ],
+  "elevation": {
+    "enabled": true,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/central-otago_2022-2023/dem_1m/2193/collection.json",
+    "resampleIntervalMeters": 5,
+    "smoothingWindowMeters": 30,
+    "gradientWindowMeters": 25,
+    "gradientReviewThresholdPercent": 8,
+    "maximumBridgeInterpolationMeters": 130
+  },
+  "terrain": {
+    "enabled": true,
+    "nearRadiusMeters": 200,
+    "farRadiusMeters": 600,
+    "spacingMeters": 10,
+    "farSpacingMeters": 25,
+    "corridorRadiusMeters": 220,
+    "chunkSizeMeters": 250,
+    "farChunkSizeMeters": 500,
+    "transitionOverlapMeters": 10,
+    "roadClearanceMeters": 0.12,
+    "roadCorridorRadiusMeters": 5,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "vegetation": { "enabled": true, "searchRadiusMeters": 100, "generatedTreeCapPerArea": 30, "totalTreeInstanceCap": 250 }
+}
