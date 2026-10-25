@@ -13,6 +13,7 @@ public static class WorkoutStudioBuilder
         root.AddChild(new MeshInstance3D { Name = "NeutralStudioFloor", Position = new Vector3((minX + maxX) / 2, -3, (minZ + maxZ) / 2),
             Mesh = new PlaneMesh { Size = new Vector2(maxX - minX, maxZ - minZ) },
             MaterialOverride = Material(new Color(.12f, .15f, .17f)) });
+        AddStudioShell(root, minX, maxX, minZ, maxZ);
         root.AddChild(Ribbon(route, -8, 8, new Color(.17f, .22f, .24f), 0.015f));
         root.AddChild(Ribbon(route, -7.7f, -7.55f, new Color(.88f, .54f, .23f), .035f));
         root.AddChild(Ribbon(route, 7.55f, 7.7f, new Color(.88f, .54f, .23f), .035f));
@@ -24,6 +25,25 @@ public static class WorkoutStudioBuilder
                 Mesh = new SphereMesh { Radius = .12f, Height = .24f }, MaterialOverride = Material(new Color(.95f, .75f, .48f), true) });
         }
         return root;
+    }
+
+    private static void AddStudioShell(Node3D root, float minX, float maxX, float minZ, float maxZ)
+    {
+        const float floorY = -3, wallHeight = 14, wallThickness = 2;
+        var wall = Material(new Color(.075f, .09f, .105f));
+        var trim = Material(new Color(.72f, .37f, .16f), true);
+        void Box(string name, Vector3 position, Vector3 size, StandardMaterial3D material) =>
+            root.AddChild(new MeshInstance3D { Name = name, Position = position, Mesh = new BoxMesh { Size = size }, MaterialOverride = material });
+        Box("StudioWallWest", new(minX, floorY + wallHeight / 2, (minZ + maxZ) / 2), new(wallThickness, wallHeight, maxZ - minZ), wall);
+        Box("StudioWallEast", new(maxX, floorY + wallHeight / 2, (minZ + maxZ) / 2), new(wallThickness, wallHeight, maxZ - minZ), wall);
+        Box("StudioWallNorth", new((minX + maxX) / 2, floorY + wallHeight / 2, minZ), new(maxX - minX, wallHeight, wallThickness), wall);
+        Box("StudioWallSouth", new((minX + maxX) / 2, floorY + wallHeight / 2, maxZ), new(maxX - minX, wallHeight, wallThickness), wall);
+        Box("StudioTrimWest", new(minX + wallThickness / 2 + .02f, 2, (minZ + maxZ) / 2), new(.08f, .12f, maxZ - minZ), trim);
+        Box("StudioTrimEast", new(maxX - wallThickness / 2 - .02f, 2, (minZ + maxZ) / 2), new(.08f, .12f, maxZ - minZ), trim);
+        Box("StudioTrimNorth", new((minX + maxX) / 2, 2, minZ + wallThickness / 2 + .02f), new(maxX - minX, .12f, .08f), trim);
+        Box("StudioTrimSouth", new((minX + maxX) / 2, 2, maxZ - wallThickness / 2 - .02f), new(maxX - minX, .12f, .08f), trim);
+        Box("StudioCeiling", new((minX + maxX) / 2, floorY + wallHeight + .2f, (minZ + maxZ) / 2),
+            new(maxX - minX, .4f, maxZ - minZ), Material(new Color(.10f, .12f, .14f)));
     }
 
     private static MeshInstance3D Ribbon(VisualRoute route, float left, float right, Color colour, float lift)
