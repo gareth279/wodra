@@ -58,7 +58,7 @@ def main():
             for item in tile.findall(element):
                 key = int(item.get("id", "0"))
                 store[key] = ET.fromstring(ET.tostring(item))
-        print(f"tile {index + 1}/{len(locations)} at {latitude:.5f},{longitude:.5f}; "
+        print(f"tile {index + 1}/{len(locations)}; "
               f"nodes={len(nodes)} ways={len(ways)} relations={len(relations)}")
         if index + 1 < len(locations):
             time.sleep(1)
