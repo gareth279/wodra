@@ -68,6 +68,16 @@ public partial class GameBootstrap : Node
 			GD.Print($"USER DATA ISOLATION VERIFIED: user:// = {userDataDirectory}");
 		}
 
+		// The packaged-route smoke is dispatched through Wodra.exe's actual main
+		// scene. Release templates may disable --scene path overrides, so the
+		// test-mode branch must remain after the isolation guard and before any
+		// settings, migration, diagnostics, or history initialization.
+		if (userArguments.Contains("--packaged-xc-assets-smoke"))
+		{
+			AddChild(new PackagedXcRouteAssetsSmokeTest());
+			return;
+		}
+
 		var userDataParent = Directory.GetParent(userDataDirectory)?.FullName;
 		if (userDataParent is not null && !IsLayoutSmokeTest)
 		{

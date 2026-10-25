@@ -661,9 +661,8 @@ try {
             $routeSmoke = Invoke-WithWodraSmokeIsolation -Isolation $smokeIsolation -Action {
                 param($isolation)
                 Invoke-TrackedProcess -FilePath $smokeExe `
-                    -ArgumentList @('--headless', '--scene', 'res://Tests/PackagedXcRouteAssetsSmokeTest.tscn',
-                        '--quit-after', '20', '--log-file', $routeSmokeLog, '--',
-                        '--require-userdata-under', $isolation.UserDataRoot) `
+                    -ArgumentList @('--headless', '--quit-after', '20', '--log-file', $routeSmokeLog, '--',
+                        '--require-userdata-under', $isolation.UserDataRoot, '--packaged-xc-assets-smoke') `
                     -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "packaged-xc-process-$safeVersion.log") `
                     -TimeoutSeconds 45 -Label 'Extracted Wodra packaged XC asset smoke test' `
                     -RemoveEnvironmentVariables $smokeEnvironment
