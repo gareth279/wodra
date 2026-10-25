@@ -609,7 +609,8 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
         await _workoutCommandLock.WaitAsync(cancellationToken);
         try
         {
-            if (sessionId != Interlocked.Read(ref _workoutSessionId)) return;
+            if (sessionId != Interlocked.Read(ref _workoutSessionId))
+                throw new OperationCanceledException("The FTMS Release Control belongs to an inactive workout or connection; release was not confirmed.");
             if (!IsReady) throw new IOException("Trainer is disconnected; ERG release was requested but could not be confirmed.");
             await ExecuteWorkoutControlPointAsync([0x08], 0x08, cancellationToken);
             Interlocked.CompareExchange(ref _workoutSessionId, 0, sessionId);

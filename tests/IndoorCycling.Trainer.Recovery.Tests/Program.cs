@@ -21,6 +21,17 @@ Check(independentMeasurement.PowerWatts == 190 && dummyWorkout.TargetPowerWatts 
     "dummy ERG target remains separate from actual dummy power telemetry");
 await dummyWorkout.ReleaseWorkoutControlAsync(11);
 Check(dummyWorkout.WorkoutTargetPowerWatts is null, "dummy workout target clears on control release");
+await dummyWorkout.BeginWorkoutControlAsync(12);
+await dummyWorkout.SetWorkoutTargetPowerAsync(310, 12);
+await dummyWorkout.DisconnectAsync();
+Check(dummyWorkout.WorkoutTargetPowerWatts is null, "disconnect clears the simulated workout target");
+await dummyWorkout.ConnectAsync();
+await dummyWorkout.BeginWorkoutControlAsync(13);
+var staleReleaseRejected = false;
+try { await dummyWorkout.ReleaseWorkoutControlAsync(12); }
+catch (OperationCanceledException) { staleReleaseRejected = true; }
+Check(staleReleaseRejected && dummyWorkout.WorkoutTargetPowerWatts is null,
+    "an old workout release after reconnect is rejected and cannot clear or claim the new control session");
 
 var commandWarningPolicy = new TrainerCommandWarningPolicy();
 var warningSession = commandWarningPolicy.BeginSession();

@@ -623,7 +623,8 @@ public sealed class AntFeCTrainerClient : ITrainerClient, IWorkoutTrainerControl
         await _workoutCommandLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (sessionId != Interlocked.Read(ref _workoutSessionId)) return;
+            if (sessionId != Interlocked.Read(ref _workoutSessionId))
+                throw new OperationCanceledException("The FE-C exit command belongs to an inactive workout or connection; release was not confirmed.");
             if (!_isReady) throw new IOException("FE-C trainer disconnected; ERG release was requested but not confirmed.");
             if (_state.SimulationSupport != AntFeCCapabilitySupport.Supported)
                 throw new NotSupportedException("FE-C simulation mode cannot be confirmed as the ERG exit path.");

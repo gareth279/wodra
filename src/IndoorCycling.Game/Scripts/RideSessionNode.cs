@@ -2110,6 +2110,12 @@ public partial class RideSessionNode : Node
 	{
 		if (GameBootstrap.TrainerClient is null || !GameBootstrap.TrainerClient.IsReady)
 		{
+			if (_isWorkoutSession && _workoutErgRequested && _workoutControlStarted)
+			{
+				_workoutControlStarted = false;
+				_workoutControlMessage = "Trainer disconnected · ERG release cannot be confirmed. Targets only until you deliberately pause and resume after reconnecting.";
+				UpdateWorkoutHud();
+			}
 			_trainerGradeTransition.Cancel();
 			_trainerCommandDirty = true;
 			var staleTelemetry = GameBootstrap.TrainerClient?.GetLatestTelemetry() ?? new TrainerTelemetry(
