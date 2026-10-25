@@ -15,6 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
 . (Join-Path $RepoDir 'tools\GitHubReleaseAuth.ps1')
+. (Join-Path $RepoDir 'tools\PublisherSmokeIsolation.ps1')
 $githubToken = $null
 $repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
@@ -150,6 +151,7 @@ function Invoke-TrackedProcess {
         [Parameter(Mandatory = $true)][int]$TimeoutSeconds,
         [Parameter(Mandatory = $true)][string]$Label,
         [string[]]$RemoveEnvironmentVariables = @(),
+        [int[]]$AllowedExitCodes = @(0),
         [string]$StopAfterOutputPattern,
         [int]$StopAfterOutputGraceSeconds = 5
     )
@@ -230,9 +232,9 @@ function Invoke-TrackedProcess {
             Get-Content -LiteralPath $LogPath -Tail 80
             throw "$Label timed out after $TimeoutSeconds seconds. Its child process tree was terminated. Log: $LogPath"
         }
-        if ($child.ExitCode -ne 0 -and -not $stoppedAfterCompleteOutput) {
+        if ($child.ExitCode -notin $AllowedExitCodes -and -not $stoppedAfterCompleteOutput) {
             Get-Content -LiteralPath $LogPath -Tail 80
-            throw "$Label failed with exit code $($child.ExitCode). Log: $LogPath"
+            throw "$Label failed with unexpected exit code $($child.ExitCode). Expected: $($AllowedExitCodes -join ', '). Log: $LogPath"
         }
         $reportedExitCode = if ($stoppedAfterCompleteOutput) { 0 } else { $child.ExitCode }
         return [pscustomobject]@{ ExitCode = $reportedExitCode; StdOut = $stdoutText; StdErr = $stderrText;
@@ -644,23 +646,66 @@ try {
     if (-not $SkipOfflineSmokeTest) {
         $extractDir = Join-Path $workRoot "smoke-$safeVersion-$([guid]::NewGuid().ToString('N'))"
         New-Item -ItemType Directory -Path $extractDir | Out-Null
+        $smokeIsolation = New-WodraSmokeIsolation -Root (Join-Path $workRoot "smoke-user-data-$([guid]::NewGuid().ToString('N'))")
+        New-Item -ItemType Directory -Path $smokeIsolation.Root, $smokeIsolation.AppData,
+            $smokeIsolation.LocalAppData, $smokeIsolation.Temp | Out-Null
         try {
             [System.IO.Compression.ZipFile]::ExtractToDirectory($ArchivePath, $extractDir)
             $smokeExe = Join-Path $extractDir 'Wodra.exe'
             $smokeLog = Join-Path $workRoot "offline-smoke-$safeVersion.log"
-            [void](Invoke-TrackedProcess -FilePath $smokeExe `
-                -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog, '--', '--layout-smoke-test') `
-                -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "smoke-process-$safeVersion.log") `
-                -TimeoutSeconds 45 -Label 'Extracted Wodra offline smoke test' `
-                -RemoveEnvironmentVariables @('WODRA_EOS_PRODUCT_ID', 'WODRA_EOS_SANDBOX_ID',
-                    'WODRA_EOS_DEPLOYMENT_ID', 'WODRA_EOS_CLIENT_ID', 'WODRA_EOS_CLIENT_SECRET', 'WODRA_EOS_CACHE_DIR'))
-            Write-Host 'Extracted executable startup smoke test passed (--headless --quit-after 2).'
+            $rejectedSmokeLog = Join-Path $workRoot "offline-smoke-rejected-$safeVersion.log"
+            $smokeEnvironment = @('WODRA_EOS_PRODUCT_ID', 'WODRA_EOS_SANDBOX_ID',
+                'WODRA_EOS_DEPLOYMENT_ID', 'WODRA_EOS_CLIENT_ID', 'WODRA_EOS_CLIENT_SECRET', 'WODRA_EOS_CACHE_DIR')
+
+            # Deliberately give the packaged app a wrong expected root once.
+            # It must reject user:// before settings, diagnostics, migration,
+            # or history services can initialize.
+            $rejectedRoot = Join-Path $smokeIsolation.Root 'wrong-expected-root'
+            $rejected = Invoke-WithWodraSmokeIsolation -Isolation $smokeIsolation -Action {
+                param($isolation)
+                Invoke-TrackedProcess -FilePath $smokeExe `
+                    -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $rejectedSmokeLog, '--',
+                        '--layout-smoke-test', '--require-userdata-under', $rejectedRoot) `
+                    -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "smoke-isolation-reject-$safeVersion.log") `
+                    -TimeoutSeconds 45 -Label 'Extracted Wodra isolation rejection test' -AllowedExitCodes @(41) `
+                    -RemoveEnvironmentVariables $smokeEnvironment
+            }
+            $rejectedEngineLog = if (Test-Path -LiteralPath $rejectedSmokeLog) { Get-Content -LiteralPath $rejectedSmokeLog -Raw } else { '' }
+            $rejectedOutput = [string]$rejected.StdOut + [string]$rejected.StdErr + [string]$rejectedEngineLog
+            if ($rejected.ExitCode -ne 41 -or $rejectedOutput -notmatch 'USER DATA ISOLATION FAILED' -or
+                $rejectedOutput -match 'GameBootstrap initialised|logger_started|ride_history_startup') {
+                throw 'Packaged Wodra did not reject an out-of-root user:// before bootstrap services initialized.'
+            }
+
+            $smoke = Invoke-WithWodraSmokeIsolation -Isolation $smokeIsolation -Action {
+                param($isolation)
+                Invoke-TrackedProcess -FilePath $smokeExe `
+                    -ArgumentList @('--headless', '--quit-after', '2', '--log-file', $smokeLog, '--',
+                        '--layout-smoke-test', '--require-userdata-under', $isolation.UserDataRoot) `
+                    -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "smoke-process-$safeVersion.log") `
+                    -TimeoutSeconds 45 -Label 'Extracted Wodra offline smoke test' `
+                    -RemoveEnvironmentVariables $smokeEnvironment
+            }
+            $smokeEngineLog = if (Test-Path -LiteralPath $smokeLog) { Get-Content -LiteralPath $smokeLog -Raw } else { '' }
+            $smokeOutput = [string]$smoke.StdOut + [string]$smoke.StdErr + [string]$smokeEngineLog
+            $isolationMatch = [regex]::Match($smokeOutput, 'USER DATA ISOLATION VERIFIED: user:// = (.+)')
+            if (-not $isolationMatch.Success -or
+                -not (Test-WodraPathInside -Path $isolationMatch.Groups[1].Value.Trim() -Root $smokeIsolation.UserDataRoot)) {
+                throw "Packaged smoke did not prove user:// resolved under its disposable directory. Isolation log: $(Join-Path $workRoot "smoke-process-$safeVersion.log")"
+            }
+            Write-Host "Extracted executable startup smoke test passed; user:// resolved inside disposable root '$($smokeIsolation.UserDataRoot)'."
+            Write-Host "Disposable smoke APPDATA: $($smokeIsolation.AppData)"
+            Write-Host "Disposable smoke LOCALAPPDATA: $($smokeIsolation.LocalAppData)"
+            Write-Host "Resolved disposable user://: $($isolationMatch.Groups[1].Value.Trim())"
             if ((Test-Path -LiteralPath $smokeLog -PathType Leaf) -and
                 (Select-String -LiteralPath $smokeLog -Pattern 'UnauthorizedAccessException|readonly database' -Quiet)) {
-                Write-Warning "The smoke process could not write this sandbox account's Godot user data. Startup exited normally, but settings/history persistence needs a writable user profile for full verification."
+                throw 'The isolated packaged smoke could not write its disposable Godot user data.'
             }
         }
-        finally { Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue }
+        finally {
+            Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $smokeIsolation.Root -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
 
     Write-Phase 7 'Creating and validating the per-user installer/update package...'

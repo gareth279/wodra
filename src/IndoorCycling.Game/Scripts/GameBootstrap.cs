@@ -47,7 +47,27 @@ public partial class GameBootstrap : Node
 
 	public override void _Ready()
 	{
+		// Release smoke runs must prove the resolved Godot profile is disposable
+		// before even settings, diagnostics, migration, or history code can run.
+		var userArguments = OS.GetCmdlineUserArgs();
+		if (!UserDataIsolationGuard.TryReadRequiredRoot(userArguments, out var requiredUserDataRoot, out var isolationError))
+		{
+			GD.PushError($"USER DATA ISOLATION FAILED: {isolationError}");
+			System.Environment.Exit(41);
+			return;
+		}
 		var userDataDirectory = OS.GetUserDataDir();
+		if (requiredUserDataRoot is not null)
+		{
+			if (!UserDataIsolationGuard.IsInsideRequiredRoot(userDataDirectory, requiredUserDataRoot))
+			{
+				GD.PushError("USER DATA ISOLATION FAILED: Godot resolved user:// outside the required disposable test directory.");
+				System.Environment.Exit(41);
+				return;
+			}
+			GD.Print($"USER DATA ISOLATION VERIFIED: user:// = {userDataDirectory}");
+		}
+
 		var userDataParent = Directory.GetParent(userDataDirectory)?.FullName;
 		if (userDataParent is not null && !IsLayoutSmokeTest)
 		{

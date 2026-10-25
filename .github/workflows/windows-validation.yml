@@ -57,6 +57,9 @@ jobs:
       - name: Test safe local release credential selection
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/GitHubReleaseAuth.Tests.ps1
+      - name: Test publisher smoke user-data isolation
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/PublisherSmokeIsolation.Tests.ps1
       - name: Build solution without proprietary EOS SDK
         shell: pwsh
         run: dotnet build wodra.sln -c ${{ matrix.configuration }} -m:1 -p:EnableEpicOnlineServices=false -p:NuGetAudit=false

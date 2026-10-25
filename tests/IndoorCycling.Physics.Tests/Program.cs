@@ -90,6 +90,7 @@ var tests = new (string Name, Action Run)[]
 	,("Diagnostic session catalog selects matching Wodra, rotated Godot, and marker files", DiagnosticSessionFilesAreScoped)
 	,("Explorer navigation normalizes mixed Windows separators", ExplorerPathNormalization)
     ,("Game features default off and persist independently per profile", GameFeaturesPersistPerProfile)
+    ,("Publisher smoke user-data guard rejects missing roots and path-prefix escapes", PublisherUserDataIsolationGuard)
 };
 
 var failed = 0;
@@ -108,6 +109,26 @@ static void ControllerDevicePreferencePersists()
     var restored = JsonSerializer.Deserialize<TestControllerPreference>(JsonSerializer.Serialize(settings));
     Assert(restored?.DeviceType == ControllerDeviceTypePreference.EliteSterzoSmart,
         "The explicit existing Sterzo adapter selection must survive settings serialization.");
+}
+
+static void PublisherUserDataIsolationGuard()
+{
+    var root = Path.Combine(Path.GetTempPath(), "WodraSmokeGuard", Guid.NewGuid().ToString("N"));
+    var valid = Path.Combine(root, "Godot", "app_userdata", "Wodra");
+    Assert(UserDataIsolationGuard.IsInsideRequiredRoot(valid, root), "A resolved user-data directory below the disposable root must pass.");
+    Assert(!UserDataIsolationGuard.IsInsideRequiredRoot(root + "-owner", root), "A path sharing the root prefix must not pass containment.");
+    Assert(!UserDataIsolationGuard.IsInsideRequiredRoot(root, root), "The root itself is not a resolved app user-data child directory.");
+
+    Assert(UserDataIsolationGuard.TryReadRequiredRoot(["--layout-smoke-test"], out var optional, out _) && optional is null,
+        "Ordinary launches must not require the publisher-specific argument.");
+    Assert(!UserDataIsolationGuard.TryReadRequiredRoot([UserDataIsolationGuard.RequiredRootArgument], out _, out _),
+        "A missing expected directory must fail closed.");
+    Assert(!UserDataIsolationGuard.TryReadRequiredRoot([UserDataIsolationGuard.RequiredRootArgument, "relative-test-root"], out _, out _),
+        "A relative expected directory must fail closed.");
+    Assert(!UserDataIsolationGuard.TryReadRequiredRoot([UserDataIsolationGuard.RequiredRootArgument, root,
+        UserDataIsolationGuard.RequiredRootArgument, root], out _, out _), "Duplicate expected roots must fail closed.");
+    Assert(UserDataIsolationGuard.TryReadRequiredRoot([UserDataIsolationGuard.RequiredRootArgument, root], out var parsed, out _) &&
+        parsed == Path.GetFullPath(root), "The explicit publisher root must be canonicalized.");
 }
 
 static void CollectibleLayoutIsDeterministic()
