@@ -27,6 +27,10 @@ public sealed class RouteAuthoringConfig
     public string Environment { get; init; } = "Road";
     public string Discipline { get; init; } = "Road";
     public List<RouteSurfaceAuthoringSegment> SurfaceSegments { get; init; } = [];
+    /// <summary>OSM paths verified for this authored off-road route, even where bicycle tags are absent.</summary>
+    public List<long> ApprovedTrailWayIds { get; init; } = [];
+    /// <summary>When set, include only the approved source ways in the route graph.</summary>
+    public bool RestrictToApprovedTrailWayIds { get; init; }
     public List<RouteBridgeAuthoringSegment> BridgeSections { get; init; } = [];
     /// <summary>Optional explicit usable road width for generated U-turns; never inferred from GPS data.</summary>
     public double? TurnaroundWidthMeters { get; init; }
@@ -74,10 +78,18 @@ public sealed class RouteAuthoringConfig
             throw new InvalidDataException("environment must be Road, Trail, Velodrome, or MountainBike.");
         if (Discipline is not ("Road" or "Gravel" or "MountainBike" or "Track"))
             throw new InvalidDataException("discipline must be Road, Gravel, MountainBike, or Track.");
+        if (Environment == "MountainBike" && Discipline != "MountainBike")
+            throw new InvalidDataException("The MountainBike environment must declare MountainBike discipline separately.");
+        if (Environment == "MountainBike" && SurfaceSegments.Count == 0)
+            throw new InvalidDataException("MountainBike routes require route-relative, source-attributed surface sections.");
         if (SurfaceSegments.Any(segment => !double.IsFinite(segment.StartMeters + segment.EndMeters)
             || segment.StartMeters < 0 || segment.EndMeters <= segment.StartMeters
             || string.IsNullOrWhiteSpace(segment.Surface) || segment.SourceOsmWayId <= 0))
             throw new InvalidDataException("Surface sections need finite positive chainage, a surface label, and a source OSM way ID.");
+        if (ApprovedTrailWayIds.Any(id => id <= 0) || ApprovedTrailWayIds.Distinct().Count() != ApprovedTrailWayIds.Count)
+            throw new InvalidDataException("Approved trail way IDs must be positive and unique.");
+        if (RestrictToApprovedTrailWayIds && ApprovedTrailWayIds.Count == 0)
+            throw new InvalidDataException("Restricting the route graph to approved trail ways requires at least one source way ID.");
         for (var i = 1; i < SurfaceSegments.Count; i++)
             if (Math.Abs(SurfaceSegments[i].StartMeters - SurfaceSegments[i - 1].EndMeters) > 0.05)
                 throw new InvalidDataException("Surface sections must be ordered and contiguous.");
@@ -110,6 +122,10 @@ public sealed class RouteAuthoringConfig
         if (RoutingMode is not ("anchors" or "roadRef")) throw new InvalidDataException("routingMode must be 'anchors' or 'roadRef'.");
         if (RouteType is not ("" or "loop" or "outAndBack" or "pointToPoint"))
             throw new InvalidDataException("routeType must be 'loop', 'outAndBack', or 'pointToPoint'.");
+        if (RouteType == "pointToPoint" && RoutingMode == "anchors" && Anchors.Count >= 2
+            && Math.Abs(Anchors[0].Latitude - Anchors[^1].Latitude) < 1e-9
+            && Math.Abs(Anchors[0].Longitude - Anchors[^1].Longitude) < 1e-9)
+            throw new InvalidDataException("Point-to-point routes must have distinct start and natural end anchors.");
         if (Difficulty is not ("" or "Unrated" or "Easy" or "Moderate" or "Challenging"))
             throw new InvalidDataException("difficulty must be Unrated, Easy, Moderate, or Challenging when provided.");
         if (Loop && RouteType is not ("" or "loop"))

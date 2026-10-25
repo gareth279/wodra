@@ -1,0 +1,167 @@
+{
+  "id": "signal-hill-big-easy-mtb",
+  "name": "Signal Hill - The Big Easy",
+  "loop": false,
+  "routeType": "pointToPoint",
+  "routeDataVersion": 1,
+  "difficulty": "Unrated",
+  "environment": "MountainBike",
+  "discipline": "MountainBike",
+  "approvedTrailWayIds": [
+    1552538872,
+    317151858,
+    226859348,
+    688281912,
+    317151866
+  ],
+  "restrictToApprovedTrailWayIds": true,
+  "surfaceSegments": [
+    {
+      "startMeters": 0,
+      "endMeters": 48.061,
+      "surface": "ground",
+      "sourceOsmWayId": 1552538872
+    },
+    {
+      "startMeters": 48.061,
+      "endMeters": 3168.126,
+      "surface": "ground",
+      "sourceOsmWayId": 317151858
+    },
+    {
+      "startMeters": 3168.126,
+      "endMeters": 3244.858,
+      "surface": "unknown",
+      "sourceOsmWayId": 226859348
+    },
+    {
+      "startMeters": 3244.858,
+      "endMeters": 3785.044,
+      "surface": "unknown",
+      "sourceOsmWayId": 226859348
+    },
+    {
+      "startMeters": 3785.044,
+      "endMeters": 3793.818,
+      "surface": "unknown",
+      "sourceOsmWayId": 688281912
+    },
+    {
+      "startMeters": 3793.818,
+      "endMeters": 5114.853,
+      "surface": "unknown",
+      "sourceOsmWayId": 317151866
+    }
+  ],
+  "routingMode": "anchors",
+  "profile": "cycling",
+  "bbox": {
+    "minLatitude": -45.863,
+    "minLongitude": 170.525,
+    "maxLatitude": -45.855,
+    "maxLongitude": 170.549
+  },
+  "marginMeters": 20,
+  "maxSnapDistanceMeters": 5,
+  "routeCorridorMeters": 500,
+  "maxOutputSpacingMeters": 12,
+  "detourWarningRatio": 8,
+  "detourFailureRatio": 10,
+  "anchors": [
+    {
+      "name": "Big Easy lower trailhead",
+      "sourceDistanceMeters": 0,
+      "latitude": -45.8599614,
+      "longitude": 170.5327309
+    },
+    {
+      "name": "Lower path link",
+      "sourceDistanceMeters": 44,
+      "latitude": -45.8596561,
+      "longitude": 170.5329909
+    },
+    {
+      "name": "Bridge to main path",
+      "sourceDistanceMeters": 48,
+      "latitude": -45.8596381,
+      "longitude": 170.5330384
+    },
+    {
+      "name": "Big Easy lower climb",
+      "sourceDistanceMeters": 3168,
+      "latitude": -45.8620552,
+      "longitude": 170.5400142
+    },
+    {
+      "name": "Telecom track connector",
+      "sourceDistanceMeters": 3245,
+      "latitude": -45.8617745,
+      "longitude": 170.5408884
+    },
+    {
+      "name": "Big Easy upper climb",
+      "sourceDistanceMeters": 4139,
+      "latitude": -45.857917,
+      "longitude": 170.5418571
+    },
+    {
+      "name": "Upper trail link",
+      "sourceDistanceMeters": 4148,
+      "latitude": -45.8578597,
+      "longitude": 170.5417792
+    },
+    {
+      "name": "Signal Hill lookout trail end",
+      "sourceDistanceMeters": 5469,
+      "latitude": -45.8586162,
+      "longitude": 170.5470295
+    }
+  ],
+  "elevation": {
+    "enabled": true,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
+    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json",
+    "resampleIntervalMeters": 5,
+    "smoothingWindowMeters": 30,
+    "gradientWindowMeters": 25,
+    "gradientReviewThresholdPercent": 15,
+    "maximumBridgeInterpolationMeters": 0
+  },
+  "terrain": {
+    "enabled": true,
+    "nearRadiusMeters": 180,
+    "farRadiusMeters": 450,
+    "spacingMeters": 10,
+    "farSpacingMeters": 25,
+    "corridorRadiusMeters": 180,
+    "chunkSizeMeters": 250,
+    "farChunkSizeMeters": 500,
+    "transitionOverlapMeters": 10,
+    "roadClearanceMeters": 0.12,
+    "roadCorridorRadiusMeters": 4,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "vegetation": {
+    "enabled": true,
+    "searchRadiusMeters": 75,
+    "generatedTreeCapPerArea": 70,
+    "totalTreeInstanceCap": 180,
+    "elevationCacheDirectory": "routes/cache/elevation"
+  },
+  "buildings": {
+    "enabled": false
+  },
+  "streetFurniture": {
+    "enabled": false
+  },
+  "backgroundStreets": {
+    "enabled": false
+  },
+  "allowedOsmWayIds": [
+    1552538872,
+    317151858,
+    226859348,
+    688281912,
+    317151866
+  ]
+}

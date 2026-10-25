@@ -12,6 +12,7 @@ public partial class VegetationLayer : Node3D
     private sealed record VisibleChunk(int Index, double CenterDistanceMeters, List<Node3D> Nodes);
     private readonly List<VisibleChunk> _chunks = [];
     private double _routeLengthMeters;
+    private bool _wrapsAtRouteEnd;
 
     public int VegetationAreaCount { get; private set; }
     public int TreesLoaded { get; private set; }
@@ -35,6 +36,7 @@ public partial class VegetationLayer : Node3D
             throw new InvalidOperationException("Vegetation layer is already configured.");
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.DistanceMeters;
+        _wrapsAtRouteEnd = !visualRoute.IsPointToPoint;
         var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
         VegetationAreaCount = data.Areas.Count;
         TreesLoaded = data.Trees.Count;
@@ -141,12 +143,14 @@ public partial class VegetationLayer : Node3D
     public void UpdateForRideDistance(double rideDistanceMeters)
     {
         if (_routeLengthMeters <= 0) return;
-        var wrapped = ((_routeLengthMeters + rideDistanceMeters % _routeLengthMeters) % _routeLengthMeters);
+        var wrapped = _wrapsAtRouteEnd
+            ? ((rideDistanceMeters % _routeLengthMeters) + _routeLengthMeters) % _routeLengthMeters
+            : Math.Clamp(rideDistanceMeters, 0, _routeLengthMeters);
         var visible = 0;
         foreach (var chunk in _chunks)
         {
             var difference = Math.Abs(chunk.CenterDistanceMeters - wrapped);
-            var along = Math.Min(difference, _routeLengthMeters - difference);
+            var along = _wrapsAtRouteEnd ? Math.Min(difference, _routeLengthMeters - difference) : difference;
             var show = along <= VisibleDistanceMeters;
             foreach (var node in chunk.Nodes) node.Visible = show;
             if (show) visible++;

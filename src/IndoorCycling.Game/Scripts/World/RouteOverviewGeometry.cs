@@ -50,8 +50,8 @@ public sealed class RouteOverviewGeometry
 
 	public (Vector2 Position, Vector2 Direction, double LapDistanceMeters, int Lap) GetMapPose(double rideDistanceMeters, Vector2 size)
 	{
-		var lap = (int)Math.Floor(Math.Max(0, rideDistanceMeters) / LengthMeters) + 1;
-		var distance = ((rideDistanceMeters % LengthMeters) + LengthMeters) % LengthMeters;
+		var lap = _visualRoute.IsPointToPoint ? 1 : (int)Math.Floor(Math.Max(0, rideDistanceMeters) / LengthMeters) + 1;
+		var distance = _visualRoute.WrapDistance(rideDistanceMeters);
 		var pose = _visualRoute.GetPoseAtDistance(distance);
 		var scale = Math.Min(Math.Max(1, size.X - Padding * 2) / _spanX,
 			Math.Max(1, size.Y - Padding * 2) / _spanY);
@@ -76,7 +76,7 @@ public sealed class RouteOverviewGeometry
 	public Vector2 GetProfilePosition(double rideDistanceMeters, Vector2 origin, Vector2 size)
 	{
 		var sample = _profile;
-		var distance = ((rideDistanceMeters % LengthMeters) + LengthMeters) % LengthMeters;
+		var distance = _visualRoute.WrapDistance(rideDistanceMeters);
 		var low = 0;
 		var high = sample.Length - 1;
 		while (high - low > 1)

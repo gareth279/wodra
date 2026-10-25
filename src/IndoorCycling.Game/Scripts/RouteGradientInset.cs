@@ -6,6 +6,11 @@ using NVector2 = System.Numerics.Vector2;
 /// <summary>Small cached route/elevation overview driven by the active ride distance.</summary>
 public partial class RouteGradientInset : Control
 {
+	public static string FormatRouteHeader(RouteDefinition route, double rideDistanceMeters, int lap)
+	{
+		var distance = $"{Math.Max(0, rideDistanceMeters) / 1000:0.00} km";
+		return route.RouteType == "Point-to-Point" ? $"ROUTE · {distance}" : $"ROUTE · LAP {Math.Max(1, lap)} · {distance}";
+	}
 	private RideSessionNode? _session;
 	private RideWorldView? _world;
 	private RouteOverviewGeometry? _overview;
@@ -79,7 +84,7 @@ public partial class RouteGradientInset : Control
 		DrawRect(new Rect2(Vector2.Zero, Size), new Color(.68f, .51f, .31f, .72f), false, 1);
 		var rideState = _session?.CurrentRideState;
 		var currentPose = rideState is null ? default : _overview.GetMapPose(rideState.DistanceMeters, new NVector2(Size.X, 92));
-		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : $"ROUTE · LAP {currentPose.Lap} · {rideState.DistanceMeters / 1000:0.00} km", HorizontalAlignment.Left, Size.X - 64, 11, new Color(.88f, .82f, .69f));
+		DrawString(GetThemeDefaultFont(), new Vector2(12, 18), rideState is null ? "ROUTE" : FormatRouteHeader(_session.CurrentRoute, rideState.DistanceMeters, currentPose.Lap), HorizontalAlignment.Left, Size.X - 64, 11, new Color(.88f, .82f, .69f));
 		DrawString(GetThemeDefaultFont(), new Vector2(Size.X - 12, 18), "N ↑", HorizontalAlignment.Right, -1, 10, new Color(.75f, .82f, .76f));
 		if (_mapLine.Length >= 2) DrawPolyline(_mapLine, new Color(.58f, .65f, .57f), 2.2f, true);
 		if (_world is not null)

@@ -103,6 +103,8 @@ try
             Environment = config.Environment,
             Discipline = config.Discipline,
             SurfaceSegments = config.SurfaceSegments,
+            ApprovedTrailWayIds = config.ApprovedTrailWayIds,
+            RestrictToApprovedTrailWayIds = config.RestrictToApprovedTrailWayIds,
             BridgeSections = config.BridgeSections,
             TurnaroundWidthMeters = config.TurnaroundWidthMeters,
             TurnaroundWidthSource = config.TurnaroundWidthSource,
@@ -260,10 +262,14 @@ static async Task<(RouteBuildResult Result, GraphBuildStats GraphStats, double R
         || Math.Abs(points[^1].DistanceMeters - report.ActualOsmDistanceMeters) > 0.001
         || Math.Abs(pointsRoot.GetProperty("actualOsmDistanceMeters").GetDouble() - report.ActualOsmDistanceMeters) > 0.001)
         throw new InvalidDataException("Approved route-points and report metadata do not agree.");
-    if (points[0].DistanceMeters != 0
-        || Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
-        || Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9)
-        throw new InvalidDataException("Approved route is not closed at its lap seam.");
+    if (points[0].DistanceMeters != 0)
+        throw new InvalidDataException("Approved route must start at route chainage zero.");
+    var sameEndpoints = Math.Abs(points[0].Latitude - points[^1].Latitude) <= 1e-9
+        && Math.Abs(points[0].Longitude - points[^1].Longitude) <= 1e-9;
+    if (config.RouteType == "pointToPoint" ? sameEndpoints : !sameEndpoints)
+        throw new InvalidDataException(config.RouteType == "pointToPoint"
+            ? "Approved point-to-point route must have distinct natural endpoints."
+            : "Approved route is not closed at its lap seam.");
     if (points.Any(point => !double.IsFinite(point.DistanceMeters + point.Latitude + point.Longitude))
         || points.Zip(points.Skip(1), (a, b) => b.DistanceMeters - a.DistanceMeters)
             .Any(gap => gap <= 0 || gap > config.MaxOutputSpacingMeters + 0.02))

@@ -23,6 +23,7 @@ public sealed class VisualRoute
     // Compatibility alias; this is the same canonical sample array, not a second path.
     public IReadOnlyList<VisualRouteSample> Vertices => _samples;
     public double LengthMeters { get; }
+    public bool IsPointToPoint { get; }
     public Vector3 ClosureCorrection { get; }
     public float GroundPlaneY { get; }
     public const float GroundClearanceMeters = 10;
@@ -50,6 +51,7 @@ public sealed class VisualRoute
         if (!double.IsFinite(spacingMeters) || spacingMeters <= 0)
             throw new ArgumentOutOfRangeException(nameof(spacingMeters));
         _trackBanked = route.Environment == RouteEnvironment.Velodrome;
+        IsPointToPoint = route.RouteType == "Point-to-Point";
         LengthMeters = route.DistanceMeters;
         var distances = new SortedSet<double> { 0, LengthMeters };
         for (double d = spacingMeters; d < LengthMeters; d += spacingMeters) distances.Add(d);
@@ -84,15 +86,17 @@ public sealed class VisualRoute
             raw.Add((d, position));
             previousDistance = d;
         }
-        ClosureCorrection = raw[^1].Position - raw[0].Position;
+        ClosureCorrection = IsPointToPoint ? Vector3.Zero : raw[^1].Position - raw[0].Position;
         var corrected = raw.Select(v =>
         {
+            if (IsPointToPoint) return (DistanceMeters: v.DistanceMeters, Position: v.Position);
             var t = Math.Clamp((v.DistanceMeters / LengthMeters - ClosureStartFraction)
                 / (1 - ClosureStartFraction), 0, 1);
             var blend = (float)(t * t * (3 - 2 * t));
             return (DistanceMeters: v.DistanceMeters, Position: v.Position - ClosureCorrection * blend);
         }).ToArray();
-        corrected[^1] = (corrected[^1].DistanceMeters, corrected[0].Position);
+        if (!IsPointToPoint)
+            corrected[^1] = (corrected[^1].DistanceMeters, corrected[0].Position);
 
         // Segment boundaries can coincide with an authored GPS point after the
         // local-frame conversion to float. Collapse only those redundant samples;
@@ -120,8 +124,12 @@ public sealed class VisualRoute
         _samples = new VisualRouteSample[corrected.Length];
         for (var i = 0; i < corrected.Length; i++)
         {
-            var previous = i == 0 || i == corrected.Length - 1 ? corrected.Length - 2 : i - 1;
-            var next = i == 0 || i == corrected.Length - 1 ? 1 : i + 1;
+            var previous = IsPointToPoint
+                ? Math.Max(0, i - 1)
+                : i == 0 || i == corrected.Length - 1 ? corrected.Length - 2 : i - 1;
+            var next = IsPointToPoint
+                ? Math.Min(corrected.Length - 1, i + 1)
+                : i == 0 || i == corrected.Length - 1 ? 1 : i + 1;
             var tangent = positions[next] - positions[previous];
             if (tangent.LengthSquared() < 0.000001f)
                 tangent = i == 0 ? positions[1] - positions[0] : positions[i] - positions[i - 1];
@@ -152,6 +160,7 @@ public sealed class VisualRoute
     public double WrapDistance(double distance)
     {
         if (!double.IsFinite(distance)) throw new ArgumentOutOfRangeException(nameof(distance));
+        if (IsPointToPoint) return Math.Clamp(distance, 0, LengthMeters);
         return ((distance % LengthMeters) + LengthMeters) % LengthMeters;
     }
 
