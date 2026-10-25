@@ -205,7 +205,7 @@ public partial class RideSessionNode : Node
 			? requested : RideActivityMode.FreeRide;
 		_trackEffort = _currentRoute.Environment == RouteEnvironment.Velodrome
 			? new TrackEffortTimingController(CurrentActivityMode) : null;
-		_routeEffortTracker = _currentRoute.Environment == RouteEnvironment.Road
+		_routeEffortTracker = _currentRoute.Environment is RouteEnvironment.Road or RouteEnvironment.Trail
 			? new RouteEffortTimingTracker(_currentRoute.DistanceMeters, RouteEffortCatalog.ForwardDirection,
 				RouteEffortCatalog.ForRoute(_currentRoute!)) : null;
 		_routeEffortResults.Clear();

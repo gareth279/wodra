@@ -1467,6 +1467,65 @@ var tests = new (string Name, Action Run)[]
             }
         }
     }),
+    ("Clyde–Alexandra gravel route keeps sourced surface coverage and trail environment policy", () =>
+    {
+        var route = RouteCatalog.GetById("otago-central-rail-trail-clyde-alexandra")
+            ?? throw new Exception("Bundled Clyde–Alexandra gravel route was not loaded.");
+        if (route.Environment != RouteEnvironment.Trail || route.Discipline != RouteDiscipline.Gravel
+            || route.Difficulty != "Unrated")
+            throw new Exception("Trail environment and Gravel discipline must remain separate route metadata.");
+        if (Math.Abs(route.DistanceMeters - 16_135.5909) > 0.5 || route.RouteDataVersion != 1
+            || string.IsNullOrWhiteSpace(route.GeometryFingerprint) || route.Points is not { Count: > 100 })
+            throw new Exception("Bundled route identity, version, fingerprint, or measured loop length changed unexpectedly.");
+        if (route.SurfaceSegments.Count != 10 || Math.Abs(route.SurfaceSegments[0].StartMeters) > 0.001
+            || Math.Abs(route.SurfaceSegments[^1].EndMeters - route.DistanceMeters) > 0.05)
+            throw new Exception("Source surface metadata does not cover the entire trail loop.");
+        for (var i = 0; i < route.SurfaceSegments.Count; i++)
+        {
+            var surface = route.SurfaceSegments[i];
+            if (surface.SourceOsmWayId <= 0 || string.IsNullOrWhiteSpace(surface.Surface)
+                || (i > 0 && Math.Abs(surface.StartMeters - route.SurfaceSegments[i - 1].EndMeters) > 0.05))
+                throw new Exception("Trail surface source intervals must remain contiguous and tied to OSM way IDs.");
+        }
+        if (route.SurfaceSegments.Count(segment => segment.Surface == "gravel") < 1
+            || route.SurfaceSegments.Count(segment => segment.Surface == "unpaved") < 1)
+            throw new Exception("Both source-mapped gravel and unpaved sections should remain represented.");
+        if (!route.Capabilities.SupportsGhost || !route.Capabilities.SupportsCollectibles
+            || route.Capabilities.SupportsPacer || route.Capabilities.SupportsTraffic || route.Capabilities.SupportsMultiplayer)
+            throw new Exception("The gravel route exposed an unsupported cyclist feature combination.");
+        var policy = RouteEnvironmentPolicy.For(RouteEnvironment.Trail);
+        if (policy.SupportsAmbientCars || policy.SupportsAmbientPedestrians || policy.SupportsUrbanStreetScenery)
+            throw new Exception("Trail environments must disable ambient actors and urban street furniture.");
+        foreach (var environment in new[] { RouteEnvironment.MountainBike, RouteEnvironment.Velodrome })
+        {
+            var other = RouteEnvironmentPolicy.For(environment);
+            if (other.SupportsAmbientActors || other.SupportsUrbanStreetScenery)
+                throw new Exception($"{environment} must disable ambient cars, pedestrians, and urban scenery.");
+        }
+        var road = RouteEnvironmentPolicy.For(RouteEnvironment.Road);
+        if (!road.SupportsAmbientCars || !road.SupportsAmbientPedestrians || !road.SupportsUrbanStreetScenery)
+            throw new Exception("Existing road routes must retain ambient traffic, pedestrians, and street scenery.");
+        var maxGrade = route.Points!.Max(point => Math.Abs(point.GradientPercent ?? 0));
+        if (route.TotalAscentMeters is < 20 or > 35 || maxGrade > 3)
+            throw new Exception($"LINZ profile changed to an implausible ascent/grade ({route.TotalAscentMeters:F1} m, {maxGrade:F2}%).");
+        using var terrainStream = typeof(RouteCatalog).Assembly.GetManifestResourceStream(
+            "Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.terrain.json")
+            ?? throw new Exception("Bundled gravel terrain metadata was not embedded.");
+        using var terrain = JsonDocument.Parse(terrainStream);
+        if (terrain.RootElement.GetProperty("sourceDataset").GetString() != "Otago - Central Otago LiDAR 1m DEM (2022-2023)"
+            || terrain.RootElement.GetProperty("sourceLicense").GetString() != "CC-BY-4.0"
+            || string.IsNullOrWhiteSpace(terrain.RootElement.GetProperty("sourceAttribution").GetString()))
+            throw new Exception("Bundled terrain source dataset or attribution is inaccurate.");
+        using var vegetationStream = typeof(RouteCatalog).Assembly.GetManifestResourceStream(
+            "Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.vegetation.json")
+            ?? throw new Exception("Bundled gravel vegetation metadata was not embedded.");
+        using var vegetationData = JsonDocument.Parse(vegetationStream);
+        if (vegetationData.RootElement.GetProperty("sourcePbfFilename").GetString() != "WodraGravelContext.osm"
+            || !vegetationData.RootElement.GetProperty("attribution").GetString()!.Contains("ODbL 1.0", StringComparison.Ordinal))
+            throw new Exception("Bundled mapped vegetation must identify its context extract and OSM license.");
+        var visual = new VisualRoute(route, spacingMeters: 5);
+        NearVector(visual.Vertices[0].Position, visual.Vertices[^1].Position);
+    }),
     ("Signal Hill shared-road samples keep route, rider, and grade elevations consistent in both directions", () =>
     {
         var route = RouteCatalog.GetById("dunedin-signal-hill-climbing-loop")
@@ -1620,7 +1679,7 @@ var tests = new (string Name, Action Run)[]
         {
             var path = Path.Combine(folder, "fixture-loop.route-points.json");
             File.WriteAllText(path, """
-                {"id":"fixture-loop","name":"Fixture Loop","routeType":"loop","difficulty":"Easy","routeDataVersion":3,
+                {"id":"fixture-loop","name":"Fixture Loop","routeType":"loop","difficulty":"Unrated","routeDataVersion":3,
                  "sourceAttribution":"© OpenStreetMap contributors, ODbL 1.0","isValid":true,"actualOsmDistanceMeters":20,
                  "points":[{"distanceMeters":0,"latitude":-45,"longitude":170,"elevationMeters":5,"rawElevationMeters":5,"gradientPercent":1},
                            {"distanceMeters":10,"latitude":-45.00001,"longitude":170,"elevationMeters":5.1,"rawElevationMeters":5.1,"gradientPercent":1},
@@ -1628,12 +1687,12 @@ var tests = new (string Name, Action Run)[]
                 """);
             var route = RouteDataLoader.LoadPackage(path);
             if (route.Id != "fixture-loop" || route.DistanceMeters != 20 || route.RouteType != "Loop"
-                || route.Difficulty != "Easy" || route.RouteDataVersion != 3
+                || route.Difficulty != "Unrated" || route.RouteDataVersion != 3
                 || route.SourceAttribution != "© OpenStreetMap contributors, ODbL 1.0"
                 || route.GeometryFingerprint.Length != 64)
                 throw new Exception("External route package metadata was not loaded.");
             File.WriteAllText(path, $$"""
-                {"id":"fixture-loop","name":"Fixture Loop","routeType":"loop","difficulty":"Easy","routeDataVersion":4,
+                {"id":"fixture-loop","name":"Fixture Loop","routeType":"loop","difficulty":"Unrated","routeDataVersion":4,
                  "geometryFingerprint":"{{route.GeometryFingerprint}}","sourceAttribution":"© OpenStreetMap contributors, ODbL 1.0","isValid":true,"actualOsmDistanceMeters":20,
                  "points":[{"distanceMeters":0,"latitude":-45,"longitude":170,"elevationMeters":5,"rawElevationMeters":5,"gradientPercent":1},
                            {"distanceMeters":10,"latitude":-45.00002,"longitude":170,"elevationMeters":5.1,"rawElevationMeters":5.1,"gradientPercent":1},

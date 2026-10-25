@@ -53,10 +53,28 @@ public partial class RouteSelectionPanelController : Control
 		if (_panel is null || !IsInsideTree()) return;
 		var viewport = GetViewportRect().Size;
 		var width = Math.Min(1100, Math.Max(600, viewport.X - 32));
+		var compact = viewport.Y < 720;
 		var height = Math.Min(620, Math.Max(420, viewport.Y - 32));
 		_panel.CustomMinimumSize = new Vector2(width, height);
 		_panel.OffsetLeft = -width / 2; _panel.OffsetRight = width / 2;
 		_panel.OffsetTop = -height / 2; _panel.OffsetBottom = height / 2;
+		if (_panel.GetNodeOrNull<MarginContainer>("RouteBrowserMargin") is { } margin)
+		{
+			var horizontal = compact ? 14 : 20;
+			var vertical = compact ? 10 : 16;
+			margin.AddThemeConstantOverride("margin_left", horizontal);
+			margin.AddThemeConstantOverride("margin_right", horizontal);
+			margin.AddThemeConstantOverride("margin_top", vertical);
+			margin.AddThemeConstantOverride("margin_bottom", vertical);
+			if (margin.GetNodeOrNull<VBoxContainer>("RouteBrowserLayout") is { } root)
+			{
+				root.AddThemeConstantOverride("separation", compact ? 6 : 10);
+				if (root.GetNodeOrNull<Control>("Content") is { } content)
+					content.AddThemeConstantOverride("separation", compact ? 10 : 18);
+			}
+		}
+		if (_map is not null) _map.CustomMinimumSize = new Vector2(0, compact ? 112 : 150);
+		if (_elevation is not null) _elevation.CustomMinimumSize = new Vector2(0, compact ? 72 : 92);
 	}
 
 	private void BuildBrowser()
@@ -170,7 +188,8 @@ public partial class RouteSelectionPanelController : Control
 		foreach (var route in list)
 		{
 			var row = new HBoxContainer(); row.AddThemeConstantOverride("separation", 5); _rows.AddChild(row);
-			var button = new Button { Name = "RouteChoice", Text = $"{route.Name}\n{route.DistanceMeters / 1000:0.0} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}", Alignment = HorizontalAlignment.Left, CustomMinimumSize = new Vector2(0, 58), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ToggleMode = true, ButtonPressed = route.Id == _selectedId };
+			var discipline = route.Discipline == RouteDiscipline.Road ? "Road" : route.Discipline.ToString();
+			var button = new Button { Name = "RouteChoice", Text = $"{route.Name}\n{discipline}  ·  {route.DistanceMeters / 1000:0.0} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}", Alignment = HorizontalAlignment.Left, CustomMinimumSize = new Vector2(0, 58), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ToggleMode = true, ButtonPressed = route.Id == _selectedId };
 			button.Pressed += () => { _selectedId = route.Id; UpdateSelection(); };
 			row.AddChild(button); _routeButtons[route.Id] = button;
 			var star = new Button { Text = IsFavorite(route.Id) ? "★" : "☆", TooltipText = IsFavorite(route.Id) ? "Remove favourite" : "Add favourite", CustomMinimumSize = new Vector2(42, 58) };
@@ -203,8 +222,8 @@ public partial class RouteSelectionPanelController : Control
 		if (_previewTitle is not null) _previewTitle.Text = route.Name;
 		if (_metadata is not null)
 		{
-			_metadata.Text = $"{route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
-			if (route.Environment == RouteEnvironment.Road &&
+			_metadata.Text = $"{route.Discipline}  ·  {route.DistanceMeters / 1000:0.00} km  ·  {route.TotalAscentMeters:0} m ascent  ·  {route.RouteType}";
+			if ((route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) &&
 				_effortHistoryRouteId == route.Id && _effortHistoryProfileId == ActiveProfileId)
 				_metadata.Text += $"  ·  Route PB {FormatEffort(_bestRouteEffort)}  ·  Previous {FormatEffort(_previousRouteEffort)}";
 		}
@@ -223,7 +242,8 @@ public partial class RouteSelectionPanelController : Control
 		if (_activityModePicker is not null) _activityModePicker.Visible = hasEffortModes;
 		if (_pacerPicker is not null) _pacerPicker.Visible = route.Capabilities.SupportsPacer;
 		if (_pacerLabel is not null) _pacerLabel.Visible = route.Capabilities.SupportsPacer;
-		if (_routeGhostPicker is not null) _routeGhostPicker.Visible = route.Environment == RouteEnvironment.Road && route.Capabilities.SupportsGhost;
+		if (_routeGhostPicker is not null) _routeGhostPicker.Visible =
+			(route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) && route.Capabilities.SupportsGhost;
 		if (_startButton is not null) _startButton.Text = isTrack ? "Start Track Ride" : "Start Ride";
 		if (_favoriteButton is not null) _favoriteButton.Text = IsFavorite(route.Id) ? "★ Favourited" : "☆ Favourite";
 		if (_map is not null) { _map.Route = route; _map.QueueRedraw(); }
@@ -231,9 +251,11 @@ public partial class RouteSelectionPanelController : Control
 		var first = route.GetSampleAt(0);
 		if (_routeEnds is not null) _routeEnds.Text = isTrack
 			? "Reference line: 250 m per lap · start/finish line on the main straight\nChoose an effort below. Flying 200 m has a 50 m run-up; 500 m and 1 km begin from a standing start."
+			: route.Environment == RouteEnvironment.Trail
+				? "Lap seam: about 4 km from Clyde railhead · turn at the mapped Clyde and Alexandra ends; both directions follow the mapped trail."
 			: $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
 		if (_startButton is not null) _startButton.Disabled = false;
-		if (route.Environment == RouteEnvironment.Road &&
+		if ((route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) &&
 			(_effortHistoryRouteId != route.Id || _effortHistoryProfileId != ActiveProfileId))
 			_ = RefreshRouteEffortChoicesAsync(route);
 	}
@@ -278,7 +300,7 @@ public partial class RouteSelectionPanelController : Control
 	private async void StartSelectedRoute()
 	{
 		if (_session is null || RouteCatalog.GetById(_selectedId) is not { } route) return;
-		if (route.Environment == RouteEnvironment.Road && _routeGhostPicker?.Selected is 1 or 2)
+		if ((route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) && _routeGhostPicker?.Selected is 1 or 2)
 			await PrepareSelectedRouteGhostAsync(route, _routeGhostPicker.Selected == 1 ? _bestRouteEffort : _previousRouteEffort);
 		else _session.ClearPendingGhost();
 		Hide(); _hud?.Show();

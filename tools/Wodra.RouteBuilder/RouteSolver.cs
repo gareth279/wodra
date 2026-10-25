@@ -209,7 +209,8 @@ public static class RouteSolver
             var maxDeviation = points.Max(point => GeoMath.PointToSegmentMeters(point, corridorStart, corridorEnd));
             if (maxDeviation > corridorMeters + 0.01) return null;
             var ways = new List<RoadWaySummary> { ToWaySummary(start), ToWaySummary(end) };
-            ways.AddRange(network.Edges.Select(edge => new RoadWaySummary(edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer)));
+            ways.AddRange(network.Edges.Select(edge => new RoadWaySummary(edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer,
+                Surface: edge.Surface)));
             var uniqueWays = ways.DistinctBy(way => way.WayId).ToArray();
             var ratio = straightLineDistance > 0 ? pathDistance / straightLineDistance : double.PositiveInfinity;
             var alignmentPenalty = (start.DirectionAlignmentDegrees + end.DirectionAlignmentDegrees) * 0.4;

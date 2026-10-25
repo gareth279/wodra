@@ -11,6 +11,8 @@ public sealed record ClosureEdgeExclusion(long WayId, long FromNodeId, long ToNo
         && ((edge.FromNodeId == FromNodeId && edge.ToNodeId == ToNodeId)
             || (edge.FromNodeId == ToNodeId && edge.ToNodeId == FromNodeId));
 }
+public sealed record RouteSurfaceAuthoringSegment(double StartMeters, double EndMeters, string Surface, long SourceOsmWayId);
+public sealed record RouteBridgeAuthoringSegment(double StartMeters, double EndMeters, long SourceOsmWayId);
 
 public sealed class RouteAuthoringConfig
 {
@@ -21,6 +23,11 @@ public sealed class RouteAuthoringConfig
     public string RouteType { get; init; } = "";
     public string Difficulty { get; init; } = "";
     public int RouteDataVersion { get; init; } = 1;
+    /// <summary>Environment policy and riding discipline are independent authoring concepts.</summary>
+    public string Environment { get; init; } = "Road";
+    public string Discipline { get; init; } = "Road";
+    public List<RouteSurfaceAuthoringSegment> SurfaceSegments { get; init; } = [];
+    public List<RouteBridgeAuthoringSegment> BridgeSections { get; init; } = [];
     /// <summary>Optional explicit usable road width for generated U-turns; never inferred from GPS data.</summary>
     public double? TurnaroundWidthMeters { get; init; }
     public string TurnaroundWidthSource { get; init; } = "";
@@ -63,6 +70,20 @@ public sealed class RouteAuthoringConfig
             throw new InvalidDataException("Config id must be a simple filename-safe identifier.");
         if (string.IsNullOrWhiteSpace(Name)) throw new InvalidDataException("Config name is required.");
         if (RouteDataVersion <= 0) throw new InvalidDataException("routeDataVersion must be positive.");
+        if (Environment is not ("Road" or "Trail" or "Velodrome" or "MountainBike"))
+            throw new InvalidDataException("environment must be Road, Trail, Velodrome, or MountainBike.");
+        if (Discipline is not ("Road" or "Gravel" or "MountainBike" or "Track"))
+            throw new InvalidDataException("discipline must be Road, Gravel, MountainBike, or Track.");
+        if (SurfaceSegments.Any(segment => !double.IsFinite(segment.StartMeters + segment.EndMeters)
+            || segment.StartMeters < 0 || segment.EndMeters <= segment.StartMeters
+            || string.IsNullOrWhiteSpace(segment.Surface) || segment.SourceOsmWayId <= 0))
+            throw new InvalidDataException("Surface sections need finite positive chainage, a surface label, and a source OSM way ID.");
+        for (var i = 1; i < SurfaceSegments.Count; i++)
+            if (Math.Abs(SurfaceSegments[i].StartMeters - SurfaceSegments[i - 1].EndMeters) > 0.05)
+                throw new InvalidDataException("Surface sections must be ordered and contiguous.");
+        if (BridgeSections.Any(section => !double.IsFinite(section.StartMeters + section.EndMeters)
+            || section.StartMeters < 0 || section.EndMeters <= section.StartMeters || section.SourceOsmWayId <= 0))
+            throw new InvalidDataException("Bridge sections need finite route chainage and a positive source OSM way ID.");
         if (TurnaroundWidthMeters is { } turnaroundWidth
             && (!double.IsFinite(turnaroundWidth) || turnaroundWidth < 3 || turnaroundWidth > 40
                 || string.IsNullOrWhiteSpace(TurnaroundWidthSource)))
@@ -89,8 +110,8 @@ public sealed class RouteAuthoringConfig
         if (RoutingMode is not ("anchors" or "roadRef")) throw new InvalidDataException("routingMode must be 'anchors' or 'roadRef'.");
         if (RouteType is not ("" or "loop" or "outAndBack" or "pointToPoint"))
             throw new InvalidDataException("routeType must be 'loop', 'outAndBack', or 'pointToPoint'.");
-        if (Difficulty is not ("" or "Easy" or "Moderate" or "Challenging"))
-            throw new InvalidDataException("difficulty must be Easy, Moderate, or Challenging when provided.");
+        if (Difficulty is not ("" or "Unrated" or "Easy" or "Moderate" or "Challenging"))
+            throw new InvalidDataException("difficulty must be Unrated, Easy, Moderate, or Challenging when provided.");
         if (Loop && RouteType is not ("" or "loop"))
             throw new InvalidDataException("The legacy loop flag can only be combined with routeType 'loop'.");
         Elevation?.Validate();
@@ -305,12 +326,12 @@ public sealed record RoutedLeg(string FromAnchor, string ToAnchor, double Straig
 public sealed record RoadWaySummary(long WayId, string Highway, string? Name, string? Ref,
     string? Bridge = null, string? Tunnel = null, string? Layer = null, string? Oneway = null,
     string? Access = null, string? Bicycle = null, string? Vehicle = null,
-    string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null);
+    string? MotorVehicle = null, string? Motorcar = null, string? OnewayBicycle = null, string? Surface = null);
 public sealed record RoutedRoadSegment(double StartDistanceMeters, double EndDistanceMeters, long WayId,
     string Highway, string? Name, string? Ref, string? Bridge, string? Tunnel, string? Layer,
     long FromNodeId = 0, long ToNodeId = 0, string? Oneway = null, string? Access = null,
     string? Bicycle = null, string? Vehicle = null, string? MotorVehicle = null, string? Motorcar = null,
-    string? OnewayBicycle = null);
+    string? OnewayBicycle = null, string? Surface = null);
 public sealed record NonPreferredConnector(long WayId, string Highway, string? Name, string? Ref,
     double DistanceMeters, string Reason);
 public sealed record RouteRefSummary(IReadOnlyList<string> PreferredRefs,

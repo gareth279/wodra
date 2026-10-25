@@ -3,6 +3,36 @@ using Wodra.RouteBuilder;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("small OSM XML route extracts load with their mapped surface tags", () =>
+    {
+        var path = Path.Combine(Path.GetTempPath(), "wodra-osm-xml-" + Guid.NewGuid().ToString("N") + ".osm");
+        try
+        {
+            File.WriteAllText(path, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <osm version="0.6" generator="Wodra test">
+                  <node id="1" lat="-45.22" lon="169.36" />
+                  <node id="2" lat="-45.2201" lon="169.3601" />
+                  <node id="3" lat="-45.2202" lon="169.3602" />
+                  <way id="42">
+                    <nd ref="1" /><nd ref="2" /><nd ref="3" />
+                    <tag k="highway" v="cycleway" /><tag k="surface" v="gravel" />
+                  </way>
+                </osm>
+                """);
+            var config = new RouteAuthoringConfig
+            {
+                Id = "osm-xml-fixture", Name = "OSM XML fixture",
+                Bbox = new BoundingBox(-45.3, 169.2, -45.1, 169.5),
+                Anchors = [new("Start", 0, -45.22, 169.36), new("Finish", 100, -45.2202, 169.3602)]
+            };
+            var loaded = PbfRoadGraphLoader.Load(path, config);
+            if (loaded.Stats.EligibleWayCount != 1 || loaded.Graph.EdgeCount != 4
+                || loaded.Graph.Edges.Any(edge => edge.Surface != "gravel"))
+                throw new Exception("The XML route graph did not retain the mapped gravel way and surface tags.");
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }),
     ("vegetation DEM pass retains the generated route clearance", () =>
     {
         Equal(false, VegetationGroundPolicy.ShouldRenderGround(0, 0));

@@ -82,7 +82,7 @@ try
     if (!args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
         throw new ArgumentException($"Unknown command '{args[0]}'.");
     var options = ParseOptions(args.Skip(1).ToArray());
-    if (!options.TryGetValue("--pbf", out var pbf)) throw new ArgumentException("--pbf is required.");
+    if (!options.TryGetValue("--pbf", out var pbf)) throw new ArgumentException("--pbf is required (PBF or .osm XML extract).");
     if (!options.TryGetValue("--config", out var configPath)) throw new ArgumentException("--config is required.");
     if (!options.TryGetValue("--output", out var outputDirectory)) throw new ArgumentException("--output is required.");
     var cacheDirectory = options.TryGetValue("--cache-dir", out var cacheArg)
@@ -100,6 +100,10 @@ try
             Id = config.Id, Name = config.Name, Loop = config.Loop, RouteType = config.RouteType,
             Difficulty = config.Difficulty,
             RouteDataVersion = config.RouteDataVersion,
+            Environment = config.Environment,
+            Discipline = config.Discipline,
+            SurfaceSegments = config.SurfaceSegments,
+            BridgeSections = config.BridgeSections,
             TurnaroundWidthMeters = config.TurnaroundWidthMeters,
             TurnaroundWidthSource = config.TurnaroundWidthSource,
             RoutingMode = config.RoutingMode, PreferredRefs = config.PreferredRefs,
@@ -156,8 +160,11 @@ try
         : null;
     if (buildings is not null)
         buildings = await BuildingElevationSampler.SampleAsync(buildings, config.Buildings!.ElevationCacheDirectory);
-    VegetationExtractionResult? vegetation = result.IsValid && !routeOnly && config.Vegetation is { Enabled: true } vegetationOptions
-        ? VegetationExtractor.Extract(pbf, result.RoutePoints, buildings?.Buildings ?? [], landmarks?.Landmarks,
+    var hasVegetationSource = options.TryGetValue("--vegetation-source", out var vegetationSourcePath);
+    var vegetationSource = hasVegetationSource ? vegetationSourcePath! : pbf;
+    VegetationExtractionResult? vegetation = result.IsValid && (!routeOnly || hasVegetationSource)
+        && config.Vegetation is { Enabled: true } vegetationOptions
+        ? VegetationExtractor.Extract(vegetationSource, result.RoutePoints, buildings?.Buildings ?? [], landmarks?.Landmarks,
             vegetationOptions.SearchRadiusMeters, vegetationOptions.SimplificationToleranceMeters,
             vegetationOptions.TreeRowSpacingMeters, vegetationOptions.GeneratedTreeCapPerArea,
             vegetationOptions.TotalTreeInstanceCap, config.Id)
@@ -207,10 +214,12 @@ try
     }
     await BuildOutputs.WriteAsync(outputDirectory, config, pbf, graphStats, result,
         routeSolveSeconds, landmarks, buildings, vegetation, streetFurniture, backgroundStreets,
-        bundleBackgroundStreets: !options.ContainsKey("--no-bundle-streets"));
-    if (!routeOnly && result.IsValid && config.Elevation is { Enabled: true } elevation)
+        bundleBackgroundStreets: !options.ContainsKey("--no-bundle-streets"),
+        vegetationSourcePath: vegetation is null ? null : vegetationSource);
+    var includeTerrainAssets = !routeOnly || options.ContainsKey("--with-elevation");
+    if (includeTerrainAssets && result.IsValid && config.Elevation is { Enabled: true } elevation)
         await ElevationPipelineRunner.RunAsync(outputDirectory, config.Id, elevation);
-    if (!routeOnly && result.IsValid && config.Terrain is { Enabled: true } terrain)
+    if (includeTerrainAssets && result.IsValid && config.Terrain is { Enabled: true } terrain)
         await TerrainPipelineRunner.RunAsync(outputDirectory, config.Id, terrain);
     if (result.IsValid)
         await RoutePackageMetadata.RefreshAsync(outputDirectory, config);

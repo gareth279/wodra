@@ -27,6 +27,7 @@ public partial class AmbientActorManager : Node3D
     private Random _random = new(AmbientActorTuning.DefaultSeed);
     private int _nextActorId = 1;
     private bool _configured;
+    private bool _ambientActorsAllowed = true;
 
     public int ActiveCarCount => _active.Count(actor => actor.State.Active && actor.State.Kind == AmbientActorKind.Car);
     public int ActivePedestrianCount => _active.Count(actor => actor.State.Active && actor.State.Kind == AmbientActorKind.Pedestrian);
@@ -64,8 +65,11 @@ public partial class AmbientActorManager : Node3D
     internal IReadOnlyList<AmbientTrafficRider> GetTrafficReviewSamples() =>
         _active.Where(actor => actor.State.Active).Select(ToTrafficRider).ToArray();
 
-    public void Configure(VisualRoute route, RouteBackgroundStreetData streetData)
+    public void Configure(VisualRoute route, RouteBackgroundStreetData streetData,
+        RouteEnvironment environment = RouteEnvironment.Road)
     {
+        _ambientActorsAllowed = RouteEnvironmentPolicy.For(environment).SupportsAmbientActors;
+        if (!_ambientActorsAllowed) return;
         if (_configured) throw new InvalidOperationException("Ambient actor manager is already configured.");
         _configured = true;
         _random = new Random(RandomSeed);
@@ -106,7 +110,7 @@ public partial class AmbientActorManager : Node3D
 
     public void UpdateForCyclists(IReadOnlyList<AmbientTrafficRider> cyclists, double deltaSeconds, bool paused)
     {
-        if (!_configured || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return;
+        if (!_ambientActorsAllowed || !_configured || paused || !double.IsFinite(deltaSeconds) || deltaSeconds <= 0) return;
         var player = cyclists.FirstOrDefault(rider => rider.RiderId == "player");
         if (!Finite(player.Position)) return;
         UpdateAndCull(_active, cyclists, deltaSeconds);

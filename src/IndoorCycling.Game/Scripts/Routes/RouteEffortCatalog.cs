@@ -25,7 +25,8 @@ public static class RouteEffortCatalog
 
     public static IReadOnlyList<RouteEffortDefinition> ForRoute(RouteDefinition route)
     {
-        if (route.Environment != RouteEnvironment.Road || route.Points is not { Count: >= 2 } ||
+        if (route.Environment is not (RouteEnvironment.Road or RouteEnvironment.Trail)
+            || route.Points is not { Count: >= 2 } ||
             string.IsNullOrWhiteSpace(route.GeometryFingerprint) || route.DistanceMeters <= 0)
             return Array.Empty<RouteEffortDefinition>();
 

@@ -201,7 +201,7 @@ internal static class RoadRefRouteBuilder
                 roadSegments.Add(new RoutedRoadSegment(sectionDistance, sectionDistance + edge.LengthMeters,
                     edge.WayId, edge.Highway, edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer,
                     edge.FromNodeId, edge.ToNodeId, edge.Oneway, edge.Access, edge.Bicycle,
-                    edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle));
+                    edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle, edge.Surface));
                 sectionDistance += edge.LengthMeters;
             }
             var distance = path.Edges.Sum(edge => edge.LengthMeters);
@@ -214,7 +214,7 @@ internal static class RoadRefRouteBuilder
 
     private static RoadWaySummary ToWaySummary(RoadEdge edge) => new(edge.WayId, edge.Highway,
         edge.Name, edge.Ref, edge.Bridge, edge.Tunnel, edge.Layer, edge.Oneway, edge.Access,
-        edge.Bicycle, edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle);
+        edge.Bicycle, edge.Vehicle, edge.MotorVehicle, edge.Motorcar, edge.OnewayBicycle, edge.Surface);
 
     private static long[] NodesNearArea(RoadGraph graph, IReadOnlyList<RoadEdge> preferredEdges,
         GeoPoint area, double radiusMeters) => preferredEdges

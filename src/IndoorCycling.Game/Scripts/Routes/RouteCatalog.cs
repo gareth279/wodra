@@ -16,7 +16,7 @@ public static class RouteCatalog
 
 	private static IReadOnlyList<RouteDefinition> LoadRoutes()
 	{
-		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute() };
+		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute(), CreateGravelTrailRoute() };
 		var reservedTestIds = new HashSet<string>(System.StringComparer.Ordinal)
 			{ "test-route", "flat-test-route", "climb-test-route" };
 		foreach (var packageRoot in RoutePackageFiles.PackageDirectories.Distinct(System.StringComparer.OrdinalIgnoreCase))
@@ -140,6 +140,24 @@ public static class RouteCatalog
 			SourceAttribution = "Original procedural track geometry; no real venue branding or survey geometry.",
 			RouteDataVersion = 1,
 			PublishedTotalAscentMeters = 0
+		};
+	}
+
+	private static RouteDefinition CreateGravelTrailRoute()
+	{
+		var route = RouteDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+			"Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.route-points.json",
+			"otago-central-rail-trail-clyde-alexandra", "Otago Central Rail Trail: Clyde–Alexandra",
+			"An 8 km mapped Clyde–Alexandra rail-trail section ridden in both directions. The lap starts about 4 km from Clyde so both railhead turns remain inside the loop; the route trace follows OSM geometry and uses LINZ 1 m elevation.",
+			[]);
+		return route with
+		{
+			Segments = [new RouteSegment(0, route.DistanceMeters, 0,
+				"Trail loop · start about 4 km from Clyde railhead")],
+			Environment = RouteEnvironment.Trail,
+			Discipline = RouteDiscipline.Gravel,
+			Capabilities = RouteCapabilities.SoloTrail,
+			SupportsVerifiedCompletionAchievement = true
 		};
 	}
 }
