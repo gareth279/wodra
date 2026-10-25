@@ -21,6 +21,7 @@ public partial class RouteSelectionPanelController : Control
 	private RouteElevationPreview? _map, _elevation;
 	private OptionButton? _pacerPicker;
 	private OptionButton? _routeGhostPicker;
+	private HBoxContainer? _routeGhostChoiceRow;
 	private RouteEffortRecord? _bestRouteEffort, _previousRouteEffort;
 	private string _effortHistoryRouteId = "";
 	private Guid? _effortHistoryProfileId;
@@ -124,11 +125,11 @@ public partial class RouteSelectionPanelController : Control
 		_elevation = new RouteElevationPreview { Name = "ElevationProfile", CustomMinimumSize = new Vector2(0, 92), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		previewColumn.AddChild(_elevation);
 		_routeEnds = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart }; previewColumn.AddChild(_routeEnds);
-		var ghostChoiceRow = new HBoxContainer { Name = "RouteGhostChoiceRow" };
-		ghostChoiceRow.AddChild(new Label { Text = "Compare with", VerticalAlignment = VerticalAlignment.Center });
+		_routeGhostChoiceRow = new HBoxContainer { Name = "RouteGhostChoiceRow" };
+		_routeGhostChoiceRow.AddChild(new Label { Text = "Compare with", VerticalAlignment = VerticalAlignment.Center });
 		_routeGhostPicker = new OptionButton { Name = "RouteGhostChoice", CustomMinimumSize = new Vector2(160, 0), TooltipText = "Compare against an eligible route lap" };
 		_routeGhostPicker.AddItem("No route ghost"); _routeGhostPicker.AddItem("Best lap"); _routeGhostPicker.AddItem("Previous lap");
-		ghostChoiceRow.AddChild(_routeGhostPicker); previewColumn.AddChild(ghostChoiceRow);
+		_routeGhostChoiceRow.AddChild(_routeGhostPicker); previewColumn.AddChild(_routeGhostChoiceRow);
 		var spacer = new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill }; previewColumn.AddChild(spacer);
 		var footer = new HBoxContainer { Name = "Footer" }; footer.AddThemeConstantOverride("separation", 8); root.AddChild(footer);
 		var back = new Button { Text = "Back" }; back.Pressed += OnBackPressed; footer.AddChild(back);
@@ -242,8 +243,10 @@ public partial class RouteSelectionPanelController : Control
 		if (_activityModePicker is not null) _activityModePicker.Visible = hasEffortModes;
 		if (_pacerPicker is not null) _pacerPicker.Visible = route.Capabilities.SupportsPacer;
 		if (_pacerLabel is not null) _pacerLabel.Visible = route.Capabilities.SupportsPacer;
-		if (_routeGhostPicker is not null) _routeGhostPicker.Visible =
-			(route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) && route.Capabilities.SupportsGhost;
+		var supportsRouteGhost = (route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail)
+			&& route.Capabilities.SupportsGhost;
+		if (_routeGhostPicker is not null) _routeGhostPicker.Visible = supportsRouteGhost;
+		if (_routeGhostChoiceRow is not null) _routeGhostChoiceRow.Visible = supportsRouteGhost;
 		if (_startButton is not null) _startButton.Text = isTrack ? "Start Track Ride" : "Start Ride";
 		if (_favoriteButton is not null) _favoriteButton.Text = IsFavorite(route.Id) ? "★ Favourited" : "☆ Favourite";
 		if (_map is not null) { _map.Route = route; _map.QueueRedraw(); }
@@ -253,6 +256,8 @@ public partial class RouteSelectionPanelController : Control
 			? "Reference line: 250 m per lap · start/finish line on the main straight\nChoose an effort below. Flying 200 m has a 50 m run-up; 500 m and 1 km begin from a standing start."
 			: route.Environment == RouteEnvironment.Trail
 				? "Lap seam: about 4 km from Clyde railhead · turn at the mapped Clyde and Alexandra ends; both directions follow the mapped trail."
+			: route.RouteType == "Point-to-Point"
+				? $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? "Natural endpoint"} · one-way route ends at its mapped endpoint."
 			: $"Start: {route.Segments.FirstOrDefault()?.Label ?? first.SegmentLabel}\nFinish: {route.Segments.LastOrDefault()?.Label ?? first.SegmentLabel} · {route.Segments.Count} route segments per lap";
 		if (_startButton is not null) _startButton.Disabled = false;
 		if ((route.Environment is RouteEnvironment.Road or RouteEnvironment.Trail) &&

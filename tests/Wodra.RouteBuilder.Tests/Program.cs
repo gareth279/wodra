@@ -3,6 +3,68 @@ using Wodra.RouteBuilder;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("approved singletrack sources are included only by way ID and explicit access restrictions still apply", () =>
+    {
+        var path = Path.Combine(Path.GetTempPath(), "wodra-approved-trail-" + Guid.NewGuid().ToString("N") + ".osm");
+        try
+        {
+            File.WriteAllText(path, """
+                <osm version="0.6">
+                  <node id="1" lat="-45.0" lon="170.0"/><node id="2" lat="-45.0001" lon="170.0001"/>
+                  <node id="3" lat="-45.0002" lon="170.0002"/><node id="4" lat="-45.0003" lon="170.0003"/>
+                  <way id="11"><nd ref="1"/><nd ref="2"/><tag k="highway" v="path"/><tag k="bicycle" v="designated"/></way>
+                  <way id="12"><nd ref="2"/><nd ref="3"/><tag k="highway" v="track"/><tag k="vehicle" v="yes"/></way>
+                  <way id="13"><nd ref="3"/><nd ref="4"/><tag k="highway" v="path"/><tag k="access" v="private"/></way>
+                  <way id="14"><nd ref="1"/><nd ref="4"/><tag k="highway" v="path"/><tag k="bicycle" v="designated"/></way>
+                </osm>
+                """);
+            var config = new RouteAuthoringConfig
+            {
+                Id = "approved-trail-fixture", Name = "Approved trail fixture",
+                Environment = "MountainBike", Discipline = "MountainBike",
+                ApprovedTrailWayIds = [11, 12, 13], RestrictToApprovedTrailWayIds = true,
+                SurfaceSegments = [new(0, 40, "unknown", 11)],
+                Bbox = new(-45.1, 169.9, -44.9, 170.1),
+                Anchors = [new("Start", 0, -45.0, 170.0), new("End", 40, -45.0002, 170.0002)]
+            };
+            var loaded = PbfRoadGraphLoader.Load(path, config);
+            if (loaded.Stats.EligibleWayCount != 2 || loaded.Graph.Edges.Any(edge => edge.WayId is not (11 or 12)))
+                throw new Exception("Only the approved, access-permitted trail/path ways should enter the route graph.");
+            if (!RoadEligibility.TryGetHighway(new Dictionary<string, string> { ["highway"] = "path" }, out _, true)
+                || RoadEligibility.TryGetHighway(new Dictionary<string, string> { ["highway"] = "path" }, out _, false)
+                || RoadEligibility.TryGetHighway(new Dictionary<string, string> { ["highway"] = "path", ["access"] = "private" }, out _, true))
+                throw new Exception("Approved singletrack access must be explicit, and private access must remain denied.");
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }),
+    ("point-to-point route solver preserves distinct natural endpoints", () =>
+    {
+        var graph = new RoadGraph();
+        var coordinates = new Dictionary<long, GeoPoint>
+        {
+            [1] = new(0, 0), [2] = new(0, .001), [3] = new(0, .002)
+        };
+        graph.AddWay(1, [1, 2, 3], Tags("cycleway"), coordinates);
+        var config = new RouteAuthoringConfig
+        {
+            Id = "point-to-point-fixture", Name = "Open trail fixture", RouteType = "pointToPoint",
+            Bbox = new(-1, -1, 1, 1), Anchors = [new("Start", 0, 0, .0001), new("Natural end", 220, 0, .0019)],
+            MaxSnapDistanceMeters = 20, RouteCorridorMeters = 100, MaxOutputSpacingMeters = 30,
+            DetourWarningRatio = 1.6, DetourFailureRatio = 2.2
+        };
+        config.Validate();
+        var result = RouteSolver.Build(graph, config);
+        if (!result.IsValid || result.RoutePoints[0].DistanceMeters != 0
+            || result.RoutePoints[0].Latitude == result.RoutePoints[^1].Latitude
+                && result.RoutePoints[0].Longitude == result.RoutePoints[^1].Longitude)
+            throw new Exception("An open route must retain its distinct endpoints and measured cumulative distance.");
+        var sameEndpointConfig = new RouteAuthoringConfig
+        {
+            Id = "invalid-open-fixture", Name = "Invalid open route", RouteType = "pointToPoint",
+            Bbox = new(-1, -1, 1, 1), Anchors = [new("Start", 0, 0, 0), new("End", 1, 0, 0)]
+        };
+        Throws<InvalidDataException>(() => sameEndpointConfig.Validate());
+    }),
     ("small OSM XML route extracts load with their mapped surface tags", () =>
     {
         var path = Path.Combine(Path.GetTempPath(), "wodra-osm-xml-" + Guid.NewGuid().ToString("N") + ".osm");

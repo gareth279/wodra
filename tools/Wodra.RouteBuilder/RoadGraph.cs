@@ -22,9 +22,9 @@ public sealed class RoadGraph
     public IEnumerable<RoadEdge> Edges => _outgoing.Values.SelectMany(edges => edges);
 
     public void AddWay(long wayId, IReadOnlyList<long> nodeIds, IReadOnlyDictionary<string, string> tags,
-        IReadOnlyDictionary<long, GeoPoint> coordinates)
+        IReadOnlyDictionary<long, GeoPoint> coordinates, bool allowApprovedTrailWay = false)
     {
-        if (!RoadEligibility.TryGetHighway(tags, out var highway)) return;
+        if (!RoadEligibility.TryGetHighway(tags, out var highway, allowApprovedTrailWay)) return;
         var oneway = RoadEligibility.GetOnewayMode(tags);
         var name = tags.GetValueOrDefault("name");
         var reference = tags.GetValueOrDefault("ref");
@@ -83,7 +83,8 @@ public static class RoadEligibility
         "tertiary", "tertiary_link", "residential", "unclassified", "living_street", "service", "cycleway"
     };
 
-    public static bool TryGetHighway(IReadOnlyDictionary<string, string> tags, out string highway)
+    public static bool TryGetHighway(IReadOnlyDictionary<string, string> tags, out string highway,
+        bool allowApprovedTrailWay = false)
     {
         highway = tags.GetValueOrDefault("highway") ?? "";
         if (string.IsNullOrWhiteSpace(highway)) return false;
@@ -95,6 +96,8 @@ public static class RoadEligibility
                 || bicycle.Equals("permissive", StringComparison.OrdinalIgnoreCase));
         if (!bicycleExplicitlyAllowed && IsDenied(tags.GetValueOrDefault("access"))) return false;
         if (AllowedHighways.Contains(highway)) return true;
+        if (allowApprovedTrailWay && (highway.Equals("path", StringComparison.OrdinalIgnoreCase)
+            || highway.Equals("track", StringComparison.OrdinalIgnoreCase))) return true;
         if (highway.Equals("path", StringComparison.OrdinalIgnoreCase))
             return IsYesOrDesignated(tags.GetValueOrDefault("bicycle"));
         if (highway.Equals("footway", StringComparison.OrdinalIgnoreCase))

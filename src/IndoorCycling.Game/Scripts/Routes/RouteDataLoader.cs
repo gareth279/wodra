@@ -45,8 +45,8 @@ public static class RouteDataLoader
 			?? throw new InvalidDataException($"Route package '{routePointsPath}' is empty.");
 		if (string.IsNullOrWhiteSpace(source.Id) || string.IsNullOrWhiteSpace(source.Name))
 			throw new InvalidDataException($"Route package '{routePointsPath}' is missing its ID or name.");
-		if (source.RouteType is not ("loop" or "outAndBack"))
-			throw new InvalidDataException($"Route package '{routePointsPath}' is not a repeated-lap loop or out-and-back route.");
+		if (source.RouteType is not ("loop" or "outAndBack" or "pointToPoint"))
+			throw new InvalidDataException($"Route package '{routePointsPath}' has an unsupported route geometry type.");
 		if (source.RouteDataVersion is not > 0 || source.Difficulty is not ("Unrated" or "Easy" or "Moderate" or "Challenging")
 			|| string.IsNullOrWhiteSpace(source.SourceAttribution))
 			throw new InvalidDataException($"Route package '{routePointsPath}' has incomplete difficulty, version, or attribution metadata.");
@@ -79,9 +79,16 @@ public static class RouteDataLoader
 				|| (i > 0 && point.DistanceMeters <= points[i - 1].DistanceMeters))
 				throw new InvalidDataException($"Route data '{sourceName}' contains invalid or unordered points.");
 		}
-		if (points[0].DistanceMeters != 0 || Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
-			|| Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9)
+		if (points[0].DistanceMeters != 0)
+			throw new InvalidDataException($"Route data '{sourceName}' must start at chainage zero.");
+		if (routeType is "loop" or "outAndBack"
+			&& (Math.Abs(points[0].Latitude - points[^1].Latitude) > 1e-9
+				|| Math.Abs(points[0].Longitude - points[^1].Longitude) > 1e-9))
 			throw new InvalidDataException($"Route data '{sourceName}' does not close at the lap seam.");
+		if (routeType == "pointToPoint"
+			&& Math.Abs(points[0].Latitude - points[^1].Latitude) < 1e-9
+			&& Math.Abs(points[0].Longitude - points[^1].Longitude) < 1e-9)
+			throw new InvalidDataException($"Point-to-point route data '{sourceName}' must have distinct natural endpoints.");
 		if (points.Any(point => point.ElevationMeters is not { } elevation || !double.IsFinite(elevation)
 			|| point.RawElevationMeters is not { } raw || !double.IsFinite(raw)
 			|| point.GradientPercent is not { } gradient || !double.IsFinite(gradient)))
@@ -95,6 +102,11 @@ public static class RouteDataLoader
 			throw new InvalidDataException($"Trail environment '{id}' must declare its riding discipline separately as Gravel or MountainBike.");
 		if (environment == RouteEnvironment.Trail && surfaces.Length == 0)
 			throw new InvalidDataException($"Trail route '{id}' must declare route-relative source surface sections.");
+		if (environment == RouteEnvironment.MountainBike
+			&& discipline != RouteDiscipline.MountainBike)
+			throw new InvalidDataException($"Mountain-bike environment '{id}' must declare MountainBike discipline.");
+		if (environment == RouteEnvironment.MountainBike && surfaces.Length == 0)
+			throw new InvalidDataException($"Mountain-bike route '{id}' must declare route-relative source surface sections.");
 		if (surfaces.Length > 0)
 		{
 			if (Math.Abs(surfaces[0].StartMeters) > 0.001
@@ -129,7 +141,13 @@ public static class RouteDataLoader
 			point.Latitude, point.Longitude, point.ElevationMeters!.Value, point.RawElevationMeters, point.GradientPercent)).ToArray();
 		var route = new RouteDefinition(id, name, description, routeLengthMeters, segments, routePoints)
 		{
-			RouteType = routeType is "loop" ? "Loop" : routeType is "outAndBack" ? "Out-and-Back" : routeType,
+			RouteType = routeType switch
+			{
+				"loop" => "Loop",
+				"outAndBack" => "Out-and-Back",
+				"pointToPoint" => "Point-to-Point",
+				_ => routeType
+			},
 			Difficulty = difficulty,
 			SourceAttribution = attribution,
 			RouteDataVersion = dataVersion,

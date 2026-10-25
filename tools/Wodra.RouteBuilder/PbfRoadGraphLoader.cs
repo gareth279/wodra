@@ -52,8 +52,10 @@ public static class PbfRoadGraphLoader
         foreach (var item in OsmSource.Open(stream, pbfPath))
         {
             if (item is not Way way || way.Id is not long wayId || way.Nodes is null || way.Tags is null) continue;
+            var approvedTrailWay = config.ApprovedTrailWayIds.Contains(wayId);
+            if (config.RestrictToApprovedTrailWayIds && !approvedTrailWay) continue;
             var tags = way.Tags.ToDictionary(tag => tag.Key, tag => tag.Value, StringComparer.OrdinalIgnoreCase);
-            if (!RoadEligibility.TryGetHighway(tags, out _)) continue;
+            if (!RoadEligibility.TryGetHighway(tags, out _, approvedTrailWay)) continue;
             if (!HasRetainedSegment(way.Nodes, coordinates)) continue;
             wayRecords.Add(new WayRecord(wayId, way.Nodes, tags));
         }
@@ -62,7 +64,8 @@ public static class PbfRoadGraphLoader
         var graphTimer = Stopwatch.StartNew();
         var graph = new RoadGraph();
         foreach (var way in wayRecords)
-            graph.AddWay(way.Id, way.NodeIds, way.Tags, coordinates);
+            graph.AddWay(way.Id, way.NodeIds, way.Tags, coordinates,
+                config.ApprovedTrailWayIds.Contains(way.Id));
         graphTimer.Stop();
         var cacheBuildSeconds = nodeTimer.Elapsed.TotalSeconds + wayTimer.Elapsed.TotalSeconds + graphTimer.Elapsed.TotalSeconds;
 

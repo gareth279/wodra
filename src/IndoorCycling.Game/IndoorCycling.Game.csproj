@@ -22,6 +22,9 @@
     <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.route-points.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.route-points.json" />
     <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.terrain.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.terrain.json" />
     <EmbeddedResource Include="Data\Routes\otago-central-rail-trail-clyde-alexandra.vegetation.json" LogicalName="Wodra.GameData.Routes.otago-central-rail-trail-clyde-alexandra.vegetation.json" />
+    <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.route-points.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.route-points.json" />
+    <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.terrain.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.terrain.json" />
+    <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.vegetation.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.vegetation.json" />
     <Content Include="Data\Cats\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.landmarks.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.landmarks.json" />
     <EmbeddedResource Include="Data\Routes\dunedin-one-way-oval-gardens.buildings.json" LogicalName="Wodra.GameData.Routes.dunedin-one-way-oval-gardens.buildings.json" />

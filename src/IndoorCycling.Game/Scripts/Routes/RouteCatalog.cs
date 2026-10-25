@@ -16,7 +16,7 @@ public static class RouteCatalog
 
 	private static IReadOnlyList<RouteDefinition> LoadRoutes()
 	{
-		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute(), CreateGravelTrailRoute() };
+		var routes = new List<RouteDefinition> { CreateDunedinRoute(), CreateVelodromeRoute(), CreateGravelTrailRoute(), CreateSignalHillMountainBikeRoute() };
 		var reservedTestIds = new HashSet<string>(System.StringComparer.Ordinal)
 			{ "test-route", "flat-test-route", "climb-test-route" };
 		foreach (var packageRoot in RoutePackageFiles.PackageDirectories.Distinct(System.StringComparer.OrdinalIgnoreCase))
@@ -158,6 +158,23 @@ public static class RouteCatalog
 			Discipline = RouteDiscipline.Gravel,
 			Capabilities = RouteCapabilities.SoloTrail,
 			SupportsVerifiedCompletionAchievement = true
+		};
+	}
+
+	private static RouteDefinition CreateSignalHillMountainBikeRoute()
+	{
+		var route = RouteDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+			"Wodra.GameData.Routes.signal-hill-big-easy-mtb.route-points.json",
+			"signal-hill-big-easy-mtb", "Signal Hill · The Big Easy",
+			"One-way climb from the mapped lower Big Easy trailhead to the Signal Hill lookout. The ride ends at the natural mapped trail endpoint; no return direction is implied.", []);
+		return route with
+		{
+			Segments = [new RouteSegment(0, route.DistanceMeters, 0, "The Emersons Big Easy · climb")],
+			Environment = RouteEnvironment.MountainBike,
+			Discipline = RouteDiscipline.MountainBike,
+			Capabilities = RouteCapabilities.SoloMountainBike,
+			RouteType = "Point-to-Point",
+			SupportsVerifiedCompletionAchievement = false
 		};
 	}
 }

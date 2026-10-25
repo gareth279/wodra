@@ -136,6 +136,22 @@ class ElevationQualityTests(unittest.TestCase):
         self.assertAlmostEqual(calibrated[6] - calibrated[5], 0.2, places=6)
         self.assertAlmostEqual(calibrated[2] - calibrated[1], 0.2, places=6)
 
+    def test_point_to_point_profile_clamps_at_end_and_does_not_wrap_smoothing_or_grade(self):
+        values = np.asarray([0.0, 10.0, 20.0, 40.0])
+        self.assertEqual(0.0, elevation.distance_interp(values, 1, -10, False))
+        self.assertEqual(40.0, elevation.distance_interp(values, 1, 99, False))
+        self.assertAlmostEqual(40.0, elevation.distance_interp(values, 1, 3, False))
+        # A large elevation change at the far endpoint must not bleed into the start.
+        smoothed = elevation.moving_average(np.asarray([100.0, 100.0, 100.0, 0.0]), 1, 2, False)
+        self.assertGreater(smoothed[0], smoothed[-1])
+        grades = elevation.distance_gradient(np.asarray([0.0, 1.0, 2.0, 100.0]), 1, 2, False)
+        self.assertGreater(grades[-1], 0)
+        self.assertLess(grades[0], grades[-1])
+
+    def test_point_to_point_source_labels_do_not_wrap_last_sample_to_start(self):
+        labels = elevation.source_labels_at_distances([0, 10, 20, 30], ["1m", "8m", "8m", "8m"], 10, 30, False)
+        self.assertEqual(["1m", "8m", "8m", "8m"], labels)
+
     def test_short_primary_dem_outlier_is_filtered_without_changing_underlying_raw(self):
         raw = np.arange(20, dtype=float) * 0.5
         raw[8] -= 6

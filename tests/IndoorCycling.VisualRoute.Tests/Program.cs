@@ -1453,12 +1453,23 @@ var tests = new (string Name, Action Run)[]
         foreach (var route in RouteCatalog.Routes)
         {
             var geometry = new VisualRoute(route);
-            NearVector(geometry.Vertices[0].Position, geometry.Vertices[^1].Position);
-            var before = geometry.GetPoseAtDistance(route.DistanceMeters - 0.01);
-            var after = geometry.GetPoseAtDistance(0.01);
-            if (Vector3.Distance(before.Position, after.Position) > 0.1f) throw new Exception($"Position seam: {route.Id}");
-            if (route.Id != "dunedin-one-way-oval-gardens" && Vector3.Dot(before.Forward, after.Forward) < 0.99f)
-                throw new Exception($"Direction seam: {route.Id}");
+            if (geometry.IsPointToPoint)
+            {
+                if (Vector3.Distance(geometry.GetPoseAtDistance(0).Position, geometry.GetPoseAtDistance(route.DistanceMeters).Position) < 1f)
+                    throw new Exception($"Open route endpoints unexpectedly coincide: {route.Id}");
+                var end = geometry.GetPoseAtDistance(route.DistanceMeters);
+                var beyond = geometry.GetPoseAtDistance(route.DistanceMeters + 10);
+                NearVector(end.Position, beyond.Position);
+            }
+            else
+            {
+                NearVector(geometry.Vertices[0].Position, geometry.Vertices[^1].Position);
+                var before = geometry.GetPoseAtDistance(route.DistanceMeters - 0.01);
+                var after = geometry.GetPoseAtDistance(0.01);
+                if (Vector3.Distance(before.Position, after.Position) > 0.1f) throw new Exception($"Position seam: {route.Id}");
+                if (route.Id != "dunedin-one-way-oval-gardens" && Vector3.Dot(before.Forward, after.Forward) < 0.99f)
+                    throw new Exception($"Direction seam: {route.Id}");
+            }
             for (double d = 0; d < route.DistanceMeters; d += 3.7)
             {
                 var pose = geometry.GetPoseAtDistance(d);
@@ -1525,6 +1536,49 @@ var tests = new (string Name, Action Run)[]
             throw new Exception("Bundled mapped vegetation must identify its context extract and OSM license.");
         var visual = new VisualRoute(route, spacingMeters: 5);
         NearVector(visual.Vertices[0].Position, visual.Vertices[^1].Position);
+    }),
+    ("Signal Hill Big Easy is a bundled open MTB route with truthful surfaces, endpoint, and elevation", () =>
+    {
+        var route = RouteCatalog.GetById("signal-hill-big-easy-mtb")
+            ?? throw new Exception("Bundled Signal Hill MTB route was not loaded from its embedded package.");
+        if (route.RouteType != "Point-to-Point" || route.Environment != RouteEnvironment.MountainBike
+            || route.Discipline != RouteDiscipline.MountainBike || route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("MTB must use open route geometry and remain outside loop completion awards.");
+        if (route.DistanceMeters is < 4_500 or > 6_500 || route.TotalAscentMeters is < 250 or > 400)
+            throw new Exception($"MTB distance/ascent changed unexpectedly ({route.DistanceMeters:F1} m/{route.TotalAscentMeters:F1} m).");
+        if (route.Points is not { Count: > 300 } points || points[0].DistanceMeters != 0
+            || points[^1].DistanceMeters != route.DistanceMeters
+            || (points[0].Latitude == points[^1].Latitude && points[0].Longitude == points[^1].Longitude))
+            throw new Exception("MTB geometry must have increasing route chainage and two distinct natural endpoints.");
+        if (route.SurfaceSegments.Count < 4 || Math.Abs(route.SurfaceSegments[0].StartMeters) > .001
+            || Math.Abs(route.SurfaceSegments[^1].EndMeters - route.DistanceMeters) > .05
+            || route.SurfaceSegments.Any(item => item.SourceOsmWayId <= 0 || string.IsNullOrWhiteSpace(item.Surface))
+            || route.SurfaceSegments.Zip(route.SurfaceSegments.Skip(1), (a, b) => Math.Abs(a.EndMeters - b.StartMeters)).Any(gap => gap > .05))
+            throw new Exception("MTB source surface metadata must cover the point-to-point route without gaps.");
+        if (route.Capabilities.SupportsPacer || route.Capabilities.SupportsGhost || route.Capabilities.SupportsCollectibles
+            || route.Capabilities.SupportsTraffic || route.Capabilities.SupportsMultiplayer
+            || route.Capabilities.MaximumLateralOffsetMeters is not ( > 0 and <= .30f))
+            throw new Exception("The narrow singletrack must keep unsupported cyclist features disabled and limit steering offset.");
+        var environment = RouteEnvironmentPolicy.For(route.Environment);
+        if (environment.SupportsAmbientActors || environment.SupportsUrbanStreetScenery)
+            throw new Exception("MTB must not enable ambient cars, pedestrians, or urban road scenery.");
+
+        var visual = new VisualRoute(route, spacingMeters: 5);
+        if (!visual.IsPointToPoint || visual.ClosureCorrection != Vector3.Zero)
+            throw new Exception("An open MTB centreline must not receive a loop closure correction.");
+        NearVector(visual.GetPoseAtDistance(route.DistanceMeters).Position,
+            visual.GetPoseAtDistance(route.DistanceMeters + 100).Position);
+        NearVector(visual.GetPoseAtDistance(0).Position, visual.GetPoseAtDistance(-100).Position);
+        var overview = new RouteOverviewGeometry(route, visual);
+        var endAtDistance = overview.GetMapPose(route.DistanceMeters, new Vector2(280, 92));
+        var beyondEnd = overview.GetMapPose(route.DistanceMeters + 100, new Vector2(280, 92));
+        if (Math.Abs(endAtDistance.LapDistanceMeters - beyondEnd.LapDistanceMeters) > 0.001) throw new Exception("Point-to-point overview must clamp beyond its natural endpoint.");
+        Equal(1, beyondEnd.Lap);
+
+        foreach (var suffix in new[] { "route-points.json", "terrain.json", "vegetation.json" })
+            using (typeof(RouteCatalog).Assembly.GetManifestResourceStream(
+                $"Wodra.GameData.Routes.signal-hill-big-easy-mtb.{suffix}")
+                ?? throw new Exception($"Bundled MTB {suffix} sidecar was not embedded.")) { }
     }),
     ("Signal Hill shared-road samples keep route, rider, and grade elevations consistent in both directions", () =>
     {

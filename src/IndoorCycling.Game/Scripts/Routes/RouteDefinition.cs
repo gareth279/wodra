@@ -53,6 +53,8 @@ public sealed record RouteDefinition(
 	{
 		if (DistanceMeters <= 0)
 			return 0;
+		if (RouteType == "Point-to-Point")
+			return Math.Clamp(rideDistanceMeters, 0, DistanceMeters);
 
 		return rideDistanceMeters % DistanceMeters;
 	}
@@ -167,7 +169,11 @@ public enum RideActivityMode { FreeRide, LapTiming, Flying200, Standing500, Stan
 public sealed record RouteCapabilities(bool SupportsPacer, bool SupportsGhost, bool SupportsCollectibles,
 	bool SupportsTraffic, bool SupportsMultiplayer)
 {
+	/// <summary>Optional maximum lateral steering extent for a narrow environment, in metres.</summary>
+	public float? MaximumLateralOffsetMeters { get; init; }
 	public static RouteCapabilities LegacyRoad { get; } = new(true, true, true, true, true);
 	public static RouteCapabilities SoloVelodrome { get; } = new(false, false, false, false, false);
 	public static RouteCapabilities SoloTrail { get; } = new(false, true, true, false, false);
+	public static RouteCapabilities SoloMountainBike { get; } = new(false, false, false, false, false)
+	{ MaximumLateralOffsetMeters = 0.28f };
 }

@@ -9,17 +9,19 @@ internal sealed record RoadGraphCacheData(string CacheKey, List<RoadNode> Nodes,
 
 public static class RoadGraphCache
 {
-    private const int RoadFilteringVersion = 3;
+    private const int RoadFilteringVersion = 4;
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
     public static string GetCacheKey(string pbfPath, RouteAuthoringConfig config)
     {
         var file = new FileInfo(pbfPath);
-        return BuildCacheKey(file.Name, file.Length, file.LastWriteTimeUtc.Ticks, config.Bbox, config.MarginMeters);
+        return BuildCacheKey(file.Name, file.Length, file.LastWriteTimeUtc.Ticks, config.Bbox, config.MarginMeters,
+            config.ApprovedTrailWayIds, config.RestrictToApprovedTrailWayIds);
     }
 
     public static string BuildCacheKey(string filename, long fileLength, long lastWriteUtcTicks,
-        BoundingBox bbox, double marginMeters)
+        BoundingBox bbox, double marginMeters, IReadOnlyCollection<long>? approvedTrailWayIds = null,
+        bool restrictToApprovedTrailWayIds = false)
     {
         var identity = JsonSerializer.Serialize(new
         {
@@ -28,7 +30,9 @@ public static class RoadGraphCache
             pbfLastWriteUtcTicks = lastWriteUtcTicks,
             bbox,
             marginMeters,
-            roadFilteringVersion = RoadFilteringVersion
+            roadFilteringVersion = RoadFilteringVersion,
+            approvedTrailWayIds = approvedTrailWayIds?.Order().ToArray() ?? [],
+            restrictToApprovedTrailWayIds
         });
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity))).ToLowerInvariant();
     }

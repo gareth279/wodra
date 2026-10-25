@@ -144,6 +144,15 @@ jobs:
               $gravelReviewOutput -match 'SCRIPT ERROR:|\[GravelRideScreenReview\] FAIL:') {
             throw 'Isolated production RideScreen gravel review did not report a clean environment-transition pass.'
           }
+          $mountainBikeReviewLog = "$env:RUNNER_TEMP\wodra-mountain-bike-review.log"
+          & .\tools\RunMountainBikeRideScreenReview.ps1 -GodotExe $env:GODOT_PATH -Headless *> $mountainBikeReviewLog
+          if ($LASTEXITCODE -ne 0) { throw 'Isolated production RideScreen mountain-bike review failed.' }
+          $mountainBikeReviewOutput = Get-Content -LiteralPath $mountainBikeReviewLog -Raw
+          if ($mountainBikeReviewOutput -notmatch '\[MountainBikeRideScreenReview\] PASS \d+ assertions; complete dummy route' -or
+              $mountainBikeReviewOutput -notmatch 'road.*MTB.*gravel.*velodrome.*road' -or
+              $mountainBikeReviewOutput -match 'SCRIPT ERROR:|\[MountainBikeRideScreenReview\] FAIL:') {
+            throw 'Isolated production RideScreen mountain-bike review did not report a clean route and environment-transition pass.'
+          }
           $mediaControlsLog = "$env:RUNNER_TEMP\wodra-media-controls-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/MediaControlsRideScreenReviewTest.tscn --log-file $mediaControlsLog
           if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen media controls review failed.' }

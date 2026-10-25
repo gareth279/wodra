@@ -75,31 +75,44 @@ def interp(distances, values, distance):
     return float(np.interp(distance, distances, values))
 
 
-def circular_average(values, interval, window):
+def moving_average(values, interval, window, wraps):
     half = window / 2
     offsets = np.arange(-half, half + interval * .5, interval)
     result = []
     for i in range(len(values)):
-        result.append(float(np.mean([values[int(round((i + off / interval) % len(values))) % len(values)] for off in offsets])))
+        indexes = []
+        for off in offsets:
+            index = int(round(i + off / interval))
+            if wraps:
+                index %= len(values)
+            else:
+                index = min(len(values) - 1, max(0, index))
+            indexes.append(values[index])
+        result.append(float(np.mean(indexes)))
     return np.asarray(result)
 
 
-def circular_gradient(values, interval, window):
+def distance_gradient(values, interval, window, wraps):
     half = window / 2
-    return np.asarray([(periodic_interp(values, interval, i*interval + half)
-                        - periodic_interp(values, interval, i*interval - half)) / window * 100
+    return np.asarray([(distance_interp(values, interval, i*interval + half, wraps)
+                        - distance_interp(values, interval, i*interval - half, wraps)) / window * 100
                        for i in range(len(values))])
 
 
-def periodic_interp(values, interval, distance):
-    position = (distance / interval) % len(values)
-    before = int(math.floor(position)); after = (before + 1) % len(values)
+def distance_interp(values, interval, distance, wraps):
+    position = distance / interval
+    if wraps:
+        position %= len(values)
+    else:
+        position = min(len(values) - 1, max(0.0, position))
+    before = int(math.floor(position)); after = (before + 1) % len(values) if wraps else min(len(values) - 1, before + 1)
     fraction = position - before
     return float(values[before] + (values[after] - values[before]) * fraction)
 
 
-def source_labels_at_distances(distances, sources, interval, length):
-    return [sources[int(round((distance % length) / interval)) % len(sources)] for distance in distances]
+def source_labels_at_distances(distances, sources, interval, length, wraps=True):
+    return [sources[int(round((distance % length) / interval)) % len(sources) if wraps
+                    else min(len(sources) - 1, max(0, int(round(distance / interval))))] for distance in distances]
 
 
 def canonicalize_repeated_elevation_samples(distances, latitudes, longitudes, raw_elevations,
@@ -258,20 +271,22 @@ def canonicalize_repeated_elevation_samples(distances, latitudes, longitudes, ra
     return result, summaries
 
 
-def calibrate_fallback_spans(raw, sources, interval):
+def calibrate_fallback_spans(raw, sources, interval, wraps=True):
     """Remove local vertical offsets in fallback spans without flattening their grade."""
     values = np.asarray(raw, dtype=float).copy()
     n = len(values)
-    transitions = [i for i in range(n) if sources[i] != sources[(i - 1) % n]]
-    entries = [i for i in transitions if sources[(i - 1) % n] == '1m' and sources[i] == '8m']
+    transitions = [i for i in range(n) if sources[i] != sources[(i - 1) % n]] if wraps else [
+        i for i in range(1, n) if sources[i] != sources[i - 1]]
+    entries = [i for i in transitions if (sources[(i - 1) % n] if wraps or i > 0 else None) == '1m'
+               and sources[i] == '8m']
     calibrations = []
     for start in entries:
         exits = [i for i in transitions if sources[(i - 1) % n] == '8m' and sources[i] == '1m'
-                 and 0 < (i - start) % n < n]
+                 and 0 < ((i - start) % n if wraps else i - start) < n]
         if not exits:
             continue
-        end = min(exits, key=lambda i: (i - start) % n)
-        span_count = (end - start) % n
+        end = min(exits, key=lambda i: (i - start) % n if wraps else i - start)
+        span_count = (end - start) % n if wraps else end - start
         if span_count <= 0:
             continue
 
@@ -280,15 +295,17 @@ def calibrate_fallback_spans(raw, sources, interval):
                      if sources[a] == '1m' and sources[b] == '1m']
             return float(np.median(steps)) if steps else 0.0
 
-        before_pairs = [((start - offset - 1) % n, (start - offset) % n) for offset in range(1, 9)]
-        after_pairs = [((end + offset - 1) % n, (end + offset) % n) for offset in range(1, 9)]
+        before_pairs = [((start - offset - 1) % n, (start - offset) % n) for offset in range(1, 9)
+                        if wraps or start - offset > 0]
+        after_pairs = [((end + offset - 1) % n, (end + offset) % n) for offset in range(1, 9)
+                       if wraps or end + offset < n]
         expected_start = local_primary_step(before_pairs)
         expected_end = local_primary_step(after_pairs)
         observed_start = values[start] - values[(start - 1) % n]
         observed_end = values[end] - values[(end - 1) % n]
         correction_start = expected_start - observed_start
         correction_end = observed_end - expected_end
-        indices = (start + np.arange(span_count)) % n
+        indices = (start + np.arange(span_count)) % n if wraps else np.arange(start, end)
         corrections = np.linspace(correction_start, correction_end, span_count)
         values[indices] += corrections
         calibrations.append({
@@ -367,6 +384,7 @@ def generate(args):
     route = json.loads(route_path.read_text(encoding='utf-8'))
     points = route['points']
     if not points: raise ValueError('Route has no generated points.')
+    wraps = route.get('routeType', 'loop') != 'pointToPoint'
     bounds = [min(p['longitude'] for p in points), min(p['latitude'] for p in points),
               max(p['longitude'] for p in points), max(p['latitude'] for p in points)]
     primary, items = selected_items(args.primary, bounds, cache)
@@ -378,7 +396,9 @@ def generate(args):
     dist = np.asarray([p['distanceMeters'] for p in points], dtype=float)
     length = float(dist[-1])
     count = max(1, math.ceil(length / args.interval))
-    interval = length / count
+    if not wraps:
+        count += 1
+    interval = length / count if wraps else length / max(1, count - 1)
     grid = np.arange(count, dtype=float) * interval
     route_lat = np.interp(grid, dist, [p['latitude'] for p in points])
     route_lon = np.interp(grid, dist, [p['longitude'] for p in points])
@@ -399,24 +419,24 @@ def generate(args):
         if value is None: raise ValueError(f"No DEM elevation at route distance {d:.2f} m; no elevation was invented.")
         raw.append(value); sources.append(source)
     raw_grid = np.asarray(raw)
-    calibrated_grid, source_calibrations = calibrate_fallback_spans(raw_grid, sources, interval)
+    calibrated_grid, source_calibrations = calibrate_fallback_spans(raw_grid, sources, interval, wraps)
     calibrated_grid, repeated_segments = canonicalize_repeated_elevation_samples(
         grid, route_lat, route_lon, raw_grid, calibrated_grid)
     filtered_grid, raw_outlier_runs = remove_isolated_primary_outliers(calibrated_grid, sources, interval)
     profile_grid = filtered_grid.copy()
-    smooth_grid = circular_average(profile_grid, interval, args.smooth)
+    smooth_grid = moving_average(profile_grid, interval, args.smooth, wraps)
     smooth_grid, smoothed_repeated_segments = canonicalize_repeated_elevation_samples(
         grid, route_lat, route_lon, raw_grid, smooth_grid)
-    gradient_grid = circular_gradient(smooth_grid, interval, args.gradient)
-    point_raw = np.asarray([periodic_interp(raw_grid, interval, d) for d in dist])
-    point_calibrated = np.asarray([periodic_interp(calibrated_grid, interval, d) for d in dist])
-    point_filtered = np.asarray([periodic_interp(filtered_grid, interval, d) for d in dist])
-    smooth = np.asarray([periodic_interp(smooth_grid, interval, d) for d in dist])
-    gradient = np.asarray([periodic_interp(gradient_grid, interval, d) for d in dist])
+    gradient_grid = distance_gradient(smooth_grid, interval, args.gradient, wraps)
+    point_raw = np.asarray([distance_interp(raw_grid, interval, d, wraps) for d in dist])
+    point_calibrated = np.asarray([distance_interp(calibrated_grid, interval, d, wraps) for d in dist])
+    point_filtered = np.asarray([distance_interp(filtered_grid, interval, d, wraps) for d in dist])
+    smooth = np.asarray([distance_interp(smooth_grid, interval, d, wraps) for d in dist])
+    gradient = np.asarray([distance_interp(gradient_grid, interval, d, wraps) for d in dist])
     # Source labels describe the nearest actually sampled DEM cell at each
     # route point. Indexing sources by route-point index mislabels every route
     # whose output points are spaced differently from the DEM resample grid.
-    point_sources = source_labels_at_distances(dist, sources, interval, length)
+    point_sources = source_labels_at_distances(dist, sources, interval, length, wraps)
 
     # Short tagged bridge/tunnel spans are replaced by linear interpolation between their road approaches.
     report = json.loads(report_path.read_text(encoding='utf-8'))
@@ -426,16 +446,16 @@ def generate(args):
         start, end = section['startDistanceMeters'], section['endDistanceMeters']
         span = end - start
         if span <= args.bridge_max:
-            left = periodic_interp(profile_grid, interval, max(0, start - 10)); right = periodic_interp(profile_grid, interval, min(length, end + 10))
+            left = distance_interp(profile_grid, interval, max(0, start - 10), wraps); right = distance_interp(profile_grid, interval, min(length, end + 10), wraps)
             for i, d in enumerate(grid):
                 if start <= d <= end:
                     t = (d - start) / max(span, 1e-6); profile_grid[i] = left + (right-left)*t
-            smooth_grid = circular_average(profile_grid, interval, args.smooth)
+            smooth_grid = moving_average(profile_grid, interval, args.smooth, wraps)
             smooth_grid, smoothed_repeated_segments = canonicalize_repeated_elevation_samples(
                 grid, route_lat, route_lon, raw_grid, smooth_grid)
-            gradient_grid = circular_gradient(smooth_grid, interval, args.gradient)
-            smooth = np.asarray([periodic_interp(smooth_grid, interval, d) for d in dist])
-            gradient = np.asarray([periodic_interp(gradient_grid, interval, d) for d in dist])
+            gradient_grid = distance_gradient(smooth_grid, interval, args.gradient, wraps)
+            smooth = np.asarray([distance_interp(smooth_grid, interval, d, wraps) for d in dist])
+            gradient = np.asarray([distance_interp(gradient_grid, interval, d, wraps) for d in dist])
             action = 'interpolated from adjacent road elevations before smoothing'
         else: action = 'flagged for review; DEM retained'
         structures.append({**section, 'lengthMeters': span, 'handling': action})
@@ -458,8 +478,8 @@ def generate(args):
     with csv_path.open('w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f); writer.writerow(['distanceMeters','latitude','longitude','rawElevationMeters','calibratedSourceElevationMeters','filteredSourceElevationMeters','smoothedElevationMeters','gradientPercent','sourceDataset'])
         for p in points: writer.writerow([p['distanceMeters'],p['latitude'],p['longitude'],p['rawElevationMeters'],p['calibratedSourceElevationMeters'],p['filteredSourceElevationMeters'],p['smoothedElevationMeters'],p['gradientPercent'],p['sourceDataset']])
-    loop_differences = np.diff(np.r_[smooth_grid, smooth_grid[0]])
-    ascent = float(np.maximum(0, loop_differences).sum()); descent = float(np.maximum(0, -loop_differences).sum())
+    profile_differences = np.diff(np.r_[smooth_grid, smooth_grid[0]]) if wraps else np.diff(smooth_grid)
+    ascent = float(np.maximum(0, profile_differences).sum()); descent = float(np.maximum(0, -profile_differences).sum())
     suspicious = [float(dist[i]) for i, g in enumerate(gradient) if abs(g) > args.review_gradient]
     all_samplers = samplers + (fallback or [])
     source_transitions = []
