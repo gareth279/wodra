@@ -4,6 +4,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'WodraBuiltInRoutePackages.ps1')
+$routeDefinitions = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot (Split-Path $PSScriptRoot -Parent))
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $ZipPath = [System.IO.Path]::GetFullPath($ZipPath)
@@ -11,16 +13,6 @@ if (-not (Test-Path -LiteralPath $ZipPath -PathType Leaf)) {
     throw "Release archive not found: $ZipPath"
 }
 
-$expectedRoutes = @(
-    'dunedin-one-way-oval-gardens',
-    'dunedin-south-coastal-loop',
-    'dunedin-rolling-loop',
-    'dunedin-signal-hill-climbing-loop'
-)
-$routeFiles = @(
-    'route-points', 'buildings', 'landmarks', 'street-furniture',
-    'streets', 'terrain', 'vegetation'
-)
 $required = @(
     'Wodra.exe',
     'Wodra.pck',
@@ -84,9 +76,10 @@ try {
     try { $manifest = $manifestReader.ReadToEnd() | ConvertFrom-Json -ErrorAction Stop }
     catch { throw 'Built-in route manifest is not valid JSON.' }
     finally { $manifestReader.Dispose() }
-    if ($manifest.Routes.Count -ne $expectedRoutes.Count) { throw 'Route manifest does not list exactly four built-in routes.' }
-    foreach ($routeId in $expectedRoutes) {
-        foreach ($file in $routeFiles) {
+    if ($manifest.Routes.Count -ne $routeDefinitions.Count) { throw "Route manifest does not list exactly $($routeDefinitions.Count) built-in routes." }
+    foreach ($definition in $routeDefinitions) {
+        $routeId = $definition.Id
+        foreach ($file in $definition.Files) {
             $entryName = "Routes/$routeId/$routeId.$file.json"
             if (-not $entries.ContainsKey($entryName)) { throw "Release archive is missing route dependency: $entryName" }
             if ($file -ne 'route-points') {
@@ -112,6 +105,11 @@ try {
              [string]::IsNullOrWhiteSpace([string]$route.sourceAttribution))) {
             throw "Route package '$routeId' is missing its fingerprint or source attribution."
         }
+        if ($routeId -eq 'signal-hill-big-easy-mtb' -and
+            ($route.routeType -ne 'pointToPoint' -or $route.environment -ne 'MountainBike' -or
+                $route.discipline -ne 'MountainBike' -or @($route.surfaceSegments).Count -lt 1)) {
+            throw 'Packaged MTB route is missing point-to-point, MountainBike, or surface metadata.'
+        }
 
         $canonicalLines = foreach ($point in $route.points) {
             @(
@@ -122,8 +120,7 @@ try {
             ) -join ','
         }
         $canonical = [string]::Join("`n", [string[]]$canonicalLines)
-        $actualFingerprint = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
-            [Text.Encoding]::UTF8.GetBytes($canonical))).ToLowerInvariant()
+        $actualFingerprint = Get-WodraRouteGeometryFingerprint -Route $route
         if (-not [string]::IsNullOrWhiteSpace([string]$route.geometryFingerprint) -and
             $route.geometryFingerprint -ne $actualFingerprint) {
             throw "Route package '$routeId' fingerprint does not match its geometry."
@@ -138,6 +135,6 @@ try {
     Remove-Variable manifest
 
     Write-Host "Release archive verified: $ZipPath"
-    Write-Host "Validated executable, managed runtime, EOS client config, notices, and four route packages."
+    Write-Host "Validated executable, managed runtime, EOS client config, notices, and five route packages."
 }
 finally { $archive.Dispose() }
