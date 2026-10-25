@@ -9,7 +9,8 @@ $guard = Get-Content -LiteralPath (Join-Path $repoRoot 'src\IndoorCycling.Game\S
 if ($publisher -notmatch "PublisherSmokeIsolation\.ps1" -or
     $publisher -notmatch "New-WodraSmokeIsolation" -or
     ([regex]::Matches($publisher, 'Invoke-WithWodraSmokeIsolation').Count -lt 3) -or
-    $publisher -notmatch 'PackagedXcRouteAssetsSmokeTest\.tscn' -or
+    $publisher -notmatch '--packaged-xc-assets-smoke' -or
+    $publisher -match "'--scene'" -or
     $publisher -notmatch "--require-userdata-under" -or
     $publisher -notmatch "AllowedExitCodes @\(41\)") {
     throw 'The extracted-app publisher smoke no longer establishes and verifies disposable user-data isolation.'
@@ -22,11 +23,13 @@ if ($parseErrors.Count -gt 0) { throw "Publisher script has PowerShell syntax er
 $settingsIndex = $bootstrap.IndexOf('AppSettings.LoadOrCreate()', [StringComparison]::Ordinal)
 $historyIndex = $bootstrap.IndexOf('new SqliteRideHistoryRepository', [StringComparison]::Ordinal)
 $guardIndex = $bootstrap.IndexOf('UserDataIsolationGuard.TryReadRequiredRoot', [StringComparison]::Ordinal)
+$userDataIndex = $bootstrap.IndexOf('OS.GetUserDataDir()', $guardIndex, [StringComparison]::Ordinal)
+$packagedSmokeIndex = $bootstrap.IndexOf('--packaged-xc-assets-smoke', [StringComparison]::Ordinal)
 if ($guardIndex -lt 0 -or $settingsIndex -le $guardIndex -or $historyIndex -le $guardIndex -or
-    $bootstrap.IndexOf('OS.GetUserDataDir()', $guardIndex, [StringComparison]::Ordinal) -lt $guardIndex -or
-    $bootstrap.IndexOf('OS.GetUserDataDir()', $guardIndex, [StringComparison]::Ordinal) -gt $settingsIndex -or
+    $userDataIndex -lt $guardIndex -or $userDataIndex -gt $settingsIndex -or
+    $packagedSmokeIndex -le $userDataIndex -or $packagedSmokeIndex -ge $settingsIndex -or
     $bootstrap -notmatch 'Environment\.Exit\(41\)') {
-    throw 'The user-data guard must resolve and validate user:// before settings/history initialization.'
+    throw 'The user-data guard and packaged XC smoke dispatch must precede settings/history initialization.'
 }
 if ($guard -notmatch 'RequiredRootArgument' -or $guard -notmatch 'PathComparison' -or
     $guard -notmatch 'Path.DirectorySeparatorChar') {
