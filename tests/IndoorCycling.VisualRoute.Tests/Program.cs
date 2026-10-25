@@ -62,6 +62,7 @@ var tests = new (string Name, Action Run)[]
             var challenge = new TrailFeatureChallenge(route.TrailFeatures, route.DistanceMeters, route.TrailRollers);
             challenge.Update(feature.StartMeters - 2, 0, 22, false, true);
             challenge.Update(feature.StartMeters + 35, feature.RequiredLateralMeters, 22, false, true);
+            challenge.Update(feature.TakeoffMeters - 2, feature.RequiredLateralMeters, 22, false, true);
             var launch = challenge.Update(feature.TakeoffMeters + 2, feature.RequiredLateralMeters, 22, false, true);
             var pause = challenge.Update(feature.TakeoffMeters + 8, feature.RequiredLateralMeters, 22, true, true);
             if (launch.Feedback is null || pause.AirHeightMeters <= 0 || challenge.TotalScore != 0)
