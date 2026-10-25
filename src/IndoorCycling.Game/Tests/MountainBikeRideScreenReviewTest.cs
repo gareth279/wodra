@@ -370,6 +370,7 @@ public partial class MountainBikeRideScreenReviewTest : Node
         var maxCameraStep = 0f;
         ulong lastSampleTicks = Time.GetTicksMsec();
         TrailFeatureLapSummary? completedLapSummary = null;
+        var capturedFeatureMoments = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
         var timeout = Time.GetTicksMsec() + 300_000;
         while (session.CurrentRideState.DistanceMeters < targetDistance)
         {
@@ -378,6 +379,25 @@ public partial class MountainBikeRideScreenReviewTest : Node
             var selected = selectJumpLines && featureIndex < route.TrailFeatures.Count
                 ? route.TrailFeatures[featureIndex] : null;
             var featureBase = (lap - 1) * route.DistanceMeters;
+            if (!IsHeadless && selected is not null)
+            {
+                foreach (var (moment, captureAtDistance) in new[]
+                {
+                    ("sign", selected.StartMeters - 36),
+                    ("approach", selected.StartMeters + 20),
+                    ("takeoff", selected.TakeoffMeters + 1),
+                    ("landing", selected.LandingMeters + 1)
+                })
+                {
+                    var captureKey = $"{selected.Id}:{moment}";
+                    if (ride.DistanceMeters >= featureBase + captureAtDistance
+                        && capturedFeatureMoments.Add(captureKey))
+                    {
+                        await Settle(.04);
+                        Capture($"xc-lap-{lap}-{selected.Id}-{moment}.png");
+                    }
+                }
+            }
             var pressWindowStart = selected is null ? double.PositiveInfinity
                 : featureBase + selected.StartMeters - 55;
             var lineEntryEnds = selected is null ? double.NegativeInfinity

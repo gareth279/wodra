@@ -510,7 +510,7 @@ var tests = new (string Name, Action Run)[]
             var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
             foreach (var tree in vegetation.Trees)
             {
-                var position = routeVisual.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
+                var position = routeVisual.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value, tree.ElevationMeters!.Value);
                 var nearest = routeIndex.Nearest(position);
                 var horizontalDistance = Math.Sqrt(nearest.DistanceSquared);
                 var verticalDifference = Math.Abs(position.Y - nearest.Position.Y);
@@ -1922,9 +1922,9 @@ var tests = new (string Name, Action Run)[]
         var point = building.Footprint[0];
         var converted = geometry.GetPositionForCoordinate(point.Latitude, point.Longitude, building.BaseElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
-        var expected = new Vector3((float)((point.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected = new Vector3((float)((point.Longitude-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(building.BaseElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(point.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(point.Latitude-origin.Latitude!.Value)*radians*earth));
         NearVector(expected, converted);
     }),
     ("building extrusion creates wall and flat roof triangles at configured height", () =>
@@ -2110,9 +2110,9 @@ var tests = new (string Name, Action Run)[]
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json",route.Id).Items[0];
         var converted=geometry.GetPositionForCoordinate(item.Latitude,item.Longitude,item.ElevationMeters!.Value);
         var origin=route.Points![0]; const double radians=Math.PI/180; const double earth=6371000;
-        var expected=new Vector3((float)((item.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected=new Vector3((float)((item.Longitude-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(item.ElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(item.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(item.Latitude-origin.Latitude!.Value)*radians*earth));
         NearVector(expected,converted);
     }),
     ("vegetation coordinates use VisualRoute mapping and area surfaces triangulate", () =>
@@ -2122,11 +2122,11 @@ var tests = new (string Name, Action Run)[]
         var vegetation = RouteVegetationDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.vegetation.json", route.Id);
         var tree = vegetation.Trees[0];
-        var localTree = geometry.GetPositionForCoordinate(tree.Latitude, tree.Longitude, tree.ElevationMeters!.Value);
+        var localTree = geometry.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value, tree.ElevationMeters!.Value);
         var origin = route.Points![0]; const double radians = Math.PI / 180; const double earth = 6371000;
-        var expected = new Vector3((float)((tree.Longitude-origin.Longitude)*radians*earth*Math.Cos(origin.Latitude*radians)),
+        var expected = new Vector3((float)((tree.Longitude.Value-origin.Longitude!.Value)*radians*earth*Math.Cos(origin.Latitude!.Value*radians)),
             (float)(tree.ElevationMeters.Value-origin.ElevationMeters),
-            (float)(-(tree.Latitude-origin.Latitude)*radians*earth));
+            (float)(-(tree.Latitude.Value-origin.Latitude!.Value)*radians*earth));
         NearVector(expected, localTree);
         var triangleCount = 0;
         foreach (var area in vegetation.Areas.Where(item => item.RenderGround))
@@ -2562,7 +2562,7 @@ var tests = new (string Name, Action Run)[]
     {
         var route=new VisualRoute(RouteCatalog.GetById("dunedin-one-way-oval-gardens")!);
         var origin=RouteCatalog.GetById("dunedin-one-way-oval-gardens")!.Points![0];
-        var mapped=BackgroundStreetGeometry.ConvertPoints(route,[new RouteBackgroundStreetPoint(origin.Latitude,origin.Longitude,origin.ElevationMeters)]);
+        var mapped=BackgroundStreetGeometry.ConvertPoints(route,[new RouteBackgroundStreetPoint(origin.Latitude!.Value,origin.Longitude!.Value,origin.ElevationMeters)]);
         if(mapped.Length!=1||mapped[0].Length()>0.001f)throw new Exception("Street coordinates do not share the route geographic origin.");
     }),
     ("bundled Dunedin side-street endpoints resolve to deterministic route junctions", () =>
@@ -2628,7 +2628,7 @@ var tests = new (string Name, Action Run)[]
         var routeDefinition = RouteCatalog.GetById("dunedin-one-way-oval-gardens")!;
         var visual = new VisualRoute(routeDefinition);
         var origin = routeDefinition.Points![0];
-        NearVector(Vector3.Zero, visual.GetPositionForCoordinate(origin.Latitude, origin.Longitude, origin.ElevationMeters));
+        NearVector(Vector3.Zero, visual.GetPositionForCoordinate(origin.Latitude!.Value, origin.Longitude!.Value, origin.ElevationMeters));
     }),
     ("terrain cell is cut out when a diagonal road crosses between unadjusted grid vertices", () =>
     {
@@ -2793,8 +2793,8 @@ var tests = new (string Name, Action Run)[]
         const string id="dunedin-one-way-oval-gardens";
         var definition=RouteCatalog.GetById(id)!;var route=new VisualRoute(definition);var origin=definition.Points![0];
         var street=new RouteBackgroundStreet(9,"test",null,"residential",false,6,"test",
-            [new RouteBackgroundStreetPoint(origin.Latitude-.00015,origin.Longitude,origin.ElevationMeters),
-             new RouteBackgroundStreetPoint(origin.Latitude-.00006,origin.Longitude,origin.ElevationMeters)],0,0);
+            [new RouteBackgroundStreetPoint(origin.Latitude!.Value-.00015,origin.Longitude!.Value,origin.ElevationMeters),
+             new RouteBackgroundStreetPoint(origin.Latitude!.Value-.00006,origin.Longitude!.Value,origin.ElevationMeters)],0,0);
         var corridors=BackgroundStreetGeometry.BuildTerrainCorridors(route,new RouteBackgroundStreetData(id,[street]));
         Equal(1,corridors.Length);
         var rendered=BackgroundStreetGeometry.ConnectRouteEnds(
@@ -2882,7 +2882,7 @@ var tests = new (string Name, Action Run)[]
         var minimumDistance = double.PositiveInfinity;
         foreach (var point in route.Points!)
         {
-            var p = Local(point.Latitude, point.Longitude);
+            var p = Local(point.Latitude!.Value, point.Longitude!.Value);
             var fraction = edge.LengthSquared() > 1e-8f
                 ? Math.Clamp(Vector2.Dot(p - a, edge) / edge.LengthSquared(), 0, 1) : 0;
             minimumDistance = Math.Min(minimumDistance, Vector2.Distance(p, a + edge * fraction));
