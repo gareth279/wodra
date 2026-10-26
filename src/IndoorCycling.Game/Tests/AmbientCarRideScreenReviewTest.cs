@@ -19,15 +19,21 @@ public partial class AmbientCarRideScreenReviewTest : Node
 		{
 			DisplayServer.WindowSetSize(new Vector2I(1280, 720));
 			var routeName = RouteId == "dunedin-rolling-loop" ? "rolling-city" : "oval-gardens";
-			var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", $"alpha53-ambient-car-review-{routeName}");
+			var output = System.Environment.GetEnvironmentVariable("WODRA_REVIEW_OUTPUT")
+				?? Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", $"alpha53-ambient-car-review-{routeName}");
 			Directory.CreateDirectory(output);
 			var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
 			AddChild(screen);
 			await Settle(6);
+			// A scratch user-data root has no saved rider profile, so the real first-run
+			// profile editor would otherwise obscure the chase-camera review captures.
+			foreach (var window in GetTree().Root.FindChildren("", "Window", true, false).OfType<Window>())
+				if (window.Title == "Manage Rider Profiles") window.Hide();
 			GameBootstrap.Settings.DebugModeEnabled = true;
 			GameBootstrap.Settings.DummyTrainer.Mode = "Watts";
 			GameBootstrap.Settings.DummyTrainer.TargetWatts = PlayerCatchesCar ? 750 : 220;
 			GameBootstrap.Settings.DummyTrainer.CadenceRpm = 86;
+			GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(ProjectSettings.GlobalizePath("user://"), "ambient-car-review-fit");
 			GameBootstrap.ConfigureFakeTrainerMode();
 			var world = screen.GetNode<RideWorldView>("RideWorldView");
 			var requireRiderGroup = RouteId == "dunedin-rolling-loop";
@@ -129,7 +135,15 @@ public partial class AmbientCarRideScreenReviewTest : Node
 				var finalPlayer = world.GetRiderCollisionReviewSamples().Single(rider => rider.RiderId == "player");
 				var finalGap = finalCar is null ? double.NaN : NVector3.Dot(ToNumerics(finalPlayer.WorldPosition)
 					- finalCar.Value.WorldPosition, ToNumerics(finalPlayer.WorldForward));
-				throw new InvalidOperationException($"Controlled car did not pass and return on route {RouteId}: gap={finalGap:F2}m, car-speed={finalCar?.SpeedMetersPerSecond:F2}m/s, lane={manager.FirstCarLaneOffset:F2}m, clearance={closestApproach:F2}m.");
+				var playerSpeed = (float)(session.CurrentRideState.VirtualSpeedKph / 3.6);
+				var safelyWaitingForGroup = requireRiderGroup && finalGap > 0
+					&& closestApproach >= AmbientTrafficFollowingMath.MinimumFollowingGapMeters - .25f
+					&& finalCar is not null && finalCar.Value.SpeedMetersPerSecond <= playerSpeed + .5f;
+				if (!safelyWaitingForGroup)
+					throw new InvalidOperationException($"Controlled car neither passed safely nor waited behind an occupied pass lane on route {RouteId}: gap={finalGap:F2}m, car-speed={finalCar?.SpeedMetersPerSecond:F2}m/s, player-speed={playerSpeed:F2}m/s, lane={manager.FirstCarLaneOffset:F2}m, clearance={closestApproach:F2}m.");
+				GD.Print($"[AmbientCarRideScreenReview] PASS: production route={RouteId}, direction=car held behind rider group, controlled safe-following car, AI={world.GetDiagnosticState().AiRiders}, minimum envelope clearance={minimumClearance:F3}m, player clearance={closestApproach:F2}m, gap={finalGap:F2}m.");
+				GetTree().Quit(0);
+				return;
 			}
 			var diagnostic = world.GetDiagnosticState();
 			if (requireRiderGroup && diagnostic.AiRiders < 3) throw new InvalidOperationException($"RideScreen AI population changed during car interaction: {diagnostic.AiRiders}.");

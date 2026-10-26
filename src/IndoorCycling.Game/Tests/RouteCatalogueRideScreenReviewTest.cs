@@ -161,6 +161,12 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				"Options window contains the moved Online Riding toggle");
 			Check(mediaToggle is not null && new AppSettings().InRideMediaControlsEnabled == false,
 				"pre-ride Options exposes optional Windows media controls, disabled by default");
+			var mediaHelp = options.FindChildren("", "Label", true, false).OfType<Label>()
+				.Select(label => label.Text).FirstOrDefault(text => text.Contains("active Windows media session", StringComparison.Ordinal));
+			Check(mediaToggle?.Text.Contains("Spotify", StringComparison.Ordinal) == true
+				&& mediaHelp is not null && mediaHelp.Contains("off by default", StringComparison.Ordinal)
+				&& mediaHelp.Contains("now-playing", StringComparison.Ordinal),
+				"media Options explicitly explains Spotify uses Windows media sessions and must be enabled for now-playing controls");
 			Check(gamingToggle?.ButtonPressed == GameFeaturesPreference.Enabled
 				&& onlineToggle?.ButtonPressed == GameBootstrap.Settings.OnlineRidingEnabled
 				&& mediaToggle?.ButtonPressed == GameBootstrap.Settings.InRideMediaControlsEnabled,
