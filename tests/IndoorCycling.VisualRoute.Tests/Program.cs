@@ -810,8 +810,11 @@ var tests = new (string Name, Action Run)[]
             if (carPosition > cyclistPosition)
                 throw new Exception($"Car overtook without lateral passing clearance at frame {frame}.");
         }
-        if (Math.Abs(carSpeed - cyclistSpeed) > .1 || cyclistPosition - carPosition > 12)
-            throw new Exception($"Car did not settle into a realistic follow gap: speed={carSpeed:F2}, gap={cyclistPosition - carPosition:F2}m.");
+        var followGap = cyclistPosition - carPosition;
+        var minimumHeadwayGap = AmbientTrafficFollowingMath.MinimumFollowingGapMeters
+            + AmbientTrafficFollowingMath.FollowingHeadwaySeconds * cyclistSpeed;
+        if (Math.Abs(carSpeed - cyclistSpeed) > .1 || followGap < minimumHeadwayGap || followGap > minimumHeadwayGap + 8)
+            throw new Exception($"Car did not settle into a realistic follow gap: speed={carSpeed:F2}, gap={followGap:F2}m, expected minimum={minimumHeadwayGap:F2}m.");
         var otherLane = AmbientTrafficFollowingMath.TargetSpeed(Vector3.Zero, Vector3.UnitX, 12,
             [new AmbientTrafficRider("adjacent-rider", new Vector3(10, 0, 4), Vector3.UnitX, 4)]);
         Near(12, otherLane);

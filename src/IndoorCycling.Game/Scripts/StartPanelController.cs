@@ -162,14 +162,14 @@ public partial class StartPanelController : Control
 			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; content.AddChild(_optionsOnlineToggle);
 			_onlineStatusLabel = new Label { Name = "OnlineStatusLabel", Text = "Online Riding: Off", AutowrapMode = TextServer.AutowrapMode.WordSmart };
 			ConfigureStartupStatusLabel(_onlineStatusLabel); content.AddChild(_onlineStatusLabel);
-			_optionsMediaControlsToggle = new CheckButton { Name = "MediaControlsToggle", Text = "In-ride media controls", ButtonPressed = GameBootstrap.Settings.InRideMediaControlsEnabled };
+			_optionsMediaControlsToggle = new CheckButton { Name = "MediaControlsToggle", Text = "In-ride media controls (Spotify and other Windows players)", ButtonPressed = GameBootstrap.Settings.InRideMediaControlsEnabled };
 			_optionsMediaControlsToggle.Toggled += enabled =>
 			{
 				GameBootstrap.Settings.InRideMediaControlsEnabled = enabled;
 				GameBootstrap.Settings.Save();
 			};
 			content.AddChild(_optionsMediaControlsToggle);
-			content.AddChild(new Label { Text = "Show and control the current Windows media session during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
 			content.AddChild(new HSeparator());
 			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
 			_optionsCompanionToggle = new CheckButton { Name = "CompanionEnabledToggle", Text = "Enable read-only phone companion", ButtonPressed = GameBootstrap.Settings.CompanionEnabled };

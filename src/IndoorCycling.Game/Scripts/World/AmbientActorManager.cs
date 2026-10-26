@@ -399,10 +399,19 @@ public partial class AmbientActorManager : Node3D
         return Math.Clamp(0, -halfTravelableWidth, halfTravelableWidth);
     }
 
-    private static float OvertakeLaneOffset(AmbientActorPath path) =>
-        Math.Clamp(Math.Sign(path.BaseLaneOffsetMeters) * .15f,
+    private static float OvertakeLaneOffset(AmbientActorPath path)
+    {
+        // Use the opposing-side lane centre. A center-line pass leaves the car inside
+        // the cyclist's lateral following corridor on some RideScreen routes, so its
+        // speed controller continues braking beside the rider instead of completing
+        // the manoeuvre. Existing swept-corridor checks still decide whether this
+        // lane is clear before the car commits.
+        var preferredOffset = path.BaseLaneOffsetMeters == 0
+            ? -1.7f : -MathF.Sign(path.BaseLaneOffsetMeters) * 1.7f;
+        return Math.Clamp(preferredOffset,
             (float)(-path.RoadWidthMeters * .5 + AmbientActorEnvelopeMath.CarWidthMeters * .5 + AmbientActorMath.RoadEdgeClearanceMeters),
             (float)(path.RoadWidthMeters * .5 - AmbientActorEnvelopeMath.CarWidthMeters * .5 - AmbientActorMath.RoadEdgeClearanceMeters));
+    }
 
     private static float ApproachLane(float current, float target, double deltaSeconds)
     {

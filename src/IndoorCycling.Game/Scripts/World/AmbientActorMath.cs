@@ -142,8 +142,8 @@ public static class AmbientTrafficFollowingMath
 {
     // Clearance is measured between model envelopes. This remains an extra surface gap,
     // rather than a center-to-center threshold that ignores vehicle and bicycle length.
-    public const float MinimumFollowingGapMeters = 1.2f;
-    public const float FollowingHeadwaySeconds = 1.5f;
+    public const float MinimumFollowingGapMeters = 4f;
+    public const float FollowingHeadwaySeconds = 2.5f;
     public const float MaximumBrakingMetersPerSecondSquared = 5f;
     public const float MaximumLateralMatchMeters = 1.55f;
     public const float MaximumFollowingLookAheadMeters = 55f;
@@ -180,7 +180,12 @@ public static class AmbientTrafficFollowingMath
             var gap = Math.Max(0, longitudinal - AmbientActorEnvelopeMath.CarLengthMeters * .5f
                 - rider.LengthMeters * .5f - MinimumFollowingGapMeters);
             var riderSpeed = Math.Max(0, rider.SpeedMetersPerSecond);
-            var headwaySpeed = riderSpeed + gap / FollowingHeadwaySeconds;
+            // `gap` is the model-envelope clearance left after the minimum buffer.
+            // A headway controller must converge to riderSpeed * headway of extra
+            // clearance. Adding riderSpeed here makes every positive gap look like
+            // permission to keep closing, so the old controller settled at the hard
+            // minimum and let the car tailgate the bicycle.
+            var headwaySpeed = gap / FollowingHeadwaySeconds;
             var brakingSpeed = MathF.Sqrt(riderSpeed * riderSpeed
                 + 2 * MaximumBrakingMetersPerSecondSquared * gap);
             target = Math.Min(target, Math.Min(headwaySpeed, brakingSpeed));
@@ -217,7 +222,7 @@ public static class AmbientTrafficFollowingMath
                 if (Vector3.Dot(HorizontalUnit(carHeading), HorizontalUnit(obstaclePose.Forward)) > .55f)
                 {
                     var freeGap = Math.Max(0, conflictDistance - obstacle.LengthMeters * .5f - MinimumFollowingGapMeters);
-                    var followingCap = obstacle.SpeedMetersPerSecond + freeGap / FollowingHeadwaySeconds;
+                    var followingCap = freeGap / FollowingHeadwaySeconds;
                     var brakingCap = MathF.Sqrt(obstacle.SpeedMetersPerSecond * obstacle.SpeedMetersPerSecond
                         + 2 * MaximumBrakingMetersPerSecondSquared * freeGap);
                     target = Math.Min(target, Math.Min(followingCap, brakingCap));
