@@ -82,6 +82,8 @@ jobs:
           if ($startupOutput -match 'Main scene''s path could not be resolved|Cannot instantiate C# script|SCRIPT ERROR:') {
             throw 'Godot headless startup reported project or C# script-loading errors.'
           }
+          & .\tools\RunCompanionTraceInvariance.ps1 -GodotPath $env:GODOT_PATH -KeepTestData
+          if ($LASTEXITCODE -ne 0) { throw 'Companion enabled/disabled isolated trace regression failed.' }
           $connectionLog = "$env:RUNNER_TEMP\wodra-device-connection-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/DeviceConnectionAutomationReviewTest.tscn --log-file $connectionLog
           if ($LASTEXITCODE -ne 0) { throw 'Production device connection automation scene test failed.' }
