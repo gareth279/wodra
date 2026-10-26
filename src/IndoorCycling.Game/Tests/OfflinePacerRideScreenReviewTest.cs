@@ -407,10 +407,10 @@ public partial class OfflinePacerRideScreenReviewTest : Node
 	{
 		var hud = screen.GetNode<HudController>("HudController");
 		var pacer = hud.GetNode<Control>("OfflinePacerPanel");
-		var bar = hud.GetNode<Control>("BottomBar");
-		var pause = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
-		var recording = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
-		var menu = hud.GetNode<Control>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
+		var bar = hud.GetNode<Control>("BottomHudLane/BottomBar");
+		var pause = hud.GetNode<Control>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
+		var recording = hud.GetNode<Control>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
+		var menu = hud.GetNode<Control>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/MenuButton");
 		var viewport = hud.GetViewportRect();
 		AssertInside(bar.GetGlobalRect(), viewport.Size, $"action bar ({context})");
 		if (bar.Size.X > 400 || pause.Size.X < 72 || pause.Size.Y < 36 || menu.Size.X < 72 || menu.Size.Y < 36)

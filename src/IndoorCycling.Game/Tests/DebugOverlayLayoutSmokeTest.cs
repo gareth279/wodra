@@ -221,9 +221,9 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 	{
 		var debug = hud.GetNode<PanelContainer>("DebugRideOverlay");
 		var actions = hud.GetNode<Control>("DebugRideOverlay/DebugLayout/DebugControls");
-		var pause = hud.GetNode<Button>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
-		var menu = hud.GetNode<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
-		var bottomBar = hud.GetNode<Control>("BottomBar");
+		var pause = hud.GetNode<Button>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
+		var menu = hud.GetNode<Button>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/MenuButton");
+		var bottomBar = hud.GetNode<Control>("BottomHudLane/BottomBar");
 		var scroll = hud.GetNode<ScrollContainer>("DebugRideOverlay/DebugLayout/DebugDetailsScroll");
 		CheckInside(debug.GetGlobalRect(), size, "debug panel", riderCount, dummyMode, insetVisible);
 		CheckInside(actions.GetGlobalRect(), size, "debug actions", riderCount, dummyMode, insetVisible);
@@ -233,7 +233,7 @@ public partial class DebugOverlayLayoutSmokeTest : Node
 			scroll.GetGlobalRect().End.Y > actions.GetGlobalRect().Position.Y + .5f)
 			_failures.Add($"Debug content or sticky actions overlap at {size}, riders={riderCount}.");
 		if (insetVisible) CheckInside(inset.GetGlobalRect(), size, "route inset", riderCount, dummyMode, insetVisible);
-		var recording = hud.GetNode<Label>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
+		var recording = hud.GetNode<Label>("BottomHudLane/BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
 		if (!recording.Visible) _failures.Add($"Recording status is not accessible at {size}.");
 		foreach (var action in hud.GetNode("DebugRideOverlay/DebugLayout/DebugControls").FindChildren("*", "Button", true, false).Cast<Button>())
 			if (action.Disabled || action.MouseFilter == Control.MouseFilterEnum.Ignore)

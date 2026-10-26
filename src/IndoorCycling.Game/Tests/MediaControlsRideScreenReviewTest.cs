@@ -118,7 +118,7 @@ public partial class MediaControlsRideScreenReviewTest : Node
 			await Until(() => world.IsVisibleInTree() && world.RouteGeometry is not null, "production road scene to load");
 			world.SetProcess(false);
 			hud.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
-			await Until(() => hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree(), "mock media session to appear");
+			await Until(() => hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "mock media session to appear");
 			AssertMediaLayout(screen, "1280x720 debug hidden");
 			Check(Find<Label>(hud, "MediaTitle").Text == "A Long Ride Home", "current media session title is displayed");
 			Check(Find<Label>(hud, "MediaArtist").Text.Contains("Wodra Test Artist") && Find<Label>(hud, "MediaArtist").Text.Contains("Playing"),
@@ -162,27 +162,33 @@ public partial class MediaControlsRideScreenReviewTest : Node
 				await Until(() => Find<Label>(hud, "MediaTitle").Text == "Media session", "missing metadata fallback");
 				Check(Find<Label>(hud, "MediaArtist").Text == "Ready", "missing title and artist use a compact fallback without stale text");
 				_provider.Set(SystemMediaSessionSnapshot.Unavailable);
-				await Until(() => !hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
+				await Until(() => !hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
 					"closed player clears the panel and metadata");
 				_provider.Set(new SystemMediaSessionSnapshot(true, "Recovered", "Player", SystemMediaPlaybackState.Paused, true, false, false, false));
-				await Until(() => hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree(), "session switching restores panel");
+				await Until(() => hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "session switching restores panel");
 				_provider.FailReads = true;
-				await Until(() => !hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree(), "failed media API hides stale metadata");
+				await Until(() => !hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "failed media API hides stale metadata");
 				_provider.FailReads = false;
-				await Until(() => hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree(), "media API recovery restores panel");
+				await Until(() => hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "media API recovery restores panel");
 				GameBootstrap.Settings.InRideMediaControlsEnabled = false;
 				GameBootstrap.Settings.Save();
 				await Frames(3);
-				Check(!hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
+				Check(!hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
 					"turning the optional preference off immediately clears the in-ride panel");
 				GameBootstrap.Settings.InRideMediaControlsEnabled = true;
 				GameBootstrap.Settings.Save();
-				await Until(() => hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree(), "re-enabled preference restores current media");
+				await Until(() => hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "re-enabled preference restores current media");
 			}
 
 			hud.SetDebugDisplayEnabled(true);
 			hud.SetDebugMode(true);
-			foreach (var (name, size) in new[] { ("minimum", new Vector2I(960, 540)), ("default", new Vector2I(1280, 720)) })
+			foreach (var (name, size) in new[]
+			{
+				("minimum", new Vector2I(960, 540)),
+				("1280x720", new Vector2I(1280, 720)),
+				("1920x1080", new Vector2I(1920, 1080)),
+				("2560x1440", new Vector2I(2560, 1440))
+			})
 			{
 				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
 				DisplayServer.WindowSetSize(size);
@@ -207,7 +213,7 @@ public partial class MediaControlsRideScreenReviewTest : Node
 				await VerifyActualWindowsSessionAsync(screen, session, hud, world);
 			await session.ExitToRouteSelectionAsync();
 			await Frames(2);
-			Check(!hud.GetNode<Control>("MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
+			Check(!hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree() && Find<Label>(hud, "MediaTitle").Text.Length == 0,
 				"leaving the ride clears the media panel and cached text");
 			RestoreSettings();
 			GD.Print($"[MediaControlsRideScreenReview] PASS: {_assertions} assertions; mock production RideScreen; actual Windows session exercised={actualSession}; screenshots={_output}");
@@ -223,7 +229,7 @@ public partial class MediaControlsRideScreenReviewTest : Node
 
 	private async Task VerifyActualWindowsSessionAsync(Node screen, RideSessionNode session, HudController hud, RideWorldView world)
 	{
-		var panel = hud.GetNode<Control>("MediaControlsPanel");
+		var panel = hud.GetNode<Control>("BottomHudLane/MediaControlsPanel");
 		hud.MediaSessionProviderOverride = null;
 		await Until(() => panel.IsVisibleInTree(), "real Windows media session");
 		var title = Find<Label>(hud, "MediaTitle").TooltipText;
@@ -239,13 +245,25 @@ public partial class MediaControlsRideScreenReviewTest : Node
 	private void AssertMediaLayout(Node screen, string context)
 	{
 		var hud = screen.GetNode<HudController>("HudController");
-		var media = hud.GetNode<Control>("MediaControlsPanel");
+		var media = hud.GetNode<Control>("BottomHudLane/MediaControlsPanel");
+		var lane = hud.GetNode<HBoxContainer>("BottomHudLane");
+		var bar = hud.GetNode<Control>("BottomHudLane/BottomBar");
 		if (!media.IsVisibleInTree()) throw new InvalidOperationException($"Media panel is not visible for layout review at {context}.");
 		var viewport = hud.GetViewportRect();
 		var rect = media.GetGlobalRect();
 		if (rect.Position.X < 0 || rect.Position.Y < 0 || rect.End.X > viewport.Size.X || rect.End.Y > viewport.Size.Y)
 			throw new InvalidOperationException($"Media panel is outside the viewport at {context}: {rect}, viewport={viewport.Size}.");
-		foreach (var name in new[] { "OfflinePacerPanel", "BottomBar", "RouteGradientInset", "DummyControlPanel", "TopHudPanel", "AchievementNotification", "DebugRideOverlay" })
+		var laneRect = lane.GetGlobalRect();
+		var barRect = bar.GetGlobalRect();
+		if (laneRect.Position.X < 0 || laneRect.Position.Y < 0 || laneRect.End.X > viewport.Size.X || laneRect.End.Y > viewport.Size.Y)
+			throw new InvalidOperationException($"Bottom HUD lane is outside the viewport at {context}: {laneRect}, viewport={viewport.Size}.");
+		if (rect.Position.X < barRect.End.X + RideHudOverlayLayoutPolicy.PanelGap - 1 ||
+			Math.Abs(rect.End.Y - barRect.End.Y) > 1)
+			throw new InvalidOperationException($"Media panel is not immediately to the right of the content-sized action bar at {context}: media={rect}, bar={barRect}.");
+		var barMinimum = bar.GetCombinedMinimumSize();
+		if (Math.Abs(bar.Size.X - barMinimum.X) > 1)
+			throw new InvalidOperationException($"Action bar is not sized to its contents at {context}: bar={bar.Size}, minimum={barMinimum}.");
+		foreach (var name in new[] { "OfflinePacerPanel", "BottomHudLane/BottomBar", "RouteGradientInset", "DummyControlPanel", "TopHudPanel", "AchievementNotification", "DebugRideOverlay" })
 		{
 			var other = hud.GetNodeOrNull<Control>(name);
 			if (other?.IsVisibleInTree() == true && rect.Intersects(other.GetGlobalRect()))
@@ -254,7 +272,7 @@ public partial class MediaControlsRideScreenReviewTest : Node
 		var toast = hud.GetNodeOrNull<Control>("AchievementNotification");
 		if (toast?.IsVisibleInTree() == true)
 		{
-			foreach (var name in new[] { "OfflinePacerPanel", "BottomBar", "RouteGradientInset", "DummyControlPanel", "DebugRideOverlay" })
+			foreach (var name in new[] { "OfflinePacerPanel", "BottomHudLane/BottomBar", "RouteGradientInset", "DummyControlPanel", "DebugRideOverlay" })
 			{
 				var other = hud.GetNodeOrNull<Control>(name);
 				if (other?.IsVisibleInTree() == true && toast.GetGlobalRect().Intersects(other.GetGlobalRect()))

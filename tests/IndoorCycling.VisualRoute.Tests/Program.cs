@@ -148,7 +148,7 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"Dummy controls escape the viewport at {width}x{height}.");
         }
     }),
-    ("optional media controls fit between the existing ride surfaces", () =>
+    ("optional media controls reserve a clear bottom lane beside the content-sized action bar", () =>
     {
         foreach (var (width, height) in new[] { (960f, 540f), (1152f, 648f), (1366f, 768f), (1920f, 1080f) })
         foreach (var debug in new[] { false, true })
@@ -159,16 +159,22 @@ var tests = new (string Name, Action Run)[]
                 pacer, 330, 78, dummy, 190, 52, true,
                 RideHudOverlayLayoutPolicy.MediaPanelMinimumWidth,
                 RideHudOverlayLayoutPolicy.MediaPanelHeight, debug);
-            var media = layout.MediaPanel;
-            if (media.Width < RideHudOverlayLayoutPolicy.MediaPanelMinimumWidth - .5f ||
-                media.X < 0 || media.Y < 0 || media.Right > width || media.Bottom > height)
-                throw new Exception($"Media panel was clipped or compressed below its controls at {width}x{height} (debug={debug}, pacer={pacer}, dummy={dummy}): {media}.");
             static bool Overlap(RideHudOverlayBounds a, RideHudOverlayBounds b) =>
                 a.X < b.Right && a.Right > b.X && a.Y < b.Bottom && a.Bottom > b.Y;
+            if (layout.BottomBar.X < RideHudOverlayLayoutPolicy.ViewportMargin ||
+                layout.BottomBar.Bottom > height - RideHudOverlayLayoutPolicy.BottomPanelMargin + .5f)
+                throw new Exception($"Action bar escaped the bottom-left HUD lane at {width}x{height}.");
+            var media = new RideHudOverlayBounds(layout.BottomBar.Right + RideHudOverlayLayoutPolicy.PanelGap,
+                height - RideHudOverlayLayoutPolicy.BottomPanelMargin - RideHudOverlayLayoutPolicy.MediaPanelHeight,
+                RideHudOverlayLayoutPolicy.MediaPanelMinimumWidth,
+                RideHudOverlayLayoutPolicy.MediaPanelHeight);
+            if (media.X < 0 || media.Right > width - RideHudOverlayLayoutPolicy.ViewportMargin ||
+                media.Bottom > height - RideHudOverlayLayoutPolicy.BottomPanelMargin + .5f)
+                throw new Exception($"Media controls do not fit in the bottom lane at {width}x{height} (debug={debug}, pacer={pacer}, dummy={dummy}).");
             if (Overlap(media, layout.BottomBar) || (pacer && Overlap(media, layout.PacerPanel)) ||
                 (dummy && Overlap(media, layout.DummyPanel)) || (debug && Overlap(media, layout.DebugPanel)) ||
-                (Overlap(media, layout.RouteInset)))
-                throw new Exception($"Media panel overlaps an existing HUD surface at {width}x{height} (debug={debug}, pacer={pacer}, dummy={dummy}): {media}.");
+                Overlap(media, layout.RouteInset))
+                throw new Exception($"Media controls overlap an existing HUD surface at {width}x{height} (debug={debug}, pacer={pacer}, dummy={dummy}).");
         }
     }),
     ("repeated physical road ribbons emit one surface while crossings and parallel roads remain separate", () =>
