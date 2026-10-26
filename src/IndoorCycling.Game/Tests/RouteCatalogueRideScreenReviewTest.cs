@@ -152,9 +152,9 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				.Single(button => button.Text == "Options").EmitSignal(BaseButton.SignalName.Pressed);
 			await Frames(8);
 			var options = ride.GetNode<Window>("OptionsWindow");
-			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggle");
-			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineRidingToggle");
-			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggle");
+			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggleRow/GameFeaturesToggle");
+			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineRidingToggleRow/OnlineRidingToggle");
+			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggleRow/MediaControlsToggle");
 			Check(gamingToggle is not null,
 				"Options window contains the moved gaming toggle");
 			Check(onlineToggle is not null,
@@ -163,7 +163,8 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				"pre-ride Options exposes optional Windows media controls, disabled by default");
 			var mediaHelp = options.FindChildren("", "Label", true, false).OfType<Label>()
 				.Select(label => label.Text).FirstOrDefault(text => text.Contains("active Windows media session", StringComparison.Ordinal));
-			Check(mediaToggle?.Text.Contains("Spotify", StringComparison.Ordinal) == true
+			var mediaLabel = options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggleRow/MediaControlsToggleLabel");
+			Check(mediaLabel.Text.Contains("Spotify", StringComparison.Ordinal)
 				&& mediaHelp is not null && mediaHelp.Contains("off by default", StringComparison.Ordinal)
 				&& mediaHelp.Contains("now-playing", StringComparison.Ordinal),
 				"media Options explicitly explains Spotify uses Windows media sessions and must be enabled for now-playing controls");
@@ -171,6 +172,15 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 				&& onlineToggle?.ButtonPressed == GameBootstrap.Settings.OnlineRidingEnabled
 				&& mediaToggle?.ButtonPressed == GameBootstrap.Settings.InRideMediaControlsEnabled,
 				"Options initializes from saved settings without changing their values");
+			foreach (var (name, expected) in new[]
+			{
+				("GameFeaturesToggleLabel", "Game features"),
+				("OnlineRidingToggleLabel", "Online Riding"),
+				("MediaControlsToggleLabel", "In-ride media controls (Spotify and other Windows players)"),
+				("CompanionEnabledToggleLabel", "Enable read-only phone companion")
+			})
+				Check(options.GetNode<Label>($"OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/{name.Replace("ToggleLabel", "ToggleRow")}/{name}").Text == expected,
+					$"Options exposes the {expected} setting label separately from its toggle");
 			var aboutBuildInformation = options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/AboutBuildInformation");
 			var expectedBuildInformation = BuildIdentity.Current.ToPlainText();
 			Check(aboutBuildInformation.Text == expectedBuildInformation &&
@@ -195,31 +205,71 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			mediaToggle.ButtonPressed = previousMediaPreference;
 			mediaToggle.EmitSignal(CheckButton.SignalName.Toggled, mediaToggle.ButtonPressed);
 			await Frames(3);
-			if (!IsHeadless)
+			var optionsScroll = options.GetNode<ScrollContainer>("OptionsMargin/OptionsLayout/OptionsScroll");
+			var doneButton = options.GetNode<Button>("OptionsMargin/OptionsLayout/DoneButton");
+			var settingLabels = new Control[]
 			{
-				var optionsScroll = options.GetNode<ScrollContainer>("OptionsMargin/OptionsLayout/OptionsScroll");
-				foreach (var (size, label) in new[] { (new Vector2I(960, 540), "minimum"), (new Vector2I(1152, 648), "default") })
+				options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggleRow/GameFeaturesToggleLabel"),
+				options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineRidingToggleRow/OnlineRidingToggleLabel"),
+				options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggleRow/MediaControlsToggleLabel"),
+				options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/CompanionEnabledToggleRow/CompanionEnabledToggleLabel"),
+				options.GetNode<Label>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineStatusLabel")
+			};
+			foreach (var (size, label) in new[]
+			{
+				(new Vector2I(1280, 720), "1280x720"),
+				(new Vector2I(1920, 1080), "1920x1080"),
+				(new Vector2I(2560, 1440), "2560x1440")
+			})
+			{
+				options.Size = StartPanelController.CalculateOptionsWindowSize(size);
+				await Frames(6);
+				var expected = StartPanelController.CalculateOptionsWindowSize(size);
+				Check(options.Size == expected,
+					$"Options window responds to the {label} viewport size (requested={size}, window={options.Size}, expected={expected})");
+				optionsScroll.ScrollVertical = 0;
+				await Frames(3);
+				Check(options.Size.Y <= size.Y - 24,
+					$"Options About panel fits the {label} window height");
+				foreach (var control in new Control[] { gamingToggle!, onlineToggle!, mediaToggle!, doneButton,
+					options.GetNode<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/CompanionEnabledToggleRow/CompanionEnabledToggle"),
+				})
 				{
-					DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
-					DisplayServer.WindowSetSize(size);
-					await Frames(6);
-					optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
-					await Frames(3);
-					Check(options.Size.Y <= size.Y - 24,
-						$"Options About panel fits the {label} window height");
-					Capture(options, $"options-about-{label}.png");
-					optionsScroll.ScrollVertical = 0;
-					await Frames(3);
-					Capture(options, $"options-{label}.png");
+					var rect = control.GetGlobalRect();
+					Check(rect.Size.X > 0 && rect.Size.Y > 0 && rect.Position.X >= 0
+						&& rect.End.X <= options.GetVisibleRect().Size.X
+						&& rect.Position.Y >= 0 && rect.End.Y <= options.GetVisibleRect().Size.Y,
+						$"{control.Name} remains inside the {label} Options window");
 				}
-				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
-				await Frames(8);
+				foreach (var control in settingLabels)
+				{
+					var labelControl = (Label)control;
+					var rect = control.GetGlobalRect();
+					Check(rect.Size.X > 0 && rect.Size.Y > 0 && rect.Position.X >= 0
+						&& rect.End.X <= options.GetVisibleRect().Size.X
+						&& rect.Position.Y >= 0 && rect.End.Y <= options.GetVisibleRect().Size.Y
+						&& !labelControl.ClipText && labelControl.AutowrapMode != TextServer.AutowrapMode.Off,
+						$"{control.Name} remains visible without horizontal clipping at {label}");
+				}
+				if (!IsHeadless) Capture(options, $"options-{label}.png");
 				optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
 				await Frames(3);
-				Capture(options, "options-about-fullscreen.png");
-				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+				var aboutRect = copyBuildInformation.GetGlobalRect();
+				var doneRect = doneButton.GetGlobalRect();
+				Check(aboutRect.Position.X >= 0 && aboutRect.End.X <= options.GetVisibleRect().Size.X
+					&& aboutRect.Position.Y >= 0 && aboutRect.End.Y <= options.GetVisibleRect().Size.Y,
+					$"About action remains inside the {label} Options window when scrolled into view");
+				Check(doneRect.Size.Y > 0 && doneRect.Position.Y >= 0 && doneRect.End.Y <= options.GetVisibleRect().Size.Y,
+					$"Done button stays visible while About is scrolled into view ({doneRect})");
+				if (!IsHeadless) Capture(options, $"options-about-{label}.png");
 			}
 			var pacerBefore = GameBootstrap.Settings.PacerPresetId;
+			options.GetNode<Button>("OptionsMargin/OptionsLayout/DoneButton").EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(6);
+			Check(selector.IsVisibleInTree(), "Options Done button returns to route selection");
+			selector.FindChildren("", "Button", true, false).OfType<Button>()
+				.Single(button => button.Text == "Options").EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(6);
 			options.EmitSignal(Window.SignalName.CloseRequested);
 			await Frames(6);
 			Check(selector.IsVisibleInTree() && selector.SelectedRouteId == selectedId,

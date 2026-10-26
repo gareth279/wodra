@@ -87,6 +87,7 @@ public partial class StartPanelController : Control
 		BuildLocalSettingsUi();
 		_startupPanel = GetNodeOrNull<PanelContainer>("PanelContainer");
 		Resized += FitStartupPanel;
+		Resized += ResizeOptionsWindow;
 		FitStartupPanel();
 		_ = RefreshProfilesAsync(openCreateProfileWhenEmpty: true);
 		_debugModeCheckButton = GetNode<CheckButton>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/DebugModeCheckButton");
@@ -136,7 +137,7 @@ public partial class StartPanelController : Control
 		_optionsReturnToWorkouts = returnToWorkouts;
 		if (_optionsWindow is null)
 		{
-			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", Size = new Vector2I(460, 500), MinSize = new Vector2I(400, 460), Exclusive = true };
+			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", MinSize = new Vector2I(440, 400), Exclusive = true };
 			var margin = new MarginContainer { Name = "OptionsMargin" };
 			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 12), ("margin_bottom", 12) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
 			margin.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -155,24 +156,24 @@ public partial class StartPanelController : Control
 			var content = new VBoxContainer { Name = "OptionsContent", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			content.AddThemeConstantOverride("separation", 6);
 			optionsScroll.AddChild(content);
-			_optionsGameFeaturesToggle = new CheckButton { Name = "GameFeaturesToggle", Text = "Game features", ButtonPressed = GameFeaturesPreference.Enabled };
-			_optionsGameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled); content.AddChild(_optionsGameFeaturesToggle);
-			content.AddChild(new Label { Text = CollectibleUiText.HelperText, AutowrapMode = TextServer.AutowrapMode.WordSmart });
-			_optionsOnlineToggle = new CheckButton { Name = "OnlineRidingToggle", Text = "Online Riding", ButtonPressed = GameBootstrap.Settings.OnlineRidingEnabled };
-			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled; content.AddChild(_optionsOnlineToggle);
+			_optionsGameFeaturesToggle = AddOptionsSetting(content, "GameFeaturesToggle", "Game features", "Enabled", GameFeaturesPreference.Enabled);
+			_optionsGameFeaturesToggle.Toggled += enabled => GameFeaturesPreference.Set(enabled);
+			content.AddChild(new Label { Text = CollectibleUiText.HelperText, AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+			_optionsOnlineToggle = AddOptionsSetting(content, "OnlineRidingToggle", "Online Riding", "Enabled", GameBootstrap.Settings.OnlineRidingEnabled);
+			_optionsOnlineToggle.Toggled += OnOnlineRidingToggled;
 			_onlineStatusLabel = new Label { Name = "OnlineStatusLabel", Text = "Online Riding: Off", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-			ConfigureStartupStatusLabel(_onlineStatusLabel); content.AddChild(_onlineStatusLabel);
-			_optionsMediaControlsToggle = new CheckButton { Name = "MediaControlsToggle", Text = "In-ride media controls (Spotify and other Windows players)", ButtonPressed = GameBootstrap.Settings.InRideMediaControlsEnabled };
+			ConfigureStartupStatusLabel(_onlineStatusLabel, clipText: false); content.AddChild(_onlineStatusLabel);
+			_optionsMediaControlsToggle = AddOptionsSetting(content, "MediaControlsToggle", "In-ride media controls (Spotify and other Windows players)", "Enabled", GameBootstrap.Settings.InRideMediaControlsEnabled);
 			_optionsMediaControlsToggle.Toggled += enabled =>
 			{
 				GameBootstrap.Settings.InRideMediaControlsEnabled = enabled;
 				GameBootstrap.Settings.Save();
 			};
 			content.AddChild(_optionsMediaControlsToggle);
-			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
 			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
-			_optionsCompanionToggle = new CheckButton { Name = "CompanionEnabledToggle", Text = "Enable read-only phone companion", ButtonPressed = GameBootstrap.Settings.CompanionEnabled };
+			_optionsCompanionToggle = AddOptionsSetting(content, "CompanionEnabledToggle", "Enable read-only phone companion", "Enabled", GameBootstrap.Settings.CompanionEnabled);
 			_optionsCompanionToggle.Toggled += enabled =>
 			{
 				GameBootstrap.Settings.CompanionEnabled = enabled;
@@ -209,7 +210,7 @@ public partial class StartPanelController : Control
 			_optionsCompanionControls.AddChild(approvalRow);
 			_optionsCompanionUrl.TextSubmitted += _ => SaveCompanionUrl();
 			_optionsCompanionUrl.FocusExited += SaveCompanionUrl;
-			content.AddChild(new Label { Text = "Pairing uses a temporary code. Ride data is shared only after desktop approval.", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			content.AddChild(new Label { Text = "Pairing uses a temporary code. Ride data is shared only after desktop approval.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
@@ -221,17 +222,18 @@ public partial class StartPanelController : Control
 			};
 			_aboutBuildInformation.AddThemeFontSizeOverride("font_size", 12);
 			content.AddChild(_aboutBuildInformation);
-			var aboutActions = new HBoxContainer { Name = "AboutActions" }; content.AddChild(aboutActions);
-			var copyBuildInformation = new Button { Name = "CopyBuildInformationButton", Text = "Copy build information" };
+			var aboutActions = new VBoxContainer { Name = "AboutActions", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; content.AddChild(aboutActions);
+			var copyBuildInformation = new Button { Name = "CopyBuildInformationButton", Text = "Copy build information", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			copyBuildInformation.Pressed += CopyBuildInformation;
 			aboutActions.AddChild(copyBuildInformation);
 			_aboutCopyStatus = new Label { Name = "BuildInformationCopyStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			_aboutCopyStatus.AddThemeFontSizeOverride("font_size", 12);
 			aboutActions.AddChild(_aboutCopyStatus);
-			var close = new Button { Text = "Done", CustomMinimumSize = new Vector2(0, 40) }; close.Pressed += CloseOptions; column.AddChild(close);
+			var close = new Button { Name = "DoneButton", Text = "Done", CustomMinimumSize = new Vector2(0, 40) }; close.Pressed += CloseOptions; column.AddChild(close);
 			_optionsWindow.CloseRequested += CloseOptions;
 			GetParent().AddChild(_optionsWindow);
 		}
+		ResizeOptionsWindow();
 		_optionsGameFeaturesToggle!.SetPressedNoSignal(GameFeaturesPreference.Enabled);
 		_optionsOnlineToggle!.SetPressedNoSignal(GameBootstrap.Settings.OnlineRidingEnabled);
 		_optionsMediaControlsToggle!.SetPressedNoSignal(GameBootstrap.Settings.InRideMediaControlsEnabled);
@@ -244,6 +246,32 @@ public partial class StartPanelController : Control
 		_optionsWindow.PopupCentered();
 		UpdateCompanionUi();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
+	}
+
+	private static CheckButton AddOptionsSetting(VBoxContainer content, string name, string label, string buttonText, bool pressed)
+	{
+		var row = new HBoxContainer { Name = $"{name}Row", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var settingLabel = new Label { Name = $"{name}Label", Text = label, AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center };
+		var toggle = new CheckButton { Name = name, Text = buttonText, ButtonPressed = pressed,
+			SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd, TooltipText = label };
+		row.AddChild(settingLabel);
+		row.AddChild(toggle);
+		content.AddChild(row);
+		return toggle;
+	}
+
+	private void ResizeOptionsWindow()
+	{
+		if (_optionsWindow is null || !IsInsideTree()) return;
+		_optionsWindow.Size = CalculateOptionsWindowSize(GetViewportRect().Size);
+	}
+
+	internal static Vector2I CalculateOptionsWindowSize(Vector2 viewport)
+	{
+		var width = Math.Max(720, Math.Min(1120, (int)(viewport.X * 0.64f)));
+		var height = Math.Max(400, Math.Min(720, (int)viewport.Y - 48));
+		return new Vector2I(width, height);
 	}
 
 	private void CopyBuildInformation()
@@ -342,12 +370,12 @@ public partial class StartPanelController : Control
 		Uri.TryCreate(GameBootstrap.Settings.CompanionRelayBaseUrl, UriKind.Absolute, out var uri) &&
 		(uri.Scheme == Uri.UriSchemeHttps || (GameBootstrap.DebugModeEnabled && uri.IsLoopback && uri.Scheme == Uri.UriSchemeHttp));
 
-	private static void ConfigureStartupStatusLabel(Label? label)
+	private static void ConfigureStartupStatusLabel(Label? label, bool clipText = true)
 	{
 		if (label is null) return;
 		label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 		label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-		label.ClipText = true;
+		label.ClipText = clipText;
 		label.AddThemeFontSizeOverride("font_size", 14);
 		label.Modulate = new Color(0.78f, 0.78f, 0.72f, 0.9f);
 	}
