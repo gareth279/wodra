@@ -46,6 +46,7 @@ public partial class HudController : Control
 	private string _nearbyHumanRidersText = "";
 	private Control? _topHudPanel;
 	private Control? _bottomHudPanel;
+	private HBoxContainer? _bottomHudLane;
 	private Rect2? _cameraSafeViewportRect;
 	private int _cameraSafeViewportLayoutHash;
 	private RouteGradientInset? _routeGradientInset;
@@ -151,6 +152,7 @@ public partial class HudController : Control
 		_modeLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/ModeLabel");
 		_topHudPanel = GetNodeOrNull<Control>("TopHudPanel");
 		_bottomHudPanel = GetNodeOrNull<Control>("BottomBar");
+		BuildBottomHudLane();
 		_statusLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/StatusLabel");
 		_powerLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/PowerMetric/Value");
 		_cadenceLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/PrimaryMetrics/CadenceMetric/Value");
@@ -226,9 +228,9 @@ public partial class HudController : Control
 		ConfigureClippedLabel(_dummySummary);
 		ConnectDummyControls();
 
-		_menuButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/MenuButton");
-		_pauseRideButton = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/PauseRideButton");
-		_recordingIndicator = GetNodeOrNull<Label>("BottomBar/MarginContainer/HBoxContainer/RecordingIndicator");
+		_menuButton = _bottomHudPanel?.GetNodeOrNull<Button>("MarginContainer/HBoxContainer/MenuButton");
+		_pauseRideButton = _bottomHudPanel?.GetNodeOrNull<Button>("MarginContainer/HBoxContainer/PauseRideButton");
+		_recordingIndicator = _bottomHudPanel?.GetNodeOrNull<Label>("MarginContainer/HBoxContainer/RecordingIndicator");
 		_rideMenuPanel = GetNodeOrNull<RideMenuPanelController>("../RideMenuPanel");
 		_rideSessionNode = GetNodeOrNull<RideSessionNode>("../RideSessionNode");
 		_rideWorldView = GetNodeOrNull<RideWorldView>("../RideWorldView");
@@ -847,10 +849,8 @@ public partial class HudController : Control
 				_topHudPanel.Size = new Vector2(_topHudPanel.Size.X, minimum.Y);
 			if (_topHudPanel.Visible) topHudBottom = _topHudPanel.Position.Y + _topHudPanel.Size.Y;
 		}
-		ResizeBottomBar();
+		ResizeBottomHudLane();
 		if (_pacerPanel is not null) _pacerPanel.Size = _pacerPanel.GetCombinedMinimumSize();
-		if (_bottomHudPanel is not null) _bottomHudPanel.Size = _bottomHudPanel.GetCombinedMinimumSize();
-		if (_mediaPanel is not null) _mediaPanel.Size = _mediaPanel.GetCombinedMinimumSize();
 		var layout = RideHudOverlayLayoutPolicy.ForViewport(viewport.X, viewport.Y,
 			_routeGradientInset?.Visible == true,
 			_pacerPanel?.Visible == true,
@@ -867,8 +867,6 @@ public partial class HudController : Control
 		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
 		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
 		if (_pacerPanel?.Visible == true) SetAnchoredBounds(_pacerPanel, layout.PacerPanel);
-		SetAnchoredBounds(_bottomHudPanel, layout.BottomBar);
-		if (_mediaPanel?.Visible == true) SetAnchoredBounds(_mediaPanel, layout.MediaPanel);
 		PositionAchievementToast(viewport, layout);
 	}
 
@@ -886,11 +884,7 @@ public partial class HudController : Control
 			left = MathF.Max(RideHudOverlayLayoutPolicy.ViewportMargin, (viewport.X - toastWidth) / 2);
 		var top = viewport.Y - 166;
 		var toast = new RideHudOverlayBounds(left, top, MathF.Min(toastWidth, viewport.X - left - RideHudOverlayLayoutPolicy.ViewportMargin), toastHeight);
-		foreach (var reserved in new[]
-		{
-			_mediaPanel?.Visible == true ? layout.MediaPanel : default,
-			_dummyControlPanel?.Visible == true ? layout.DummyPanel : default
-		})
+		foreach (var reserved in new[] { _dummyControlPanel?.Visible == true ? layout.DummyPanel : default })
 		{
 			if (reserved.Width <= 0 || reserved.Height <= 0) continue;
 			var intersectsHorizontally = toast.X < reserved.Right && toast.Right > reserved.X;
@@ -901,6 +895,21 @@ public partial class HudController : Control
 		}
 		toast = toast with { Y = MathF.Max(RideHudOverlayLayoutPolicy.ViewportMargin, toast.Y) };
 		SetAnchoredBounds(_achievementToastPanel, toast);
+	}
+
+	private void BuildBottomHudLane()
+	{
+		if (_bottomHudPanel is null) return;
+		_bottomHudPanel.GetParent()?.RemoveChild(_bottomHudPanel);
+		_bottomHudLane = new HBoxContainer
+		{
+			Name = "BottomHudLane",
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+			Alignment = BoxContainer.AlignmentMode.Begin
+		};
+		_bottomHudLane.AddThemeConstantOverride("separation", (int)RideHudOverlayLayoutPolicy.PanelGap);
+		AddChild(_bottomHudLane);
+		_bottomHudLane.AddChild(_bottomHudPanel);
 	}
 
 	private void BuildMediaPanel()
@@ -945,7 +954,7 @@ public partial class HudController : Control
 		row.AddChild(_mediaPlaybackButton);
 		row.AddChild(_mediaNextButton);
 		_mediaPanel.AddChild(row);
-		AddChild(_mediaPanel);
+		_bottomHudLane?.AddChild(_mediaPanel);
 	}
 
 	private Button BuildMediaButton(string name, string text, string tooltip, SystemMediaCommand command)
@@ -1013,7 +1022,9 @@ public partial class HudController : Control
 		if (_mediaPanel is null) return;
 		var visible = _mediaSnapshot.IsAvailable && GameBootstrap.Settings?.InRideMediaControlsEnabled == true &&
 			_rideSessionNode?.IsRideActive == true && _hudDisplayEnabled;
+		var visibilityChanged = _mediaPanel.Visible != visible;
 		_mediaPanel.Visible = visible;
+		if (visibilityChanged && IsInsideTree()) CallDeferred(nameof(UpdateDebugOverlayLayout));
 		if (!visible)
 		{
 			_mediaTitleLabel!.Text = string.Empty;
@@ -1063,17 +1074,18 @@ public partial class HudController : Control
 		}
 	}
 
-	private void ResizeBottomBar()
+	private void ResizeBottomHudLane()
 	{
-		if (_bottomHudPanel is null) return;
-		var size = _bottomHudPanel.GetCombinedMinimumSize();
-		_bottomHudPanel.AnchorLeft = _bottomHudPanel.AnchorRight = 0;
-		_bottomHudPanel.AnchorTop = _bottomHudPanel.AnchorBottom = 1;
-		_bottomHudPanel.OffsetLeft = RideHudOverlayLayoutPolicy.ViewportMargin;
-		_bottomHudPanel.OffsetTop = -RideHudOverlayLayoutPolicy.BottomPanelMargin - size.Y;
-		_bottomHudPanel.OffsetRight = RideHudOverlayLayoutPolicy.ViewportMargin + size.X;
-		_bottomHudPanel.OffsetBottom = -RideHudOverlayLayoutPolicy.BottomPanelMargin;
-		_bottomHudPanel.Size = size;
+		if (_bottomHudLane is null) return;
+		var size = _bottomHudLane.GetCombinedMinimumSize();
+		if (size.X <= 0 || size.Y <= 0) return;
+		_bottomHudLane.AnchorLeft = _bottomHudLane.AnchorRight = 0;
+		_bottomHudLane.AnchorTop = _bottomHudLane.AnchorBottom = 1;
+		_bottomHudLane.OffsetLeft = RideHudOverlayLayoutPolicy.ViewportMargin;
+		_bottomHudLane.OffsetTop = -RideHudOverlayLayoutPolicy.BottomPanelMargin - size.Y;
+		_bottomHudLane.OffsetRight = RideHudOverlayLayoutPolicy.ViewportMargin + size.X;
+		_bottomHudLane.OffsetBottom = -RideHudOverlayLayoutPolicy.BottomPanelMargin;
+		_bottomHudLane.Size = size;
 	}
 
 	private static void SetAnchoredBounds(Control? control, RideHudOverlayBounds bounds)
