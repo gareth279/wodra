@@ -1306,7 +1306,10 @@ public partial class RideWorldView : Node3D
             _terrainLayer = null;
             _loadedRoute = route;
             GameLogger.Log("visual_route_loaded", new { route.Id, route.DistanceMeters,
-                environment = route.Environment.ToString(), referenceLine = "250 m", bankDegrees = 12,
+                environment = route.Environment.ToString(), referenceLine = "250 m",
+                straightBankDegrees = VelodromeRouteGeometry.StraightBankDegrees,
+                cornerBankDegrees = VelodromeRouteGeometry.CornerBankDegrees,
+                bankingTransitionMeters = VelodromeRouteGeometry.BankingTransitionMeters,
                 traffic = false, collectibles = false });
             return;
         }

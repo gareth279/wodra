@@ -3206,6 +3206,28 @@ static void VelodromeGeometryIsExactAndSimple()
             throw new Exception("Bank transition out of the first bend reverses direction.");
     if (route.GetGradientAt(85) != 0 || route.TotalAscentMeters != 0)
         throw new Exception("Banking introduced artificial route grade or elevation gain.");
+
+    var trackCenter = new Vector3(22.5f, 0, (float)VelodromeRouteGeometry.TurnRadiusMeters);
+    const double speedKph = 30;
+    foreach (var distance in new[] { 15d, 45.5, 85, 125.5, 145, 170.5, 210, 245, 250.5, 335d })
+    {
+        var pose = visual.GetPoseAtDistance(distance);
+        var previousForward = visual.GetPoseAtDistance(distance - .1).Forward;
+        var steerLean = CyclistAnimationMath.CornerLeanDegrees(previousForward, pose.Forward,
+            .1 / (speedKph / 3.6), speedKph) * Math.PI / 180;
+        var roll = (float)(CyclistAnimationMath.SurfaceBankRollRadians(pose.BankSlope) + steerLean);
+        var up = Vector3.Transform(Vector3.UnitY,
+            Quaternion.CreateFromAxisAngle(-pose.Forward, roll));
+        var inside = trackCenter - pose.Position;
+        inside.Y = 0;
+        inside = Vector3.Normalize(inside);
+        var left = RiderLaneMath.LocalLeft(pose.Forward);
+        var surfaceUp = Vector3.Normalize(Vector3.UnitY - left * pose.BankSlope);
+        if (Vector3.Dot(up, inside) <= 0)
+            throw new Exception($"Cyclist roll points away from the oval interior at {distance:F1} m (dot={Vector3.Dot(up, inside):F3}).");
+        if (Vector3.Dot(up, surfaceUp) < .98f)
+            throw new Exception($"Cyclist roll no longer follows the track surface at {distance:F1} m (dot={Vector3.Dot(up, surfaceUp):F3}).");
+    }
 }
 
 static void VelodromeTenLapProgression()
