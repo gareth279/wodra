@@ -12,6 +12,13 @@ Bundled and imported routes use the same `RouteDefinition`, `RoutePoint`, `Visua
 - Route progression remains the source of truth for rider motion, recorded distance, timing, and trainer control. A visual connector must be incorporated into canonical geometry and chainage rather than added as camera-only travel.
 - Camera clearance queries use the camera's volume against active scenery collision chunks. Destination chunks are activated before the query; diagnostics record camera mode, desired and resolved positions, collision source, and clearance outcome.
 
+### Procedural local-coordinate tracks
+
+- Fictional tracks without a surveyed geographic source use native `LocalXMeters`/`LocalZMeters`; do not encode local metres as fake latitude/longitude.
+- A measured closed track must generate its centreline and chainage from the same geometry. Validate the sampled centreline length against `DistanceMeters`; do not use route closure correction or scale a broken shape to make its declared length appear correct.
+- `VisualRoute` may retain legacy closure and length parameterization for other routes, but a velodrome rejects a discontinuous seam or a centreline that differs from its authoritative length by more than 1 mm.
+- Track banking is a cross-track presentation field. It is not `ElevationMeters`, `GradientPercent`, trainer resistance, route ascent, FIT elevation gain, or lap distance.
+
 ## Corridor and derived objects
 
 - Road/corridor width is route input with provenance. The built-in Dunedin rendering fallback is 7 m where no mapped width is available; it is not a universal road, gravel, cycleway, or MTB width and is never inferred from GPX.

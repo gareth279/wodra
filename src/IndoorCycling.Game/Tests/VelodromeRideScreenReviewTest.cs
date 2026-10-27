@@ -64,8 +64,8 @@ public partial class VelodromeRideScreenReviewTest : Node
             {
                 foreach (var (size, debug) in new[]
                 {
-                    (new Vector2I(960, 540), false), (new Vector2I(1152, 648), true),
-                    (new Vector2I(1152, 648), false), (new Vector2I(1920, 1080), true)
+                    (new Vector2I(1280, 720), false), (new Vector2I(1920, 1080), true),
+                    (new Vector2I(1920, 1080), false), (new Vector2I(2560, 1440), true)
                 })
                 {
                     DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
@@ -100,11 +100,29 @@ public partial class VelodromeRideScreenReviewTest : Node
             await Settle(2);
             var geometry = world.RouteGeometry ?? throw new InvalidOperationException("Velodrome route did not load.");
             Assert(session.CurrentActivityMode == RideActivityMode.Flying200, "selected route activity mode reaches the production ride");
-            Assert(geometry.GetPoseAtDistance(15).BankSlope < .02f, "straight section stays visually level");
-            Assert(Math.Abs(geometry.GetPoseAtDistance(85).BankSlope) > .16f, "turn section receives visual-only banking");
+            Assert(Math.Abs(geometry.CenterlineLengthMeters - 250) < .001 && track.RouteDataVersion == 2,
+                "production track uses the measured 250 m version 2 reference line");
+            Assert(Math.Abs(geometry.GetPoseAtDistance(15).BankSlope - VelodromeRouteGeometry.BankSlopeAt(15)) < .001f,
+                "straight banking matches the authored 13.5 degree crossfall");
+            Assert(Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - VelodromeRouteGeometry.BankSlopeAt(85)) < .001f &&
+                Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - (float)Math.Tan(43.6 * Math.PI / 180)) < .001f,
+                "turn banking matches the authored 43.6 degree crossfall");
             Assert(track.GetGradientAt(85) == 0 && track.TotalAscentMeters == 0, "visual banking does not affect route grade or ascent");
             Assert(world.GetNodeOrNull<Node3D>("RouteGeometry/VelodromeEnvironment") is not null,
                 "track geometry is built by its environment renderer");
+            var trackEnvironment = world.GetNode<Node3D>("RouteGeometry/VelodromeEnvironment");
+            var racingMeshes = GetTree().GetNodesInGroup("VelodromeTrackSurfaces").OfType<MeshInstance3D>()
+                .Where(mesh => mesh.GetParent() == trackEnvironment).ToArray();
+            Assert(racingMeshes.Length >= 6 && racingMeshes.All(mesh =>
+                {
+                    var faces = mesh.Mesh?.GetFaces() ?? Array.Empty<Vector3>();
+                    return faces.Length > 0 && faces.Length % 3 == 0 &&
+                        Enumerable.Range(0, faces.Length / 3).All(index =>
+                        {
+                            var a = faces[index * 3]; var b = faces[index * 3 + 1]; var c = faces[index * 3 + 2];
+                            return a.IsFinite() && b.IsFinite() && c.IsFinite() && (b - a).Cross(c - a).LengthSquared() > 1e-8f;
+                        });
+                }), $"production racing surface meshes have finite, non-degenerate triangles (meshes={racingMeshes.Length}, faces={string.Join(',', racingMeshes.Select(mesh => mesh.Mesh?.GetFaces().Length ?? 0))})");
             Assert(world.GetNodeOrNull<Node3D>("RouteGeometry/AmbientActors") is null &&
                 world.GetNodeOrNull<Node3D>("RouteGeometry/BackgroundStreets") is null,
                 "road traffic and scenery are absent on the velodrome");
@@ -118,6 +136,87 @@ public partial class VelodromeRideScreenReviewTest : Node
 				$"track HUD displays run-up or live flying-effort status ({effortStatus.Text})");
             var player = world.PlayerRider ?? throw new InvalidOperationException("Production rider visual is missing.");
             Assert(player.GlobalPosition.IsFinite(), "track rider has a finite rendered transform");
+            Assert(track.Capabilities.MaximumLateralOffsetMeters >= 3.05f &&
+                track.Capabilities.DefaultLateralOffsetMeters == 0,
+                "production track keeps the rider on the 7 m racing surface by default");
+
+            if (!IsHeadless)
+            {
+                // Sweep the rendered production track at named route chainages.
+                // This test-only camera/rider placement does not alter RideState.
+                var environment = world.GetNode<Node3D>("RouteGeometry/VelodromeEnvironment");
+                var overheadHiddenMeshes = environment.GetChildren().OfType<MeshInstance3D>()
+                    .Where(mesh => !mesh.IsInGroup("VelodromeTrackSurfaces") && mesh.Name != "StartFinishLine" && mesh.Visible)
+                    .ToArray();
+                foreach (var mesh in overheadHiddenMeshes) mesh.Visible = false;
+                hud.Hide();
+                achievementToast.Hide();
+                world.SetProcess(false);
+                world.SetPhysicsProcess(false);
+                var camera = world.InspectionCamera;
+                camera.SetProcess(false);
+                camera.Projection = Camera3D.ProjectionType.Orthogonal;
+                camera.Size = 125;
+                var trackCenter = new Vector3(22.5f, 0, (float)VelodromeRouteGeometry.TurnRadiusMeters);
+                camera.GlobalPosition = trackCenter + Vector3.Up * 100;
+                camera.LookAt(trackCenter, Vector3.Forward);
+                camera.MakeCurrent();
+                await Settle(.2);
+                Capture("velodrome-overhead.png");
+
+                camera.Projection = Camera3D.ProjectionType.Perspective;
+                camera.SetView(RiderCameraView.GameplayRefined);
+                foreach (var (distance, name) in new[]
+                {
+                    (20d, "start-finish-straight"),
+                    (45.5d, "first-corner-entry"),
+                    (85d, "first-corner-middle"),
+                    (125.5d, "back-straight-exit"),
+                    (170.5d, "second-corner-entry"),
+                    (210d, "second-corner-middle"),
+                    (245d, "finish-straight-exit"),
+                    (250.5d, "lap-two-crossing"),
+                    (10 * 250d + 85, "later-lap-first-corner")
+                })
+                {
+                    var wrapped = geometry.WrapDistance(distance);
+                    var pose = geometry.GetPoseAtDistance(wrapped);
+                    var state = new RiderState("player", "You", track.Id, distance, wrapped,
+                        (int)Math.Floor(distance / track.DistanceMeters) + 1, 0, 10, 1500, 95, false, 0);
+                    player.UpdateFromRiderState(state, pose, track.GetGradientAt(wrapped), .016);
+                    camera.ResetFollow();
+                    camera.Follow(player.GlobalPosition, ProceduralRoad.ToGodot(pose.Forward), .016,
+                        player.GetStableLocalVisualBounds(), player.GlobalTransform, hud.GetCameraSafeViewportRect());
+                    var visualInput = RiderVisualInputMath.Create(state, pose, track.GetGradientAt(wrapped));
+                    Assert((player.GlobalPosition -
+                            new Vector3(visualInput.Position.X, visualInput.Position.Y, visualInput.Position.Z)).Length() < .001f,
+                        $"rendered rider follows the banked surface and camera at {name}");
+                    Assert(camera.GlobalPosition.IsFinite() && camera.GlobalPosition.DistanceTo(player.GlobalPosition) > 1,
+                        $"chase camera remains usable at {name}");
+                    await Settle(.1);
+                    Capture($"velodrome-{name}.png");
+                }
+                world.SetProcess(true);
+                world.SetPhysicsProcess(true);
+                camera.SetProcess(true);
+                foreach (var mesh in overheadHiddenMeshes) mesh.Visible = true;
+                hud.Show();
+                achievementToast.Show();
+
+                // Confirm the requested window sizes render from the production ride.
+                foreach (var (size, filename) in new[]
+                {
+                    (new Vector2I(1280, 720), "velodrome-1280x720.png"),
+                    (new Vector2I(1920, 1080), "velodrome-1920x1080.png"),
+                    (new Vector2I(2560, 1440), "velodrome-2560x1440.png")
+                })
+                {
+                    DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                    DisplayServer.WindowSetSize(size);
+                    await Settle(.5);
+                    Capture(filename);
+                }
+            }
 
             if (!IsHeadless)
             {
