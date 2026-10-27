@@ -94,6 +94,13 @@ public static class CyclistAnimationMath
         return Math.Clamp(lean, -maximumLeanDegrees, maximumLeanDegrees);
     }
 
+    /// <summary>Roll required for the bicycle's up axis to align with a surface rising toward local left.</summary>
+    public static double SurfaceBankRollRadians(float bankSlope)
+    {
+        if (!float.IsFinite(bankSlope)) throw new ArgumentOutOfRangeException(nameof(bankSlope));
+        return -Math.Atan(bankSlope);
+    }
+
     public static double WrapAngle(double radians)
     {
         var value = radians % Math.Tau;

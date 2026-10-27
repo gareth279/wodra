@@ -523,7 +523,13 @@ public partial class CyclistVisual : Node3D
             new Vector3(input.Forward.X, input.Forward.Y, input.Forward.Z), input.SpeedKph,
             input.CadenceRpm, input.GradientPercent, input.Paused, deltaSeconds);
         if (routePose.BankSlope != 0)
-            RotateObjectLocal(Vector3.Back, MathF.Atan(routePose.BankSlope));
+        {
+            // BankSlope is the rise toward the route's local left. The bicycle's
+            // up axis must follow the surface normal, which points toward the
+            // lower (local right) edge. Positive rotation around local back tips
+            // the rider toward local left, so invert the bank angle here.
+            RotateObjectLocal(Vector3.Back, (float)CyclistAnimationMath.SurfaceBankRollRadians(routePose.BankSlope));
+        }
     }
 
     /// <summary>Applies route-authored surface lift and virtual airtime to rendering only.</summary>

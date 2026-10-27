@@ -191,6 +191,31 @@ public partial class VelodromeRideScreenReviewTest : Node
                     Assert((player.GlobalPosition -
                             new Vector3(visualInput.Position.X, visualInput.Position.Y, visualInput.Position.Z)).Length() < .001f,
                         $"rendered rider follows the banked surface and camera at {name}");
+                    var inside = new Vector3(trackCenter.X - pose.Position.X, 0,
+                        trackCenter.Z - pose.Position.Z).Normalized();
+                    var left = RiderLaneMath.LocalLeft(pose.Forward);
+                    var surfaceUp = (Vector3.Up - new Vector3(left.X, 0, left.Z) * pose.BankSlope).Normalized();
+                    Assert(player.GlobalBasis.Y.Dot(inside) > .15f,
+                        $"rider's upper body leans toward the oval interior at {name} (up={player.GlobalBasis.Y}, inside={inside}, dot={player.GlobalBasis.Y.Dot(inside):F3})");
+                    Assert(player.GlobalBasis.Y.Dot(surfaceUp) > .94f,
+                        $"bicycle orientation follows the banked riding surface at {name}");
+                    var frontWheel = player.FindChildren("FrontWheelSpin", "Node3D", recursive: true, owned: false)
+                        .OfType<Node3D>().Single();
+                    var rearWheel = player.FindChildren("RearWheelSpin", "Node3D", recursive: true, owned: false)
+                        .OfType<Node3D>().Single();
+                    foreach (var (wheel, offsetMeters, wheelName) in new[]
+                    {
+                        (frontWheel, .51f, "front"), (rearWheel, -.51f, "rear")
+                    })
+                    {
+                        var wheelPose = geometry.GetPoseAtDistance(geometry.WrapDistance(wrapped + offsetMeters));
+                        var wheelLeft = RiderLaneMath.LocalLeft(wheelPose.Forward);
+                        var wheelSurfaceUp = (Vector3.Up - new Vector3(wheelLeft.X, 0, wheelLeft.Z) * wheelPose.BankSlope).Normalized();
+                        var hubHeight = (wheel.GlobalPosition - ProceduralRoad.ToGodot(wheelPose.Position)).Dot(wheelSurfaceUp);
+                        var expectedHubHeight = .35f + .04f * wheelSurfaceUp.Y;
+                        Assert(MathF.Abs(hubHeight - expectedHubHeight) < .08f,
+                            $"{wheelName} wheel stays seated on the racing surface at {name} (height={hubHeight:F3}, expected={expectedHubHeight:F3})");
+                    }
                     Assert(camera.GlobalPosition.IsFinite() && camera.GlobalPosition.DistanceTo(player.GlobalPosition) > 1,
                         $"chase camera remains usable at {name}");
                     await Settle(.1);
