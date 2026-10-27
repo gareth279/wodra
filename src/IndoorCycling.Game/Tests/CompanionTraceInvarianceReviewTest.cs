@@ -76,6 +76,9 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 		client.Configure(session, false, "");
 		if (pair)
 		{
+			// This review drives invitation polling directly. Stop the production frame
+			// poller during setup so it cannot race the explicit pending/approve steps.
+			client.SetProcess(false);
 			relay.Mode = "healthy";
 			client.Configure(session, true, relay.BaseUrl);
 			if (!await client.CreateInvitationAsync()) throw new InvalidOperationException($"Could not create the local fake pairing for {mode}: {client.StatusText}");
@@ -85,6 +88,7 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			if (!client.PhonePending) throw new InvalidOperationException($"The fake relay did not present a pending companion request to the desktop client: {client.StatusText}");
 			if (!await client.DecideAsync(true)) throw new InvalidOperationException($"Could not approve the local fake pairing for {mode}: {client.StatusText}");
 			relay.Mode = mode;
+			client.SetProcess(true);
 		}
 		else client.Configure(session, false, "");
 
