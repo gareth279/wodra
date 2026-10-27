@@ -6,7 +6,7 @@ Read-only mobile browser telemetry relayed from the Windows app. No ride history
 
 Minimum **PHP 8.2** (supported PHP branch), the core `json` extension, `random_bytes`, `hash_equals`, filesystem `flock`/atomic same-volume `rename`, and a writable private directory outside the document root. No cURL, OpenSSL PHP extension, SQLite or MySQL is required by this relay. HTTPS must terminate at the PHP host; the relay rejects non-TLS requests in production. `allow_insecure_local` is for local tests only.
 
-Before deployment, confirm with the actual cPanel account: PHP version/handler, `json`, hosting filesystem lock/rename behavior, writable quota/file limits, document root, TLS certificate, and whether API POSTs to a same-origin PHP endpoint work. These hosting facilities and DNS for `wodra.g5.co.nz` have not been inspected or changed. Do not deploy until the domain and host checks pass.
+Before deployment, confirm with the actual cPanel account that the **domain's active PHP-FPM/Apache handler** is PHP 8.2 or newer, with `json`, and verify its document root, TLS certificate, writable quota/file limits, and filesystem lock/rename behavior. Checking `php -v` in a shell is not sufficient because the web domain can use a different PHP handler. A static companion page can load while `api.php` fails to parse under an older handler. Complete a same-origin API POST against the deployed handler before pairing. Do not deploy until the domain and host checks pass.
 
 ## Local test
 
@@ -29,12 +29,12 @@ The public API is `POST /api.php`; call it from the browser page served on the s
 
 ## cPanel deployment (manual, after host verification)
 
-1. Create/verify `wodra.g5.co.nz` in cPanel and issue/enable a valid TLS certificate. Confirm HTTPS and choose the subdomain's document root (for example `public_html/wodra-companion`). No public deployment is performed by this repository change.
+1. In cPanel MultiPHP Manager, check the PHP version assigned to `wodra.g5.co.nz` itself and select PHP 8.2 or newer if it is below the documented minimum. Verify the site's active handler rather than relying on the account's CLI version. Create/verify the subdomain and TLS certificate, then choose its document root (for example `public_html/wodra-companion`). No public deployment is performed by this repository change.
 2. Upload **only** the contents of `public/` to that document root. Do not expose `private/`, source, or the example config.
 3. In the account home directory outside `public_html`, create `wodra-private/companion` with owner-only permissions. The PHP account must be able to create/lock files there.
 4. Copy `private/config.example.php` outside the docroot as `wodra-private/config.php`. Replace `CPANEL_USER` in the storage path with the host's actual home path; set `origin` to the exact `https://` origin. Set `allow_insecure_local` false. Restrict config and directory permissions to the account.
-5. If the config is not at `<package>/private/config.php`, configure the PHP handler's `WODRA_COMPANION_CONFIG` environment variable to its absolute path. If cPanel cannot set environment variables, place `private/config.php` beside `public/` (outside the selected document root) and keep its parent inaccessible over HTTP.
-6. Set PHP to 8.2 or newer with `json`; confirm the quota supports at least 200 active small pair records and temporary atomic files. The store is bounded to 1 MB and abandoned pairs expire on requests; no cron is required.
+5. If the config is not at `<package>/private/config.php`, configure `WODRA_COMPANION_CONFIG` to its absolute path. On Apache/cPanel this can be set with a domain-scoped `SetEnv WODRA_COMPANION_CONFIG /absolute/path/to/config.php` directive. Verify that `GET /api.php` returns the expected JSON `method_not_allowed` response (rather than `not_configured`), then run an authorized same-origin API integration test. If the hosting setup cannot pass the variable, place `private/config.php` beside `public/` (outside the selected document root) and keep its parent inaccessible over HTTP.
+6. Confirm the domain's web handler is PHP 8.2 or newer with `json`; confirm the quota supports at least 200 active small pair records and temporary atomic files. The store is bounded to 1 MB and abandoned pairs expire on requests; no cron is required.
 7. Verify HTTPS, `POST` API from the same origin, no-store response headers, and private storage behavior. Pair using a test Wodra build/profile, revoke it, and confirm test files contain only token hashes and one current snapshot.
 
 ## Protocol and limits
