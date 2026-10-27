@@ -1116,7 +1116,7 @@ public partial class RideWorldView : Node3D
             _streetFurnitureLayer?.PhysicalProxiesSuppressed ?? 0,
             _streetFurnitureLayer?.ProxiesRelocatedRoadside ?? 0,
             _streetFurnitureLayer?.IntentionallyRetainedInRoad ?? 0,
-            RiderLaneMath.RiderLateralOffsetMeters,
+            (float)_steering.LateralOffsetMeters,
             _streetFurnitureLayer?.GetNearestDebugState(distance),
             _terrainLayer?.TerrainChunksLoaded ?? 0,
             _terrainLayer?.VisibleTerrainChunks ?? 0,

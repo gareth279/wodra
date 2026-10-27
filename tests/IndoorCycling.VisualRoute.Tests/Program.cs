@@ -3089,7 +3089,7 @@ var tests = new (string Name, Action Run)[]
 static void VelodromeGeometryIsExactAndSimple()
 {
     var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
-    if (route.DistanceMeters != VelodromeRouteGeometry.LapLengthMeters || route.RouteDataVersion != 2
+    if (route.DistanceMeters != VelodromeRouteGeometry.LapLengthMeters || route.RouteDataVersion != 3
         || route.Points is not { Count: 1001 } points || route.Segments.Count != 4
         || route.Capabilities.MaximumLateralOffsetMeters != 3.05f
         || route.Capabilities.DefaultLateralOffsetMeters != 0)
@@ -3132,6 +3132,17 @@ static void VelodromeGeometryIsExactAndSimple()
         if (Vector2.Dot(Vector2.Normalize(edges[i]), Vector2.Normalize(next)) < .9998f)
             throw new Exception($"Tangent changes discontinuously near chainage {points[i + 1].DistanceMeters:F2} m.");
     }
+    var signedTurns = new double[edges.Length];
+    for (var i = 0; i < edges.Length; i++)
+    {
+        var before = Vector2.Normalize(edges[(i - 1 + edges.Length) % edges.Length]);
+        var after = Vector2.Normalize(edges[i]);
+        signedTurns[i] = Math.Atan2((double)before.X * after.Y - (double)before.Y * after.X,
+            Vector2.Dot(before, after));
+    }
+    for (var i = 0; i < signedTurns.Length; i++)
+        if (Math.Abs(signedTurns[(i + 1) % signedTurns.Length] - signedTurns[i]) > .002)
+            throw new Exception($"Curvature changes discontinuously near chainage {points[(i + 1) % (points.Count - 1)].DistanceMeters:F2} m.");
     foreach (var (start, end) in new[] { (45d, 125d), (170d, 250d) })
     {
         var firstEdge = checked((int)(start * 4));
@@ -3173,7 +3184,7 @@ static void VelodromeGeometryIsExactAndSimple()
 
     var expectedStraight = (float)Math.Tan(VelodromeRouteGeometry.StraightBankDegrees * Math.PI / 180);
     var expectedCorner = (float)Math.Tan(VelodromeRouteGeometry.CornerBankDegrees * Math.PI / 180);
-    foreach (var distance in new[] { 15d, 145d })
+    foreach (var distance in new[] { 22.5d, 147.5d })
         if (Math.Abs(visual.GetPoseAtDistance(distance).BankSlope - expectedStraight) > .0001f)
             throw new Exception($"Straight bank is not {VelodromeRouteGeometry.StraightBankDegrees:F1}° at {distance} m.");
     foreach (var distance in new[] { 85d, 210d })
@@ -3182,15 +3193,11 @@ static void VelodromeGeometryIsExactAndSimple()
         if (slope <= 0 || Math.Abs(slope - expectedCorner) > .0001f)
             throw new Exception($"Outside edge does not rise at {VelodromeRouteGeometry.CornerBankDegrees:F1}° in the corner at {distance} m.");
     }
-    foreach (var (distance, turnCenterX) in new[]
-    {
-        (55d, 45f), (85d, 45f), (115d, 45f),
-        (180d, 0f), (210d, 0f), (240d, 0f)
-    })
+    foreach (var distance in new[] { 55d, 85d, 115d, 180d, 210d, 240d })
     {
         var pose = visual.GetPoseAtDistance(distance);
-        var outward = new Vector3(pose.Position.X - turnCenterX, 0,
-            pose.Position.Z - (float)VelodromeRouteGeometry.TurnRadiusMeters);
+        var outward = pose.Position - visual.BoundsCenter;
+        outward.Y = 0;
         var localLeft = RiderLaneMath.LocalLeft(pose.Forward);
         var outsideY = pose.Position.Y + 3.5f * pose.BankSlope;
         var insideY = pose.Position.Y - 3.5f * pose.BankSlope;
@@ -3204,10 +3211,32 @@ static void VelodromeGeometryIsExactAndSimple()
     for (var distance = 117d; distance <= 125; distance += .25)
         if (visual.GetPoseAtDistance(distance + .25).BankSlope > visual.GetPoseAtDistance(distance).BankSlope)
             throw new Exception("Bank transition out of the first bend reverses direction.");
+    foreach (var join in new[] { 45d, 125d, 170d, 250d })
+    foreach (var lateral in new[] { -3.05f, 0f, 3.05f })
+    {
+        var maxSurfaceStep = 0d;
+        var maxBankStep = 0d;
+        var previous = visual.GetPoseAtDistance(join - .1);
+        for (var chainage = join; chainage <= join + 20.0001; chainage += .1)
+        {
+            var pose = visual.GetPoseAtDistance(chainage);
+            maxSurfaceStep = Math.Max(maxSurfaceStep, Math.Abs(lateral * (pose.BankSlope - previous.BankSlope)));
+            maxBankStep = Math.Max(maxBankStep, Math.Abs(VelodromeRouteGeometry.BankAngleDegreesAt(chainage)
+                - VelodromeRouteGeometry.BankAngleDegreesAt(chainage - .1)));
+            previous = pose;
+        }
+        if (maxSurfaceStep > .025 || maxBankStep > .3)
+            throw new Exception($"Bank profile is discontinuous at join {join:F0} m, lateral={lateral:F2} m (surface={maxSurfaceStep:F3} m, bank={maxBankStep:F3}°).");
+    }
+    for (var lap = 0; lap < 10; lap++)
+    foreach (var join in new[] { 45d, 125d, 170d, 250d })
+        if (Math.Abs(VelodromeRouteGeometry.BankAngleDegreesAt(lap * 250 + join + .1)
+                     - VelodromeRouteGeometry.BankAngleDegreesAt(lap * 250 + join - .1)) > .5)
+            throw new Exception($"Bank profile snaps at lap {lap + 1}, join {join:F0} m.");
     if (route.GetGradientAt(85) != 0 || route.TotalAscentMeters != 0)
         throw new Exception("Banking introduced artificial route grade or elevation gain.");
 
-    var trackCenter = new Vector3(22.5f, 0, (float)VelodromeRouteGeometry.TurnRadiusMeters);
+    var trackCenter = visual.BoundsCenter;
     const double speedKph = 30;
     foreach (var distance in new[] { 15d, 45.5, 85, 125.5, 145, 170.5, 210, 245, 250.5, 335d })
     {

@@ -100,13 +100,42 @@ public partial class VelodromeRideScreenReviewTest : Node
             await Settle(2);
             var geometry = world.RouteGeometry ?? throw new InvalidOperationException("Velodrome route did not load.");
             Assert(session.CurrentActivityMode == RideActivityMode.Flying200, "selected route activity mode reaches the production ride");
-            Assert(Math.Abs(geometry.CenterlineLengthMeters - 250) < .001 && track.RouteDataVersion == 2,
-                "production track uses the measured 250 m version 2 reference line");
-            Assert(Math.Abs(geometry.GetPoseAtDistance(15).BankSlope - VelodromeRouteGeometry.BankSlopeAt(15)) < .001f,
+            Assert(Math.Abs(geometry.CenterlineLengthMeters - 250) < .001 && track.RouteDataVersion == 3,
+                "production track uses the measured 250 m version 3 reference line");
+            Assert(Math.Abs(geometry.GetPoseAtDistance(22.5).BankSlope - VelodromeRouteGeometry.BankSlopeAt(22.5)) < .001f,
                 "straight banking matches the authored 13.5 degree crossfall");
             Assert(Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - VelodromeRouteGeometry.BankSlopeAt(85)) < .001f &&
                 Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - (float)Math.Tan(43.6 * Math.PI / 180)) < .001f,
                 "turn banking matches the authored 43.6 degree crossfall");
+            var joins = new[] { 45d, 125d, 170d, 250d };
+            foreach (var join in joins)
+            foreach (var lateral in new[] { -3.05f, 0f, 3.05f })
+            {
+                var maximumStep = 0d;
+                var maximumBankStep = 0d;
+                var previousHeight = lateral * geometry.GetPoseAtDistance(join - 1).BankSlope;
+                var previousBank = VelodromeRouteGeometry.BankAngleDegreesAt(join - 1);
+                for (var offset = -.9; offset <= .90001; offset += .1)
+                {
+                    var pose = geometry.GetPoseAtDistance(join + offset);
+                    var height = lateral * pose.BankSlope;
+                    maximumStep = Math.Max(maximumStep, Math.Abs(height - previousHeight));
+                    var bank = VelodromeRouteGeometry.BankAngleDegreesAt(join + offset);
+                    maximumBankStep = Math.Max(maximumBankStep, Math.Abs(bank - previousBank));
+                    previousHeight = height;
+                    previousBank = bank;
+                }
+                Assert(maximumStep < .045 && maximumBankStep < .3,
+                    $"banked surface is continuous at join {join:F0} m for lateral line {lateral:F2} m (height step={maximumStep:F3} m, bank step={maximumBankStep:F3}°)");
+            }
+            for (var lap = 0; lap < 10; lap++)
+            foreach (var join in joins)
+            {
+                var before = VelodromeRouteGeometry.BankAngleDegreesAt(lap * 250 + join - .1);
+                var after = VelodromeRouteGeometry.BankAngleDegreesAt(lap * 250 + join + .1);
+                Assert(Math.Abs(after - before) < .5,
+                    $"bank transition remains continuous through lap {lap + 1} join {join:F0} m");
+            }
             Assert(track.GetGradientAt(85) == 0 && track.TotalAscentMeters == 0, "visual banking does not affect route grade or ascent");
             Assert(world.GetNodeOrNull<Node3D>("RouteGeometry/VelodromeEnvironment") is not null,
                 "track geometry is built by its environment renderer");
@@ -139,6 +168,8 @@ public partial class VelodromeRideScreenReviewTest : Node
             Assert(track.Capabilities.MaximumLateralOffsetMeters >= 3.05f &&
                 track.Capabilities.DefaultLateralOffsetMeters == 0,
                 "production track keeps the rider on the 7 m racing surface by default");
+            Assert(Math.Abs(world.GetDiagnosticState().RiderLateralOffsetMeters - world.CurrentLateralOffsetMeters) < .001,
+                "world diagnostics report the current steering-controlled rider lateral offset");
 
             if (!IsHeadless)
             {
@@ -157,7 +188,7 @@ public partial class VelodromeRideScreenReviewTest : Node
                 camera.SetProcess(false);
                 camera.Projection = Camera3D.ProjectionType.Orthogonal;
                 camera.Size = 125;
-                var trackCenter = new Vector3(22.5f, 0, (float)VelodromeRouteGeometry.TurnRadiusMeters);
+                var trackCenter = ProceduralRoad.ToGodot(geometry.BoundsCenter);
                 camera.GlobalPosition = trackCenter + Vector3.Up * 100;
                 camera.LookAt(trackCenter, Vector3.Forward);
                 camera.MakeCurrent();
@@ -168,12 +199,30 @@ public partial class VelodromeRideScreenReviewTest : Node
                 camera.SetView(RiderCameraView.GameplayRefined);
                 foreach (var (distance, name) in new[]
                 {
+                    (25d, "first-corner-bank-transition-before"),
+                    (35d, "first-corner-bank-transition-during"),
+                    (45d, "first-corner-bank-transition-at-join"),
+                    (55d, "first-corner-bank-transition-after"),
+                    (65d, "first-corner-bank-transition-end"),
                     (20d, "start-finish-straight"),
                     (45.5d, "first-corner-entry"),
                     (85d, "first-corner-middle"),
+                    (125d, "first-corner-exit-at-join"),
+                    (135d, "first-corner-exit-transition-during"),
+                    (145d, "first-corner-exit-transition-end"),
                     (125.5d, "back-straight-exit"),
+                    (150d, "second-corner-bank-transition-before"),
+                    (160d, "second-corner-bank-transition-during"),
+                    (170d, "second-corner-bank-transition-at-join"),
+                    (180d, "second-corner-bank-transition-after"),
+                    (190d, "second-corner-bank-transition-end"),
                     (170.5d, "second-corner-entry"),
                     (210d, "second-corner-middle"),
+                    (230d, "second-corner-exit-transition-before"),
+                    (240d, "second-corner-exit-transition-during"),
+                    (250d, "second-corner-exit-at-lap-seam"),
+                    (260d, "second-corner-exit-transition-after"),
+                    (270d, "second-corner-exit-transition-end"),
                     (245d, "finish-straight-exit"),
                     (250.5d, "lap-two-crossing"),
                     (10 * 250d + 85, "later-lap-first-corner")
