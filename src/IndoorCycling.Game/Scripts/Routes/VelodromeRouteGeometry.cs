@@ -12,47 +12,44 @@ public static class VelodromeRouteGeometry
 	public const double CornerStartMeters = StraightLengthMeters;
 	public const double FirstCornerEndMeters = CornerStartMeters + CornerLengthMeters;
 	public const double BackStraightEndMeters = FirstCornerEndMeters + StraightLengthMeters;
-	public const double BankingTransitionMeters = 8;
+	public const double BankingTransitionMeters = 20;
 	public const double StraightBankDegrees = 13.5;
 	public const double CornerBankDegrees = 43.6;
-	public static double TurnRadiusMeters => CornerLengthMeters /
-		(2 * SamplesPerCorner * Math.Sin(Math.PI / (2 * SamplesPerCorner)));
+	private const double SampleStepMeters = .25;
+	private const double CurveIntegralMeters = CornerLengthMeters - BankingTransitionMeters;
+	public static double TurnRadiusMeters => CurveIntegralMeters / Math.PI;
 
 	public static IReadOnlyList<RoutePoint> CreateCenterline()
 	{
 		const double halfStraight = StraightLengthMeters / 2;
-		const double step = StraightLengthMeters / SamplesPerStraight;
-		var radius = TurnRadiusMeters;
-		var points = new List<RoutePoint>(2 * SamplesPerStraight + 2 * SamplesPerCorner + 1);
+		var points = new List<RoutePoint>(1001);
+		var x = -halfStraight;
+		var z = -TurnRadiusMeters;
+		var heading = 0d;
+		var startX = x;
+		var startZ = z;
+		points.Add(Point(0, x, z));
 
-		void Add(double distance, double x, double z) => points.Add(new RoutePoint(
-			distance, null, null, 0, 0, 0, x, z));
-
-		// Start on the south straight. The reference line follows two 45 m
-		// straights and two 80 m polygonal semicircles. Radius compensates only
-		// for the sampled chords, so the authored polyline itself measures 250 m.
-		for (var i = 0; i <= SamplesPerStraight; i++)
-			Add(i * step, -halfStraight + i * step, -radius);
-
-		for (var i = 1; i <= SamplesPerCorner; i++)
+		// Each 80 m turn is a symmetric clothoid-like transition: curvature rises
+		// and falls with a zero-slope smoothstep over 20 m, with constant curvature
+		// through the middle. Integrating by canonical chainage keeps the route at
+		// exactly 250 m while removing the straight-to-circular curvature corners.
+		for (var index = 1; index <= LapLengthMeters / SampleStepMeters; index++)
 		{
-			var angle = -Math.PI / 2 + Math.PI * i / SamplesPerCorner;
-			var x = halfStraight + radius * Math.Cos(angle);
-			var z = radius * Math.Sin(angle);
-			if (i == SamplesPerCorner) { x = halfStraight; z = radius; }
-			Add(CornerStartMeters + CornerLengthMeters * i / SamplesPerCorner, x, z);
-		}
-
-		for (var i = 1; i <= SamplesPerStraight; i++)
-			Add(FirstCornerEndMeters + i * step, halfStraight - i * step, radius);
-
-		for (var i = 1; i <= SamplesPerCorner; i++)
-		{
-			var angle = Math.PI / 2 + Math.PI * i / SamplesPerCorner;
-			var x = -halfStraight + radius * Math.Cos(angle);
-			var z = radius * Math.Sin(angle);
-			if (i == SamplesPerCorner) { x = -halfStraight; z = -radius; }
-			Add(BackStraightEndMeters + CornerLengthMeters * i / SamplesPerCorner, x, z);
+			var distance = index * SampleStepMeters;
+			var midpoint = distance - SampleStepMeters / 2;
+			var curvature = CurvatureAt(midpoint);
+			heading += curvature * SampleStepMeters;
+			x += Math.Cos(heading - curvature * SampleStepMeters / 2) * SampleStepMeters;
+			z += Math.Sin(heading - curvature * SampleStepMeters / 2) * SampleStepMeters;
+			if (index == LapLengthMeters / SampleStepMeters)
+			{
+				if (Math.Sqrt(Math.Pow(x - startX, 2) + Math.Pow(z - startZ, 2)) > .001 || Math.Abs(heading - Math.Tau) > .001)
+					throw new InvalidOperationException("Smooth 250 m velodrome integration did not close at its start/finish line.");
+				x = startX;
+				z = startZ;
+			}
+			points.Add(Point(distance, x, z));
 		}
 		return points;
 	}
@@ -62,15 +59,23 @@ public static class VelodromeRouteGeometry
 		if (!double.IsFinite(distanceMeters)) throw new ArgumentOutOfRangeException(nameof(distanceMeters));
 		var distance = ((distanceMeters % LapLengthMeters) + LapLengthMeters) % LapLengthMeters;
 		var cornerFactor = Math.Max(
-			TransitionFactor(distance, CornerStartMeters, FirstCornerEndMeters),
-			TransitionFactor(distance, BackStraightEndMeters, LapLengthMeters));
+			BankFactor(distance, CornerStartMeters, FirstCornerEndMeters),
+			BankFactor(distance, BackStraightEndMeters, LapLengthMeters));
 		return StraightBankDegrees + (CornerBankDegrees - StraightBankDegrees) * cornerFactor;
 	}
 
 	public static float BankSlopeAt(double distanceMeters) =>
 		(float)Math.Tan(BankAngleDegreesAt(distanceMeters) * Math.PI / 180);
 
-	private static double TransitionFactor(double distance, double start, double end)
+	private static double CurvatureAt(double distance)
+	{
+		var factor = Math.Max(
+			BankFactor(distance, CornerStartMeters, FirstCornerEndMeters),
+			BankFactor(distance, BackStraightEndMeters, LapLengthMeters));
+		return factor * Math.PI / CurveIntegralMeters;
+	}
+
+	private static double BankFactor(double distance, double start, double end)
 	{
 		if (distance < start || distance > end) return 0;
 		var entry = SmoothStep(Math.Clamp((distance - start) / BankingTransitionMeters, 0, 1));
@@ -79,4 +84,7 @@ public static class VelodromeRouteGeometry
 	}
 
 	private static double SmoothStep(double value) => value * value * (3 - 2 * value);
+
+	private static RoutePoint Point(double distance, double x, double z) => new(
+		distance, null, null, 0, 0, 0, x, z);
 }

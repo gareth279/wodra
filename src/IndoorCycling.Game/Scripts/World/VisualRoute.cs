@@ -29,6 +29,7 @@ public sealed class VisualRoute
     public bool IsPointToPoint { get; }
     public Vector3 ClosureCorrection { get; }
     public float GroundPlaneY { get; }
+    public Vector3 BoundsCenter { get; }
     public const float GroundClearanceMeters = 10;
 
     // Synthetic/nonclosed data is visually closed over the last quarter of a lap.
@@ -162,6 +163,10 @@ public sealed class VisualRoute
                 positions[i], Vector3.Normalize(tangent));
         }
         GroundPlaneY = positions.Min(p => p.Y) - GroundClearanceMeters;
+        BoundsCenter = new Vector3(
+            (positions.Min(p => p.X) + positions.Max(p => p.X)) / 2,
+            (positions.Min(p => p.Y) + positions.Max(p => p.Y)) / 2,
+            (positions.Min(p => p.Z) + positions.Max(p => p.Z)) / 2);
     }
 
     private static Vector3 GpsPosition(RoutePoint[] points, double distance)
