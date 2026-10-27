@@ -1,6 +1,14 @@
 param([string]$PhpExe = 'php')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$phpVersion = & $PhpExe -r 'echo PHP_VERSION_ID;'
+if ($LASTEXITCODE -ne 0 -or [int]$phpVersion -lt 80200) {
+    throw "The companion relay requires PHP 8.2 or newer; syntax and integration checks need the same supported runtime. Found PHP_VERSION_ID=$phpVersion."
+}
+Get-ChildItem -LiteralPath (Split-Path -Parent $PSScriptRoot) -Filter '*.php' -File -Recurse | ForEach-Object {
+    & $PhpExe -l $_.FullName
+    if ($LASTEXITCODE -ne 0) { throw "PHP syntax check failed for $($_.FullName)." }
+}
 $port = 8799
 $tempRoot = Join-Path $env:TEMP ('wodra-companion-test-' + [Guid]::NewGuid().ToString('N'))
 $storage = Join-Path $tempRoot 'private'
