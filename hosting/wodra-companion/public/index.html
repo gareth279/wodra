@@ -9,13 +9,14 @@
   <main class="app">
     <header class="brand"><div class="mark" aria-hidden="true">W</div><div><p class="eyebrow">RIDE COMPANION</p><h1>Wodra</h1></div><span id="connection" class="pill">Not connected</span></header>
     <section id="pair-view" class="card pair-view">
-      <h2>Connect to your ride</h2><p>Enter the temporary code shown in Wodra Options → Companion. Pairing requires approval on your desktop.</p>
+      <h2>Connect to your ride</h2><p>Scan the QR code shown by Wodra or enter its short-lived pairing code. First-time pairing is completed by the phone that scans it; older Wodra versions may still ask for desktop approval.</p>
       <form id="pair-form"><label for="pair-code">Pairing code</label><div class="join"><input id="pair-code" name="code" autocomplete="one-time-code" maxlength="10" autocapitalize="characters" required placeholder="AB12CD34EF"><button type="submit">Request pairing</button></div></form>
       <p id="pair-message" class="message" role="status"></p>
+      <button id="reconnect" class="quiet" type="button" hidden>Reconnect this phone</button>
       <p class="privacy">Read-only live ride metrics. Your phone never controls the trainer.</p>
     </section>
     <section id="ride-view" hidden>
-      <div class="ride-heading card"><div><p class="eyebrow">CURRENT RIDE</p><h2 id="route-name">Waiting for ride</h2></div><button id="disconnect" class="quiet">Disconnect</button></div>
+      <div class="ride-heading card"><div><p class="eyebrow">CURRENT RIDE</p><h2 id="route-name">Waiting for ride</h2></div></div>
       <div id="ride-state" class="state-banner">Waiting for Wodra</div>
       <div class="metrics">
         <article class="metric primary"><span>Power</span><strong id="power">—</strong><small>W</small></article>
@@ -28,9 +29,14 @@
         <article class="metric status"><span>Trainer</span><strong id="trainer">—</strong></article>
       </div>
       <p id="updated" class="updated" aria-live="polite"></p>
+      <section class="phone-controls" aria-label="Phone options">
+        <label class="wake-toggle"><input id="wake-toggle" type="checkbox" checked> Keep screen awake during an active ride</label>
+        <p id="wake-status" class="message" role="status">Wake lock is requested during an active ride when supported.</p>
+        <div class="phone-actions"><button id="disconnect" class="quiet">Disconnect</button><button id="forget-phone" class="quiet">Forget this phone</button></div>
+      </section>
       <p class="privacy">Live snapshot only. Ride history and FIT files are not sent to this service.</p>
     </section>
   </main>
-  <script src="app.js" defer></script>
+  <script src="wake-lock.js" defer></script><script src="app.js" defer></script>
 </body>
 </html>

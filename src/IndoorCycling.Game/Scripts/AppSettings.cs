@@ -10,15 +10,16 @@ using IndoorCycling.Trainer.Models;
 
 public sealed class AppSettings
 {
+	public const string ProductionCompanionRelayBaseUrl = "https://wodra.g5.co.nz/";
 	public RiderSettings Rider { get; set; } = new();
 	public RecordingSettings Recording { get; set; } = new();
 	public StravaClientSettings StravaClient { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
 	/// <summary>Optional in-ride controls for the Windows OS-selected media session. Disabled by default.</summary>
 	public bool InRideMediaControlsEnabled { get; set; }
-	/// <summary>Optional read-only phone companion; disabled by default, with no relay configured.</summary>
+	/// <summary>Optional read-only phone companion; disabled by default.</summary>
 	public bool CompanionEnabled { get; set; }
-	public string CompanionRelayBaseUrl { get; set; } = "";
+	public string CompanionRelayBaseUrl { get; set; } = ProductionCompanionRelayBaseUrl;
 	public bool OnlineRidingEnabled { get; set; }
 	public string OnlineMultiplayerProvider { get; set; } = "EpicOnlineServices";
 	public string MultiplayerServerAddress { get; set; } = "ws://127.0.0.1:8787/ws";
@@ -125,7 +126,8 @@ public sealed class AppSettings
 			settings.Steering.Normalize();
 			settings.StravaClient ??= new StravaClientSettings();
 			settings.Trainer ??= new TrainerSettings();
-			settings.CompanionRelayBaseUrl ??= "";
+			var migrateCompanionRelay = string.IsNullOrWhiteSpace(settings.CompanionRelayBaseUrl);
+			if (migrateCompanionRelay) settings.CompanionRelayBaseUrl = ProductionCompanionRelayBaseUrl;
 			settings.OptionalDeviceProtocols ??= new OptionalDeviceProtocolPreferences();
 			settings.PacerPresetId = PacerEffortPresets.NormalizeSelection(settings.PacerPresetId);
 			if (!Enum.IsDefined(settings.ControllerDeviceType)) settings.ControllerDeviceType = ControllerDeviceTypePreference.AutoDetect;
@@ -139,7 +141,7 @@ public sealed class AppSettings
 				settings.Recording.OutputFolder,
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
 				System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments));
-			if (removeLegacyStravaSettings || migratedTrainerPreference || migratedSteeringSensitivity)
+			if (removeLegacyStravaSettings || migratedTrainerPreference || migratedSteeringSensitivity || migrateCompanionRelay)
 				settings.Save();
 
 			GameLogger.Log("settings_loaded", new

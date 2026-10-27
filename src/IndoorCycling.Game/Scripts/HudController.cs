@@ -54,6 +54,7 @@ public partial class HudController : Control
 
 	private Button? _menuButton;
 	private Button? _pauseRideButton;
+	private Button? _companionButton;
 	private Label? _recordingIndicator;
 	private bool _recordingActive;
 	private bool _debugInspectionWithoutRecording;
@@ -909,6 +910,16 @@ public partial class HudController : Control
 		};
 		_bottomHudLane.AddThemeConstantOverride("separation", (int)RideHudOverlayLayoutPolicy.PanelGap);
 		AddChild(_bottomHudLane);
+		_companionButton = new Button
+		{
+			Name = "CompanionConnectButton",
+			Text = "Phone",
+			TooltipText = "Connect or manage your phone companion",
+			CustomMinimumSize = new Vector2(72, 40),
+			FocusMode = Control.FocusModeEnum.All
+		};
+		_companionButton.Pressed += () => GetNodeOrNull<StartPanelController>("../StartPanel")?.ShowOptions(false, returnToRide: true);
+		_bottomHudPanel.GetNodeOrNull<HBoxContainer>("MarginContainer/HBoxContainer")?.AddChild(_companionButton);
 		_bottomHudLane.AddChild(_bottomHudPanel);
 	}
 
@@ -1574,4 +1585,3 @@ public partial class HudController : Control
 		label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
 	}
 }
-

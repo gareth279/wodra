@@ -55,6 +55,7 @@ public partial class StartPanelController : Control
 	private CheckButton? _optionsGameFeaturesToggle;
 	private CheckButton? _optionsMediaControlsToggle;
 	private CheckButton? _optionsCompanionToggle;
+	private Button? _optionsCompanionAdvanced;
 	private LineEdit? _optionsCompanionUrl;
 	private Label? _optionsCompanionStatus;
 	private Label? _optionsCompanionCode;
@@ -64,11 +65,15 @@ public partial class StartPanelController : Control
 	private Button? _optionsCompanionStart;
 	private Button? _optionsCompanionCancel;
 	private VBoxContainer? _optionsCompanionControls;
+	private VBoxContainer? _optionsCompanionDevices;
+	private Button? _optionsCompanionRevokeAll;
+	private string _lastCompanionDeviceSignature = "";
 	private CompanionRelayClient? _companionClient;
 	private Label? _aboutBuildInformation;
 	private Label? _aboutCopyStatus;
 	private bool _optionsReturnToRoutes;
 	private bool _optionsReturnToWorkouts;
+	private bool _optionsReturnToRide;
 
 	public override void _Ready()
 	{
@@ -131,10 +136,11 @@ public partial class StartPanelController : Control
 
 
 
-	public void ShowOptions(bool returnToRoutes, bool returnToWorkouts = false)
+	public void ShowOptions(bool returnToRoutes, bool returnToWorkouts = false, bool returnToRide = false)
 	{
 		_optionsReturnToRoutes = returnToRoutes;
 		_optionsReturnToWorkouts = returnToWorkouts;
+		_optionsReturnToRide = returnToRide;
 		if (_optionsWindow is null)
 		{
 			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", MinSize = new Vector2I(440, 400), Exclusive = true };
@@ -182,11 +188,18 @@ public partial class StartPanelController : Control
 			_optionsCompanionControls = new VBoxContainer { Name = "CompanionControls", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			_optionsCompanionControls.AddThemeConstantOverride("separation", 5);
 			content.AddChild(_optionsCompanionControls);
-			_optionsCompanionControls.AddChild(new Label { Text = "Deployed relay HTTPS address", AutowrapMode = TextServer.AutowrapMode.WordSmart });
-			_optionsCompanionUrl = new LineEdit { Name = "CompanionRelayUrl", PlaceholderText = "https://your-companion-domain/", Text = GameBootstrap.Settings.CompanionRelayBaseUrl, CustomMinimumSize = new Vector2(0, 40) };
+			_optionsCompanionAdvanced = new Button { Name = "CompanionAdvancedOverride", Text = "Advanced relay override", CustomMinimumSize = new Vector2(0, 36), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionAdvanced.Pressed += () =>
+			{
+				if (_optionsCompanionUrl is null || _optionsCompanionAdvanced is null) return;
+				_optionsCompanionUrl.Visible = !_optionsCompanionUrl.Visible;
+				_optionsCompanionAdvanced.Text = _optionsCompanionUrl.Visible ? "Hide relay override" : "Advanced relay override";
+			};
+			_optionsCompanionControls.AddChild(_optionsCompanionAdvanced);
+			_optionsCompanionUrl = new LineEdit { Name = "CompanionRelayUrl", PlaceholderText = AppSettings.ProductionCompanionRelayBaseUrl, Text = GameBootstrap.Settings.CompanionRelayBaseUrl, CustomMinimumSize = new Vector2(0, 40), Visible = false };
 			_optionsCompanionControls.AddChild(_optionsCompanionUrl);
 			var companionActions = new HBoxContainer { Name = "CompanionActions" };
-			_optionsCompanionStart = new Button { Name = "StartCompanionPairing", Text = "Create pairing code", CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionStart = new Button { Name = "StartCompanionPairing", Text = "Connect new phone", CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			_optionsCompanionStart.Pressed += async () => await StartCompanionPairingAsync();
 			companionActions.AddChild(_optionsCompanionStart);
 			_optionsCompanionCancel = new Button { Name = "CancelCompanionPairing", Text = "Cancel", CustomMinimumSize = new Vector2(0, 40) };
@@ -199,6 +212,15 @@ public partial class StartPanelController : Control
 			_optionsCompanionControls.AddChild(_optionsCompanionCode);
 			_optionsCompanionStatus = new Label { Name = "CompanionStatus", AutowrapMode = TextServer.AutowrapMode.WordSmart };
 			_optionsCompanionControls.AddChild(_optionsCompanionStatus);
+			_optionsCompanionControls.AddChild(new HSeparator());
+			var rememberedHeading = new Label { Text = "Remembered phones" }; rememberedHeading.AddThemeFontSizeOverride("font_size", 15);
+			_optionsCompanionControls.AddChild(rememberedHeading);
+			_optionsCompanionDevices = new VBoxContainer { Name = "RememberedCompanionDevices", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_optionsCompanionDevices.AddThemeConstantOverride("separation", 4);
+			_optionsCompanionControls.AddChild(_optionsCompanionDevices);
+			_optionsCompanionRevokeAll = new Button { Name = "RevokeAllCompanionDevices", Text = "Revoke all phones", CustomMinimumSize = new Vector2(0, 36) };
+			_optionsCompanionRevokeAll.Pressed += async () => { if (_companionClient is not null) await _companionClient.RevokeAllDevicesAsync(); _lastCompanionDeviceSignature = ""; UpdateCompanionUi(); };
+			_optionsCompanionControls.AddChild(_optionsCompanionRevokeAll);
 			var approvalRow = new HBoxContainer();
 			_optionsCompanionApprove = new Button { Name = "ApproveCompanion", Text = "Approve phone", CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			_optionsCompanionApprove.Pressed += async () => { if (_companionClient is not null) await _companionClient.DecideAsync(true); UpdateCompanionUi(); };
@@ -208,7 +230,7 @@ public partial class StartPanelController : Control
 			_optionsCompanionControls.AddChild(approvalRow);
 			_optionsCompanionUrl.TextSubmitted += _ => SaveCompanionUrl();
 			_optionsCompanionUrl.FocusExited += SaveCompanionUrl;
-			content.AddChild(new Label { Text = "Pairing uses a temporary code. Ride data is shared only after desktop approval.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+			content.AddChild(new Label { Text = "Connect a new phone with a short-lived QR code. Paired phones reconnect automatically. Companion sharing is read-only and remains opt-in.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
@@ -237,10 +259,13 @@ public partial class StartPanelController : Control
 		_optionsMediaControlsToggle!.SetPressedNoSignal(GameBootstrap.Settings.InRideMediaControlsEnabled);
 		_optionsCompanionToggle!.SetPressedNoSignal(GameBootstrap.Settings.CompanionEnabled);
 		_optionsCompanionUrl!.Text = GameBootstrap.Settings.CompanionRelayBaseUrl;
+		_optionsCompanionUrl.Visible = !string.Equals(GameBootstrap.Settings.CompanionRelayBaseUrl, AppSettings.ProductionCompanionRelayBaseUrl, StringComparison.OrdinalIgnoreCase);
+		if (_optionsCompanionAdvanced is not null)
+			_optionsCompanionAdvanced.Text = _optionsCompanionUrl.Visible ? "Hide relay override" : "Advanced relay override";
 		ConfigureCompanion();
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
-		if (_optionsReturnToRoutes || _optionsReturnToWorkouts) Hide(); else Show();
+		if (_optionsReturnToRoutes || _optionsReturnToWorkouts || _optionsReturnToRide) Hide(); else Show();
 		_optionsWindow.PopupCentered();
 		UpdateCompanionUi();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
@@ -287,7 +312,7 @@ public partial class StartPanelController : Control
 		_optionsWindow?.Hide();
 		if (_optionsReturnToRoutes) _routeSelectionPanel?.ReturnFromOptions();
 		else if (_optionsReturnToWorkouts) _workoutSelectionPanel?.ShowSelection();
-		else Show();
+		else if (!_optionsReturnToRide) Show();
 	}
 
 	private void FitStartupPanel()
@@ -325,7 +350,17 @@ public partial class StartPanelController : Control
 	private void SaveCompanionUrl()
 	{
 		if (_optionsCompanionUrl is null) return;
-		GameBootstrap.Settings.CompanionRelayBaseUrl = _optionsCompanionUrl.Text.Trim();
+		var value = _optionsCompanionUrl.Text.Trim();
+		if (value.Length == 0) value = AppSettings.ProductionCompanionRelayBaseUrl;
+		if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || !string.IsNullOrEmpty(uri.UserInfo)
+			|| !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment)
+			|| (uri.Scheme != Uri.UriSchemeHttps && !(GameBootstrap.DebugModeEnabled && uri.IsLoopback && uri.Scheme == Uri.UriSchemeHttp)))
+		{
+			if (_optionsCompanionStatus is not null) _optionsCompanionStatus.Text = "Relay override must be an HTTPS address.";
+			_optionsCompanionUrl.Text = GameBootstrap.Settings.CompanionRelayBaseUrl;
+			return;
+		}
+		GameBootstrap.Settings.CompanionRelayBaseUrl = value;
 		GameBootstrap.Settings.Save();
 		ConfigureCompanion();
 	}
@@ -363,8 +398,34 @@ public partial class StartPanelController : Control
 		if (_optionsCompanionCancel is not null)
 		{
 			_optionsCompanionCancel.Visible = _companionClient.HasInvitation;
-			_optionsCompanionCancel.Text = _companionClient.IsPaired ? "Disconnect phone" : "Cancel";
+			_optionsCompanionCancel.Text = "Cancel pairing";
 		}
+		RefreshCompanionDeviceUi();
+	}
+
+	private void RefreshCompanionDeviceUi()
+	{
+		if (_optionsCompanionDevices is null || _companionClient is null) return;
+		var devices = _companionClient.Devices;
+		var signature = string.Join('|', devices.Select(device => $"{device.Id}:{device.LastSeenAt.ToUnixTimeSeconds()}"));
+		if (signature == _lastCompanionDeviceSignature) return;
+		_lastCompanionDeviceSignature = signature;
+		foreach (var child in _optionsCompanionDevices.GetChildren()) child.QueueFree();
+		foreach (var device in devices)
+		{
+			var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			var label = new Label
+			{
+				Text = $"{device.Label} · last seen {device.LastSeenAt.ToLocalTime():g}",
+				AutowrapMode = TextServer.AutowrapMode.WordSmart,
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+			};
+			var revoke = new Button { Text = "Revoke", CustomMinimumSize = new Vector2(76, 36) };
+			var id = device.Id;
+			revoke.Pressed += async () => { await _companionClient.RevokeDeviceAsync(id); _lastCompanionDeviceSignature = ""; UpdateCompanionUi(); };
+			row.AddChild(label); row.AddChild(revoke); _optionsCompanionDevices.AddChild(row);
+		}
+		if (_optionsCompanionRevokeAll is not null) _optionsCompanionRevokeAll.Visible = devices.Count > 0;
 	}
 
 	private bool _optionsCompanionClientReady() => _companionClient is not null && GameBootstrap.Settings.CompanionEnabled &&
@@ -437,7 +498,7 @@ public partial class StartPanelController : Control
 	private async void OnProfileSelected(long index)
 	{
 		if (index < 0 || index >= _profiles.Count) return;
-		try { await GameBootstrap.SetActiveProfileAsync(_profiles[(int)index].Id); await RefreshProfilesAsync(); }
+		try { await GameBootstrap.SetActiveProfileAsync(_profiles[(int)index].Id); ConfigureCompanion(); await RefreshProfilesAsync(); }
 		catch (Exception ex) { SetStatus($"Profile could not be selected: {ex.Message}"); }
 	}
 

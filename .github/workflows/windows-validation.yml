@@ -223,6 +223,12 @@ jobs:
         if: matrix.configuration == 'Release'
         shell: pwsh
         run: hosting/wodra-companion/tests/run.ps1
+      - name: Check companion Screen Wake Lock lifecycle
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: |
+          node hosting/wodra-companion/tests/wake-lock.test.cjs
+          node hosting/wodra-companion/tests/app.test.cjs
       - name: Run regression suites
         if: matrix.configuration == 'Release'
         shell: pwsh
