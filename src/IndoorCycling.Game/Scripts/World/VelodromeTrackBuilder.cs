@@ -6,18 +6,22 @@ using NVector3 = System.Numerics.Vector3;
 /// <summary>Track-only geometry. It consumes the shared reference route and has no ride-state authority.</summary>
 public static class VelodromeTrackBuilder
 {
-    public const float HalfWidthMeters = 7.0f;
+	public const float RacingHalfWidthMeters = 3.5f;
+	public const float SafetyApronInnerEdgeMeters = -7.5f;
+	public const float InfieldFloorY = -7.6f;
     public static Node3D Build(VisualRoute route)
     {
         var root = new Node3D { Name = "VelodromeEnvironment" };
-        root.AddChild(BuildRibbon(route, -HalfWidthMeters, HalfWidthMeters, new Color(.38f, .22f, .15f), .015f));
-        root.AddChild(BuildRibbon(route, -6.4f, -5.9f, new Color(.15f, .42f, .68f), .035f));
-        root.AddChild(BuildRibbon(route, -5.9f, -5.75f, new Color(.94f, .93f, .86f), .04f));
-        root.AddChild(BuildRibbon(route, -2.4f, -2.25f, new Color(.91f, .88f, .79f), .045f));
-        root.AddChild(BuildRibbon(route, 0.0f, .12f, new Color(.94f, .88f, .74f), .05f));
-        root.AddChild(BuildRibbon(route, 5.9f, 6.05f, new Color(.88f, .19f, .16f), .045f));
-        root.AddChild(BuildRibbon(route, -6.98f, -6.82f, new Color(.83f, .82f, .74f), .05f));
-        root.AddChild(BuildRibbon(route, 6.82f, 6.98f, new Color(.83f, .82f, .74f), .05f));
+		// The centreline is the 250 m reference line; the 7 m racing surface is
+		// centred on it. The blue apron is a separate inside surface.
+		root.AddChild(BuildRibbon(route, -RacingHalfWidthMeters, RacingHalfWidthMeters, new Color(.38f, .22f, .15f), .015f));
+		root.AddChild(BuildRibbon(route, SafetyApronInnerEdgeMeters, -RacingHalfWidthMeters, new Color(.08f, .31f, .58f), .025f));
+		// Track markings measured from the inner edge (negative lane offsets).
+		root.AddChild(BuildRibbon(route, -3.53f, -3.47f, new Color(.94f, .93f, .86f), .04f)); // inner boundary
+		root.AddChild(BuildRibbon(route, -3.34f, -3.30f, new Color(.08f, .08f, .08f), .045f)); // 250 m measurement line
+		root.AddChild(BuildRibbon(route, -2.62f, -2.54f, new Color(.88f, .19f, .16f), .05f)); // sprinter line
+		root.AddChild(BuildRibbon(route, -1.02f, -.94f, new Color(.12f, .39f, .67f), .05f)); // stayer line
+		root.AddChild(BuildRibbon(route, RacingHalfWidthMeters - .08f, RacingHalfWidthMeters, new Color(.83f, .82f, .74f), .05f));
         root.AddChild(BuildFinishLine(route));
 
         var bounds = route.Samples;
@@ -28,16 +32,16 @@ public static class VelodromeTrackBuilder
         var floor = new MeshInstance3D
         {
             Name = "IndoorInfieldAndFloor",
-            Position = new Vector3((minX + maxX) / 2, -4.0f, (minZ + maxZ) / 2),
+			Position = new Vector3((minX + maxX) / 2, InfieldFloorY - .5f, (minZ + maxZ) / 2),
             Mesh = new PlaneMesh { Size = new Vector2(maxX - minX, maxZ - minZ) },
             MaterialOverride = Material(new Color(.31f, .38f, .34f))
         };
         root.AddChild(floor);
         root.AddChild(new MeshInstance3D
         {
-            Name = "VelodromeInfield",
-            Position = new Vector3(0, -2.6f, 0),
-            Mesh = new PlaneMesh { Size = new Vector2(35, 43) },
+			Name = "FlatCentralInfield",
+			Position = new Vector3(0, InfieldFloorY, 0),
+			Mesh = new PlaneMesh { Size = new Vector2(34, 40) },
             MaterialOverride = Material(new Color(.16f, .32f, .25f))
         });
         root.AddChild(new MeshInstance3D
@@ -101,7 +105,12 @@ public static class VelodromeTrackBuilder
             var normal = forward.Cross(lateral).Normalized();
             AddQuad(surface, pa, pb, qa, qb, normal);
         }
-        return new MeshInstance3D { Name = "BankedTrackSurface", Mesh = surface.Commit(), MaterialOverride = Material(colour) };
+        var ribbon = new MeshInstance3D
+        {
+            Name = "BankedTrackSurface", Mesh = surface.Commit(), MaterialOverride = Material(colour)
+        };
+        ribbon.AddToGroup("VelodromeTrackSurfaces");
+        return ribbon;
     }
 
     private static MeshInstance3D BuildFinishLine(VisualRoute route)
@@ -111,12 +120,12 @@ public static class VelodromeTrackBuilder
         var pose = route.GetPoseAtDistance(0);
         var left = ToGodot(RiderLaneMath.LocalLeft(pose.Forward));
         var center = ToGodot(pose.Position);
-        var y = pose.BankSlope;
-        var a = center + left * -7 + Vector3.Up * (-7 * y + .06f);
-        var b = center + left * -6.6f + Vector3.Up * (-6.6f * y + .06f);
-        var c = center + left * 7 + Vector3.Up * (7 * y + .06f);
-        var d = center + left * 6.6f + Vector3.Up * (6.6f * y + .06f);
-        AddQuad(surface, a, a + ToGodot(pose.Forward) * .12f, c, d + ToGodot(pose.Forward) * .12f, Vector3.Up);
+		Vector3 At(float lateral) => center + left * lateral + Vector3.Up * (lateral * pose.BankSlope + .06f);
+		var forward = ToGodot(pose.Forward) * .12f;
+		var inner = At(SafetyApronInnerEdgeMeters);
+		var outer = At(RacingHalfWidthMeters);
+		var normal = ToGodot(pose.Forward).Cross(left).Normalized();
+		AddQuad(surface, inner, inner + forward, outer, outer + forward, normal);
         return new MeshInstance3D { Name = "StartFinishLine", Mesh = surface.Commit(), MaterialOverride = Material(new Color(.95f,.94f,.86f)) };
     }
 

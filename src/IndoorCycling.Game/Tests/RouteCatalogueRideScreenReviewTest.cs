@@ -155,6 +155,13 @@ public partial class RouteCatalogueRideScreenReviewTest : Node
 			var gamingToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/GameFeaturesToggleRow/GameFeaturesToggle");
 			var onlineToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/OnlineRidingToggleRow/OnlineRidingToggle");
 			var mediaToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/MediaControlsToggleRow/MediaControlsToggle");
+			var companionToggle = options.GetNodeOrNull<CheckButton>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent/CompanionEnabledToggleRow/CompanionEnabledToggle");
+			var optionsContent = options.GetNode<VBoxContainer>("OptionsMargin/OptionsLayout/OptionsScroll/OptionsContent");
+			Check(mediaToggle?.GetParent()?.Name == "MediaControlsToggleRow"
+				&& companionToggle?.GetParent()?.Name == "CompanionEnabledToggleRow"
+				&& !optionsContent.GetChildren().Contains(mediaToggle)
+				&& !optionsContent.GetChildren().Contains(companionToggle),
+				"Options toggles remain in their setting rows without duplicate-parent errors");
 			Check(gamingToggle is not null,
 				"Options window contains the moved gaming toggle");
 			Check(onlineToggle is not null,

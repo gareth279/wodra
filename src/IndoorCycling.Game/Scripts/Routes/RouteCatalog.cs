@@ -90,56 +90,30 @@ public static class RouteCatalog
 
 	private static RouteDefinition CreateVelodromeRoute()
 	{
-		// 250 m reference line: two 45 m straights plus two 80 m semicircles.
-		// Radius is derived from circumference so authoritative chainage is exactly 250 m.
-		const double straight = 45;
-		const double radius = 80 / (2 * Math.PI);
-		const double halfStraight = straight / 2;
-		var points = new List<RoutePoint>(251);
-		for (var metre = 0; metre <= 250; metre++)
-		{
-			double x, z;
-			var d = (double)metre;
-			if (d <= straight)
-			{
-				x = -radius; z = -halfStraight + d;
-			}
-			else if (d <= 125)
-			{
-				var angle = Math.PI - (d - straight) / radius;
-				x = radius * Math.Cos(angle); z = halfStraight + radius * Math.Sin(angle);
-			}
-			else if (d <= 170)
-			{
-				x = radius; z = halfStraight - (d - 125);
-			}
-			else
-			{
-				var angle = -(d - 170) / radius;
-				x = radius * Math.Cos(angle); z = -halfStraight + radius * Math.Sin(angle);
-			}
-			const double degreesPerMeter = 1.0 / 111_320.0;
-			points.Add(new RoutePoint(d, -z * degreesPerMeter, x * degreesPerMeter,
-				0, 0, 0));
-		}
+		var points = VelodromeRouteGeometry.CreateCenterline();
 		return new RouteDefinition("wodra-velodrome-250", "250 m Indoor Velodrome",
-			"Banked indoor track. The reference riding line measures 250 m per lap; banking is visual only.",
-			250,
+			"Banked indoor track. The centre reference line measures exactly 250 m per lap; banking is visual only.",
+			VelodromeRouteGeometry.LapLengthMeters,
 			[
-				new(0, 45, 0, "Start/finish straight"),
-				new(45, 125, 0, "North banked turn"),
-				new(125, 170, 0, "Back straight"),
-				new(170, 250, 0, "South banked turn")
+				new(0, VelodromeRouteGeometry.CornerStartMeters, 0, "Start/finish straight"),
+				new(VelodromeRouteGeometry.CornerStartMeters, VelodromeRouteGeometry.FirstCornerEndMeters, 0, "First banked 180° corner"),
+				new(VelodromeRouteGeometry.FirstCornerEndMeters, VelodromeRouteGeometry.BackStraightEndMeters, 0, "Back straight"),
+				new(VelodromeRouteGeometry.BackStraightEndMeters, VelodromeRouteGeometry.LapLengthMeters, 0, "Second banked 180° corner")
 			], points)
 		{
 			RouteType = "Loop",
 			Difficulty = "Unrated",
 			Environment = RouteEnvironment.Velodrome,
-			Capabilities = RouteCapabilities.SoloVelodrome,
+			Discipline = RouteDiscipline.Track,
+			Capabilities = RouteCapabilities.SoloVelodrome with
+			{
+				MaximumLateralOffsetMeters = 3.05f,
+				DefaultLateralOffsetMeters = 0
+			},
 			SupportedModes = [RideActivityMode.FreeRide, RideActivityMode.LapTiming,
 				RideActivityMode.Flying200, RideActivityMode.Standing500, RideActivityMode.Standing1000],
-			SourceAttribution = "Original procedural track geometry; no real venue branding or survey geometry.",
-			RouteDataVersion = 1,
+			SourceAttribution = "Original procedural local-coordinate track geometry; no real venue branding or survey geometry.",
+			RouteDataVersion = 2,
 			PublishedTotalAscentMeters = 0
 		};
 	}

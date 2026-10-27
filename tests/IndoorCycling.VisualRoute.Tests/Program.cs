@@ -3070,31 +3070,14 @@ var tests = new (string Name, Action Run)[]
     }),
     ("visual track banking does not create route elevation or gradient", () =>
     {
-        var route = GpsRoute() with { Environment = RouteEnvironment.Velodrome,
-            Points = GpsRoute().Points!.Select(p => p with { ElevationMeters = 0, GradientPercent = 0 }).ToArray() };
+        var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
         var visual = new VisualRoute(route);
         if (visual.GetPoseAtDistance(100).BankSlope == 0) throw new Exception("Banked route has no visual slope.");
         if (route.GetGradientAt(100) != 0 || route.TotalAscentMeters != 0)
             throw new Exception("Visual bank changed authoritative route elevation.");
     }),
-    ("250 m velodrome reference line remains lap-stable across repeated wraps", () =>
-    {
-        var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
-        if (Math.Abs(route.DistanceMeters - 250) > 1e-9 || route.Points?.Last().DistanceMeters != 250)
-            throw new Exception("Track definition does not end at its authoritative 250 m line.");
-        var visual = new VisualRoute(route);
-        var reference = visual.GetPoseAtDistance(137.25);
-        for (var lap = 1; lap <= 10_000; lap++)
-        {
-            var repeated = visual.GetPoseAtDistance(137.25 + 250 * lap);
-            if (Vector3.Distance(reference.Position, repeated.Position) > 1e-5f)
-                throw new Exception($"Route position drifted at lap {lap}.");
-        }
-        var before = visual.GetPoseAtDistance(249.99);
-        var after = visual.GetPoseAtDistance(0.01);
-        if (Vector3.Distance(before.Position, after.Position) > .05f)
-            throw new Exception("Lap seam is discontinuous.");
-    }),
+    ("250 m velodrome is one exact, tangent-continuous stadium oval with correct bank", VelodromeGeometryIsExactAndSimple),
+    ("velodrome makes ten consecutive 250 m crossings without drift or duplicate lap events", VelodromeTenLapProgression),
     ("Zero length route is rejected", () =>
     {
         try { _ = new VisualRoute(GpsRoute() with { DistanceMeters = 0 }); }
@@ -3102,6 +3085,168 @@ var tests = new (string Name, Action Run)[]
         throw new Exception("Accepted zero route length.");
     })
 };
+
+static void VelodromeGeometryIsExactAndSimple()
+{
+    var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
+    if (route.DistanceMeters != VelodromeRouteGeometry.LapLengthMeters || route.RouteDataVersion != 2
+        || route.Points is not { Count: 1001 } points || route.Segments.Count != 4
+        || route.Capabilities.MaximumLateralOffsetMeters != 3.05f
+        || route.Capabilities.DefaultLateralOffsetMeters != 0)
+        throw new Exception("Track route identity, version, 7 m usable corridor, or four segment definitions are invalid.");
+    if (points.Any(point => point.Latitude.HasValue || point.Longitude.HasValue
+            || point.LocalXMeters is null || point.LocalZMeters is null
+            || point.ElevationMeters != 0 || point.GradientPercent != 0)
+        || points[0].LocalXMeters != points[^1].LocalXMeters
+        || points[0].LocalZMeters != points[^1].LocalZMeters)
+        throw new Exception("Track must use a closed local-coordinate centreline with zero elevation and grade.");
+
+    var expectedLengths = new[] { 45d, 80d, 45d, 80d };
+    for (var segmentIndex = 0; segmentIndex < route.Segments.Count; segmentIndex++)
+    {
+        var segment = route.Segments[segmentIndex];
+        var measured = points.Zip(points.Skip(1), (a, b) => (A: a, B: b))
+            .Where(edge => edge.A.DistanceMeters >= segment.StartMeters - 1e-9
+                && edge.B.DistanceMeters <= segment.EndMeters + 1e-9)
+            .Sum(edge => Math.Sqrt(Math.Pow(edge.B.LocalXMeters!.Value - edge.A.LocalXMeters!.Value, 2)
+                + Math.Pow(edge.B.LocalZMeters!.Value - edge.A.LocalZMeters!.Value, 2)));
+        if (Math.Abs(measured - expectedLengths[segmentIndex]) > .0001)
+            throw new Exception($"{segment.Label} measures {measured:F6} m instead of {expectedLengths[segmentIndex]} m.");
+    }
+
+    for (var i = 0; i < points.Count - 1; i++)
+    {
+        var a = points[i]; var b = points[i + 1];
+        var chord = Math.Sqrt(Math.Pow(b.LocalXMeters!.Value - a.LocalXMeters!.Value, 2)
+            + Math.Pow(b.LocalZMeters!.Value - a.LocalZMeters!.Value, 2));
+        if (b.DistanceMeters <= a.DistanceMeters || Math.Abs(chord - (b.DistanceMeters - a.DistanceMeters)) > .00002)
+            throw new Exception($"Route chainage diverges from its sampled centreline at point {i}.");
+    }
+
+    var edges = points.Zip(points.Skip(1), (a, b) => new Vector2(
+        (float)(b.LocalXMeters!.Value - a.LocalXMeters!.Value),
+        (float)(b.LocalZMeters!.Value - a.LocalZMeters!.Value))).ToArray();
+    for (var i = 0; i < edges.Length; i++)
+    {
+        var next = edges[(i + 1) % edges.Length];
+        if (Vector2.Dot(Vector2.Normalize(edges[i]), Vector2.Normalize(next)) < .9998f)
+            throw new Exception($"Tangent changes discontinuously near chainage {points[i + 1].DistanceMeters:F2} m.");
+    }
+    foreach (var (start, end) in new[] { (45d, 125d), (170d, 250d) })
+    {
+        var firstEdge = checked((int)(start * 4));
+        var lastEdge = checked((int)(end * 4));
+        var sweptAngle = 0d;
+        // Include the two half-chords at the joins to the adjoining straights.
+        for (var edge = firstEdge; edge <= lastEdge; edge++)
+        {
+            var before = Vector2.Normalize(edges[(edge - 1 + edges.Length) % edges.Length]);
+            var after = Vector2.Normalize(edges[edge % edges.Length]);
+            sweptAngle += Math.Atan2((double)before.X * after.Y - (double)before.Y * after.X,
+                Vector2.Dot(before, after));
+        }
+        if (Math.Abs(Math.Abs(sweptAngle) - Math.PI) > .001)
+            throw new Exception($"Corner [{start},{end}] sweeps {sweptAngle * 180 / Math.PI:F3}°, not 180°.");
+    }
+
+    // Independent 2D segment intersection check over the authored polygon.
+    for (var first = 0; first < points.Count - 1; first++)
+    for (var second = first + 2; second < points.Count - 1; second++)
+    {
+        if (first == 0 && second == points.Count - 2) continue; // shared closed seam
+        if (SegmentsProperlyIntersect(points[first], points[first + 1], points[second], points[second + 1]))
+            throw new Exception($"Track centreline self-intersects between edges {first} and {second}.");
+    }
+
+    var visual = new VisualRoute(route);
+    if (Math.Abs(visual.CenterlineLengthMeters - 250) > .001 || visual.ClosureCorrection != Vector3.Zero)
+        throw new Exception($"Visual route changed the authored shape: measured={visual.CenterlineLengthMeters:F6}, correction={visual.ClosureCorrection}.");
+    var beforeSeam = visual.GetPoseAtDistance(249.99);
+    var afterSeam = visual.GetPoseAtDistance(.01);
+    if (Vector3.Distance(beforeSeam.Position, afterSeam.Position) > .05f
+        || Vector3.Dot(beforeSeam.Forward, afterSeam.Forward) < .99f)
+        throw new Exception("Position or tangent is discontinuous at the lap seam.");
+    var reference = visual.GetPoseAtDistance(137.25);
+    for (var lap = 1; lap <= 10_000; lap++)
+        if (Vector3.Distance(reference.Position, visual.GetPoseAtDistance(137.25 + 250 * lap).Position) > 1e-5f)
+            throw new Exception($"Route position drifted at lap {lap}.");
+
+    var expectedStraight = (float)Math.Tan(VelodromeRouteGeometry.StraightBankDegrees * Math.PI / 180);
+    var expectedCorner = (float)Math.Tan(VelodromeRouteGeometry.CornerBankDegrees * Math.PI / 180);
+    foreach (var distance in new[] { 15d, 145d })
+        if (Math.Abs(visual.GetPoseAtDistance(distance).BankSlope - expectedStraight) > .0001f)
+            throw new Exception($"Straight bank is not {VelodromeRouteGeometry.StraightBankDegrees:F1}° at {distance} m.");
+    foreach (var distance in new[] { 85d, 210d })
+    {
+        var slope = visual.GetPoseAtDistance(distance).BankSlope;
+        if (slope <= 0 || Math.Abs(slope - expectedCorner) > .0001f)
+            throw new Exception($"Outside edge does not rise at {VelodromeRouteGeometry.CornerBankDegrees:F1}° in the corner at {distance} m.");
+    }
+    foreach (var (distance, turnCenterX) in new[]
+    {
+        (55d, 45f), (85d, 45f), (115d, 45f),
+        (180d, 0f), (210d, 0f), (240d, 0f)
+    })
+    {
+        var pose = visual.GetPoseAtDistance(distance);
+        var outward = new Vector3(pose.Position.X - turnCenterX, 0,
+            pose.Position.Z - (float)VelodromeRouteGeometry.TurnRadiusMeters);
+        var localLeft = RiderLaneMath.LocalLeft(pose.Forward);
+        var outsideY = pose.Position.Y + 3.5f * pose.BankSlope;
+        var insideY = pose.Position.Y - 3.5f * pose.BankSlope;
+        var outwardAlignment = Vector3.Dot(localLeft, outward);
+        if (outwardAlignment <= 0 || outsideY <= insideY)
+            throw new Exception($"Left/outside edge is not higher than right/inside through bend transitions at {distance} m (left={localLeft}, radial={outward}, alignment={outwardAlignment:F3}, slope={pose.BankSlope:F3}).");
+    }
+    for (var distance = 45d; distance <= 53; distance += .25)
+        if (visual.GetPoseAtDistance(distance + .25).BankSlope < visual.GetPoseAtDistance(distance).BankSlope)
+            throw new Exception("Bank transition into the first bend reverses direction.");
+    for (var distance = 117d; distance <= 125; distance += .25)
+        if (visual.GetPoseAtDistance(distance + .25).BankSlope > visual.GetPoseAtDistance(distance).BankSlope)
+            throw new Exception("Bank transition out of the first bend reverses direction.");
+    if (route.GetGradientAt(85) != 0 || route.TotalAscentMeters != 0)
+        throw new Exception("Banking introduced artificial route grade or elevation gain.");
+}
+
+static void VelodromeTenLapProgression()
+{
+    var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
+    var visual = new VisualRoute(route);
+    var crossedLines = new List<double>();
+    var previous = 0d;
+    for (var frame = 1; frame <= 1000; frame++)
+    {
+        var distance = frame * 2.5;
+        for (var lap = 1; lap <= 10; lap++)
+            if (DistanceBoundaryMath.Crossed(previous, distance, lap * route.DistanceMeters))
+                crossedLines.Add(lap * route.DistanceMeters);
+        previous = distance;
+    }
+    if (!crossedLines.SequenceEqual(Enumerable.Range(1, 10).Select(lap => lap * 250d)))
+        throw new Exception("Ten consecutive start/finish crossings were missed, duplicated, or drifted from 250 m.");
+    foreach (var crossing in crossedLines)
+        if (Vector3.Distance(visual.GetPoseAtDistance(crossing).Position, visual.GetPoseAtDistance(0).Position) > 1e-5f)
+            throw new Exception($"The track seam changed at lap crossing {crossing:F0} m.");
+
+    var timing = new TrackEffortTimingController(RideActivityMode.LapTiming);
+    TrackEffortResult? result = null;
+    for (var frame = 1; frame <= 1000 && result is null; frame++)
+        result = timing.Advance(frame * 2.5, frame * .25);
+    if (result is not { Completed: true, DistanceMeters: 250, ElapsedSeconds: 25, Eligible: true })
+        throw new Exception("The timed lap failed to report exactly 250 m and the interpolated finish time.");
+}
+
+static bool SegmentsProperlyIntersect(RoutePoint a, RoutePoint b, RoutePoint c, RoutePoint d)
+{
+    static double Cross(RoutePoint start, RoutePoint end, RoutePoint point) =>
+        (end.LocalXMeters!.Value - start.LocalXMeters!.Value) * (point.LocalZMeters!.Value - start.LocalZMeters!.Value)
+        - (end.LocalZMeters!.Value - start.LocalZMeters!.Value) * (point.LocalXMeters!.Value - start.LocalXMeters!.Value);
+    const double tolerance = 1e-9;
+    var abC = Cross(a, b, c); var abD = Cross(a, b, d);
+    var cdA = Cross(c, d, a); var cdB = Cross(c, d, b);
+    return (abC > tolerance && abD < -tolerance || abC < -tolerance && abD > tolerance)
+        && (cdA > tolerance && cdB < -tolerance || cdA < -tolerance && cdB > tolerance);
+}
 
 var failures = 0;
 foreach (var test in tests)

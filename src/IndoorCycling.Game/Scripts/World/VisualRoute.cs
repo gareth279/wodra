@@ -24,6 +24,8 @@ public sealed class VisualRoute
     // Compatibility alias; this is the same canonical sample array, not a second path.
     public IReadOnlyList<VisualRouteSample> Vertices => _samples;
     public double LengthMeters { get; }
+    /// <summary>Measured sampled centreline length before any non-track legacy adjustment.</summary>
+    public double CenterlineLengthMeters { get; }
     public bool IsPointToPoint { get; }
     public Vector3 ClosureCorrection { get; }
     public float GroundPlaneY { get; }
@@ -76,6 +78,8 @@ public sealed class VisualRoute
         _localOrigin = usesLocalCoordinates ? gps![0] : null;
         if (gps is { Length: >= 2 })
             foreach (var point in gps) distances.Add(Math.Clamp(point.DistanceMeters, 0, LengthMeters));
+        if (_trackBanked && !usesLocalCoordinates)
+            throw new ArgumentException("Velodrome geometry must use native local coordinates.", nameof(route));
 
         var raw = new List<(double DistanceMeters, Vector3 Position)>();
         double elevation = 0;
@@ -100,8 +104,10 @@ public sealed class VisualRoute
             raw.Add((d, position));
             previousDistance = d;
         }
-        ClosureCorrection = IsPointToPoint ? Vector3.Zero : raw[^1].Position - raw[0].Position;
-        var corrected = raw.Select(v =>
+        if (_trackBanked && Vector3.Distance(raw[^1].Position, raw[0].Position) > 0.0001f)
+            throw new ArgumentException("Velodrome reference line must close without correction.", nameof(route));
+        ClosureCorrection = IsPointToPoint || _trackBanked ? Vector3.Zero : raw[^1].Position - raw[0].Position;
+        var corrected = _trackBanked ? raw.ToArray() : raw.Select(v =>
         {
             if (IsPointToPoint) return (DistanceMeters: v.DistanceMeters, Position: v.Position);
             var t = Math.Clamp((v.DistanceMeters / LengthMeters - ClosureStartFraction)
@@ -109,7 +115,7 @@ public sealed class VisualRoute
             var blend = (float)(t * t * (3 - 2 * t));
             return (DistanceMeters: v.DistanceMeters, Position: v.Position - ClosureCorrection * blend);
         }).ToArray();
-        if (!IsPointToPoint)
+        if (!IsPointToPoint && !_trackBanked)
             corrected[^1] = (corrected[^1].DistanceMeters, corrected[0].Position);
 
         // Segment boundaries can coincide with an authored GPS point after the
@@ -133,7 +139,10 @@ public sealed class VisualRoute
             cumulative[i] = cumulative[i - 1] + Vector3.Distance(corrected[i - 1].Position, corrected[i].Position);
         if (cumulative[^1] <= 0 || !double.IsFinite(cumulative[^1]))
             throw new ArgumentException("Visual route centreline must have positive finite length.", nameof(route));
-        var scale = LengthMeters / cumulative[^1];
+        CenterlineLengthMeters = cumulative[^1];
+        if (_trackBanked && Math.Abs(CenterlineLengthMeters - LengthMeters) > 0.001)
+            throw new ArgumentException($"Velodrome reference line measures {CenterlineLengthMeters:F6} m, not {LengthMeters:F3} m.", nameof(route));
+        var scale = _trackBanked ? 1d : LengthMeters / cumulative[^1];
         var positions = corrected.Select(v => v.Position).ToArray();
         _samples = new VisualRouteSample[corrected.Length];
         for (var i = 0; i < corrected.Length; i++)
@@ -148,7 +157,8 @@ public sealed class VisualRoute
             if (tangent.LengthSquared() < 0.000001f)
                 tangent = i == 0 ? positions[1] - positions[0] : positions[i] - positions[i - 1];
             _samples[i] = new VisualRouteSample(
-                i == corrected.Length - 1 ? LengthMeters : cumulative[i] * scale,
+                i == corrected.Length - 1 ? LengthMeters
+                    : _trackBanked ? corrected[i].DistanceMeters : cumulative[i] * scale,
                 positions[i], Vector3.Normalize(tangent));
         }
         GroundPlaneY = positions.Min(p => p.Y) - GroundClearanceMeters;
@@ -208,31 +218,10 @@ public sealed class VisualRoute
         var forward = Vector3.Lerp(a.Forward, b.Forward, t);
         if (forward.LengthSquared() < 0.000001f) forward = b.Position - a.Position;
         var normalizedForward = Vector3.Normalize(forward);
-        var bankSlope = 0f;
-        if (_trackBanked)
-        {
-            var before = GetCenterTangent(WrapDistance(distance - 4));
-            var after = GetCenterTangent(WrapDistance(distance + 4));
-            var turn = Vector3.Cross(before, after).Y;
-            // The reference lane banks visually toward the outer side through turns.
-            // Positive lane offset is left of travel, so this right-turn oval rises left.
-            var bankAmount = Math.Clamp(Math.Abs(turn) / .28f, 0, 1);
-            if (bankAmount > .002f) bankSlope = Math.Sign(turn) * _trackBankTangent * bankAmount;
-        }
+        var bankSlope = _trackBanked ? VelodromeRouteGeometry.BankSlopeAt(distance) : 0f;
         return new VisualRoutePose(Vector3.Lerp(a.Position, b.Position, t), normalizedForward,
             distance, low, high, t) { BankSlope = bankSlope };
     }
 
     private readonly bool _trackBanked;
-    private const float _trackBankTangent = .21255656f; // 12 degrees, visual only.
-
-    private Vector3 GetCenterTangent(double distance)
-    {
-        var d = WrapDistance(distance);
-        var upper = Array.FindIndex(_samples, sample => sample.DistanceMeters >= d);
-        if (upper <= 0) return _samples[0].Forward;
-        return Vector3.Normalize(Vector3.Lerp(_samples[upper - 1].Forward, _samples[upper].Forward,
-            (float)((d - _samples[upper - 1].DistanceMeters) /
-                (_samples[upper].DistanceMeters - _samples[upper - 1].DistanceMeters))));
-    }
 }

@@ -169,7 +169,6 @@ public partial class StartPanelController : Control
 				GameBootstrap.Settings.InRideMediaControlsEnabled = enabled;
 				GameBootstrap.Settings.Save();
 			};
-			content.AddChild(_optionsMediaControlsToggle);
 			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
 			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
@@ -180,7 +179,6 @@ public partial class StartPanelController : Control
 				GameBootstrap.Settings.Save();
 				ConfigureCompanion();
 			};
-			content.AddChild(_optionsCompanionToggle);
 			_optionsCompanionControls = new VBoxContainer { Name = "CompanionControls", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			_optionsCompanionControls.AddThemeConstantOverride("separation", 5);
 			content.AddChild(_optionsCompanionControls);
@@ -269,7 +267,10 @@ public partial class StartPanelController : Control
 
 	internal static Vector2I CalculateOptionsWindowSize(Vector2 viewport)
 	{
-		var width = Math.Max(720, Math.Min(1120, (int)(viewport.X * 0.64f)));
+		// Keep a broad content column on desktop while leaving margins for the
+		// host window and respecting smaller displays (including scaled Windows).
+		var availableWidth = Math.Max(440, (int)viewport.X - 48);
+		var width = Math.Min(availableWidth, Math.Max(720, Math.Min(1600, (int)(viewport.X * 0.82f))));
 		var height = Math.Max(400, Math.Min(720, (int)viewport.Y - 48));
 		return new Vector2I(width, height);
 	}
