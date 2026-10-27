@@ -28,8 +28,9 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate<Control>();
 			AddChild(screen);
 			await Settle(8);
-			if (GameBootstrap.Settings.CompanionEnabled || !string.IsNullOrWhiteSpace(GameBootstrap.Settings.CompanionRelayBaseUrl))
-				throw new InvalidOperationException("The isolated profile did not start with companion disabled and unconfigured.");
+			if (GameBootstrap.Settings.CompanionEnabled || !string.Equals(GameBootstrap.Settings.CompanionRelayBaseUrl,
+				AppSettings.ProductionCompanionRelayBaseUrl, StringComparison.OrdinalIgnoreCase))
+				throw new InvalidOperationException("The isolated profile must keep companion disabled while using the production relay default.");
 			GameBootstrap.Settings.DebugModeEnabled = true;
 			GameBootstrap.Settings.OnlineRidingEnabled = false;
 			GameBootstrap.Settings.DummyTrainer.Mode = "Watts";
@@ -85,8 +86,7 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			var poll = typeof(CompanionRelayClient).GetMethod("PollInvitationAsync", BindingFlags.Instance | BindingFlags.NonPublic)
 				?? throw new MissingMethodException(nameof(CompanionRelayClient), "PollInvitationAsync");
 			await (Task)(poll.Invoke(client, null) ?? throw new InvalidOperationException("Could not start companion invitation status poll."));
-			if (!client.PhonePending) throw new InvalidOperationException($"The fake relay did not present a pending companion request to the desktop client: {client.StatusText}");
-			if (!await client.DecideAsync(true)) throw new InvalidOperationException($"Could not approve the local fake pairing for {mode}: {client.StatusText}");
+			if (!client.IsPaired) throw new InvalidOperationException($"The fake relay did not complete the explicitly requested remembered-device pairing: {client.StatusText}");
 			relay.Mode = mode;
 			client.SetProcess(true);
 		}
@@ -206,9 +206,10 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 				using var json = JsonDocument.Parse(await reader.ReadToEndAsync());
 				var action = json.RootElement.GetProperty("action").GetString();
 				string result = "{}"; int status = 200;
-				if (action == "create") result = "{\"id\":\"review-pair\",\"code\":\"TRACE123\"}";
-				else if (action == "invite_status") result = "{\"status\":\"pending\"}";
-				else if (action == "publish")
+				if (action == "remembered_create") result = "{\"id\":\"review-pair-id-0000000000000000000000000000\",\"code\":\"TRACE12345\"}";
+				else if (action == "remembered_invite_status") result = "{\"status\":\"claimed\"}";
+				else if (action == "remembered_devices") result = "{\"devices\":[{\"id\":\"review-device-id-0000000000000000000000000000\",\"label\":\"Phone 1\",\"created_at\":1,\"last_seen\":1,\"expires_at\":4102444800}]}";
+				else if (action == "remembered_publish")
 				{
 					if (Mode == "timeout") { await Task.Delay(TimeSpan.FromSeconds(5.2), _stop.Token); Interlocked.Increment(ref _publishTimeouts); }
 					else if (Mode == "rejected") { status = 503; result = "{\"error\":\"relay_unavailable\"}"; Interlocked.Increment(ref _publishFailures); }

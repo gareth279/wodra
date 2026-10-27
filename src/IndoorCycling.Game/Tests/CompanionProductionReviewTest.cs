@@ -20,7 +20,8 @@ public partial class CompanionProductionReviewTest : Node
 	private RideSessionNode? _session;
 	private Control? _screen;
 	private (string Id, string Token)? _phonePair;
-	private static readonly System.Net.Http.HttpClient RelayHttp = new() { Timeout = TimeSpan.FromSeconds(10) };
+	private static readonly System.Net.Http.HttpClient RelayHttp = new(new HttpClientHandler { UseCookies = true,
+		CookieContainer = new System.Net.CookieContainer() }) { Timeout = TimeSpan.FromSeconds(10) };
 
 	public override async void _Ready()
 	{
@@ -33,7 +34,7 @@ public partial class CompanionProductionReviewTest : Node
 			_screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate<Control>();
 			AddChild(_screen);
 			await Frames(12);
-			if ((GameBootstrap.Settings.CompanionEnabled || !string.IsNullOrEmpty(GameBootstrap.Settings.CompanionRelayBaseUrl)) &&
+			if ((GameBootstrap.Settings.CompanionEnabled || !string.Equals(GameBootstrap.Settings.CompanionRelayBaseUrl, AppSettings.ProductionCompanionRelayBaseUrl, StringComparison.OrdinalIgnoreCase)) &&
 				System.Environment.GetEnvironmentVariable("WODRA_COMPANION_REVIEW_ALLOW_CONFIGURED_SETTINGS") != "1")
 				throw new InvalidOperationException("A new isolated settings profile must leave the companion disabled and unconfigured by default.");
 			var profile = new RiderProfileRecord(Guid.NewGuid(), "Companion Review Test", DateTimeOffset.UtcNow,
@@ -56,50 +57,54 @@ public partial class CompanionProductionReviewTest : Node
 			var start = _screen.GetNode<StartPanelController>("StartPanel");
 			foreach (var window in _screen.FindChildren("*", "Window", recursive: true, owned: false).OfType<Window>())
 				window.Hide();
-			start.ShowOptions(false);
+			var companionButton = _screen.FindChildren("CompanionConnectButton", "Button", recursive: true, owned: false).OfType<Button>().Single();
+			companionButton.EmitSignal(Button.SignalName.Pressed);
 			await Frames(3);
+			var options = _screen.FindChildren("OptionsWindow", "Window", recursive: true, owned: false).OfType<Window>().FirstOrDefault()
+				?? throw new InvalidOperationException("In-ride phone action did not open the production Options window.");
+			var done = options.FindChildren("DoneButton", "Button", recursive: true, owned: false).OfType<Button>().Single();
+			done.EmitSignal(Button.SignalName.Pressed);
+			await Frames(2);
+			if (options.Visible || start.Visible) throw new InvalidOperationException("Closing in-ride Options must return to the ride without showing the startup panel.");
+			companionButton.EmitSignal(Button.SignalName.Pressed);
+			await Frames(3);
+			if (!options.Visible) throw new InvalidOperationException("In-ride phone action could not reopen Options after closing it.");
+			var advancedRelay = _screen.FindChildren("CompanionAdvancedOverride", "Button", recursive: true, owned: false).OfType<Button>().Single();
+			advancedRelay.EmitSignal(Button.SignalName.Pressed);
+			var relayOverride = _screen.FindChildren("CompanionRelayUrl", "LineEdit", recursive: true, owned: false).OfType<LineEdit>().Single();
+			relayOverride.Text = _relay;
 			var createPairing = _screen.FindChildren("StartCompanionPairing", "Button", recursive: true, owned: false).OfType<Button>().Single();
 			createPairing.EmitSignal(Button.SignalName.Pressed);
 			for (var wait = 0; wait < 300 && !_client.HasInvitation; wait++) await Frames(1);
 			if (!_client.HasInvitation) throw new InvalidOperationException("Production Options could not create a pairing invitation through its actual button.");
 			await Frames(3);
-			var options = _screen.FindChildren("OptionsWindow", "Window", recursive: true, owned: false).OfType<Window>().FirstOrDefault()
-				?? throw new InvalidOperationException("Production Options window was not created.");
 			CaptureWindow(options, "pairing-desktop.png");
 			GD.Print("[CompanionProductionReview] Pairing code is visible in the captured Options window; it is intentionally omitted from logs.");
 			if (System.Environment.GetEnvironmentVariable("WODRA_COMPANION_REVIEW_AUTO_PAIR") == "1")
 				_phonePair = await ClaimPhoneAsync(_relay, _client.ManualCode);
 			GD.Print("[CompanionProductionReview] Waiting for the actual browser or isolated phone protocol client to request pairing.");
 
-			var approved = false;
-			for (var frame = 0; frame < 18000 && !approved; frame++)
+			for (var frame = 0; frame < 18000 && !_client.IsPaired; frame++)
 			{
 				await Frames(1);
-				if (!_client.PhonePending) continue;
-				await Frames(2);
-				CaptureWindow(options, "pairing-phone-pending.png");
-				var approve = options.FindChildren("ApproveCompanion", "Button", recursive: true, owned: false).OfType<Button>().Single();
-				approve.EmitSignal(Button.SignalName.Pressed);
-				for (var wait = 0; wait < 120 && !_client.IsPaired; wait++) await Frames(1);
-				approved = _client.IsPaired;
 			}
-			if (!approved) throw new TimeoutException("No companion pairing request arrived within five minutes.");
-			GD.Print("[CompanionProductionReview] PAIR_APPROVED");
+			if (!_client.IsPaired) throw new TimeoutException("No companion device completed pairing within five minutes.");
+			GD.Print("[CompanionProductionReview] PHONE_REMEMBERED");
 			options.Hide();
 			await RunRideAsync("dunedin-one-way-oval-gardens", "road-live.png");
 			await RunRideAsync("wodra-velodrome-250", "velodrome-live.png");
 			await _session.ExitToRouteSelectionAsync();
-			await _client.CancelAsync();
-			if (_phonePair is { } disconnectedPhone && await ReadPhoneRouteAsync(_relay, disconnectedPhone) is not null)
-				throw new InvalidOperationException("A disconnected phone session still received ride data.");
-			if (_phonePair is not null)
+			if (_phonePair is { } rememberedPhone)
 			{
-				if (!await _client.CreateInvitationAsync()) throw new InvalidOperationException("The production client could not create a replacement invitation after disconnect.");
-				_phonePair = await ClaimPhoneAsync(_relay, _client.ManualCode);
-				for (var wait = 0; wait < 600 && !_client.PhonePending; wait++) await Frames(1);
-				if (!await _client.DecideAsync(true) || !_client.IsPaired)
-					throw new InvalidOperationException("The production client could not reconnect a new phone session after disconnect.");
-				await _client.CancelAsync();
+				(bool Authorized, string? Route) state = (false, null);
+				for (var attempt = 0; attempt < 10; attempt++)
+				{
+					await Frames(30);
+					state = await ReadPhoneStateAsync(_relay, rememberedPhone);
+					if (!state.Authorized || state.Route is null) break;
+				}
+				if (!state.Authorized || state.Route is not null)
+					throw new InvalidOperationException("Trusted phone should remain authorised but receive no live route snapshot while Wodra is idle.");
 			}
 			CaptureViewport("ride-ended.png");
 			GD.Print("[CompanionProductionReview] PASS: production RideScreen paired through the production PHP relay; road and velodrome dummy snapshots sent; disconnect and reconnect verified; isolated profile, recording and artifacts only.");
@@ -140,7 +145,7 @@ public partial class CompanionProductionReviewTest : Node
 			for (var attempt = 0; attempt < 6 && observedRoute is null; attempt++)
 			{
 				await Frames(60);
-				observedRoute = await ReadPhoneRouteAsync(_relay!, phone);
+				observedRoute = (await ReadPhoneStateAsync(_relay!, phone)).Route;
 			}
 			if (observedRoute != route.Name)
 				throw new InvalidOperationException($"The production phone session did not receive the {routeId} snapshot.");
@@ -151,24 +156,36 @@ public partial class CompanionProductionReviewTest : Node
 
 	private static async Task<(string Id, string Token)> ClaimPhoneAsync(string relay, string code)
 	{
-		var token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-		var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
+		if (code.Length != 10 || code.Any(character => !Uri.IsHexDigit(character)))
+			throw new InvalidOperationException($"Production pairing UI did not provide a valid invitation (length={code.Length}, hexadecimal={code.All(Uri.IsHexDigit)}).");
 		var api = new Uri(new Uri(relay.EndsWith('/') ? relay : relay + "/"), "api.php");
-		using var response = await RelayHttp.PostAsJsonAsync(api, new { protocol = 1, action = "claim", code, companion_hash = hash });
-		if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"The isolated phone protocol client received HTTP {(int)response.StatusCode} while claiming.");
+		using var request = new HttpRequestMessage(HttpMethod.Post, api);
+		request.Headers.Add("Origin", new Uri(relay).GetLeftPart(UriPartial.Authority));
+		request.Content = System.Net.Http.Json.JsonContent.Create(new { protocol = 2, action = "remembered_claim", code });
+		using var response = await RelayHttp.SendAsync(request);
+		if (!response.IsSuccessStatusCode)
+		{
+			using var failure = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+			var reason = failure.RootElement.TryGetProperty("error", out var error) ? error.GetString() : "unknown";
+			throw new InvalidOperationException($"The isolated phone protocol client received HTTP {(int)response.StatusCode} ({reason}) while claiming.");
+		}
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-		return (body.RootElement.GetProperty("id").GetString()!, token);
+		return (body.RootElement.GetProperty("device_id").GetString()!, "");
 	}
 
-	private static async Task<string?> ReadPhoneRouteAsync(string relay, (string Id, string Token) phone)
+	private static async Task<(bool Authorized, string? Route)> ReadPhoneStateAsync(string relay, (string Id, string Token) phone)
 	{
-		var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(phone.Token))).ToLowerInvariant();
 		var api = new Uri(new Uri(relay.EndsWith('/') ? relay : relay + "/"), "api.php");
-		using var response = await RelayHttp.PostAsJsonAsync(api, new { protocol = 1, action = "read", id = phone.Id, token_hash = hash });
-		if (!response.IsSuccessStatusCode) return null;
+		using var request = new HttpRequestMessage(HttpMethod.Post, api);
+		request.Headers.Add("Origin", new Uri(relay).GetLeftPart(UriPartial.Authority));
+		request.Content = System.Net.Http.Json.JsonContent.Create(new { protocol = 2, action = "remembered_read" });
+		using var response = await RelayHttp.SendAsync(request);
+		if (!response.IsSuccessStatusCode) return (false, null);
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 		var snapshot = body.RootElement.GetProperty("snapshot");
-		return snapshot.ValueKind == JsonValueKind.Object && snapshot.TryGetProperty("route", out var route) ? route.GetString() : null;
+		var routeName = snapshot.ValueKind == JsonValueKind.Object && snapshot.TryGetProperty("route", out var route)
+			? route.GetString() : null;
+		return (true, routeName);
 	}
 
 	private void CaptureWindow(Window window, string name)

@@ -1,52 +1,45 @@
-# Wodra web companion (foundation)
+# Wodra web companion
 
-Read-only mobile browser telemetry relayed from the Windows app. No ride history, FIT files, trainer control, chat, third-party QR service, database, Composer, cron or persistent worker is used. The relay keeps only the latest small snapshot for each pair.
+The companion is a read-only, same-origin mobile web app. It relays only the latest active ride snapshot; it does not store ride history or FIT files and does not provide trainer or application controls.
 
-## Supported hosting
+## Hosting requirements
 
-Minimum **PHP 8.2** (supported PHP branch), the core `json` extension, `random_bytes`, `hash_equals`, filesystem `flock`/atomic same-volume `rename`, and a writable private directory outside the document root. No cURL, OpenSSL PHP extension, SQLite or MySQL is required by this relay. HTTPS must terminate at the PHP host; the relay rejects non-TLS requests in production. `allow_insecure_local` is for local tests only.
+The relay supports the production host's PHP 8.2 runtime, built-in `json` support, `random_bytes`, `hash_equals`, filesystem `flock` and atomic same-volume `rename`. Runtime state and `config.php` must remain outside the document root. HTTPS is required in production. The handler reports a JSON error rather than exposing credentials or filesystem paths if private storage is unavailable.
 
-Before deployment, confirm with the actual cPanel account that the **domain's active PHP-FPM/Apache handler** is PHP 8.2 or newer, with `json`, and verify its document root, TLS certificate, writable quota/file limits, and filesystem lock/rename behavior. Checking `php -v` in a shell is not sufficient because the web domain can use a different PHP handler. A static companion page can load while `api.php` fails to parse under an older handler. Complete a same-origin API POST against the deployed handler before pairing. Do not deploy until the domain and host checks pass.
+Verify the domain's active PHP-FPM/Apache handler, not only the command-line version. CI runs syntax and API integration checks with PHP 8.2. The production domain is `https://wodra.g5.co.nz/`; Windows defaults to this URL while Companion itself remains opt-in. Custom HTTPS relay URLs are retained as an advanced override.
 
-## Local test
+## Protocols and trust model
 
-Use PHP 8.2+ CLI. Create a temporary PHP config outside this package with:
+Protocol 2 separates a profile-scoped desktop identity, a one-time invitation, a remembered browser device, and its current ride snapshot. Desktop identity material is protected with the current Windows user's DPAPI and is never stored in ordinary settings JSON. Each phone receives an opaque random 256-bit credential in a host-only `HttpOnly`, `Secure`, `SameSite=Strict` cookie. PHP stores only its SHA-256 hash. The credential expires after 90 days and renews during authenticated use when fewer than 30 days remain. A user can revoke one device or all devices in Wodra, or forget the phone from the web page.
 
-```php
-<?php
-return ['origin'=>'http://127.0.0.1:8789','storage'=>sys_get_temp_dir().'/wodra-companion-local',
-  'invite_ttl_seconds'=>180,'pair_ttl_seconds'=>1800,'allow_insecure_local'=>true];
-```
+Selecting **Connect new phone** is a short-lived (180-second default), single-use invitation for one new device. The QR contains the public companion URL and the temporary code only. Scanning it pairs automatically; there is no second approval step. Manual code entry remains available. Pairing creation and claims are rate limited. Browser actions require the configured exact Origin, credentials are not accepted in URLs, and `SameSite=Strict` further limits cross-site requests.
 
-PowerShell:
+Trusted phones poll while their page is visible. The desktop publishes only while Companion is enabled and a ride is active, and clears the snapshot when the ride ends. An offline or idle phone remains trusted and shows **Waiting for Wodra**. The previous protocol 1 pairing/read flow remains available for Alpha.77 clients while they transition; protocol 1 retains its explicit desktop approval and session behavior.
+
+The web page uses the standard Screen Wake Lock API and defaults its toggle on. Browsers may refuse or revoke the lock, and iOS power-saving/browser policy can still turn the display off. Users can temporarily disconnect polling or permanently forget the phone. The page is read-only.
+
+## Local PHP integration test
+
+Run on PHP 8.2 or newer:
 
 ```powershell
-$env:WODRA_COMPANION_CONFIG = 'C:\temp\wodra-companion-test.php'
-php -S 127.0.0.1:8789 -t hosting/wodra-companion/public
+hosting/wodra-companion/tests/run.ps1
 ```
 
-The public API is `POST /api.php`; call it from the browser page served on the same origin (or set the matching test origin). Never use localhost as the desktop production default.
+The script syntax-checks all PHP sources, starts an isolated local PHP server, and runs protocol 1 and protocol 2 tests against temporary storage. The browser wake-lock state machine has a separate Node test:
 
-## cPanel deployment (manual, after host verification)
+```powershell
+node hosting/wodra-companion/tests/wake-lock.test.cjs
+```
 
-1. In cPanel MultiPHP Manager, check the PHP version assigned to `wodra.g5.co.nz` itself and select PHP 8.2 or newer if it is below the documented minimum. Verify the site's active handler rather than relying on the account's CLI version. Create/verify the subdomain and TLS certificate, then choose its document root (for example `public_html/wodra-companion`). No public deployment is performed by this repository change.
-2. Upload **only** the contents of `public/` to that document root. Do not expose `private/`, source, or the example config.
-3. In the account home directory outside `public_html`, create `wodra-private/companion` with owner-only permissions. The PHP account must be able to create/lock files there.
-4. Copy `private/config.example.php` outside the docroot as `wodra-private/config.php`. Replace `CPANEL_USER` in the storage path with the host's actual home path; set `origin` to the exact `https://` origin. Set `allow_insecure_local` false. Restrict config and directory permissions to the account.
-5. If the config is not at `<package>/private/config.php`, configure `WODRA_COMPANION_CONFIG` to its absolute path. On Apache/cPanel this can be set with a domain-scoped `SetEnv WODRA_COMPANION_CONFIG /absolute/path/to/config.php` directive. Verify that `GET /api.php` returns the expected JSON `method_not_allowed` response (rather than `not_configured`), then run an authorized same-origin API integration test. If the hosting setup cannot pass the variable, place `private/config.php` beside `public/` (outside the selected document root) and keep its parent inaccessible over HTTP.
-6. Confirm the domain's web handler is PHP 8.2 or newer with `json`; confirm the quota supports at least 200 active small pair records and temporary atomic files. The store is bounded to 1 MB and abandoned pairs expire on requests; no cron is required.
-7. Verify HTTPS, `POST` API from the same origin, no-store response headers, and private storage behavior. Pair using a test Wodra build/profile, revoke it, and confirm test files contain only token hashes and one current snapshot.
+For manual testing, make a private test config outside this package with `origin`, a writable private `storage` directory, `invite_ttl_seconds` (180), `pair_ttl_seconds` (28800), and `allow_insecure_local` true only for loopback. Set `WODRA_COMPANION_CONFIG` to that file before starting PHP's built-in server. Never use HTTP or `allow_insecure_local` for public hosting.
 
-## Protocol and limits
+## Production deployment and rollback
 
-Protocol version is `1` (fixed action/field contract; unknown fields are rejected in telemetry). Pairing uses a 10-character one-use hexadecimal code (40 random bits), valid for 180 seconds by default, plus independent random 256-bit invite, desktop and browser credentials. The desktop asks the rider to approve the pending phone. The browser role can only read; the desktop role can only publish. Credential values are held in memory/sessionStorage and only their SHA-256 hashes are kept by PHP. The phone code is in the URL fragment only and is cleared from browser history immediately. Never paste credentials into logs or URLs.
+There is no automated production deployment credential or deployment workflow in this repository. Deploy only through the host's authorized cPanel/SSH process after taking a recoverable backup of the current public files and confirming private configuration/storage paths. Upload the contents of `public/` to the existing companion document root; do not upload `private/`, test fixtures, or repository source. Preserve the current production PHP handler and private configuration. Do not replace the private store or its credentials.
 
-The desktop publishes every 3 seconds; the page polls every 3 seconds while foregrounded. That's approximately **40 small API requests/minute per active pair** (20 reads + 20 writes); a foreground phone retry backs off to 12 seconds when errors repeat. Hidden tabs stop polling. Requests abort after 5 seconds. Snapshot timestamps/sequence reject replay; stale data is labeled after 12 seconds. A pair expires after 8 hours without authenticated activity by default. Pairing requests are rate limited per source address (6 creates and 12 claims per minute). Configure HTTPS/proxy boundaries so the PHP process receives a meaningful `REMOTE_ADDR`; there is no trust in forwarded headers.
+Before changing the live site, validate a copy of the release on PHP 8.2 with `tests/run.ps1` and syntax-check every PHP file. Upload public files to a staging directory first where hosting permits, then switch the document root or copy files as one reviewed operation. Retain the backup until the checks below pass; restore the previous public files if they fail. No database migration is required, and the v1 API actions remain in the new API for existing Alpha.77 clients.
 
-## Desktop configuration and safety
+After upload, verify anonymously that the website and JS/CSS load over HTTPS, and `GET /api.php` returns HTTP 405 with JSON `method_not_allowed` (not a PHP parse error, 404, or `not_configured`). From an authorized same-origin test browser and a disposable Wodra profile, pair, restart the browser and desktop, start/end a test ride, reconnect, revoke the test phone, and verify it is rejected. Confirm the private store is outside the document root and contains hashes rather than raw credentials. Do not use or disclose production credentials in logs or diagnostics.
 
-Companion defaults OFF and relay URL blank. No production hostname or localhost URL is preconfigured. Enabling the option alone does not transmit ride data; the rider must enter their deployed HTTPS relay URL, create an invitation, then approve the phone. Desktop credentials live only for this app process; quit, disable, cancel and revoke discard them. Without deployment configuration, pairing is unavailable while local riding remains unaffected.
-
-## Local validation
-
-`tests/run.ps1` starts the built-in PHP server against a temporary isolated store and runs API scenarios for one-time claims, approval/rejection, pair isolation, monotonic sequence, snapshot bounds, role separation, expiry, revocation and parallel reads. Website layout is plain responsive HTML/CSS and does not depend on a service worker or remote assets. Browser emulation is not a real iPhone/Android acceptance test.
+`tests/run.ps1` provides local service-level coverage, not proof of production deployment or physical iPhone Safari/Android behavior. Those still require an authorized deployed integration and owner-device acceptance.

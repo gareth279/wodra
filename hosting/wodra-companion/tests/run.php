@@ -12,6 +12,17 @@ $post = static function (array $body) use ($base): array {
     $status = 0; foreach ($http_response_header ?? [] as $header) if (preg_match('~HTTP/\S+\s+(\d+)~', $header, $m)) $status=(int)$m[1];
     return [$status, json_decode($result, true, 32, JSON_THROW_ON_ERROR)];
 };
+$post2 = static function (array $body, ?string $cookie = null, string $origin = 'http://127.0.0.1:8799') use ($base): array {
+	$headers = "Content-Type: application/json\r\nOrigin: $origin\r\n";
+    if ($cookie !== null) $headers .= "Cookie: WodraPhone=$cookie\r\n";
+    $context = stream_context_create(['http'=>['method'=>'POST','header'=>$headers,
+        'content'=>json_encode(['protocol'=>2]+$body, JSON_THROW_ON_ERROR),'ignore_errors'=>true,'timeout'=>5]]);
+    $result = file_get_contents($base . '/api.php', false, $context);
+    if (!is_string($result)) throw new RuntimeException('Local remembered-device API did not return a response.');
+    $status = 0; $headersOut = $http_response_header ?? [];
+    foreach ($headersOut as $header) if (preg_match('~HTTP/\S+\s+(\d+)~', $header, $m)) $status=(int)$m[1];
+    return [$status, json_decode($result, true, 32, JSON_THROW_ON_ERROR), $headersOut];
+};
 $hash = static fn(string $s): string => hash('sha256', $s);
 $token = static fn(): string => rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
 $create = static function () use ($post, $hash, $token): array {
@@ -69,6 +80,81 @@ $state['sessions'][$id5]['expires']=time()-1;
 file_put_contents($sessionsPath,json_encode($state,JSON_THROW_ON_ERROR),LOCK_EX);
 [$status]=$post(['action'=>'claim','code'=>$code5,'companion_hash'=>$hash($token())]);$assert($status===404,'Expired invitations must not be claimable.');
 [$status]=$post(['action'=>'invite_status','id'=>$id5,'invite_hash'=>$hash($invite5)]);$assert($status===401 || $status===404 || $status===410,'Expired or removed invitation must never expose pairing state.');
+
+// Protocol v2 separates a stable desktop identity, one-time invitation, remembered
+// browser credential and the current live snapshot.
+$desktopId=$token();$desktopCredential=$token();$desktopHash=$hash($desktopCredential);
+[$status,$invite]=$post2(['action'=>'remembered_create','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+$assert($status===200 && strlen($invite['code']??'')===10,'Desktop creates a short-lived remembered-device invitation.');
+$inviteId=$invite['id'];$pairCode=$invite['code'];
+[$status,$inviteState]=$post2(['action'=>'remembered_invite_status','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'invite_id'=>$inviteId]);
+$assert($status===200 && $inviteState['status']==='invited','New remembered-device invitation remains available after desktop polling.');
+[$status,$paired,$responseHeaders]=$post2(['action'=>'remembered_claim','code'=>$pairCode]);
+$setCookie=implode("\n",array_filter($responseHeaders,static fn($header)=>stripos($header,'Set-Cookie: WodraPhone=')===0));
+$assert($status===200 && $paired['status']==='paired' && $paired['label']==='Phone 1','QR claim pairs a phone without another approval click.');
+$assert(preg_match('/WodraPhone=([A-Za-z0-9_-]{40,48})/',$setCookie,$cookieMatch)===1
+    && stripos($setCookie,'httponly')!==false && stripos($setCookie,'samesite=strict')!==false
+    && !isset($paired['_set_phone_cookie']),'Browser credential is delivered as HttpOnly SameSite cookie, not JSON.');
+$phoneCookie=$cookieMatch[1]??'';
+[$status]=$post2(['action'=>'remembered_claim','code'=>$pairCode]);$assert($status===404,'Claimed pairing invitation cannot be replayed.');
+[$status,$inviteState]=$post2(['action'=>'remembered_invite_status','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'invite_id'=>$inviteId]);
+$assert($status===200 && $inviteState['status']==='claimed' && $inviteState['device_id']===$paired['device_id'],'Desktop observes successful phone pairing.');
+$snapshot=['state'=>'riding','connected'=>true,'paused'=>false,'data_stale'=>false,'route'=>'Remembered device test','speed_kph'=>30.0,'power_w'=>210,'cadence_rpm'=>90,'heart_rate_bpm'=>null,'distance_m'=>500.0,'elapsed_s'=>60.0,'gradient_pct'=>0.0,'captured_at'=>gmdate('c')];
+[$status,$published]=$post2(['action'=>'remembered_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'seq'=>1,'snapshot'=>$snapshot]);
+$assert($status===200 && $published['status']==='accepted','Desktop identity publishes its current ride snapshot.');
+[$status,$read]=$post2(['action'=>'remembered_read'],$phoneCookie);
+$assert($status===200 && $read['status']==='remembered' && $read['snapshot']['power_w']===210,'Remembered browser reconnects to its own desktop snapshot.');
+[$status,$devices]=$post2(['action'=>'remembered_devices','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+$assert($status===200 && count($devices['devices'])===1 && $devices['devices'][0]['label']==='Phone 1'
+    && !isset($devices['devices'][0]['credential_hash']),'Desktop can list generic device labels without exposing credentials.');
+[$status]=$post2(['action'=>'remembered_devices','desktop_id'=>$token(),'desktop_hash'=>$hash($token())]);
+$assert($status===401,'Unrelated desktop cannot enumerate trusted devices.');
+[$status]=$post2(['action'=>'remembered_read'],null,'https://attacker.example');
+$assert($status===403,'Cross-origin browser requests cannot read remembered telemetry.');
+[$status]=$post2(['action'=>'remembered_read']);$assert($status===401,'A browser without the first-party credential cannot discover a desktop session.');
+[$status]=$post2(['action'=>'remembered_idle','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+[$status,$idle]=$post2(['action'=>'remembered_read'],$phoneCookie);
+$assert($status===200 && $idle['snapshot']===null,'Ending a ride clears its snapshot without removing phone trust.');
+[$status]=$post2(['action'=>'remembered_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'seq'=>2,'snapshot'=>$snapshot]);
+[$status,$reconnected]=$post2(['action'=>'remembered_read'],$phoneCookie);
+$assert($status===200 && $reconnected['snapshot']['route']==='Remembered device test','The same desktop identity resumes publishing after restart or a later ride.');
+[$status,$anotherInvite]=$post2(['action'=>'remembered_create','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+[$status,$anotherPhone,$anotherHeaders]=$post2(['action'=>'remembered_claim','code'=>$anotherInvite['code']]);
+preg_match('/WodraPhone=([A-Za-z0-9_-]{40,48})/',implode("\n",$anotherHeaders),$anotherCookieMatch);
+$anotherCookie=$anotherCookieMatch[1]??'';
+[$status,$devices]=$post2(['action'=>'remembered_devices','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+$assert($status===200 && count($devices['devices'])===2 && $anotherPhone['label']==='Phone 2','One desktop can remember multiple independent phones.');
+[$status]=$post2(['action'=>'remembered_revoke','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'device_id'=>$paired['device_id']]);
+$assert($status===200,'Desktop can revoke a phone server-side.');
+[$status]=$post2(['action'=>'remembered_read'],$phoneCookie);$assert($status===401,'Revoked phone can no longer read the live snapshot.');
+[$status,$otherPhoneRead]=$post2(['action'=>'remembered_read'],$anotherCookie);
+$assert($status===200 && $otherPhoneRead['snapshot']['route']==='Remembered device test','Revoking one phone leaves other trusted devices usable.');
+$statePath=(string)getenv('WODRA_COMPANION_TEST_STORAGE').'/sessions.json';
+$state=json_decode((string)file_get_contents($statePath),true,64,JSON_THROW_ON_ERROR);
+$state['remembered_devices'][$anotherPhone['device_id']]['expires']=time()+20*86400;
+file_put_contents($statePath,json_encode($state,JSON_THROW_ON_ERROR),LOCK_EX);
+[$status,$renewed,$renewalHeaders]=$post2(['action'=>'remembered_read'],$anotherCookie);
+$assert($status===200 && stripos(implode("\n",$renewalHeaders),'Set-Cookie: WodraPhone=')!==false,
+    'A trusted browser credential nearing expiry is renewed securely.');
+$state=json_decode((string)file_get_contents($statePath),true,64,JSON_THROW_ON_ERROR);
+$state['remembered_devices'][$anotherPhone['device_id']]['expires']=time()-1;
+file_put_contents($statePath,json_encode($state,JSON_THROW_ON_ERROR),LOCK_EX);
+[$status]=$post2(['action'=>'remembered_read'],$anotherCookie);
+$assert($status===401,'Expired trusted browser credentials are rejected and require a new pairing.');
+[$status,$secondInvite]=$post2(['action'=>'remembered_create','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
+[$status,$secondPaired,$secondHeaders]=$post2(['action'=>'remembered_claim','code'=>$secondInvite['code']]);
+preg_match('/WodraPhone=([A-Za-z0-9_-]{40,48})/',implode("\n",$secondHeaders),$secondCookieMatch);
+$secondCookie=$secondCookieMatch[1]??'';
+[$status,$forgot,$forgotHeaders]=$post2(['action'=>'remembered_forget'],$secondCookie);
+$assert($status===200 && $forgot['status']==='forgotten' && stripos(implode("\n",$forgotHeaders),'expires=thu, 01 jan 1970')!==false,
+    'Forget revokes trust and clears the HttpOnly phone cookie.');
+[$status]=$post2(['action'=>'remembered_read'],$secondCookie);$assert($status===401,'Forgotten phone can no longer read telemetry.');
+[$status,$forgotUnknown,$forgotUnknownHeaders]=$post2(['action'=>'remembered_forget'],'invalid-cookie');
+$assert($status===200 && $forgotUnknown['status']==='forgotten' && stripos(implode("\n",$forgotUnknownHeaders),'Set-Cookie: WodraPhone=')!==false,
+    'Forget still clears a stale or malformed browser cookie without granting access.');
+$rememberedState=json_decode((string)file_get_contents((string)getenv('WODRA_COMPANION_TEST_STORAGE').'/sessions.json'),true,64,JSON_THROW_ON_ERROR);
+$rememberedJson=json_encode($rememberedState,JSON_THROW_ON_ERROR);
+$assert(!str_contains($rememberedJson,$phoneCookie) && !str_contains($rememberedJson,$secondCookie),'Server persists only hashes of browser credentials.');
 
 $storage = (string)getenv('WODRA_COMPANION_TEST_STORAGE');
 $file = $storage . '/sessions.json';$persisted=file_get_contents($file);

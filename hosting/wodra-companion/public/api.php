@@ -9,14 +9,16 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Content-Security-Policy: default-src \'self\'; connect-src \'self\'; style-src \'self\'; script-src \'self\'; img-src \'self\' data:; object-src \'none\'; base-uri \'none\'; frame-ancestors \'none\'; form-action \'self\'');
 
-function reply(int $status, array $body): never {
+function reply(int $status, array $body, int $protocol = 1): never {
     http_response_code($status);
-    echo json_encode(['protocol' => 1] + $body, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    echo json_encode(['protocol' => $protocol] + $body, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
 
 function companion_storage_is_private(string $path, string $documentRoot): bool {
-    $absolute = DIRECTORY_SEPARATOR === '\\' ? preg_match('/^[A-Za-z]:\\\\/', $path) === 1 : str_starts_with($path, '/');
+    $absolute = DIRECTORY_SEPARATOR === '\\'
+        ? (preg_match('~^[A-Za-z]:[\\\\/]~', $path) === 1 || str_starts_with($path, '\\\\'))
+        : str_starts_with($path, '/');
     if ($path === '' || !$absolute || str_contains($path, "\0") || preg_match('~(?:^|[\\\\/])\.\.(?:[\\\\/]|$)~', $path)) return false;
     $root = realpath($documentRoot);
     $resolved = realpath($path);
@@ -29,6 +31,7 @@ function companion_storage_is_private(string $path, string $documentRoot): bool 
 }
 
 try {
+    $protocol = 1;
     $configPath = getenv('WODRA_COMPANION_CONFIG') ?: dirname(__DIR__) . '/private/config.php';
     if (!is_file($configPath)) reply(503, ['error' => 'not_configured']);
     if (!companion_storage_is_private((string)$configPath, (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'configuration_not_private']);
@@ -49,17 +52,35 @@ try {
     $raw = file_get_contents('php://input', false, null, 0, 8193);
     if (!is_string($raw) || strlen($raw) > 8192) reply(413, ['error' => 'request_too_large']);
     $request = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
-    if (!is_array($request) || ($request['protocol'] ?? null) !== 1 || !is_string($request['action'] ?? null)) reply(400, ['error' => 'invalid_request']);
+    if (!is_array($request) || !in_array($request['protocol'] ?? null, [1, 2], true) || !is_string($request['action'] ?? null)) reply(400, ['error' => 'invalid_request']);
+    $protocol = $request['protocol'];
+    if ($protocol === 2) {
+        $browserActions = ['remembered_claim', 'remembered_read', 'remembered_forget'];
+        if (in_array($request['action'], $browserActions, true) && !hash_equals((string)($config['origin'] ?? ''), $origin))
+            reply(403, ['error' => 'origin_rejected'], 2);
+        $request['_phone_cookie'] = is_string($_COOKIE['WodraPhone'] ?? null) ? $_COOKIE['WodraPhone'] : null;
+    }
     if (!companion_storage_is_private((string)($config['storage'] ?? ''), (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'storage_not_private']);
     $store = new CompanionStore((string)($config['storage'] ?? ''));
     $response = $store->execute($request, (int)($config['invite_ttl_seconds'] ?? 180), (int)($config['pair_ttl_seconds'] ?? 28800), (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
-    reply(200, $response);
+    if (isset($response['_set_phone_cookie'])) {
+        $cookie = $response['_set_phone_cookie']; unset($response['_set_phone_cookie']);
+        setcookie('WodraPhone', $cookie, ['expires' => (int)$response['_cookie_expires'], 'path' => '/', 'secure' => $secure,
+            'httponly' => true, 'samesite' => 'Strict']);
+        unset($response['_cookie_expires']);
+    }
+    if (!empty($response['_clear_phone_cookie'])) {
+        unset($response['_clear_phone_cookie']);
+        setcookie('WodraPhone', '', ['expires' => 1, 'path' => '/', 'secure' => $secure, 'httponly' => true, 'samesite' => 'Strict']);
+    }
+    reply(200, $response, $protocol);
 } catch (DomainException $e) {
     $map = ['rate_limited' => 429, 'unauthorized' => 401, 'not_found' => 404, 'expired' => 410, 'conflict' => 409];
-    reply($map[$e->getMessage()] ?? 400, ['error' => $e->getMessage()]);
-} catch (Throwable) {
+    reply($map[$e->getMessage()] ?? 400, ['error' => $e->getMessage()], $protocol ?? 1);
+} catch (Throwable $e) {
     // Do not include filesystem paths, secrets or request data in responses/logs.
-    reply(503, ['error' => 'temporarily_unavailable']);
+    error_log('Wodra companion relay internal failure: ' . get_class($e));
+    reply(503, ['error' => 'temporarily_unavailable'], $protocol ?? 1);
 }
 
 final class CompanionStore {
@@ -83,6 +104,12 @@ final class CompanionStore {
                 if (!is_array($s) || (int)($s['expires'] ?? 0) < $now ||
                     (($s['status'] ?? '') === 'active' && (int)($s['last_seen'] ?? 0) < $now - $pairTtl)) unset($state['sessions'][$id]);
             }
+            foreach (($state['remembered_devices'] ?? []) as $id => $device) {
+                if (!is_array($device) || (int)($device['expires'] ?? 0) < $now) unset($state['remembered_devices'][$id]);
+            }
+            foreach (($state['remembered_invites'] ?? []) as $id => $invite) {
+                if (!is_array($invite) || (int)($invite['expires'] ?? 0) < $now) unset($state['remembered_invites'][$id]);
+            }
             foreach (($state['rates'] ?? []) as $key => $times) {
                 $recent = array_values(array_filter(is_array($times) ? $times : [], static fn($t) => is_int($t) && $t > $now - 60));
                 if ($recent === []) unset($state['rates'][$key]); else $state['rates'][$key] = $recent;
@@ -101,14 +128,15 @@ final class CompanionStore {
     }
 
     private function rateLimit(array &$s, string $action, string $ip, int $now): void {
-        if (!in_array($action, ['create', 'claim'], true)) return;
+        if (!in_array($action, ['create', 'claim', 'remembered_create', 'remembered_claim'], true)) return;
         $key = hash('sha256', $ip . '|pairing|' . $action);
         $times = array_values(array_filter($s['rates'][$key] ?? [], static fn($t) => is_int($t) && $t > $now - 60));
-        if (count($times) >= ($action === 'claim' ? 12 : 6)) throw new DomainException('rate_limited');
+        if (count($times) >= (str_ends_with($action, 'claim') ? 12 : 6)) throw new DomainException('rate_limited');
         $times[] = $now; $s['rates'][$key] = $times;
     }
 
     private function dispatch(array &$s, array $r, int $now, int $inviteTtl, int $pairTtl): array {
+        if (($r['protocol'] ?? 1) === 2) return $this->dispatchRemembered($s, $r, $now, $inviteTtl);
         $sessions = &$s['sessions']; if (!is_array($sessions ?? null)) $sessions = [];
         $action = $r['action'];
         if ($action === 'create') {
@@ -173,7 +201,139 @@ final class CompanionStore {
         }
         return $x;
     }
+
+    private function dispatchRemembered(array &$s, array $r, int $now, int $inviteTtl): array {
+        $action = (string)($r['action'] ?? '');
+        $desktops = &$s['remembered_desktops']; if (!is_array($desktops ?? null)) $desktops = [];
+        $devices = &$s['remembered_devices']; if (!is_array($devices ?? null)) $devices = [];
+        $invites = &$s['remembered_invites']; if (!is_array($invites ?? null)) $invites = [];
+
+        if ($action === 'remembered_create') {
+            $desktopId = $this->desktopId($r);
+            $this->hashField($r, 'desktop_hash');
+            if (isset($desktops[$desktopId]) && !hash_equals((string)$desktops[$desktopId]['credential_hash'], $r['desktop_hash']))
+                throw new DomainException('unauthorized');
+            if (!isset($desktops[$desktopId]) && count($desktops) >= 500) throw new DomainException('rate_limited');
+            $desktops[$desktopId] ??= ['credential_hash'=>$r['desktop_hash'], 'created'=>$now, 'last_seen'=>$now,
+                'seq'=>0, 'snapshot'=>null, 'snapshot_at'=>0];
+            $desktops[$desktopId]['last_seen'] = $now;
+            do {
+                $code = strtoupper(bin2hex(random_bytes(5)));
+                $exists = false;
+                foreach ($invites as $candidate) if (hash_equals((string)($candidate['code_hash'] ?? ''), hash('sha256', $code))) { $exists = true; break; }
+            } while ($exists);
+            $id = $this->opaque();
+            $invites[$id] = ['code_hash'=>hash('sha256', $code), 'desktop_id'=>$desktopId, 'status'=>'invited',
+                'created'=>$now, 'expires'=>$now + max(60, min(300, $inviteTtl))];
+            return ['id'=>$id, 'code'=>$code, 'expires_at'=>$invites[$id]['expires']];
+        }
+
+        if ($action === 'remembered_claim') {
+            $code = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string)($r['code'] ?? '')) ?? '');
+            if (strlen($code) !== 10) throw new DomainException('not_found');
+            foreach ($invites as $inviteId => $invite) {
+                if (!hash_equals((string)($invite['code_hash'] ?? ''), hash('sha256', $code))) continue;
+                if ((int)($invite['expires'] ?? 0) < $now) throw new DomainException('expired');
+                $desktopId = (string)($invite['desktop_id'] ?? '');
+                $deviceCount = count(array_filter($devices, static fn($device) => ($device['desktop_id'] ?? '') === $desktopId));
+                if ($deviceCount >= 12) throw new DomainException('rate_limited');
+                $cookie = $this->opaque(); $deviceId = $this->opaque();
+                $number = 1;
+                foreach ($devices as $existing) if (($existing['desktop_id'] ?? '') === $desktopId &&
+                    preg_match('/^Phone ([1-9][0-9]*)$/D', (string)($existing['label'] ?? ''), $labelMatch) === 1)
+                    $number = max($number, (int)$labelMatch[1] + 1);
+                $devices[$deviceId] = ['desktop_id'=>$desktopId, 'credential_hash'=>hash('sha256', $cookie),
+                    'label'=>'Phone ' . $number, 'created'=>$now, 'last_seen'=>$now, 'expires'=>$now + 90 * 86400];
+                $invites[$inviteId]['status'] = 'claimed';
+                $invites[$inviteId]['device_id'] = $deviceId;
+                unset($invites[$inviteId]['code_hash']);
+                return ['status'=>'paired', 'device_id'=>$deviceId, 'label'=>$devices[$deviceId]['label'],
+                    '_set_phone_cookie'=>$cookie, '_cookie_expires'=>$devices[$deviceId]['expires']];
+            }
+            throw new DomainException('not_found');
+        }
+
+        if (in_array($action, ['remembered_publish', 'remembered_devices', 'remembered_revoke', 'remembered_revoke_all', 'remembered_idle', 'remembered_invite_status', 'remembered_cancel_invite'], true)) {
+            $desktopId = $this->desktopId($r);
+            $desktop = &$desktops[$desktopId];
+            if (!is_array($desktop ?? null)) throw new DomainException('unauthorized');
+            $this->hashField($r, 'desktop_hash');
+            if (!hash_equals((string)($desktop['credential_hash'] ?? ''), $r['desktop_hash'])) throw new DomainException('unauthorized');
+            $desktop['last_seen'] = $now;
+            if ($action === 'remembered_publish') {
+                $sequence = $r['seq'] ?? null;
+                if (!is_int($sequence) || $sequence <= (int)$desktop['seq'] || !is_array($r['snapshot'] ?? null)) throw new DomainException('conflict');
+                $desktop['seq'] = $sequence; $desktop['snapshot'] = $this->snapshot($r['snapshot']); $desktop['snapshot_at'] = $now;
+                return ['status'=>'accepted', 'seq'=>$sequence];
+            }
+            if ($action === 'remembered_idle') {
+                $desktop['snapshot'] = null; $desktop['snapshot_at'] = 0;
+                return ['status'=>'idle'];
+            }
+            if ($action === 'remembered_invite_status' || $action === 'remembered_cancel_invite') {
+                $inviteId = $this->inviteId($r);
+                $invite = &$invites[$inviteId];
+                if (!is_array($invite ?? null) || ($invite['desktop_id'] ?? '') !== $desktopId) throw new DomainException('not_found');
+                if ($action === 'remembered_cancel_invite') {
+                    if (($invite['status'] ?? 'invited') !== 'invited') throw new DomainException('conflict');
+                    $invite['status'] = 'cancelled'; unset($invite['code_hash']);
+                }
+                $status = (string)($invite['status'] ?? 'expired');
+                $expires = (int)($invite['expires'] ?? 0);
+                $deviceId = (string)($invite['device_id'] ?? ''); unset($invite);
+                return ['status'=>$status, 'expires_at'=>$expires, 'device_id'=>$deviceId];
+            }
+            if ($action === 'remembered_devices') {
+                $result = [];
+                foreach ($devices as $id => $device) if (($device['desktop_id'] ?? '') === $desktopId) {
+                    $result[] = ['id'=>$id, 'label'=>(string)$device['label'], 'created_at'=>(int)$device['created'],
+                        'last_seen'=>(int)$device['last_seen'], 'expires_at'=>(int)$device['expires']];
+                }
+                return ['devices'=>$result];
+            }
+            if ($action === 'remembered_revoke_all') {
+                foreach ($devices as $id => $device) if (($device['desktop_id'] ?? '') === $desktopId) unset($devices[$id]);
+                return ['status'=>'revoked'];
+            }
+            $deviceId = $this->deviceId($r);
+            if (!isset($devices[$deviceId]) || ($devices[$deviceId]['desktop_id'] ?? '') !== $desktopId) throw new DomainException('not_found');
+            unset($devices[$deviceId]);
+            return ['status'=>'revoked'];
+        }
+
+        if (in_array($action, ['remembered_read', 'remembered_forget'], true)) {
+            $cookie = $r['_phone_cookie'] ?? null;
+            if ($action === 'remembered_forget' && (!is_string($cookie) || !preg_match('/^[A-Za-z0-9_-]{40,48}$/D', $cookie)))
+                return ['status'=>'forgotten', '_clear_phone_cookie'=>true];
+            if (!is_string($cookie) || !preg_match('/^[A-Za-z0-9_-]{40,48}$/D', $cookie)) throw new DomainException('unauthorized');
+            $credentialHash = hash('sha256', $cookie); $found = null;
+            foreach ($devices as $id => $device) if (hash_equals((string)($device['credential_hash'] ?? ''), $credentialHash)) { $found = $id; break; }
+            if ($found === null && $action === 'remembered_forget') return ['status'=>'forgotten', '_clear_phone_cookie'=>true];
+            if ($found === null) throw new DomainException('unauthorized');
+            if ((int)$devices[$found]['expires'] < $now) { unset($devices[$found]); throw new DomainException('expired'); }
+            if ($action === 'remembered_forget') {
+                unset($devices[$found]);
+                return ['status'=>'forgotten', '_clear_phone_cookie'=>true];
+            }
+            $devices[$found]['last_seen'] = $now;
+            if ((int)$devices[$found]['expires'] < $now + 30 * 86400) {
+                $devices[$found]['expires'] = $now + 90 * 86400;
+                return ['status'=>'remembered', 'snapshot'=>$desktops[$devices[$found]['desktop_id']]['snapshot'] ?? null,
+                    'snapshot_at'=>(int)($desktops[$devices[$found]['desktop_id']]['snapshot_at'] ?? 0),
+                    'desktop_online'=>(int)($desktops[$devices[$found]['desktop_id']]['last_seen'] ?? 0) > $now - 12,
+                    '_set_phone_cookie'=>$cookie, '_cookie_expires'=>$devices[$found]['expires']];
+            }
+            $desktop = $desktops[$devices[$found]['desktop_id']] ?? [];
+            return ['status'=>'remembered', 'snapshot'=>$desktop['snapshot'] ?? null,
+                'snapshot_at'=>(int)($desktop['snapshot_at'] ?? 0), 'desktop_online'=>(int)($desktop['last_seen'] ?? 0) > $now - 12];
+        }
+        throw new DomainException('not_found');
+    }
+
     private function findCode(array $sessions, string $code): ?string { foreach ($sessions as $id=>$v) if (isset($v['code_hash']) && hash_equals((string)$v['code_hash'], hash('sha256',$code))) return (string)$id; return null; }
+    private function desktopId(array $r): string { $v=$r['desktop_id']??''; if (!is_string($v) || !preg_match('/^[A-Za-z0-9_-]{32,64}$/D',$v)) throw new DomainException('invalid_request'); return $v; }
+    private function deviceId(array $r): string { $v=$r['device_id']??''; if (!is_string($v) || !preg_match('/^[A-Za-z0-9_-]{32,48}$/D',$v)) throw new DomainException('not_found'); return $v; }
+    private function inviteId(array $r): string { $v=$r['invite_id']??''; if (!is_string($v) || !preg_match('/^[A-Za-z0-9_-]{32,48}$/D',$v)) throw new DomainException('not_found'); return $v; }
     private function id(array $r): string { $v=$r['id']??''; if (!is_string($v) || !preg_match('/^[A-Za-z0-9_-]{32,48}$/D',$v)) throw new DomainException('not_found'); return $v; }
     private function hashField(array $r,string $k): void { if (!is_string($r[$k]??null) || !preg_match('/^[a-f0-9]{64}$/D',$r[$k])) throw new DomainException('invalid_request'); }
     private function opaque(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
