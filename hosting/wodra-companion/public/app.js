@@ -61,7 +61,7 @@
       $('ride-state').className = 'state-banner'; $('route-name').textContent = !desktopUnavailable && !snapshot ? 'Waiting for ride' : 'Waiting for Wodra';
       ['power','speed','cadence','heart','distance','elapsed','gradient','trainer'].forEach(id => $(id).textContent = '—');
       $('updated').textContent = '';
-      window.WodraWakeLock?.setRideActive(false);
+      window.WodraWakeLock?.setRideActive(null);
       return;
     }
     const state = snapshot.state === 'ended' ? 'Ride ended' : snapshot.paused ? 'Ride paused'
