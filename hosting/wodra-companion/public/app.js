@@ -5,8 +5,10 @@
   const pairView = $('pair-view'), rideView = $('ride-view'), msg = $('pair-message'), badge = $('connection');
   const legacyKey = 'wodra-companion-pair-v1', legacyPendingKey = 'wodra-companion-pending-v1';
   const wakePreferenceKey = 'wodra-companion-wake-enabled';
-  let trusted = false, legacyPair = null, legacyPending = null, timer = null, busy = false, failures = 0;
+  const screenPreferenceKey = 'wodra-companion-selected-screen';
+  let trusted = false, legacyPair = null, legacyPending = null, timer = null, busy = false, failures = 0, routeMeta = null, routeVersion = '', currentTab = 'ride';
   try { $('wake-toggle').checked = localStorage.getItem(wakePreferenceKey) !== 'false'; } catch { /* Private storage may be unavailable. */ }
+  try { const selected = localStorage.getItem(screenPreferenceKey); if (['ride','route','riders'].includes(selected)) currentTab = selected; } catch { /* Private storage may be unavailable. */ }
 
   async function post(body, protocol = 2) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 5000);
@@ -45,13 +47,79 @@
     const seconds = Math.max(0, Math.floor(value)), hours = Math.floor(seconds / 3600), minutes = Math.floor(seconds % 3600 / 60), remainder = seconds % 60;
     return `${hours}:${String(minutes).padStart(2,'0')}:${String(remainder).padStart(2,'0')}`;
   }
+  function selectTab(name) {
+    if (!['ride','route','riders'].includes(name)) return;
+    currentTab = name;
+    try { localStorage.setItem(screenPreferenceKey, name); } catch { /* Screen selection remains available for this page session. */ }
+    document.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-current', button.dataset.tab === name ? 'page' : 'false'));
+    document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
+  }
+  function renderRoute(snapshot) {
+    const title = $('route-title'), subtitle = $('route-subtitle'), route = routeMeta;
+    const unavailable = snapshot?.environment === 'TrainingStudio';
+    if (!route || unavailable) {
+      title.textContent = unavailable ? 'Workout studio' : snapshot?.route || 'Route unavailable';
+      subtitle.textContent = unavailable ? 'Route overview is not applicable to this session.' : 'Waiting for route overview data';
+      $('route-line').setAttribute('points',''); $('elevation-line').setAttribute('points',''); $('route-marker').setAttribute('visibility','hidden');
+      ['route-distance','route-ridden','route-progress'].forEach(id => $(id).textContent = '—');
+      $('ascent-label').textContent = 'Elevation unavailable'; $('gradient-label').textContent = `Gradient ${Number.isFinite(snapshot?.gradient_pct) ? Number(snapshot.gradient_pct).toFixed(1)+'%' : '—'}`;
+      return;
+    }
+    title.textContent = route.name;
+    const points = route.points || [];
+    if (points.length < 2) { subtitle.textContent = 'Route geometry unavailable'; return; }
+    const xs=points.map(p=>p[1]), ys=points.map(p=>p[2]), minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    const spanX=Math.max(.001,maxX-minX),spanY=Math.max(.001,maxY-minY), mapScale=Math.min(84/spanX,84/spanY);
+    const mapOffsetX=(100-spanX*mapScale)/2, mapOffsetY=(100-spanY*mapScale)/2;
+    const xy=points.map(p=>[mapOffsetX+(p[1]-minX)*mapScale,mapOffsetY+(p[2]-minY)*mapScale]);
+    $('route-line').setAttribute('points',xy.map(p=>p.join(',')).join(' '));
+    const distance=Math.max(0,Number(snapshot?.distance_m)||0), total=Number(route.distance_m)||0;
+    const progress=route.type==='Point-to-Point'?Math.max(0,Math.min(1,distance/total)):total?((distance%total)/total):0;
+    const chainage=progress*total;
+    let index=0; while(index<points.length-2 && points[index+1][0]<chainage) index++;
+    const span=points[index+1][0]-points[index][0], t=span>0?Math.max(0,Math.min(1,(chainage-points[index][0])/span)):0;
+    const pos=[xy[index][0]+(xy[index+1][0]-xy[index][0])*t,xy[index][1]+(xy[index+1][1]-xy[index][1])*t];
+    $('route-marker').setAttribute('cx',pos[0]); $('route-marker').setAttribute('cy',pos[1]); $('route-marker').setAttribute('visibility','visible');
+    const elevations=points.map(p=>p[3]), minE=Math.min(...elevations), maxE=Math.max(...elevations), spanE=Math.max(1,maxE-minE);
+    const profile=points.map(p=>[Math.max(0,Math.min(1,p[0]/total))*300,72-(p[3]-minE)/spanE*64]);
+    $('elevation-line').setAttribute('points',profile.map(p=>p.join(',')).join(' '));
+    const ex=progress*300; $('elevation-marker').setAttribute('x1',ex); $('elevation-marker').setAttribute('x2',ex);
+    $('route-distance').textContent=`${(total/1000).toFixed(2)} km`; $('route-ridden').textContent=`${(distance/1000).toFixed(2)} km`;
+    const loop=route.type!=='Point-to-Point'; $('route-progress').textContent=loop?`Lap ${snapshot?.lap||1}`:`${((Number(snapshot?.remaining_m)||Math.max(0,total-distance))/1000).toFixed(1)} km`;
+    $('route-progress-label').textContent=loop?`${Math.round(progress*100)}% of lap`:'remaining';
+    const routeKind=route.type==='Point-to-Point'?'Point to point':route.type==='Out-and-Back'?'Out and back':'Loop';
+    const environmentLabel=route.discipline==='Gravel'?'Gravel':route.discipline==='MountainBike'?'MTB':route.environment;
+    subtitle.textContent=route.environment==='TrainingStudio'?'Workout studio':`${environmentLabel} · ${routeKind}`;
+    $('ascent-label').textContent=`${Math.round(Number(route.ascent_m)||0)} m ascent`;
+    const nextGradient=route.type==='Point-to-Point'?points[index+1]?.[4]:points[(index+1)%points.length]?.[4];
+    $('gradient-label').textContent=`Gradient ${Number.isFinite(snapshot?.gradient_pct)?Number(snapshot.gradient_pct).toFixed(1)+'%':'—'}${Number.isFinite(nextGradient)?` · next ${Number(nextGradient).toFixed(1)}%`:''}`;
+  }
+  function renderRiders(snapshot) {
+    const list=$('riders-list'); list.replaceChildren();
+    const riders=Array.isArray(snapshot?.riders)?snapshot.riders.filter(r=>Number.isFinite(r.relative_m)).sort((a,b)=>Math.abs(a.relative_m)-Math.abs(b.relative_m)):[];
+    $('riders-empty').hidden=riders.length>0;
+    if (snapshot) riders.unshift({name:'You',kind:'Current rider',relative_m:0});
+    for (const rider of riders) {
+      const li=document.createElement('li'); li.className='rider-row';
+      const text=document.createElement('div'), name=document.createElement('div'), meta=document.createElement('div'), gap=document.createElement('div');
+      name.className='rider-name'; name.textContent=rider.name||'Rider'; meta.className='rider-meta'; meta.textContent=rider.kind==='AI'?'Wodra rider':rider.kind==='Current rider'?'Current rider':'Multiplayer rider';
+      gap.className='rider-gap'+(rider.kind==='Current rider'?' current':rider.relative_m<0?' behind':'');
+      gap.textContent=rider.kind==='Current rider'?'YOU':`${Math.abs(Math.round(rider.relative_m))} m ${rider.relative_m>=0?'ahead':'behind'}`;
+      text.append(name,meta); li.append(text,gap); list.append(li);
+    }
+  }
   function render(data) {
     trusted = true; pairView.hidden = true; rideView.hidden = false;
+    selectTab(currentTab);
     $('reconnect').hidden = true;
+    if (typeof data.route_version === 'string' && data.route_version !== routeVersion) { routeVersion=data.route_version; routeMeta=data.route||null; }
+    else if (data.route) routeMeta=data.route;
     const snapshot = data.snapshot;
     const age = Date.now() / 1000 - Number(data.snapshot_at || 0);
     const desktopUnavailable = !data.desktop_online;
     const stale = desktopUnavailable || !snapshot || age > 12;
+    renderRoute(snapshot);
+    renderRiders(stale ? null : snapshot);
     if (stale) {
       badge.textContent = failures ? 'Reconnecting' : desktopUnavailable ? 'Waiting for Wodra' : !snapshot ? 'Waiting for ride' : 'Reconnecting'; badge.className = 'pill warn';
       $('ride-state').textContent = desktopUnavailable
@@ -97,7 +165,8 @@
       if (legacyPair) {
         render(await post({action:'read',id:legacyPair.id,token_hash:await digest(legacyPair.token)},1));
       } else if (trusted) {
-        render(await post({action:'remembered_read'}));
+        const response=await post({action:'remembered_read',route_version:routeVersion});
+        render(response);
       }
       failures = 0;
     } catch (error) {
@@ -160,6 +229,7 @@
   $('reconnect').addEventListener('click',()=>{trusted=true;$('reconnect').hidden=true;void poll().then(schedule);});
   $('forget-phone').addEventListener('click',async()=>{try{await post({action:'remembered_forget'});}catch{}clearTimeout(timer);trusted=false;legacyPair=null;legacyPending=null;sessionStorage.removeItem(legacyKey);sessionStorage.removeItem(legacyPendingKey);showPair('This phone has been forgotten.');$('reconnect').hidden=true;});
   $('wake-toggle').addEventListener('change',()=>{try{localStorage.setItem(wakePreferenceKey,$('wake-toggle').checked?'true':'false');}catch{};});
+  document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>selectTab(button.dataset.tab)));
   document.addEventListener('visibilitychange',()=>{clearTimeout(timer);if(!document.hidden){void poll();schedule();}});
   const fragment=location.hash.slice(1);if(fragment){$('pair-code').value=fragment.replace(/[^a-z0-9]/gi,'').slice(0,10).toUpperCase();history.replaceState(null,'',location.pathname+location.search);}
   try { legacyPair=JSON.parse(sessionStorage.getItem(legacyKey)||'null'); legacyPending=legacyPair?null:JSON.parse(sessionStorage.getItem(legacyPendingKey)||'null'); } catch { sessionStorage.removeItem(legacyKey);sessionStorage.removeItem(legacyPendingKey); }

@@ -163,6 +163,7 @@ public partial class RideSessionNode : Node
 	public bool? OnlineServiceAvailable => _onlineServiceAvailable;
 	public string OnlineStatus => _multiplayerProvider?.IsConnected == true ? "Connected" : _onlineStatus;
 	public IReadOnlyList<MultiplayerRemoteRider> MultiplayerRiders => _remoteRiders.Values.ToArray();
+	public RideWorldView? CompanionWorld => _rideWorldView;
 	public IReadOnlyList<MultiplayerRemoteRider> GetInterpolatedRemoteRiders() => _remoteInterpolators.Values
 		.Select(track => track.TrySample(MonotonicSeconds(), out var sample)
 			? new MultiplayerRemoteRider(sample.RiderId, sample.DisplayName, sample.DistanceMeters, sample.SpeedKph,

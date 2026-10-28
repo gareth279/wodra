@@ -1,6 +1,6 @@
 # Wodra web companion
 
-The companion is a read-only, same-origin mobile web app. It relays only the latest active ride snapshot; it does not store ride history or FIT files and does not provide trainer or application controls.
+The companion is a read-only, same-origin mobile web app. It relays the latest active ride snapshot and a versioned, bounded route overview; it does not store ride history or FIT files and does not provide trainer or application controls.
 
 ## Hosting requirements
 
@@ -18,7 +18,7 @@ Protocol 2 separates a profile-scoped desktop identity, a one-time invitation, a
 
 Selecting **Connect new phone** is a short-lived (180-second default), single-use invitation for one new device. The QR contains the public companion URL and the temporary code only. Scanning it pairs automatically; there is no second approval step. Manual code entry remains available. Pairing creation and claims are rate limited. Browser actions require the configured exact Origin, credentials are not accepted in URLs, and `SameSite=Strict` further limits cross-site requests.
 
-Trusted phones poll while their page is visible. The desktop publishes only while Companion is enabled and a ride is active, and clears the snapshot when the ride ends. An offline or idle phone remains trusted and shows **Waiting for Wodra**. The previous protocol 1 pairing/read flow remains available for Alpha.77 clients while they transition; protocol 1 retains its explicit desktop approval and session behavior.
+Trusted phones share one poll while their page is visible. The desktop publishes ride state every three seconds and sends sampled route geometry only when the route changes. Phones send their cached route version; the relay omits geometry when it matches. The latest route is transient relay state and is cleared with the live snapshot when the ride ends. Rider summaries contain only a bounded display name, AI/multiplayer kind, and relative distance. No rider IDs or route history are relayed. An offline or idle phone remains trusted and shows **Waiting for Wodra**. The previous protocol 1 pairing/read flow remains available for Alpha.77 clients while they transition; protocol 1 retains its explicit desktop approval and session behavior.
 
 The web page uses the standard Screen Wake Lock API and defaults its toggle on. Browsers may refuse or revoke the lock, and iOS power-saving/browser policy can still turn the display off. Users can temporarily disconnect polling or permanently forget the phone. The page is read-only.
 
@@ -34,7 +34,10 @@ The script syntax-checks all PHP sources, starts an isolated local PHP server, a
 
 ```powershell
 node hosting/wodra-companion/tests/wake-lock.test.cjs
+node hosting/wodra-companion/tests/app.test.cjs
 ```
+
+When Playwright and Chromium are available locally, `node hosting/wodra-companion/tests/visual-layout.review.cjs` runs the three screens at compact, standard, and landscape phone viewports and captures review screenshots in the temporary directory.
 
 For manual testing, make a private test config outside this package with `origin`, a writable private `storage` directory, `invite_ttl_seconds` (180), `pair_ttl_seconds` (28800), and `allow_insecure_local` true only for loopback. Set `WODRA_COMPANION_CONFIG` to that file before starting PHP's built-in server. Never use HTTP or `allow_insecure_local` for public hosting.
 
