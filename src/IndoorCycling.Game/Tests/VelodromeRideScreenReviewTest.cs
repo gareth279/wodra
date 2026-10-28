@@ -100,13 +100,13 @@ public partial class VelodromeRideScreenReviewTest : Node
             await Settle(2);
             var geometry = world.RouteGeometry ?? throw new InvalidOperationException("Velodrome route did not load.");
             Assert(session.CurrentActivityMode == RideActivityMode.Flying200, "selected route activity mode reaches the production ride");
-            Assert(Math.Abs(geometry.CenterlineLengthMeters - 250) < .001 && track.RouteDataVersion == 3,
-                "production track uses the measured 250 m version 3 reference line");
+            Assert(Math.Abs(geometry.CenterlineLengthMeters - 250) < .001 && track.RouteDataVersion == 4,
+                "production track uses the measured 250 m version 4 reference line");
             Assert(Math.Abs(geometry.GetPoseAtDistance(22.5).BankSlope - VelodromeRouteGeometry.BankSlopeAt(22.5)) < .001f,
                 "straight banking matches the authored 13.5 degree crossfall");
             Assert(Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - VelodromeRouteGeometry.BankSlopeAt(85)) < .001f &&
-                Math.Abs(geometry.GetPoseAtDistance(85).BankSlope - (float)Math.Tan(43.6 * Math.PI / 180)) < .001f,
-                "turn banking matches the authored 43.6 degree crossfall");
+                Math.Abs(geometry.GetPoseAtDistance(85).BankSlope + (float)Math.Tan(43.6 * Math.PI / 180)) < .001f,
+                "left-turn banking rises toward the outside on the rider's right");
             var joins = new[] { 45d, 125d, 170d, 250d };
             foreach (var join in joins)
             foreach (var lateral in new[] { -3.05f, 0f, 3.05f })

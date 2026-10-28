@@ -3054,7 +3054,7 @@ var tests = new (string Name, Action Run)[]
     }),
     ("velodrome personal bests are keyed by profile, route version and mode", () =>
     {
-        var route = GpsRoute() with { Environment = RouteEnvironment.Velodrome, RouteDataVersion = 2 };
+        var route = GpsRoute() with { Environment = RouteEnvironment.Velodrome, RouteDataVersion = 3 };
         var values = new Dictionary<string, double>(); var a = Guid.NewGuid(); var b = Guid.NewGuid();
         var result = new TrackEffortResult("Flying200", 200, 25, true, true, [], null);
         if (!VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result, false, false, false))
@@ -3062,7 +3062,7 @@ var tests = new (string Name, Action Run)[]
         if (VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result with { ElapsedSeconds = 26 }, false, false, false))
             throw new Exception("A slower effort replaced the PB.");
         VelodromePersonalBestPolicy.TrySave(values, b, route, RideActivityMode.Flying200, result, false, false, false);
-        var otherVersion = route with { RouteDataVersion = 3 };
+        var otherVersion = route with { RouteDataVersion = 4 };
         VelodromePersonalBestPolicy.TrySave(values, a, otherVersion, RideActivityMode.Flying200, result, false, false, false);
         if (values.Count != 3) throw new Exception("PBs leaked between profiles or track versions.");
         if (VelodromePersonalBestPolicy.TrySave(values, a, route, RideActivityMode.Flying200, result, true, false, false))
@@ -3089,7 +3089,7 @@ var tests = new (string Name, Action Run)[]
 static void VelodromeGeometryIsExactAndSimple()
 {
     var route = RouteCatalog.GetById("wodra-velodrome-250") ?? throw new Exception("Built-in track is missing.");
-    if (route.DistanceMeters != VelodromeRouteGeometry.LapLengthMeters || route.RouteDataVersion != 3
+    if (route.DistanceMeters != VelodromeRouteGeometry.LapLengthMeters || route.RouteDataVersion != 4
         || route.Points is not { Count: 1001 } points || route.Segments.Count != 4
         || route.Capabilities.MaximumLateralOffsetMeters != 3.05f
         || route.Capabilities.DefaultLateralOffsetMeters != 0)
@@ -3126,6 +3126,20 @@ static void VelodromeGeometryIsExactAndSimple()
     var edges = points.Zip(points.Skip(1), (a, b) => new Vector2(
         (float)(b.LocalXMeters!.Value - a.LocalXMeters!.Value),
         (float)(b.LocalZMeters!.Value - a.LocalZMeters!.Value))).ToArray();
+    var twiceArea = points.Zip(points.Skip(1), (a, b) =>
+        a.LocalXMeters!.Value * b.LocalZMeters!.Value - b.LocalXMeters!.Value * a.LocalZMeters!.Value).Sum();
+    if (twiceArea >= 0 || VelodromeRouteGeometry.InsideLateralSign != 1)
+        throw new Exception($"Velodrome must wind anticlockwise in east/south coordinates with its infield on rider-left (area2={twiceArea:F3}, inside={VelodromeRouteGeometry.InsideLateralSign}).");
+    var insideMarks = new[]
+    {
+        (VelodromeRouteGeometry.StayerLineInnerMeters + VelodromeRouteGeometry.StayerLineOuterMeters) / 2,
+        (VelodromeRouteGeometry.SprinterLineInnerMeters + VelodromeRouteGeometry.SprinterLineOuterMeters) / 2,
+        (VelodromeRouteGeometry.MeasurementLineInnerMeters + VelodromeRouteGeometry.MeasurementLineOuterMeters) / 2,
+        VelodromeRouteGeometry.RacingHalfWidthMeters,
+        VelodromeRouteGeometry.SafetyApronOuterEdgeMeters
+    }.Select(VelodromeRouteGeometry.InsideOffset).ToArray();
+    if (insideMarks.Any(offset => offset <= 0) || !insideMarks.SequenceEqual(insideMarks.Order()))
+        throw new Exception("The blue apron and blue/stayer, red/sprinter, black/measurement and inner boundary lines are not ordered along rider-left toward the infield.");
     for (var i = 0; i < edges.Length; i++)
     {
         var next = edges[(i + 1) % edges.Length];
@@ -3143,6 +3157,15 @@ static void VelodromeGeometryIsExactAndSimple()
     for (var i = 0; i < signedTurns.Length; i++)
         if (Math.Abs(signedTurns[(i + 1) % signedTurns.Length] - signedTurns[i]) > .002)
             throw new Exception($"Curvature changes discontinuously near chainage {points[(i + 1) % (points.Count - 1)].DistanceMeters:F2} m.");
+    if (Math.Abs(signedTurns.Sum() + Math.Tau) > .001)
+        throw new Exception($"Complete route must turn anticlockwise exactly once, got {signedTurns.Sum() * 180 / Math.PI:F3}°.");
+    for (var i = 0; i < signedTurns.Length; i++)
+    {
+        var chainage = i / 4d;
+        var isCorner = chainage is >= 45 and <= 125 or >= 170 and <= 250;
+        if (isCorner ? signedTurns[i] > .00001 : Math.Abs(signedTurns[i]) > .00001)
+            throw new Exception($"Velodrome has a right-hand turn or unintended straight curvature near {chainage:F2} m.");
+    }
     foreach (var (start, end) in new[] { (45d, 125d), (170d, 250d) })
     {
         var firstEdge = checked((int)(start * 4));
@@ -3156,8 +3179,8 @@ static void VelodromeGeometryIsExactAndSimple()
             sweptAngle += Math.Atan2((double)before.X * after.Y - (double)before.Y * after.X,
                 Vector2.Dot(before, after));
         }
-        if (Math.Abs(Math.Abs(sweptAngle) - Math.PI) > .001)
-            throw new Exception($"Corner [{start},{end}] sweeps {sweptAngle * 180 / Math.PI:F3}°, not 180°.");
+        if (Math.Abs(sweptAngle + Math.PI) > .001)
+            throw new Exception($"Corner [{start},{end}] turns {sweptAngle * 180 / Math.PI:F3}°, not a left-hand 180°.");
     }
 
     // Independent 2D segment intersection check over the authored polygon.
@@ -3185,31 +3208,31 @@ static void VelodromeGeometryIsExactAndSimple()
     var expectedStraight = (float)Math.Tan(VelodromeRouteGeometry.StraightBankDegrees * Math.PI / 180);
     var expectedCorner = (float)Math.Tan(VelodromeRouteGeometry.CornerBankDegrees * Math.PI / 180);
     foreach (var distance in new[] { 22.5d, 147.5d })
-        if (Math.Abs(visual.GetPoseAtDistance(distance).BankSlope - expectedStraight) > .0001f)
-            throw new Exception($"Straight bank is not {VelodromeRouteGeometry.StraightBankDegrees:F1}° at {distance} m.");
+        if (Math.Abs(visual.GetPoseAtDistance(distance).BankSlope + expectedStraight) > .0001f)
+            throw new Exception($"Straight bank does not rise to the rider's outside at {distance} m.");
     foreach (var distance in new[] { 85d, 210d })
     {
         var slope = visual.GetPoseAtDistance(distance).BankSlope;
-        if (slope <= 0 || Math.Abs(slope - expectedCorner) > .0001f)
-            throw new Exception($"Outside edge does not rise at {VelodromeRouteGeometry.CornerBankDegrees:F1}° in the corner at {distance} m.");
+        if (slope >= 0 || Math.Abs(slope + expectedCorner) > .0001f)
+            throw new Exception($"Outside (rider-right) edge does not rise at {VelodromeRouteGeometry.CornerBankDegrees:F1}° in the corner at {distance} m.");
     }
-    foreach (var distance in new[] { 55d, 85d, 115d, 180d, 210d, 240d })
+    foreach (var distance in new[] { 22.5d, 55d, 85d, 115d, 147.5d, 180d, 210d, 240d })
     {
         var pose = visual.GetPoseAtDistance(distance);
         var outward = pose.Position - visual.BoundsCenter;
         outward.Y = 0;
         var localLeft = RiderLaneMath.LocalLeft(pose.Forward);
-        var outsideY = pose.Position.Y + 3.5f * pose.BankSlope;
-        var insideY = pose.Position.Y - 3.5f * pose.BankSlope;
-        var outwardAlignment = Vector3.Dot(localLeft, outward);
-        if (outwardAlignment <= 0 || outsideY <= insideY)
-            throw new Exception($"Left/outside edge is not higher than right/inside through bend transitions at {distance} m (left={localLeft}, radial={outward}, alignment={outwardAlignment:F3}, slope={pose.BankSlope:F3}).");
+        var inwardAlignment = Vector3.Dot(localLeft, -outward);
+        var outsideY = pose.Position.Y - 3.5f * pose.BankSlope;
+        var insideY = pose.Position.Y + 3.5f * pose.BankSlope;
+        if (inwardAlignment <= 0 || outsideY <= insideY)
+            throw new Exception($"Rider-left must face the infield and the outside must rise through corner transitions at {distance} m (left={localLeft}, radial={outward}, inward={inwardAlignment:F3}, slope={pose.BankSlope:F3}).");
     }
     for (var distance = 45d; distance <= 53; distance += .25)
-        if (visual.GetPoseAtDistance(distance + .25).BankSlope < visual.GetPoseAtDistance(distance).BankSlope)
+        if (visual.GetPoseAtDistance(distance + .25).BankSlope > visual.GetPoseAtDistance(distance).BankSlope)
             throw new Exception("Bank transition into the first bend reverses direction.");
     for (var distance = 117d; distance <= 125; distance += .25)
-        if (visual.GetPoseAtDistance(distance + .25).BankSlope > visual.GetPoseAtDistance(distance).BankSlope)
+        if (visual.GetPoseAtDistance(distance + .25).BankSlope < visual.GetPoseAtDistance(distance).BankSlope)
             throw new Exception("Bank transition out of the first bend reverses direction.");
     foreach (var join in new[] { 45d, 125d, 170d, 250d })
     foreach (var lateral in new[] { -3.05f, 0f, 3.05f })

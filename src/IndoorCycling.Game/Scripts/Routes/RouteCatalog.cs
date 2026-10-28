@@ -113,7 +113,7 @@ public static class RouteCatalog
 			SupportedModes = [RideActivityMode.FreeRide, RideActivityMode.LapTiming,
 				RideActivityMode.Flying200, RideActivityMode.Standing500, RideActivityMode.Standing1000],
 			SourceAttribution = "Original procedural local-coordinate track geometry; no real venue branding or survey geometry.",
-			RouteDataVersion = 3,
+			RouteDataVersion = 4,
 			PublishedTotalAscentMeters = 0
 		};
 	}
