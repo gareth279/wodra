@@ -242,7 +242,8 @@ final class CompanionStore {
             'ascent_m'=>(float)$route['ascent_m'], 'points'=>array_map(static fn($point) => array_map('floatval', $point), $route['points'])];
     }
     private function routeForClient(mixed $route, mixed $version): ?array {
-        if (!is_array($route) || !is_string($version) || $version === ($route['version'] ?? null)) return null;
+        if (!is_array($route)) return null;
+        if (is_string($version) && $version !== '' && $version === ($route['version'] ?? null)) return null;
         return $route;
     }
 
