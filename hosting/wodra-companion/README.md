@@ -4,9 +4,13 @@ The companion is a read-only, same-origin mobile web app. It relays only the lat
 
 ## Hosting requirements
 
-The relay supports the production host's PHP 8.2 runtime, built-in `json` support, `random_bytes`, `hash_equals`, filesystem `flock` and atomic same-volume `rename`. Runtime state and `config.php` must remain outside the document root. HTTPS is required in production. The handler reports a JSON error rather than exposing credentials or filesystem paths if private storage is unavailable.
+The relay supports PHP 8.2 and newer, built-in `json` support, `random_bytes`, `hash_equals`, filesystem `flock` and atomic same-volume `rename`. Runtime state and `config.php` must remain outside the document root. HTTPS is required in production. The handler reports a JSON error rather than exposing credentials or filesystem paths if private storage is unavailable. CI runs the PHP/API suite on PHP 8.2 and 8.5.
 
-Verify the domain's active PHP-FPM/Apache handler, not only the command-line version. CI runs syntax and API integration checks with PHP 8.2. The production domain is `https://wodra.g5.co.nz/`; Windows defaults to this URL while Companion itself remains opt-in. Custom HTTPS relay URLs are retained as an advanced override.
+Verify the domain's active PHP-FPM/Apache handler, not only the command-line version. The production domain is `https://wodra.g5.co.nz/`; Windows defaults to this URL while Companion itself remains opt-in. Custom HTTPS relay URLs are retained as an advanced override.
+
+For the production domain, configure the exact Origin as `https://wodra.g5.co.nz` (scheme and host only). With the reported document root `/home/gconz/wodra.g5.co.nz`, the default private config path resolves to `/home/gconz/private/config.php`; alternatively set `WODRA_COMPANION_CONFIG` to a private file outside the document root. Configure its `storage` value as an existing, writable private directory such as `/home/gconz/wodra-private/companion`; preserve the current trusted-device store when repairing this mapping. The PHP-FPM account must be able to create/read/write the directory and its lock file, while web requests must not be able to download either private path.
+
+If the host emits the PHP 8.5 `register_argc_argv` startup deprecation, set these values for this domain only with the hosting control panel's PHP INI editor: `register_argc_argv=Off`, `display_errors=Off`, and `log_errors=On`. Do not put PHP directives in `.htaccess` unless the active SAPI explicitly supports them, and do not change account-wide settings. The API does not use `$_SERVER['argv']`.
 
 ## Protocols and trust model
 
@@ -40,6 +44,6 @@ There is no automated production deployment credential or deployment workflow in
 
 Before changing the live site, validate a copy of the release on PHP 8.2 with `tests/run.ps1` and syntax-check every PHP file. Upload public files to a staging directory first where hosting permits, then switch the document root or copy files as one reviewed operation. Retain the backup until the checks below pass; restore the previous public files if they fail. No database migration is required, and the v1 API actions remain in the new API for existing Alpha.77 clients.
 
-After upload, verify anonymously that the website and JS/CSS load over HTTPS, and `GET /api.php` returns HTTP 405 with JSON `method_not_allowed` (not a PHP parse error, 404, or `not_configured`). From an authorized same-origin test browser and a disposable Wodra profile, pair, restart the browser and desktop, start/end a test ride, reconnect, revoke the test phone, and verify it is rejected. Confirm the private store is outside the document root and contains hashes rather than raw credentials. Do not use or disclose production credentials in logs or diagnostics.
+After upload and private configuration, verify anonymously that the website and JS/CSS load over HTTPS, and `GET /api.php` returns HTTP 405 with JSON `method_not_allowed` (not a PHP parse error, HTML, or startup warning). Send a same-origin unauthenticated protocol-2 `remembered_claim` with a deliberately invalid code; it must return protocol-2 JSON `not_found`/`expired`, without creating a session. From an authorized same-origin test browser and a disposable Wodra profile, pair, restart the browser and desktop, start/end a test ride, reconnect, revoke the test phone, and verify it is rejected. Confirm the private store is outside the document root and contains hashes rather than raw credentials. Do not use or disclose production credentials in logs or diagnostics.
 
 `tests/run.ps1` provides local service-level coverage, not proof of production deployment or physical iPhone Safari/Android behavior. Those still require an authorized deployed integration and owner-device acceptance.

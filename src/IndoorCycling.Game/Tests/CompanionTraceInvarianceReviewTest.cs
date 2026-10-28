@@ -57,6 +57,7 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			AssertEquivalent("relay error", disabled, rejected);
 			var timedOut = await RunTrace(screen, session, world, client, route, relay, "timeout", pair: true);
 			AssertEquivalent("relay timeout", disabled, timedOut);
+			AssertCompanionDiagnostics();
 
 			if (relay.PublishSuccesses == 0 || relay.PublishFailures == 0 || relay.PublishTimeouts == 0)
 				throw new InvalidOperationException($"Relay outcomes were not all exercised: success={relay.PublishSuccesses}, failure={relay.PublishFailures}, timeout={relay.PublishTimeouts}.");
@@ -131,10 +132,25 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 		finally { session.RecordingSampleObservedForReview -= OnRecording; }
 		if (frames.All(sample => sample.State.DistanceMeters <= 1) || recordings.Count < 3)
 			throw new InvalidOperationException($"The {mode} production ride did not advance and record dummy input.");
-		if (mode == "rejected" && !client.StatusText.StartsWith("Relay unavailable", StringComparison.Ordinal))
+		if (mode == "rejected" && !client.StatusText.Contains("server is unavailable", StringComparison.OrdinalIgnoreCase))
 			throw new InvalidOperationException($"Expected relay HTTP failure to remain a non-blocking client error, got '{client.StatusText}'.");
-		if (mode == "timeout" && !client.StatusText.StartsWith("Relay request timed out", StringComparison.Ordinal))
+		if (mode == "timeout" && !client.StatusText.Contains("timed out", StringComparison.OrdinalIgnoreCase))
 			throw new InvalidOperationException($"Expected bounded relay timeout to be reported during the ride, got '{client.StatusText}'.");
+		if (mode == "rejected")
+		{
+			relay.Mode = "healthy";
+			var priorSuccesses = relay.PublishSuccesses;
+			client._Process(3.1);
+			for (var attempt = 0; attempt < 300
+				&& (relay.PublishSuccesses <= priorSuccesses
+					|| !client.StatusText.Contains("live ride data is updating", StringComparison.OrdinalIgnoreCase)); attempt++)
+			{
+				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+				await Task.Delay(25);
+			}
+			if (!client.StatusText.Contains("live ride data is updating", StringComparison.OrdinalIgnoreCase))
+				throw new InvalidOperationException($"A recovered relay did not restore the companion state: {client.StatusText}.");
+		}
 		await session.ExitToRouteSelectionAsync();
 		world.SetProcess(true); await Settle(3); world.SetProcess(false);
 		client.Configure(session, false, "");
@@ -158,6 +174,37 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 				a.Telemetry.HasSpeedMeasurement != b.Telemetry.HasSpeedMeasurement)
 				throw new InvalidOperationException($"Companion {scenario} changed recording input sample {i}: base={a}, observed={b}.");
 		}
+	}
+
+	private static void AssertCompanionDiagnostics()
+	{
+		if (string.IsNullOrWhiteSpace(GameLogger.LogPath) || !File.Exists(GameLogger.LogPath))
+			throw new InvalidOperationException("Companion event logging did not create a diagnostic session log.");
+		var entries = File.ReadLines(GameLogger.LogPath).Select(line => JsonDocument.Parse(line)).ToArray();
+		try
+		{
+			var companion = entries.Select(document => document.RootElement)
+				.Where(entry => entry.TryGetProperty("type", out var type) && type.GetString()?.StartsWith("companion_", StringComparison.Ordinal) == true)
+				.ToArray();
+			var types = companion.Select(entry => entry.GetProperty("type").GetString()).ToHashSet(StringComparer.Ordinal);
+			var required = new[] { "companion_configuration_changed", "companion_invitation_created", "companion_pairing_result",
+				"companion_trusted_devices_discovered", "companion_publishing_started", "companion_http_response",
+				"companion_publishing_succeeded", "companion_publishing_failed", "companion_connection_restored" };
+			var missing = required.Where(type => !types.Contains(type)).ToArray();
+			if (missing.Length > 0) throw new InvalidOperationException($"Companion diagnostics omitted required safe lifecycle events: {string.Join(", ", missing)}.");
+			foreach (var entry in companion)
+				if (entry.TryGetProperty("payload", out var payload) && payload.ValueKind == JsonValueKind.Object
+				&& payload.EnumerateObject().Any(property => property.Name != "errorCode"
+					&& (property.Name.Contains("code", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("token", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("secret", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("hash", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("deviceId", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("inviteId", StringComparison.OrdinalIgnoreCase)
+						|| property.Name.Contains("route", StringComparison.OrdinalIgnoreCase))))
+					throw new InvalidOperationException("A companion diagnostic event contained a forbidden credential, identifier, or ride field.");
+		}
+		finally { foreach (var entry in entries) entry.Dispose(); }
 	}
 
 	private async Task Settle(int frames) { for (var i = 0; i < frames; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame); }
@@ -205,14 +252,14 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 				using var reader = new System.IO.StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
 				using var json = JsonDocument.Parse(await reader.ReadToEndAsync());
 				var action = json.RootElement.GetProperty("action").GetString();
-				string result = "{}"; int status = 200;
-				if (action == "remembered_create") result = "{\"id\":\"review-pair-id-0000000000000000000000000000\",\"code\":\"TRACE12345\"}";
-				else if (action == "remembered_invite_status") result = "{\"status\":\"claimed\"}";
-				else if (action == "remembered_devices") result = "{\"devices\":[{\"id\":\"review-device-id-0000000000000000000000000000\",\"label\":\"Phone 1\",\"created_at\":1,\"last_seen\":1,\"expires_at\":4102444800}]}";
+				string result = "{\"protocol\":2,\"status\":\"accepted\"}"; int status = 200;
+				if (action == "remembered_create") result = "{\"protocol\":2,\"id\":\"review-pair-id-0000000000000000000000000000\",\"code\":\"TRACE12345\"}";
+				else if (action == "remembered_invite_status") result = "{\"protocol\":2,\"status\":\"claimed\"}";
+				else if (action == "remembered_devices") result = "{\"protocol\":2,\"devices\":[{\"id\":\"review-device-id-0000000000000000000000000000\",\"label\":\"Phone 1\",\"created_at\":1,\"last_seen\":1,\"expires_at\":4102444800}]}";
 				else if (action == "remembered_publish")
 				{
 					if (Mode == "timeout") { await Task.Delay(TimeSpan.FromSeconds(5.2), _stop.Token); Interlocked.Increment(ref _publishTimeouts); }
-					else if (Mode == "rejected") { status = 503; result = "{\"error\":\"relay_unavailable\"}"; Interlocked.Increment(ref _publishFailures); }
+					else if (Mode == "rejected") { status = 503; result = "{\"protocol\":2,\"error\":\"relay_unavailable\"}"; Interlocked.Increment(ref _publishFailures); }
 					else Interlocked.Increment(ref _publishSuccesses);
 				}
 				var bytes = Encoding.UTF8.GetBytes(result); context.Response.StatusCode = status; context.Response.ContentType = "application/json"; context.Response.ContentLength64 = bytes.Length;

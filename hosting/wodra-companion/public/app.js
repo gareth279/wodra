@@ -13,10 +13,26 @@
     try {
       const response = await fetch(api, { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({protocol,...body}), cache:'no-store', credentials:'same-origin', signal:controller.signal });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'request_failed');
+      let data;
+      try { data = await response.json(); } catch { throw new Error('invalid_response'); }
+      if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid_response');
+      if (!response.ok && data.error === 'not_configured') throw new Error('not_configured');
+      if (data.protocol !== protocol) throw new Error('protocol_mismatch');
+      if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : 'request_failed');
       return data;
     } finally { clearTimeout(timeout); }
+  }
+  function failureMessage(error) {
+    switch (error?.message) {
+      case 'not_configured': return 'The Wodra companion server has not been configured yet. Try again later.';
+      case 'protocol_mismatch': return 'This Wodra companion server version is incompatible. The website and API need to be updated together.';
+      case 'invalid_response': return 'The Wodra companion server returned an invalid response. Try again later.';
+      case 'unauthorized': return 'This phone is not trusted by Wodra. Pair it again from the desktop app.';
+      case 'expired': return 'This phone pairing has expired. Pair it again from the desktop app.';
+      case 'not_found': return 'This pairing code or remembered phone is no longer available.';
+      case 'rate_limited': return 'Too many pairing attempts. Wait a few minutes and try again.';
+      default: return 'The Wodra companion server is unavailable. Check the connection and retry.';
+    }
   }
   function showPair(message = '') {
     trusted = false; pairView.hidden = false; rideView.hidden = true;
@@ -34,11 +50,15 @@
     $('reconnect').hidden = true;
     const snapshot = data.snapshot;
     const age = Date.now() / 1000 - Number(data.snapshot_at || 0);
-    const stale = !data.desktop_online || !snapshot || age > 12;
+    const desktopUnavailable = !data.desktop_online;
+    const stale = desktopUnavailable || !snapshot || age > 12;
     if (stale) {
-      badge.textContent = failures ? 'Reconnecting' : 'Waiting for Wodra'; badge.className = 'pill warn';
-      $('ride-state').textContent = 'Waiting for Wodra. Your phone is remembered; live ride data will appear when Wodra is available.';
-      $('ride-state').className = 'state-banner'; $('route-name').textContent = 'Waiting for ride';
+      badge.textContent = failures ? 'Reconnecting' : desktopUnavailable ? 'Waiting for Wodra' : !snapshot ? 'Waiting for ride' : 'Reconnecting'; badge.className = 'pill warn';
+      $('ride-state').textContent = desktopUnavailable
+        ? 'Waiting for Wodra. Your phone is remembered; ride data will appear when the desktop reconnects.'
+        : !snapshot ? 'Waiting for an active ride. Your phone is remembered and will reconnect automatically.'
+          : 'Reconnecting to Wodra. Ride data will return when the desktop connection is restored.';
+      $('ride-state').className = 'state-banner'; $('route-name').textContent = !desktopUnavailable && !snapshot ? 'Waiting for ride' : 'Waiting for Wodra';
       ['power','speed','cadence','heart','distance','elapsed','gradient','trainer'].forEach(id => $(id).textContent = '—');
       $('updated').textContent = '';
       window.WodraWakeLock?.setRideActive(false);
@@ -90,8 +110,11 @@
         showPair('This phone credential expired. Pair it again to restore access.'); return;
       }
       failures++;
-      if (trusted) { badge.textContent = 'Reconnecting'; badge.className = 'pill warn'; $('ride-state').textContent = 'Connection unavailable. Retrying automatically; phone trust is unchanged.'; }
-      else if (legacyPending) msg.textContent = 'Waiting for Wodra. Retrying securely…';
+      if (trusted) {
+        badge.textContent = 'Reconnecting'; badge.className = 'pill warn';
+        $('ride-state').textContent = error.message === 'protocol_mismatch'
+          ? failureMessage(error) : 'Connection unavailable. Retrying automatically; phone trust is unchanged.';
+      } else if (legacyPending) msg.textContent = failureMessage(error);
     } finally { busy = false; }
   }
   function schedule() {
@@ -109,7 +132,9 @@
       }
       throw new Error('pairing_unavailable');
     } catch (error) {
-      if (!['not_found','expired','rate_limited'].includes(error.message)) { msg.textContent = 'Pairing could not be completed. Try again.'; return; }
+      if (!['not_found','expired','rate_limited','protocol_mismatch','invalid_request'].includes(error.message)) {
+        msg.textContent = failureMessage(error); return;
+      }
       // Existing Alpha.77 installations still use protocol v1 and desktop approval.
       try {
         const phone = randomToken();
@@ -141,8 +166,8 @@
   if (legacyPair || legacyPending) { void poll(); schedule(); }
   else {
     void post({action:'remembered_read'}).then(render).then(schedule).catch(error => {
-      if (['unauthorized','expired','not_found'].includes(error.message)) { showPair(); return; }
-      showPair('Connection unavailable. Retrying automatically; a remembered phone stays trusted while offline.');
+      if (['unauthorized','expired','not_found'].includes(error.message)) { showPair(failureMessage(error)); return; }
+      showPair(failureMessage(error));
       trusted = true;
       schedule();
     });
