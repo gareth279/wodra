@@ -99,11 +99,22 @@ $phoneCookie=$cookieMatch[1]??'';
 [$status]=$post2(['action'=>'remembered_claim','code'=>$pairCode]);$assert($status===404,'Claimed pairing invitation cannot be replayed.');
 [$status,$inviteState]=$post2(['action'=>'remembered_invite_status','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'invite_id'=>$inviteId]);
 $assert($status===200 && $inviteState['status']==='claimed' && $inviteState['device_id']===$paired['device_id'],'Desktop observes successful phone pairing.');
-$snapshot=['state'=>'riding','connected'=>true,'paused'=>false,'data_stale'=>false,'route'=>'Remembered device test','speed_kph'=>30.0,'power_w'=>210,'cadence_rpm'=>90,'heart_rate_bpm'=>null,'distance_m'=>500.0,'elapsed_s'=>60.0,'gradient_pct'=>0.0,'captured_at'=>gmdate('c')];
+$routeMeta=['version'=>'route-test-v1','id'=>'test-route','name'=>'Test Loop','environment'=>'Velodrome','discipline'=>'Track','type'=>'Loop','distance_m'=>250.0,'ascent_m'=>0.0,
+    'points'=>[[0,0.0,0.0,0.0,0.0],[125,10.0,5.0,1.0,0.0],[250,0.0,0.0,0.0,0.0]]];
+[$status]=$post2(['action'=>'remembered_route_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'version'=>'route-test-v1','route'=>$routeMeta]);
+$assert($status===200,'Desktop publishes bounded static route metadata through authenticated relay action.');
+$snapshot=['state'=>'riding','connected'=>true,'paused'=>false,'data_stale'=>false,'route'=>'Remembered device test','speed_kph'=>30.0,'power_w'=>210,'cadence_rpm'=>90,'heart_rate_bpm'=>null,'distance_m'=>500.0,'elapsed_s'=>60.0,'gradient_pct'=>0.0,
+    'route_distance_m'=>250.0,'route_progress'=>0.0,'lap'=>3,'remaining_m'=>null,'environment'=>'Velodrome','route_type'=>'Loop',
+    'riders'=>[['name'=>'Alex','kind'=>'AI','relative_m'=>50.0]],'captured_at'=>gmdate('c')];
 [$status,$published]=$post2(['action'=>'remembered_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'seq'=>1,'snapshot'=>$snapshot]);
 $assert($status===200 && $published['status']==='accepted','Desktop identity publishes its current ride snapshot.');
-[$status,$read]=$post2(['action'=>'remembered_read'],$phoneCookie);
-$assert($status===200 && $read['status']==='remembered' && $read['snapshot']['power_w']===210,'Remembered browser reconnects to its own desktop snapshot.');
+[$status,$read]=$post2(['action'=>'remembered_read','route_version'=>''],$phoneCookie);
+$assert($status===200 && $read['status']==='remembered' && $read['snapshot']['power_w']===210 && $read['route']['version']==='route-test-v1'
+    && $read['snapshot']['lap']===3 && $read['snapshot']['riders'][0]['kind']==='AI','Remembered browser receives live metrics, route metadata and bounded rider summaries.');
+[$status,$cachedRead]=$post2(['action'=>'remembered_read','route_version'=>'route-test-v1'],$phoneCookie);
+$assert($status===200 && $cachedRead['route']===null,'Static route geometry is omitted when the phone already has its version cached.');
+[$status,$olderClientRead]=$post2(['action'=>'remembered_read'],$phoneCookie);
+$assert($status===200 && $olderClientRead['route']===null,'Older companion clients that do not send a route version never receive repeated geometry payloads.');
 [$status,$devices]=$post2(['action'=>'remembered_devices','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
 $assert($status===200 && count($devices['devices'])===1 && $devices['devices'][0]['label']==='Phone 1'
     && !isset($devices['devices'][0]['credential_hash']),'Desktop can list generic device labels without exposing credentials.');
@@ -114,7 +125,9 @@ $assert($status===403,'Cross-origin browser requests cannot read remembered tele
 [$status]=$post2(['action'=>'remembered_read']);$assert($status===401,'A browser without the first-party credential cannot discover a desktop session.');
 [$status]=$post2(['action'=>'remembered_idle','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash]);
 [$status,$idle]=$post2(['action'=>'remembered_read'],$phoneCookie);
-$assert($status===200 && $idle['snapshot']===null,'Ending a ride clears its snapshot without removing phone trust.');
+ $assert($status===200 && $idle['snapshot']===null && $idle['route_version']==='none','Ending a ride clears its live snapshot and route cache without removing phone trust.');
+[$status]=$post2(['action'=>'remembered_route_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'version'=>'route-test-v1','route'=>$routeMeta]);
+ $assert($status===200,'A later ride republishes its static route metadata once.');
 [$status]=$post2(['action'=>'remembered_publish','desktop_id'=>$desktopId,'desktop_hash'=>$desktopHash,'seq'=>2,'snapshot'=>$snapshot]);
 [$status,$reconnected]=$post2(['action'=>'remembered_read'],$phoneCookie);
 $assert($status===200 && $reconnected['snapshot']['route']==='Remembered device test','The same desktop identity resumes publishing after restart or a later ride.');

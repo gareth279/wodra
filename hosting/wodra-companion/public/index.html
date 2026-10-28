@@ -16,8 +16,10 @@
       <p class="privacy">Read-only live ride metrics. Your phone never controls the trainer.</p>
     </section>
     <section id="ride-view" hidden>
-      <div class="ride-heading card"><div><p class="eyebrow">CURRENT RIDE</p><h2 id="route-name">Waiting for ride</h2></div></div>
-      <div id="ride-state" class="state-banner">Waiting for Wodra</div>
+      <div class="session-bar"><span id="ride-state" class="state-banner">Waiting for Wodra</span><label class="wake-toggle"><input id="wake-toggle" type="checkbox" checked> Awake</label></div>
+      <nav class="tabs" aria-label="Ride information"><button type="button" data-tab="ride" aria-current="page">Ride</button><button type="button" data-tab="route">Route</button><button type="button" data-tab="riders">Riders</button></nav>
+      <section class="tab-panel" data-panel="ride" aria-label="Ride">
+      <div class="ride-heading"><p class="eyebrow">CURRENT RIDE</p><h2 id="route-name">Waiting for ride</h2></div>
       <div class="metrics">
         <article class="metric primary"><span>Power</span><strong id="power">—</strong><small>W</small></article>
         <article class="metric primary"><span>Speed</span><strong id="speed">—</strong><small>km/h</small></article>
@@ -29,11 +31,15 @@
         <article class="metric status"><span>Trainer</span><strong id="trainer">—</strong></article>
       </div>
       <p id="updated" class="updated" aria-live="polite"></p>
-      <section class="phone-controls" aria-label="Phone options">
-        <label class="wake-toggle"><input id="wake-toggle" type="checkbox" checked> Keep screen awake during an active ride</label>
-        <p id="wake-status" class="message" role="status">Wake lock is requested during an active ride when supported.</p>
-        <div class="phone-actions"><button id="disconnect" class="quiet">Disconnect</button><button id="forget-phone" class="quiet">Forget this phone</button></div>
       </section>
+      <section class="tab-panel route-panel" data-panel="route" aria-label="Route" hidden>
+        <h2 id="route-title">Route unavailable</h2><p id="route-subtitle" class="subtle">Waiting for route data</p>
+        <svg id="route-map" class="route-map" viewBox="0 0 100 100" role="img" aria-label="Route overview"><polyline id="route-line" points=""/><circle id="route-marker" cx="0" cy="0" r="3"/></svg>
+        <div class="route-stats"><span><b id="route-distance">—</b><small>route</small></span><span><b id="route-ridden">—</b><small>ridden</small></span><span><b id="route-progress">—</b><small id="route-progress-label">progress</small></span></div>
+        <div class="elevation-wrap"><svg id="elevation-chart" viewBox="0 0 300 76" role="img" aria-label="Route elevation profile"><polyline id="elevation-line" points=""/><line id="elevation-marker" x1="0" x2="0" y1="4" y2="72"/></svg><div class="elevation-labels"><span id="ascent-label">Elevation</span><span id="gradient-label">Gradient —</span></div></div>
+      </section>
+      <section class="tab-panel riders-panel" data-panel="riders" aria-label="Riders" hidden><div id="riders-empty" class="empty-state">No riders nearby</div><ul id="riders-list" class="riders-list"></ul></section>
+      <section class="phone-controls" aria-label="Phone options"><p id="wake-status" class="message" role="status">Screen awake status</p><div class="phone-actions"><button id="disconnect" class="quiet">Disconnect</button><button id="forget-phone" class="quiet">Forget this phone</button></div></section>
       <p class="privacy">Live snapshot only. Ride history and FIT files are not sent to this service.</p>
     </section>
   </main>

@@ -45,6 +45,8 @@ public partial class CompanionRelayClient : Node
 	private bool _lastLoggedProductionRelay;
 	private bool _publishingSession;
 	private bool _publishSuccessLogged;
+	private string _publishedRouteVersion = "";
+	private RouteDefinition? _publishedRoute;
 	private bool _deviceDiscoveryLogged;
 	private string _status = "Companion is off.";
 	private string _lastFailure = "";
@@ -98,6 +100,8 @@ public partial class CompanionRelayClient : Node
 			{
 				_identity = CompanionDesktopIdentityStore.LoadOrCreate(profileId);
 				_identityProfileId = profileId;
+				_publishedRouteVersion = "";
+				_publishedRoute = null;
 				_devices.Clear();
 				_sequence = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			}
@@ -275,6 +279,28 @@ public partial class CompanionRelayClient : Node
 		_requestBusy = true;
 		try
 		{
+			var route = _session.CurrentRoute;
+			if (!ReferenceEquals(route, _publishedRoute) || _publishedRouteVersion.Length == 0)
+			{
+				var routeVersion = route is null ? "none" : $"{route.Id}:{route.RouteDataVersion}:{route.GeometryFingerprint}";
+				try
+				{
+					await PostDesktopAsync(new { action = "remembered_route_publish", version = routeVersion,
+						route = route is null ? null : CreateRouteOverview(route) });
+					_publishedRouteVersion = routeVersion;
+					_publishedRoute = route;
+				}
+				catch (Exception ex)
+				{
+					GameLogger.Log("companion_route_metadata_failed", new { protocol = 2, errorCode = SafeErrorCode(ex) });
+					if (ex is CompanionRelayException { ErrorCode: "not_found" or "protocol_incompatible" })
+					{
+						// Older relays still receive the live snapshot below; they simply cannot supply a route overview.
+						_publishedRouteVersion = routeVersion;
+						_publishedRoute = route;
+					}
+				}
+			}
 			await PostDesktopAsync(new { action = "remembered_publish", seq = ++_sequence, snapshot = CreateSnapshot(_session) });
 			var restored = _lastFailure.Length > 0;
 			_hasPublishedRide = true; _lastFailure = "";
@@ -298,6 +324,8 @@ public partial class CompanionRelayClient : Node
 		{
 			await PostDesktopAsync(new { action = "remembered_idle" });
 			_hasPublishedRide = false;
+			_publishedRouteVersion = "";
+			_publishedRoute = null;
 			_status = "Phone remembered · waiting for an active ride.";
 		}
 		catch { /* Stale snapshots are hidden by the phone after twelve seconds. */ }
@@ -435,12 +463,59 @@ public partial class CompanionRelayClient : Node
 		double? speed = fresh && telemetry?.HasSpeedMeasurement == true ? ride.VirtualSpeedKph : null;
 		int? power = fresh && telemetry?.HasPowerMeasurement == true ? telemetry.PowerWatts : null;
 		int? cadence = fresh && telemetry?.HasCadenceMeasurement == true ? telemetry.CadenceRpm : null;
+		var routeDistance = route?.DistanceMeters ?? 0;
+		var routeProgress = routeDistance > 0 ? (route!.RouteType == "Point-to-Point" ? Math.Clamp(ride.DistanceMeters / routeDistance, 0, 1) : (ride.DistanceMeters % routeDistance) / routeDistance) : 0;
+		var lap = routeDistance > 0 && route?.RouteType != "Point-to-Point" ? (int)Math.Floor(ride.DistanceMeters / routeDistance) + 1 : 1;
+		var riders = BuildRiders(session, ride.DistanceMeters, routeDistance);
 		return new { state, connected, paused, data_stale = connected && (telemetry is null || !telemetry.HasReceivedMeasurement || !fresh),
 			route = route?.Name, speed_kph = speed, power_w = power, cadence_rpm = cadence,
 			heart_rate_bpm = heartFresh ? telemetry!.HeartRateBpm : null,
 			distance_m = session?.IsRideActive == true ? ride.DistanceMeters : (double?)null,
 			elapsed_s = session?.IsRideActive == true ? ride.ElapsedSeconds : (double?)null,
-			gradient_pct = gradient, captured_at = now.ToString("O", CultureInfo.InvariantCulture) };
+			gradient_pct = gradient, environment = route?.Environment.ToString() ?? (session?.IsWorkoutSession == true ? "TrainingStudio" : null),
+			discipline = route?.Discipline.ToString(), route_type = route?.RouteType,
+			route_distance_m = routeDistance > 0 ? routeDistance : (double?)null,
+			route_progress = routeProgress, lap, remaining_m = route?.RouteType == "Point-to-Point" ? Math.Max(0, routeDistance - ride.DistanceMeters) : (double?)null,
+			riders, captured_at = now.ToString("O", CultureInfo.InvariantCulture) };
+	}
+
+	private static object? CreateRouteOverview(RouteDefinition route)
+	{
+		if (route.Points is not { Count: >= 2 } points || route.DistanceMeters <= 0) return null;
+		var stride = Math.Max(1, (int)Math.Ceiling(points.Count / 64d));
+		var samples = points.Where((_, index) => index % stride == 0 || index == points.Count - 1).Select(point =>
+		{
+			var x = point.LocalXMeters ?? point.Longitude ?? 0;
+			var y = point.LocalZMeters ?? point.Latitude ?? 0;
+			return new[] { point.DistanceMeters, x, y, point.ElevationMeters, route.GetGradientAt(point.DistanceMeters) };
+		}).ToArray();
+		return new { version = $"{route.Id}:{route.RouteDataVersion}:{route.GeometryFingerprint}", id = route.Id,
+			name = route.Name, environment = route.Environment.ToString(), discipline = route.Discipline.ToString(), type = route.RouteType,
+			distance_m = route.DistanceMeters, ascent_m = route.TotalAscentMeters, points = samples };
+	}
+
+	private static object[] BuildRiders(RideSessionNode? session, double playerDistance, double routeLength)
+	{
+		if (session is null || routeLength <= 0) return [];
+		var candidates = new List<(string Name, string Kind, double Distance)>();
+		foreach (var rider in session.CompanionWorld?.GetCompanionLocalRiders() ?? [])
+			if (rider.RouteId == session.CurrentRoute?.Id) candidates.Add((rider.DisplayName, "AI", rider.RouteDistanceMeters));
+		foreach (var remote in session.GetInterpolatedRemoteRiders())
+			if (remote.HasState && remote.DistanceMeters is { } distance)
+				candidates.Add((remote.DisplayName, "Rider", distance));
+		return candidates.Select(r =>
+		{
+			var relative = r.Distance - playerDistance;
+			if (session.CurrentRoute?.RouteType != "Point-to-Point")
+			{
+				// Keep the nearest signed route gap while accounting for completed-lap separation.
+				var wrapped = ((relative + routeLength / 2) % routeLength + routeLength) % routeLength - routeLength / 2;
+				var lapGap = Math.Round((relative - wrapped) / routeLength);
+				relative = Math.Abs(lapGap) >= 1 ? Math.Sign(lapGap) * Math.Max(routeLength * .5, Math.Abs(relative)) : wrapped;
+			}
+			return new { name = string.IsNullOrWhiteSpace(r.Name) ? "Rider" : r.Name[..Math.Min(r.Name.Length, 32)], kind = r.Kind,
+				relative_m = relative };
+		}).Where(r => Math.Abs(r.relative_m) <= 1000).OrderBy(r => Math.Abs(r.relative_m)).Take(20).Cast<object>().ToArray();
 	}
 
 	private static ImageTexture CreateQrTexture(string text)

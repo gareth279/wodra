@@ -136,6 +136,10 @@ public partial class RideWorldView : Node3D
     public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
     public int LocalAiRiderCount => _riderStateSource?.GetRiders().Count(rider => rider.RiderId != "player") ?? 0;
 
+    public IReadOnlyList<RiderState> GetCompanionLocalRiders() => (_riderStateSource?.GetRiders()
+        ?? Array.Empty<RiderState>()).Where(rider => rider.RiderId != "player")
+        .Concat(PacerRiderStates).Where(rider => rider.RiderId != "player").ToArray();
+
     private static double SteeringWidthForRoute(RouteCapabilities? capabilities) =>
         capabilities?.MaximumLateralOffsetMeters is { } maximumOffset
             ? 2 * (maximumOffset + SteeringLateralController.RiderMarginMeters)
