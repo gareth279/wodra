@@ -15,15 +15,16 @@ let reads = 0;
 const actions = [];
 const fetch = async (_url, options) => {
   const body = JSON.parse(options.body); actions.push(body.action);
-  if (body.action === 'remembered_claim') return {ok:true, json:async()=>({status:'paired', device_id:'device-id'})};
-  if (body.action === 'remembered_forget') return {ok:true, json:async()=>({status:'forgotten'})};
+  const reply = (ok, data) => ({ok, json:async()=>({protocol:body.protocol,...data})});
+  if (body.action === 'remembered_claim') return reply(true,{status:'paired', device_id:'device-id'});
+  if (body.action === 'remembered_forget') return reply(true,{status:'forgotten'});
   if (body.action === 'remembered_read') {
     reads++;
-    if (reads === 1) return {ok:false, json:async()=>({error:'unauthorized'})};
-    if (reads === 2) return {ok:true, json:async()=>({status:'remembered',desktop_online:false,snapshot:null,snapshot_at:0})};
-    return {ok:true, json:async()=>({status:'remembered',desktop_online:true,snapshot_at:Math.floor(Date.now()/1000),snapshot:{
+    if (reads === 1) return reply(false,{error:'unauthorized'});
+    if (reads === 2) return reply(true,{status:'remembered',desktop_online:false,snapshot:null,snapshot_at:0});
+    return reply(true,{status:'remembered',desktop_online:true,snapshot_at:Math.floor(Date.now()/1000),snapshot:{
       state:'riding',connected:true,paused:false,data_stale:false,route:'Test route',speed_kph:30,power_w:200,
-      cadence_rpm:90,heart_rate_bpm:null,distance_m:500,elapsed_s:60,gradient_pct:0}})};
+      cadence_rpm:90,heart_rate_bpm:null,distance_m:500,elapsed_s:60,gradient_pct:0}});
   }
   throw new Error(`Unexpected companion API action ${body.action}`);
 };
@@ -35,6 +36,21 @@ const context = {document, window, location:{href:'https://wodra.g5.co.nz/',hash
   history:{replaceState(){}}, localStorage:store, sessionStorage:store, fetch,
   setTimeout:()=>1, clearTimeout(){}, AbortController, URL, Date, Math, Number, String, JSON, Error, Promise};
 vm.runInNewContext(source, context);
+
+function bootFailure(fetchStub) {
+  const scenarioElements = new Map();
+  const scenarioElement = id => {
+    if (!scenarioElements.has(id)) scenarioElements.set(id,{id,hidden:false,value:'',textContent:'',className:'',checked:true,
+      addEventListener(){}});
+    return scenarioElements.get(id);
+  };
+  const scenarioDocument = {hidden:false,addEventListener(){},getElementById:scenarioElement};
+  vm.runInNewContext(source,{document:scenarioDocument,window:{WodraWakeLock:{setRideActive:()=>Promise.resolve()}},
+    location:{href:'https://wodra.g5.co.nz/',hash:'',pathname:'/',search:''},history:{replaceState(){}},
+    localStorage:store,sessionStorage:store,fetch:fetchStub,setTimeout:()=>1,clearTimeout(){},AbortController,
+    URL,Date,Math,Number,String,JSON,Error,Promise});
+  return scenarioElements;
+}
 
 (async()=>{
   await new Promise(resolve=>setImmediate(resolve));
@@ -59,5 +75,16 @@ vm.runInNewContext(source, context);
   assert.equal(actions.includes('remembered_forget'),true,'forget calls server-side revocation');
   assert.equal(saved.some(([operation,key])=>operation==='set'&&(key==='wodra-companion-pair-v1'||key==='wodra-companion-pending-v1')),false,
     'protocol 2 does not store a long-lived bearer token in browser storage');
+  for (const [error,expected] of [
+    ['not_configured',/has not been configured/i],
+    ['protocol_mismatch',/version is incompatible/i]
+  ]) {
+    const scenario = bootFailure(async()=>({ok:false,json:async()=>({protocol:error==='protocol_mismatch'?1:2,error:error==='invalid_response'?'unspecified':error})}));
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.match(scenario.get('pair-message').textContent,expected,`${error} has a specific companion message`);
+  }
+  const malformed = bootFailure(async()=>({ok:true,json:async()=>{throw new Error('bad response');}}));
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.match(malformed.get('pair-message').textContent,/invalid response/i,'invalid JSON has a specific companion message');
   console.log('PASS: companion claim, idle, temporary disconnect, remembered reconnect, server-side forget and browser-storage policy');
 })().catch(error=>{console.error(error);process.exitCode=1;});

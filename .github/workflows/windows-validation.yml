@@ -223,6 +223,17 @@ jobs:
         if: matrix.configuration == 'Release'
         shell: pwsh
         run: hosting/wodra-companion/tests/run.ps1
+      - name: Check web companion PHP 8.5 compatibility
+        if: matrix.configuration == 'Release'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: json
+          coverage: none
+      - name: Run companion API suite on PHP 8.5
+        if: matrix.configuration == 'Release'
+        shell: pwsh
+        run: hosting/wodra-companion/tests/run.ps1
       - name: Check companion Screen Wake Lock lifecycle
         if: matrix.configuration == 'Release'
         shell: pwsh

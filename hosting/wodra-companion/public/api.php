@@ -32,35 +32,40 @@ function companion_storage_is_private(string $path, string $documentRoot): bool 
 
 try {
     $protocol = 1;
-    $configPath = getenv('WODRA_COMPANION_CONFIG') ?: dirname(__DIR__) . '/private/config.php';
-    if (!is_file($configPath)) reply(503, ['error' => 'not_configured']);
-    if (!companion_storage_is_private((string)$configPath, (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'configuration_not_private']);
-    $config = require $configPath;
-    if (!is_array($config) || PHP_VERSION_ID < 80200 || !extension_loaded('json') || !function_exists('random_bytes'))
-        reply(503, ['error' => 'requirements_not_met']);
-    $secure = strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on' || (string)($_SERVER['SERVER_PORT'] ?? '') === '443';
-    $localTest = !empty($config['allow_insecure_local']) && in_array((string)($_SERVER['REMOTE_ADDR'] ?? ''), ['127.0.0.1', '::1'], true);
-    if (!$secure && !$localTest)
-        reply(400, ['error' => 'https_required']);
     $method = $_SERVER['REQUEST_METHOD'] ?? '';
     if ($method !== 'POST') reply(405, ['error' => 'method_not_allowed']);
     if (!str_starts_with(strtolower((string)($_SERVER['CONTENT_TYPE'] ?? '')), 'application/json')) reply(415, ['error' => 'json_required']);
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    if ($origin !== '' && !hash_equals((string)($config['origin'] ?? ''), $origin)) reply(403, ['error' => 'origin_rejected']);
     $length = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
     if ($length > 8192) reply(413, ['error' => 'request_too_large']);
     $raw = file_get_contents('php://input', false, null, 0, 8193);
     if (!is_string($raw) || strlen($raw) > 8192) reply(413, ['error' => 'request_too_large']);
-    $request = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+    try { $request = json_decode($raw, true, 32, JSON_THROW_ON_ERROR); }
+    catch (JsonException) { reply(400, ['error' => 'invalid_json']); }
     if (!is_array($request) || !in_array($request['protocol'] ?? null, [1, 2], true) || !is_string($request['action'] ?? null)) reply(400, ['error' => 'invalid_request']);
     $protocol = $request['protocol'];
+
+    // Parse and retain the requested protocol before configuration checks. This
+    // keeps health and setup failures useful to clients while the private config
+    // is absent, without revealing any private path or value.
+    $configPath = getenv('WODRA_COMPANION_CONFIG') ?: dirname(__DIR__) . '/private/config.php';
+    if (!is_file($configPath)) reply(503, ['error' => 'not_configured'], $protocol);
+    if (!companion_storage_is_private((string)$configPath, (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'configuration_not_private'], $protocol);
+    $config = require $configPath;
+    if (!is_array($config) || PHP_VERSION_ID < 80200 || !extension_loaded('json') || !function_exists('random_bytes'))
+        reply(503, ['error' => 'requirements_not_met'], $protocol);
+    $secure = strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on' || (string)($_SERVER['SERVER_PORT'] ?? '') === '443';
+    $localTest = !empty($config['allow_insecure_local']) && in_array((string)($_SERVER['REMOTE_ADDR'] ?? ''), ['127.0.0.1', '::1'], true);
+    if (!$secure && !$localTest)
+        reply(400, ['error' => 'https_required'], $protocol);
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin !== '' && !hash_equals((string)($config['origin'] ?? ''), $origin)) reply(403, ['error' => 'origin_rejected'], $protocol);
     if ($protocol === 2) {
         $browserActions = ['remembered_claim', 'remembered_read', 'remembered_forget'];
         if (in_array($request['action'], $browserActions, true) && !hash_equals((string)($config['origin'] ?? ''), $origin))
-            reply(403, ['error' => 'origin_rejected'], 2);
+            reply(403, ['error' => 'origin_rejected'], $protocol);
         $request['_phone_cookie'] = is_string($_COOKIE['WodraPhone'] ?? null) ? $_COOKIE['WodraPhone'] : null;
     }
-    if (!companion_storage_is_private((string)($config['storage'] ?? ''), (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'storage_not_private']);
+    if (!companion_storage_is_private((string)($config['storage'] ?? ''), (string)($_SERVER['DOCUMENT_ROOT'] ?? ''))) reply(503, ['error' => 'storage_not_private'], $protocol);
     $store = new CompanionStore((string)($config['storage'] ?? ''));
     $response = $store->execute($request, (int)($config['invite_ttl_seconds'] ?? 180), (int)($config['pair_ttl_seconds'] ?? 28800), (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     if (isset($response['_set_phone_cookie'])) {
