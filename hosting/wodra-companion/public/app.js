@@ -108,12 +108,28 @@
       text.append(name,meta); li.append(text,gap); list.append(li);
     }
   }
+  function updateRouteCache(data) {
+    const serverVersion = typeof data.route_version === 'string' ? data.route_version : '';
+    const receivedRoute = data.route && typeof data.route === 'object' && !Array.isArray(data.route)
+      && typeof data.route.version === 'string' && Array.isArray(data.route.points) && data.route.points.length >= 2 ? data.route : null;
+    if (receivedRoute && (!serverVersion || receivedRoute.version === serverVersion)) {
+      routeMeta = receivedRoute;
+      routeVersion = receivedRoute.version;
+      return;
+    }
+    if (serverVersion === 'none') {
+      routeMeta = null;
+      routeVersion = 'none';
+      return;
+    }
+    if (serverVersion && serverVersion !== routeVersion) routeMeta = null;
+    if (!routeMeta || !routeVersion || routeMeta.version !== routeVersion) routeVersion = '';
+  }
   function render(data) {
     trusted = true; pairView.hidden = true; rideView.hidden = false;
     selectTab(currentTab);
     $('reconnect').hidden = true;
-    if (typeof data.route_version === 'string' && data.route_version !== routeVersion) { routeVersion=data.route_version; routeMeta=data.route||null; }
-    else if (data.route) routeMeta=data.route;
+    updateRouteCache(data);
     const snapshot = data.snapshot;
     const age = Date.now() / 1000 - Number(data.snapshot_at || 0);
     const desktopUnavailable = !data.desktop_online;
@@ -235,7 +251,7 @@
   try { legacyPair=JSON.parse(sessionStorage.getItem(legacyKey)||'null'); legacyPending=legacyPair?null:JSON.parse(sessionStorage.getItem(legacyPendingKey)||'null'); } catch { sessionStorage.removeItem(legacyKey);sessionStorage.removeItem(legacyPendingKey); }
   if (legacyPair || legacyPending) { void poll(); schedule(); }
   else {
-    void post({action:'remembered_read'}).then(render).then(schedule).catch(error => {
+    void post({action:'remembered_read',route_version:routeVersion}).then(render).then(schedule).catch(error => {
       if (['unauthorized','expired','not_found'].includes(error.message)) { showPair(failureMessage(error)); return; }
       showPair(failureMessage(error));
       trusted = true;
