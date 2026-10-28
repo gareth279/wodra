@@ -69,6 +69,8 @@ function harness({supported = true, request, activation = false, policy = true, 
   await steady.flush();
   assert.match(steady.status.textContent, /active/i, 'a slow successful request remains active');
   assert.equal(steady.released, 0, 'repeated telemetry updates do not discard the acquired sentinel');
+  steady.window.WodraWakeLock.setRideActive(null);
+  assert.equal(steady.released, 0, 'a temporary missing telemetry snapshot does not discard the acquired sentinel');
   steady.toggle.checked = false;
   await steady.listeners.get('toggle:change')();
   await steady.flush();

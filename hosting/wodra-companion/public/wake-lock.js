@@ -84,6 +84,7 @@
   }
 
   function setRideActive(active) {
+    if (active === null || active === undefined) return; // Missing telemetry is not proof that the ride ended.
     const next = Boolean(active);
     if (next === activeRide) return;
     const wasActive = activeRide;
