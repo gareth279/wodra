@@ -94,7 +94,7 @@ public partial class PreRideHomeLayoutReviewTest : Node
 						&& rect.Position.Y >= homeViewport.Position.Y && rect.End.Y <= homeViewport.End.Y,
 						$"primary and secondary action '{name}' is visible within the {size.X}x{size.Y} home viewport");
 				}
-				Capture(ride, $"pre-ride-home-{size.X}x{size.Y}.png");
+				Capture(ride.GetViewport(), $"pre-ride-home-{size.X}x{size.Y}.png");
 			}
 
 			home.GetNode<Button>("ConnectTrainerButton").EmitSignal(BaseButton.SignalName.Pressed);
@@ -134,18 +134,50 @@ public partial class PreRideHomeLayoutReviewTest : Node
 						$"advanced dummy setting '{control.Name}' remains within the Options window width");
 				}
 			}
-			optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
-			await Frames(4);
-			Check(optionsScroll.GetVScrollBar().MaxValue > 0
-				&& options.FindChild("AboutBuildInformation", true, false) is Label
-				&& options.FindChildren("DoneButton", "Button", true, false).Count == 1,
-				"Advanced settings and About remain reachable through vertical scrolling with Done available");
-			Check(advancedContent.FindChildren("Test with Fake Trainer", "Button", true, false).Count == 1,
-				"existing dummy trainer entry point is available in Advanced");
-			Check(advancedContent.FindChildren("QuitButton", "Button", true, false).Count == 0,
-				"Quit is not hidden in Testing & Diagnostics");
-			if (!IsHeadless)
-				Capture(ride, Path.Combine("pre-ride-options-advanced-scroll-bottom.png"));
+			foreach (var size in new[] { new Vector2I(960, 540), new Vector2I(1280, 720), new Vector2I(1920, 1080) })
+			{
+				if (IsHeadless)
+				{
+					var expected = StartPanelController.CalculateOptionsWindowSize(size);
+					Check(expected.X <= size.X - 48 && expected.Y <= size.Y - 48,
+						$"Options window fits the {size.X}x{size.Y} viewport with its margins");
+				}
+				else
+				{
+					options.Hide();
+					DisplayServer.WindowSetSize(size);
+					await Frames(4);
+					start.ShowOptions(returnToRoutes: false);
+					await Frames(4);
+					var expected = StartPanelController.CalculateOptionsWindowSize(size);
+					var mainSize = DisplayServer.WindowGetSize();
+					var logicalSize = start.GetViewportRect().Size;
+					var scale = new Vector2(mainSize.X / logicalSize.X, mainSize.Y / logicalSize.Y);
+					var visibleWidth = options.Size.X * scale.X;
+					var visibleHeight = options.Size.Y * scale.Y;
+					Check(visibleWidth <= expected.X + 1 && visibleHeight <= expected.Y + 1,
+						$"Options popup visible size {visibleWidth:0}x{visibleHeight:0} fits its responsive {expected.X}x{expected.Y} target at {size.X}x{size.Y}");
+					Check(options.Position.X >= -1 && options.Position.Y >= -1
+						&& options.Position.X * scale.X + visibleWidth <= mainSize.X + 1
+						&& options.Position.Y * scale.Y + visibleHeight <= mainSize.Y + 1,
+						$"Options popup remains within the visible main window at {size.X}x{size.Y}");
+				}
+				Check(advancedToggle.ButtonPressed && advancedContent.Visible,
+					$"Advanced remains expanded after reopening Options at {size.X}x{size.Y}");
+				Check(optionsScroll.HorizontalScrollMode == ScrollContainer.ScrollMode.Disabled,
+					$"Options uses vertical scrolling only at {size.X}x{size.Y}");
+				optionsScroll.ScrollVertical = (int)optionsScroll.GetVScrollBar().MaxValue;
+				await Frames(4);
+				Check(optionsScroll.GetVScrollBar().MaxValue > 0
+					&& options.FindChild("AboutBuildInformation", true, false) is Label
+					&& options.FindChildren("DoneButton", "Button", true, false).Count == 1,
+					$"Advanced settings and About remain scroll-accessible with Done available at {size.X}x{size.Y}");
+				Check(advancedContent.FindChildren("Test with Fake Trainer", "Button", true, false).Count == 1
+					&& advancedContent.FindChildren("QuitButton", "Button", true, false).Count == 0,
+					"Dummy Trainer remains in Advanced and Quit remains a home action");
+				if (!IsHeadless)
+					Capture(options, $"pre-ride-options-advanced-scroll-bottom-{size.X}x{size.Y}.png");
+			}
 			options.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Done")
 				.EmitSignal(BaseButton.SignalName.Pressed);
 			await Frames(3);
@@ -205,8 +237,24 @@ public partial class PreRideHomeLayoutReviewTest : Node
 			var trainerCardState = trainerCard.FindChildren("DeviceState", "Label", true, false).OfType<Label>().Single();
 			Check(trainerCardName.Text == "Dummy trainer" && trainerCardState.Text == "Test mode active",
 				"dummy trainer is not presented as a real connected device");
-			GameBootstrap.ResetSession();
 
+			// Options opened from the in-ride HUD must not offer launch actions that
+			// replace or end the current ride. Verify the existing client remains intact.
+			var activeTrainer = GameBootstrap.TrainerClient;
+			start.ShowOptions(returnToRoutes: false, returnToRide: true);
+			await Frames(3);
+			Check(!start.Visible && options.Visible
+				&& advancedContent.FindChildren("Test with Fake Trainer", "Button", true, false).OfType<Button>().Single().Disabled
+				&& advancedContent.FindChildren("LoadFitButton", "Button", true, false).OfType<Button>().Single().Disabled
+				&& advancedContent.FindChildren("LocalDiagnosticsButton", "Button", true, false).OfType<Button>().Single().Disabled,
+				"Dummy Trainer, FIT replay and Diagnostics are disabled when Options is opened during a ride");
+			Check(ReferenceEquals(GameBootstrap.TrainerClient, activeTrainer),
+				"opening in-ride Options does not replace the active trainer client");
+			options.FindChildren("DoneButton", "Button", true, false).OfType<Button>().Single()
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(3);
+			Check(!options.Visible && !start.Visible,
+				"closing in-ride Options leaves the ride screen active without revealing pre-ride home");
 			GD.Print($"[PreRideHomeLayoutReview] PASS: {_assertions} production assertions; graphical layout captures={(!IsHeadless)}.");
 			GetTree().Quit(0);
 		}
@@ -229,13 +277,13 @@ public partial class PreRideHomeLayoutReviewTest : Node
 		for (var i = 0; i < count; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 	}
 
-	private void Capture(Control ride, string fileName)
+	private void Capture(Viewport viewport, string fileName)
 	{
 		var output = System.Environment.GetEnvironmentVariable("WODRA_REVIEW_OUTPUT");
 		if (string.IsNullOrWhiteSpace(output)) output = Path.Combine(Path.GetTempPath(), "WodraPreRideReview");
 		Directory.CreateDirectory(output);
 		var path = Path.Combine(output, fileName);
-		GetViewport().GetTexture().GetImage().SavePng(path);
+		viewport.GetTexture().GetImage().SavePng(path);
 		GD.Print($"[PreRideHomeLayoutReview] CAPTURE: {path}");
 	}
 }

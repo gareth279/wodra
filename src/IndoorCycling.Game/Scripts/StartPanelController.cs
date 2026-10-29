@@ -295,7 +295,16 @@ public partial class StartPanelController : Control
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
 		if (_optionsReturnToRoutes || _optionsReturnToWorkouts || _optionsReturnToRide) Hide(); else Show();
-		_optionsWindow.PopupCentered();
+		if (DisplayServer.GetName().Contains("headless", StringComparison.OrdinalIgnoreCase))
+			_optionsWindow.Show();
+		else
+			_optionsWindow.PopupCentered();
+		// PopupCentered may grow a Window to its children's natural minimum size.
+		// Reapply the screen-fit dimensions afterwards so the ScrollContainer,
+		// rather than the native window, absorbs long Options content.
+		var popupSize = _optionsWindow.Size;
+		ResizeOptionsWindow();
+		_optionsWindow.Position += (popupSize - _optionsWindow.Size) / 2;
 		UpdateCompanionUi();
 		if (GameBootstrap.Settings.OnlineRidingEnabled && _rideSessionNode is not null) _ = _rideSessionNode.RefreshOnlineAvailabilityAsync();
 	}
@@ -316,7 +325,20 @@ public partial class StartPanelController : Control
 	private void ResizeOptionsWindow()
 	{
 		if (_optionsWindow is null || !IsInsideTree()) return;
-		_optionsWindow.Size = CalculateOptionsWindowSize(GetViewportRect().Size);
+		// Window controls are expressed in the stretched logical canvas, while the
+		// available desktop area is measured in client pixels. Convert the desired
+		// responsive pixel size back into the parent viewport's coordinate space.
+		var logicalSize = GetViewportRect().Size;
+		if (DisplayServer.GetName().Contains("headless", StringComparison.OrdinalIgnoreCase))
+		{
+			_optionsWindow.Size = CalculateOptionsWindowSize(logicalSize);
+			return;
+		}
+		var clientSize = DisplayServer.WindowGetSize();
+		var pixelSize = CalculateOptionsWindowSize(clientSize);
+		_optionsWindow.Size = new Vector2I(
+			Math.Max(1, (int)Math.Round(pixelSize.X * logicalSize.X / clientSize.X)),
+			Math.Max(1, (int)Math.Round(pixelSize.Y * logicalSize.Y / clientSize.Y)));
 	}
 
 	internal static Vector2I CalculateOptionsWindowSize(Vector2 viewport)
