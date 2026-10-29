@@ -113,7 +113,7 @@ public partial class StartPanelController : Control
 			_diagnosticPanel = new DiagnosticPanelController { Name = "DiagnosticPanel" };
 			GetParent().CallDeferred(Node.MethodName.AddChild, _diagnosticPanel);
 			var diagnosticsButton = new Button { Name = "LocalDiagnosticsButton", Text = "Diagnostics" };
-			diagnosticsButton.Pressed += () => _diagnosticPanel.OpenFor(this);
+			diagnosticsButton.Pressed += () => { _optionsWindow?.Hide(); _diagnosticPanel.OpenFor(this); };
 			startupColumn.AddChild(diagnosticsButton);
 			startupColumn.MoveChild(diagnosticsButton, startupColumn.GetNode<Button>("QuitButton").GetIndex());
 			_updatePanel = new VelopackUpdatePanel();
@@ -253,7 +253,6 @@ public partial class StartPanelController : Control
 			if (_debugModeCheckButton is not null) { _debugModeCheckButton.Text = "Debug Overlay"; _debugModeCheckButton.Visible = true; _debugModeCheckButton.Reparent(_advancedOptionsContent); }
 			if (_fitReplayButton is not null) { _fitReplayButton.Visible = true; _fitReplayButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _fitReplayButton.Reparent(_advancedOptionsContent); }
 			if (_diagnosticsButton is not null) { _diagnosticsButton.Visible = true; _diagnosticsButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _diagnosticsButton.Reparent(_advancedOptionsContent); }
-			if (_quitButton is not null) { _quitButton.Visible = true; _quitButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _quitButton.Reparent(_advancedOptionsContent); }
 			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
@@ -286,6 +285,9 @@ public partial class StartPanelController : Control
 		if (_optionsCompanionAdvanced is not null)
 			_optionsCompanionAdvanced.Text = _optionsCompanionUrl.Visible ? "Hide relay override" : "Advanced relay override";
 		ConfigureCompanion();
+		// Do not allow a test trainer or FIT replay to replace an active real ride.
+		if (_dummyStartButton is not null) _dummyStartButton.Disabled = returnToRide;
+		if (_fitReplayButton is not null) _fitReplayButton.Disabled = returnToRide;
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
 		if (_optionsReturnToRoutes || _optionsReturnToWorkouts || _optionsReturnToRide) Hide(); else Show();
@@ -500,7 +502,7 @@ public partial class StartPanelController : Control
 		startupColumn.AddThemeConstantOverride("separation", 14);
 
 		var title = startupColumn.GetNode<Label>("TitleLabel");
-		title.Text = "Ready to ride";
+		title.Text = "Welcome to Wodra";
 		title.AddThemeFontSizeOverride("font_size", 30);
 		title.HorizontalAlignment = HorizontalAlignment.Left;
 		title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -541,6 +543,11 @@ public partial class StartPanelController : Control
 		var secondary = new HBoxContainer { Name = "PreRideSecondaryActions", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; secondary.AddThemeConstantOverride("separation", 8); startupColumn.AddChild(secondary);
 		MoveToParent(startupColumn.GetNode<Button>("OptionsButton"), secondary, "Settings");
 		MoveToParent(startupColumn.GetNode<Button>("HistoryButton"), secondary, "Ride History");
+		// Keep Quit available to ordinary riders, but visually secondary to riding actions.
+		_quitButton = startupColumn.GetNode<Button>("QuitButton");
+		MoveToParent(_quitButton, secondary, "Quit");
+		_quitButton.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
+		_quitButton.CustomMinimumSize = new Vector2(92, 0);
 
 		// Testing, diagnostics and debug preferences remain available but no longer
 		// compete with normal ride actions on launch.
@@ -550,7 +557,6 @@ public partial class StartPanelController : Control
 		_dummyStartButton.Visible = false;
 		if (_dummySettingsRow is not null) _dummySettingsRow.Visible = false;
 		_fitReplayButton = startupColumn.GetNode<Button>("LoadFitButton"); _fitReplayButton.Visible = false;
-		_quitButton = startupColumn.GetNode<Button>("QuitButton"); _quitButton.Visible = false;
 		_debugModeCheckButton!.Visible = false;
 		foreach (var child in startupColumn.GetChildren())
 			if (child is Button button && button.Name == "LocalDiagnosticsButton") { _diagnosticsButton = button; button.Visible = false; }
@@ -837,11 +843,14 @@ public partial class StartPanelController : Control
 			return;
 		}
 
+		// The entry point now lives in an exclusive Options window. Close it before
+		// opening the existing route selector so the new screen is not obscured.
+		_optionsWindow?.Hide();
 		GameBootstrap.ConfigureFakeTrainerMode();
 
 		Hide();
 		_hudController?.Hide();
-		_routeSelectionPanel.ShowRouteSelection();
+		_routeSelectionPanel.ShowRouteSelectionFromHome();
 	}
 
 	private void OnLoadFitPressed()
@@ -852,6 +861,9 @@ public partial class StartPanelController : Control
 			return;
 		}
 
+		// FIT replay is launched from Advanced Options; remove its exclusive window
+		// before opening the existing file picker.
+		_optionsWindow?.Hide();
 		_fileDialog.PopupCenteredRatio(0.7f);
 	}
 
