@@ -38,6 +38,8 @@ public partial class PreRideHomeLayoutReviewTest : Node
 			Check(home.GetNode<Button>("ConnectTrainerButton").Visible && home.GetNode<Button>("ConnectTrainerButton").Text == "Connect devices",
 				"device management remains reachable from the home screen");
 			Check(!home.GetNode<Button>("Test with Fake Trainer").Visible, "dummy trainer entry point is absent from the normal home screen");
+			Check(home.GetNode<Label>("TitleLabel").Text == "Welcome to Wodra", "home heading does not claim a disconnected trainer is ready");
+			Check(home.GetNode<Button>("PreRideSecondaryActions/QuitButton").Visible, "Quit remains a secondary normal home action");
 			Check(homeScroll.HorizontalScrollMode == ScrollContainer.ScrollMode.Disabled,
 				"home uses vertical scrolling only and cannot hide content in a horizontal overflow");
 
@@ -140,6 +142,8 @@ public partial class PreRideHomeLayoutReviewTest : Node
 				"Advanced settings and About remain reachable through vertical scrolling with Done available");
 			Check(advancedContent.FindChildren("Test with Fake Trainer", "Button", true, false).Count == 1,
 				"existing dummy trainer entry point is available in Advanced");
+			Check(advancedContent.FindChildren("QuitButton", "Button", true, false).Count == 0,
+				"Quit is not hidden in Testing & Diagnostics");
 			if (!IsHeadless)
 				Capture(ride, Path.Combine("pre-ride-options-advanced-scroll-bottom.png"));
 			options.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Done")
@@ -152,8 +156,48 @@ public partial class PreRideHomeLayoutReviewTest : Node
 			await Frames(3);
 			Check(start.Visible && !options.Visible, "Options close button returns to home");
 
-			GameBootstrap.ConfigureFakeTrainerMode();
+			// Exercise the actual relocated diagnostics action; it must close the
+			// exclusive Options window, not open a panel behind it.
+			start.ShowOptions(returnToRoutes: false);
 			await Frames(3);
+			advancedContent.FindChildren("LocalDiagnosticsButton", "Button", true, false).OfType<Button>().Single()
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(4);
+			var diagnostics = ride.GetNode<DiagnosticPanelController>("DiagnosticPanel");
+			Check(diagnostics.Visible && !options.Visible && !start.Visible,
+				"Advanced Diagnostics opens in front of the closed Options window");
+			diagnostics.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Back")
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(3);
+			Check(start.Visible && !diagnostics.Visible, "Diagnostics Back restores the home screen");
+
+			// FIT replay must dismiss the exclusive Options window before showing
+			// the original file picker. Dismiss without selecting a real file.
+			start.ShowOptions(returnToRoutes: false);
+			await Frames(3);
+			advancedContent.FindChildren("LoadFitButton", "Button", true, false).OfType<Button>().Single()
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(3);
+			var fileDialog = start.GetNode<FileDialog>("FileDialog");
+			Check(!options.Visible && (IsHeadless || fileDialog.Visible),
+				"Advanced FIT replay closes Options before opening the existing file picker");
+			fileDialog.Hide();
+			await Frames(3);
+			Check(start.Visible, "dismissing FIT file selection leaves the pre-ride home available");
+
+			// Use the actual Advanced button, not a direct fake-client setup call.
+			// This protects the window close and return-to-home paths.
+			start.ShowOptions(returnToRoutes: false);
+			await Frames(3);
+			advancedContent.FindChildren("Test with Fake Trainer", "Button", true, false).OfType<Button>().Single()
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(4);
+			Check(routes.Visible && !options.Visible && !start.Visible,
+				"Advanced Dummy Trainer opens route selection without leaving Options over it");
+			routes.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Back")
+				.EmitSignal(BaseButton.SignalName.Pressed);
+			await Frames(3);
+			Check(start.Visible && !routes.Visible, "dummy trainer route Back returns to the new home screen");
 			Check(start.FindChild("DummyTrainerActiveNotice", true, false) is Label { Visible: true },
 				"synthetic trainer mode is surfaced as test mode");
 			var trainerCard = home.GetNode<Control>("PreRideDeviceCards/TrainerSummary");
@@ -161,12 +205,6 @@ public partial class PreRideHomeLayoutReviewTest : Node
 			var trainerCardState = trainerCard.FindChildren("DeviceState", "Label", true, false).OfType<Label>().Single();
 			Check(trainerCardName.Text == "Dummy trainer" && trainerCardState.Text == "Test mode active",
 				"dummy trainer is not presented as a real connected device");
-			home.GetNode<Button>("RideChoices/ChooseRouteButton").EmitSignal(BaseButton.SignalName.Pressed);
-			await Frames(3);
-			routes.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Back")
-				.EmitSignal(BaseButton.SignalName.Pressed);
-			await Frames(3);
-			Check(start.Visible && !routes.Visible, "route Back from Home returns home even when a trainer client is present");
 			GameBootstrap.ResetSession();
 
 			GD.Print($"[PreRideHomeLayoutReview] PASS: {_assertions} production assertions; graphical layout captures={(!IsHeadless)}.");
