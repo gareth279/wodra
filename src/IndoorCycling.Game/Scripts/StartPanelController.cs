@@ -285,9 +285,13 @@ public partial class StartPanelController : Control
 		if (_optionsCompanionAdvanced is not null)
 			_optionsCompanionAdvanced.Text = _optionsCompanionUrl.Visible ? "Hide relay override" : "Advanced relay override";
 		ConfigureCompanion();
-		// Do not allow a test trainer or FIT replay to replace an active real ride.
-		if (_dummyStartButton is not null) _dummyStartButton.Disabled = returnToRide;
-		if (_fitReplayButton is not null) _fitReplayButton.Disabled = returnToRide;
+		// These actions were originally available only from the pre-ride home.
+		// Keep them disabled when Options is opened from another screen, especially
+		// an active ride, so no test/replay session replaces the current context.
+		var fromPreRideHome = !returnToRoutes && !returnToWorkouts && !returnToRide;
+		if (_dummyStartButton is not null) _dummyStartButton.Disabled = !fromPreRideHome;
+		if (_fitReplayButton is not null) _fitReplayButton.Disabled = !fromPreRideHome;
+		if (_diagnosticsButton is not null) _diagnosticsButton.Disabled = !fromPreRideHome;
 		_aboutBuildInformation!.Text = BuildIdentity.Current.ToPlainText();
 		_aboutCopyStatus!.Text = string.Empty;
 		if (_optionsReturnToRoutes || _optionsReturnToWorkouts || _optionsReturnToRide) Hide(); else Show();
