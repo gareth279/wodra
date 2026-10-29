@@ -74,6 +74,13 @@ public partial class StartPanelController : Control
 	private bool _optionsReturnToRoutes;
 	private bool _optionsReturnToWorkouts;
 	private bool _optionsReturnToRide;
+	private HBoxContainer? _profileRow;
+	private GridContainer? _dummySettingsRow;
+	private Label? _trainerHomeName, _trainerHomeStatus, _heartRateHomeName, _heartRateHomeStatus, _steeringHomeName, _steeringHomeStatus;
+	private Label? _dummyModeNotice;
+	private Button? _advancedOptionsButton;
+	private VBoxContainer? _advancedOptionsContent;
+	private Button? _dummyStartButton, _fitReplayButton, _diagnosticsButton, _quitButton;
 
 	public override void _Ready()
 	{
@@ -127,6 +134,7 @@ public partial class StartPanelController : Control
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/LoadFitButton").Pressed += OnLoadFitPressed;
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/HistoryButton").Pressed += () => _rideHistoryPanel?.ShowHistory();
 		GetNode<Button>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer/QuitButton").Pressed += OnQuitPressed;
+		BuildPreRideHomeUi(startupColumn);
 
 		if (_fileDialog is not null)
 		{
@@ -232,6 +240,21 @@ public partial class StartPanelController : Control
 			_optionsCompanionUrl.FocusExited += SaveCompanionUrl;
 			content.AddChild(new Label { Text = "Connect a new phone with a short-lived QR code. Paired phones reconnect automatically. Companion sharing is read-only and remains opt-in.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
+			_advancedOptionsButton = new Button { Name = "AdvancedTestingToggle", Text = "Advanced / Testing & Diagnostics", ToggleMode = true, ButtonPressed = false, CustomMinimumSize = new Vector2(0, 40), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			content.AddChild(_advancedOptionsButton);
+			_advancedOptionsContent = new VBoxContainer { Name = "AdvancedTestingContent", Visible = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			_advancedOptionsContent.AddThemeConstantOverride("separation", 7);
+			content.AddChild(_advancedOptionsContent);
+			_advancedOptionsButton.Toggled += expanded => { if (_advancedOptionsContent is not null) _advancedOptionsContent.Visible = expanded; };
+			_advancedOptionsContent.AddChild(new Label { Text = "Testing & Diagnostics", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+			_advancedOptionsContent.AddChild(new Label { Text = "Synthetic trainer rides are marked as test mode. They do not represent a connected physical trainer.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+			if (_dummySettingsRow is not null) { _dummySettingsRow.Visible = true; _dummySettingsRow.Reparent(_advancedOptionsContent); }
+			if (_dummyStartButton is not null) { _dummyStartButton.Visible = true; _dummyStartButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _dummyStartButton.Reparent(_advancedOptionsContent); }
+			if (_debugModeCheckButton is not null) { _debugModeCheckButton.Text = "Debug Overlay"; _debugModeCheckButton.Visible = true; _debugModeCheckButton.Reparent(_advancedOptionsContent); }
+			if (_fitReplayButton is not null) { _fitReplayButton.Visible = true; _fitReplayButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _fitReplayButton.Reparent(_advancedOptionsContent); }
+			if (_diagnosticsButton is not null) { _diagnosticsButton.Visible = true; _diagnosticsButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _diagnosticsButton.Reparent(_advancedOptionsContent); }
+			if (_quitButton is not null) { _quitButton.Visible = true; _quitButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _quitButton.Reparent(_advancedOptionsContent); }
+			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
 			{
@@ -318,10 +341,9 @@ public partial class StartPanelController : Control
 	private void FitStartupPanel()
 	{
 		if (_startupPanel is null || !IsInsideTree()) return;
-		var viewport = GetViewportRect().Size;
-		var width = Math.Min(480, Math.Max(360, viewport.X - 32));
-		var height = Math.Min(600, Math.Max(420, viewport.Y - 32));
-		_startupPanel.CustomMinimumSize = new Vector2(width, height);
+		var size = CalculateStartupPanelSize(GetViewportRect().Size);
+		_startupPanel.CustomMinimumSize = new Vector2(size.X, size.Y);
+		var width = size.X; var height = size.Y;
 		_startupPanel.OffsetLeft = -width / 2; _startupPanel.OffsetRight = width / 2;
 		_startupPanel.OffsetTop = -height / 2; _startupPanel.OffsetBottom = height / 2;
 	}
@@ -334,6 +356,7 @@ public partial class StartPanelController : Control
 
 	public override void _Process(double delta)
 	{
+		UpdatePreRideDeviceSummary();
 		UpdateCompanionUi();
 		if (_onlineStatusLabel is null || _rideSessionNode is null) return;
 		var usingEos = OnlineStatusText.UsesEos(GameBootstrap.Settings.OnlineMultiplayerProvider);
@@ -446,22 +469,133 @@ public partial class StartPanelController : Control
 	{
 		var column = GetNodeOrNull<VBoxContainer>("PanelContainer/MarginContainer/StartupScroll/VBoxContainer");
 		if (column is null) return;
-		var profileRow = new HBoxContainer(); profileRow.AddChild(new Label { Text = "Profile:" });
+		var profileRow = _profileRow = new HBoxContainer { Name = "ActiveProfileRow" }; profileRow.AddChild(new Label { Text = "Rider profile", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
 		_profilePicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		_profilePicker.ItemSelected += OnProfileSelected; profileRow.AddChild(_profilePicker);
 		var manage = new Button { Text = "Manage Profiles" }; manage.Pressed += ShowProfileEditor; profileRow.AddChild(manage);
 		column.AddChild(profileRow); column.MoveChild(profileRow, 2);
-		var dummyRow = new HBoxContainer { Name = "DummyTrainerSettings" };
-		dummyRow.AddChild(new Label { Text = "Dummy:" });
-		_dummyMode = new OptionButton(); _dummyMode.AddItem("W/kg"); _dummyMode.AddItem("Watts"); _dummyMode.ItemSelected += _ => UpdateDummyModeUi(); dummyRow.AddChild(_dummyMode);
+		var dummyRow = _dummySettingsRow = new GridContainer { Name = "DummyTrainerSettings", Columns = 2, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		dummyRow.AddChild(new Label { Text = "Mode", VerticalAlignment = VerticalAlignment.Center });
+		_dummyMode = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; _dummyMode.AddItem("W/kg"); _dummyMode.AddItem("Watts"); _dummyMode.ItemSelected += _ => UpdateDummyModeUi(); dummyRow.AddChild(_dummyMode);
+		dummyRow.AddChild(new Label { Text = "Power target", VerticalAlignment = VerticalAlignment.Center });
 		_dummyPower = new SpinBox { MinValue = 0, MaxValue = 12, Step = .1, Value = 2, CustomMinimumSize = new Vector2(115, 0) };
+		_dummyPower.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		_dummyPower.ValueChanged += _ => SaveDummySettings(); dummyRow.AddChild(_dummyPower);
-		dummyRow.AddChild(new Label { Text = "Cadence" });
+		dummyRow.AddChild(new Label { Text = "Cadence", VerticalAlignment = VerticalAlignment.Center });
 		_dummyCadence = new SpinBox { MinValue = 0, MaxValue = 160, Step = 1, Value = 85, CustomMinimumSize = new Vector2(85, 0) };
+		_dummyCadence.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		_dummyCadence.ValueChanged += _ => SaveDummySettings(); dummyRow.AddChild(_dummyCadence);
 		column.AddChild(dummyRow); column.MoveChild(dummyRow, 3);
 		LoadDummySettingsToUi();
 		BuildProfileEditor();
+	}
+
+	private void BuildPreRideHomeUi(VBoxContainer? startupColumn)
+	{
+		if (startupColumn is null) return;
+		var startupScroll = GetNode<ScrollContainer>("PanelContainer/MarginContainer/StartupScroll");
+		startupScroll.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		startupScroll.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+		startupScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled;
+		startupColumn.AddThemeConstantOverride("separation", 14);
+
+		var title = startupColumn.GetNode<Label>("TitleLabel");
+		title.Text = "Ready to ride";
+		title.AddThemeFontSizeOverride("font_size", 30);
+		title.HorizontalAlignment = HorizontalAlignment.Left;
+		title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+		var status = _statusLabel;
+		if (status is not null) status.Text = "Choose a route or workout. Your devices will connect as usual.";
+
+		var cat = new TextureRect { Name = "WodraCatMark", Texture = GD.Load<Texture2D>("res://Assets/Branding/wodra-icon-128.png"), CustomMinimumSize = new Vector2(52, 52), ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered };
+		var brand = new HBoxContainer { Name = "BrandHeader", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Begin };
+		brand.AddChild(cat);
+		var titleText = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
+		var brandName = new Label { Text = "Wodra", VerticalAlignment = VerticalAlignment.Bottom }; brandName.AddThemeFontSizeOverride("font_size", 26); titleText.AddChild(brandName);
+		var subtitle = new Label { Text = "Indoor cycling", Modulate = new Color(0.78f, 0.82f, 0.82f, 1), VerticalAlignment = VerticalAlignment.Top }; subtitle.AddThemeFontSizeOverride("font_size", 13); titleText.AddChild(subtitle);
+		brand.AddChild(titleText);
+		var build = new Label { Name = "HomeBuildInfo", Text = BuildIdentity.Current.ApplicationVersion, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd }; build.AddThemeFontSizeOverride("font_size", 12); build.Modulate = new Color(0.72f, 0.75f, 0.74f, 1); brand.AddChild(build);
+		startupColumn.AddChild(brand);
+		startupColumn.MoveChild(brand, 0);
+		startupColumn.MoveChild(title, 1);
+		if (status is not null) startupColumn.MoveChild(status, 2);
+		startupColumn.MoveChild(_profileRow!, 3);
+
+		var devicesHeading = new Label { Text = "Your devices" }; devicesHeading.AddThemeFontSizeOverride("font_size", 16); startupColumn.AddChild(devicesHeading);
+		var devicesRow = new HBoxContainer { Name = "PreRideDeviceCards", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; devicesRow.AddThemeConstantOverride("separation", 10); startupColumn.AddChild(devicesRow);
+		(_trainerHomeName, _trainerHomeStatus) = AddDeviceSummaryCard(devicesRow, "Trainer", "TrainerSummary");
+		(_heartRateHomeName, _heartRateHomeStatus) = AddDeviceSummaryCard(devicesRow, "Heart rate", "HeartRateSummary");
+		(_steeringHomeName, _steeringHomeStatus) = AddDeviceSummaryCard(devicesRow, "Steering", "SteeringSummary");
+		var dummyNotice = _dummyModeNotice = new Label { Name = "DummyTrainerActiveNotice", Text = "Test trainer active · ride eligibility may be limited", Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = new Color(1.0f, 0.78f, 0.42f, 1) };
+		startupColumn.AddChild(dummyNotice);
+
+		var actionsTitle = new Label { Text = "Choose your ride", }; actionsTitle.AddThemeFontSizeOverride("font_size", 16); startupColumn.AddChild(actionsTitle);
+		var rideChoices = new HBoxContainer { Name = "RideChoices", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; rideChoices.AddThemeConstantOverride("separation", 12); startupColumn.AddChild(rideChoices);
+		var routesButton = new Button { Name = "ChooseRouteButton", Text = "Ride a route", CustomMinimumSize = new Vector2(0, 62), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; routesButton.AddThemeFontSizeOverride("font_size", 18); routesButton.Pressed += () => { Hide(); _routeSelectionPanel?.ShowRouteSelectionFromHome(); }; rideChoices.AddChild(routesButton);
+		var workoutButton = new Button { Name = "ChooseWorkoutButton", Text = "Do a workout", CustomMinimumSize = new Vector2(0, 62), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; workoutButton.AddThemeFontSizeOverride("font_size", 18); workoutButton.Pressed += () => { Hide(); _workoutSelectionPanel?.ShowSelection(); }; rideChoices.AddChild(workoutButton);
+
+		var primary = startupColumn.GetNode<Button>("ConnectTrainerButton");
+		primary.Text = "Connect devices";
+		primary.CustomMinimumSize = new Vector2(0, 44);
+		startupColumn.MoveChild(primary, startupColumn.GetChildCount() - 1);
+		var secondary = new HBoxContainer { Name = "PreRideSecondaryActions", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; secondary.AddThemeConstantOverride("separation", 8); startupColumn.AddChild(secondary);
+		MoveToParent(startupColumn.GetNode<Button>("OptionsButton"), secondary, "Settings");
+		MoveToParent(startupColumn.GetNode<Button>("HistoryButton"), secondary, "Ride History");
+
+		// Testing, diagnostics and debug preferences remain available but no longer
+		// compete with normal ride actions on launch.
+		_dummyStartButton = startupColumn.GetNode<Button>("Test with Fake Trainer");
+		_dummyStartButton.Text = "Start with Dummy Trainer";
+		_dummyStartButton.CustomMinimumSize = new Vector2(0, 40);
+		_dummyStartButton.Visible = false;
+		if (_dummySettingsRow is not null) _dummySettingsRow.Visible = false;
+		_fitReplayButton = startupColumn.GetNode<Button>("LoadFitButton"); _fitReplayButton.Visible = false;
+		_quitButton = startupColumn.GetNode<Button>("QuitButton"); _quitButton.Visible = false;
+		_debugModeCheckButton!.Visible = false;
+		foreach (var child in startupColumn.GetChildren())
+			if (child is Button button && button.Name == "LocalDiagnosticsButton") { _diagnosticsButton = button; button.Visible = false; }
+
+		UpdatePreRideDeviceSummary();
+	}
+
+	private static (Label Name, Label Status) AddDeviceSummaryCard(HBoxContainer row, string title, string name)
+	{
+		var card = new PanelContainer { Name = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1 };
+		var margin = new MarginContainer();
+		foreach (var (key, value) in new[] { ("margin_left", 12), ("margin_right", 12), ("margin_top", 10), ("margin_bottom", 10) }) margin.AddThemeConstantOverride(key, value);
+		card.AddChild(margin);
+		var content = new VBoxContainer(); content.AddThemeConstantOverride("separation", 4); margin.AddChild(content);
+		var heading = new Label { Text = title }; heading.AddThemeFontSizeOverride("font_size", 12); heading.Modulate = new Color(0.76f, 0.80f, 0.79f, 1); content.AddChild(heading);
+		var deviceName = new Label { Name = "DeviceName", Text = title, AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; deviceName.AddThemeFontSizeOverride("font_size", 16); content.AddChild(deviceName);
+		var state = new Label { Name = "DeviceState", Text = "Checking…", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; state.AddThemeFontSizeOverride("font_size", 12); state.Modulate = new Color(0.77f, 0.79f, 0.76f, 1); content.AddChild(state);
+		row.AddChild(card);
+		return (deviceName, state);
+	}
+
+	private static void MoveToParent(Button control, Container parent, string text)
+	{
+		control.Reparent(parent);
+		control.Text = text;
+		control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+	}
+
+	private void UpdatePreRideDeviceSummary()
+	{
+		if (_trainerHomeName is null || _deviceConnectionPanel is null) return;
+		_trainerHomeName.Text = _deviceConnectionPanel.PreRideTrainerName;
+		_trainerHomeStatus!.Text = _deviceConnectionPanel.PreRideTrainerStatus;
+		_heartRateHomeName!.Text = _deviceConnectionPanel.PreRideHeartRateName;
+		_heartRateHomeStatus!.Text = _deviceConnectionPanel.PreRideHeartRateStatus;
+		_steeringHomeName!.Text = _deviceConnectionPanel.PreRideSteeringName;
+		_steeringHomeStatus!.Text = _deviceConnectionPanel.PreRideSteeringStatus;
+		if (_dummyModeNotice is not null) _dummyModeNotice.Visible = GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient;
+	}
+
+	internal static Vector2I CalculateStartupPanelSize(Vector2 viewport)
+	{
+		var width = Math.Min(1120, Math.Max(360, (int)viewport.X - 40));
+		var height = Math.Min(820, Math.Max(360, (int)viewport.Y - 40));
+		return new Vector2I(width, height);
 	}
 
 	private async Task RefreshProfilesAsync()

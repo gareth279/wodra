@@ -33,6 +33,7 @@ public partial class RouteSelectionPanelController : Control
 	private string _selectedId = RouteCatalog.Routes.FirstOrDefault()?.Id ?? "";
 	private readonly Dictionary<string, Button> _routeButtons = new(StringComparer.Ordinal);
 	private bool _returnToRouteAfterOptions;
+	private bool _returnToHomeOnBack;
 	public string SelectedRouteId => _selectedId;
 
 	public override void _Ready()
@@ -357,9 +358,19 @@ public partial class RouteSelectionPanelController : Control
 	{
 		if (!_returnToRouteAfterOptions) return;
 		_returnToRouteAfterOptions = false;
-		ShowRouteSelection();
+		ShowRouteSelectionCore();
 	}
 	public void ShowRouteSelection()
+	{
+		_returnToHomeOnBack = false;
+		ShowRouteSelectionCore();
+	}
+	public void ShowRouteSelectionFromHome()
+	{
+		_returnToHomeOnBack = true;
+		ShowRouteSelectionCore();
+	}
+	private void ShowRouteSelectionCore()
 	{
 		_workoutSelection?.Hide();
 		_hud?.Hide(); _device?.Hide(); _start?.Hide(); Show(); MoveToFront();
@@ -374,6 +385,8 @@ public partial class RouteSelectionPanelController : Control
 	private void OnBackPressed()
 	{
 		Hide();
-		if (GameBootstrap.TrainerClient is not null) _device?.Show(); else _start?.Show();
+		if (_returnToHomeOnBack) _start?.Show();
+		else if (GameBootstrap.TrainerClient is not null) _device?.Show();
+		else _start?.Show();
 	}
 }

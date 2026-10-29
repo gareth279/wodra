@@ -100,6 +100,33 @@ public partial class DeviceConnectionPanelController : Control
 	private bool _awaitingAntDeviceChoice;
 	private double _telemetryRefreshSeconds;
 
+	// Read-only presentation values for the launch screen. These are derived from
+	// the existing connection state and device clients; they do not own state or
+	// alter discovery, readiness, or reconnect behaviour.
+	public string PreRideTrainerName => GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient
+		? "Dummy trainer" : _trainerCardName?.Text ?? "Trainer";
+	public string PreRideTrainerStatus => GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient
+		? "Test mode active" : _connectionState.Phase switch
+		{
+			TrainerConnectionPhase.Scanning => "Searching for trainer…",
+			TrainerConnectionPhase.Connecting => "Connecting…",
+			TrainerConnectionPhase.SettingUp => "Setting up controls…",
+			TrainerConnectionPhase.Ready => "Connected and ready",
+			TrainerConnectionPhase.NoTrainer => "No trainer found · retry in Devices",
+			TrainerConnectionPhase.Failed => "Connection needs attention · retry in Devices",
+			TrainerConnectionPhase.Disconnected => "Disconnected · recovery may be in progress",
+			TrainerConnectionPhase.Demo => "Test mode active",
+			_ => "Not connected · connect in Devices"
+		};
+	public string PreRideHeartRateName => _heartRateClient?.IsConnected == true
+		? _heartRateClient.ConnectedDeviceName ?? _heartRateName?.Text ?? "Heart-rate monitor"
+		: "Heart rate";
+	public string PreRideHeartRateStatus => _heartRateStatus?.Text ?? "Optional · not connected";
+	public string PreRideSteeringName => _steeringClient?.IsConnected == true
+		? _steeringClient.ConnectedDeviceName ?? _steeringName?.Text ?? "Steering controller"
+		: "Steering";
+	public string PreRideSteeringStatus => _steeringStatus?.Text ?? "Optional · not connected";
+
 	public override void _Ready()
 	{
 		_trainerDebugEventHandler = evt => GameLogger.Log("trainer_event", evt);

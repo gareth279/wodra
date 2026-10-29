@@ -92,6 +92,14 @@ jobs:
               $connectionOutput -match 'SCRIPT ERROR:|\[DeviceConnectionAutomationReview\] FAIL:') {
             throw 'Production device connection automation scene test did not report a clean pass.'
           }
+          $preRideLayoutLog = "$env:RUNNER_TEMP\wodra-pre-ride-layout-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/PreRideHomeLayoutReviewTest.tscn --log-file $preRideLayoutLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production pre-ride home layout review failed.' }
+          $preRideLayoutOutput = Get-Content -LiteralPath $preRideLayoutLog -Raw
+          if ($preRideLayoutOutput -notmatch '\[PreRideHomeLayoutReview\] PASS:' -or
+              $preRideLayoutOutput -match 'SCRIPT ERROR:|\[PreRideHomeLayoutReview\] FAIL:') {
+            throw 'Production pre-ride home layout review did not report a clean pass.'
+          }
           $trafficLog = "$env:RUNNER_TEMP\wodra-ambient-traffic-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientTrafficFollowingReviewTest.tscn --log-file $trafficLog
           if ($LASTEXITCODE -ne 0) { throw 'Production ambient traffic following scene test failed.' }
