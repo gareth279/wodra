@@ -1,6 +1,6 @@
 # Workouts MVP
 
-Workouts are a separate `RideActivityKind.Workout` session. The workout definition and interval clock live in `IndoorCycling.Core.Workouts`; `RouteEnvironment.TrainingStudio` selects a fictional local-coordinate circuit. Activity mode, environment, and workout content remain separate. The current studio is a flat 800 m loop with no latitude/longitude, route catalogue identity, road traffic, route effort tracking, pacers, collectibles, or route ghosts.
+Workouts are a separate `RideActivityKind.Workout` session. The workout definition and interval clock live in `IndoorCycling.Core.Workouts`; `RouteEnvironment.Raceway` selects the local-coordinate Levels Raceway scenery. Activity mode, environment, and workout content remain separate. The workout circuit follows the mapped anticlockwise 2.4 km Levels Raceway centreline and is kept flat, with no ride GPS, route catalogue identity, road traffic, route effort tracking, pacers, collectibles, or route ghosts. Source and geometry validation are documented in [Levels Raceway](routes/levels-raceway.md).
 
 The workout engine owns interval time and targets only. It never changes measured telemetry. Its supported blocks are warm-up, work, recovery, and cool-down; targets use watts or an explicitly configured per-profile FTP fraction. Ramps interpolate targets, repeats expand to individual steps, pause freezes the clock, and intensity adjustment is bounded to 70–130%.
 

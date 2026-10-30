@@ -424,9 +424,9 @@ public partial class HudController : Control
 	private void BuildWorkoutPanel()
 	{
 		_workoutPanel = new PanelContainer { Name = "WorkoutHudPanel", Visible = false,
-			AnchorLeft = 1, AnchorRight = 1, AnchorTop = 0, AnchorBottom = 0,
-			OffsetLeft = -372, OffsetRight = -12, OffsetTop = 202, OffsetBottom = 384,
-			CustomMinimumSize = new Vector2(350, 170), MouseFilter = Control.MouseFilterEnum.Stop };
+			AnchorLeft = 0, AnchorRight = 0, AnchorTop = 0, AnchorBottom = 0,
+			CustomMinimumSize = new Vector2(RideHudOverlayLayoutPolicy.WorkoutPanelWidth,
+				RideHudOverlayLayoutPolicy.WorkoutPanelHeight), MouseFilter = Control.MouseFilterEnum.Stop };
 		var style = new StyleBoxFlat { BgColor = new Color(.045f, .055f, .06f, .94f),
 			BorderColor = new Color(.28f, .62f, .66f, .9f), BorderWidthLeft = 1, BorderWidthTop = 1,
 			BorderWidthRight = 1, BorderWidthBottom = 1, CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8,
@@ -440,9 +440,9 @@ public partial class HudController : Control
 		_workoutNextLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart }; _workoutNextLabel.AddThemeFontSizeOverride("font_size", 12); column.AddChild(_workoutNextLabel);
 		_workoutControlLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart }; _workoutControlLabel.AddThemeFontSizeOverride("font_size", 11); column.AddChild(_workoutControlLabel);
 		var actions = new HBoxContainer(); actions.AddThemeConstantOverride("separation", 5); column.AddChild(actions);
-		_workoutIntensityDown = new Button { Text = "−5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityDown.Pressed += () => _adjustWorkout?.Invoke(-.05); actions.AddChild(_workoutIntensityDown);
-		_workoutIntensityUp = new Button { Text = "+5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityUp.Pressed += () => _adjustWorkout?.Invoke(.05); actions.AddChild(_workoutIntensityUp);
-		_workoutSkipButton = new Button { Text = "Skip interval", CustomMinimumSize = new Vector2(110, 29) }; _workoutSkipButton.Pressed += () => _skipWorkout?.Invoke(); actions.AddChild(_workoutSkipButton);
+		_workoutIntensityDown = new Button { Name = "WorkoutIntensityDown", Text = "−5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityDown.Pressed += () => _adjustWorkout?.Invoke(-.05); actions.AddChild(_workoutIntensityDown);
+		_workoutIntensityUp = new Button { Name = "WorkoutIntensityUp", Text = "+5%", CustomMinimumSize = new Vector2(58, 29) }; _workoutIntensityUp.Pressed += () => _adjustWorkout?.Invoke(.05); actions.AddChild(_workoutIntensityUp);
+		_workoutSkipButton = new Button { Name = "WorkoutSkipInterval", Text = "Skip interval", CustomMinimumSize = new Vector2(110, 29) }; _workoutSkipButton.Pressed += () => _skipWorkout?.Invoke(); actions.AddChild(_workoutSkipButton);
 		AddChild(_workoutPanel);
 	}
 
@@ -863,11 +863,15 @@ public partial class HudController : Control
 			_mediaPanel?.Visible == true,
 			_mediaPanel?.GetCombinedMinimumSize().X ?? 0,
 			_mediaPanel?.GetCombinedMinimumSize().Y ?? 0,
-			_debugOverlay?.Visible == true, topHudBottom);
+			_debugOverlay?.Visible == true, topHudBottom,
+			_workoutPanel?.Visible == true,
+			_workoutPanel?.GetCombinedMinimumSize().X ?? 0,
+			_workoutPanel?.GetCombinedMinimumSize().Y ?? 0);
 		SetAnchoredBounds(_debugOverlay, layout.DebugPanel);
 		SetAnchoredBounds(_routeGradientInset, layout.RouteInset);
 		SetAnchoredBounds(_dummyControlPanel, layout.DummyPanel);
 		if (_pacerPanel?.Visible == true) SetAnchoredBounds(_pacerPanel, layout.PacerPanel);
+		if (_workoutPanel?.Visible == true) SetAnchoredBounds(_workoutPanel, layout.WorkoutPanel);
 		PositionAchievementToast(viewport, layout);
 	}
 
