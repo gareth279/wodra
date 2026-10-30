@@ -450,12 +450,18 @@ public partial class CompanionRelayClient : Node
 	{
 		var trainer = GameBootstrap.TrainerClient;
 		var ride = session?.CurrentRideState ?? RideState.Initial;
-		var telemetry = trainer?.GetLatestTelemetry();
+		var telemetry = session?.LatestRideTelemetry ?? trainer?.GetLatestTelemetry();
 		var now = DateTimeOffset.UtcNow;
 		var connected = trainer?.IsConnected == true;
 		var fresh = connected && telemetry is { HasReceivedMeasurement: true } && telemetry.IsFreshAt(now);
-		var heartFresh = fresh && telemetry?.HeartRateBpm is not null && (telemetry.HeartRateTimestamp ?? telemetry.Timestamp) <= now
-			&& now - (telemetry.HeartRateTimestamp ?? telemetry.Timestamp) <= TimeSpan.FromSeconds(5);
+		var heartRateClient = GameBootstrap.HeartRateClient;
+		// The separate HR monitor has its own freshness clock. Do not tie it to trainer freshness,
+		// and stop publishing its cached value as soon as that monitor disconnects.
+		var heartRateFromDisconnectedMonitor = heartRateClient is { IsConnected: false } &&
+			telemetry?.HeartRateTimestamp is { } heartRateTimestamp && heartRateTimestamp == heartRateClient.LastMeasurementAt;
+		var heartTimestamp = telemetry?.HeartRateTimestamp ?? telemetry?.Timestamp;
+		var heartFresh = !heartRateFromDisconnectedMonitor && telemetry?.HeartRateBpm is not null &&
+			heartTimestamp is { } heartAt && heartAt <= now && now - heartAt <= TimeSpan.FromSeconds(5);
 		var route = session?.CurrentRoute;
 		var paused = session?.IsRidePaused == true;
 		var state = session?.IsRideActive == true ? (paused ? "paused" : "riding") : "idle";

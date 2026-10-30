@@ -182,6 +182,15 @@ async function nextScenarioPoll(scenario){await scenario.handlers.get('document:
   assert.equal(changingRoute.calls[2].route_version,'route-v2','The new route version is sent after metadata is cached');
   assert.equal(changingRoute.elements.get('route-title').textContent,'Changed route','A cached route is retained when geometry is omitted');
 
+  const heartDisplay=bootRouteScenario([
+    readPayload('route-v1',routePayload('route-v1','Heart-rate route'),{...ridePayload(),heart_rate_bpm:147}),
+    readPayload('route-v1',null,{...ridePayload(),heart_rate_bpm:null})
+  ]);
+  await flushScenario();
+  assert.equal(heartDisplay.elements.get('heart').textContent,'147','the Ride screen displays a valid companion heart-rate value');
+  await nextScenarioPoll(heartDisplay);
+  assert.equal(heartDisplay.elements.get('heart').textContent,'—','the Ride screen clears heart rate when the snapshot reports it unavailable');
+
   for (const [error,expected] of [
     ['not_configured',/has not been configured/i],
     ['protocol_mismatch',/version is incompatible/i]

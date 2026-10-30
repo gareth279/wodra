@@ -64,6 +64,8 @@ public partial class RideSessionNode : Node
 	private int _lastLoggedLapNumber = 1;
 	// Read-only rendering input. This remains the only authority for ride progress.
 	public RideState CurrentRideState => _rideState;
+	/// <summary>Latest telemetry shared with the ride HUD and recording path; trainer rides include the optional HR overlay.</summary>
+	public TrainerTelemetry? LatestRideTelemetry => _lastTelemetry;
 	public int CurrentAnimationCadenceRpm => _lastTelemetry?.IsFreshAt(DateTimeOffset.UtcNow) == true
 		? _rideState.CurrentCadenceRpm : 0;
 	public RouteDefinition? CurrentRoute => _currentRoute;
