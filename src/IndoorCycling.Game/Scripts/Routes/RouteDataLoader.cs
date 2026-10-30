@@ -198,6 +198,7 @@ public static class RouteDataLoader
 		"Trail" => RouteEnvironment.Trail,
 		"Velodrome" => RouteEnvironment.Velodrome,
 		"MountainBike" => RouteEnvironment.MountainBike,
+		"Raceway" => RouteEnvironment.Raceway,
 		_ => throw new InvalidDataException($"Unknown route environment '{value}'.")
 	};
 

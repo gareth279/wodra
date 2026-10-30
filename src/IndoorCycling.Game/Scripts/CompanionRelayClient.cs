@@ -472,7 +472,10 @@ public partial class CompanionRelayClient : Node
 			heart_rate_bpm = heartFresh ? telemetry!.HeartRateBpm : null,
 			distance_m = session?.IsRideActive == true ? ride.DistanceMeters : (double?)null,
 			elapsed_s = session?.IsRideActive == true ? ride.ElapsedSeconds : (double?)null,
-			gradient_pct = gradient, environment = route?.Environment.ToString() ?? (session?.IsWorkoutSession == true ? "TrainingStudio" : null),
+			// The companion protocol currently recognizes TrainingStudio as its workout-only value.
+			// Keep that wire value while the desktop renderer uses the more specific Raceway environment.
+			gradient_pct = gradient, environment = route?.Environment == RouteEnvironment.Raceway ? "TrainingStudio"
+				: route?.Environment.ToString() ?? (session?.IsWorkoutSession == true ? "TrainingStudio" : null),
 			discipline = route?.Discipline.ToString(), route_type = route?.RouteType,
 			route_distance_m = routeDistance > 0 ? routeDistance : (double?)null,
 			route_progress = routeProgress, lap, remaining_m = route?.RouteType == "Point-to-Point" ? Math.Max(0, routeDistance - ride.DistanceMeters) : (double?)null,
