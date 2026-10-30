@@ -44,6 +44,7 @@ public partial class StartPanelController : Control
 	private Button? _stravaLinkButton;
 	private Button? _stravaDisconnectButton;
 	private Button? _stravaCancelButton;
+	private bool _testModeTransitionInProgress;
 	private CancellationTokenSource? _stravaLinkCancellation;
 	private List<RiderProfileRecord> _profiles = [];
 	private Guid? _editingProfileId;
@@ -866,7 +867,7 @@ public partial class StartPanelController : Control
 		_deviceConnectionPanel.ShowTrainerConnectionScreen();
 	}
 
-	private void OnQuickFakeTrainerPressed()
+	private async void OnQuickFakeTrainerPressed()
 	{
 		if (_routeSelectionPanel is null)
 		{
@@ -874,15 +875,30 @@ public partial class StartPanelController : Control
 			return;
 		}
 
-		_deviceConnectionPanel?.CancelPendingDiscoveryForTestMode();
-		// The entry point now lives in an exclusive Options window. Close it before
-		// opening the existing route selector so the new screen is not obscured.
-		_optionsWindow?.Hide();
-		GameBootstrap.ConfigureFakeTrainerMode();
+		if (_testModeTransitionInProgress || _rideSessionNode?.IsRideActive == true) return;
+		_testModeTransitionInProgress = true;
+		if (_dummyStartButton is not null) _dummyStartButton.Disabled = true;
+		try
+		{
+			if (_deviceConnectionPanel is null || !await _deviceConnectionPanel.ReleasePhysicalDevicesForTestModeAsync())
+			{
+				SetStatus("Could not safely release the connected devices. Test mode was not started; retry from Options.");
+				return;
+			}
+			// The entry point now lives in an exclusive Options window. Close it before
+			// opening the existing route selector so the new screen is not obscured.
+			_optionsWindow?.Hide();
+			GameBootstrap.ConfigureFakeTrainerMode();
 
-		Hide();
-		_hudController?.Hide();
-		_routeSelectionPanel.ShowRouteSelectionFromHome();
+			Hide();
+			_hudController?.Hide();
+			_routeSelectionPanel.ShowRouteSelectionFromHome();
+		}
+		finally
+		{
+			if (_dummyStartButton is not null) _dummyStartButton.Disabled = false;
+			_testModeTransitionInProgress = false;
+		}
 	}
 
 	private void OnLoadFitPressed()
@@ -907,12 +923,25 @@ public partial class StartPanelController : Control
 			return;
 		}
 
-		_deviceConnectionPanel?.CancelPendingDiscoveryForTestMode();
-		GameBootstrap.ConfigureFitReplayMode(path);
-		_hudController?.Show();
-		Hide();
+		if (_testModeTransitionInProgress || _rideSessionNode.IsRideActive) return;
+		_testModeTransitionInProgress = true;
+		try
+		{
+			if (_deviceConnectionPanel is null || !await _deviceConnectionPanel.ReleasePhysicalDevicesForTestModeAsync())
+			{
+				SetStatus("Could not safely release the connected devices. FIT replay was not started; retry from Options.");
+				return;
+			}
+			GameBootstrap.ConfigureFitReplayMode(path);
+			_hudController?.Show();
+			Hide();
 
-		await _rideSessionNode.StartFitReplaySessionAsync(path);
+			await _rideSessionNode.StartFitReplaySessionAsync(path);
+		}
+		finally
+		{
+			_testModeTransitionInProgress = false;
+		}
 	}
 
 	private async void OnQuitPressed()

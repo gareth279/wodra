@@ -115,7 +115,8 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			await VerifyMultipleTrainersRequireAnExplicitChoice();
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.Trainer, "dummy");
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.FitReplay, "replay.fit");
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen automatically selected remembered devices using the saved protocol, kept home visible during setup, avoided duplicate/repeated scans and reconnect after manual disconnect, retained optional-sensor cancellation and readiness, prompted for multiple devices, exposed retry after a miss, and skipped physical discovery for Dummy Trainer/FIT replay.");
+			await VerifyConnectedDevicesReleasedBeforeTestModes();
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen automatically selected remembered devices using the saved protocol, kept home visible during setup, avoided duplicate/repeated scans and reconnect after manual disconnect or test-mode transitions, safely released connected trainer/HR/steering clients before Dummy Trainer and FIT replay, retained remembered preferences and home navigation, preserved optional-sensor cancellation and readiness, prompted for multiple devices, exposed retry after a miss, and skipped physical discovery for configured test modes.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
@@ -205,6 +206,108 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		GameBootstrap.ResetSession();
 	}
 
+	private async Task VerifyConnectedDevicesReleasedBeforeTestModes()
+	{
+		await VerifyConnectedDevicesReleasedBeforeDummyMode();
+		await VerifyConnectedDevicesReleasedBeforeFitReplay();
+	}
+
+	private async Task<(Node Screen, FakeTrainer Trainer, FakeHeartRate HeartRate, FakeSteering Steering)> CreateAutoConnectedPhysicalSession()
+	{
+		GameBootstrap.ResetSession();
+		GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
+		GameBootstrap.Settings.LastTrainerBluetoothAddress = FakeTrainer.Remembered.BluetoothAddress;
+		GameBootstrap.Settings.LastHeartRateBluetoothAddress = FakeHeartRate.Remembered.BluetoothAddress;
+		GameBootstrap.Settings.LastSteeringBluetoothAddress = FakeSteering.Remembered.BluetoothAddress;
+		var trainer = new FakeTrainer([FakeTrainer.Remembered]);
+		var heartRate = new FakeHeartRate([FakeHeartRate.Remembered]);
+		var steering = new FakeSteering([FakeSteering.Remembered]);
+		var screen = CreateProductionRideScreen(trainer, heartRate, steering);
+		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+		await WaitUntil(() => trainer.ControlRequestStarted && heartRate.IsConnected && steering.IsConnected);
+		trainer.CompleteControlRequest();
+		await WaitUntil(() => trainer.IsReady && connection.PreRideTrainerStatus == "Connected and ready");
+		if (GameBootstrap.Settings.LastTrainerBluetoothAddress != FakeTrainer.Remembered.BluetoothAddress ||
+			GameBootstrap.Settings.LastHeartRateBluetoothAddress != FakeHeartRate.Remembered.BluetoothAddress ||
+			GameBootstrap.Settings.LastSteeringBluetoothAddress != FakeSteering.Remembered.BluetoothAddress ||
+			GameBootstrap.Settings.Trainer.ProtocolPreference != TrainerProtocolPreference.BluetoothFtms)
+			throw new InvalidOperationException("The physical startup fixture did not retain all remembered-device preferences.");
+		return (screen, trainer, heartRate, steering);
+	}
+
+	private async Task VerifyConnectedDevicesReleasedBeforeDummyMode()
+	{
+		var (screen, trainer, heartRate, steering) = await CreateAutoConnectedPhysicalSession();
+		var start = screen.GetNode<StartPanelController>("StartPanel");
+		var routes = screen.GetNode<RouteSelectionPanelController>("RouteSelectionPanel");
+		start.ShowOptions(returnToRoutes: false);
+		await Settle(3);
+		var options = screen.GetNode<Window>("OptionsWindow");
+		(options.FindChild("AdvancedTestingToggle", true, false) as Button
+			?? throw new InvalidOperationException("Options did not expose its Advanced toggle.")).ButtonPressed = true;
+		await Settle(2);
+		options.FindChildren("Test with Fake Trainer", "Button", true, false).OfType<Button>().Single()
+			.EmitSignal(BaseButton.SignalName.Pressed);
+		await WaitUntil(() => routes.Visible && GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient);
+		AssertPhysicalDevicesReleased(screen, trainer, heartRate, steering, "Dummy Trainer");
+		if (GameBootstrap.Settings.LastTrainerBluetoothAddress != FakeTrainer.Remembered.BluetoothAddress ||
+			GameBootstrap.Settings.LastHeartRateBluetoothAddress != FakeHeartRate.Remembered.BluetoothAddress ||
+			GameBootstrap.Settings.LastSteeringBluetoothAddress != FakeSteering.Remembered.BluetoothAddress)
+			throw new InvalidOperationException("Switching to Dummy Trainer overwrote remembered physical-device preferences.");
+		routes.FindChildren("", "Button", true, false).OfType<Button>().Single(button => button.Text == "Back")
+			.EmitSignal(BaseButton.SignalName.Pressed);
+		await WaitUntil(() => start.Visible && !routes.Visible);
+		await Settle(15);
+		AssertNoAutomaticReconnect(screen, trainer, heartRate, steering, "Dummy Trainer return to Home");
+		screen.QueueFree();
+		await Settle(2);
+		GameBootstrap.ResetSession();
+	}
+
+	private async Task VerifyConnectedDevicesReleasedBeforeFitReplay()
+	{
+		var (screen, trainer, heartRate, steering) = await CreateAutoConnectedPhysicalSession();
+		var start = screen.GetNode<StartPanelController>("StartPanel");
+		var rideSession = screen.GetNode<RideSessionNode>("RideSessionNode");
+		var fileDialog = start.GetNode<FileDialog>("FileDialog");
+		// Exercise the production FileSelected callback directly. The separate
+		// pre-ride layout test covers opening/dismissing the dialog.
+		fileDialog.EmitSignal(FileDialog.SignalName.FileSelected, Path.Combine(Path.GetTempPath(), "device-transition.fit"));
+		await WaitUntil(() => rideSession.IsRideActive && GameBootstrap.Mode == GameBootstrap.SessionMode.FitReplay);
+		AssertPhysicalDevicesReleased(screen, trainer, heartRate, steering, "FIT replay");
+		if (GameBootstrap.TrainerClient is not null)
+			throw new InvalidOperationException("FIT replay retained the previous physical trainer client.");
+		await screen.GetNode<RideMenuPanelController>("RideMenuPanel").EndRideAndShowSummaryAsync();
+		var home = screen.GetNode<StartPanelController>("StartPanel");
+		await WaitUntil(() => home.Visible && !rideSession.IsRideActive);
+		await Settle(15);
+		AssertNoAutomaticReconnect(screen, trainer, heartRate, steering, "FIT replay return to Home");
+		screen.QueueFree();
+		await Settle(2);
+		GameBootstrap.ResetSession();
+	}
+
+	private static void AssertPhysicalDevicesReleased(Node screen, FakeTrainer trainer, FakeHeartRate heartRate,
+		FakeSteering steering, string targetMode)
+	{
+		if (trainer.IsConnected || trainer.IsReady || heartRate.IsConnected || steering.IsConnected ||
+			trainer.DisconnectCount == 0 || heartRate.DisconnectCount == 0 || steering.DisconnectCount == 0 ||
+			GameBootstrap.HeartRateClient is not null)
+			throw new InvalidOperationException($"Switching to {targetMode} did not release every connected physical client.");
+		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+		if (connection.PreRideTrainerStatus.Contains("Reconnecting", StringComparison.OrdinalIgnoreCase))
+			throw new InvalidOperationException($"Switching to {targetMode} left trainer recovery active.");
+	}
+
+	private static void AssertNoAutomaticReconnect(Node screen, FakeTrainer trainer, FakeHeartRate heartRate,
+		FakeSteering steering, string transition)
+	{
+		if (trainer.ScanCount != 1 || heartRate.ScanCount != 1 || steering.ScanCount != 1 ||
+			trainer.IsConnected || heartRate.IsConnected || steering.IsConnected ||
+			screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").BeginStartupDiscovery())
+			throw new InvalidOperationException($"{transition} caused an unwanted physical-device reconnect or repeated discovery.");
+	}
+
 	private static void VerifyTrainerRecoveryRetrySignal(Node screen)
 	{
 		var hud = screen.GetNode<HudController>("HudController");
@@ -273,6 +376,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		private bool _ready;
 		public FakeTrainer(IReadOnlyList<BleDiscoveredDevice> devices) => _devices = devices;
 		public int ScanCount { get; private set; }
+		public int DisconnectCount { get; private set; }
 		public bool ControlRequestStarted { get; private set; }
 		public ulong? LastConnectedBluetoothAddress { get; private set; }
 		public override bool IsConnected => _connected;
@@ -300,6 +404,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		public override void MarkReady() => _ready = _connected;
 		public override Task DisconnectAsync(CancellationToken cancellationToken = default)
 		{
+			DisconnectCount++;
 			_connected = false;
 			_ready = false;
 			return Task.CompletedTask;
@@ -318,6 +423,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		public int ScanCount { get; private set; }
 		public bool ScanPending { get; private set; }
 		public int ScanCancellationCount { get; private set; }
+		public int DisconnectCount { get; private set; }
 		public bool HoldNextScan { get => _holdNextScan; set => _holdNextScan = value; }
 		public ulong? ConnectedBluetoothAddress { get; private set; }
 		public override bool IsConnected => _connected;
@@ -340,7 +446,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			_connected = true;
 			return Task.CompletedTask;
 		}
-		public override Task DisconnectAsync() { _connected = false; ConnectedBluetoothAddress = null; return Task.CompletedTask; }
+		public override Task DisconnectAsync() { DisconnectCount++; _connected = false; ConnectedBluetoothAddress = null; return Task.CompletedTask; }
 		public override void Dispose() { }
 	}
 
@@ -355,6 +461,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		public int ScanCount { get; private set; }
 		public bool ScanPending { get; private set; }
 		public int ScanCancellationCount { get; private set; }
+		public int DisconnectCount { get; private set; }
 		public bool HoldNextScan { get => _holdNextScan; set => _holdNextScan = value; }
 		public ulong? ConnectedBluetoothAddress { get; private set; }
 		public override bool IsConnected => _connected;
@@ -377,7 +484,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			_connected = true;
 			return Task.CompletedTask;
 		}
-		public override Task DisconnectAsync() { _connected = false; ConnectedBluetoothAddress = null; return Task.CompletedTask; }
+		public override Task DisconnectAsync() { DisconnectCount++; _connected = false; ConnectedBluetoothAddress = null; return Task.CompletedTask; }
 		public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
 	}
 }
