@@ -11,7 +11,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using IndoorCycling.Core.Models;
+using IndoorCycling.Trainer.Abstractions;
 using IndoorCycling.Trainer.Implementations;
+using IndoorCycling.Trainer.Models;
+using IndoorCycling.Trainer.Windows;
 
 /// <summary>Compares the production ride and recording path with companion publishing off and under relay outcomes.</summary>
 public partial class CompanionTraceInvarianceReviewTest : Node
@@ -58,6 +61,7 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			var timedOut = await RunTrace(screen, session, world, client, route, relay, "timeout", pair: true);
 			AssertEquivalent("relay timeout", disabled, timedOut);
 			AssertCompanionDiagnostics();
+			await AssertCompanionHeartRateSnapshot(session);
 
 			if (relay.PublishSuccesses == 0 || relay.PublishFailures == 0 || relay.PublishTimeouts == 0)
 				throw new InvalidOperationException($"Relay outcomes were not all exercised: success={relay.PublishSuccesses}, failure={relay.PublishFailures}, timeout={relay.PublishTimeouts}.");
@@ -70,6 +74,100 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 			GD.PushError($"[CompanionTraceInvarianceReview] FAIL: {error}");
 			GetTree().Quit(1);
 		}
+	}
+
+	private static async Task AssertCompanionHeartRateSnapshot(RideSessionNode session)
+	{
+		var now = DateTimeOffset.UtcNow;
+		var trainer = new FakeAntFeCTrainerClient(new TrainerTelemetry(now, 212, 88, 31,
+			HasPowerMeasurement: true, HasCadenceMeasurement: true, HasReceivedMeasurement: true, HasSpeedMeasurement: true));
+		var heartRate = new FakeHeartRateClient { Connected = true, Bpm = 146, MeasurementAt = now };
+		GameBootstrap.ConfigureRealTrainerMode(trainer);
+		GameBootstrap.HeartRateClient = heartRate;
+		var route = RouteCatalog.GetById(RouteId) ?? throw new InvalidOperationException($"Missing production route {RouteId}.");
+		if (!await session.StartTrainerSessionAsync(route)) throw new InvalidOperationException("Could not start the FE-C and separate BLE heart-rate snapshot regression ride.");
+		session.SetProcess(false);
+		var recorded = new List<TrainerTelemetry>();
+		void OnRecording(RideState _, TrainerTelemetry telemetry, double __) => recorded.Add(telemetry);
+		session.RecordingSampleObservedForReview += OnRecording;
+		try
+		{
+			for (var i = 0; i < 30; i++)
+			{
+				heartRate.MeasurementAt = DateTimeOffset.UtcNow;
+				trainer.Telemetry = trainer.Telemetry with { Timestamp = DateTimeOffset.UtcNow };
+				session._Process(.05);
+			}
+			var rideTelemetry = session.LatestRideTelemetry ?? throw new InvalidOperationException("Ride did not expose processed telemetry.");
+			if (rideTelemetry.HeartRateBpm != heartRate.Bpm)
+				throw new InvalidOperationException("The ride telemetry was not enriched with the connected BLE heart-rate value.");
+			var snapshot = JsonSerializer.Serialize(CompanionRelayClient.CreateSnapshot(session));
+			using (var json = JsonDocument.Parse(snapshot))
+			{
+				var root = json.RootElement;
+				foreach (var field in new[] { "state", "connected", "paused", "data_stale", "route", "speed_kph", "power_w", "cadence_rpm", "heart_rate_bpm", "distance_m", "elapsed_s", "gradient_pct", "environment", "route_type", "route_distance_m", "route_progress", "lap", "remaining_m", "riders", "captured_at" })
+					if (!root.TryGetProperty(field, out _)) throw new InvalidOperationException($"Companion snapshot lost existing protocol field '{field}'.");
+				if (root.GetProperty("heart_rate_bpm").GetInt32() != rideTelemetry.HeartRateBpm ||
+					root.GetProperty("power_w").GetInt32() != 212 || root.GetProperty("cadence_rpm").GetInt32() != 88 ||
+					root.GetProperty("speed_kph").ValueKind != JsonValueKind.Number || root.TryGetProperty("heartRateBpm", out _))
+					throw new InvalidOperationException("Companion did not serialize the same fresh HR-enriched ride telemetry with compatible JSON names and unaffected trainer metrics.");
+			}
+			if (recorded.Count == 0 || recorded[^1].HeartRateBpm != rideTelemetry.HeartRateBpm)
+				throw new InvalidOperationException("Companion heart rate differs from the FIT recording input telemetry.");
+
+			heartRate.Connected = false;
+			trainer.Telemetry = trainer.Telemetry with { Timestamp = DateTimeOffset.UtcNow };
+			session._Process(.05);
+			if (session.LatestRideTelemetry?.HeartRateBpm != heartRate.Bpm)
+				throw new InvalidOperationException("The disconnected-monitor test did not retain the client's cached ride sample to verify companion filtering.");
+			AssertHeartRateNullAndTrainerMetrics(session, "disconnected BLE monitor");
+
+			heartRate.Connected = true;
+			heartRate.Bpm = 153;
+			heartRate.MeasurementAt = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(6);
+			trainer.Telemetry = trainer.Telemetry with { Timestamp = DateTimeOffset.UtcNow };
+			session._Process(.05);
+			AssertHeartRateNullAndTrainerMetrics(session, "stale BLE measurement");
+
+			heartRate.Bpm = 159;
+			heartRate.MeasurementAt = DateTimeOffset.UtcNow;
+			trainer.Telemetry = trainer.Telemetry with { Timestamp = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(6) };
+			session._Process(.05);
+			using var staleTrainerJson = JsonDocument.Parse(JsonSerializer.Serialize(CompanionRelayClient.CreateSnapshot(session)));
+			var staleTrainer = staleTrainerJson.RootElement;
+			if (!staleTrainer.GetProperty("data_stale").GetBoolean() || staleTrainer.GetProperty("heart_rate_bpm").GetInt32() != 159 ||
+				staleTrainer.GetProperty("power_w").ValueKind != JsonValueKind.Null ||
+				staleTrainer.GetProperty("cadence_rpm").ValueKind != JsonValueKind.Null ||
+				staleTrainer.GetProperty("speed_kph").ValueKind != JsonValueKind.Null)
+				throw new InvalidOperationException("Fresh BLE heart rate was suppressed by stale trainer measurements or stale trainer values leaked into the snapshot.");
+
+			GameBootstrap.HeartRateClient = null;
+			var trainerHeartRateAt = DateTimeOffset.UtcNow;
+			trainer.Telemetry = new TrainerTelemetry(trainerHeartRateAt, 212, 88, 31, HeartRateBpm: 132,
+				HasPowerMeasurement: true, HasCadenceMeasurement: true, HasReceivedMeasurement: true,
+				HasSpeedMeasurement: true, HeartRateTimestamp: trainerHeartRateAt);
+			session._Process(.05);
+			using var trainerHeartRateJson = JsonDocument.Parse(JsonSerializer.Serialize(CompanionRelayClient.CreateSnapshot(session)));
+			if (trainerHeartRateJson.RootElement.GetProperty("heart_rate_bpm").GetInt32() != 132)
+				throw new InvalidOperationException("Fresh trainer-reported heart rate was lost when no separate BLE monitor is configured.");
+		}
+		finally
+		{
+			session.RecordingSampleObservedForReview -= OnRecording;
+			GameBootstrap.HeartRateClient = null;
+			await session.ExitToRouteSelectionAsync();
+		}
+		GD.Print("[CompanionTraceInvarianceReview] PASS: connected FE-C trainer plus independent BLE heart rate is published from ride/FIT telemetry; stale/disconnected HR clears; trainer metrics and protocol-2 JSON fields remain independent.");
+	}
+
+	private static void AssertHeartRateNullAndTrainerMetrics(RideSessionNode session, string scenario)
+	{
+		using var json = JsonDocument.Parse(JsonSerializer.Serialize(CompanionRelayClient.CreateSnapshot(session)));
+		var root = json.RootElement;
+		if (root.GetProperty("heart_rate_bpm").ValueKind != JsonValueKind.Null ||
+			root.GetProperty("power_w").GetInt32() != 212 || root.GetProperty("cadence_rpm").GetInt32() != 88 ||
+			root.GetProperty("speed_kph").ValueKind != JsonValueKind.Number)
+			throw new InvalidOperationException($"{scenario} should clear only heart rate while retaining fresh trainer metrics.");
 	}
 
 	private async Task<TraceResult> RunTrace(Control screen, RideSessionNode session, RideWorldView world,
@@ -205,6 +303,32 @@ public partial class CompanionTraceInvarianceReviewTest : Node
 					throw new InvalidOperationException("A companion diagnostic event contained a forbidden credential, identifier, or ride field.");
 		}
 		finally { foreach (var entry in entries) entry.Dispose(); }
+	}
+
+	private sealed class FakeAntFeCTrainerClient(TrainerTelemetry telemetry) : ITrainerClient
+	{
+		public TrainerTelemetry Telemetry { get; set; } = telemetry;
+		public bool IsConnected => true;
+		public bool IsReady => true;
+		public Task ConnectAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public Task DisconnectAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public Task SetSimulationAsync(SimulationCommand command, CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public Task SetResistanceAsync(ResistanceCommand command, CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public TrainerTelemetry GetLatestTelemetry() => Telemetry;
+	}
+
+	private sealed class FakeHeartRateClient : WindowsBleHeartRateClient
+	{
+		public bool Connected { get; set; }
+		public int? Bpm { get; set; }
+		public DateTimeOffset MeasurementAt { get; set; }
+		public override bool IsConnected => Connected;
+		public override DateTimeOffset LastMeasurementAt => MeasurementAt;
+		public override int? GetFreshBpm(DateTimeOffset now, TimeSpan? maxAge = null)
+		{
+			var age = maxAge ?? TimeSpan.FromSeconds(8);
+			return Bpm.HasValue && MeasurementAt <= now && now - MeasurementAt <= age ? Bpm : null;
+		}
 	}
 
 	private async Task Settle(int frames) { for (var i = 0; i < frames; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame); }
