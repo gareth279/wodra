@@ -18,6 +18,7 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
 	internal bool HasDeviceFactoriesForTesting => TrainerClientFactoryForTesting is not null ||
 		HeartRateClientFactoryForTesting is not null || SteeringClientFactoryForTesting is not null;
+	internal TimeSpan DeviceReleaseWaitTimeoutForTesting { get; set; } = TimeSpan.FromSeconds(10);
 	internal Button HeartRateActionForTesting => _heartRateAction!;
 	internal Button SteeringActionForTesting => _steeringAction!;
 
@@ -421,18 +422,34 @@ public partial class DeviceConnectionPanelController : Control
 		CancelOptionalDiscovery();
 		_steeringReconnectCancellation?.Cancel();
 		_connectionState.Invalidate();
+		using var releaseWaitTimeout = new CancellationTokenSource(DeviceReleaseWaitTimeoutForTesting);
 		try
 		{
-			if (_attemptTask is { } attempt) { try { await attempt; } catch { } }
-			if (_recoveryTask is { } recovery) { try { await recovery; } catch { } }
-			if (_steeringReconnectTask is { } steeringReconnect) { try { await steeringReconnect; } catch { } }
+			if (_attemptTask is { } attempt)
+			{
+				try { await attempt.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
+			if (_recoveryTask is { } recovery)
+			{
+				try { await recovery.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
+			if (_steeringReconnectTask is { } steeringReconnect)
+			{
+				try { await steeringReconnect.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
 			// Optional-device operations are not stored as Tasks, but their existing
 			// cancellation tokens make them settle promptly. Wait until their finally
 			// blocks have released the clients before disconnecting them below.
 			while (_attemptInProgress || _recoveryTask is not null || _steeringReconnectTask is not null ||
 				_heartRateScanInProgress || _steeringScanInProgress ||
 				_heartRateConnectionCancellation is not null || _steeringConnectionCancellation is not null)
+			{
+				releaseWaitTimeout.Token.ThrowIfCancellationRequested();
 				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			}
 
 			var bleTrainer = _realTrainerClient;
 			var antTrainer = _antTrainerClient;
@@ -461,6 +478,17 @@ public partial class DeviceConnectionPanelController : Control
 			_steeringStaleReconnectAttempted = false;
 			GameLogger.Log("physical_devices_released_for_test_mode", new { trainer = true, optionalDevices = true });
 			return true;
+		}
+		catch (OperationCanceledException) when (releaseWaitTimeout.IsCancellationRequested)
+		{
+			GameLogger.Log("physical_device_release_wait_timed_out", new
+			{
+				timeoutMilliseconds = (long)DeviceReleaseWaitTimeoutForTesting.TotalMilliseconds,
+				trainerAttemptPending = _attemptInProgress,
+				heartRateOperationPending = _heartRateScanInProgress || _heartRateConnectionCancellation is not null,
+				steeringOperationPending = _steeringScanInProgress || _steeringConnectionCancellation is not null
+			});
+			return false;
 		}
 		catch (Exception ex)
 		{

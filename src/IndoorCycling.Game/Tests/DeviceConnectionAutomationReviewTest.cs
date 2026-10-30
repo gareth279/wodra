@@ -116,7 +116,8 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.Trainer, "dummy");
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.FitReplay, "replay.fit");
 			await VerifyConnectedDevicesReleasedBeforeTestModes();
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen automatically selected remembered devices using the saved protocol, kept home visible during setup, avoided duplicate/repeated scans and reconnect after manual disconnect or test-mode transitions, safely released connected trainer/HR/steering clients before Dummy Trainer and FIT replay, retained remembered preferences and home navigation, preserved optional-sensor cancellation and readiness, prompted for multiple devices, exposed retry after a miss, and skipped physical discovery for configured test modes.");
+			await VerifyTestModeReleaseWaitIsBounded();
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen automatically selected remembered devices using the saved protocol, kept home visible during setup, avoided duplicate/repeated scans and reconnect after manual disconnect or test-mode transitions, safely released connected trainer/HR/steering clients before Dummy Trainer and FIT replay, retained remembered preferences and home navigation, bounded device-release waits without changing modes on timeout, preserved optional-sensor cancellation and readiness, prompted for multiple devices, exposed retry after a miss, and skipped physical discovery for configured test modes.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
@@ -287,6 +288,32 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		GameBootstrap.ResetSession();
 	}
 
+	private async Task VerifyTestModeReleaseWaitIsBounded()
+	{
+		var (screen, trainer, heartRate, steering) = await CreateAutoConnectedPhysicalSession();
+		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+		var physicalTrainer = GameBootstrap.TrainerClient;
+		connection.HeartRateActionForTesting.EmitSignal(BaseButton.SignalName.Pressed);
+		heartRate.HoldNextScanIgnoringCancellation();
+		connection.HeartRateActionForTesting.EmitSignal(BaseButton.SignalName.Pressed);
+		await WaitUntil(() => heartRate.ScanPending);
+		connection.DeviceReleaseWaitTimeoutForTesting = TimeSpan.FromMilliseconds(150);
+		if (await connection.ReleasePhysicalDevicesForTestModeAsync())
+			throw new InvalidOperationException("A non-settling optional-device operation was treated as safely released.");
+		if (trainer.IsReady == false || !trainer.IsConnected || !ReferenceEquals(GameBootstrap.TrainerClient, physicalTrainer) ||
+			GameBootstrap.Mode != GameBootstrap.SessionMode.Trainer)
+			throw new InvalidOperationException("A timed-out device release changed or disconnected the active physical-trainer mode.");
+		heartRate.ReleaseHeldScan();
+		await WaitUntil(() => !heartRate.ScanPending);
+		connection.DeviceReleaseWaitTimeoutForTesting = TimeSpan.FromSeconds(10);
+		if (!await connection.ReleasePhysicalDevicesForTestModeAsync())
+			throw new InvalidOperationException("A completed optional-device operation did not allow a later safe release retry.");
+		AssertPhysicalDevicesReleased(screen, trainer, heartRate, steering, "retried test-mode release");
+		screen.QueueFree();
+		await Settle(2);
+		GameBootstrap.ResetSession();
+	}
+
 	private static void AssertPhysicalDevicesReleased(Node screen, FakeTrainer trainer, FakeHeartRate heartRate,
 		FakeSteering steering, string targetMode)
 	{
@@ -419,12 +446,15 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		private readonly IReadOnlyList<BleDiscoveredDevice> _devices;
 		private bool _connected;
 		private bool _holdNextScan;
+		private TaskCompletionSource? _heldScan;
 		public FakeHeartRate(IReadOnlyList<BleDiscoveredDevice> devices) => _devices = devices;
 		public int ScanCount { get; private set; }
 		public bool ScanPending { get; private set; }
 		public int ScanCancellationCount { get; private set; }
 		public int DisconnectCount { get; private set; }
 		public bool HoldNextScan { get => _holdNextScan; set => _holdNextScan = value; }
+		public void HoldNextScanIgnoringCancellation() => _heldScan = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		public void ReleaseHeldScan() => _heldScan?.TrySetResult();
 		public ulong? ConnectedBluetoothAddress { get; private set; }
 		public override bool IsConnected => _connected;
 		public override string? ConnectedDeviceName => _devices.FirstOrDefault(device => device.BluetoothAddress == ConnectedBluetoothAddress)?.Name;
@@ -437,6 +467,12 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				ScanPending = true;
 				try { await Task.Delay(Timeout.Infinite, cancellationToken); }
 				catch (OperationCanceledException) { ScanCancellationCount++; ScanPending = false; throw; }
+			}
+			if (_heldScan is { } heldScan)
+			{
+				ScanPending = true;
+				try { await heldScan.Task; }
+				finally { ScanPending = false; _heldScan = null; }
 			}
 			return _devices;
 		}
