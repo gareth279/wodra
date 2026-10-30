@@ -11,8 +11,12 @@ public partial class RiderMotionReviewTest : Node
         try
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
-                "alpha48-hand-correction", "cockpit-v22", "godot-motion-frames-v22");
+            var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
+            if (string.IsNullOrWhiteSpace(output))
+                output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
+                    "alpha48-hand-correction", "cockpit-v22", "godot-motion-frames-v22");
+            else
+                output = Path.GetFullPath(output);
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);

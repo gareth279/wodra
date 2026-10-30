@@ -31,8 +31,8 @@ public partial class CyclistVisual : Node3D
     private static readonly TorusMesh TyreMesh = new() { InnerRadius = .315f, OuterRadius = .35f, Rings = 8, RingSegments = 20 };
     private static readonly TorusMesh RimMesh = new() { InnerRadius = .289f, OuterRadius = .301f, Rings = 6, RingSegments = 20 };
     private static readonly StandardMaterial3D[] FramePalette = [
-        Material(new Color(.12f,.63f,.72f)), Material(new Color(.20f,.38f,.63f)),
-        Material(new Color(.72f,.37f,.12f)), Material(new Color(.27f,.48f,.27f))];
+        FrameMaterial(new Color(.075f,.37f,.42f)), FrameMaterial(new Color(.16f,.32f,.50f)),
+        FrameMaterial(new Color(.62f,.32f,.13f)), FrameMaterial(new Color(.23f,.39f,.25f))];
     private static readonly StandardMaterial3D[] JerseyPalette = [
         Material(new Color(.70f,.25f,.19f)), Material(new Color(.25f,.40f,.53f)),
         Material(new Color(.72f,.52f,.20f)), Material(new Color(.31f,.47f,.35f)),
@@ -833,6 +833,7 @@ public partial class CyclistVisual : Node3D
         var mesh=new MeshInstance3D{Name=name,Mesh=UnitSphereMesh,Position=position,Scale=scale,MaterialOverride=material}; (parent ?? this).AddChild(mesh); return mesh;
     }
     private static StandardMaterial3D Material(Color color)=>new(){AlbedoColor=color,Roughness=.88f};
+    private static StandardMaterial3D FrameMaterial(Color color)=>new(){AlbedoColor=color,Roughness=.43f,Metallic=.16f};
     private static int CountNodes(Node node)
     {
         var count=1; foreach(Node child in node.GetChildren()) count+=CountNodes(child); return count;

@@ -12,7 +12,11 @@ public partial class RiderFinishingSceneReviewTest : Node
         try
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
+            var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
+            if (string.IsNullOrWhiteSpace(output))
+                output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
+            else
+                output = Path.GetFullPath(output);
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
@@ -25,6 +29,9 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException("Could not start Rolling City in RideScreen.");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
             var hud = screen.GetNode<HudController>("HudController");
+            // Keep the model review camera clear of a collectible card that can
+            // otherwise fill the front-three-quarter frame at the fixed test distance.
+            world.GetNodeOrNull<Node3D>("CollectibleCats")?.Hide();
             hud.Show();
             await Settle(12);
             foreach (var window in screen.GetNode<StartPanelController>("StartPanel").GetChildren().OfType<Window>()) window.Hide();
@@ -48,6 +55,9 @@ public partial class RiderFinishingSceneReviewTest : Node
             world.SelectCameraInspectionView(RiderCameraView.GameplayRefined);
             await Settle(24);
             await Save(output, "ride-chase.png");
+            world.SelectCameraInspectionView(RiderCameraView.FrontThreeQuarter);
+            await Settle(24);
+            await Save(output, "ride-front-three-quarter.png");
 
             // Freeze normal ride updates only while temporarily using the actual RideScreen
             // rider and imported GLB for close fit and accessory inspection.
@@ -131,6 +141,15 @@ public partial class RiderFinishingSceneReviewTest : Node
             camera.LookAt(cockpitTarget, Vector3.Up);
             await Settle(3);
             await Save(output, "cockpit-no-hands-front-three-quarter.png");
+            foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
+            {
+                var hoodCenter = hood.GlobalTransform * hood.GetAabb().GetCenter();
+                var view = (bikeSide * side * .62f + bikeForward * .52f + Vector3.Up * .18f).Normalized();
+                camera.GlobalPosition = hoodCenter + view * .28f;
+                camera.LookAt(hoodCenter, Vector3.Up);
+                await Settle(3);
+                await Save(output, side < 0 ? "hood-left-no-hands-close.png" : "hood-right-no-hands-close.png");
+            }
             human.Visible = wasHumanVisible;
             rider.SetHelmetVisible(true);
             foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })

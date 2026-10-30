@@ -547,3 +547,90 @@ $ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Sha
   -frames:v 300 -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p `
   tools/modeling/previews/road-bike-front-10s.mp4
 ```
+
+### Road bicycle geometry pass (#158)
+
+The current road bicycle geometry is authored in `source/WodraCyclist.blend`;
+`build_road_bike_158.py` rebuilds only the bicycle subtree and preserves the
+weighted human, skeleton, `PedalCycle` action, root, and animation nodes. It also
+restores the 48 existing wrist seam quads from the documented matching
+`WodraCyclist.alpha48-mask-export-fixed.blend` checkpoint when the raw canonical
+blend does not contain them, and restores the checkpoint's 152 eye-face
+material assignments. It verifies identical source vertex coordinates and
+weights; no rider vertices, weights, bones, shape keys, or animation are changed.
+The historical cockpit evidence from issue #95 / PR #94 in
+`artifacts/alpha48-hand-correction/cockpit-v22/README.md` was reviewed. This
+pass replaces the capsule-like controls with a sloped palm shelf, narrow bar
+mount, distinct pivot, and a longer, widened swept brake blade.
+
+The geometry target follows published size-54 road-bike relationships rather
+than proprietary graphics. The [Specialized Tarmac SL8 geometry chart](https://www.specialized.com/ca/en/tarmac-sl8-comp-sram-rival-axs-/p/4292996)
+provides a 978 mm wheelbase, 410 mm chainstay, 74 mm bottom-bracket drop,
+420 mm handlebar, 100 mm stem, 172.5 mm crank, and 73 degree head angle. This
+model uses a 170 mm crank and the same 978/410/74 mm frame relationships. Its
+700×28C wheel has a 622 mm bead-seat diameter and 678 mm outer diameter; the
+carbon rim is 37 mm deep. The drivetrain is a plausible 50/34 double with an
+11-sprocket cassette, a closed chain path, two disc rotors, calipers, and a
+rear derailleur. Frame, carbon, alloy, rubber, tape, and hood materials use a
+consistent restrained stylised finish.
+
+All dimensions below are in metres in the `BicycleModel` local Blender basis:
+X is lateral, +Y points forward, and +Z is up. The GLB/Godot basis maps Blender
++Y forward to Godot -Z. The front/rear wheel pivots remain `FrontWheelSpin` and
+`RearWheelSpin`; the cadence-controlled `CrankPivot`, crank, and pedal node
+names are unchanged.
+
+| Contact or datum | Blender bike-local position |
+| --- | --- |
+| Rear wheel centre | `(0, -0.489, 0.339)` |
+| Front wheel centre | `(0, 0.489, 0.339)` |
+| Bottom bracket | `(0, -0.079, 0.265)` |
+| Seat cluster | `(0, -0.240, 0.845)` |
+| Saddle/pelvis target | `(0, -0.253, 0.951)` |
+| Left hood palm shelf | `(-0.180, 0.405, 0.912)` |
+| Right hood palm shelf | `(0.180, 0.405, 0.912)` |
+| Left pedal target, crank local | `(-0.130, 0, -0.170)` |
+| Right pedal target, crank local | `(0.130, 0, 0.170)` |
+
+`Contact_LeftHood`, `Contact_RightHood`, `Contact_Saddle`,
+`Contact_LeftPedal`, and `Contact_RightPedal` export as named empty nodes. The
+pedal targets are children of `CrankPivot` so they rotate with the pedals. The
+hood, saddle, and pedal coordinates are intended as stable #159 fit references;
+the existing rider's hands and pelvis need refitting to these revised points in
+the separate posture task. On the current baked riding pose, the measured palm
+median is 221 mm from each hood and the 90th percentile is 268 mm; finger
+medians range from 141 to 198 mm from their corresponding control surfaces.
+That is a confirmed fit mismatch intentionally deferred to #159. No hand, body,
+clothing, bone, or animation data was changed in #158. Do not distort the
+finished bicycle to preserve the old hand/pelvis pose.
+
+Rebuild the editable source and runtime model with Blender 5.2.2, then reimport
+in Godot 4.6.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+& $blender --background tools/modeling/source/WodraCyclist.blend `
+  --python tools/modeling/build_road_bike_158.py -- `
+  tools/modeling/source/WodraCyclist.issue158.blend
+& $blender --background tools/modeling/source/WodraCyclist.issue158.blend `
+  --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-issue158.glb `
+  tools/modeling/checkpoints/WodraCyclist-issue158-export.blend `
+  tools/modeling/previews/issue158 --export-only
+Copy-Item tools/modeling/exports/WodraCyclist-issue158.glb `
+  src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb -Force
+python tools/modeling/verify_road_bike_158.py
+```
+
+`verify_road_bike_158.py` is a standard-library GLB regression check for wheel
+spacing and diameter, BB drop, bar width, crank radius, component/contact nodes,
+lever-to-hood relation, animation import, triangle budget, and mesh budget. The
+production Godot review harness captures matched side/front-three-quarter and
+rider views plus the cockpit and both controls in
+`artifacts/issue158-road-bike/`. `--capture-road-bike-motion --motion-view=chase`
+uses the imported production model, pedal cycle, road, and chase camera for the
+ride-motion review; it is a route-following visual, not a physical steering
+hardware test.
+The hood and lever silhouette was also reviewed against the ergonomic shape
+and distinct brake-blade layout shown in [SRAM's AXS control overview](https://www.sram.com/en/learn/tech-deep-dives/axs-controls);
+no brand marks or copied product artwork are included.
