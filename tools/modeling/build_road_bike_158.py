@@ -21,8 +21,7 @@ SEAT_Y, SEAT_Z = -.240, .845
 HEAD_LOW = (.0, .343, .660)
 HEAD_HIGH = (.0, .3065, .778)
 BAR_CENTRE = (.0, .365, .854)
-HOOD_CENTRE_Y, HOOD_CENTRE_Z = .424, .884
-HOOD_PALM_Y, HOOD_PALM_Z = .405, .912
+HOOD_PALM_X, HOOD_PALM_Y, HOOD_PALM_Z = .210, .416, .930
 SADDLE_Y, SADDLE_Z = -.253, .951
 
 
@@ -42,7 +41,9 @@ ALLOY = material("Wodra Machined Alloy", (.26, .29, .31), .62, .44)
 DARK_METAL = material("Wodra Dark Anodised Alloy", (.075, .09, .10), .50, .62)
 RUBBER = material("Wodra Road Tyre Rubber", (.014, .018, .021), .94, .0)
 TAPE = material("Wodra Bar Tape", (.045, .052, .056), .88, .0)
-HOOD = material("Wodra Brifter Rubber", (.075, .082, .086), .80, .0)
+HOOD = material("Wodra Brifter Rubber", (.028, .034, .037), .76, .0)
+LEVER = material("Wodra Brifter Satin Graphite", (.045, .050, .054), .34, .28)
+PIVOT = material("Wodra Brifter Pivot Alloy", (.22, .25, .27), .48, .60)
 ROTOR = material("Wodra Stainless Rotor", (.32, .35, .36), .55, .58)
 
 
@@ -241,55 +242,111 @@ def merge_frame_tubes(parent):
     result["WodraRoadFrameV1"]=True
 
 
+def catmull_rom(a, b, c, d, t):
+    return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t)
+
+
+def smooth_station_rows(rows, steps=5):
+    """Interpolate a shape profile without the planar bands of the old loft."""
+    sampled=[]
+    for i in range(len(rows)-1):
+        a=rows[max(i-1,0)];b=rows[i];c=rows[i+1];d=rows[min(i+2,len(rows)-1)]
+        for step in range(steps):
+            t=step/steps
+            sampled.append(tuple(catmull_rom(a[k],b[k],c[k],d[k],t) for k in range(len(b))))
+    sampled.append(rows[-1])
+    return sampled
+
+
+def superellipse_point(angle, radius_x, radius_y, exponent=2.65):
+    power=2.0/exponent
+    c=math.cos(angle);s=math.sin(angle)
+    return (math.copysign(abs(c)**power,c)*radius_x,
+            math.copysign(abs(s)**power,s)*radius_y)
+
+
+def rounded_loft(name, side, parent, rows, mat, ring_count=48, exponent=2.65):
+    """Soft, closed cross-section loft; rows are y,z,x-centre,width-radius,height-radius."""
+    verts=[];faces=[]
+    sampled=smooth_station_rows(rows)
+    for y,z,cx,rx,rz in sampled:
+        rx=max(.0018,rx);rz=max(.002,rz)
+        for j in range(ring_count):
+            dx,dz=superellipse_point(math.tau*j/ring_count,rx,rz,exponent)
+            verts.append((side*cx+dx,y,z+dz))
+    for row in range(len(sampled)-1):
+        for j in range(ring_count):
+            a=row*ring_count+j;b=row*ring_count+(j+1)%ring_count
+            faces.append((a,b,b+ring_count,a+ring_count))
+    faces.extend((tuple(reversed(range(ring_count))),
+                  tuple((len(sampled)-1)*ring_count+j for j in range(ring_count))))
+    return obj_mesh(name,verts,faces,mat,parent,True)
+
+
+def swept_blade(name, side, parent, rows, mat, ring_count=32, exponent=2.5):
+    """Rounded forged blade: broad in the bike side plane, thin across the bar."""
+    samples=smooth_station_rows(rows,steps=4)
+    centers=[Vector((side*.190,row[0],row[1])) for row in samples]
+    verts=[];faces=[]
+    for i,center in enumerate(centers):
+        before=centers[max(i-1,0)];after=centers[min(i+1,len(centers)-1)]
+        tangent=(after-before).normalized()
+        lateral=Vector((1,0,0));normal=Vector((0,-tangent.z,tangent.y)).normalized()
+        half_width=max(.004, samples[i][2]);half_thickness=max(.0015,samples[i][3])
+        for j in range(ring_count):
+            dx,dz=superellipse_point(math.tau*j/ring_count,half_width,half_thickness,exponent)
+            # A brake blade is a plate in the bicycle's side plane. Its thin
+            # thickness runs across X; the larger dimension follows the curve.
+            point=center+lateral*dz+normal*dx
+            verts.append(tuple(point))
+    for row in range(len(centers)-1):
+        for j in range(ring_count):
+            a=row*ring_count+j;b=row*ring_count+(j+1)%ring_count
+            faces.append((a,b,b+ring_count,a+ring_count))
+    faces.extend((tuple(reversed(range(ring_count))),
+                  tuple((len(centers)-1)*ring_count+j for j in range(ring_count))))
+    return obj_mesh(name,verts,faces,mat,parent,True)
+
+
 def hood_shell(side, parent):
-    # Compact, softened ergonomic loft: a gently crowned palm shelf, a wider
-    # heel and a tapered nose. The rounded shoulders avoid a capsule silhouette.
-    cx=side*.180; cy=HOOD_CENTRE_Y; cz=HOOD_CENTRE_Z
-    sections=[(-.048,.004,.006,.006),(-.040,.010,.014,.009),(-.028,.014,.020,.010),
-              (-.010,.014,.020,.008),(.005,.012,.018,.004),(.022,.009,.014,.000),
-              (.034,.006,.009,-.004)]
-    profile=((-0.40,-1.0),(.40,-1.0),(.72,-.82),(.95,-.42),(1.0,.25),
-             (.90,.65),(.72,.88),(.38,.96),(-.38,.96),(-.72,.88),(-.90,.65),(-1.0,.25),(-.95,-.42),(-.72,-.82))
-    verts=[];faces=[];n=len(profile)
-    for dy,rx,rz,dz in sections:
-        for px,pz in profile:
-            x=cx+side*min(max(dy,0)*.08,.004)+rx*px
-            z=cz+dz+rz*pz
-            verts.append((x,cy+dy,z))
-    for row in range(len(sections)-1):
-        for i in range(n):
-            a=row*n+i;b=row*n+(i+1)%n;faces.append((a,b,b+n,a+n))
-    faces.extend((tuple(reversed(range(n))),tuple((len(sections)-1)*n+i for i in range(n))))
-    obj=obj_mesh("BrakeHood"+("L" if side<0 else "R"),verts,faces,HOOD,parent,False)
-    obj["contact_surface"]="palm shelf; target at shelf centre"
-    # Separate curved forged lever with an obvious pivot and narrow blade.
-    pivot_y=cy+.024; pivot_z=cz-.005
-    tube_between("BrakeLeverPivot"+("L" if side<0 else "R"),
-                 (side*.180,pivot_y,pivot_z),(side*.180,pivot_y+.006,pivot_z-.006),.006,DARK_METAL,parent,.006,12)
-    pts=[(side*.178,pivot_y+.001,pivot_z-.002),(side*.173,pivot_y-.015,pivot_z-.027),
-         (side*.167,pivot_y-.036,pivot_z-.055),(side*.165,pivot_y-.063,pivot_z-.078),
-         (side*.165,pivot_y-.090,pivot_z-.084)]
-    # A slim swept blade reads as a forged lever rather than a round wire.
-    widths=(.009,.011,.013,.014,.013)
-    thicknesses=(.004,.0045,.0045,.004,.0035)
-    verts=[];faces=[];segments=12
-    for i,raw in enumerate(pts):
-        center=Vector(raw)
-        tangent=(Vector(pts[min(i+1,len(pts)-1)])-Vector(pts[max(i-1,0)])).normalized()
-        lateral=Vector((1,0,0)); normal=tangent.cross(lateral).normalized()
-        for j in range(segments):
-            angle=math.tau*j/segments
-            p=center+lateral*(math.cos(angle)*widths[i]/2)+normal*(math.sin(angle)*thicknesses[i]/2)
-            verts.append(tuple(p))
-    for row in range(len(pts)-1):
-        for j in range(segments):
-            a=row*segments+j;b=row*segments+(j+1)%segments
-            faces.append((a,b,b+segments,a+segments))
-    faces.extend((tuple(reversed(range(segments))),tuple((len(pts)-1)*segments+j for j in range(segments))))
-    obj_mesh("BrakeLever"+("L" if side<0 else "R"),verts,faces,ALLOY,parent,False)
-    # Shifter paddle on the inner face gives the integrated control its layered silhouette.
-    tube_between("ShiftPaddle"+("L" if side<0 else "R"),
-                 (side*.166,cy+.012,cz-.016),(side*.163,cy+.031,cz-.034),.0038,DARK_METAL,parent,.0025,8)
+    suffix="L" if side<0 else "R"
+    # The control shell now follows the wrapped bar into a rising palm shelf,
+    # with a full rubber heel, broad upper surface and rounded nose. Dense
+    # superellipse sections keep its silhouette organic in the game renderer.
+    # The cross-section centres follow the real bar ramp: it swings outward
+    # to the hood palm position before turning into the drop. Keeping the hood
+    # on that centreline removes the old 30 mm bar-to-shell offset.
+    hood_rows=[(.345,.850,.166,.006,.005),(.357,.856,.178,.009,.008),
+               (.372,.868,.194,.013,.011),(.388,.883,.205,.016,.016),
+               (.403,.900,.210,.019,.018),(.419,.912,.210,.019,.018),
+               (.435,.914,.200,.018,.016),(.448,.912,.188,.016,.018),
+               (.459,.906,.184,.010,.015),(.465,.890,.182,.002,.004)]
+    hood=rounded_loft("BrakeHood"+suffix,side,parent,hood_rows,HOOD)
+    hood["contact_surface"]="smooth crowned palm shelf; Contact_"+suffix+"Hood lies on upper surface"
+    hood["construction"]="rounded superellipse loft with continuous bar-tape heel"
+
+    # A small side pivot cap ties the lever's root visibly into the rubber body.
+    pivot_y=.449;pivot_z=.889
+    tube_between("BrakeLeverPivot"+suffix,(side*.196,pivot_y,pivot_z),
+                 (side*.203,pivot_y,pivot_z),.0065,PIVOT,parent,.0065,24)
+    tube_between("BrakeLeverPivotScrew"+suffix,(side*.202,pivot_y,pivot_z),
+                 (side*.204,pivot_y,pivot_z),.0022,ALLOY,parent,.0022,20)
+
+    # The broad main blade starts under the pivot, sweeps forward/down, then
+    # curls slightly back at its rounded tip as on a modern road brifter.
+    brake_rows=[(.449,.887,.0095,.0032),(.456,.868,.0105,.0030),
+                (.466,.844,.0105,.0028),(.473,.818,.0095,.0027),
+                (.472,.798,.0080,.0026),(.466,.784,.0055,.0022)]
+    blade=swept_blade("BrakeLever"+suffix,side,parent,brake_rows,LEVER)
+    blade["component"]="integrated curved brake blade"
+    blade["section_width_mm"]=23.0
+
+    # The shorter inner shift paddle remains distinct but sits behind the
+    # brake blade and follows the same forward/down control plane.
+    shift_rows=[(.444,.866,.0045,.0015),(.450,.849,.0050,.0015),
+                (.454,.829,.0046,.0014),(.451,.812,.0034,.0013)]
+    shift=swept_blade("ShiftPaddle"+suffix,side,parent,shift_rows,DARK_METAL)
+    shift.location.x=-side*.020
 
 
 def make_chain(parent):
@@ -557,7 +614,7 @@ def build():
         tube_between("BarEndPlug"+("L" if side<0 else "R"),end-tangent*.005,end+tangent*.003,
                      .0085,CARBON,bike,.0075,12)
         create_contact_target("Contact_"+("Left" if side<0 else "Right")+"Hood",bike,
-                              (side*.180,HOOD_PALM_Y,HOOD_PALM_Z))
+                              (side*HOOD_PALM_X,HOOD_PALM_Y,HOOD_PALM_Z))
     # Modern internal routing keeps unsupported cable loops out of the cockpit.
 
     # Steering axis and fork offset correspond to a measured 73-degree road fit.
@@ -584,7 +641,7 @@ def build():
     create_contact_target("Contact_Saddle",bike,(0,SADDLE_Y,SADDLE_Z))
 
     # Add small, named frame-level dimensions to the editable file for review.
-    bike["road_bike_geometry_version"]="issue158-v1"
+    bike["road_bike_geometry_version"]="issue158-v2"
     bike["wheelbase_mm"]=978
     bike["chainstay_mm"]=410
     bike["bottom_bracket_drop_mm"]=74

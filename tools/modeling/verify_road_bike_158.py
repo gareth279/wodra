@@ -89,12 +89,16 @@ for label,p in (("left",left),("right",right)):
     radial=((p[1]-bb[1])**2+(p[2]-bb[2])**2)**.5
     assert close(radial,.170),f"{label} pedal crank radius is {radial:.4f} m"
 assert close(origin("Contact_Saddle")[1],.951),"saddle contact target should be at documented seat height"
-assert close(origin("Contact_LeftHood")[0],-.180) and close(origin("Contact_RightHood")[0],.180),"hood targets should be symmetric"
-assert close(origin("Contact_LeftHood")[1],.912) and close(origin("Contact_RightHood")[1],.912),"hood targets should sit on the palm shelf height"
-assert close(abs(origin("Contact_LeftHood")[2]),.405) and close(abs(origin("Contact_RightHood")[2]),.405),"hood targets should sit on the rider-side palm shelf"
+assert close(origin("Contact_LeftHood")[0],-.210) and close(origin("Contact_RightHood")[0],.210),"hood targets should be symmetric and follow the bar ramp"
+assert close(origin("Contact_LeftHood")[1],.930) and close(origin("Contact_RightHood")[1],.930),"hood targets should sit on the palm shelf height"
+assert close(abs(origin("Contact_LeftHood")[2]),.416) and close(abs(origin("Contact_RightHood")[2]),.416),"hood targets should sit on the rider-side palm shelf"
+for side in ("L","R"):
+    hood_size=local_size("BrakeHood"+side)
+    assert hood_size[0]>=.044 and hood_size[1]>=.050 and hood_size[2]>=.110,\
+        f"BrakeHood{side} should have a broad, elongated palm body; size={hood_size}"
 left_hood_top=transformed_bounds("BrakeHoodL")[1][1]
 right_hood_top=transformed_bounds("BrakeHoodR")[1][1]
-assert abs(left_hood_top-origin("Contact_LeftHood")[1])<.003 and abs(right_hood_top-origin("Contact_RightHood")[1])<.003,"hood contact targets must lie on the actual top surface"
+assert abs(left_hood_top-origin("Contact_LeftHood")[1])<.005 and abs(right_hood_top-origin("Contact_RightHood")[1])<.005,"hood contact targets must lie on the crowned palm shelf"
 
 # Check both lever blades sit close to their corresponding brifter shell rather
 # than exporting at the old detached location.
@@ -104,8 +108,10 @@ def center(name):
 for side in ("L","R"):
     hood=center("BrakeHood"+side);lever=center("BrakeLever"+side)
     gap=sum((hood[d]-lever[d])**2 for d in range(3))**.5
-    assert gap<.090,f"BrakeLever{side} is detached from its hood ({gap:.3f} m)"
-    assert local_size("BrakeLever"+side)[0]>=.010,f"BrakeLever{side} should have a broad, blade-like section"
+    assert gap<.120,f"BrakeLever{side} is detached from its hood ({gap:.3f} m)"
+    lever_size=local_size("BrakeLever"+side)
+    assert lever_size[0]<=.010 and max(lever_size[1:])>=.018,\
+        f"BrakeLever{side} should be thin across the bike and broad in the side plane; size={lever_size}"
 
 # Geometry and mesh budget guard against accidental runaway exports.
 triangles=0

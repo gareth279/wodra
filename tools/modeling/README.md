@@ -559,9 +559,20 @@ blend does not contain them, and restores the checkpoint's 152 eye-face
 material assignments. It verifies identical source vertex coordinates and
 weights; no rider vertices, weights, bones, shape keys, or animation are changed.
 The historical cockpit evidence from issue #95 / PR #94 in
-`artifacts/alpha48-hand-correction/cockpit-v22/README.md` was reviewed. This
-pass replaces the capsule-like controls with a sloped palm shelf, narrow bar
-mount, distinct pivot, and a longer, widened swept brake blade.
+`artifacts/alpha48-hand-correction/cockpit-v22/README.md` and the owner-provided
+photos/videos under `images/bike/` were reviewed. The latter show the Trek
+Émonda and Shimano 105 brifters from side, front, and hand-on-hood angles. The
+hood has a rising bar-tape heel, broad but comparatively flat palm shelf,
+tapered front nose, visible side pivot, and separate curved brake blade. The
+rebuild replaces the faceted capsule controls with a smooth lofted rubber body,
+follows the actual bar ramp, and gives the blade a broad face in the bike side
+plane with a thin lateral section. No Shimano marks or product artwork are
+copied.
+
+The committed, editable result is `source/WodraCyclist.issue158.blend`;
+`source/WodraCyclist.blend` remains the preserved canonical rider source. The
+builder verifies that human vertices, weights, skeleton, and `PedalCycle` remain
+unchanged before saving the rebuilt bike into the result blend.
 
 The geometry target follows published size-54 road-bike relationships rather
 than proprietary graphics. The [Specialized Tarmac SL8 geometry chart](https://www.specialized.com/ca/en/tarmac-sl8-comp-sram-rival-axs-/p/4292996)
@@ -587,8 +598,8 @@ names are unchanged.
 | Bottom bracket | `(0, -0.079, 0.265)` |
 | Seat cluster | `(0, -0.240, 0.845)` |
 | Saddle/pelvis target | `(0, -0.253, 0.951)` |
-| Left hood palm shelf | `(-0.180, 0.405, 0.912)` |
-| Right hood palm shelf | `(0.180, 0.405, 0.912)` |
+| Left hood palm shelf | `(-0.210, 0.416, 0.930)` |
+| Right hood palm shelf | `(0.210, 0.416, 0.930)` |
 | Left pedal target, crank local | `(-0.130, 0, -0.170)` |
 | Right pedal target, crank local | `(0.130, 0, 0.170)` |
 
@@ -625,9 +636,11 @@ python tools/modeling/verify_road_bike_158.py
 `verify_road_bike_158.py` is a standard-library GLB regression check for wheel
 spacing and diameter, BB drop, bar width, crank radius, component/contact nodes,
 lever-to-hood relation, animation import, triangle budget, and mesh budget. The
-production Godot review harness captures matched side/front-three-quarter and
-rider views plus the cockpit and both controls in
-`artifacts/issue158-road-bike/`. `--capture-road-bike-motion --motion-view=chase`
+production Godot review harness captures matched 1920x1080
+side/front-three-quarter, rider, cockpit, and control views in
+`artifacts/issue158-road-bike/`. `RiderMotionReviewTest.tscn` supplies matched
+production RideScreen captures for pedalling, steering, coasting, and restart.
+`--capture-road-bike-motion --motion-view=chase`
 uses the imported production model, pedal cycle, road, and chase camera for the
 ride-motion review; it is a route-following visual, not a physical steering
 hardware test.
