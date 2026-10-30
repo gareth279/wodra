@@ -140,6 +140,11 @@ public partial class StartPanelController : Control
 		{
 			_fileDialog.FileSelected += OnFitFileSelected;
 		}
+
+		// Sibling controllers and persisted settings are fully initialized before
+		// the existing connection flow starts. Discovery remains presentation-free,
+		// so the launch screen stays visible while the device cards update.
+		CallDeferred(nameof(BeginStartupDeviceDiscovery));
 	}
 
 
@@ -869,6 +874,7 @@ public partial class StartPanelController : Control
 			return;
 		}
 
+		_deviceConnectionPanel?.CancelPendingDiscoveryForTestMode();
 		// The entry point now lives in an exclusive Options window. Close it before
 		// opening the existing route selector so the new screen is not obscured.
 		_optionsWindow?.Hide();
@@ -901,6 +907,7 @@ public partial class StartPanelController : Control
 			return;
 		}
 
+		_deviceConnectionPanel?.CancelPendingDiscoveryForTestMode();
 		GameBootstrap.ConfigureFitReplayMode(path);
 		_hudController?.Show();
 		Hide();
@@ -918,5 +925,16 @@ public partial class StartPanelController : Control
 	{
 		if (_statusLabel is not null)
 			_statusLabel.Text = text;
+	}
+
+	private void BeginStartupDeviceDiscovery()
+	{
+		// RideScreen is also embedded by production scene-review harnesses. Do not
+		// probe real hardware from those nested instances; injected device factories
+		// opt the dedicated connection review into the same startup path safely.
+		if (_deviceConnectionPanel is null ||
+			(!ReferenceEquals(GetTree().CurrentScene, GetParent()) && !_deviceConnectionPanel.HasDeviceFactoriesForTesting))
+			return;
+		_deviceConnectionPanel?.BeginStartupDiscovery();
 	}
 }
