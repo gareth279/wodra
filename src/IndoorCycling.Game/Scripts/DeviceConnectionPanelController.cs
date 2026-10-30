@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
+using IndoorCycling.Trainer.Abstractions;
 using IndoorCycling.Trainer.Models;
 using IndoorCycling.Trainer.Windows;
 
@@ -15,6 +16,9 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<WindowsBleTrainerClient>? TrainerClientFactoryForTesting { get; set; }
 	internal Func<WindowsBleHeartRateClient>? HeartRateClientFactoryForTesting { get; set; }
 	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
+	internal bool HasDeviceFactoriesForTesting => TrainerClientFactoryForTesting is not null ||
+		HeartRateClientFactoryForTesting is not null || SteeringClientFactoryForTesting is not null;
+	internal TimeSpan DeviceReleaseWaitTimeoutForTesting { get; set; } = TimeSpan.FromSeconds(10);
 	internal Button HeartRateActionForTesting => _heartRateAction!;
 	internal Button SteeringActionForTesting => _steeringAction!;
 
@@ -98,20 +102,24 @@ public partial class DeviceConnectionPanelController : Control
 	private bool _intentionalDisconnect;
 	private bool _awaitingDeviceChoice;
 	private bool _awaitingAntDeviceChoice;
+	private bool _startupDiscoveryAttempted;
+	private bool _testModeTransitionInProgress;
 	private double _telemetryRefreshSeconds;
 
 	// Read-only presentation values for the launch screen. These are derived from
 	// the existing connection state and device clients; they do not own state or
 	// alter discovery, readiness, or reconnect behaviour.
 	public string PreRideTrainerName => GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient
-		? "Dummy trainer" : _trainerCardName?.Text ?? "Trainer";
+		? "Dummy trainer" : _awaitingDeviceChoice || _awaitingAntDeviceChoice
+			? "Choose a trainer" : _trainerNameLabel?.Text ?? _trainerCardName?.Text ?? "Trainer";
 	public string PreRideTrainerStatus => GameBootstrap.TrainerClient is IndoorCycling.Trainer.Implementations.FakeTrainerClient
-		? "Test mode active" : _connectionState.Phase switch
+		? "Test mode active" : _recoveryTask is not null ? "Reconnecting…" : _connectionState.Phase switch
 		{
 			TrainerConnectionPhase.Scanning => "Searching for trainer…",
 			TrainerConnectionPhase.Connecting => "Connecting…",
 			TrainerConnectionPhase.SettingUp => "Setting up controls…",
 			TrainerConnectionPhase.Ready => "Connected and ready",
+			TrainerConnectionPhase.Idle when _awaitingDeviceChoice || _awaitingAntDeviceChoice => "Choose a trainer in Devices",
 			TrainerConnectionPhase.NoTrainer => "No trainer found · retry in Devices",
 			TrainerConnectionPhase.Failed => "Connection needs attention · retry in Devices",
 			TrainerConnectionPhase.Disconnected => "Disconnected · recovery may be in progress",
@@ -120,11 +128,12 @@ public partial class DeviceConnectionPanelController : Control
 		};
 	public string PreRideHeartRateName => _heartRateClient?.IsConnected == true
 		? _heartRateClient.ConnectedDeviceName ?? _heartRateName?.Text ?? "Heart-rate monitor"
-		: "Heart rate";
+		: _heartRateName?.Text is { Length: > 0 } heartRateName && heartRateName != "No monitor selected"
+			? heartRateName : "Heart rate";
 	public string PreRideHeartRateStatus => _heartRateStatus?.Text ?? "Optional · not connected";
 	public string PreRideSteeringName => _steeringClient?.IsConnected == true
 		? _steeringClient.ConnectedDeviceName ?? _steeringName?.Text ?? "Steering controller"
-		: "Steering";
+		: _steeringName?.Text is { Length: > 0 } steeringName ? steeringName : "Steering";
 	public string PreRideSteeringStatus => _steeringStatus?.Text ?? "Optional · not connected";
 
 	public override void _Ready()
@@ -381,7 +390,119 @@ public partial class DeviceConnectionPanelController : Control
 		if (_peripheralCards.Columns != columns) _peripheralCards.Columns = columns;
 	}
 
-	/// <summary>Clicking Connect Trainer on the launch screen starts Bluetooth discovery immediately.</summary>
+	/// <summary>Starts the existing discovery flow once at launch without opening the device-management screen.</summary>
+	internal bool BeginStartupDiscovery()
+	{
+		if (_startupDiscoveryAttempted) return false;
+		_startupDiscoveryAttempted = true;
+
+		// A mode configured before the launch screen is shown is an explicit user or
+		// test choice. Do not replace it with physical discovery (especially FIT replay).
+		if (GameBootstrap.Mode != GameBootstrap.SessionMode.None || GameBootstrap.TrainerClient is not null)
+		{
+			GameLogger.Log("trainer_startup_discovery_skipped", new { reason = "session_mode_already_configured" });
+			return false;
+		}
+		if (_attemptInProgress || _recoveryTask is not null ||
+			_connectionState.Phase == TrainerConnectionPhase.IntentionalDisconnect)
+			return false;
+
+		_attemptTask = StartDiscoveryAsync();
+		return true;
+	}
+
+	/// <summary>Releases active and pending physical devices before an explicit test/replay session begins.</summary>
+	internal async Task<bool> ReleasePhysicalDevicesForTestModeAsync()
+	{
+		if (_rideSessionNode?.IsRideActive == true || _testModeTransitionInProgress) return false;
+		_testModeTransitionInProgress = true;
+		_intentionalDisconnect = true;
+		_attemptCancellation?.Cancel();
+		_recoveryCancellation?.Cancel();
+		CancelOptionalDiscovery();
+		_steeringReconnectCancellation?.Cancel();
+		_connectionState.Invalidate();
+		using var releaseWaitTimeout = new CancellationTokenSource(DeviceReleaseWaitTimeoutForTesting);
+		try
+		{
+			if (_attemptTask is { } attempt)
+			{
+				try { await attempt.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
+			if (_recoveryTask is { } recovery)
+			{
+				try { await recovery.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
+			if (_steeringReconnectTask is { } steeringReconnect)
+			{
+				try { await steeringReconnect.WaitAsync(releaseWaitTimeout.Token); }
+				catch (OperationCanceledException) when (!releaseWaitTimeout.IsCancellationRequested) { }
+			}
+			// Optional-device operations are not stored as Tasks, but their existing
+			// cancellation tokens make them settle promptly. Wait until their finally
+			// blocks have released the clients before disconnecting them below.
+			while (_attemptInProgress || _recoveryTask is not null || _steeringReconnectTask is not null ||
+				_heartRateScanInProgress || _steeringScanInProgress ||
+				_heartRateConnectionCancellation is not null || _steeringConnectionCancellation is not null)
+			{
+				releaseWaitTimeout.Token.ThrowIfCancellationRequested();
+				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			}
+
+			var bleTrainer = _realTrainerClient;
+			var antTrainer = _antTrainerClient;
+			await DisconnectTrainerAsync();
+			if (bleTrainer?.IsConnected == true || antTrainer?.IsConnected == true)
+			{
+				_realTrainerClient = bleTrainer;
+				_antTrainerClient = antTrainer;
+				var connectedTrainer = (ITrainerClient?)bleTrainer ?? antTrainer!;
+				GameBootstrap.ConfigureRealTrainerMode(connectedTrainer);
+				var stillReady = bleTrainer?.IsReady == true || antTrainer?.IsReady == true;
+				_connectionState.SetPhase(_connectionState.AttemptId,
+					stillReady ? TrainerConnectionPhase.Ready : TrainerConnectionPhase.Failed,
+					"The physical trainer did not confirm disconnection.");
+				_overallStatusLabel!.Text = "The physical trainer is still connected. Test mode was not started.";
+				if (stillReady) ShowReadyUi();
+				else _trainerCardStatus!.Text = "Disconnect failed · retry in Devices";
+				return false;
+			}
+			await DisconnectHeartRateAsync();
+			await DisconnectSteeringAsync();
+			if (_heartRateClient?.IsConnected == true || _steeringClient?.IsConnected == true)
+				throw new InvalidOperationException("An optional physical device remained connected after its disconnect completed.");
+			GameBootstrap.HeartRateClient = null;
+			_selectedSteeringDevice = null;
+			_steeringStaleReconnectAttempted = false;
+			GameLogger.Log("physical_devices_released_for_test_mode", new { trainer = true, optionalDevices = true });
+			return true;
+		}
+		catch (OperationCanceledException) when (releaseWaitTimeout.IsCancellationRequested)
+		{
+			GameLogger.Log("physical_device_release_wait_timed_out", new
+			{
+				timeoutMilliseconds = (long)DeviceReleaseWaitTimeoutForTesting.TotalMilliseconds,
+				trainerAttemptPending = _attemptInProgress,
+				heartRateOperationPending = _heartRateScanInProgress || _heartRateConnectionCancellation is not null,
+				steeringOperationPending = _steeringScanInProgress || _steeringConnectionCancellation is not null
+			});
+			return false;
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("physical_device_release_for_test_mode_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+			return false;
+		}
+		finally
+		{
+			_intentionalDisconnect = false;
+			_testModeTransitionInProgress = false;
+		}
+	}
+
+	/// <summary>Opening device management during a scan shows its progress without starting another scan.</summary>
 	public void ShowTrainerConnectionScreen()
 	{
 		Show();
