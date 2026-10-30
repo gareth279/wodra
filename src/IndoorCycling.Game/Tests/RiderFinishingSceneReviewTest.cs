@@ -177,6 +177,11 @@ public partial class RiderFinishingSceneReviewTest : Node
             camera.LookAt(cockpitTarget, Vector3.Up);
             await Settle(3);
             await Save(output, "cockpit-no-hands-side.png");
+            camera.Fov = 36f;
+            camera.GlobalPosition = cockpitTarget + Vector3.Up * .72f;
+            camera.LookAt(cockpitTarget, bikeForward);
+            await Settle(3);
+            await Save(output, "cockpit-no-hands-top.png");
             camera.Fov = 30f;
             camera.GlobalPosition = cockpitTarget + bikeForward * .80f + bikeSide * .48f + Vector3.Up * .42f;
             camera.LookAt(cockpitTarget, Vector3.Up);

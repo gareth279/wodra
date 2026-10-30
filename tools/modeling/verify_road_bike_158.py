@@ -90,15 +90,20 @@ for label,p in (("left",left),("right",right)):
     assert close(radial,.170),f"{label} pedal crank radius is {radial:.4f} m"
 assert close(origin("Contact_Saddle")[1],.951),"saddle contact target should be at documented seat height"
 assert close(origin("Contact_LeftHood")[0],-.210) and close(origin("Contact_RightHood")[0],.210),"hood targets should be symmetric and follow the bar ramp"
-assert close(origin("Contact_LeftHood")[1],.930) and close(origin("Contact_RightHood")[1],.930),"hood targets should sit on the palm shelf height"
-assert close(abs(origin("Contact_LeftHood")[2]),.416) and close(abs(origin("Contact_RightHood")[2]),.416),"hood targets should sit on the rider-side palm shelf"
+assert close(origin("Contact_LeftHood")[1],.900) and close(origin("Contact_RightHood")[1],.900),"hood targets should sit on the palm shelf height"
+assert close(abs(origin("Contact_LeftHood")[2]),.421) and close(abs(origin("Contact_RightHood")[2]),.421),"hood targets should sit at the rider-side palm shelf depth"
+for name in ("Contact_LeftHood","Contact_RightHood"):
+    rotation=require(name).get("rotation",[0,0,0,1])
+    assert abs(rotation[0])>.02,"hood target orientation must follow the shallow palm shelf"
 for side in ("L","R"):
     hood_size=local_size("BrakeHood"+side)
-    assert hood_size[0]>=.044 and hood_size[1]>=.050 and hood_size[2]>=.110,\
+    # glTF's Y/Z to Godot Y/Z mapping presents Blender longitudinal Y as
+    # exported Z; the palm body should remain wide, tall enough, and elongated.
+    assert hood_size[0]>=.040 and hood_size[1]>=.035 and hood_size[2]>=.110,\
         f"BrakeHood{side} should have a broad, elongated palm body; size={hood_size}"
 left_hood_top=transformed_bounds("BrakeHoodL")[1][1]
 right_hood_top=transformed_bounds("BrakeHoodR")[1][1]
-assert abs(left_hood_top-origin("Contact_LeftHood")[1])<.005 and abs(right_hood_top-origin("Contact_RightHood")[1])<.005,"hood contact targets must lie on the crowned palm shelf"
+assert left_hood_top>origin("Contact_LeftHood")[1] and right_hood_top>origin("Contact_RightHood")[1],"palm shelf target must be below the compact raised nose"
 
 # Check both lever blades sit close to their corresponding brifter shell rather
 # than exporting at the old detached location.
@@ -110,7 +115,7 @@ for side in ("L","R"):
     gap=sum((hood[d]-lever[d])**2 for d in range(3))**.5
     assert gap<.120,f"BrakeLever{side} is detached from its hood ({gap:.3f} m)"
     lever_size=local_size("BrakeLever"+side)
-    assert lever_size[0]<=.010 and max(lever_size[1:])>=.018,\
+    assert lever_size[0]<=.012 and max(lever_size[1:])>=.018,\
         f"BrakeLever{side} should be thin across the bike and broad in the side plane; size={lever_size}"
 
 # Geometry and mesh budget guard against accidental runaway exports.

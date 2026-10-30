@@ -560,14 +560,18 @@ material assignments. It verifies identical source vertex coordinates and
 weights; no rider vertices, weights, bones, shape keys, or animation are changed.
 The historical cockpit evidence from issue #95 / PR #94 in
 `artifacts/alpha48-hand-correction/cockpit-v22/README.md` and the owner-provided
-photos/videos under `images/bike/` were reviewed. The latter show the Trek
-Émonda and Shimano 105 brifters from side, front, and hand-on-hood angles. The
-hood has a rising bar-tape heel, broad but comparatively flat palm shelf,
-tapered front nose, visible side pivot, and separate curved brake blade. The
-rebuild replaces the faceted capsule controls with a smooth lofted rubber body,
-follows the actual bar ramp, and gives the blade a broad face in the bike side
-plane with a thin lateral section. No Shimano marks or product artwork are
-copied.
+photos/videos under `images/bike/` were reviewed. The owner's IMG_1459 and
+IMG_1474 photographs show the Trek Émonda and Shimano 105 brifters from side,
+front, and hand-on-hood angles. In review, the prior superellipse loft produced
+a high domed canopy, and a flat silhouette extrusion looked like a tapered
+fin. The current iteration replaces both with an editable rounded 3D body
+intersecting the wrapped bar, a mostly level palm surface, and a raised nose.
+The brake blade and inner shift paddle remain separate curved forms; the blade
+overlaps the control body at a visible axle/pivot. This remains a stylised
+approximation: its palm-body transition and nose still read more like a capsule
+than the reference control and require further visual review. No Shimano marks
+or product artwork are copied. Drop-bar return ends are now 290 mm apart,
+previously 180 mm.
 
 The committed, editable result is `source/WodraCyclist.issue158.blend`;
 `source/WodraCyclist.blend` remains the preserved canonical rider source. The
@@ -598,8 +602,8 @@ names are unchanged.
 | Bottom bracket | `(0, -0.079, 0.265)` |
 | Seat cluster | `(0, -0.240, 0.845)` |
 | Saddle/pelvis target | `(0, -0.253, 0.951)` |
-| Left hood palm shelf | `(-0.210, 0.416, 0.930)` |
-| Right hood palm shelf | `(0.210, 0.416, 0.930)` |
+| Left hood palm shelf | `(-0.210, 0.421, 0.900)` |
+| Right hood palm shelf | `(0.210, 0.421, 0.900)` |
 | Left pedal target, crank local | `(-0.130, 0, -0.170)` |
 | Right pedal target, crank local | `(0.130, 0, 0.170)` |
 
@@ -637,8 +641,10 @@ python tools/modeling/verify_road_bike_158.py
 spacing and diameter, BB drop, bar width, crank radius, component/contact nodes,
 lever-to-hood relation, animation import, triangle budget, and mesh budget. The
 production Godot review harness captures matched 1920x1080
-side/front-three-quarter, rider, cockpit, and control views in
-`artifacts/issue158-road-bike/`. `RiderMotionReviewTest.tscn` supplies matched
+side/top/front-three-quarter, rider, cockpit, and control views in
+`artifacts/issue158-road-bike/`. The close cockpit rebuild captures are under
+`artifacts/issue158-road-bike/evidence/cockpit-profile-rebuild/`, beside the
+earlier canopy-style production views for comparison. `RiderMotionReviewTest.tscn` supplies matched
 production RideScreen captures for pedalling, steering, coasting, and restart.
 `--capture-road-bike-motion --motion-view=chase`
 uses the imported production model, pedal cycle, road, and chase camera for the
@@ -647,3 +653,14 @@ hardware test.
 The hood and lever silhouette was also reviewed against the ergonomic shape
 and distinct brake-blade layout shown in [SRAM's AXS control overview](https://www.sram.com/en/learn/tech-deep-dives/axs-controls);
 no brand marks or copied product artwork are included.
+
+The #160 cockpit iteration replaces the pointed side extrusion with a rounded,
+editable 3D control body intersecting the wrapped bar, and reshapes the brake
+blade to overlap the front underside at its pivot. The photographed owner
+Shimano 105 controls are in `images/bike` and are not redistributed; a cropped
+owner reference and current production Godot comparisons are preserved in
+`artifacts/issue158-road-bike/evidence/cockpit-profile-rebuild/`. The current
+render is not being represented as visually accepted: the hood still reads
+too capsule-like and does not yet match the reference palm shelf/nose clearly.
+The hand targets remain at ±210 mm lateral, 421 mm forward and 900 mm high in
+Blender coordinates, rotated to the palm surface.
