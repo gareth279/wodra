@@ -12,7 +12,8 @@ public readonly record struct RideHudOverlayLayout(
 	RideHudOverlayBounds RouteInset,
 	RideHudOverlayBounds DummyPanel,
 	RideHudOverlayBounds PacerPanel,
-	RideHudOverlayBounds BottomBar);
+	RideHudOverlayBounds BottomBar,
+	RideHudOverlayBounds WorkoutPanel);
 
 public static class RideHudOverlayLayoutPolicy
 {
@@ -28,12 +29,14 @@ public static class RideHudOverlayLayoutPolicy
 	public const float BottomPanelMargin = 12;
 	public const float MediaPanelHeight = 58;
 	public const float MediaPanelMinimumWidth = 246;
+	public const float WorkoutPanelWidth = 350;
+	public const float WorkoutPanelHeight = 204;
 
 	public static RideHudOverlayLayout ForViewport(float width, float height, bool showRouteInset,
 		bool showPacerPanel = false, float pacerWidth = 0, float pacerHeight = 0,
 		bool showDummyPanel = false, float bottomBarWidth = 0, float bottomBarHeight = 0,
 		bool showMediaPanel = false, float mediaWidth = 0, float mediaHeight = 0, bool showDebugPanel = false,
-		float topHudBottom = 0)
+		float topHudBottom = 0, bool showWorkoutPanel = false, float workoutWidth = 0, float workoutHeight = 0)
 	{
 		width = MathF.Max(width, ViewportMargin * 2 + 1);
 		height = MathF.Max(height, ViewportMargin * 2 + 1);
@@ -57,6 +60,13 @@ public static class RideHudOverlayLayoutPolicy
 			bottomBarWidth, bottomBarHeight);
 		var pacer = new RideHudOverlayBounds(width - ViewportMargin - pacerWidth,
 			height - BottomPanelMargin - pacerHeight, pacerWidth, pacerHeight);
+		var workoutPanelWidth = MathF.Min(workoutWidth > 0 ? workoutWidth : WorkoutPanelWidth,
+			MathF.Max(1, width - ViewportMargin * 2));
+		var workoutPanelHeight = workoutHeight > 0 ? workoutHeight : WorkoutPanelHeight;
+		var workout = showWorkoutPanel
+			? new RideHudOverlayBounds(width - ViewportMargin - workoutPanelWidth,
+				topHudBottom + PanelGap, workoutPanelWidth, workoutPanelHeight)
+			: default;
 		if (showPacerPanel && showDummyPanel)
 		{
 			// The bottom-right pacer gets the right edge. Place dummy controls in the
@@ -90,6 +100,6 @@ public static class RideHudOverlayLayoutPolicy
 					dummyWidth, dummyHeight);
 			}
 		}
-		return new(debug, inset, dummy, pacer, bar);
+		return new(debug, inset, dummy, pacer, bar, workout);
 	}
 }

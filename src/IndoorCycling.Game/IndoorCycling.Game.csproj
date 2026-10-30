@@ -26,6 +26,7 @@
     <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.terrain.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.terrain.json" />
     <EmbeddedResource Include="Data\Routes\signal-hill-big-easy-mtb.vegetation.json" LogicalName="Wodra.GameData.Routes.signal-hill-big-easy-mtb.vegetation.json" />
     <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.route-points.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.route-points.json" />
+	<EmbeddedResource Include="Data\Routes\levels-raceway-workout.route-points.json" LogicalName="Wodra.GameData.Routes.levels-raceway-workout.route-points.json" />
     <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.terrain.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.terrain.json" />
     <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.vegetation.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.vegetation.json" />
     <EmbeddedResource Include="Data\Routes\wodra-xc-skills-loop.trail-features.json" LogicalName="Wodra.GameData.Routes.wodra-xc-skills-loop.trail-features.json" />

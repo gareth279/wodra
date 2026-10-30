@@ -194,14 +194,14 @@ public partial class RideSessionNode : Node
 		_workoutDefinition = definition;
 		_workoutFtpWatts = ftpWatts;
 		_workoutErgRequested = useErg;
-		var started = await StartTrainerSessionAsync(WorkoutStudioRoute.Create(), null);
+		var started = await StartTrainerSessionAsync(WorkoutRacewayRoute.Create(), null);
 		if (!started) { ResetWorkoutState(); return false; }
 		return true;
 	}
 
 	public async Task<bool> StartTrainerSessionAsync(RouteDefinition? route = null, RideActivityMode? activityMode = null)
 	{
-		var isWorkoutRequest = _workoutDefinition is not null && route?.Environment == RouteEnvironment.TrainingStudio;
+		var isWorkoutRequest = _workoutDefinition is not null && route?.Environment == RouteEnvironment.Raceway;
 		if (!isWorkoutRequest) ResetWorkoutState();
 		if (GameBootstrap.TrainerClient is null)
 		{

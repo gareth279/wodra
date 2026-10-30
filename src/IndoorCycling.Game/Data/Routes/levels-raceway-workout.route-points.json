@@ -1,0 +1,4837 @@
+{
+  "id": "levels-raceway-workout",
+  "name": "Levels Raceway \u00b7 Timaru",
+  "isValid": true,
+  "actualOsmDistanceMeters": 2402.699729,
+  "actualRouteDistanceMeters": 2402.699729,
+  "points": [
+    {
+      "distanceMeters": 0.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 0.0,
+      "localZMeters": -0.0,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 5.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 0.737129,
+      "localZMeters": -4.945364,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 10.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 1.474258,
+      "localZMeters": -9.890728,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 15.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 2.211387,
+      "localZMeters": -14.836092,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 20.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 2.948516,
+      "localZMeters": -19.781457,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 25.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 3.685645,
+      "localZMeters": -24.726821,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 30.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 4.422773,
+      "localZMeters": -29.672185,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 35.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 5.159902,
+      "localZMeters": -34.617549,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 40.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 5.897031,
+      "localZMeters": -39.562913,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 45.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 6.63416,
+      "localZMeters": -44.508277,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 50.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 7.371289,
+      "localZMeters": -49.453641,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 55.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 8.108418,
+      "localZMeters": -54.399006,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 60.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 8.845547,
+      "localZMeters": -59.34437,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 65.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 9.582676,
+      "localZMeters": -64.289734,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 70.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 10.319805,
+      "localZMeters": -69.235098,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 75.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 11.056934,
+      "localZMeters": -74.180462,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 80.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 11.794063,
+      "localZMeters": -79.125826,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 85.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 12.531192,
+      "localZMeters": -84.07119,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 90.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 13.26832,
+      "localZMeters": -89.016555,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 95.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 14.005449,
+      "localZMeters": -93.961919,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 100.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 14.742578,
+      "localZMeters": -98.907283,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 105.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 15.479707,
+      "localZMeters": -103.852647,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 110.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 16.216836,
+      "localZMeters": -108.798011,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 115.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 16.953965,
+      "localZMeters": -113.743375,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 120.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 17.691094,
+      "localZMeters": -118.688739,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 125.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 18.428223,
+      "localZMeters": -123.634104,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 130.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 19.165352,
+      "localZMeters": -128.579468,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 135.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 19.902481,
+      "localZMeters": -133.524832,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 140.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 20.63961,
+      "localZMeters": -138.470196,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 145.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 21.376739,
+      "localZMeters": -143.41556,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 150.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 22.113867,
+      "localZMeters": -148.360924,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 155.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 22.850996,
+      "localZMeters": -153.306288,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 160.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 23.588125,
+      "localZMeters": -158.251653,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 165.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 24.325254,
+      "localZMeters": -163.197017,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 170.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 25.062383,
+      "localZMeters": -168.142381,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 175.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 25.799512,
+      "localZMeters": -173.087745,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 180.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 26.536773,
+      "localZMeters": -178.033087,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 185.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 27.274045,
+      "localZMeters": -182.978428,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 190.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 28.011318,
+      "localZMeters": -187.923768,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 195.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 28.74859,
+      "localZMeters": -192.869108,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 200.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 29.485862,
+      "localZMeters": -197.814449,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 205.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 30.223135,
+      "localZMeters": -202.759789,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 210.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 30.960407,
+      "localZMeters": -207.70513,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 215.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 31.69768,
+      "localZMeters": -212.65047,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 220.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 32.434952,
+      "localZMeters": -217.59581,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 225.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 33.172224,
+      "localZMeters": -222.541151,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 230.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 33.909497,
+      "localZMeters": -227.486491,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 235.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 34.646769,
+      "localZMeters": -232.431831,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 240.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 35.384042,
+      "localZMeters": -237.377172,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 245.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 36.121314,
+      "localZMeters": -242.322512,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 250.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 36.858586,
+      "localZMeters": -247.267852,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 255.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 37.595859,
+      "localZMeters": -252.213193,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 260.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 38.333131,
+      "localZMeters": -257.158533,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 265.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 39.070404,
+      "localZMeters": -262.103874,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 270.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 39.807676,
+      "localZMeters": -267.049214,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 275.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 40.544948,
+      "localZMeters": -271.994554,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 280.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 41.282221,
+      "localZMeters": -276.939895,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 285.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 42.019493,
+      "localZMeters": -281.885235,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 290.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 42.4687,
+      "localZMeters": -286.858763,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 295.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 42.703985,
+      "localZMeters": -291.853224,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 300.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 42.93927,
+      "localZMeters": -296.847684,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 305.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.174555,
+      "localZMeters": -301.842145,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 310.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.40984,
+      "localZMeters": -306.836605,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 315.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.645125,
+      "localZMeters": -311.831066,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 320.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.88041,
+      "localZMeters": -316.825526,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 325.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 44.013784,
+      "localZMeters": -321.822205,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 330.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.996013,
+      "localZMeters": -326.822173,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 335.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.978241,
+      "localZMeters": -331.822142,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 340.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.96047,
+      "localZMeters": -336.82211,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 345.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 43.031285,
+      "localZMeters": -341.716156,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 350.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 41.902021,
+      "localZMeters": -346.586949,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 355.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 40.772757,
+      "localZMeters": -351.457743,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 360.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 39.6303,
+      "localZMeters": -356.32456,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 365.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 37.880288,
+      "localZMeters": -361.008267,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 370.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 36.130276,
+      "localZMeters": -365.691975,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 375.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 34.093325,
+      "localZMeters": -370.246818,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 380.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 31.755453,
+      "localZMeters": -374.666515,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 385.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 29.364577,
+      "localZMeters": -379.052433,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 390.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 26.346094,
+      "localZMeters": -383.03837,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 395.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 23.322502,
+      "localZMeters": -387.019906,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 400.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 19.8275,
+      "localZMeters": -390.595307,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 405.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 16.332497,
+      "localZMeters": -394.170708,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 410.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 12.411127,
+      "localZMeters": -397.243187,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 415.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 8.312382,
+      "localZMeters": -400.106444,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 420.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 4.088294,
+      "localZMeters": -402.735337,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 425.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -0.568422,
+      "localZMeters": -404.55531,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 430.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -5.225139,
+      "localZMeters": -406.375283,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 435.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -10.066115,
+      "localZMeters": -407.513995,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 440.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -15.005241,
+      "localZMeters": -408.289816,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 445.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -19.944368,
+      "localZMeters": -409.065636,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 450.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -24.883494,
+      "localZMeters": -409.841457,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 455.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.822621,
+      "localZMeters": -410.617277,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 460.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -34.761747,
+      "localZMeters": -411.393098,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 465.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -39.700874,
+      "localZMeters": -412.168918,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 470.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -44.64,
+      "localZMeters": -412.944739,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 475.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -49.579126,
+      "localZMeters": -413.720559,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 480.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -54.518253,
+      "localZMeters": -414.49638,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 485.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -59.457379,
+      "localZMeters": -415.2722,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 490.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -64.396506,
+      "localZMeters": -416.048021,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 495.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -69.335632,
+      "localZMeters": -416.823841,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 500.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -74.274759,
+      "localZMeters": -417.599662,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 505.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -79.213885,
+      "localZMeters": -418.375483,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 510.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -84.153011,
+      "localZMeters": -419.151303,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 515.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -89.092138,
+      "localZMeters": -419.927124,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 520.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -94.031264,
+      "localZMeters": -420.702944,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 525.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -98.970391,
+      "localZMeters": -421.478765,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 530.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -103.909517,
+      "localZMeters": -422.254585,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 535.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -108.848643,
+      "localZMeters": -423.030406,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 540.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -113.78777,
+      "localZMeters": -423.806226,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 545.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -118.726896,
+      "localZMeters": -424.582047,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 550.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -123.666023,
+      "localZMeters": -425.357867,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 555.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -128.605149,
+      "localZMeters": -426.133688,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 560.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -133.544276,
+      "localZMeters": -426.909508,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 565.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -138.483402,
+      "localZMeters": -427.685329,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 570.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.422528,
+      "localZMeters": -428.46115,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 575.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -148.361655,
+      "localZMeters": -429.23697,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 580.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -153.300781,
+      "localZMeters": -430.012791,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 585.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -158.239908,
+      "localZMeters": -430.788611,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 590.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -163.184555,
+      "localZMeters": -431.500169,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 595.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -168.183613,
+      "localZMeters": -431.578375,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 600.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -173.182671,
+      "localZMeters": -431.65658,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 605.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -178.181729,
+      "localZMeters": -431.734786,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 610.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -183.166098,
+      "localZMeters": -431.539561,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 615.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -188.128004,
+      "localZMeters": -430.926181,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 620.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -192.904142,
+      "localZMeters": -429.559302,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 625.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -197.582456,
+      "localZMeters": -427.795641,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 630.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -201.743057,
+      "localZMeters": -425.117666,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 635.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -205.66188,
+      "localZMeters": -422.012697,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 640.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -209.418661,
+      "localZMeters": -418.745534,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 645.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -212.526819,
+      "localZMeters": -414.829142,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 650.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -215.634977,
+      "localZMeters": -410.91275,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 655.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -218.417141,
+      "localZMeters": -406.780083,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 660.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -220.816677,
+      "localZMeters": -402.393568,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 665.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -223.191778,
+      "localZMeters": -397.995047,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 670.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -225.197166,
+      "localZMeters": -393.414878,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 675.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -227.202554,
+      "localZMeters": -388.834709,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 680.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -229.207942,
+      "localZMeters": -384.254539,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 685.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -231.213329,
+      "localZMeters": -379.67437,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 690.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -233.218717,
+      "localZMeters": -375.094201,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 695.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -235.224105,
+      "localZMeters": -370.514032,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 700.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -237.229493,
+      "localZMeters": -365.933863,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 705.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -238.868519,
+      "localZMeters": -361.21386,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 710.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -240.424471,
+      "localZMeters": -356.46215,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 715.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -241.980423,
+      "localZMeters": -351.71044,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 720.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -243.536375,
+      "localZMeters": -346.95873,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 725.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -244.469733,
+      "localZMeters": -342.070861,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 730.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -245.039085,
+      "localZMeters": -337.103387,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 735.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -245.022913,
+      "localZMeters": -332.123418,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 740.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -244.665952,
+      "localZMeters": -327.136178,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 745.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -243.770828,
+      "localZMeters": -322.226502,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 750.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -242.705053,
+      "localZMeters": -317.341421,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 755.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -241.130721,
+      "localZMeters": -312.613253,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 760.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -239.258969,
+      "localZMeters": -307.976853,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 765.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -236.592699,
+      "localZMeters": -303.775059,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 770.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -233.698521,
+      "localZMeters": -299.697934,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 775.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -230.344191,
+      "localZMeters": -296.003116,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 780.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -226.866727,
+      "localZMeters": -292.410603,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 785.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -222.809196,
+      "localZMeters": -289.528527,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 790.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -218.594022,
+      "localZMeters": -286.839524,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 795.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -214.161706,
+      "localZMeters": -284.54493,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 800.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -209.635458,
+      "localZMeters": -282.420947,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 805.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -204.861518,
+      "localZMeters": -281.082684,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 810.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -199.935549,
+      "localZMeters": -280.226681,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 815.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -194.946096,
+      "localZMeters": -279.90727,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 820.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -189.966859,
+      "localZMeters": -279.994697,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 825.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -185.000248,
+      "localZMeters": -280.56972,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 830.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -180.191166,
+      "localZMeters": -281.863218,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 835.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -175.496383,
+      "localZMeters": -283.543952,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 840.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -171.20081,
+      "localZMeters": -286.102554,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 845.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -166.958159,
+      "localZMeters": -288.742314,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 850.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -162.88462,
+      "localZMeters": -291.641418,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 855.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -159.153991,
+      "localZMeters": -294.925021,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 860.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -155.809758,
+      "localZMeters": -298.641886,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 865.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -152.465526,
+      "localZMeters": -302.358751,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 870.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -149.121294,
+      "localZMeters": -306.075615,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 875.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -146.296714,
+      "localZMeters": -310.200124,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 880.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.483311,
+      "localZMeters": -314.333399,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 885.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -140.669908,
+      "localZMeters": -318.466675,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 890.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -137.856505,
+      "localZMeters": -322.59995,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 895.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -135.043101,
+      "localZMeters": -326.733226,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 900.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -132.229698,
+      "localZMeters": -330.866501,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 905.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -129.416295,
+      "localZMeters": -334.999777,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 910.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -126.602892,
+      "localZMeters": -339.133052,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 915.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -123.789489,
+      "localZMeters": -343.266328,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 920.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -120.976085,
+      "localZMeters": -347.399603,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 925.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -118.000374,
+      "localZMeters": -351.403385,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 930.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -114.504717,
+      "localZMeters": -354.966579,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 935.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -110.495244,
+      "localZMeters": -357.946478,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 940.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -106.289232,
+      "localZMeters": -360.644607,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 945.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -101.901786,
+      "localZMeters": -363.042144,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 950.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -97.25809,
+      "localZMeters": -364.880541,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 955.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -92.577834,
+      "localZMeters": -366.639164,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 960.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -87.774904,
+      "localZMeters": -367.978852,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 965.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -82.885401,
+      "localZMeters": -369.022896,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 970.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -77.995898,
+      "localZMeters": -370.06694,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 975.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -73.106395,
+      "localZMeters": -371.110984,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 980.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -68.216892,
+      "localZMeters": -372.155028,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 985.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -63.327389,
+      "localZMeters": -373.199073,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 990.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -58.437886,
+      "localZMeters": -374.243117,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 995.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -53.548383,
+      "localZMeters": -375.287161,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1000.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -48.65888,
+      "localZMeters": -376.331205,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1005.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.769377,
+      "localZMeters": -377.375249,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1010.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -38.879874,
+      "localZMeters": -378.419293,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1015.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -33.951832,
+      "localZMeters": -379.109869,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1020.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -28.986516,
+      "localZMeters": -378.772158,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1025.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -24.280293,
+      "localZMeters": -377.231971,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1030.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.354346,
+      "localZMeters": -374.227533,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1035.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -17.035237,
+      "localZMeters": -370.490509,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1040.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -14.529436,
+      "localZMeters": -366.187281,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1045.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -13.615732,
+      "localZMeters": -361.364923,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1050.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -13.297967,
+      "localZMeters": -356.375032,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1055.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -14.300008,
+      "localZMeters": -351.490936,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1060.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -16.400819,
+      "localZMeters": -346.959385,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1065.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -18.591054,
+      "localZMeters": -342.464681,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1070.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.566413,
+      "localZMeters": -338.490306,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1075.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -25.263252,
+      "localZMeters": -335.230734,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1080.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.638953,
+      "localZMeters": -332.81179,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1085.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -34.014654,
+      "localZMeters": -330.392845,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1090.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -38.442781,
+      "localZMeters": -328.079591,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1095.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.016205,
+      "localZMeters": -326.059255,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1100.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -47.589629,
+      "localZMeters": -324.038919,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1105.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -52.163053,
+      "localZMeters": -322.018584,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1110.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -56.736477,
+      "localZMeters": -319.998248,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1115.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -61.309902,
+      "localZMeters": -317.977912,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1120.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -65.883326,
+      "localZMeters": -315.957576,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1125.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -70.45675,
+      "localZMeters": -313.937241,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1130.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -75.030174,
+      "localZMeters": -311.916905,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1135.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -79.603598,
+      "localZMeters": -309.896569,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1140.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -84.177022,
+      "localZMeters": -307.876234,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1145.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -88.4373,
+      "localZMeters": -305.357852,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1150.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -92.239742,
+      "localZMeters": -302.111301,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1155.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -95.166939,
+      "localZMeters": -298.113365,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1160.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -97.646833,
+      "localZMeters": -293.781134,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1165.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -99.713455,
+      "localZMeters": -289.228256,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1170.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -101.463908,
+      "localZMeters": -284.551594,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1175.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -102.948953,
+      "localZMeters": -279.787308,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1180.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -103.395118,
+      "localZMeters": -274.807256,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1185.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -103.595249,
+      "localZMeters": -269.819068,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1190.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -103.479022,
+      "localZMeters": -264.820419,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1195.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -102.823445,
+      "localZMeters": -259.868301,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1200.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -101.996043,
+      "localZMeters": -254.940165,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1205.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -100.845009,
+      "localZMeters": -250.074467,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1210.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -99.693974,
+      "localZMeters": -245.208769,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1215.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -98.409412,
+      "localZMeters": -240.382857,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1220.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -96.70974,
+      "localZMeters": -235.680633,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1225.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -95.010069,
+      "localZMeters": -230.978409,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1230.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -93.190742,
+      "localZMeters": -226.329807,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1235.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -90.81245,
+      "localZMeters": -221.931698,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1240.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -88.434158,
+      "localZMeters": -217.533589,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1245.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -86.055867,
+      "localZMeters": -213.135479,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1250.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -83.677575,
+      "localZMeters": -208.73737,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1255.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -81.299283,
+      "localZMeters": -204.33926,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1260.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -78.920992,
+      "localZMeters": -199.941151,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1265.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -76.5427,
+      "localZMeters": -195.543042,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1270.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -74.164422,
+      "localZMeters": -191.144925,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1275.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -71.786615,
+      "localZMeters": -186.746549,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1280.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -69.408809,
+      "localZMeters": -182.348172,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1285.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -67.030399,
+      "localZMeters": -177.950118,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1290.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -64.651804,
+      "localZMeters": -173.552163,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1295.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -62.273209,
+      "localZMeters": -169.154207,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1300.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -59.894614,
+      "localZMeters": -164.756252,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1305.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -57.516019,
+      "localZMeters": -160.358296,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1310.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -55.137424,
+      "localZMeters": -155.960341,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1315.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -52.758829,
+      "localZMeters": -151.562385,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1320.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -50.380234,
+      "localZMeters": -147.16443,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1325.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -48.001639,
+      "localZMeters": -142.766475,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1330.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -45.623044,
+      "localZMeters": -138.368519,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1335.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.293102,
+      "localZMeters": -133.945846,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1340.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -41.144152,
+      "localZMeters": -129.431221,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1345.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -38.995201,
+      "localZMeters": -124.916596,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1350.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -36.846251,
+      "localZMeters": -120.40197,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1355.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -34.6973,
+      "localZMeters": -115.887345,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1360.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -32.54835,
+      "localZMeters": -111.37272,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1365.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -30.436692,
+      "localZMeters": -106.841399,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1370.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -28.500774,
+      "localZMeters": -102.231398,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1375.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -26.564856,
+      "localZMeters": -97.621398,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1380.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -24.89949,
+      "localZMeters": -92.921032,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1385.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -23.676483,
+      "localZMeters": -88.072918,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1390.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -22.453476,
+      "localZMeters": -83.224803,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1395.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.230469,
+      "localZMeters": -78.376688,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1400.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.681539,
+      "localZMeters": -73.417241,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1405.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.2807,
+      "localZMeters": -68.433335,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1410.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -19.879862,
+      "localZMeters": -63.449428,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1415.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -19.759597,
+      "localZMeters": -58.459971,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1420.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -19.963014,
+      "localZMeters": -53.464111,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1425.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.166432,
+      "localZMeters": -48.46825,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1430.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.369849,
+      "localZMeters": -43.47239,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1435.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.573267,
+      "localZMeters": -38.47653,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1440.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.005561,
+      "localZMeters": -33.497206,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1445.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.522434,
+      "localZMeters": -28.523994,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1450.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -22.039308,
+      "localZMeters": -23.550782,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1455.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -22.556181,
+      "localZMeters": -18.57757,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1460.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -23.073055,
+      "localZMeters": -13.604357,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1465.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -23.918942,
+      "localZMeters": -8.676749,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1470.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -24.774232,
+      "localZMeters": -3.750444,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1475.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -25.629521,
+      "localZMeters": 1.175861,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1480.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -26.484811,
+      "localZMeters": 6.102166,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1485.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -27.340101,
+      "localZMeters": 11.028471,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1490.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -28.195391,
+      "localZMeters": 15.954776,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1495.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.05068,
+      "localZMeters": 20.881081,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1500.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.90597,
+      "localZMeters": 25.807386,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1505.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -30.76126,
+      "localZMeters": 30.733691,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1510.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -31.894405,
+      "localZMeters": 35.602278,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1515.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -33.071929,
+      "localZMeters": 40.461645,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1520.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -34.249285,
+      "localZMeters": 45.321054,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1525.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -35.426087,
+      "localZMeters": 50.180599,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1530.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -36.60289,
+      "localZMeters": 55.040145,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1535.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -37.779692,
+      "localZMeters": 59.89969,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1540.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -38.956495,
+      "localZMeters": 64.759235,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1545.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -40.133297,
+      "localZMeters": 69.61878,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1550.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -41.3101,
+      "localZMeters": 74.478325,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1555.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -42.486902,
+      "localZMeters": 79.33787,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1560.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.663705,
+      "localZMeters": 84.197415,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1565.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -44.840507,
+      "localZMeters": 89.05696,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1570.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -46.01731,
+      "localZMeters": 93.916505,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1575.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -47.194112,
+      "localZMeters": 98.77605,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1580.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -48.370915,
+      "localZMeters": 103.635595,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1585.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -49.547717,
+      "localZMeters": 108.495141,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1590.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -50.72452,
+      "localZMeters": 113.354686,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1595.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -51.901322,
+      "localZMeters": 118.214231,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1600.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -53.078125,
+      "localZMeters": 123.073776,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1605.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -54.254927,
+      "localZMeters": 127.933321,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1610.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -55.43173,
+      "localZMeters": 132.792866,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1615.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -56.608532,
+      "localZMeters": 137.652411,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1620.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -57.785335,
+      "localZMeters": 142.511956,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1625.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -58.962137,
+      "localZMeters": 147.371501,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1630.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -60.13894,
+      "localZMeters": 152.231046,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1635.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -61.313097,
+      "localZMeters": 157.091219,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1640.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -62.442752,
+      "localZMeters": 161.961943,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1645.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -63.572407,
+      "localZMeters": 166.832667,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1650.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -64.702062,
+      "localZMeters": 171.703392,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1655.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -65.831717,
+      "localZMeters": 176.574116,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1660.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -66.961372,
+      "localZMeters": 181.444841,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1665.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -68.091027,
+      "localZMeters": 186.315565,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1670.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -69.220682,
+      "localZMeters": 191.186289,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1675.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -70.350337,
+      "localZMeters": 196.057014,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1680.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -71.479992,
+      "localZMeters": 200.927738,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1685.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -72.609647,
+      "localZMeters": 205.798463,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1690.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -73.739302,
+      "localZMeters": 210.669187,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1695.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -74.868957,
+      "localZMeters": 215.539912,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1700.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -75.998612,
+      "localZMeters": 220.410636,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1705.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -77.128268,
+      "localZMeters": 225.28136,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1710.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -78.257923,
+      "localZMeters": 230.152085,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1715.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -79.387578,
+      "localZMeters": 235.022809,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1720.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -81.067858,
+      "localZMeters": 239.725922,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1725.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -83.144305,
+      "localZMeters": 244.258084,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1730.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -85.62416,
+      "localZMeters": 248.599833,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1735.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -88.893162,
+      "localZMeters": 252.368143,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1740.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -92.610487,
+      "localZMeters": 255.635567,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1745.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -96.902475,
+      "localZMeters": 258.200774,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1750.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -101.617187,
+      "localZMeters": 259.680186,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1755.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -106.513925,
+      "localZMeters": 260.692052,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1760.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -111.410663,
+      "localZMeters": 261.703919,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1765.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -116.308888,
+      "localZMeters": 262.705646,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1770.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -121.289907,
+      "localZMeters": 263.143199,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1775.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -126.052629,
+      "localZMeters": 264.645383,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1780.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -130.447782,
+      "localZMeters": 266.996748,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1785.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -134.042757,
+      "localZMeters": 270.421197,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1790.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -136.795975,
+      "localZMeters": 274.566123,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1795.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -139.312578,
+      "localZMeters": 278.886684,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1800.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -141.151207,
+      "localZMeters": 283.527224,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1805.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -142.702339,
+      "localZMeters": 288.258931,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1810.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.19957,
+      "localZMeters": 293.234148,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1815.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.6968,
+      "localZMeters": 298.209365,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1820.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.981528,
+      "localZMeters": 303.196259,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1825.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.032472,
+      "localZMeters": 308.196,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1830.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.083415,
+      "localZMeters": 313.19574,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1835.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.134359,
+      "localZMeters": 318.195481,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1840.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.185303,
+      "localZMeters": 323.195221,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1845.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.236247,
+      "localZMeters": 328.194962,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1850.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.287191,
+      "localZMeters": 333.194702,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1855.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.338135,
+      "localZMeters": 338.194443,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1860.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.389079,
+      "localZMeters": 343.194183,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1865.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.440023,
+      "localZMeters": 348.193924,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1870.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.490966,
+      "localZMeters": 353.193664,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1875.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.54191,
+      "localZMeters": 358.193405,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1880.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.592854,
+      "localZMeters": 363.193145,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1885.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.643798,
+      "localZMeters": 368.192885,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1890.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.694742,
+      "localZMeters": 373.192626,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1895.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.745686,
+      "localZMeters": 378.192366,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1900.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.558155,
+      "localZMeters": 383.184015,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1905.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -144.168356,
+      "localZMeters": 388.168799,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1910.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -143.289887,
+      "localZMeters": 393.06973,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1915.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -141.735493,
+      "localZMeters": 397.811107,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1920.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -139.502457,
+      "localZMeters": 402.265762,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1925.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -136.850903,
+      "localZMeters": 406.504881,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1930.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -132.731394,
+      "localZMeters": 409.287432,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1935.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -128.296038,
+      "localZMeters": 411.576255,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1940.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -123.754209,
+      "localZMeters": 413.662451,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1945.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -118.924868,
+      "localZMeters": 414.958762,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1950.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -114.007312,
+      "localZMeters": 415.797504,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1955.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -109.048869,
+      "localZMeters": 416.079762,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1960.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -104.114149,
+      "localZMeters": 415.272522,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1965.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -99.280331,
+      "localZMeters": 414.005842,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1970.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -94.461419,
+      "localZMeters": 412.671289,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1975.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -89.964749,
+      "localZMeters": 410.520753,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1980.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -85.655693,
+      "localZMeters": 408.009999,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1985.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -81.651483,
+      "localZMeters": 405.015287,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1990.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -77.923992,
+      "localZMeters": 401.692382,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 1995.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -74.388462,
+      "localZMeters": 398.163213,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2000.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -71.114007,
+      "localZMeters": 394.384424,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2005.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -67.903598,
+      "localZMeters": 390.557716,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2010.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -65.201917,
+      "localZMeters": 386.350367,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2015.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -62.500237,
+      "localZMeters": 382.143018,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2020.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -60.695787,
+      "localZMeters": 377.482259,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2025.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -58.91057,
+      "localZMeters": 372.811781,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2030.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -57.125354,
+      "localZMeters": 368.141303,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2035.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -55.340137,
+      "localZMeters": 363.470825,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2040.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -54.228912,
+      "localZMeters": 358.61975,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2045.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -53.439407,
+      "localZMeters": 353.682469,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2050.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -52.649901,
+      "localZMeters": 348.745188,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2055.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -51.860396,
+      "localZMeters": 343.807907,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2060.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -51.070891,
+      "localZMeters": 338.870626,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2065.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -50.281385,
+      "localZMeters": 333.933345,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2070.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -49.49188,
+      "localZMeters": 328.996064,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2075.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -48.702374,
+      "localZMeters": 324.058783,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2080.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -47.912869,
+      "localZMeters": 319.121502,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2085.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -47.123364,
+      "localZMeters": 314.184221,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2090.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -46.333858,
+      "localZMeters": 309.24694,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2095.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -45.544353,
+      "localZMeters": 304.309659,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2100.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -44.754847,
+      "localZMeters": 299.372378,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2105.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.965342,
+      "localZMeters": 294.435097,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2110.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -43.175837,
+      "localZMeters": 289.497816,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2115.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -42.414388,
+      "localZMeters": 284.556203,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2120.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -41.677258,
+      "localZMeters": 279.610835,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2125.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -40.940129,
+      "localZMeters": 274.665467,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2130.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -40.202999,
+      "localZMeters": 269.720099,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2135.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -39.46587,
+      "localZMeters": 264.774731,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2140.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -38.728741,
+      "localZMeters": 259.829364,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2145.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -37.991611,
+      "localZMeters": 254.883996,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2150.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -37.254482,
+      "localZMeters": 249.938628,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2155.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -36.517352,
+      "localZMeters": 244.99326,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2160.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -35.780223,
+      "localZMeters": 240.047892,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2165.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -35.043093,
+      "localZMeters": 235.102524,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2170.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -34.305964,
+      "localZMeters": 230.157156,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2175.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -33.568835,
+      "localZMeters": 225.211788,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2180.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -32.831705,
+      "localZMeters": 220.26642,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2185.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -32.094576,
+      "localZMeters": 215.321052,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2190.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -31.357446,
+      "localZMeters": 210.375684,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2195.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -30.620317,
+      "localZMeters": 205.430316,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2200.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.883187,
+      "localZMeters": 200.484948,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2205.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -29.146058,
+      "localZMeters": 195.53958,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2210.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -28.408928,
+      "localZMeters": 190.594212,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2215.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -27.671799,
+      "localZMeters": 185.648844,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2220.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -26.93467,
+      "localZMeters": 180.703476,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2225.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -26.19754,
+      "localZMeters": 175.758108,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2230.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -25.460411,
+      "localZMeters": 170.812741,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2235.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -24.723281,
+      "localZMeters": 165.867373,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2240.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -23.986152,
+      "localZMeters": 160.922005,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2245.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -23.249022,
+      "localZMeters": 155.976637,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2250.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -22.511893,
+      "localZMeters": 151.031269,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2255.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.774764,
+      "localZMeters": 146.085901,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2260.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -21.037634,
+      "localZMeters": 141.140533,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2265.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -20.300505,
+      "localZMeters": 136.195165,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2270.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -19.563375,
+      "localZMeters": 131.249797,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2275.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -18.826246,
+      "localZMeters": 126.304429,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2280.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -18.089116,
+      "localZMeters": 121.359061,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2285.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -17.351987,
+      "localZMeters": 116.413693,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2290.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -16.614858,
+      "localZMeters": 111.468325,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2295.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -15.877728,
+      "localZMeters": 106.522957,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2300.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -15.140599,
+      "localZMeters": 101.577589,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2305.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -14.403469,
+      "localZMeters": 96.632221,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2310.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -13.66634,
+      "localZMeters": 91.686853,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2315.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -12.92921,
+      "localZMeters": 86.741485,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2320.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -12.192081,
+      "localZMeters": 81.796118,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2325.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -11.454951,
+      "localZMeters": 76.85075,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2330.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -10.717822,
+      "localZMeters": 71.905382,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2335.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -9.980693,
+      "localZMeters": 66.960014,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2340.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -9.243563,
+      "localZMeters": 62.014646,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2345.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -8.506434,
+      "localZMeters": 57.069278,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2350.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -7.769304,
+      "localZMeters": 52.12391,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2355.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -7.032175,
+      "localZMeters": 47.178542,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2360.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -6.295045,
+      "localZMeters": 42.233174,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2365.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -5.557916,
+      "localZMeters": 37.287806,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2370.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -4.820787,
+      "localZMeters": 32.342438,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2375.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -4.083657,
+      "localZMeters": 27.39707,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2380.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -3.346528,
+      "localZMeters": 22.451702,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2385.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -2.609398,
+      "localZMeters": 17.506334,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2390.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -1.872269,
+      "localZMeters": 12.560966,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2395.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -1.135139,
+      "localZMeters": 7.615598,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2400.0,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": -0.39801,
+      "localZMeters": 2.67023,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    },
+    {
+      "distanceMeters": 2402.699729,
+      "latitude": null,
+      "longitude": null,
+      "localXMeters": 0.0,
+      "localZMeters": -0.0,
+      "elevationMeters": 0.0,
+      "rawElevationMeters": 0.0,
+      "gradientPercent": 0.0
+    }
+  ],
+  "routeType": "loop",
+  "difficulty": "Unrated",
+  "routeDataVersion": 1,
+  "geometryFingerprint": "01d1528c186b2b908256cddb4154084d37fa356cdd0a745ba669171d81abdb1b",
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0 (way 101182095); route centerline used for flat workout scenery only.",
+  "totalAscentMeters": 0.0,
+  "environment": "Raceway",
+  "discipline": "Track"
+}
