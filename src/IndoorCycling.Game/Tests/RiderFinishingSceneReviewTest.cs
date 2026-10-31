@@ -187,14 +187,18 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Imported left pedal contact missing.");
             var rightPedal = Find<Node3D>(rider, "Contact_RightPedal")
                 ?? throw new InvalidOperationException("Imported right pedal contact missing.");
-            var leftPalmBones = Enumerable.Range(1, 4).Select(i => skeleton.FindBone($"metacarpal{i}.L")).ToArray();
-            var rightPalmBones = Enumerable.Range(1, 4).Select(i => skeleton.FindBone($"metacarpal{i}.R")).ToArray();
+            // The replacement sculpt is one rigid, posed grip per wrist. The
+            // former MPFB metacarpal bones remain for compatibility but no
+            // longer describe the rendered hand. These exported markers are
+            // at the source mesh's palm support points and follow its wrist.
+            var leftPalmContact = skeleton.FindBone("palm_contact.L");
+            var rightPalmContact = skeleton.FindBone("palm_contact.R");
             var leftFootBone = skeleton.FindBone("foot.L");
             var rightFootBone = skeleton.FindBone("foot.R");
             var pelvisBones = new[] { skeleton.FindBone("pelvis.L"), skeleton.FindBone("pelvis.R") }.Where(i => i >= 0).ToArray();
-            if (leftPalmBones.Any(i => i < 0) || rightPalmBones.Any(i => i < 0) ||
+            if (leftPalmContact < 0 || rightPalmContact < 0 ||
                 leftFootBone < 0 || rightFootBone < 0 || pelvisBones.Length == 0)
-                throw new InvalidOperationException("Rider hand, pelvis, or pedal-fit bones are missing.");
+                throw new InvalidOperationException("Sculpted palm-contact, pelvis, or pedal-fit bones are missing.");
             var maxLeftPalm = 0f;
             var maxRightPalm = 0f;
             var maxPelvis = 0f;
@@ -210,8 +214,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             {
                 riderAnimation.Seek(clipLength * sample / fitSamples, true);
                 await Settle(1);
-                var leftPalm = leftPalmBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin).Aggregate(Vector3.Zero, (sum, p) => sum + p) / leftPalmBones.Length;
-                var rightPalm = rightPalmBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin).Aggregate(Vector3.Zero, (sum, p) => sum + p) / rightPalmBones.Length;
+                var leftPalm = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(leftPalmContact).Origin;
+                var rightPalm = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightPalmContact).Origin;
                 var leftFoot = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(leftFootBone).Origin;
                 var rightFoot = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightFootBone).Origin;
                 var pelvis = pelvisBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin)
@@ -230,7 +234,7 @@ public partial class RiderFinishingSceneReviewTest : Node
                     maxFootTravel = Math.Max(maxFootTravel, Math.Max(leftFoot.DistanceTo(leftFootAtStart), rightFoot.DistanceTo(rightFootAtStart)));
                 }
             }
-            GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max sculpted palm-contact-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
@@ -284,17 +288,8 @@ public partial class RiderFinishingSceneReviewTest : Node
                 var hoodCenter = hood.GlobalPosition;
                 // Aim at the palm bones and actual hood mesh. Wrist-to-hood
                 // origin distance is not used as a contact acceptance check.
-                var palm = Vector3.Zero;
-                var palmCount = 0;
-                foreach (var finger in new[] { 1, 2, 3, 4 })
-                {
-                    var boneIndex = skeleton.FindBone($"metacarpal{finger}.{(side < 0 ? "L" : "R")}");
-                    if (boneIndex < 0) continue;
-                    palm += skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(boneIndex).Origin;
-                    palmCount++;
-                }
-                if (palmCount == 0) throw new InvalidOperationException("Imported metacarpal bones missing.");
-                palm /= palmCount;
+                var palmBone = side < 0 ? leftPalmContact : rightPalmContact;
+                var palm = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(palmBone).Origin;
                 var target = hoodCenter.Lerp(palm, .58f);
                 // A near-lateral, rider-scale view shows the palm, fingers,
                 // brake hood and lever together instead of clipping the hand.

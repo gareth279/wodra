@@ -1,109 +1,95 @@
-# Issue #159 production RideScreen review
+# Issue #159 — production rider and hood-grip review
 
-All images below were captured from the production `RideScreen.tscn` in Godot
-4.6.2 using the NVIDIA Quadro P620 renderer. Still views use a 1500×900 review
-viewport; the motion review ran 360 frames at 30 fps with a 960×540 requested
-window (the host produced a 1177×670 viewport). The bicycle is the accepted
-Alpha.84 CGTrader model.
+All stills are captures from the production `RideScreen.tscn` with the imported
+candidate in Godot 4.6.2 on the NVIDIA Quadro P620. The before and after hand
+close-ups and elevated views are matched at 1500×900 with the same review
+cameras. The older full-body baseline captures are 1177×670; the new full-body
+captures are 1500×900, so those compositions are comparable but not pixel-size
+matched. The motion test rendered 360 production frames at 30 fps; this host's
+display limited each frame to 1177×670. The accepted Alpha.84 CGTrader bicycle
+is unchanged.
 
-## Before and after
+## Rider fit
 
-The matched production side and chase views compare the original upright rider
-with the current fitted rider. Full-view captures are included below as well.
-
-| Original baseline | Fitted production view |
+| Original baseline side | Current fitted rider side |
 | --- | --- |
-| ![Original production side view](before/production-side.png) | ![Fitted production side view](after/production-side.png) |
+| ![Baseline side](before/production-side.png) | ![Current side](after/production-side.png) |
 
-| Original chase view | Fitted production chase view |
+| Original baseline chase | Current fitted rider in gameplay chase |
 | --- | --- |
-| ![Original chase](before/production-chase.png) | ![Fitted chase](after/production-chase.png) |
+| ![Baseline chase](before/production-chase.png) | ![Current chase](after/production-chase.png) |
 
-![Fitted rider and bicycle, front three-quarter](after/rider-bike-front-three-quarter.png)
+![Current fitted rider from front three-quarter](after/rider-bike-front-three-quarter.png)
 
-The full side and front-three-quarter close views are from the final RideScreen
-test. The original baseline RideScreen captures used a 1177×670 window while
-the current fit review uses a 1500×900 SubViewport. The before/after side and
-chase images use the same named production camera views, but their viewport
-aspect ratios differ.
+The new model retains the PR's accepted forward cycling posture, fitted jersey,
+bib shorts, shoes and helmet. This hand pass did not alter the bicycle or change
+the rider's torso, pelvis, legs, or clothing mesh.
 
-## Hood grip close-ups
+## Hands on the hoods
 
-These are matched production captures of the previous PR pose and the revised
-hand pose, taken at the same hand-review camera and viewport size. The owner’s
-hand-on-hood photograph is `images/bike/IMG_1465.JPEG` and remains outside the
-repository.
+The prior Wodra hand pose had visibly stretched fingers hanging past the hood.
+The current hand surfaces come from the closed road-control grip in the
+owner-supplied Andy Woodhead cyclist model (CC BY 4.0). The actual Godot renders
+below show the complete source grip geometry fitted to the Wodra hood surfaces.
+The owner's photograph at `C:\Users\garet\OneDrive\wodra\images\bike\IMG_1465.JPEG`
+was inspected as the primary grip reference and remains external; it is not
+redistributed in this PR.
 
-| Left hood | Right hood |
+| Left hand, previous | Left hand, current |
 | --- | --- |
-| ![Left hand on hood](after/hand-left-hood.png) | ![Right hand on hood](after/hand-right-hood.png) |
+| ![Previous left hand](before/hand-left-hood-close.png) | ![Current left hand](after/hand-left-hood.png) |
 
-| Previous left hand | Revised left hand |
+| Right hand, previous | Right hand, current |
 | --- | --- |
-| ![Previous left grip](before/hand-left-hood-close.png) | ![Revised left grip](after/hand-left-hood.png) |
+| ![Previous right hand](before/hand-right-hood-close.png) | ![Current right hand](after/hand-right-hood.png) |
 
-| Previous right hand | Revised right hand |
-| --- | --- |
-| ![Previous right grip](before/hand-right-hood-close.png) | ![Revised right grip](after/hand-right-hood.png) |
+The elevated views show the palm support and opposed thumb around each control:
 
-The elevated hand views show the opposed thumb and the other four digits
-wrapping the outside edge from above:
-
-| Previous left elevated | Revised left elevated | Previous right elevated | Revised right elevated |
+| Previous left elevated | Current left elevated | Previous right elevated | Current right elevated |
 | --- | --- | --- | --- |
-| ![Previous left elevated grip](before/hand-left-hood-elevated.png) | ![Revised left elevated grip](after/hand-left-hood-elevated.png) | ![Previous right elevated grip](before/hand-right-hood-elevated.png) | ![Revised right elevated grip](after/hand-right-hood-elevated.png) |
+| ![Previous left elevated](before/hand-left-hood-elevated.png) | ![Current left elevated](after/hand-left-hood-elevated.png) | ![Previous right elevated](before/hand-right-hood-elevated.png) | ![Current right elevated](after/hand-right-hood-elevated.png) |
 
-The source hand is a weighted 19,158-vertex mesh with distinct metacarpals and
-three phalanges for every finger and thumb. Its modeled chain lengths are in a
-human hand range (15–36 mm per phalanx); inspection showed the stretch was in
-the pose, not missing finger geometry or weights. The prior common local-Euler
-curl used the wrong direction on several mirrored phalanges because their
-hinge rolls differ, leaving the fingers extended across the hood. The polish
-pass narrows the metacarpal fan, resolves separate mirrored thumb/finger
-points against the actual integrated cockpit mesh, and bakes the weighted
-three-phalanx chains through the full 217-frame action. The thumb target is on
-the inboard side; the four finger targets wrap the outboard hood edge.
-Temporary Blender IK constraints and targets are removed after baking. Wrist,
-arm, torso, pelvis, legs, bike geometry and runtime systems are unchanged.
+![Cockpit from rider viewpoint](after/cockpit-rider-view.png)
 
-`verify_hood_finger_pose_159.py` samples every frame and checks that all ten
-fingertips stay within 15 mm of the cockpit, each finger chain has visible
-flex, and the thumbs remain opposed to the fingers. The final canonical-source
-run measured a worst fingertip-to-cockpit gap of 4.5 mm and minimum combined
-finger-joint bend of 49.36°. This geometric check is paired with the close
-production renders above; neither is used as a substitute for the other.
+This is a visible improvement over the prior open, extended-finger silhouette:
+the replacement fingers curl around the hood/lever body and the thumb closes
+on the inboard side. The mesh remains stylized and somewhat broad compared
+with a photoreal hand. Each hand is a single posed sculpture rigidly attached
+to its wrist; its fingers do not articulate independently. The images are
+provided for owner visual acceptance, which has not yet been granted.
 
 ## Motion
 
-[12-second production RideScreen clip: pedalling, steering, coasting and restart](pedalling-steering-coast-restart.mp4)
+[12-second production RideScreen clip: pedalling, steering, coasting and restart](after/pedalling-steering-coast-restart.mp4)
 
-Selected production frames:
-
-| Pedalling | Steering | Coast | Resume |
+| Pedalling | Steering | Coast | Restart |
 | --- | --- | --- | --- |
-| ![Pedalling frame](after/motion-pedalling.png) | ![Steering frame](after/motion-steering.png) | ![Coasting frame](after/motion-coasting.png) | ![Resuming frame](after/motion-resuming.png) |
+| ![Pedalling](after/motion-pedalling.png) | ![Steering](after/motion-steering.png) | ![Coasting](after/motion-coasting.png) | ![Restart](after/motion-resuming.png) |
 
-## Regression measurements
+Godot's production `RiderMotionReviewTest.tscn` captured 360 frames at 30 fps
+and passed its steering displacement and phase assertions. Both wrist-following
+grips remain in the production ride during cadence, steering, coast and resume.
 
-`RiderFinishingSceneReviewTest.tscn` sampled 72 phases across the imported
-pedal cycle. Maximum palm-center distance from the hood targets was 20 mm on
-each side; pelvis distance from saddle target was 96 mm; ankle origins moved
-5–340 mm through the sampled cycle. These are fit/animation continuity checks,
-not a substitute for visual contact or pedal-pressure validation.
+## Fit and performance checks
 
-The model verifier reports 947,270 triangles across 25 render meshes, versus
-935,442 triangles and 24 meshes on the accepted bike-only Alpha.84 asset. This
-is +1.3% triangles and one additional mesh (the merged three-surface garment
-detail mesh). The final GLB grew from 36,563,576 to 36,912,212 bytes (+0.95%).
-No separate GPU-time or multi-rider frame-time benchmark was run for this
-rider-only change; these small geometry/draw-mesh deltas are the measured
-overhead.
+`RiderFinishingSceneReviewTest.tscn` passed in the production RideScreen and
+sampled 72 phases across `PedalCycle`. It measured maximum sculpted
+palm-contact-to-hood distance of 0 mm left and right, pelvis-to-saddle distance
+of 96 mm, and ankle-origin travel of 5–340 mm. These are fit/continuity checks;
+the screenshots remain the evidence for visual shape. The exported
+`palm_contact.L/R` frames follow the wrist. The rider and accepted bicycle retain
+their existing animation interfaces.
 
-The rider remains stylised. The revised fingers curl around the hood edge and
-the thumb opposes them, a closer visual match to the owner's relaxed grip than
-the former open, extended pose. Close production views are included so the
-remaining low-poly hand appearance can be judged directly; no claim of exact
-photorealistic anatomy is made. Physical hardware and real-ride acceptance
-have not been performed.
-This PR does not change the bike geometry, trainer, ride physics, telemetry,
-steering, recording, routes or multiplayer behavior.
+The final GLB contains 958,119 triangles across 25 render meshes and is
+32,536,224 bytes. The pre-hand baseline contains 947,270 triangles across 25
+meshes and is 36,912,232 bytes: the sculpture adds 10,849 triangles (+1.15%)
+while the exported file is 4,376,008 bytes smaller (-11.86%). No separate
+GPU-time or multiplayer frame-time benchmark was run for this rider-only
+change, so the smaller file is not presented as a frame-rate improvement. The
+owner should still check visual quality and physical riding acceptance on the
+Windows gaming machine. No BLE/ANT+ hardware or real ride was tested here.
+
+The Godot test processes report pre-existing renderer/Resource RID leak
+warnings during shutdown after their PASS markers. They still exited zero on
+the final graphical production runs. This is the isolated headless/scene
+shutdown issue tracked by #56; no engine changes are included in this PR.
