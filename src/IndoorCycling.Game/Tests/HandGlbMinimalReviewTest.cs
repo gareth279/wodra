@@ -23,12 +23,11 @@ public partial class HandGlbMinimalReviewTest : Node3D
                 Roughness = .9f };
             human.MaterialOverride = neutral;
 
-            var left = Find<GeometryInstance3D>(model, "BrakeHoodL")
-                ?? throw new InvalidOperationException("Left hood missing from GLB.");
-            var right = Find<GeometryInstance3D>(model, "BrakeHoodR")
-                ?? throw new InvalidOperationException("Right hood missing from GLB.");
-            var target = (left.GlobalTransform * left.GetAabb().GetCenter() +
-                          right.GlobalTransform * right.GetAabb().GetCenter()) * .5f;
+            var left = Find<Node3D>(model, "Contact_LeftHood")
+                ?? throw new InvalidOperationException("Left imported hood contact missing from GLB.");
+            var right = Find<Node3D>(model, "Contact_RightHood")
+                ?? throw new InvalidOperationException("Right imported hood contact missing from GLB.");
+            var target = (left.GlobalPosition + right.GlobalPosition) * .5f;
             var camera = new Camera3D { Fov = 38f, Near = .02f, Current = true };
             AddChild(camera);
             var environment = new Godot.Environment { BackgroundMode = Godot.Environment.BGMode.Color,
@@ -48,7 +47,7 @@ public partial class HandGlbMinimalReviewTest : Node3D
             Directory.CreateDirectory(output);
             foreach (var (hood, side, label) in new[] { (left, -1f, "left"), (right, 1f, "right") })
             {
-                var hoodTarget = hood.GlobalTransform * hood.GetAabb().GetCenter();
+                var hoodTarget = hood.GlobalPosition;
                 var view = new Vector3(side * .90f, .20f, -.30f).Normalized();
                 camera.GlobalPosition = hoodTarget + view * .68f;
                 camera.LookAt(hoodTarget, Vector3.Up);

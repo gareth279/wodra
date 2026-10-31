@@ -407,7 +407,9 @@ public partial class CyclistVisual : Node3D
             return false;
         }
 
-        SetImportedMaterial(instance, "BikeFrame", _frameMaterial);
+        // Imported bike assets own their frame finish and material groups.
+        // The palette override remains available to the generated fallback,
+        // but would erase the authored source-bike materials on this model.
         ApplyImportedRiderMaterials(instance);
         CollectHelmetParts(instance);
         _approximateTriangleCount = CountTriangles(instance);

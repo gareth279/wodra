@@ -160,16 +160,16 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Save(output, $"head-{angle}-helmet-on.png");
             }
 
-            var leftHood = Find<GeometryInstance3D>(rider, "BrakeHoodL")
-                ?? throw new InvalidOperationException("Left runtime brake hood missing.");
-            var rightHood = Find<GeometryInstance3D>(rider, "BrakeHoodR")
-                ?? throw new InvalidOperationException("Right runtime brake hood missing.");
+            var leftHood = Find<Node3D>(rider, "Contact_LeftHood")
+                ?? throw new InvalidOperationException("Left imported hood contact missing.");
+            var rightHood = Find<Node3D>(rider, "Contact_RightHood")
+                ?? throw new InvalidOperationException("Right imported hood contact missing.");
             camera.Fov = 32f;
             var wasHumanVisible = human.Visible;
             human.Visible = false;
             rider.SetHelmetVisible(false);
-            var leftHoodCenter = leftHood.GlobalTransform * leftHood.GetAabb().GetCenter();
-            var rightHoodCenter = rightHood.GlobalTransform * rightHood.GetAabb().GetCenter();
+            var leftHoodCenter = leftHood.GlobalPosition;
+            var rightHoodCenter = rightHood.GlobalPosition;
             var cockpitTarget = (leftHoodCenter + rightHoodCenter) * .5f;
             GD.Print($"[RiderFinishingSceneReview] hood centers L={leftHoodCenter} R={rightHoodCenter} target={cockpitTarget}");
             camera.Fov = 27f;
@@ -194,7 +194,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Save(output, "cockpit-rider-view.png");
             foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
             {
-                var hoodCenter = hood.GlobalTransform * hood.GetAabb().GetCenter();
+                var hoodCenter = hood.GlobalPosition;
                 var view = (bikeSide * side * .62f + bikeForward * .52f + Vector3.Up * .18f).Normalized();
                 camera.Fov = 24f;
                 camera.GlobalPosition = hoodCenter + view * .52f;
@@ -206,7 +206,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             rider.SetHelmetVisible(true);
             foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
             {
-                var hoodCenter = hood.GlobalTransform * hood.GetAabb().GetCenter();
+                var hoodCenter = hood.GlobalPosition;
                 // Aim at the palm bones and actual hood mesh. Wrist-to-hood
                 // origin distance is not used as a contact acceptance check.
                 var palm = Vector3.Zero;

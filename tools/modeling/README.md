@@ -664,3 +664,52 @@ render is not being represented as visually accepted: the hood still reads
 too capsule-like and does not yet match the reference palm shelf/nose clearly.
 The hand targets remain at ±210 mm lateral, 421 mm forward and 900 mm high in
 Blender coordinates, rotated to the palm surface.
+
+## Current #158 source: owner-supplied CGTrader road/gravel bike
+
+The procedural road-bike sections above document the earlier failed iterations. For the current PR #160 candidate, the production bicycle geometry has been replaced with the owner-supplied native Blender asset from `C:\Users\garet\OneDrive\wodra_bikes\road_gravel\BLEND.zip`. The selected archive member is `GigantRoad.blend`; its relative `Textures` directory is required. The original downloads remain outside the repository and are not modified. The road and gravel disciplines share this source. MTB archives were inspected but are not integrated by #158.
+
+The native file contains separately modelled frame tubes, fork, front/rear wheels, hubs, rims, spokes, tyres, cockpit, brakes, saddle, cranks, pedals, chain, cassette, derailleurs and small hardware. Materials and image maps are present in the archive. There is no licence, attribution, or redistribution metadata in the supplied archive; the repository owner must confirm the CGTrader licence permits committing and redistributing the resulting runtime GLB. The asset includes GIGANT logo decals. No licence terms are inferred from the download source or altered here.
+
+`tools/modeling/integrate_cgtrader_road_bike_158.py` imports the original Blender scene, retains the canonical Wodra rider mesh, skeleton, and pedal action, replaces only bicycle geometry, bakes source transforms, scales maps, decimates only highly tessellated details, and establishes the runtime pivots. It joins static parts by material into stable frame/cockpit/saddle groups and keeps front and rear wheels plus cranks/pedals independently animatable. The integrated editable `.blend` is an intermediate working file and remains outside Git alongside the original download; the GLB is self-contained for gameplay and does not read OneDrive at runtime.
+
+Source measurements after normalization are approximately 993 mm wheelbase and 665 mm tyre outer diameter. Hubs are grounded at 339 mm. The production GLB contains 1,695,994 triangles across 24 render meshes, down from about 3.71 million source triangles (54% fewer). The previous Wodra GLB had 68,894 triangles across 49 render meshes; the replacement is about 24.6 times the prior triangle count. File size is about 67.0 MB compared with 6.97 MB previously, reflecting embedded source maps and higher-detail geometry. This is a substantial load/package-size increase. Godot reports 24 runtime mesh instances and zero non-unit scales.
+
+Bike-local contact frames (Blender axes: X lateral, Y fore/aft, Z up):
+
+| Contact | Position (m) | Orientation |
+| --- | --- | --- |
+| Left hood palm shelf | `(-0.222, 0.502, 0.948)` | local surface normal `(0, -0.08, 1)` |
+| Right hood palm shelf | `(0.222, 0.502, 0.948)` | local surface normal `(0, -0.08, 1)` |
+| Saddle / pelvis | `(0, -0.285, 0.978)` | bike frame |
+| Left pedal | `(-0.128, -0.164, 0)` | child of `CrankPivot` |
+| Right pedal | `(0.128, 0.164, 0)` | child of `CrankPivot` |
+
+The pedal contacts rotate with their crank pivot. They are bike-local fitting references for issue #159; no rider pose or hand rig changes are included.
+
+To reproduce the integration on the owner machine, extract a working copy of `BLEND.zip` and its `Textures` folder into a temporary directory, then run:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$source = "$env:TEMP\WodraBikeSource\GigantRoad.blend"
+$integrated = "$env:TEMP\WodraBikeSource\WodraCyclist.issue158-cgtrader.blend"
+& $blender --background --python tools/modeling/integrate_cgtrader_road_bike_158.py -- `
+  --source $source --rider tools/modeling/source/WodraCyclist.blend --output $integrated
+& $blender --background $integrated --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-issue158-cgtrader.glb `
+  tools/modeling/checkpoints/WodraCyclist-issue158-cgtrader-export.blend `
+  tools/modeling/previews/issue158-cgtrader --export-only
+python tools/modeling/verify_road_bike_158.py `
+  tools/modeling/exports/WodraCyclist-issue158-cgtrader.glb
+```
+
+The candidate was imported and reviewed in the production RideScreen with Godot 4.6.2. Evidence is in `artifacts/issue158-road-bike/cgtrader-production-review/` and `artifacts/issue158-road-bike/cgtrader-motion-review/`; matched previous-model captures are under `artifacts/issue158-road-bike/before-cgtrader-production-review/`. The supplied owner reference directory `images/bike` is absent from this checkout, so direct comparison against the Trek photographs could not be made. The imported source has exposed cable loops, and the existing rider hands do not fit the imported hoods; the latter remains deferred to #159.
+A production RideScreen comparison was captured on the same Windows host (Intel
+Core i7-9700, NVIDIA Quadro P620, Godot OpenGL 3, 1177×670 effective window,
+12 imported riders, same route and jitter-review harness). Across the animated
+baseline phase, the previous model measured median render draw calls 1,557,
+render objects 2,382, and process time 34.83 ms; the imported model measured
+1,910 draw calls (+22.7%), 2,823 objects (+18.5%), and 36.36 ms process time
+(+4.4%). Frame-time p95 was 33.33 ms for both; this run is environment-specific
+and does not establish a GPU-only cost or memory footprint. Full phase CSV and
+summary captures are preserved under `artifacts/issue158-road-bike/performance/`.

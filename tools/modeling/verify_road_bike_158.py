@@ -4,6 +4,7 @@ Usage: python tools/modeling/verify_road_bike_158.py [path/to/WodraCyclist.glb]
 """
 from __future__ import annotations
 import json
+import math
 import struct
 import sys
 from pathlib import Path
@@ -36,11 +37,12 @@ required=("BicycleModel","BikeFrame","FrontWheelSpin","RearWheelSpin","CrankPivo
           "BrakeLeverL","BrakeLeverR","BarEndPlugL","BarEndPlugR","Saddle","ChainringOuter50T","ChainringInner34T",
           "DriveChain","Contact_LeftHood","Contact_RightHood",
           "Contact_Saddle","Contact_LeftPedal","Contact_RightPedal")
-for name in required: require(name)
-for name in ("RoadBikeDetail_Wodra_Stainless_Rotor_FrontWheelSpin",
-             "RoadBikeDetail_Wodra_Stainless_Rotor_RearWheelSpin",
-             "RoadBikeDetail_Wodra_Machined_Alloy_BicycleModel"):
-    require(name)
+if "RoadBikeFrontWheelAssembly" not in indices:
+    for name in required: require(name)
+    for name in ("RoadBikeDetail_Wodra_Stainless_Rotor_FrontWheelSpin",
+                 "RoadBikeDetail_Wodra_Stainless_Rotor_RearWheelSpin",
+                 "RoadBikeDetail_Wodra_Machined_Alloy_BicycleModel"):
+        require(name)
 assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),"weighted rider or pedal animation missing"
 
 world={}
@@ -67,6 +69,68 @@ def local_size(name):
     hi=tuple(max(accessors[a]["max"][d] for a in positions) for d in range(3))
     return tuple(hi[d]-lo[d] for d in range(3))
 def close(a,b,tol=.002):return abs(a-b)<=tol
+
+# User-supplied artist mesh path. Keep the original prototype assertions below
+# for historical review assets while validating the imported source by its
+# runtime assemblies, measured bounds, animation pivots, materials and contacts.
+if "RoadBikeFrontWheelAssembly" in indices:
+    imported_required=("BicycleModel","BikeFrame","RoadBikeStatic","RoadBikeCockpit",
+                       "RoadBikeSaddle","RoadBikeFrontWheelAssembly",
+                       "RoadBikeRearWheelAssembly","FrontWheelSpin","RearWheelSpin",
+                       "CrankPivot","LeftCrank","RightCrank","LeftPedal","RightPedal",
+                       "Contact_LeftHood","Contact_RightHood","Contact_Saddle",
+                       "Contact_LeftPedal","Contact_RightPedal")
+    for name in imported_required: require(name)
+    assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),\
+        "weighted rider or pedal animation missing"
+    front=origin("FrontWheelSpin"); rear=origin("RearWheelSpin"); bb=origin("CrankPivot")
+    wheelbase=abs(front[2]-rear[2])
+    assert close(wheelbase,.993,.004),f"source road-bike wheelbase changed: {wheelbase:.4f} m"
+    assert close(front[1],.339,.003) and close(rear[1],.339,.003),\
+        "wheel hubs no longer share the Wodra ground plane"
+    for label,name,hub in (("front","RoadBikeFrontWheelAssembly",front),
+                           ("rear","RoadBikeRearWheelAssembly",rear)):
+        lo,hi=transformed_bounds(name)
+        vertical=hi[1]-lo[1]; longitudinal=hi[2]-lo[2]
+        assert .64<=vertical<=.69 and .64<=longitudinal<=.69,\
+            f"{label} wheel is not a plausible 700C outer diameter: {vertical:.3f} x {longitudinal:.3f} m"
+        assert abs((hi[1]+lo[1])/2-hub[1])<.006,\
+            f"{label} wheel is not centered on its runtime spin pivot"
+        assert lo[1]>=-.002 and lo[1]<.015,\
+            f"{label} tyre is floating or below ground: bottom={lo[1]:.4f} m"
+    for side,name in (("left","Contact_LeftPedal"),("right","Contact_RightPedal")):
+        assert parents[indices[name]]==indices["CrankPivot"],f"{name} must rotate with CrankPivot"
+        p=origin(name)
+        radius=math.hypot(p[1]-bb[1],p[2]-bb[2])
+        assert .15<=radius<=.18,f"{side} source crank radius is implausible: {radius:.4f} m"
+        lo,hi=transformed_bounds("LeftPedal" if side=="left" else "RightPedal")
+        assert all(lo[i]-.005<=p[i]<=hi[i]+.005 for i in range(3)),\
+            f"{name} does not fall on the imported pedal surface"
+    for side in ("Left","Right"):
+        n=require("Contact_"+side+"Hood")
+        assert "mesh" not in n and parents[indices[n["name"]]]==indices["BicycleModel"],\
+            f"{n['name']} must be a stable bike-local contact target"
+        p=origin(n["name"])
+        lo,hi=transformed_bounds("RoadBikeCockpit")
+        assert all(lo[i]-.01<=p[i]<=hi[i]+.01 for i in range(3)),\
+            f"{n['name']} lies outside the imported cockpit geometry"
+    assert close(origin("Contact_LeftHood")[0],-origin("Contact_RightHood")[0],.003),\
+        "hood palm targets are not laterally mirrored"
+    saddle=origin("Contact_Saddle")
+    saddle_lo,saddle_hi=transformed_bounds("RoadBikeSaddle")
+    assert saddle_lo[1]-.01<=saddle[1]<=saddle_hi[1]+.01,\
+        "saddle/pelvis target is outside the imported saddle surface"
+    materials={m.get("name","") for m in doc.get("materials",[])}
+    assert "tape" in materials and "levers" in materials,\
+        "artist-authored bar tape and control materials were not exported"
+    triangles=sum(accessors[p["indices"]]["count"]//3
+                  for mesh in meshes for p in mesh.get("primitives",[]) if "indices" in p)
+    assert triangles<2_100_000,f"optimized artist bike exceeded mesh budget: {triangles} triangles"
+    assert len(meshes)<40,f"imported production bicycle has too many render meshes: {len(meshes)}"
+    print(f"ROAD_BIKE_158 IMPORTED ASSET PASS: {wheelbase*1000:.0f} mm wheelbase; "
+          f"700C tire geometry grounded; source crank/pedal contacts; bilateral cockpit targets; "
+          f"{triangles:,} triangles / {len(meshes)} render meshes")
+    raise SystemExit(0)
 
 front=origin("FrontWheelSpin");rear=origin("RearWheelSpin");bb=origin("CrankPivot")
 assert close(abs(front[2]-rear[2]),.978),f"wheelbase is {abs(front[2]-rear[2]):.4f} m"
