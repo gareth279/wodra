@@ -10,6 +10,7 @@ import math
 import sys
 from pathlib import Path
 import bpy
+import bmesh
 from mathutils import Matrix, Quaternion, Vector, geometry
 from mathutils.bvhtree import BVHTree
 
@@ -87,12 +88,76 @@ def tube(name, points, radius, material, rig, bone="head", sides=8):
     return mesh_obj(name, verts, faces, material, rig, bone)
 
 
-def make_helmet(rig):
+def make_helmet(rig, use_supplied=False):
     # Head-local basis is derived from the actual evaluated head bone; source
     # model faces +Y and the original rider object is rotated in the scene.
     old = [o for o in bpy.data.objects if o.name.startswith(("CyclingHelmet", "HelmetBrim", "HelmetRim", "HelmetStrap", "HelmetVent"))]
     for obj in old:
         bpy.data.objects.remove(obj, do_unlink=True)
+    # Use the owner's recovered vented road helmet, including its modeled
+    # chin straps. The OBJ is authored in centimetres; fit its crown to the
+    # evaluated head-bone tip and skin the complete accessory to the head.
+    source = Path(__file__).resolve().parent / "source" / "helmet"
+    obj_path = source / "sport_cycling_helmet_main.obj"
+    if use_supplied and obj_path.is_file():
+        before = set(bpy.data.objects)
+        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="NEGATIVE_Z", up_axis="Y")
+        imported = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
+        if len(imported) != 1:
+            raise RuntimeError(f"Expected one mesh in supplied helmet OBJ, found {len(imported)}")
+        helmet = imported[0]
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated = helmet.evaluated_get(depsgraph)
+        points = [helmet.matrix_world @ v.co for v in evaluated.data.vertices]
+        crown = max(p.z for p in points)
+        head_bone = rig.pose.bones.get("head")
+        if head_bone is None:
+            raise RuntimeError("rider head bone is missing")
+        head_top = rig.matrix_world @ head_bone.tail
+        # The source helmet's shell sits on the skull exterior; its chin
+        # strap mesh extends below the crown and is included in the bounds.
+        head_center = Vector((head_top.x, head_top.y + .02, head_top.z + .07))
+        scale = .011
+        rest_from_world = rig.data.bones["head"].matrix_local @ head_bone.matrix.inverted() @ rig.matrix_world.inverted()
+        for vertex, point in zip(helmet.data.vertices, points):
+            fitted = head_center + Vector((point.x * scale, point.y * scale, (point.z - crown) * scale))
+            vertex.co = rest_from_world @ fitted
+        helmet.data.update()
+        # OBJ normals are inconsistent in the supplied archive. Rebuild them
+        # consistently so Godot's back-face culling shows the shell exterior.
+        bm = bmesh.new()
+        bm.from_mesh(helmet.data)
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(helmet.data)
+        bm.free()
+        helmet.data.update()
+        for material in helmet.data.materials:
+            if material is None:
+                continue
+            material.use_nodes = True
+            shader = material.node_tree.nodes.get("Principled BSDF")
+            if shader:
+                shader.inputs["Roughness"].default_value = .48
+                shader.inputs["Metallic"].default_value = .08
+            texture = source / "sport_cycling_helmet_diffuse_neutral.png"
+            for node in material.node_tree.nodes:
+                if node.type == "TEX_IMAGE" and texture.is_file():
+                    node.image = bpy.data.images.load(str(texture), check_existing=True)
+            for image in bpy.data.images:
+                if image.filepath and "sport_cycling_helmet_diffuse" in image.filepath:
+                    image.pack()
+        helmet.name = "CyclingHelmet"
+        helmet["optional_accessory"] = True
+        helmet["source"] = "Owner-supplied sport_cycling_helmet OBJ"
+        helmet.parent = rig
+        helmet.matrix_parent_inverse = Matrix.Identity(4)
+        helmet.matrix_world = rig.matrix_world.copy()
+        helmet.vertex_groups.new(name="head").add(list(range(len(helmet.data.vertices))), 1, "REPLACE")
+        modifier = helmet.modifiers.new("Helmet follows head", "ARMATURE")
+        modifier.object = rig
+        for poly in helmet.data.polygons:
+            poly.use_smooth = True
+        return
     # Build around this source rider's evaluated head, rather than the old
     # alpha48 world-space estimate. The integrated CG bike uses a different
     # rider origin; hard-coded alpha48 coordinates left the shell visibly
@@ -101,10 +166,11 @@ def make_helmet(rig):
     if head_bone is None:
         raise RuntimeError("rider head bone is missing")
     head_top = rig.matrix_world @ head_bone.tail
-    helmet_offset = Vector((head_top.x, head_top.y - .0415,
-                            head_top.z + .025 - 1.795))
+    helmet_offset = Vector((head_top.x, head_top.y - .0465,
+                            head_top.z + .040 - 1.795))
     def helmet_point(point):
-        return tuple(Vector(point) + helmet_offset)
+        center=Vector((0,.0415,1.795))
+        return tuple(center+(Vector(point)-center)*.88+helmet_offset)
     # Geometry in armature rest coordinates hugs the evaluated skull. It
     # widens over the temples and tapers rearward, with a real lower rim.
     shell_mat = mat("Road Helmet | neutral warm white", (.72, .75, .74), .33)
@@ -114,6 +180,7 @@ def make_helmet(rig):
     # elliptical; the rear extends farther down over the occiput, while the
     # front edge rises above the brow. Dense latitude rings avoid the old
     # stacked-disc/oversized-hat silhouette.
+    helmet_half_width=.088; helmet_half_length=.101; helmet_drop=.088
     n=64; rings=24; verts=[]; faces=[]
     for j in range(rings):
         t=j/(rings-1)  # 0 crown to 1 lower rim
@@ -121,16 +188,16 @@ def make_helmet(rig):
         zcrown=1.795
         # Rounded dome: an ellipsoidal section gives a low, curved crown rather
         # than a flat-topped stack or a straight conical slope.
-        drop=.105*(1.0-math.sqrt(max(0.0,1.0-t*t)))
+        drop=helmet_drop*(1.0-math.sqrt(max(0.0,1.0-t*t)))
         for i in range(n):
             a=math.tau*i/n
             front=max(0.0,math.sin(a))
             rear=max(0.0,-math.sin(a))
-            x=helmet_offset.x + .101*radial*math.cos(a)
+            x=helmet_offset.x + helmet_half_width*radial*math.cos(a)
             # Match the weighted head centre (the source's head extends
             # farther forward than the neck/armature origin).
-            y=.0415 + helmet_offset.y + .116*radial*math.sin(a)
-            z=zcrown + helmet_offset.z - drop + .018*front*(t**2) - .006*rear*(t**2)
+            y=.0415 + helmet_offset.y + helmet_half_length*radial*math.sin(a)
+            z=zcrown + helmet_offset.z - drop + .015*front*(t**2) - .005*rear*(t**2)
             verts.append((x,y,z))
     for j in range(rings-1):
         for i in range(n):
@@ -140,6 +207,12 @@ def make_helmet(rig):
     faces.append(tuple((rings-1)*n+i for i in range(n)))
     shell=mesh_obj("CyclingHelmet", verts, faces, shell_mat, rig)
     shell["optional_accessory"] = True
+    bm = bmesh.new()
+    bm.from_mesh(shell.data)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(shell.data)
+    bm.free()
+    shell.data.update()
     for poly in shell.data.polygons:
         poly.use_smooth=True
     # Distinct narrow rim follows the shell lower edge.
@@ -147,23 +220,23 @@ def make_helmet(rig):
     for i in range(65):
         a=math.tau*i/64
         front=max(0.0,math.sin(a)); rear=max(0.0,-math.sin(a))
-        ring.append((helmet_offset.x+.101*math.cos(a),.0415+helmet_offset.y+.116*math.sin(a),
-                     1.795+helmet_offset.z-.105+.018*front-.006*rear))
+        ring.append((helmet_offset.x+helmet_half_width*math.cos(a),.0415+helmet_offset.y+helmet_half_length*math.sin(a),
+                     1.795+helmet_offset.z-helmet_drop+.015*front-.005*rear))
     tube("HelmetRim", ring, .003, trim, rig, sides=8)
     # Six flat dark vent slots conform to the upper shell instead of floating
     # spheres. Their vertices follow the same ellipsoidal surface equation.
     idx=0
-    for x in (-.035,.035):
-        for y in (.020,.0415,.063):
+    for x in (-.0305,.0305):
+        for y in (.0174,.0361,.0548):
             idx+=1; patch=[]; sides=20
             for k in range(sides):
                 a=math.tau*k/sides
-                px=helmet_offset.x+x+.0045*math.cos(a); py=helmet_offset.y+y+.0105*math.sin(a)
-                t2=((px-helmet_offset.x)/.101)**2+((py-(.0415+helmet_offset.y))/.116)**2
-                t=math.sqrt(min(.98,t2)); angle=math.atan2((py-(.0415+helmet_offset.y))/.116,
-                                                              (px-helmet_offset.x)/.101)
+                px=helmet_offset.x+x+.004*math.cos(a); py=helmet_offset.y+y+.009*math.sin(a)
+                t2=((px-helmet_offset.x)/helmet_half_width)**2+((py-(.0415+helmet_offset.y))/helmet_half_length)**2
+                t=math.sqrt(min(.98,t2)); angle=math.atan2((py-(.0415+helmet_offset.y))/helmet_half_length,
+                                                              (px-helmet_offset.x)/helmet_half_width)
                 front=max(0.0,math.sin(angle)); rear=max(0.0,-math.sin(angle))
-                pz=1.795+helmet_offset.z-.105*(1.0-math.sqrt(max(0.0,1.0-t*t)))+.018*front*t*t-.006*rear*t*t+.0006
+                pz=1.795+helmet_offset.z-helmet_drop*(1.0-math.sqrt(max(0.0,1.0-t*t)))+.015*front*t*t-.005*rear*t*t+.0006
                 patch.append((px,py,pz))
             vent=mesh_obj(f"HelmetVent{idx}",patch,[tuple(range(sides))],dark,rig,smooth=True)
             vent["optional_accessory"] = True

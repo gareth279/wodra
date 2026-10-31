@@ -23,7 +23,10 @@ SOURCE_TITLE='Cyclist - racing position - free 3d printable'
 SOURCE_AUTHOR='Andy Woodhead'
 SOURCE_URL='https://sketchfab.com/3d-models/cyclist-racing-position-free-3d-printable-f97acacd76be484dbf0243d82f6a1c44'
 SOURCE_LICENSE='CC BY 4.0 https://creativecommons.org/licenses/by/4.0/'
-HAND_SCALE=.315
+# The first production pass read noticeably oversized against the hood body
+# and the owner's real hand reference. Keep the same closed-grip sculpture,
+# but bring its palm/finger envelope down while preserving the hood anchor.
+HAND_SCALE=.250
 # The two source controls are not parallel to the Wodra brifter shelves. Apply
 # a mirrored roll around each rider-forward forearm axis so both thumbs wrap
 # down the inboard side of the hood instead of opening away from the control.
@@ -343,8 +346,3 @@ def main():
     export(args.blend,args.glb)
 
 if __name__=='__main__':main()
-
-
-
-
-\r\n

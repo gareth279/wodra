@@ -1,29 +1,40 @@
 # Issue #159 — production rider and hood-grip review
 
 All stills are captures from the production `RideScreen.tscn` with the imported
-candidate in Godot 4.6.2 on the NVIDIA Quadro P620. The before and after hand
-close-ups and elevated views are matched at 1500×900 with the same review
-cameras. The older full-body baseline captures are 1177×670; the new full-body
-captures are 1500×900, so those compositions are comparable but not pixel-size
-matched. The motion test rendered 360 production frames at 30 fps; this host's
-display limited each frame to 1177×670. The accepted Alpha.84 CGTrader bicycle
-is unchanged.
+candidate in Godot 4.6.2 on the NVIDIA Quadro P620. The matched hand, helmet,
+and whole-rider before/after captures use the same production review cameras at
+1500×900. The motion test rendered 360 production frames at 30 fps at
+1177×670. The accepted Alpha.84 CGTrader bicycle is unchanged.
 
 ## Rider fit
 
 | Original baseline side | Current fitted rider side |
 | --- | --- |
-| ![Baseline side](before/production-side.png) | ![Current side](after/production-side.png) |
+| ![Baseline side](before/fit-rider-side-full.png) | ![Current side](after/fit-rider-side-full.png) |
 
 | Original baseline chase | Current fitted rider in gameplay chase |
 | --- | --- |
-| ![Baseline chase](before/production-chase.png) | ![Current chase](after/production-chase.png) |
+| ![Baseline chase](before/ride-chase.png) | ![Current chase](after/ride-chase.png) |
 
-![Current fitted rider from front three-quarter](after/rider-bike-front-three-quarter.png)
+![Current fitted rider from front three-quarter](after/ride-front-three-quarter.png)
 
 The new model retains the PR's accepted forward cycling posture, fitted jersey,
 bib shorts, shoes and helmet. This hand pass did not alter the bicycle or change
 the rider's torso, pelvis, legs, or clothing mesh.
+
+## Helmet fit
+
+| Previous production helmet | Current fitted Wodra helmet |
+| --- | --- |
+| ![Previous helmet in RideScreen](before/head-three-quarter-helmet-on.png) | ![Current helmet in RideScreen](after/head-three-quarter-helmet-on.png) |
+
+The supplied `sport_cycling_helmet` OBJ, MTL, diffuse map, and preview renders
+were recovered from the owner's local `wodra_bikes` archive. I tested the mesh
+in production RideScreen and retained an optional Blender import path, but did
+not ship it in the production GLB: its shell landed over the rider's face in
+the actual head views. The production GLB keeps the Wodra shell, with a smaller
+crown, outward normals, vent patches, neutral materials, and head-following
+chin straps. The supplied OBJ remains staged for further alignment work.
 
 ## Hands on the hoods
 
@@ -37,11 +48,11 @@ redistributed in this PR.
 
 | Left hand, previous | Left hand, current |
 | --- | --- |
-| ![Previous left hand](before/hand-left-hood-close.png) | ![Current left hand](after/hand-left-hood.png) |
+| ![Previous left hand](before/hand-left-hood-close.png) | ![Current left hand](after/hand-left-hood-close.png) |
 
 | Right hand, previous | Right hand, current |
 | --- | --- |
-| ![Previous right hand](before/hand-right-hood-close.png) | ![Current right hand](after/hand-right-hood.png) |
+| ![Previous right hand](before/hand-right-hood-close.png) | ![Current right hand](after/hand-right-hood-close.png) |
 
 The elevated views show the palm support and opposed thumb around each control:
 
@@ -53,9 +64,10 @@ The elevated views show the palm support and opposed thumb around each control:
 
 This is a visible improvement over the prior open, extended-finger silhouette:
 the replacement fingers curl around the hood/lever body and the thumb closes
-on the inboard side. The mesh remains stylized and somewhat broad compared
-with a photoreal hand. Each hand is a single posed sculpture rigidly attached
-to its wrist; its fingers do not articulate independently. The images are
+on the inboard side. The same closed-grip sculpture is scaled to 0.250 from
+its previous 0.315 fit, reducing its palm and finger envelope while preserving
+thumb opposition and hood contact. Each hand remains a single posed sculpture
+rigidly attached to its wrist; its fingers do not articulate independently. The images are
 provided for owner visual acceptance, which has not yet been granted.
 
 ## Motion

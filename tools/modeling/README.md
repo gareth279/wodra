@@ -768,7 +768,7 @@ The original extraction/integration step is also preserved in
 pre-hand fitted rider blend and the owner's external Andy Woodhead GLB; those
 are intentionally not duplicated in the repository. It extracts only each
 hand, keeps its full curled silhouette, maps the source bar-grip anchors
-`(1.5420, ±0.5922, 1.2092)` at `.315` scale to the Wodra hood palm targets,
+`(1.5420, ±0.5922, 1.2092)` at `.250` scale to the Wodra hood palm targets,
 applies mirrored 25-degree forearm-axis rolls, then blends only the wrist cut
 into the existing arm seam. The included final blend and exporter avoid that
 external-input dependency for future production exports.
@@ -785,6 +785,23 @@ The source model attribution is Andy Woodhead, CC BY 4.0, at
 <https://sketchfab.com/3d-models/cyclist-racing-position-free-3d-printable-f97acacd76be484dbf0243d82f6a1c44>.
 Only its hand geometry is used in Wodra; no supplied bike, clothing, or source
 photograph is redistributed.
+
+### Optional owner-supplied road helmet candidate
+
+The `sport_cycling_helmet` OBJ, MTL, diffuse texture, and preview renders from
+the owner-provided `C:\Users\garet\OneDrive\wodra_bikes\sport_cycling_helmet.zip`
+were recovered. The OBJ, MTL, and diffuse maps are staged in `source/helmet/`.
+`integrate_helmet_159.py --use-supplied`
+imports, neutralizes, head-skins, and exports that mesh for review. Production
+RideScreen head captures showed the source shell intersecting and covering the
+rider's face, so the final runtime GLB retains the fitted Wodra road helmet
+shell. The option is kept for continued alignment work; the supplied OBJ's
+original license metadata was not present in the archive.
+
+The production Wodra shell was resized around the evaluated head, its face
+normals were rebuilt for Godot back-face culling, and its six vents, neutral
+shell/trim materials, and head-weighted chin straps are preserved. The editable
+blend and the production test captures document the result.
 
 The matched production close-ups, elevated views, whole-rider captures and
 motion evidence are in `artifacts/issue159/final/`. The final photos are actual
