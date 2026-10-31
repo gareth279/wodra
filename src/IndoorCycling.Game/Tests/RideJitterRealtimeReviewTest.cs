@@ -9,7 +9,7 @@ using Godot;
 /// <summary>Real-time RideScreen frame and camera sampler for issue #93.</summary>
 public partial class RideJitterRealtimeReviewTest : Node
 {
-    private readonly StringBuilder _csv = new("phase,elapsed_s,delta_ms,process_ms,physics_ms,distance_m,speed_kph,cadence_rpm,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z,desired_x,desired_y,desired_z,look_x,look_y,look_z,camera_distance,bounds_x,bounds_y,bounds_z,bounds_w,bounds_h,bounds_d,safe_x,safe_y,safe_w,safe_h,stable_w,stable_h,stable_d,crank_phase,sampling_enabled,camera_view,clearance,draw_calls,render_objects\n");
+    private readonly StringBuilder _csv = new("phase,elapsed_s,delta_ms,process_ms,physics_ms,distance_m,speed_kph,cadence_rpm,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z,desired_x,desired_y,desired_z,look_x,look_y,look_z,camera_distance,bounds_x,bounds_y,bounds_z,bounds_w,bounds_h,bounds_d,safe_x,safe_y,safe_w,safe_h,stable_w,stable_h,stable_d,crank_phase,sampling_enabled,camera_view,clearance,draw_calls,render_objects,video_mem_bytes\n");
     private RideSessionNode? _session;
     private RideWorldView? _world;
     private HudController? _hud;
@@ -24,7 +24,16 @@ public partial class RideJitterRealtimeReviewTest : Node
             DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Enabled);
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "jitter-issue-93", "realtime-review-issue93-fix");
+            var args = OS.GetCmdlineUserArgs();
+            var outputArg = args.FirstOrDefault(arg => arg.StartsWith("--review-output-dir=", StringComparison.Ordinal));
+            var output = outputArg is null
+                ? Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "jitter-issue-93", "realtime-review-issue93-fix")
+                : Path.GetFullPath(outputArg.Split('=', 2)[1]);
+            var riderCountArg = args.FirstOrDefault(arg => arg.StartsWith("--bike-bench-visible-riders=", StringComparison.Ordinal));
+            var requestedRiderCount = riderCountArg is null ? 12
+                : int.Parse(riderCountArg.Split('=', 2)[1], CultureInfo.InvariantCulture);
+            if (requestedRiderCount < 1 || requestedRiderCount > 32)
+                throw new ArgumentOutOfRangeException(nameof(requestedRiderCount), "Specify between 1 and 32 total riders.");
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
             AddChild(screen);
@@ -38,6 +47,8 @@ public partial class RideJitterRealtimeReviewTest : Node
             GameBootstrap.ConfigureFakeTrainerMode();
             _session = screen.GetNode<RideSessionNode>("RideSessionNode");
             _world = screen.GetNode<RideWorldView>("RideWorldView");
+            _world.AiRiderTargetCount = requestedRiderCount - 1;
+            _world.AiRiderMaximumCount = requestedRiderCount - 1;
             if (!await _session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-one-way-oval-gardens")))
                 throw new InvalidOperationException("Could not start production RideScreen on the reported route.");
             var hud = screen.GetNode<HudController>("HudController");
@@ -64,10 +75,14 @@ public partial class RideJitterRealtimeReviewTest : Node
                 throw new InvalidOperationException($"Warmup missed the diagnostic section/speed: distance={_session.CurrentRideState.DistanceMeters:F1}m, speed={_session.CurrentRideState.VirtualSpeedKph:F1}km/h.");
 
             var riders = FindAll<CyclistVisual>(_world).ToArray();
-            if (riders.Length < 1 || riders.Any(rider => !rider.UsesImportedModel))
-                throw new InvalidOperationException($"Expected imported production riders; found {riders.Length} riders, imported={riders.Count(r => r.UsesImportedModel)}.");
+            if (riders.Length < requestedRiderCount || riders.Any(rider => !rider.UsesImportedModel))
+                throw new InvalidOperationException($"Expected at least {requestedRiderCount} imported production riders; found {riders.Length} riders, imported={riders.Count(r => r.UsesImportedModel)}.");
+            // The production route can add pacers as well as local AI riders. Keep
+            // the player first and hide extras so the requested render load is exact.
+            foreach (var rider in riders.Skip(requestedRiderCount)) rider.Visible = false;
+            var visibleRiders = riders.Where(rider => rider.Visible).ToArray();
             var screenIndex = DisplayServer.WindowGetCurrentScreen();
-            GD.Print($"[RideJitterReview] route={_session.CurrentRoute?.Id} riderCount={riders.Length} window={DisplayServer.WindowGetSize()} windowMode={DisplayServer.WindowGetMode()} screen={screenIndex} refreshHz={DisplayServer.ScreenGetRefreshRate(screenIndex)} vsync={DisplayServer.WindowGetVsyncMode()} renderer={RenderingServer.GetCurrentRenderingDriverName()} cpu={OS.GetName()} {OS.GetProcessorName()} gpu={RenderingServer.GetVideoAdapterName()}");
+            GD.Print($"[RideJitterReview] route={_session.CurrentRoute?.Id} visibleRiderCount={visibleRiders.Length} totalRiderNodes={riders.Length} window={DisplayServer.WindowGetSize()} windowMode={DisplayServer.WindowGetMode()} screen={screenIndex} refreshHz={DisplayServer.ScreenGetRefreshRate(screenIndex)} vsync={DisplayServer.WindowGetVsyncMode()} renderer={RenderingServer.GetCurrentRenderingDriverName()} cpu={OS.GetName()} {OS.GetProcessorName()} gpu={RenderingServer.GetVideoAdapterName()} videoMemoryBytes={Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed)}");
 
             // Alternating the same live ride makes cadence, steering, HUD and scenery
             // comparable while the baked animation update is isolated.
@@ -117,7 +132,8 @@ public partial class RideJitterRealtimeReviewTest : Node
             .Append(F(rider.CrankAngleRadians / Math.Tau)).Append(',').Append(rider.RiderAnimationSamplingEnabled ? 1 : 0).Append(',')
             .Append(camera.View).Append(',').Append(camera.ClearanceResult).Append(',')
             .Append(Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame)).Append(',')
-            .Append(Performance.GetMonitor(Performance.Monitor.RenderTotalObjectsInFrame)).AppendLine();
+            .Append(Performance.GetMonitor(Performance.Monitor.RenderTotalObjectsInFrame)).Append(',')
+            .Append(Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed)).AppendLine();
     }
 
     private async Task CapturePhase(string phase, int seconds, string output, bool motion = false)
