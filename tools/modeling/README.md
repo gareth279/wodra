@@ -707,4 +707,98 @@ The owner’s Trek photographs were reviewed directly from `C:\Users\garet\OneDr
 
 Godot 4.6.2 imported the optimized GLB and the actual RideScreen test loaded both one and twelve visible cyclists with the 24-mesh model. Animated-baseline plus disabled-skeletal-sampling and steer/coast/restart phases completed. The matched 2026-10-31 windowed A/B run against the exact pre-import Wodra GLB is documented in [`final-bike-a-b`](../../artifacts/issue158-road-bike/performance/final-bike-a-b/README.md). On an i7-9700 / Quadro P620 at 1152×648, the 12-rider run measured median frame delta 30.30 ms original versus 31.94 ms optimized; median draw calls rose from 1,528 to 1,740, render objects from 2,216 to 2,448, and Godot's whole-process render-video-memory counter from 50.4 MB to 143.8 MB. Thus the imported model has a modest but measurable load/memory regression in the 12-rider case; no performance improvement is claimed. GPU frame time was not available. The importer setting `meshes/generate_lods=true` is enabled, but effective LOD switches/triangle reduction by distance were not measured. The benchmark's RideScreen phases validated actual runtime model loading and active pedaling/steering/coast/restart, but they do not substitute for a final owner visual review.
 
-The installed `RiderBikePreview` motion-capture scene fails to save frames in headless mode because Godot’s dummy renderer returns a null viewport texture. During final validation, the graphical RideScreen launched on the NVIDIA renderer and reported live draw/object counters, but the available desktop capture surface showed a solid grey viewport. No valid new final-state screenshot could be captured, so the existing production screenshots document the cleanup before the final small tape-bump adjustment only. No change was made to rider rig, bike pivots, rider positioning, trainer/simulation, recording, route, or multiplayer code. Third-party licensing and distribution permission remain owner review items.
+The installed `RiderBikePreview` motion-capture scene fails to save frames in headless mode because Godot’s dummy renderer returns a null viewport texture. During the #158 final validation, the graphical RideScreen launched on the NVIDIA renderer and reported live draw/object counters, but the available desktop capture surface showed a solid grey viewport. No valid #158 final-state screenshot could be captured, so its existing production screenshots document the cleanup before the final small tape-bump adjustment only. Issue #158 did not change rider rig, bike pivots, rider positioning, trainer/simulation, recording, route, or multiplayer code. Third-party licensing and distribution permission remain owner review items.
+
+## Issue #159 — fitted rider and sculpted hood hands
+
+`fit_rider_159.py` starts from the editable integrated bike/rider blend produced
+by `integrate_cgtrader_road_bike_158.py`. It changes only the rider: a measured
+forward torso hinge is distributed over the thoracic spine and the existing
+MPFB arm IK targets are fitted to the bicycle hood and relaxed elbow targets.
+The resulting pose is baked across the existing `PedalCycle` action. The
+accepted bicycle geometry, component hierarchy, animation hooks and runtime
+rider binding are preserved.
+
+`polish_rider.py` retains the fitted torso/limbs and adds the existing jersey,
+bib, helmet, shoe and kit finishing. The final hand pass replaces the previous
+open-looking MPFB hand surfaces with the closed hand sculptures from the
+owner-supplied Andy Woodhead `Cyclist - racing position - free 3d printable`
+model. The model is attributed under CC BY 4.0 in the Blender source and
+builder. Its source GLB and the owner's `images/bike/IMG_1465.JPEG` photograph
+remain external; the committed fitted Blender source contains the mesh and can
+be exported without OneDrive.
+
+The imported sculpture is mapped from the source model's own drop-bar grips to
+the actual Wodra hood palm shelves. Both hands receive mirrored 25-degree
+forearm-axis rolls so the thumbs turn inboard. The wrist cut is blended into
+the Wodra forearm seam. The arm pose is baked to reach those seams through the
+existing pedal cycle. Each finished hand mesh follows its wrist as one rigid
+posed grip; the individual fingers do not articulate independently. The
+legacy finger bones remain in the skeleton for runtime compatibility, but no
+longer skin the replacement hands. New `palm_contact.L/R` markers identify the
+actual fitted palm support frames and are read by the production RideScreen
+regression.
+
+Bike-local fit references:
+
+| Contact | Position (m) |
+| --- | --- |
+| Left hood palm shelf | `(-0.222, 0.502, 0.948)` |
+| Right hood palm shelf | `(0.222, 0.502, 0.948)` |
+| Saddle / pelvis | `(0, -0.285, 0.978)` |
+| Left pedal | `(-0.128, -0.164, 0)` relative to `CrankPivot` |
+| Right pedal | `(0.128, 0.164, 0)` relative to `CrankPivot` |
+
+The complete editable source is
+`source/WodraCyclist.issue159-sculpted-hands.blend`. It contains the fitted
+hands, rider, rig, bike, baked action, and hand-source attribution. This
+committed blend is the reproducible source for the production GLB; the original
+cyclist GLB is not needed to export or run the result:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+& $blender --background --python tools/modeling/export_rider_hands_159.py -- `
+  --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend `
+  --glb src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb
+python tools/modeling/verify_road_bike_158.py
+```
+
+The original extraction/integration step is also preserved in
+`rebuild_rider_hands_159.py`. Re-running that step from raw inputs requires a
+pre-hand fitted rider blend and the owner's external Andy Woodhead GLB; those
+are intentionally not duplicated in the repository. It extracts only each
+hand, keeps its full curled silhouette, maps the source bar-grip anchors
+`(1.5420, ±0.5922, 1.2092)` at `.315` scale to the Wodra hood palm targets,
+applies mirrored 25-degree forearm-axis rolls, then blends only the wrist cut
+into the existing arm seam. The included final blend and exporter avoid that
+external-input dependency for future production exports.
+
+$base = "$env:LOCALAPPDATA\Wodra\Modeling159Final\baseline-c6ddb99.blend"
+$source = 'C:\Users\garet\OneDrive\wodra_bikes\cyclist_-_racing_position_-_free_3d_printable.glb'
+& $blender --background --python tools/modeling/rebuild_rider_hands_159.py -- `
+  --base $base --source $source `
+  --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend `
+  --glb tools/modeling/exports/WodraCyclist-issue159-sculpted-hands.glb
+```
+
+The source model attribution is Andy Woodhead, CC BY 4.0, at
+<https://sketchfab.com/3d-models/cyclist-racing-position-free-3d-printable-f97acacd76be484dbf0243d82f6a1c44>.
+Only its hand geometry is used in Wodra; no supplied bike, clothing, or source
+photograph is redistributed.
+
+The matched production close-ups, elevated views, whole-rider captures and
+motion evidence are in `artifacts/issue159/final/`. The final photos are actual
+Godot 4.6.2 production RideScreen renders on the NVIDIA Quadro P620, not Blender
+previews. They show a more closed four-finger grip and opposed thumb than the
+prior extended-finger pose, while retaining the source sculpture's stylized
+proportions. This is a visible improvement, not owner visual acceptance. The
+owner should make that decision from the PR captures. No physical riding or
+hardware acceptance has been performed.
+
+After importing the GLB in Godot, run `RiderFinishingSceneReviewTest.tscn` for
+production RideScreen views and 72 pedal-cycle fit samples, then
+`RiderMotionReviewTest.tscn` for 360 runtime frames covering cadence, steering,
+coasting and restart. The fit test reads `palm_contact.L/R`, verifies they stay
+within 45 mm of the hood targets, checks pelvis-to-saddle fit and requires foot
+travel. These geometric measurements support the screenshots but do not
+measure independent finger articulation or prove physical grip pressure.

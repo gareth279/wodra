@@ -10,7 +10,13 @@ public partial class RiderMotionReviewTest : Node
     {
         try
         {
-            DisplayServer.WindowSetSize(new Vector2I(1500, 900));
+            var requestedResolution = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_RESOLUTION");
+            var dimensions = requestedResolution?.Split('x', 2, StringSplitOptions.TrimEntries);
+            var resolution = dimensions is { Length: 2 } &&
+                int.TryParse(dimensions[0], out var width) &&
+                int.TryParse(dimensions[1], out var height) && width >= 640 && height >= 360
+                ? new Vector2I(width, height) : new Vector2I(1500, 900);
+            DisplayServer.WindowSetSize(resolution);
             var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
             if (string.IsNullOrWhiteSpace(output))
                 output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
