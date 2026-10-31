@@ -547,3 +547,164 @@ $ffmpeg = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Gyan.FFmpeg.Sha
   -frames:v 300 -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p `
   tools/modeling/previews/road-bike-front-10s.mp4
 ```
+
+### Road bicycle geometry pass (#158)
+
+The current road bicycle geometry is authored in `source/WodraCyclist.blend`;
+`build_road_bike_158.py` rebuilds only the bicycle subtree and preserves the
+weighted human, skeleton, `PedalCycle` action, root, and animation nodes. It also
+restores the 48 existing wrist seam quads from the documented matching
+`WodraCyclist.alpha48-mask-export-fixed.blend` checkpoint when the raw canonical
+blend does not contain them, and restores the checkpoint's 152 eye-face
+material assignments. It verifies identical source vertex coordinates and
+weights; no rider vertices, weights, bones, shape keys, or animation are changed.
+The historical cockpit evidence from issue #95 / PR #94 in
+`artifacts/alpha48-hand-correction/cockpit-v22/README.md` and the owner-provided
+photos/videos under `images/bike/` were reviewed. The owner's IMG_1459 and
+IMG_1474 photographs show the Trek Émonda and Shimano 105 brifters from side,
+front, and hand-on-hood angles. In review, the prior superellipse loft produced
+a high domed canopy, and a flat silhouette extrusion looked like a tapered
+fin. The current iteration replaces both with an editable rounded 3D body
+intersecting the wrapped bar, a mostly level palm surface, and a raised nose.
+The brake blade and inner shift paddle remain separate curved forms; the blade
+overlaps the control body at a visible axle/pivot. This remains a stylised
+approximation: its palm-body transition and nose still read more like a capsule
+than the reference control and require further visual review. No Shimano marks
+or product artwork are copied. Drop-bar return ends are now 290 mm apart,
+previously 180 mm.
+
+The committed, editable result is `source/WodraCyclist.issue158.blend`;
+`source/WodraCyclist.blend` remains the preserved canonical rider source. The
+builder verifies that human vertices, weights, skeleton, and `PedalCycle` remain
+unchanged before saving the rebuilt bike into the result blend.
+
+The geometry target follows published size-54 road-bike relationships rather
+than proprietary graphics. The [Specialized Tarmac SL8 geometry chart](https://www.specialized.com/ca/en/tarmac-sl8-comp-sram-rival-axs-/p/4292996)
+provides a 978 mm wheelbase, 410 mm chainstay, 74 mm bottom-bracket drop,
+420 mm handlebar, 100 mm stem, 172.5 mm crank, and 73 degree head angle. This
+model uses a 170 mm crank and the same 978/410/74 mm frame relationships. Its
+700×28C wheel has a 622 mm bead-seat diameter and 678 mm outer diameter; the
+carbon rim is 37 mm deep. The drivetrain is a plausible 50/34 double with an
+11-sprocket cassette, a closed chain path, two disc rotors, calipers, and a
+rear derailleur. Frame, carbon, alloy, rubber, tape, and hood materials use a
+consistent restrained stylised finish.
+
+All dimensions below are in metres in the `BicycleModel` local Blender basis:
+X is lateral, +Y points forward, and +Z is up. The GLB/Godot basis maps Blender
++Y forward to Godot -Z. The front/rear wheel pivots remain `FrontWheelSpin` and
+`RearWheelSpin`; the cadence-controlled `CrankPivot`, crank, and pedal node
+names are unchanged.
+
+| Contact or datum | Blender bike-local position |
+| --- | --- |
+| Rear wheel centre | `(0, -0.489, 0.339)` |
+| Front wheel centre | `(0, 0.489, 0.339)` |
+| Bottom bracket | `(0, -0.079, 0.265)` |
+| Seat cluster | `(0, -0.240, 0.845)` |
+| Saddle/pelvis target | `(0, -0.253, 0.951)` |
+| Left hood palm shelf | `(-0.210, 0.421, 0.900)` |
+| Right hood palm shelf | `(0.210, 0.421, 0.900)` |
+| Left pedal target, crank local | `(-0.130, 0, -0.170)` |
+| Right pedal target, crank local | `(0.130, 0, 0.170)` |
+
+`Contact_LeftHood`, `Contact_RightHood`, `Contact_Saddle`,
+`Contact_LeftPedal`, and `Contact_RightPedal` export as named empty nodes. The
+pedal targets are children of `CrankPivot` so they rotate with the pedals. The
+hood, saddle, and pedal coordinates are intended as stable #159 fit references;
+the existing rider's hands and pelvis need refitting to these revised points in
+the separate posture task. On the current baked riding pose, the measured palm
+median is 221 mm from each hood and the 90th percentile is 268 mm; finger
+medians range from 141 to 198 mm from their corresponding control surfaces.
+That is a confirmed fit mismatch intentionally deferred to #159. No hand, body,
+clothing, bone, or animation data was changed in #158. Do not distort the
+finished bicycle to preserve the old hand/pelvis pose.
+
+Rebuild the editable source and runtime model with Blender 5.2.2, then reimport
+in Godot 4.6.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+& $blender --background tools/modeling/source/WodraCyclist.blend `
+  --python tools/modeling/build_road_bike_158.py -- `
+  tools/modeling/source/WodraCyclist.issue158.blend
+& $blender --background tools/modeling/source/WodraCyclist.issue158.blend `
+  --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-issue158.glb `
+  tools/modeling/checkpoints/WodraCyclist-issue158-export.blend `
+  tools/modeling/previews/issue158 --export-only
+Copy-Item tools/modeling/exports/WodraCyclist-issue158.glb `
+  src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb -Force
+python tools/modeling/verify_road_bike_158.py
+```
+
+`verify_road_bike_158.py` is a standard-library GLB regression check for wheel
+spacing and diameter, BB drop, bar width, crank radius, component/contact nodes,
+lever-to-hood relation, animation import, triangle budget, and mesh budget. The
+production Godot review harness captures matched 1920x1080
+side/top/front-three-quarter, rider, cockpit, and control views in
+`artifacts/issue158-road-bike/`. The close cockpit rebuild captures are under
+`artifacts/issue158-road-bike/evidence/cockpit-profile-rebuild/`, beside the
+earlier canopy-style production views for comparison. `RiderMotionReviewTest.tscn` supplies matched
+production RideScreen captures for pedalling, steering, coasting, and restart.
+`--capture-road-bike-motion --motion-view=chase`
+uses the imported production model, pedal cycle, road, and chase camera for the
+ride-motion review; it is a route-following visual, not a physical steering
+hardware test.
+The hood and lever silhouette was also reviewed against the ergonomic shape
+and distinct brake-blade layout shown in [SRAM's AXS control overview](https://www.sram.com/en/learn/tech-deep-dives/axs-controls);
+no brand marks or copied product artwork are included.
+
+The #160 cockpit iteration replaces the pointed side extrusion with a rounded,
+editable 3D control body intersecting the wrapped bar, and reshapes the brake
+blade to overlap the front underside at its pivot. The photographed owner
+Shimano 105 controls are in `images/bike` and are not redistributed; a cropped
+owner reference and current production Godot comparisons are preserved in
+`artifacts/issue158-road-bike/evidence/cockpit-profile-rebuild/`. The current
+render is not being represented as visually accepted: the hood still reads
+too capsule-like and does not yet match the reference palm shelf/nose clearly.
+The hand targets remain at ±210 mm lateral, 421 mm forward and 900 mm high in
+Blender coordinates, rotated to the palm surface.
+
+## Current #158 source: owner-supplied CGTrader road/gravel bike
+
+The procedural road-bike sections above document the earlier failed iterations. For the current PR #160 candidate, the production bicycle geometry has been replaced with the owner-supplied native Blender asset from `C:\Users\garet\OneDrive\wodra_bikes\road_gravel\BLEND.zip`. The selected archive member is `GigantRoad.blend`; its relative `Textures` directory is required. The original downloads remain outside the repository and are not modified. The road and gravel disciplines share this source. MTB archives were inspected but are not integrated by #158.
+
+The native file contains separately modelled frame tubes, fork, front/rear wheels, hubs, rims, spokes, tyres, cockpit, brakes, saddle, cranks, pedals, chain, cassette, derailleurs and small hardware. Materials and image maps are present in the archive. There is no licence, attribution, or redistribution metadata in the supplied archive; the repository owner must confirm the CGTrader licence permits committing and redistributing the resulting runtime GLB. The source includes GIGANT logo decals; the current Wodra runtime asset removes the separate logo/decal meshes and unused logo-only materials/maps. No licence terms are inferred from the download source or altered here.
+
+`tools/modeling/integrate_cgtrader_road_bike_158.py` imports the original Blender scene, retains the canonical Wodra rider mesh, skeleton, and pedal action, replaces only bicycle geometry, bakes source transforms, scales maps, decimates highly tessellated hardware, and establishes the runtime pivots. The cleanup removes only the two oversized disconnected cockpit cable loops from the source cable mesh, retaining its frame-following/control runs. It tones down the source tape color and bump map while retaining the wrapped-bar surface and seams. It joins static parts by material into stable frame/cockpit/saddle groups and keeps front and rear wheels plus cranks/pedals independently animatable. The integrated editable `.blend` is an intermediate working file and remains outside Git alongside the original download; the GLB is self-contained for gameplay and does not read OneDrive at runtime.
+
+Source measurements after normalization are approximately 993 mm wheelbase and 665 mm tyre outer diameter. Hubs are grounded at 339 mm. The polished production GLB contains 935,442 triangles across 24 render meshes and is 36,563,576 bytes. Relative to the first integrated candidate (1,695,994 triangles, 67,015,424 bytes), that is 44.8% fewer triangles and 45.4% less asset data; compared with the 3.71-million-triangle source it is about 74.8% fewer triangles. The visual cleanup keeps the frame, fork, cockpit, hood/lever, rim, tyre and hub silhouettes intact. It chiefly reduces duplicated high-subdivision brake calipers, bolts, cassette, chain and spokes. The earlier Wodra model was 68,894 triangles/49 meshes and 6,974,720 bytes; the imported model remains more detailed by design. Godot reports 24 runtime mesh instances and zero non-unit scales. The existing Godot import setting `meshes/generate_lods=true` remains enabled; this pass did not add hand-authored duplicate LOD assets.
+
+Bike-local contact frames (Blender axes: X lateral, Y fore/aft, Z up):
+
+| Contact | Position (m) | Orientation |
+| --- | --- | --- |
+| Left hood palm shelf | `(-0.222, 0.502, 0.948)` | local surface normal `(0, -0.08, 1)` |
+| Right hood palm shelf | `(0.222, 0.502, 0.948)` | local surface normal `(0, -0.08, 1)` |
+| Saddle / pelvis | `(0, -0.285, 0.978)` | bike frame |
+| Left pedal | `(-0.128, -0.164, 0)` | child of `CrankPivot` |
+| Right pedal | `(0.128, 0.164, 0)` | child of `CrankPivot` |
+
+The pedal contacts rotate with their crank pivot. They are bike-local fitting references for issue #159; no rider pose or hand rig changes are included.
+
+To reproduce the integration on the owner machine, extract a working copy of `BLEND.zip` and its `Textures` folder into a temporary directory, then run:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$source = "$env:TEMP\WodraBikeSource\GigantRoad.blend"
+$integrated = "$env:TEMP\WodraBikeSource\WodraCyclist.issue158-cgtrader.blend"
+& $blender --background --python tools/modeling/integrate_cgtrader_road_bike_158.py -- `
+  --source $source --rider tools/modeling/source/WodraCyclist.blend --output $integrated
+& $blender --background $integrated --python tools/modeling/polish_rider.py -- `
+  tools/modeling/exports/WodraCyclist-issue158-cgtrader.glb `
+  tools/modeling/checkpoints/WodraCyclist-issue158-cgtrader-export.blend `
+  tools/modeling/previews/issue158-cgtrader --export-only
+python tools/modeling/verify_road_bike_158.py `
+  tools/modeling/exports/WodraCyclist-issue158-cgtrader.glb
+```
+
+The owner’s Trek photographs were reviewed directly from `C:\Users\garet\OneDrive\wodra\images\bike`, including side/cockpit and grip views; they remain external and are not copied into the repository. The comparison informed the compact cable routing and restrained, visible tape seams; the unbranded model keeps its own frame design. The production RideScreen renders captured after cleanup are in `artifacts/issue158-road-bike/polished-cgtrader-production-review/`; the preceding imported model’s matched renders are in `artifacts/issue158-road-bike/cgtrader-production-review/`. The rider’s hand fit remains deferred to #159.
+
+Godot 4.6.2 imported the optimized GLB and the actual RideScreen test loaded both one and twelve visible cyclists with the 24-mesh model. Animated-baseline plus disabled-skeletal-sampling and steer/coast/restart phases completed. The matched 2026-10-31 windowed A/B run against the exact pre-import Wodra GLB is documented in [`final-bike-a-b`](../../artifacts/issue158-road-bike/performance/final-bike-a-b/README.md). On an i7-9700 / Quadro P620 at 1152×648, the 12-rider run measured median frame delta 30.30 ms original versus 31.94 ms optimized; median draw calls rose from 1,528 to 1,740, render objects from 2,216 to 2,448, and Godot's whole-process render-video-memory counter from 50.4 MB to 143.8 MB. Thus the imported model has a modest but measurable load/memory regression in the 12-rider case; no performance improvement is claimed. GPU frame time was not available. The importer setting `meshes/generate_lods=true` is enabled, but effective LOD switches/triangle reduction by distance were not measured. The benchmark's RideScreen phases validated actual runtime model loading and active pedaling/steering/coast/restart, but they do not substitute for a final owner visual review.
+
+The installed `RiderBikePreview` motion-capture scene fails to save frames in headless mode because Godot’s dummy renderer returns a null viewport texture. During final validation, the graphical RideScreen launched on the NVIDIA renderer and reported live draw/object counters, but the available desktop capture surface showed a solid grey viewport. No valid new final-state screenshot could be captured, so the existing production screenshots document the cleanup before the final small tape-bump adjustment only. No change was made to rider rig, bike pivots, rider positioning, trainer/simulation, recording, route, or multiplayer code. Third-party licensing and distribution permission remain owner review items.

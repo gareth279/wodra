@@ -7,15 +7,45 @@ using Godot;
 /// <summary>Review focused rider finishing in the production RideScreen and imported GLB.</summary>
 public partial class RiderFinishingSceneReviewTest : Node
 {
+    private Viewport? _captureViewport;
+
     public override async void _Ready()
     {
         try
         {
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
-            var output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
+            var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
+            if (string.IsNullOrWhiteSpace(output))
+                output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
+            else
+                output = Path.GetFullPath(output);
             Directory.CreateDirectory(output);
             var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
-            AddChild(screen);
+            var requestedResolution = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_RESOLUTION");
+            var dimensions = requestedResolution?.Split('x', 2, StringSplitOptions.TrimEntries);
+            if (dimensions is { Length: 2 } &&
+                int.TryParse(dimensions[0], out var width) &&
+                int.TryParse(dimensions[1], out var height) &&
+                width >= 640 && height >= 360)
+            {
+                // Render production RideScreen into a Godot viewport target so
+                // review evidence can exceed the host display resolution.
+                var capture = new SubViewport
+                {
+                    Name = "RoadBikeReviewViewport",
+                    Size = new Vector2I(width, height),
+                    OwnWorld3D = true,
+                    RenderTargetUpdateMode = SubViewport.UpdateMode.Always
+                };
+                AddChild(capture);
+                capture.AddChild(screen);
+                _captureViewport = capture;
+            }
+            else
+            {
+                AddChild(screen);
+                _captureViewport = screen.GetViewport();
+            }
             await Settle(12);
             GameBootstrap.Settings.DebugModeEnabled = true;
             GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(output, "fit");
@@ -25,6 +55,9 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException("Could not start Rolling City in RideScreen.");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
             var hud = screen.GetNode<HudController>("HudController");
+            // Keep the model review camera clear of a collectible card that can
+            // otherwise fill the front-three-quarter frame at the fixed test distance.
+            world.GetNodeOrNull<Node3D>("CollectibleCats")?.Hide();
             hud.Show();
             await Settle(12);
             foreach (var window in screen.GetNode<StartPanelController>("StartPanel").GetChildren().OfType<Window>()) window.Hide();
@@ -48,6 +81,9 @@ public partial class RiderFinishingSceneReviewTest : Node
             world.SelectCameraInspectionView(RiderCameraView.GameplayRefined);
             await Settle(24);
             await Save(output, "ride-chase.png");
+            world.SelectCameraInspectionView(RiderCameraView.FrontThreeQuarter);
+            await Settle(24);
+            await Save(output, "ride-front-three-quarter.png");
 
             // Freeze normal ride updates only while temporarily using the actual RideScreen
             // rider and imported GLB for close fit and accessory inspection.
@@ -89,6 +125,19 @@ public partial class RiderFinishingSceneReviewTest : Node
             var bikeForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
             var bikeSide = bikeForward.Cross(Vector3.Up).Normalized();
             var savedFov = camera.Fov;
+            var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
+            rider.SetRiderVisible(false);
+            camera.Fov = 31f;
+            camera.GlobalPosition = bikeCenter + bikeSide * 2.05f + Vector3.Up * .06f;
+            camera.LookAt(bikeCenter, Vector3.Up);
+            await Settle(3);
+            await Save(output, "bike-only-side.png");
+            camera.Fov = 34f;
+            camera.GlobalPosition = bikeCenter + bikeSide * 1.10f + bikeForward * 1.25f + Vector3.Up * .46f;
+            camera.LookAt(bikeCenter, Vector3.Up);
+            await Settle(3);
+            await Save(output, "bike-only-front-three-quarter.png");
+            rider.SetRiderVisible(true);
             // Keep the complete head and neck visible without the perspective
             // exaggeration of the earlier 0.58 m macro framing.
             camera.Fov = 46f;
@@ -111,31 +160,53 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Save(output, $"head-{angle}-helmet-on.png");
             }
 
-            var leftHood = Find<GeometryInstance3D>(rider, "BrakeHoodL")
-                ?? throw new InvalidOperationException("Left runtime brake hood missing.");
-            var rightHood = Find<GeometryInstance3D>(rider, "BrakeHoodR")
-                ?? throw new InvalidOperationException("Right runtime brake hood missing.");
+            var leftHood = Find<Node3D>(rider, "Contact_LeftHood")
+                ?? throw new InvalidOperationException("Left imported hood contact missing.");
+            var rightHood = Find<Node3D>(rider, "Contact_RightHood")
+                ?? throw new InvalidOperationException("Right imported hood contact missing.");
             camera.Fov = 32f;
             var wasHumanVisible = human.Visible;
             human.Visible = false;
             rider.SetHelmetVisible(false);
-            var leftHoodCenter = leftHood.GlobalTransform * leftHood.GetAabb().GetCenter();
-            var rightHoodCenter = rightHood.GlobalTransform * rightHood.GetAabb().GetCenter();
+            var leftHoodCenter = leftHood.GlobalPosition;
+            var rightHoodCenter = rightHood.GlobalPosition;
             var cockpitTarget = (leftHoodCenter + rightHoodCenter) * .5f;
             GD.Print($"[RiderFinishingSceneReview] hood centers L={leftHoodCenter} R={rightHoodCenter} target={cockpitTarget}");
-            camera.GlobalPosition = cockpitTarget + bikeSide * .56f + Vector3.Up * .10f;
+            camera.Fov = 27f;
+            camera.GlobalPosition = cockpitTarget + bikeSide * 1.0f + Vector3.Up * .12f;
             camera.LookAt(cockpitTarget, Vector3.Up);
             await Settle(3);
             await Save(output, "cockpit-no-hands-side.png");
-            camera.GlobalPosition = cockpitTarget + bikeForward * .42f + bikeSide * .25f + Vector3.Up * .34f;
+            camera.Fov = 36f;
+            camera.GlobalPosition = cockpitTarget + Vector3.Up * .72f;
+            camera.LookAt(cockpitTarget, bikeForward);
+            await Settle(3);
+            await Save(output, "cockpit-no-hands-top.png");
+            camera.Fov = 30f;
+            camera.GlobalPosition = cockpitTarget + bikeForward * .80f + bikeSide * .48f + Vector3.Up * .42f;
             camera.LookAt(cockpitTarget, Vector3.Up);
             await Settle(3);
             await Save(output, "cockpit-no-hands-front-three-quarter.png");
+            camera.Fov = 52f;
+            camera.GlobalPosition = cockpitTarget - bikeForward * .48f + Vector3.Up * .24f;
+            camera.LookAt(cockpitTarget + bikeForward * .10f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "cockpit-rider-view.png");
+            foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
+            {
+                var hoodCenter = hood.GlobalPosition;
+                var view = (bikeSide * side * .62f + bikeForward * .52f + Vector3.Up * .18f).Normalized();
+                camera.Fov = 24f;
+                camera.GlobalPosition = hoodCenter + view * .52f;
+                camera.LookAt(hoodCenter, Vector3.Up);
+                await Settle(3);
+                await Save(output, side < 0 ? "hood-left-no-hands-close.png" : "hood-right-no-hands-close.png");
+            }
             human.Visible = wasHumanVisible;
             rider.SetHelmetVisible(true);
             foreach (var (hood, side) in new[] { (leftHood, -1f), (rightHood, 1f) })
             {
-                var hoodCenter = hood.GlobalTransform * hood.GetAabb().GetCenter();
+                var hoodCenter = hood.GlobalPosition;
                 // Aim at the palm bones and actual hood mesh. Wrist-to-hood
                 // origin distance is not used as a contact acceptance check.
                 var palm = Vector3.Zero;
@@ -222,7 +293,7 @@ public partial class RiderFinishingSceneReviewTest : Node
         // the production HUD is hidden in the headless renderer.
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         var path = Path.Combine(root, name);
-        var texture = GetViewport().GetTexture()
+        var texture = (_captureViewport ?? GetViewport()).GetTexture()
             ?? throw new InvalidOperationException("Review viewport has no render texture.");
         var image = texture.GetImage()
             ?? throw new InvalidOperationException("Review viewport returned no rendered image.");

@@ -54,6 +54,14 @@ jobs:
           if ((dotnet --version).Trim() -ne '10.0.204') { throw 'Unexpected .NET SDK version.' }
           & $env:GODOT_PATH --version
           if ($LASTEXITCODE -ne 0) { throw 'Godot version probe failed.' }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify road-bike GLB geometry and contact targets
+        shell: pwsh
+        run: |
+          python tools/modeling/verify_road_bike_158.py
+          if ($LASTEXITCODE -ne 0) { throw 'Road-bike GLB geometry regression failed.' }
       - name: Test safe local release credential selection
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/GitHubReleaseAuth.Tests.ps1

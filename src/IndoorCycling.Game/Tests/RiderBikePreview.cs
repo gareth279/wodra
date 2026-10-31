@@ -35,6 +35,9 @@ public partial class RiderBikePreview : Node3D
     private bool _bikeOnlyCaptured;
     private bool _riderSideCaptured;
     private bool _riderFrontCaptured;
+    private bool _cockpitCaptured;
+    private bool _leftHoodCaptured;
+    private bool _rightHoodCaptured;
     private bool _motionClipRequested;
     private string _motionClipView = "chase";
     private double _motionClipAccumulator;
@@ -72,7 +75,7 @@ public partial class RiderBikePreview : Node3D
                 _riders[i].Build(i);
                 _riders[i].SetHelmetVisible(_helmetVisible);
                 if (_bikeReviewRequested && i > 0) _riders[i].Visible = false;
-                if (_motionClipRequested && _motionClipView != "chase" && i > 0) _riders[i].Visible = false;
+                if (_motionClipRequested && i > 0) _riders[i].Visible = false;
                 if ((_reviewMatrixRequested || _kneeReviewRequested) && i > 0) _riders[i].Visible = false;
                 AddChild(_riders[i]);
             }
@@ -80,7 +83,7 @@ public partial class RiderBikePreview : Node3D
             _camera.SetView(RiderCameraView.GameplayRefined);
             if (_reviewMatrixRequested) _camera.Fov = 32f;
             if (_kneeReviewRequested) _camera.Fov = 26f;
-            if (_bikeReviewRequested) _camera.Fov = 24f;
+            if (_bikeReviewRequested) _camera.Fov = 30f;
             if (_motionClipRequested)
             {
                 _camera.SetView(_motionClipView switch
@@ -251,7 +254,7 @@ public partial class RiderBikePreview : Node3D
         if (_elapsed < 4.4)
         {
             _camera.SetView(RiderCameraView.FrontThreeQuarter);
-            _camera.Fov = 18f;
+            _camera.Fov = 30f;
             _camera.Follow(position, forward, delta);
             if (_bikeOnlyCaptured && !_frontCaptured && _elapsed >= 4.0)
             {
@@ -270,14 +273,67 @@ public partial class RiderBikePreview : Node3D
                 _riderSideCaptured = CaptureFrame("RoadBike-Rider-Side.png");
             return;
         }
-        _camera.SetView(RiderCameraView.FrontThreeQuarter);
-        _camera.Fov = 27f;
-        _camera.Follow(position, forward, delta);
-        if (!_riderFrontCaptured && _elapsed >= 8.4)
+        if (!_riderFrontCaptured)
         {
-            _riderFrontCaptured = CaptureFrame("RoadBike-Rider-FrontThreeQuarter.png");
-            GD.Print("[RiderBikePreview] Completed bike-only and rider-on-bike side/front review captures.");
+            _camera.SetView(RiderCameraView.FrontThreeQuarter);
+            _camera.Fov = 28f;
+            _camera.Follow(position, forward, delta);
+            if (_elapsed >= 8.4)
+            {
+                _riderFrontCaptured = CaptureFrame("RoadBike-Rider-FrontThreeQuarter.png");
+                GD.Print("[RiderBikePreview] Captured bike-only and rider-on-bike side/front review views.");
+            }
+            return;
         }
+
+        // Detail evidence uses the imported production bicycle under the same
+        // route lighting; hide only the rider mesh so both brifters are clear.
+        _riders[0].SetRiderVisible(false);
+        var right = forward.Cross(Vector3.Up).Normalized();
+        if (_elapsed < 10.0)
+        {
+            var leftHood = GetContactPosition("Contact_LeftHood", position - right * .18f + Vector3.Up * .43f + forward * .21f);
+            var rightHood = GetContactPosition("Contact_RightHood", position + right * .18f + Vector3.Up * .43f + forward * .21f);
+            var target = (leftHood + rightHood) * .5f;
+            // Look from the rider's normal approach side (behind the bar), so
+            // the paired brifters and the bar's true drop shape read together.
+            _camera.GlobalPosition = target - forward * .52f + Vector3.Up * .17f;
+            _camera.LookAt(target, Vector3.Up);
+            _camera.Fov = 40f;
+            if (!_cockpitCaptured && _elapsed >= 9.5)
+                _cockpitCaptured = CaptureFrame("RoadBike-Cockpit.png");
+            return;
+        }
+        if (_elapsed < 10.8)
+        {
+            CaptureHoodCloseup(position, forward, right, -1,
+                "RoadBike-Hood-Left.png", ref _leftHoodCaptured, delta);
+            return;
+        }
+        CaptureHoodCloseup(position, forward, right, 1,
+            "RoadBike-Hood-Right.png", ref _rightHoodCaptured, delta);
+    }
+
+    private void CaptureHoodCloseup(Vector3 position, Vector3 forward, Vector3 right, int side,
+        string fileName, ref bool captured, double delta)
+    {
+        var contactName = side < 0 ? "Contact_LeftHood" : "Contact_RightHood";
+        var fallback = position + right * (side * .09f) + Vector3.Up * .43f + forward * .21f;
+        var target = GetContactPosition(contactName, fallback);
+        // Move back far enough to show the hood-to-bar transition and the
+        // independent brake blade instead of cropping the control into a pod.
+        _camera.GlobalPosition = target + right * (side * .24f) + Vector3.Up * .08f - forward * .34f;
+        _camera.LookAt(target, Vector3.Up);
+        _camera.Fov = 34f;
+        if (!captured && _elapsed >= (side < 0 ? 10.25 : 11.05))
+            captured = CaptureFrame(fileName);
+    }
+
+    private Vector3 GetContactPosition(string name, Vector3 fallback)
+    {
+        var target = _riders[0].FindChildren(name, "Node3D", recursive: true, owned: false)
+            .OfType<Node3D>().FirstOrDefault();
+        return target?.GlobalPosition ?? fallback;
     }
 
     private void CaptureContinuousKneeReview(double delta)
