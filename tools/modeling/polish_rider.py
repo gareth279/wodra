@@ -10,7 +10,8 @@ import math
 import sys
 from pathlib import Path
 import bpy
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Matrix, Quaternion, Vector, geometry
+from mathutils.bvhtree import BVHTree
 
 
 def mat(name, color, roughness=.72, metallic=0.0):
@@ -92,8 +93,20 @@ def make_helmet(rig):
     old = [o for o in bpy.data.objects if o.name.startswith(("CyclingHelmet", "HelmetBrim", "HelmetRim", "HelmetStrap", "HelmetVent"))]
     for obj in old:
         bpy.data.objects.remove(obj, do_unlink=True)
-    # Geometry in armature rest coordinates matches the existing fitted skull:
-    # shell sits close to the crown, widens to cover temples, and tapers rearward.
+    # Build around this source rider's evaluated head, rather than the old
+    # alpha48 world-space estimate. The integrated CG bike uses a different
+    # rider origin; hard-coded alpha48 coordinates left the shell visibly
+    # floating above and in front of the skull in the production RideScreen.
+    head_bone = rig.pose.bones.get("head")
+    if head_bone is None:
+        raise RuntimeError("rider head bone is missing")
+    head_top = rig.matrix_world @ head_bone.tail
+    helmet_offset = Vector((head_top.x, head_top.y - .0415,
+                            head_top.z + .025 - 1.795))
+    def helmet_point(point):
+        return tuple(Vector(point) + helmet_offset)
+    # Geometry in armature rest coordinates hugs the evaluated skull. It
+    # widens over the temples and tapers rearward, with a real lower rim.
     shell_mat = mat("Road Helmet | neutral warm white", (.72, .75, .74), .33)
     dark = mat("Road Helmet | vents and straps", (.035, .045, .05), .64)
     trim = mat("Road Helmet | edge trim", (.38, .41, .40), .5)
@@ -113,11 +126,11 @@ def make_helmet(rig):
             a=math.tau*i/n
             front=max(0.0,math.sin(a))
             rear=max(0.0,-math.sin(a))
-            x=.101*radial*math.cos(a)
+            x=helmet_offset.x + .101*radial*math.cos(a)
             # Match the weighted head centre (the source's head extends
             # farther forward than the neck/armature origin).
-            y=.0415 + .116*radial*math.sin(a)
-            z=zcrown-drop + .018*front*(t**2) - .006*rear*(t**2)
+            y=.0415 + helmet_offset.y + .116*radial*math.sin(a)
+            z=zcrown + helmet_offset.z - drop + .018*front*(t**2) - .006*rear*(t**2)
             verts.append((x,y,z))
     for j in range(rings-1):
         for i in range(n):
@@ -134,7 +147,8 @@ def make_helmet(rig):
     for i in range(65):
         a=math.tau*i/64
         front=max(0.0,math.sin(a)); rear=max(0.0,-math.sin(a))
-        ring.append((.101*math.cos(a),.0415+.116*math.sin(a),1.795-.105+.018*front-.006*rear))
+        ring.append((helmet_offset.x+.101*math.cos(a),.0415+helmet_offset.y+.116*math.sin(a),
+                     1.795+helmet_offset.z-.105+.018*front-.006*rear))
     tube("HelmetRim", ring, .003, trim, rig, sides=8)
     # Six flat dark vent slots conform to the upper shell instead of floating
     # spheres. Their vertices follow the same ellipsoidal surface equation.
@@ -144,18 +158,20 @@ def make_helmet(rig):
             idx+=1; patch=[]; sides=20
             for k in range(sides):
                 a=math.tau*k/sides
-                px=x+.0045*math.cos(a); py=y+.0105*math.sin(a)
-                t2=(px/.101)**2+((py-.0415)/.116)**2
-                t=math.sqrt(min(.98,t2)); angle=math.atan2((py-.0415)/.116,px/.101)
+                px=helmet_offset.x+x+.0045*math.cos(a); py=helmet_offset.y+y+.0105*math.sin(a)
+                t2=((px-helmet_offset.x)/.101)**2+((py-(.0415+helmet_offset.y))/.116)**2
+                t=math.sqrt(min(.98,t2)); angle=math.atan2((py-(.0415+helmet_offset.y))/.116,
+                                                              (px-helmet_offset.x)/.101)
                 front=max(0.0,math.sin(angle)); rear=max(0.0,-math.sin(angle))
-                pz=1.795-.105*(1.0-math.sqrt(max(0.0,1.0-t*t)))+.018*front*t*t-.006*rear*t*t+.0006
+                pz=1.795+helmet_offset.z-.105*(1.0-math.sqrt(max(0.0,1.0-t*t)))+.018*front*t*t-.006*rear*t*t+.0006
                 patch.append((px,py,pz))
             vent=mesh_obj(f"HelmetVent{idx}",patch,[tuple(range(sides))],dark,rig,smooth=True)
             vent["optional_accessory"] = True
     # Two continuous straps pass in front of each ear and meet under the chin.
     for side in (-1, 1):
-        pts=[(side*.084,.035,1.715),(side*.092,.004,1.675),
-             (side*.078,.025,1.615),(side*.050,.065,1.565),(0,.090,1.550)]
+        pts=[helmet_point((side*.084,.035,1.715)),helmet_point((side*.092,.004,1.675)),
+             helmet_point((side*.078,.025,1.615)),helmet_point((side*.050,.065,1.565)),
+             helmet_point((0,.090,1.550))]
         obj=tube("HelmetStrapL" if side<0 else "HelmetStrapR",pts,.004,dark,rig,sides=8)
         obj["optional_accessory"] = True
 
@@ -165,6 +181,166 @@ def refine_human_eyes(rig):
     for obj in list(bpy.data.objects):
         if obj.name.startswith(("RiderIris", "RiderPupil", "RiderEyeHighlight")):
             bpy.data.objects.remove(obj, do_unlink=True)
+
+
+def add_road_kit_garment_details(rig):
+    """Add small, skinned garment construction cues to the existing outfit.
+
+    The jersey and bib remain the authored skinned body/outfit; these narrow
+    trims make their edges and closure read as garments without simulation or
+    a second wardrobe system.
+    """
+    for obj in list(bpy.data.objects):
+        if obj.name.startswith(("RiderJersey", "RiderBib")):
+            bpy.data.objects.remove(obj, do_unlink=True)
+    human=bpy.data.objects.get("Human")
+    if human is None:
+        raise RuntimeError("weighted rider mesh is required for garment details")
+    zipper=mat("Road kit | zipper and seam",(.075,.012,.012),.88)
+    jersey_trim=mat("Road kit | collar and sleeve edge",(.12,.025,.02),.88)
+    bib_trim=mat("Road kit | short leg gripper",(.018,.022,.024),.88)
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    evaluated=human.evaluated_get(depsgraph)
+    evaluated_mesh=evaluated.to_mesh(preserve_all_data_layers=True,depsgraph=depsgraph)
+    vertices=evaluated_mesh.vertices
+    polygons=evaluated_mesh.polygons
+    local_to_world=evaluated.matrix_world
+    world_to_local=local_to_world.inverted()
+    tree=BVHTree.FromObject(human,depsgraph)
+    groups={group.index:group.name for group in human.vertex_groups}
+
+    def project(point):
+        local_point=world_to_local@Vector(point)
+        nearest=tree.find_nearest(local_point)
+        if nearest is None or nearest[2] < 0:
+            raise RuntimeError(f"could not project garment path to rider surface: {point}")
+        _,normal,polygon_index,distance=nearest
+        polygon=polygons[polygon_index]
+        indices=list(polygon.vertices)
+        best=None
+        for offset in range(1,len(indices)-1):
+            tri=indices[0],indices[offset],indices[offset+1]
+            a,b,c=(vertices[index].co for index in tri)
+            closest=geometry.closest_point_on_tri(local_point,a,b,c)
+            v0=b-a; v1=c-a; v2=closest-a
+            d00=v0.dot(v0); d01=v0.dot(v1); d11=v1.dot(v1)
+            d20=v2.dot(v0); d21=v2.dot(v1)
+            denom=max(1e-12,d00*d11-d01*d01)
+            wb=(d11*d20-d01*d21)/denom
+            wc=(d00*d21-d01*d20)/denom
+            bary=(max(0.,1-wb-wc),max(0.,wb),max(0.,wc))
+            candidate=(local_point-closest).length
+            if best is None or candidate<best[0]:
+                best=(candidate,tri,bary,closest)
+        if best is None:
+            raise RuntimeError("rider surface polygon could not be triangulated")
+        _,tri,bary,closest=best
+        weights={}
+        for vertex_index,factor in zip(tri,bary):
+            for assignment in vertices[vertex_index].groups:
+                name=groups.get(assignment.group)
+                if name and rig.data.bones.get(name) and rig.data.bones[name].use_deform:
+                    weights[name]=weights.get(name,0.)+factor*assignment.weight
+        weights=dict(sorted(weights.items(),key=lambda item:item[1],reverse=True)[:4])
+        total=sum(weights.values())
+        if total<=1e-8:
+            raise RuntimeError("garment detail projected to vertices without deform weights")
+        weights={name:value/total for name,value in weights.items()}
+        world_point=local_to_world@closest
+        world_normal=(local_to_world.to_3x3()@normal).normalized()
+        world_point+=world_normal*.0012
+        return world_point,world_normal,weights
+
+    def skin_detail(name,guide_points,material,radius,closed=False):
+        path=[]
+        for start,end in zip(guide_points,guide_points[1:]):
+            for step in range(4):
+                path.append(Vector(start).lerp(Vector(end),step/4))
+        path.append(Vector(guide_points[-1]))
+        samples=[project(point) for point in path]
+        centers=[sample[0] for sample in samples]
+        normals=[sample[1] for sample in samples]
+        verts=[]; faces=[]; ring_weights=[]; sides=6
+        for i,(center,normal,_,) in enumerate(samples):
+            tangent=(centers[(i+1)%len(centers)]-centers[(i-1)%len(centers)]).normalized() if closed else (
+                (centers[min(i+1,len(centers)-1)]-centers[max(i-1,0)]).normalized())
+            across=tangent.cross(normal)
+            if across.length<1e-5:
+                across=tangent.cross(Vector((1,0,0)))
+            across.normalize(); depth=normal.cross(across).normalized()
+            ring_weights.append(samples[i][2])
+            for side_index in range(sides):
+                angle=math.tau*side_index/sides
+                verts.append(center+radius*(across*math.cos(angle)+depth*math.sin(angle)))
+        segment_count=len(centers) if closed else len(centers)-1
+        for i in range(segment_count):
+            next_i=(i+1)%len(centers)
+            for side_index in range(sides):
+                a=i*sides+side_index; b=i*sides+(side_index+1)%sides
+                faces.append((a,b,next_i*sides+(side_index+1)%sides,next_i*sides+side_index))
+        if not closed:
+            faces.extend((tuple(reversed(range(sides))),
+                          tuple((len(centers)-1)*sides+i for i in range(sides))))
+        mesh=bpy.data.meshes.new(name+"Mesh")
+        rig_world_to_local=rig.matrix_world.inverted()
+        mesh.from_pydata([tuple(rig_world_to_local@vertex) for vertex in verts],[],faces)
+        mesh.materials.append(material)
+        for face in mesh.polygons: face.use_smooth=True
+        obj=bpy.data.objects.new(name,mesh); bpy.context.scene.collection.objects.link(obj)
+        obj.parent=rig; obj.matrix_parent_inverse=Matrix.Identity(4)
+        deform={}
+        for bone_name,weight in {name:value for ring in ring_weights for name,value in ring.items()}.items():
+            pose_bone=rig.pose.bones[bone_name]; data_bone=rig.data.bones[bone_name]
+            deform[bone_name]=pose_bone.matrix@data_bone.matrix_local.inverted()
+            obj.vertex_groups.new(name=bone_name)
+        for ring_index,weights in enumerate(ring_weights):
+            blended=Matrix(((0.,0.,0.,0.),(0.,0.,0.,0.),(0.,0.,0.,0.),(0.,0.,0.,0.)))
+            for bone_name,weight in weights.items(): blended+=deform[bone_name]*weight
+            inverse=blended.inverted()
+            for side_index in range(sides):
+                vertex_index=ring_index*sides+side_index
+                mesh.vertices[vertex_index].co=inverse@mesh.vertices[vertex_index].co
+                for bone_name,weight in weights.items():
+                    obj.vertex_groups[bone_name].add([vertex_index],weight,"REPLACE")
+        modifier=obj.modifiers.new("Garment skin","ARMATURE"); modifier.object=rig
+        obj["garment_detail"]=True
+
+    # Chest seam, collar ring, and zipped closure all project to the current
+    # skinned surface and inherit its interpolated bone weights.
+    skin_detail("RiderJerseyCollarSeam",
+                [(0.075*math.cos(math.tau*i/48),.13+.045*math.sin(math.tau*i/48),1.37)
+                 for i in range(49)],jersey_trim,.0012,closed=True)
+    skin_detail("RiderJerseyFrontZip",
+                [(0,.31,1.42),(0,.27,1.38),(0,.23,1.33),(0,.18,1.28),
+                 (0,.13,1.23),(0,.08,1.18)],zipper,.0009)
+    for side in ("L","R"):
+        sign=-1 if side=="L" else 1
+        sleeve=[]
+        for i in range(49):
+            angle=math.tau*i/48
+            sleeve.append((sign*(.19+.036*math.cos(angle)),.145+.036*math.sin(angle),1.25))
+        skin_detail(f"RiderJerseySleeveCuff{side}",sleeve,jersey_trim,.0009,closed=True)
+        upper=rig.pose.bones.get(f"upperleg02.{side}")
+        if upper is None:
+            raise RuntimeError(f"missing bib short attachment bone upperleg02.{side}")
+        start=rig.matrix_world@upper.head; end=rig.matrix_world@upper.tail
+        axis=(end-start).normalized(); across=axis.cross(Vector((0,0,1))).normalized()
+        depth=axis.cross(across).normalized(); center=start.lerp(end,.84)
+        band=[]
+        for i in range(49):
+            angle=math.tau*i/48
+            band.append(tuple(center+.065*(across*math.cos(angle)+depth*math.sin(angle))))
+        skin_detail(f"RiderBibLegGripper{side}",band,bib_trim,.001,closed=True)
+    details=[obj for obj in bpy.context.scene.objects if obj.get("garment_detail")]
+    if details:
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in details: obj.select_set(True)
+        bpy.context.view_layer.objects.active=details[0]
+        bpy.ops.object.join()
+        details[0].name="RiderRoadKitDetails"
+        details[0].data.name="RiderRoadKitDetailsMesh"
+        details[0]["garment_detail"]=True
+    evaluated.to_mesh_clear()
 
 
 def remove_mp_fb_leg_proxy_panels(human):
@@ -744,44 +920,8 @@ def refine_hood_grip_pose():
     print("PHOTO_GUIDED_GRIP_V1", "metacarpal adduction",adduction,"joint curl deltas radians",(.045,.07,.05))
 
 
-def refine_finger_spacing_from_probe():
-    """Apply one measured local-Z step to bring splayed fingertips inward."""
-    rig=bpy.data.objects.get("Human.rig")
-    if rig is None or rig.animation_data is None or rig.animation_data.action is None:
-        raise RuntimeError("preserved animated rider is missing")
-    action=rig.animation_data.action
-    if action.get("WodraPhotoGripFanTightenedV1",False): return
-    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
-    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
-              if strip.channelbag(slot)),None)
-    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
-    # probe_hand_adduction.py perturbs each metacarpal by ±0.1 rad and measures
-    # the weighted distal-finger fan with the evaluated Armature modifier. On
-    # the preserved current pose, this single step reduced the fan cost for
-    # each metacarpal on both hands. Apply only that local step; do not flip or
-    # replace the established grip angles, which would move several fingers
-    # away from their contact surfaces.
-    inward={"L":{1:-.1,2:.1,3:-.1,4:.1},"R":{1:-.1,2:.1,3:-.1,4:.1}}
-    changes=[]
-    for side in ("L","R"):
-        for finger,sign in inward[side].items():
-            path=f'pose.bones["metacarpal{finger}.{side}"].rotation_euler'
-            curve=next((fc for fc in bag.fcurves
-                        if fc.data_path==path and fc.array_index==2),None)
-            if curve is None or not curve.keyframe_points:
-                raise RuntimeError(f"missing metacarpal spacing channel: {path}")
-            delta=sign
-            for key in curve.keyframe_points:
-                key.co.y+=delta
-                key.handle_left.y+=delta
-                key.handle_right.y+=delta
-            curve.update(); changes.append((path,sign))
-    action["WodraPhotoGripFanTightenedV1"]=True
-    print("PHOTO_GRIP_FAN_DIRECTIONS",changes)
-
-
 def refine_finger_bends_in_bike_space():
-    """Add a small anatomically aligned curl around the bike-width axis."""
+    """Pose the existing finger bones with a modest, mirrored hood grip."""
     rig=bpy.data.objects.get("Human.rig")
     bike=bpy.data.objects.get("BicycleModel")
     if rig is None or bike is None or rig.animation_data is None or rig.animation_data.action is None:
@@ -792,12 +932,10 @@ def refine_finger_bends_in_bike_space():
     bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
               if strip.channelbag(slot)),None)
     if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
-    # A world-axis sweep on each weighted joint showed that one local Euler X
-    # assumption does not bend every mirrored MPFB digit in the same plane.
-    # Use a common bike-lateral flex axis, transformed through each evaluated
-    # bone, with small per-joint signs measured against the hood/lever surface.
-    # The index/middle fingers rest at the blade; ring/little fingers curl
-    # around the rubber. This is a 0.12 rad rotation only; no bone is scaled.
+    # The authored MPFB fingers have different local axes on mirrored digits.
+    # Transform the bike-lateral curl into each evaluated bone frame. Keep the
+    # thumb relaxed, the index and middle on the lever, and the other fingers
+    # lightly wrapped over the hood. Apply the same measured values each run.
     bend_signs={
         "L":{1:(0,1,1),2:(1,1,1),3:(1,1,1),4:(-1,-1,-1),5:(1,-1,-1)},
         "R":{1:(0,1,1),2:(-1,-1,-1),3:(1,1,1),4:(-1,-1,-1),5:(-1,-1,-1)},
@@ -806,6 +944,8 @@ def refine_finger_bends_in_bike_space():
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
     bike_lateral=(bike.matrix_world.to_3x3()@Vector((1,0,0))).normalized()
+    curl_by_finger={1:(.08,.05,.03),2:(.32,.26,.19),3:(.33,.27,.19),
+                    4:(.32,.26,.18),5:(.31,.25,.18)}
     changes=[]
     for side in ("L","R"):
         for finger,joint_signs in bend_signs[side].items():
@@ -824,7 +964,8 @@ def refine_finger_bends_in_bike_space():
                 current=bone.rotation_euler.copy()
                 current_world=(rig.matrix_world@bone.matrix).to_3x3().to_quaternion()
                 axis_local=current_world.inverted()@bike_lateral
-                corrected=current.to_quaternion()@Quaternion(axis_local,sign*.12)
+                curl=curl_by_finger[finger][joint-1]
+                corrected=current.to_quaternion()@Quaternion(axis_local,sign*curl)
                 corrected_euler=corrected.to_euler("XYZ",current)
                 deltas=[corrected_euler[axis]-current[axis] for axis in range(3)]
                 for axis,curve in enumerate(curves):
@@ -833,7 +974,7 @@ def refine_finger_bends_in_bike_space():
                         key.handle_left.y+=deltas[axis]
                         key.handle_right.y+=deltas[axis]
                     curve.update()
-                changes.append((name,sign,tuple(round(value,4) for value in deltas)))
+                changes.append((name,sign,curl,tuple(round(value,4) for value in deltas)))
                 bpy.context.view_layer.update()
     action["WodraBikeSpaceGripFlexV1"]=True
     print("BIKE_SPACE_GRIP_FLEX",changes)
@@ -1192,8 +1333,9 @@ def main():
     head_only="--head-only" in args
     skip_previews="--skip-previews" in args
     export_only="--export-only" in args
-    args=[arg for arg in args if arg not in ("--head-only","--skip-previews","--export-only")]
-    if len(args)!=3: raise SystemExit("expected output GLB, output blend, preview directory [--head-only] [--skip-previews] [--export-only]")
+    rider_only="--rider-only" in args
+    args=[arg for arg in args if arg not in ("--head-only","--skip-previews","--export-only","--rider-only")]
+    if len(args)!=3: raise SystemExit("expected output GLB, output blend, preview directory [--head-only] [--skip-previews] [--export-only] [--rider-only]")
     glb,blend,preview=map(Path,args)
     glb.parent.mkdir(parents=True,exist_ok=True); blend.parent.mkdir(parents=True,exist_ok=True)
     rig=bpy.data.objects.get("metarig") or next((o for o in bpy.data.objects if o.type=="ARMATURE"),None)
@@ -1202,14 +1344,16 @@ def main():
     print("HEAD_BONE",rig.data.bones.get("head"))
     if not export_only:
         make_helmet(rig)
+        add_road_kit_garment_details(rig)
         refine_human_eyes(rig)
         round_clothing_edges()
-        refine_brake_hoods()
-        refine_road_bike()
+        if not rider_only:
+            refine_brake_hoods()
+            refine_road_bike()
         refine_hood_grip_pose()
-        refine_finger_spacing_from_probe()
         refine_finger_bends_in_bike_space()
-        seat_hands_on_hood_shelves()
+        if not rider_only:
+            seat_hands_on_hood_shelves()
         extend_shoe_uppers(rig)
         # Keep the accepted authored MPFB hand pose and its existing animation
         # curves intact. The prior alpha48 pass overwrote every finger's XYZ Euler

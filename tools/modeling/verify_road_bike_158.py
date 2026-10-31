@@ -28,6 +28,13 @@ for i,node in enumerate(nodes):
     if name in indices: raise AssertionError(f"duplicate named node {name}")
     indices[name]=i
 
+def has_pedal_cycle():
+    # Blender may suffix duplicate Action datablocks on export (for example,
+    # `PedalCycle.001`). The production rider discovers the clip by this stable
+    # semantic name, so validate the same contract rather than exact spelling.
+    return any("PedalCycle" in (animation.get("name") or "")
+               for animation in doc.get("animations",[]))
+
 def require(name):
     assert name in indices,f"missing node {name}"
     return nodes[indices[name]]
@@ -44,7 +51,7 @@ if "RoadBikeFrontWheelAssembly" not in indices:
                  "RoadBikeDetail_Wodra_Stainless_Rotor_RearWheelSpin",
                  "RoadBikeDetail_Wodra_Machined_Alloy_BicycleModel"):
         require(name)
-assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),"weighted rider or pedal animation missing"
+assert len(doc.get("skins",[]))>=1 and has_pedal_cycle(),"weighted rider or pedal animation missing"
 
 world={}
 def visit(index,parent_matrix):
@@ -82,7 +89,7 @@ if "RoadBikeFrontWheelAssembly" in indices:
                        "Contact_LeftHood","Contact_RightHood","Contact_Saddle",
                        "Contact_LeftPedal","Contact_RightPedal")
     for name in imported_required: require(name)
-    assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),\
+    assert len(doc.get("skins",[]))>=1 and has_pedal_cycle(),\
         "weighted rider or pedal animation missing"
     front=origin("FrontWheelSpin"); rear=origin("RearWheelSpin"); bb=origin("CrankPivot")
     wheelbase=abs(front[2]-rear[2])

@@ -8,11 +8,13 @@ using Godot;
 public partial class RiderFinishingSceneReviewTest : Node
 {
     private Viewport? _captureViewport;
+    private bool _skipCaptures;
 
     public override async void _Ready()
     {
         try
         {
+            _skipCaptures = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_SKIP_CAPTURES") == "1";
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
             if (string.IsNullOrWhiteSpace(output))
@@ -98,6 +100,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             rider.SetProcess(false);
             var riderAnimation = Find<AnimationPlayer>(rider)
                 ?? throw new InvalidOperationException("Imported rider AnimationPlayer missing.");
+            var pedalClipName = riderAnimation.GetAnimationList()
+                .First(name => name.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase));
             riderAnimation.Seek(0.0, true);
             await Settle(2);
             foreach (var other in FindAll<CyclistVisual>(world)) other.Visible = other == rider;
@@ -116,6 +120,10 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             if (surfaceCount != 2 || eyeSurfaceCount != 1)
                 throw new InvalidOperationException($"Expected outfit and preserved eye materials; surfaces={surfaceCount}, eyeSurfaces={eyeSurfaceCount}.");
+            var garmentDetails = Find<MeshInstance3D>(rider, "RiderRoadKitDetails")
+                ?? throw new InvalidOperationException("Skinned jersey and bib finishing details are missing.");
+            if ((garmentDetails.Mesh?.GetSurfaceCount() ?? 0) < 3)
+                throw new InvalidOperationException("Expected collar/zip, sleeve, and bib-gripper detail materials.");
             var headIndex = skeleton.FindBone("head");
             if (headIndex < 0) throw new InvalidOperationException("Imported head bone missing.");
             GD.Print($"[RiderFinishingSceneReview] Human local bounds={human.GetAabb()}, node={human.Transform}, headBone={skeleton.GetBoneGlobalPose(headIndex)}");
@@ -126,6 +134,15 @@ public partial class RiderFinishingSceneReviewTest : Node
             var bikeSide = bikeForward.Cross(Vector3.Up).Normalized();
             var savedFov = camera.Fov;
             var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
+            camera.Fov = 42f;
+            camera.GlobalPosition = bikeCenter + bikeSide * 2.65f + bikeForward * .08f + Vector3.Up * .54f;
+            camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "fit-rider-side-full.png");
+            camera.GlobalPosition = bikeCenter + bikeSide * 1.55f + bikeForward * 2.05f + Vector3.Up * .92f;
+            camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "fit-rider-front-three-quarter-full.png");
             rider.SetRiderVisible(false);
             camera.Fov = 31f;
             camera.GlobalPosition = bikeCenter + bikeSide * 2.05f + Vector3.Up * .06f;
@@ -164,6 +181,64 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Left imported hood contact missing.");
             var rightHood = Find<Node3D>(rider, "Contact_RightHood")
                 ?? throw new InvalidOperationException("Right imported hood contact missing.");
+            var saddle = Find<Node3D>(rider, "Contact_Saddle")
+                ?? throw new InvalidOperationException("Imported saddle contact missing.");
+            var leftPedal = Find<Node3D>(rider, "Contact_LeftPedal")
+                ?? throw new InvalidOperationException("Imported left pedal contact missing.");
+            var rightPedal = Find<Node3D>(rider, "Contact_RightPedal")
+                ?? throw new InvalidOperationException("Imported right pedal contact missing.");
+            var leftPalmBones = Enumerable.Range(1, 4).Select(i => skeleton.FindBone($"metacarpal{i}.L")).ToArray();
+            var rightPalmBones = Enumerable.Range(1, 4).Select(i => skeleton.FindBone($"metacarpal{i}.R")).ToArray();
+            var leftFootBone = skeleton.FindBone("foot.L");
+            var rightFootBone = skeleton.FindBone("foot.R");
+            var pelvisBones = new[] { skeleton.FindBone("pelvis.L"), skeleton.FindBone("pelvis.R") }.Where(i => i >= 0).ToArray();
+            if (leftPalmBones.Any(i => i < 0) || rightPalmBones.Any(i => i < 0) ||
+                leftFootBone < 0 || rightFootBone < 0 || pelvisBones.Length == 0)
+                throw new InvalidOperationException("Rider hand, pelvis, or pedal-fit bones are missing.");
+            var maxLeftPalm = 0f;
+            var maxRightPalm = 0f;
+            var maxPelvis = 0f;
+            var minFootTravel = float.PositiveInfinity;
+            var maxFootTravel = 0f;
+            var leftFootAtStart = Vector3.Zero;
+            var rightFootAtStart = Vector3.Zero;
+            var clipLength = riderAnimation.GetAnimation(pedalClipName).Length;
+            // Sample the entire imported cadence cycle, rather than relying on
+            // a single still pose that could hide hand or pedal drift.
+            const int fitSamples = 72;
+            for (var sample = 0; sample < fitSamples; sample++)
+            {
+                riderAnimation.Seek(clipLength * sample / fitSamples, true);
+                await Settle(1);
+                var leftPalm = leftPalmBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin).Aggregate(Vector3.Zero, (sum, p) => sum + p) / leftPalmBones.Length;
+                var rightPalm = rightPalmBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin).Aggregate(Vector3.Zero, (sum, p) => sum + p) / rightPalmBones.Length;
+                var leftFoot = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(leftFootBone).Origin;
+                var rightFoot = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightFootBone).Origin;
+                var pelvis = pelvisBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin)
+                    .Aggregate(Vector3.Zero, (sum, p) => sum + p) / pelvisBones.Length;
+                maxLeftPalm = Math.Max(maxLeftPalm, leftPalm.DistanceTo(leftHood.GlobalPosition));
+                maxRightPalm = Math.Max(maxRightPalm, rightPalm.DistanceTo(rightHood.GlobalPosition));
+                maxPelvis = Math.Max(maxPelvis, pelvis.DistanceTo(saddle.GlobalPosition));
+                if (sample == 0)
+                {
+                    leftFootAtStart = leftFoot;
+                    rightFootAtStart = rightFoot;
+                }
+                else
+                {
+                    minFootTravel = Math.Min(minFootTravel, Math.Min(leftFoot.DistanceTo(leftFootAtStart), rightFoot.DistanceTo(rightFootAtStart)));
+                    maxFootTravel = Math.Max(maxFootTravel, Math.Max(leftFoot.DistanceTo(leftFootAtStart), rightFoot.DistanceTo(rightFootAtStart)));
+                }
+            }
+            GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
+            if (maxLeftPalm > .045f || maxRightPalm > .045f)
+                throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
+            if (maxPelvis > .18f)
+                throw new InvalidOperationException($"Pelvis left the saddle fit envelope ({maxPelvis:F3}m).");
+            if (maxFootTravel < .05f)
+                throw new InvalidOperationException("PedalCycle did not animate the feet through the full cycle.");
+            riderAnimation.Seek(0.0, true);
+            await Settle(2);
             camera.Fov = 32f;
             var wasHumanVisible = human.Visible;
             human.Visible = false;
@@ -289,6 +364,7 @@ public partial class RiderFinishingSceneReviewTest : Node
 
     private async Task Save(string root, string name)
     {
+        if (_skipCaptures) return;
         // Wait for the next tree frame; FramePostDraw may stop firing after
         // the production HUD is hidden in the headless renderer.
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
