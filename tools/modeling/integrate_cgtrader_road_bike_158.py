@@ -13,6 +13,7 @@ import math
 from pathlib import Path
 
 import bpy
+import bmesh
 from mathutils import Matrix, Vector
 
 
@@ -25,11 +26,10 @@ Z_OFFSET = WHEEL_Z - SOURCE_WHEEL_Z
 
 FRONT_WHEEL_OBJECTS = {
     "Front_hub", "Front_rim.001", "Front_spokes", "Front_tire.001",
-    "gigantDecal2.003",
 }
 REAR_WHEEL_OBJECTS = {
     "Rear_hub", "Rear_rim.001", "Rear_spokes", "Rear_tire",
-    "Cassette", "gigantDecal2.002",
+    "Cassette",
 }
 CRANK_OBJECTS = {
     "Cranks", "Pedals", "Front_chainring", "Crank_axle", "Crank_bolts",
@@ -78,6 +78,34 @@ def append_source_meshes(source: Path) -> list[bpy.types.Object]:
         # CGTrader source uses metres, X lateral, +Y forward and +Z up.
         obj.matrix_world = Matrix.Translation((0.0, 0.0, Z_OFFSET)) @ obj.matrix_world
         result.append(obj)
+    # When linking data from the owner archive into the canonical rider file,
+    # Blender rebases the source's relative //Textures paths to the rider file.
+    # Resolve image files against the extracted source archive before packing.
+    source_materials = {slot.material for obj in result for slot in obj.material_slots
+                        if slot.material}
+    source_images = {node.image for material in source_materials
+                     if material.use_nodes for node in material.node_tree.nodes
+                     if node.type == "TEX_IMAGE" and node.image}
+    for image in source_images:
+        if image.source != "FILE":
+            continue
+        image_stem = Path(image.name).stem.casefold()
+        candidate = next((path for path in source.parent.rglob("*")
+                          if path.is_file() and path.stem.casefold() == image_stem), None)
+        if candidate:
+            loaded = bpy.data.images.load(str(candidate), check_existing=False)
+            loaded.name = image.name
+            for material in source_materials:
+                if not material.use_nodes:
+                    continue
+                for node in material.node_tree.nodes:
+                    if node.type == "TEX_IMAGE" and node.image == image:
+                        node.image = loaded
+            if image.users == 0:
+                bpy.data.images.remove(image)
+            print("RESOLVE_SOURCE_TEXTURE", loaded.name, candidate)
+        elif not image.has_data:
+            print("SOURCE_TEXTURE_NOT_FOUND", image.name, image.filepath)
     return result
 
 
@@ -92,14 +120,121 @@ def decimate(obj: bpy.types.Object, ratio: float) -> None:
     print("DECIMATE", obj.name, before, "to", len(obj.data.polygons), "ratio", ratio)
 
 
+def remove_brand_decals(meshes: list[bpy.types.Object]) -> list[bpy.types.Object]:
+    """Remove the source's separate GIGANT logo/decal meshes, keeping the bike unbranded."""
+    retained = []
+    removed = []
+    for obj in meshes:
+        branded = "gigant" in obj.name.casefold() or any(
+            "gigant" in slot.material.name.casefold()
+            for slot in obj.material_slots if slot.material
+        )
+        if branded:
+            removed.append(obj.name)
+            bpy.data.objects.remove(obj, do_unlink=True)
+        else:
+            retained.append(obj)
+    if removed:
+        print("REMOVE_BRANDED_DECALS", ", ".join(sorted(removed)))
+    # Do not carry orphaned logo-only maps into the editable result/export.
+    for material in list(bpy.data.materials):
+        if "gigant" in material.name.casefold() and material.users == 0:
+            bpy.data.materials.remove(material)
+    for image in list(bpy.data.images):
+        if "gigant" in image.name.casefold() and image.users == 0:
+            bpy.data.images.remove(image)
+    return retained
+
+
+def trim_front_cable_loops(obj: bpy.types.Object) -> None:
+    """Keep the tight cockpit section and the frame-following cable run.
+
+    The source combines four disconnected, artist-authored cable meshes in one
+    object. Two are large free loops at the cockpit; remove those loose islands
+    instead of synthesizing replacement tubes. Retain the long frame-following
+    run and the short control-end run.
+    """
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    components = []
+    unseen = set(bm.verts)
+    while unseen:
+        seed = unseen.pop()
+        stack = [seed]
+        component = [seed]
+        while stack:
+            current = stack.pop()
+            for edge in current.link_edges:
+                neighbor = edge.other_vert(current)
+                if neighbor in unseen:
+                    unseen.remove(neighbor)
+                    component.append(neighbor)
+                    stack.append(neighbor)
+        components.append(component)
+
+    remove = set()
+    for component in components:
+        points = [obj.matrix_world @ vertex.co for vertex in component]
+        min_y = min(point.y for point in points)
+        max_y = max(point.y for point in points)
+        # The two loose front loops span the steering area but do not reach
+        # along the frame to the rear brake/shift hardware.
+        is_free_front_loop = min_y > -0.45 and (max_y - min_y) > 0.45
+        if is_free_front_loop:
+            remove.update(component)
+            print("REMOVE_OVERSIZED_CABLE_LOOP", len(component),
+                  "y_bounds", round(min_y, 3), round(max_y, 3))
+    if remove:
+        bmesh.ops.delete(bm, geom=list(remove), context="VERTS")
+        bm.to_mesh(obj.data)
+        obj.data.update()
+    bm.free()
+
+
+def subdue_bar_tape_material(staging_directory: Path) -> None:
+    """Retain the source wrap texture while reducing its high-contrast striping."""
+    material = bpy.data.materials.get("tape")
+    if not material or not material.use_nodes:
+        return
+    nodes = material.node_tree.nodes
+    color_texture = next((node for node in nodes if node.type == "TEX_IMAGE"
+                          and node.image and "tape_color" in node.image.name.casefold()), None)
+    if color_texture and color_texture.image:
+        image = color_texture.image
+        pixels = list(image.pixels[:])
+        # Bake a charcoal bias into the artist's wrap map. glTF export maps one
+        # image directly to base color and ignores Blender mix nodes, so this
+        # keeps the restrained result identical in Blender and Godot.
+        for index in range(0, len(pixels), 4):
+            for channel, base in enumerate((0.055, 0.060, 0.070)):
+                pixels[index + channel] = pixels[index + channel] * 0.44 + base * 0.56
+        image.pixels[:] = pixels
+        staging_directory.mkdir(parents=True, exist_ok=True)
+        image.filepath_raw = str(staging_directory / "WodraBarTape.png")
+        image.file_format = "PNG"
+        image.save()
+        image.pack()
+        print("SUBDUE_TAPE_TEXTURE", image.name, tuple(image.size))
+    bump = next((node for node in nodes if node.type == "BUMP"), None)
+    if bump:
+        # The source's repeated wrap relief is strongly exaggerated at cockpit
+        # close-up distance. Keep the artist-authored diagonal seams in color,
+        # but flatten the bump so they read as tape overlaps rather than deep ribs.
+        bump.inputs["Strength"].default_value = min(bump.inputs["Strength"].default_value, 0.045)
+        bump.inputs["Distance"].default_value = min(bump.inputs["Distance"].default_value, 0.008)
+
+
 def simplify_textures() -> None:
     # Keep the detailed tire color map at 2K; non-color/utility maps need less.
     limits = {"Tire_Color": 2048, "Tire_Bump": 1024, "Tire_Roughness": 1024}
     for image in list(bpy.data.images):
-        if image.source != "FILE" or not image.size[0] or not image.size[1]:
+        if ("gigant" in image.name.casefold() or image.source != "FILE"
+                or not image.size[0] or not image.size[1]):
             continue
         longest = max(image.size)
-        limit = limits.get(image.name, 1024)
+        # Blender appends .001 when the external model reuses an image name
+        # already present in the canonical rider file.
+        limit = limits.get(Path(image.name).stem.split(".")[0], 1024)
         if longest > limit:
             scale = limit / longest
             image.scale(max(1, round(image.size[0] * scale)),
@@ -176,17 +311,29 @@ def optimize_asset(meshes: list[bpy.types.Object]) -> None:
     # triangles. Ratios preserve the silhouette while avoiding unnecessary
     # tessellation; cockpit controls and wheel silhouettes remain untouched.
     ratios = {
-        "Brake_caliper_front": 0.08,
-        "Brake_caliper_rear": 0.08,
-        "Brake_bolts": 0.08,
-        "Cassette": 0.18,
-        "Chain": 0.32,
-        "Front_spokes": 0.65,
-        "Rear_spokes": 0.65,
-        "Seat": 0.32,
-        "Seatclamp": 0.45,
-        "Seatclamp_bolts": 0.45,
-        "Headtube_spacers": 0.45,
+        # The native model contains duplicated, heavily subdivided microdetail.
+        # These ratios keep the object silhouettes and component layout while
+        # removing oversampling that is not visible at Wodra riding distances.
+        "Brake_caliper_front": 0.025,
+        "Brake_caliper_rear": 0.025,
+        "Brake_bolts": 0.05,
+        "Cassette": 0.08,
+        "Chain": 0.08,
+        "Front_spokes": 0.28,
+        "Rear_spokes": 0.28,
+        "Seat": 0.20,
+        "Seatclamp": 0.25,
+        "Seatclamp_bolts": 0.20,
+        "Headtube_spacers": 0.25,
+        "welds": 0.30,
+        "Steam": 0.25,
+        "Pedals": 0.25,
+        "Crank_spacers": 0.20,
+        "Crank_axle": 0.25,
+        "Front_chainring": 0.40,
+        "Cranks": 0.55,
+        "Derailleur.001": 0.30,
+        "Front_derailleur": 0.35,
     }
     for obj in meshes:
         ratio = ratios.get(obj.name)
@@ -213,6 +360,11 @@ def integrate(source: Path, rider: Path, output: Path) -> None:
     pivots["CrankPivot"].location = tuple(BB + Vector((0.0, 0.0, Z_OFFSET)))
 
     meshes = append_source_meshes(source)
+    meshes = remove_brand_decals(meshes)
+    cable_mesh = next((obj for obj in meshes if obj.name == "Lines.001"), None)
+    if cable_mesh:
+        trim_front_cable_loops(cable_mesh)
+    subdue_bar_tape_material(output.parent)
     simplify_textures()
     optimize_asset(meshes)
 

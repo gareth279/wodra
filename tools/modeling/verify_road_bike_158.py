@@ -5,6 +5,7 @@ Usage: python tools/modeling/verify_road_bike_158.py [path/to/WodraCyclist.glb]
 from __future__ import annotations
 import json
 import math
+import re
 import struct
 import sys
 from pathlib import Path
@@ -123,12 +124,20 @@ if "RoadBikeFrontWheelAssembly" in indices:
     materials={m.get("name","") for m in doc.get("materials",[])}
     assert "tape" in materials and "levers" in materials,\
         "artist-authored bar tape and control materials were not exported"
+    asset_labels = " ".join(
+        [n.get("name", "") for n in nodes] +
+        [m.get("name", "") for m in doc.get("materials", [])] +
+        [i.get("name", "") for i in doc.get("images", [])]
+    )
+    assert not re.search(r"gigant", asset_labels, re.IGNORECASE),\
+        "branded GIGANT geometry/material/image remains in the runtime asset"
     triangles=sum(accessors[p["indices"]]["count"]//3
                   for mesh in meshes for p in mesh.get("primitives",[]) if "indices" in p)
-    assert triangles<2_100_000,f"optimized artist bike exceeded mesh budget: {triangles} triangles"
+    assert triangles<1_100_000,f"optimized artist bike regressed toward the original heavy import: {triangles} triangles"
     assert len(meshes)<40,f"imported production bicycle has too many render meshes: {len(meshes)}"
     print(f"ROAD_BIKE_158 IMPORTED ASSET PASS: {wheelbase*1000:.0f} mm wheelbase; "
           f"700C tire geometry grounded; source crank/pedal contacts; bilateral cockpit targets; "
+          f"unbranded imported geometry; "
           f"{triangles:,} triangles / {len(meshes)} render meshes")
     raise SystemExit(0)
 
