@@ -763,13 +763,17 @@ phase fit samples, then `RiderMotionReviewTest.tscn` for cadence, steering,
 coasting, and restart. The fit test verifies that the palm centers remain
 within 45 mm of each hood target, the pelvis remains within 180 mm of the
 saddle target, and the feet animate through a full cadence cycle. These
-measurements establish fit and motion continuity, not anatomical finger-to-
-lever contact.
+measurements establish fit and motion continuity, not finger-to-hood contact.
+For the latter, run `verify_hood_finger_pose_159.py` on the final editable
+blend with Blender 5.2. It evaluates all three phalanges of both thumbs and
+all eight fingers over every baked `PedalCycle` frame against the integrated
+cockpit surface.
 
 The production captures and matched baseline are in `artifacts/issue159/`.
 The new rider has a forward cycling posture compared with the prior upright
-pose. The existing low-poly MPFB fingers still appear more open than the
-owner's closed, relaxed hood grip in close-up. Those production captures are
-included for direct owner visual review; this implementation does not claim
-perfect hand anatomy or physical riding acceptance. The bicycle remains the
-accepted #158 model and its geometry is unchanged by this task.
+pose. The photo-guided grip correction bakes each weighted finger chain onto
+the appropriate side of the hood, correcting the mirrored hinge-axis issue
+that left fingers extended in the earlier pose. Close production captures and
+the motion clip are included for owner visual review. The hand mesh remains
+stylised and physical riding acceptance is still required. The bicycle remains
+the accepted #158 model and its geometry is unchanged by this task.

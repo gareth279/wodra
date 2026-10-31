@@ -884,21 +884,21 @@ def refine_road_cockpit(bike):
 
 
 def refine_hood_grip_pose():
-    """Make a small symmetric relaxed grip correction using the photographed hood posture."""
+    """Reduce the palm's MCP fan without changing the hand or wrist fit."""
     rig=bpy.data.objects.get("Human.rig")
     if rig is None or rig.animation_data is None or rig.animation_data.action is None:
         raise RuntimeError("preserved animated rider is missing")
     action=rig.animation_data.action
-    if action.get("WodraPhotoGuidedGripV1",False): return
+    if action.get("WodraPhotoGuidedGripV2",False): return
     slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
     bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
               if strip.channelbag(slot)),None)
     if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
-    # The source action already contains the measured MPFB hand pose. This
-    # correction only reduces the visible MCP fan a few degrees and closes the
-    # fingers another 3–5 degrees at each joint. It does not scale bones,
-    # change topology or move the wrist/arm anchors.
-    adduction={"L":{1:-3,2:-2,3:3,4:3},"R":{1:3,2:-2,3:3,4:-3}}
+    # The source action already contains the measured MPFB hand pose. Narrow
+    # its open metacarpal fan using the previously measured 8–10 degree range;
+    # the individual phalanges are then solved to separate hood contact points.
+    adduction={"L":{1:-8,2:-10,3:10,4:10},
+               "R":{1:8,2:-10,3:10,4:-10}}
     for side in ("L","R"):
         for digit,degrees in adduction[side].items():
             path=f'pose.bones["metacarpal{digit}.{side}"].rotation_euler'
@@ -908,76 +908,144 @@ def refine_hood_grip_pose():
             for key in curve.keyframe_points:
                 key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
             curve.update()
-        for finger in range(1,6):
-            for joint,delta in ((1,.045),(2,.07),(3,.05)):
-                path=f'pose.bones["finger{finger}-{joint}.{side}"].rotation_euler'
-                curve=next((fc for fc in bag.fcurves if fc.data_path==path and fc.array_index==0),None)
-                if curve is None: raise RuntimeError(f"missing finger flex channel: {path}")
-                for key in curve.keyframe_points:
-                    key.co.y+=delta; key.handle_left.y+=delta; key.handle_right.y+=delta
-                curve.update()
-    action["WodraPhotoGuidedGripV1"]=True
-    print("PHOTO_GUIDED_GRIP_V1", "metacarpal adduction",adduction,"joint curl deltas radians",(.045,.07,.05))
+    action["WodraPhotoGuidedGripV2"]=True
+    print("PHOTO_GUIDED_GRIP_V2", "metacarpal adduction",adduction)
 
 
-def refine_finger_bends_in_bike_space():
-    """Pose the existing finger bones with a modest, mirrored hood grip."""
+def bake_hood_finger_contacts():
+    """Bake both weighted finger chains onto real surfaces of the cockpit.
+
+    The MPFB skeleton has different rolled hinge axes across mirrored digits,
+    so a shared Euler curl left several fingers pointing away from the hood.
+    Instead, solve each three-phalanx chain to a measured point on the imported
+    cockpit mesh and bake only those finger bones into the existing action.
+    Wrist, arm, torso, and bicycle transforms are untouched.
+    """
     rig=bpy.data.objects.get("Human.rig")
     bike=bpy.data.objects.get("BicycleModel")
     if rig is None or bike is None or rig.animation_data is None or rig.animation_data.action is None:
         raise RuntimeError("preserved animated rider and bicycle are required")
     action=rig.animation_data.action
-    if action.get("WodraBikeSpaceGripFlexV1",False): return
-    slot=next((slot for slot in action.slots if slot.identifier=="OB"+rig.name),action.slots[0])
-    bag=next((strip.channelbag(slot) for layer in action.layers for strip in layer.strips
-              if strip.channelbag(slot)),None)
-    if bag is None: raise RuntimeError("PedalCycle channel bag is missing")
-    # The authored MPFB fingers have different local axes on mirrored digits.
-    # Transform the bike-lateral curl into each evaluated bone frame. Keep the
-    # thumb relaxed, the index and middle on the lever, and the other fingers
-    # lightly wrapped over the hood. Apply the same measured values each run.
-    bend_signs={
-        "L":{1:(0,1,1),2:(1,1,1),3:(1,1,1),4:(-1,-1,-1),5:(1,-1,-1)},
-        "R":{1:(0,1,1),2:(-1,-1,-1),3:(1,1,1),4:(-1,-1,-1),5:(-1,-1,-1)},
-    }
+    if action.get("WodraHoodFingerContactV1",False): return
+    cockpit=bpy.data.objects.get("RoadBikeCockpit")
+    if cockpit is None or cockpit.type!="MESH":
+        raise RuntimeError("the imported RoadBikeCockpit mesh is required for finger contact fitting")
+    # Seeds identify the grip surface on the accepted CGTrader hood/control
+    # assembly. The nearest point is sampled from the actual cockpit mesh;
+    # the small normal offset keeps the skinned finger volume tangent instead
+    # of embedding its bone centreline in the surface.
+    # The thumb opposes the four fingers across the hood. The previous seeds
+    # put every fingertip on its inboard face, making the hand read as an open
+    # drape. These points place the thumb on the inboard side and the fingers
+    # around the outboard edge, descending under the control body.
+    contact_seeds={1:(.205,.515,.910),2:(.231,.522,.910),
+                   3:(.236,.520,.880),4:(.241,.520,.860),5:(.245,.520,.875)}
+    surface_offset=.0045
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    cockpit_eval=cockpit.evaluated_get(depsgraph)
+    cockpit_bvh=BVHTree.FromObject(cockpit_eval,depsgraph,epsilon=0.0)
+    if cockpit_bvh is None: raise RuntimeError("could not build a surface tree for RoadBikeCockpit")
+    world_to_cockpit=cockpit.matrix_world.inverted()
+    normal_to_world=cockpit.matrix_world.to_3x3().inverted().transposed()
+    targets={}
+    target_objects=[]
+    for side in ("L","R"):
+        side_sign=-1.0 if side=="L" else 1.0
+        for digit,(x,y,z) in contact_seeds.items():
+            seed_world=bike.matrix_world@Vector((side_sign*x,y,z))
+            nearest=cockpit_bvh.find_nearest(world_to_cockpit@seed_world)
+            if nearest is None: raise RuntimeError(f"could not sample cockpit surface for {side} finger {digit}")
+            surface_world=cockpit.matrix_world@nearest[0]
+            normal_world=(normal_to_world@nearest[1]).normalized()
+            target_position=surface_world+normal_world*surface_offset
+            target=bpy.data.objects.new(f"WodraGripTarget_{side}_{digit}",None)
+            bpy.context.scene.collection.objects.link(target)
+            target.location=target_position
+            target.empty_display_type="SPHERE"
+            target.hide_render=True
+            target_objects.append(target)
+            targets[(side,digit)]=target_position
+
+            distal=rig.pose.bones.get(f"finger{digit}-3.{side}")
+            if distal is None: raise RuntimeError(f"missing distal phalanx finger{digit}-3.{side}")
+            if any(constraint.type=="IK" for constraint in distal.constraints):
+                raise RuntimeError(f"unexpected pre-existing IK constraint on finger{digit}-3.{side}")
+            ik=distal.constraints.new("IK")
+            ik.name="Temporary baked hood contact"
+            ik.target=target
+            ik.chain_count=3
+            ik.iterations=64
+            ik.use_stretch=False
+            ik.use_tail=True
+
     scene=bpy.context.scene
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
-    bike_lateral=(bike.matrix_world.to_3x3()@Vector((1,0,0))).normalized()
-    curl_by_finger={1:(.08,.05,.03),2:(.32,.26,.19),3:(.33,.27,.19),
-                    4:(.32,.26,.18),5:(.31,.25,.18)}
-    changes=[]
-    for side in ("L","R"):
-        for finger,joint_signs in bend_signs[side].items():
-            for joint,sign in enumerate(joint_signs,1):
-                if sign==0: continue
-                name=f"finger{finger}-{joint}.{side}"
-                bone=rig.pose.bones.get(name)
-                if bone is None or bone.rotation_mode!="XYZ":
-                    raise RuntimeError(f"expected XYZ deformation bone {name}")
-                path=f'pose.bones["{name}"].rotation_euler'
-                curves=[next((fc for fc in bag.fcurves
-                              if fc.data_path==path and fc.array_index==axis),None)
-                        for axis in range(3)]
-                if any(curve is None or not curve.keyframe_points for curve in curves):
-                    raise RuntimeError(f"incomplete finger rotation channels: {path}")
-                current=bone.rotation_euler.copy()
-                current_world=(rig.matrix_world@bone.matrix).to_3x3().to_quaternion()
-                axis_local=current_world.inverted()@bike_lateral
-                curl=curl_by_finger[finger][joint-1]
-                corrected=current.to_quaternion()@Quaternion(axis_local,sign*curl)
-                corrected_euler=corrected.to_euler("XYZ",current)
-                deltas=[corrected_euler[axis]-current[axis] for axis in range(3)]
-                for axis,curve in enumerate(curves):
-                    for key in curve.keyframe_points:
-                        key.co.y+=deltas[axis]
-                        key.handle_left.y+=deltas[axis]
-                        key.handle_right.y+=deltas[axis]
-                    curve.update()
-                changes.append((name,sign,curl,tuple(round(value,4) for value in deltas)))
-                bpy.context.view_layer.update()
-    action["WodraBikeSpaceGripFlexV1"]=True
-    print("BIKE_SPACE_GRIP_FLEX",changes)
+    pose_bones=[rig.pose.bones[f"finger{digit}-{joint}.{side}"]
+                for side in ("L","R") for digit in range(1,6) for joint in (1,2,3)]
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.ops.object.select_all(action="DESELECT")
+    rig.select_set(True)
+    bpy.context.view_layer.objects.active=rig
+    bpy.ops.object.mode_set(mode="POSE")
+    for bone in rig.pose.bones: bone.select=False
+    for bone in pose_bones: bone.select=True
+    start,end=scene.frame_start,scene.frame_end
+    bpy.ops.nla.bake(frame_start=start,frame_end=end,step=1,only_selected=True,
+                     visual_keying=True,clear_constraints=True,use_current_action=True,
+                     bake_types={"POSE"})
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for target in target_objects: bpy.data.objects.remove(target,do_unlink=True)
+    scene.frame_set(start)
+    bpy.context.view_layer.update()
+
+    worst=0.0; worst_contact=None; minimum_bend=math.inf; minimum_bend_contact=None
+    for frame in range(start,end+1):
+        scene.frame_set(frame)
+        bpy.context.view_layer.update()
+        for side in ("L","R"):
+            bike_side=-1.0 if side=="L" else 1.0
+            thumb_tip=None
+            for digit in range(1,6):
+                chain=[rig.pose.bones[f"finger{digit}-{joint}.{side}"] for joint in (1,2,3)]
+                points=[rig.matrix_world@bone.head for bone in chain]
+                points.append(rig.matrix_world@chain[-1].tail)
+                directions=[(points[index+1]-points[index]).normalized() for index in range(3)]
+                bend=sum(math.degrees(directions[index].angle(directions[index+1])) for index in range(2))
+                if bend<minimum_bend:
+                    minimum_bend=bend; minimum_bend_contact=(frame,side,digit)
+                if bend<30.0:
+                    raise RuntimeError(f"finger {digit}.{side} is too straight to grip the hood at frame {frame}: {bend:.1f} degrees")
+                tip=points[-1]
+                if digit==1:
+                    thumb_tip=tip
+                    error=(tip-targets[(side,digit)]).length
+                    if error>worst:
+                        worst=error; worst_contact=(frame,side,digit)
+                    continue
+                target=targets[(side,digit)]
+                error=(tip-target).length
+                if error>worst:
+                    worst=error; worst_contact=(frame,side,digit)
+            if thumb_tip is None:
+                raise RuntimeError(f"thumb chain is missing for {side}")
+            # On each hand the thumb must finish on the inboard side of all
+            # four fingers. This catches mirrored/opposed-hand regressions.
+            signed_thumb_x=(bike.matrix_world.inverted()@thumb_tip).x*bike_side
+            for digit in range(2,6):
+                tip=rig.matrix_world@rig.pose.bones[f"finger{digit}-3.{side}"].tail
+                signed_finger_x=(bike.matrix_world.inverted()@tip).x*bike_side
+                if signed_finger_x<signed_thumb_x+.005:
+                    raise RuntimeError(f"thumb no longer opposes finger {digit}.{side} at frame {frame}")
+    scene.frame_set(start)
+    bpy.context.view_layer.update()
+    if worst>.012:
+        raise RuntimeError(f"finger tips leave the hood contact surfaces during PedalCycle: {worst:.4f} m at {worst_contact}")
+    action=rig.animation_data.action
+    action["WodraHoodFingerContactV1"]=True
+    print("BAKED_HOOD_FINGER_CONTACTS", "fingers",len(pose_bones),"frames",start,end,
+          "max contact error m",round(worst,5),"at",worst_contact,"minimum total bend degrees",
+          round(minimum_bend,2),"at",minimum_bend_contact,"surface offset m",surface_offset)
 
 
 def seat_hands_on_hood_shelves():
@@ -1351,15 +1419,12 @@ def main():
             refine_brake_hoods()
             refine_road_bike()
         refine_hood_grip_pose()
-        refine_finger_bends_in_bike_space()
         if not rider_only:
             seat_hands_on_hood_shelves()
+        bake_hood_finger_contacts()
         extend_shoe_uppers(rig)
-        # Keep the accepted authored MPFB hand pose and its existing animation
-        # curves intact. The prior alpha48 pass overwrote every finger's XYZ Euler
-        # rotation with an assumed common local X curl and translated the wrist
-        # root an extra 30 mm. Inspection showed that this authored stage, before
-        # export, pinched the webbing and created sharp knuckle/wrist deformation.
+        # Only the 30 finger-phalanx tracks are baked to cockpit surface contacts;
+        # the accepted arm, wrist, torso, legs, and bicycle animation remain intact.
         if not skip_previews:
             inspect_and_render(preview,rig)
             if not head_only:

@@ -29,14 +29,49 @@ aspect ratios differ.
 
 ## Hood grip close-ups
 
-These are close production captures of each hand throughout the imported
-`PedalCycle` pose. The palms seat at the established hood shelves; finger
-contact is less convincing than the owner’s closed grip photograph and remains
-the main visual limitation for review.
+These are matched production captures of the previous PR pose and the revised
+hand pose, taken at the same hand-review camera and viewport size. The owner’s
+hand-on-hood photograph is `images/bike/IMG_1465.JPEG` and remains outside the
+repository.
 
 | Left hood | Right hood |
 | --- | --- |
 | ![Left hand on hood](after/hand-left-hood.png) | ![Right hand on hood](after/hand-right-hood.png) |
+
+| Previous left hand | Revised left hand |
+| --- | --- |
+| ![Previous left grip](before/hand-left-hood-close.png) | ![Revised left grip](after/hand-left-hood.png) |
+
+| Previous right hand | Revised right hand |
+| --- | --- |
+| ![Previous right grip](before/hand-right-hood-close.png) | ![Revised right grip](after/hand-right-hood.png) |
+
+The elevated hand views show the opposed thumb and the other four digits
+wrapping the outside edge from above:
+
+| Previous left elevated | Revised left elevated | Previous right elevated | Revised right elevated |
+| --- | --- | --- | --- |
+| ![Previous left elevated grip](before/hand-left-hood-elevated.png) | ![Revised left elevated grip](after/hand-left-hood-elevated.png) | ![Previous right elevated grip](before/hand-right-hood-elevated.png) | ![Revised right elevated grip](after/hand-right-hood-elevated.png) |
+
+The source hand is a weighted 19,158-vertex mesh with distinct metacarpals and
+three phalanges for every finger and thumb. Its modeled chain lengths are in a
+human hand range (15–36 mm per phalanx); inspection showed the stretch was in
+the pose, not missing finger geometry or weights. The prior common local-Euler
+curl used the wrong direction on several mirrored phalanges because their
+hinge rolls differ, leaving the fingers extended across the hood. The polish
+pass narrows the metacarpal fan, resolves separate mirrored thumb/finger
+points against the actual integrated cockpit mesh, and bakes the weighted
+three-phalanx chains through the full 217-frame action. The thumb target is on
+the inboard side; the four finger targets wrap the outboard hood edge.
+Temporary Blender IK constraints and targets are removed after baking. Wrist,
+arm, torso, pelvis, legs, bike geometry and runtime systems are unchanged.
+
+`verify_hood_finger_pose_159.py` samples every frame and checks that all ten
+fingertips stay within 15 mm of the cockpit, each finger chain has visible
+flex, and the thumbs remain opposed to the fingers. The final canonical-source
+run measured a worst fingertip-to-cockpit gap of 4.5 mm and minimum combined
+finger-joint bend of 49.36°. This geometric check is paired with the close
+production renders above; neither is used as a substitute for the other.
 
 ## Motion
 
@@ -64,7 +99,11 @@ No separate GPU-time or multi-rider frame-time benchmark was run for this
 rider-only change; these small geometry/draw-mesh deltas are the measured
 overhead.
 
-The rider remains stylised and the jersey/bib details are subtle. Physical
-hardware and real-ride acceptance have not been performed. This PR does not
-change the bike geometry, trainer, ride physics, telemetry, steering, recording,
-routes or multiplayer behavior.
+The rider remains stylised. The revised fingers curl around the hood edge and
+the thumb opposes them, a closer visual match to the owner's relaxed grip than
+the former open, extended pose. Close production views are included so the
+remaining low-poly hand appearance can be judged directly; no claim of exact
+photorealistic anatomy is made. Physical hardware and real-ride acceptance
+have not been performed.
+This PR does not change the bike geometry, trainer, ride physics, telemetry,
+steering, recording, routes or multiplayer behavior.
