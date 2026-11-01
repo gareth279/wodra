@@ -101,10 +101,11 @@ def make_helmet(rig, use_supplied=False):
     obj_path = source / "sport_cycling_helmet_main.obj"
     if use_supplied and obj_path.is_file():
         before = set(bpy.data.objects)
-        # This OBJ is authored Z-up with +Y facing forward. The previous
-        # guessed Y-up import stood the shell on its end, which caused the
-        # reported face intersection and bowl-like production silhouette.
-        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="Y", up_axis="Z")
+        # Inspecting the standalone, neutral-material OBJ from the side shows
+        # its short projecting brow/visor lip at -Y and the long tapered shell
+        # tail at +Y. Import using that verified physical forward direction;
+        # the old +Y assumption put the genuine front behind the rider.
+        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="NEGATIVE_Y", up_axis="Z")
         imported = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
         if len(imported) != 1:
             raise RuntimeError(f"Expected one mesh in supplied helmet OBJ, found {len(imported)}")

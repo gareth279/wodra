@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 import bpy
+import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 from mathutils.bvhtree import BVHTree
 
@@ -45,6 +46,8 @@ SIDES = {
     "R": ("right", "RightPedal", "Contact_RightPedal", "PedalBearingRight",
           "Contact_RightPedalSurface", "right_foot_ik", "right_knee_ik"),
 }
+HELMET_SOURCE_OBJ = (Path(__file__).resolve().parent / "source" / "helmet" /
+                     "sport_cycling_helmet_main.obj")
 
 
 def action_curves(action):
@@ -938,13 +941,58 @@ def validate_full_cycle(rig, scene):
           "kneeBackwardMax", {side: round(max_backward_knee[side], 4) for side in SIDES})
 
 
+def helmet_source_feature_indices(helmet):
+    """Map independently inspected OBJ brow-lip and rear-tail features to the fitted mesh.
+
+    A neutral, standalone Blender inspection of the supplied OBJ shows its short
+    projecting brow/visor lip at the negative-Y end and its long tapered rear
+    shell tail at the positive-Y end. Importing with the OBJ's physical Z-up
+    frame keeps those measured source coordinates intact. These are physical
+    source features; neither their labels nor positions come from the rider,
+    reference bones, or a connected-component size heuristic.
+    """
+    if not HELMET_SOURCE_OBJ.is_file():
+        raise RuntimeError(f"independently inspected helmet source is missing: {HELMET_SOURCE_OBJ}")
+    existing_objects = set(bpy.data.objects)
+    bpy.ops.wm.obj_import(filepath=str(HELMET_SOURCE_OBJ), forward_axis="Y", up_axis="Z")
+    imported = [obj for obj in bpy.data.objects if obj not in existing_objects and obj.type == "MESH"]
+    if len(imported) != 1:
+        raise RuntimeError(f"expected one independently imported supplied helmet mesh, got {len(imported)}")
+    source = imported[0]
+    try:
+        if len(source.data.vertices) != len(helmet.data.vertices):
+            raise RuntimeError("supplied helmet source and fitted mesh vertex counts differ")
+        if not source.matrix_world.is_identity:
+            raise RuntimeError("source inspection import must preserve its measured +Z-up coordinate frame")
+        source_points = np.asarray([vertex.co[:] for vertex in source.data.vertices], dtype=np.float64)
+        fitted_points = np.asarray([vertex.co[:] for vertex in helmet.data.vertices], dtype=np.float64)
+        source_homogeneous = np.column_stack((source_points, np.ones(len(source_points))))
+        transform, _, _, _ = np.linalg.lstsq(source_homogeneous, fitted_points, rcond=None)
+        residual = source_homogeneous @ transform - fitted_points
+        max_residual = float(np.max(np.linalg.norm(residual, axis=1)))
+        if max_residual > 1e-5:
+            raise RuntimeError(f"helmet source vertex correspondence is not affine/reproducible: {max_residual:.8f}m")
+
+        source_y = source_points[:, 1]
+        front_indices = np.flatnonzero(source_y <= source_y.min() + 0.10)
+        rear_indices = np.flatnonzero(source_y >= source_y.max() - 0.10)
+        if not 80 <= len(front_indices) <= 300 or not 5 <= len(rear_indices) <= 80:
+            raise RuntimeError("independently measured helmet brow-lip or rear-tail feature cluster changed")
+        return front_indices.tolist(), rear_indices.tolist(), max_residual
+    finally:
+        source_mesh = source.data
+        bpy.data.objects.remove(source, do_unlink=True)
+        if source_mesh.users == 0:
+            bpy.data.meshes.remove(source_mesh)
+
+
 def helmet_semantics(rig, helmet, human):
-    """Measure face direction, the actual rear-retention component, and shell."""
-    front = bpy.data.objects.get("FrontWheelSpin")
-    rear = bpy.data.objects.get("RearWheelSpin")
-    if front is None or rear is None:
+    """Measure source-verified physical ends, face, and bicycle axes independently."""
+    front_anchor = bpy.data.objects.get("FrontWheelSpin")
+    rear_anchor = bpy.data.objects.get("RearWheelSpin")
+    if front_anchor is None or rear_anchor is None:
         raise RuntimeError("front/rear wheel anchors are required to orient the supplied helmet")
-    bike_forward = (front.matrix_world.translation - rear.matrix_world.translation).normalized()
+    bike_forward = (front_anchor.matrix_world.translation - rear_anchor.matrix_world.translation).normalized()
     rider_up = (rig.matrix_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
     bike_side = bike_forward.cross(rider_up).normalized()
     depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -973,126 +1021,114 @@ def helmet_semantics(rig, helmet, human):
         eye_center = sum(eye_points, Vector()) / len(eye_points)
         face_forward = (eye_center - head_center).normalized()
         face_bike_alignment = face_forward.dot(bike_forward)
-        if face_bike_alignment < 0.5:
-            raise RuntimeError("the rider's actual eye-to-head direction does not face the bicycle front wheel: "
-                               f"dot={face_bike_alignment:.3f}")
+        face_candidates = [point for point in head_points
+                           if abs((point - eye_center).dot(bike_side)) <= 0.03 and
+                           abs((point - eye_center).dot(rider_up)) <= 0.09]
+        if not face_candidates:
+            raise RuntimeError("actual central face geometry is unavailable for the nose check")
+        nose_tip = max(face_candidates, key=lambda point: point.dot(bike_forward))
+        nose_to_eye = nose_tip - eye_center
+        if nose_to_eye.length < 0.02:
+            raise RuntimeError("actual forehead/eye and nose geometry do not define a face direction")
+        nose_bike_alignment = nose_to_eye.normalized().dot(bike_forward)
+        if face_bike_alignment < 0.5 or nose_to_eye.dot(bike_forward) < 0.02 or nose_bike_alignment < 0.35:
+            raise RuntimeError("actual rider eye/head/nose geometry does not face the bicycle front wheel: "
+                               f"eyeHeadDot={face_bike_alignment:.3f} noseDot={nose_bike_alignment:.3f}")
     finally:
         evaluated_human.to_mesh_clear()
 
+    front_indices, rear_indices, source_fit_error = helmet_source_feature_indices(helmet)
     evaluated = helmet.evaluated_get(depsgraph)
     mesh = evaluated.to_mesh()
     try:
+        if len(mesh.vertices) != len(helmet.data.vertices):
+            raise RuntimeError("evaluated supplied helmet vertex indices changed during skinning")
         points = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
-        parent = list(range(len(points)))
-
-        def find(index):
-            while parent[index] != index:
-                parent[index] = parent[parent[index]]
-                index = parent[index]
-            return index
-
-        for edge in mesh.edges:
-            first = find(edge.vertices[0])
-            second = find(edge.vertices[1])
-            if first != second:
-                parent[second] = first
-        components = {}
-        for index, point in enumerate(points):
-            components.setdefault(find(index), []).append(point)
+        physical_front = sum((points[index] for index in front_indices), Vector()) / len(front_indices)
+        physical_rear = sum((points[index] for index in rear_indices), Vector()) / len(rear_indices)
     finally:
         evaluated.to_mesh_clear()
-
-    component_points = sorted(components.values(), key=len, reverse=True)
-    shell = component_points[0]
-    if len(shell) < 20000:
-        raise RuntimeError("the accepted vented helmet shell component is missing")
-    retention_candidates = []
-    for component in component_points[1:]:
-        if not 500 <= len(component) <= 4000:
-            continue
-        center = sum(component, Vector()) / len(component)
-        side_offset = (center - head_center).dot(bike_side)
-        up_offset = (center - head_center).dot(rider_up)
-        if abs(side_offset) <= 0.03 and up_offset >= 0.05:
-            retention_candidates.append((center, len(component), side_offset, up_offset))
-    if not retention_candidates:
-        raise RuntimeError("the central rear-retention hardware is missing from the accepted helmet geometry")
-    retention_center, retention_vertices, _, _ = min(
-        retention_candidates,
-        key=lambda item: (abs(item[2]), -item[3], abs(item[1] - 1250)))
-    retention_offset = (retention_center - eye_center).dot(face_forward)
-    shell_forward = [point.dot(face_forward) for point in shell]
-    shell_rear = min(shell_forward)
-    shell_front = max(shell_forward)
+    physical_axis = (physical_front - physical_rear).normalized()
     return {
         "bike_forward": bike_forward,
         "bike_side": bike_side,
         "rider_up": rider_up,
         "head_center": head_center,
         "eye_center": eye_center,
+        "nose_tip": nose_tip,
         "face_forward": face_forward,
         "face_bike_alignment": face_bike_alignment,
-        "retention_center": retention_center,
-        "retention_vertices": retention_vertices,
-        "retention_offset": retention_offset,
-        "shell": shell,
-        "shell_rear": shell_rear,
-        "shell_front": shell_front,
+        "nose_bike_alignment": nose_bike_alignment,
+        "physical_front": physical_front,
+        "physical_rear": physical_rear,
+        "physical_axis": physical_axis,
+        "front_bike_alignment": physical_axis.dot(bike_forward),
+        "front_face_alignment": physical_axis.dot(face_forward),
+        "front_to_eye": (physical_front - eye_center).dot(bike_forward),
+        "rear_to_eye": (physical_rear - eye_center).dot(bike_forward),
+        "physical_length": (physical_front - physical_rear).length,
+        "front_indices": front_indices,
+        "rear_indices": rear_indices,
+        "source_fit_error": source_fit_error,
     }
 
 
+def rotate_helmet_mesh_180(rig, helmet, center_world, rider_up):
+    """Rotate only the supplied helmet about the measured head-up axis."""
+    head_bone = rig.data.bones.get("head")
+    head_pose = rig.pose.bones.get("head")
+    if head_bone is None or head_pose is None:
+        raise RuntimeError("the accepted rider head bone is required to orient the helmet")
+    rest_to_world = (rig.matrix_world @ head_pose.matrix @ head_bone.matrix_local.inverted() @
+                     rig.matrix_world.inverted() @ helmet.matrix_world)
+    world_to_rest = rest_to_world.inverted()
+    yaw_180 = Quaternion(rider_up, math.pi)
+    for vertex in helmet.data.vertices:
+        point_world = rest_to_world @ vertex.co
+        vertex.co = world_to_rest @ (center_world + yaw_180 @ (point_world - center_world))
+    helmet.data.update()
+    bpy.context.view_layer.update()
+
+
+def require_helmet_physical_forward(metrics, label="helmet"):
+    if (metrics["front_bike_alignment"] < 0.75 or metrics["front_face_alignment"] < 0.60 or
+            metrics["front_to_eye"] <= 0.05 or metrics["rear_to_eye"] >= -0.05):
+        raise RuntimeError(f"{label} physical brow lip/rear tail orientation is wrong: "
+                           f"frontBikeDot={metrics['front_bike_alignment']:.3f} "
+                           f"frontFaceDot={metrics['front_face_alignment']:.3f} "
+                           f"frontToEye={metrics['front_to_eye']:.3f}m "
+                           f"rearToEye={metrics['rear_to_eye']:.3f}m")
+
+
 def orient_helmet_to_rider(rig, helmet, human):
-    """Place the rear-retention assembly behind the actual rider face."""
+    """Turn the source-measured brow lip to the actual face and bicycle front."""
     metrics = helmet_semantics(rig, helmet, human)
-    print("HELMET_FACE_FRAME_BEFORE",
+    print("HELMET_PHYSICAL_FEATURES_BEFORE",
+          "sourceFitError", round(metrics["source_fit_error"], 9),
+          "frontLipToEyes", round(metrics["front_to_eye"], 4),
+          "rearTailToEyes", round(metrics["rear_to_eye"], 4),
+          "frontBikeDot", round(metrics["front_bike_alignment"], 4),
           "faceBikeDot", round(metrics["face_bike_alignment"], 4),
-          "retentionToEyes", round(metrics["retention_offset"], 4),
-          "retentionVertices", metrics["retention_vertices"],
-          "shellFaceAxis", round(metrics["shell_front"] - metrics["shell_rear"], 4))
-    if metrics["retention_offset"] > 0.0:
-        print("HELMET_ROTATE_MESH_180", "rear-retention hardware is ahead of the actual eyes")
-        head_bone = rig.data.bones.get("head")
-        head_pose = rig.pose.bones.get("head")
-        if head_bone is None or head_pose is None:
-            raise RuntimeError("the accepted rider head bone is required to orient the helmet")
-        rest_to_world = (rig.matrix_world @ head_pose.matrix @ head_bone.matrix_local.inverted() @
-                         rig.matrix_world.inverted() @ helmet.matrix_world)
-        world_to_rest = rest_to_world.inverted()
-        vertices = helmet.data.vertices
-        center_world = metrics["head_center"]
-        yaw_180 = Quaternion(metrics["rider_up"], math.pi)
-        for vertex in vertices:
-            point_world = rest_to_world @ vertex.co
-            flipped_world = center_world + yaw_180 @ (point_world - center_world)
-            vertex.co = world_to_rest @ flipped_world
-        helmet.data.update()
-        bpy.context.view_layer.update()
+          "noseBikeDot", round(metrics["nose_bike_alignment"], 4))
+    if metrics["front_bike_alignment"] < 0.0:
+        print("HELMET_ROTATE_MESH_180", "source-verified brow lip is behind the actual face")
+        rotate_helmet_mesh_180(rig, helmet, metrics["head_center"], metrics["rider_up"])
         metrics = helmet_semantics(rig, helmet, human)
-    if metrics["retention_offset"] > -0.05:
-        raise RuntimeError("the helmet's actual rear-retention hardware is not behind the rider's eyes: "
-                           f"offset={metrics['retention_offset']:.3f}m")
-    shell_axis = metrics["face_forward"]
-    if metrics["shell_front"] <= metrics["shell_rear"] or \
-            shell_axis.dot(metrics["bike_forward"]) < 0.5:
-        raise RuntimeError("the accepted helmet shell does not follow the actual face and bicycle-forward frames")
-    print("HELMET_FACE_FRAME_PASS",
-          "faceBikeDot", round(metrics["face_bike_alignment"], 4),
-          "rearRetentionBehindEyes", round(metrics["retention_offset"], 4),
-          "retentionVertices", metrics["retention_vertices"],
-          "shellLength", round(metrics["shell_front"] - metrics["shell_rear"], 4))
+    require_helmet_physical_forward(metrics)
+    print("HELMET_PHYSICAL_FEATURES_PASS",
+          "frontLipAheadOfEyes", round(metrics["front_to_eye"], 4),
+          "rearTailBehindEyes", round(metrics["rear_to_eye"], 4),
+          "frontBikeDot", round(metrics["front_bike_alignment"], 4),
+          "frontFaceDot", round(metrics["front_face_alignment"], 4),
+          "noseBikeDot", round(metrics["nose_bike_alignment"], 4),
+          "sourceFitError", round(metrics["source_fit_error"], 9))
 
 
 def add_helmet_frame_markers(rig, helmet, human):
-    """Export non-deforming bones from the shell along actual face-forward."""
+    """Export head-attached references sampled from the physical source lip and tail."""
     metrics = helmet_semantics(rig, helmet, human)
-    shell = metrics["shell"]
-    face_forward = metrics["face_forward"]
-    front_points = [point for point in shell
-                    if point.dot(face_forward) >= metrics["shell_front"] - 0.015]
-    rear_points = [point for point in shell
-                   if point.dot(face_forward) <= metrics["shell_rear"] + 0.015]
-    front_world = sum(front_points, Vector()) / len(front_points)
-    rear_world = sum(rear_points, Vector()) / len(rear_points)
+    front_world = metrics["physical_front"]
+    rear_world = metrics["physical_rear"]
     rig_world_inverse = rig.matrix_world.inverted()
     head_pose = rig.pose.bones["head"]
     head_pose_inverse = head_pose.matrix.inverted()
@@ -1130,12 +1166,12 @@ def add_helmet_frame_markers(rig, helmet, human):
     rear_actual = rig.matrix_world @ rig.pose.bones["helmet_rear_ref"].matrix.translation
     bike_forward = metrics["bike_forward"]
     alignment = (front_actual - rear_actual).normalized().dot(bike_forward)
-    print("HELMET_FRAME_MARKERS", "front", tuple(round(v, 4) for v in front_actual),
-          "rear", tuple(round(v, 4) for v in rear_actual), "forwardAlignment", round(alignment, 4))
-    if alignment < 0.75:
-        raise RuntimeError("face-derived helmet front/rear markers do not follow the actual bicycle-forward frame")
-    if (front_actual - rear_actual).normalized().dot(metrics["face_forward"]) < 0.75:
-        raise RuntimeError("helmet front/rear marker axis does not follow the actual rider face")
+    print("HELMET_SOURCE_FEATURE_MARKERS", "frontLip", tuple(round(v, 4) for v in front_actual),
+          "rearTail", tuple(round(v, 4) for v in rear_actual), "forwardAlignment", round(alignment, 4))
+    if (alignment < 0.75 or (front_actual - rear_actual).normalized().dot(metrics["face_forward"]) < 0.65 or
+            (front_actual - metrics["eye_center"]).dot(bike_forward) <= 0.05 or
+            (rear_actual - metrics["eye_center"]).dot(bike_forward) >= -0.05):
+        raise RuntimeError("source-verified helmet brow-lip/tail markers do not match the actual face and bicycle frame")
 
 
 def main():
@@ -1143,6 +1179,8 @@ def main():
     parser.add_argument("--blend", type=Path, required=True, help="accepted sculpted-hands source blend")
     parser.add_argument("--output-blend", type=Path, required=True)
     parser.add_argument("--output-glb", type=Path, required=True)
+    parser.add_argument("--helmet-only", action="store_true",
+                        help="correct only the helmet on an already pedal-corrected issue #164 blend")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
     bpy.ops.wm.open_mainfile(filepath=str(args.blend))
@@ -1159,11 +1197,21 @@ def main():
           "faces", len(helmet.data.polygons))
     human = bpy.data.objects["Human"]
     orient_helmet_to_rider(rig, helmet, human)
-    source, local_offsets = sample_source_targets(rig, scene)
-    fit_road_shoes()
-    add_pedal_bearings()
-    bake_actual_pedal_cycle(rig, scene, source, local_offsets)
-    validate_full_cycle(rig, scene)
+    if args.helmet_only:
+        required = [f"{name}.{side}" for side in ("L", "R")
+                    for name in ("shoe", "shoe_heel", "shoe_toe", "pedal_contact")]
+        missing = [name for name in required if rig.data.bones.get(name) is None]
+        pedal_cycle = bpy.data.actions.get("PedalCycle")
+        if missing or pedal_cycle is None:
+            raise RuntimeError("--helmet-only requires an already pedal-corrected issue #164 blend; "
+                               f"missing={missing} pedalCycle={pedal_cycle is not None}")
+        print("HELMET_ONLY_PRESERVING_EXISTING_PEDAL_CYCLE", pedal_cycle.name)
+    else:
+        source, local_offsets = sample_source_targets(rig, scene)
+        fit_road_shoes()
+        add_pedal_bearings()
+        bake_actual_pedal_cycle(rig, scene, source, local_offsets)
+        validate_full_cycle(rig, scene)
 
     # Restore the production model's neutral transform. CyclistVisual supplies
     # the measured phase offset and pedal bearing rotation at runtime.

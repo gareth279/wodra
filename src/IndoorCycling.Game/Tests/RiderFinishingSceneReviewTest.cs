@@ -40,56 +40,34 @@ public partial class RiderFinishingSceneReviewTest : Node
         return result;
     }
 
-    private static List<int[]> FindConnectedVertexComponents(Vector3[] vertices, int[] indices)
+    private static float NearestVertexDistance(Vector3[] vertices, Vector3 feature)
     {
-        var vertexCount = vertices.Length;
-        if (indices.Length < 3 || indices.Length % 3 != 0)
-            throw new InvalidOperationException("Imported helmet topology does not contain indexed triangles.");
-        var parents = Enumerable.Range(0, vertexCount).ToArray();
-        int Find(int index)
+        var nearest = float.PositiveInfinity;
+        foreach (var vertex in vertices)
         {
-            while (parents[index] != index)
-            {
-                parents[index] = parents[parents[index]];
-                index = parents[index];
-            }
-            return index;
+            nearest = Mathf.Min(nearest, vertex.DistanceTo(feature));
         }
-        void Union(int left, int right)
-        {
-            var leftRoot = Find(left);
-            var rightRoot = Find(right);
-            if (leftRoot != rightRoot) parents[rightRoot] = leftRoot;
-        }
-        // glTF import may duplicate a geometric vertex at UV/normal seams.
-        // Weld coincident skinned positions before identifying the physical
-        // shell and separate retention hardware components.
-        var coincidentVertices = new Dictionary<Vector3I, int>();
-        for (var vertex = 0; vertex < vertexCount; vertex++)
-        {
-            var point = vertices[vertex];
-            var key = new Vector3I(
-                Mathf.RoundToInt(point.X * 10000f),
-                Mathf.RoundToInt(point.Y * 10000f),
-                Mathf.RoundToInt(point.Z * 10000f));
-            if (coincidentVertices.TryGetValue(key, out var coincident)) Union(vertex, coincident);
-            else coincidentVertices.Add(key, vertex);
-        }
-        for (var triangle = 0; triangle < indices.Length; triangle += 3)
-        {
-            var a = indices[triangle];
-            var b = indices[triangle + 1];
-            var c = indices[triangle + 2];
-            if ((uint)a >= (uint)vertexCount || (uint)b >= (uint)vertexCount || (uint)c >= (uint)vertexCount)
-                throw new InvalidOperationException("Imported helmet topology contains an invalid vertex index.");
-            Union(a, b);
-            Union(b, c);
-        }
-        return Enumerable.Range(0, vertexCount)
-            .GroupBy(Find)
-            .Select(group => group.ToArray())
-            .OrderByDescending(group => group.Length)
-            .ToList();
+        return nearest;
+    }
+
+    private static (float FrontGeometryError, float RearGeometryError, float FaceAlignment, float BikeAlignment)
+        ValidateHelmetPhysicalFeatures(Vector3[] vertices, Vector3 frontLip, Vector3 rearTail,
+            Vector3 eyeCenter, Vector3 faceForward, Vector3 bikeForward)
+    {
+        var physicalAxis = frontLip - rearTail;
+        if (physicalAxis.Length() is < .20f or > .40f)
+            throw new InvalidOperationException($"Source-verified helmet lip/tail span is implausible ({physicalAxis.Length():F3}m).");
+        var frontError = NearestVertexDistance(vertices, frontLip);
+        var rearError = NearestVertexDistance(vertices, rearTail);
+        var faceAlignment = physicalAxis.Normalized().Dot(faceForward);
+        var bikeAlignment = physicalAxis.Normalized().Dot(bikeForward);
+        if (frontError > .025f || rearError > .025f || faceAlignment < .60f || bikeAlignment < .75f ||
+            (frontLip - eyeCenter).Dot(bikeForward) <= .05f ||
+            (rearTail - eyeCenter).Dot(bikeForward) >= -.05f)
+            throw new InvalidOperationException($"Supplied helmet physical brow lip/rear tail is backwards or detached: " +
+                $"front/rear geometry={frontError:F3}/{rearError:F3}m face/bike={faceAlignment:F3}/{bikeAlignment:F3} " +
+                $"front/rear to eyes={(frontLip - eyeCenter).Dot(bikeForward):F3}/{(rearTail - eyeCenter).Dot(bikeForward):F3}m.");
+        return (frontError, rearError, faceAlignment, bikeAlignment);
     }
 
     public override async void _Ready()
@@ -233,16 +211,14 @@ public partial class RiderFinishingSceneReviewTest : Node
             var helmetVertexArray = helmetArrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
             var helmetBoneArray = helmetArrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
             var helmetWeightArray = helmetArrays[(int)Mesh.ArrayType.Weights].AsFloat32Array();
-            var helmetIndexArray = helmetArrays[(int)Mesh.ArrayType.Index].AsInt32Array();
             var helmetFrontRef = skeleton.FindBone("helmet_front_ref");
             var helmetRearRef = skeleton.FindBone("helmet_rear_ref");
             if (helmetHeadBone < 0 || helmetFrontRef < 0 || helmetRearRef < 0 ||
                 skeleton.GetBoneParent(helmetFrontRef) != helmetHeadBone ||
                 skeleton.GetBoneParent(helmetRearRef) != helmetHeadBone)
-                throw new InvalidOperationException("Face-derived helmet front/rear references are not attached to the rider's head bone.");
+                throw new InvalidOperationException("Source-measured physical helmet lip/tail references are not attached to the rider's head bone.");
             var helmetFrontPoint = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(helmetFrontRef).Origin;
             var helmetRearPoint = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(helmetRearRef).Origin;
-            var helmetLongAxis = helmetFrontPoint - helmetRearPoint;
             var helmetBikeForward = (liveFrontWheel.GlobalPosition - liveRearWheel.GlobalPosition).Normalized();
             var helmetWorldVertices = SkinVerticesToWorld(skeleton, helmet,
                 helmetVertexArray, helmetBoneArray, helmetWeightArray);
@@ -284,56 +260,44 @@ public partial class RiderFinishingSceneReviewTest : Node
             var faceBikeAlignment = faceForward.Dot(helmetBikeForward);
             if (faceBikeAlignment < .5f)
                 throw new InvalidOperationException($"Actual eye/head geometry does not face the front wheel (dot={faceBikeAlignment:F3}).");
+            var noseCandidates = headPoints.Where(point =>
+                Math.Abs((point - eyeCenter).Dot(helmetSide)) <= .03f &&
+                Math.Abs((point - eyeCenter).Dot(riderUp)) <= .09f).ToArray();
+            if (noseCandidates.Length == 0)
+                throw new InvalidOperationException("Actual rider forehead/nose geometry is unavailable for the facing check.");
+            var noseTip = noseCandidates.MaxBy(point => point.Dot(helmetBikeForward));
+            var noseVector = noseTip - eyeCenter;
+            if (noseVector.Length() < .02f || noseVector.Dot(helmetBikeForward) < .02f ||
+                noseVector.Normalized().Dot(helmetBikeForward) < .35f)
+                throw new InvalidOperationException("Actual nose geometry does not project toward the bicycle front wheel.");
 
-            var helmetComponents = FindConnectedVertexComponents(helmetWorldVertices, helmetIndexArray);
-            GD.Print($"[RiderFinishingSceneReviewTest] imported helmet welded components=" +
-                string.Join(",", helmetComponents.Take(8).Select(component => component.Length)));
-            if (helmetComponents.Count == 0 || helmetComponents[0].Length < 20000)
-                throw new InvalidOperationException("Imported accepted vented helmet shell component is missing.");
-            var retentionCandidates = helmetComponents.Skip(1)
-                .Where(component => component.Length is >= 500 and <= 4000)
-                .Select(component =>
-                {
-                    var center = component.Aggregate(Vector3.Zero, (sum, index) => sum + helmetWorldVertices[index]) / component.Length;
-                    return (component.Length, center,
-                        lateral: (center - headCenter).Dot(helmetSide),
-                        height: (center - headCenter).Dot(riderUp));
-                })
-                .Where(candidate => Math.Abs(candidate.lateral) <= .03f && candidate.height >= .05f)
-                .OrderBy(candidate => Math.Abs(candidate.lateral))
-                .ThenByDescending(candidate => candidate.height)
-                .ThenBy(candidate => Math.Abs(candidate.Length - 1250))
-                .ToArray();
-            if (retentionCandidates.Length == 0)
-                throw new InvalidOperationException("Imported helmet has no central rear-retention hardware component.");
-            var rearRetention = retentionCandidates[0].center;
-            var retentionToEyes = (rearRetention - eyeCenter).Dot(faceForward);
-            if (retentionToEyes >= -.05f)
-                throw new InvalidOperationException($"Rear-retention hardware is ahead of or level with the rider's eyes ({retentionToEyes:F3}m).");
-
-            var shellIndices = helmetComponents[0];
-            var shellPoints = shellIndices.Select(index => helmetWorldVertices[index]).ToArray();
-            var shellProjections = shellPoints.Select(point => point.Dot(faceForward)).ToArray();
-            var shellMinForward = shellProjections.Min();
-            var shellMaxForward = shellProjections.Max();
-            var shellFrontCenter = shellPoints.Where(point => point.Dot(faceForward) >= shellMaxForward - .015f)
-                .Aggregate(Vector3.Zero, (sum, point) => sum + point) /
-                shellPoints.Count(point => point.Dot(faceForward) >= shellMaxForward - .015f);
-            var shellRearCenter = shellPoints.Where(point => point.Dot(faceForward) <= shellMinForward + .015f)
-                .Aggregate(Vector3.Zero, (sum, point) => sum + point) /
-                shellPoints.Count(point => point.Dot(faceForward) <= shellMinForward + .015f);
-            var frontGeometryMarkerError = shellFrontCenter.DistanceTo(helmetFrontPoint);
-            var rearGeometryMarkerError = shellRearCenter.DistanceTo(helmetRearPoint);
-            var helmetFaceAlignment = helmetLongAxis.Normalized().Dot(faceForward);
-            var helmetForwardAlignment = helmetLongAxis.Normalized().Dot(helmetBikeForward);
-            GD.Print($"[RiderFinishingSceneReviewTest] imported helmet faceBikeDot={faceBikeAlignment:F3} " +
-                $"retentionToEyes={retentionToEyes:F3}m rearComponentVertices={retentionCandidates[0].Length} " +
-                $"shellLength={shellMaxForward - shellMinForward:F3}m markerErrors={frontGeometryMarkerError:F3}/{rearGeometryMarkerError:F3}m");
-            if (frontGeometryMarkerError > .04f || rearGeometryMarkerError > .04f ||
-                helmetLongAxis.Length() is < .15f or > .35f || helmetFaceAlignment < .75f || helmetForwardAlignment < .75f)
-                throw new InvalidOperationException("Helmet front/rear references disagree with actual eye, shell, rear-retention, or bicycle geometry.");
-            GD.Print($"[RiderFinishingSceneReviewTest] supplied helmet face/bike axes and rear-retention geometry are aligned: " +
-                $"faceBikeDot={faceBikeAlignment:F3} markerFaceDot={helmetFaceAlignment:F3} markerBikeDot={helmetForwardAlignment:F3}; vertices={helmetVertices}");
+            var helmetGeometryMetrics = ValidateHelmetPhysicalFeatures(helmetWorldVertices,
+                helmetFrontPoint, helmetRearPoint, eyeCenter, faceForward, helmetBikeForward);
+            var reverseHelmetRotation = new Quaternion(riderUp, Mathf.Pi);
+            var deliberatelyReversedVertices = helmetWorldVertices.Select(point =>
+                headCenter + reverseHelmetRotation * (point - headCenter)).ToArray();
+            var deliberatelyReversedFront = headCenter + reverseHelmetRotation * (helmetFrontPoint - headCenter);
+            var deliberatelyReversedRear = headCenter + reverseHelmetRotation * (helmetRearPoint - headCenter);
+            var backwardsControlRejected = false;
+            try
+            {
+                ValidateHelmetPhysicalFeatures(deliberatelyReversedVertices,
+                    deliberatelyReversedFront, deliberatelyReversedRear, eyeCenter, faceForward, helmetBikeForward);
+            }
+            catch (InvalidOperationException)
+            {
+                backwardsControlRejected = true;
+            }
+            if (!backwardsControlRejected)
+                throw new InvalidOperationException("Helmet orientation regression accepted its deliberately 180-degree-backwards control.");
+            var helmetPhysicalAxis = (helmetFrontPoint - helmetRearPoint).Normalized();
+            GD.Print($"[RiderFinishingSceneReviewTest] physical helmet brow-lip/rear-tail=" +
+                $"faceBikeDot={faceBikeAlignment:F3} noseBikeDot={noseVector.Normalized().Dot(helmetBikeForward):F3} " +
+                $"frontToEyes={(helmetFrontPoint - eyeCenter).Dot(helmetBikeForward):F3}m " +
+                $"rearToEyes={(helmetRearPoint - eyeCenter).Dot(helmetBikeForward):F3}m " +
+                $"featureErrors={helmetGeometryMetrics.FrontGeometryError:F3}/{helmetGeometryMetrics.RearGeometryError:F3}m " +
+                $"featureFaceDot={helmetPhysicalAxis.Dot(faceForward):F3} " +
+                $"featureBikeDot={helmetPhysicalAxis.Dot(helmetBikeForward):F3}; deliberate reverse rejected; vertices={helmetVertices}");
             GD.Print($"[RiderFinishingSceneReviewTest] accepted supplied helmet vertices={helmetVertices}; node={helmet!.GetPath()}");
             var surfaceCount = human.Mesh?.GetSurfaceCount() ?? 0;
             var eyeSurfaceCount = 0;
@@ -413,6 +377,29 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Settle(3);
                 await Save(output, $"head-{angle}-helmet-on.png");
             }
+            // A physical-feature marker check in the actual side camera makes
+            // the screen-space orientation independently reviewable. The
+            // source-measured brow lip must project in front of the eyes and
+            // the source-measured aero tail must project behind them.
+            AimAtHead(camera, bikeForward, bikeSide, headTarget, "side");
+            await Settle(2);
+            var frontLipScreen = camera.UnprojectPosition(helmetFrontPoint);
+            var rearTailScreen = camera.UnprojectPosition(helmetRearPoint);
+            var eyeScreen = camera.UnprojectPosition(eyeCenter);
+            if (frontLipScreen.X <= eyeScreen.X + 1f || rearTailScreen.X >= eyeScreen.X - 1f)
+                throw new InvalidOperationException($"Physical helmet brow/tail do not appear on the correct sides of the face in the production side camera: " +
+                    $"front/eyes/rear X={frontLipScreen.X:F1}/{eyeScreen.X:F1}/{rearTailScreen.X:F1}px.");
+            GD.Print($"[RiderFinishingSceneReviewTest] side-camera physical helmet landmarks: " +
+                $"rearTailX={rearTailScreen.X:F1}px eyeX={eyeScreen.X:F1}px frontLipX={frontLipScreen.X:F1}px");
+            var featureProbes = new Node3D { Name = "HelmetPhysicalFeatureProbes" };
+            world.AddChild(featureProbes);
+            AddHelmetFeatureProbe(featureProbes, "BrowLip", helmetFrontPoint, new Color(1f, .05f, .04f));
+            AddHelmetFeatureProbe(featureProbes, "EyeCenter", eyeCenter, new Color(.10f, 1f, .08f));
+            AddHelmetFeatureProbe(featureProbes, "AeroTail", helmetRearPoint, new Color(.05f, .35f, 1f));
+            await Settle(2);
+            await Save(output, "head-side-helmet-physical-features.png");
+            featureProbes.QueueFree();
+            await Settle(1);
             if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1")
             {
                 var baselineLeftHood = Find<Node3D>(rider, "Contact_LeftHood")
@@ -851,6 +838,26 @@ public partial class RiderFinishingSceneReviewTest : Node
         };
         camera.GlobalPosition = head + direction * .95f + Vector3.Up * .02f;
         camera.LookAt(head, Vector3.Up);
+    }
+
+    private static void AddHelmetFeatureProbe(Node3D parent, string name, Vector3 position, Color color)
+    {
+        var material = new StandardMaterial3D
+        {
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            AlbedoColor = color,
+            EmissionEnabled = true,
+            Emission = color
+        };
+        var probe = new MeshInstance3D
+        {
+            Name = name,
+            Mesh = new SphereMesh { Radius = .018f, Height = .036f, RadialSegments = 16, Rings = 8 },
+            MaterialOverride = material,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off
+        };
+        parent.AddChild(probe);
+        probe.GlobalPosition = position;
     }
 
     private void VerifySideCenter(RideWorldView world, HudController hud, bool debug)

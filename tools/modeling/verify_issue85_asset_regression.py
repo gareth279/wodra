@@ -5,8 +5,14 @@ Run in Blender 5.2.2:
 """
 import bpy
 import sys
-from collections import defaultdict
-from mathutils import Vector
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from retarget_pedals_163 import (  # noqa: E402
+    helmet_semantics,
+    require_helmet_physical_forward,
+    rotate_helmet_mesh_180,
+)
 
 args = sys.argv[sys.argv.index("--") + 1:]
 if len(args) != 2:
@@ -32,99 +38,15 @@ def snapshot_hand_region(human):
     return result
 
 
-def mesh_components(obj):
-    depsgraph = bpy.context.evaluated_depsgraph_get()
-    evaluated = obj.evaluated_get(depsgraph)
-    mesh = evaluated.to_mesh()
-    try:
-        points = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
-        parent = list(range(len(points)))
-
-        def find(index):
-            while parent[index] != index:
-                parent[index] = parent[parent[index]]
-                index = parent[index]
-            return index
-
-        for edge in mesh.edges:
-            first, second = find(edge.vertices[0]), find(edge.vertices[1])
-            if first != second:
-                parent[second] = first
-        components = defaultdict(list)
-        for index, point in enumerate(points):
-            components[find(index)].append(point)
-        return sorted(components.values(), key=len, reverse=True)
-    finally:
-        evaluated.to_mesh_clear()
-
-
 def verify_helmet_frame(rig, helmet, human, path):
     scene = bpy.context.scene
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
-    front_anchor = bpy.data.objects.get("FrontWheelSpin")
-    rear_anchor = bpy.data.objects.get("RearWheelSpin")
-    if front_anchor is None or rear_anchor is None:
-        raise AssertionError(f"{path} is missing the actual front/rear bicycle anchors")
-    bike_forward = (front_anchor.matrix_world.translation - rear_anchor.matrix_world.translation).normalized()
-    rider_up = (rig.matrix_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
-    bike_side = bike_forward.cross(rider_up).normalized()
-    depsgraph = bpy.context.evaluated_depsgraph_get()
-    evaluated_human = human.evaluated_get(depsgraph)
-    human_mesh = evaluated_human.to_mesh()
+    metrics = helmet_semantics(rig, helmet, human)
     try:
-        head_group = human.vertex_groups.get("head")
-        if head_group is None:
-            raise AssertionError(f"{path} is missing actual head weights")
-        head_indexes = {
-            vertex.index for vertex in human.data.vertices
-            if any(group.group == head_group.index and group.weight > 0.5 for group in vertex.groups)
-        }
-        head_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
-                       for index in head_indexes]
-        eye_materials = {index for index, material in enumerate(human.data.materials)
-                         if material and "Rider Eye" in material.name}
-        eye_indexes = {index for polygon in human_mesh.polygons
-                       if polygon.material_index in eye_materials for index in polygon.vertices}
-        eye_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
-                      for index in eye_indexes]
-    finally:
-        evaluated_human.to_mesh_clear()
-    if len(head_points) < 500 or len(eye_points) < 20:
-        raise AssertionError(f"{path} actual face or weighted head geometry is incomplete")
-    head_center = sum(head_points, Vector()) / len(head_points)
-    eye_center = sum(eye_points, Vector()) / len(eye_points)
-    face_forward = (eye_center - head_center).normalized()
-    face_alignment = face_forward.dot(bike_forward)
-    if face_alignment < 0.5:
-        raise AssertionError(f"{path} rider eye/head geometry faces away from the actual front wheel: "
-                             f"dot={face_alignment:.3f}")
-
-    components = mesh_components(helmet)
-    if not components or len(components[0]) < 20000:
-        raise AssertionError(f"{path} accepted vented helmet shell component is missing")
-    retention_candidates = []
-    for component in components[1:]:
-        if not 500 <= len(component) <= 4000:
-            continue
-        component_center = sum(component, Vector()) / len(component)
-        lateral = (component_center - head_center).dot(bike_side)
-        height = (component_center - head_center).dot(rider_up)
-        if abs(lateral) <= 0.03 and height >= 0.05:
-            retention_candidates.append((component_center, len(component), lateral, height))
-    if not retention_candidates:
-        raise AssertionError(f"{path} central rear-retention component is missing")
-    retention_center, retention_count, _, _ = min(
-        retention_candidates,
-        key=lambda item: (abs(item[2]), -item[3], abs(item[1] - 1250)))
-    retention_to_eyes = (retention_center - eye_center).dot(face_forward)
-    if retention_to_eyes >= -0.05:
-        raise AssertionError(f"{path} helmet's rear-retention hardware is not behind the rider's face: "
-                             f"offset={retention_to_eyes:.3f}m")
-    shell = components[0]
-    shell_projections = [point.dot(face_forward) for point in shell]
-    shell_rear = min(shell_projections)
-    shell_front = max(shell_projections)
+        require_helmet_physical_forward(metrics, str(path))
+    except RuntimeError as error:
+        raise AssertionError(str(error)) from error
 
     bones = rig.data.bones
     head = bones.get("head")
@@ -132,26 +54,34 @@ def verify_helmet_frame(rig, helmet, human, path):
     rear_ref = bones.get("helmet_rear_ref")
     if head is None or front_ref is None or rear_ref is None or \
             front_ref.parent != head or rear_ref.parent != head:
-        raise AssertionError(f"{path} is missing head-attached helmet geometry references")
+        raise AssertionError(f"{path} is missing head-attached physical brow-lip and rear-tail references")
     front_marker = rig.matrix_world @ rig.pose.bones[front_ref.name].matrix.translation
     rear_marker = rig.matrix_world @ rig.pose.bones[rear_ref.name].matrix.translation
-    marker_axis = front_marker - rear_marker
-    alignment = marker_axis.normalized().dot(face_forward)
-    if not .15 <= marker_axis.length <= .35 or alignment < .75 or \
-            marker_axis.normalized().dot(bike_forward) < .75:
-        raise AssertionError(f"{path} helmet references disagree with the actual face/bicycle frame: "
-                             f"length={marker_axis.length:.3f}m faceDot={alignment:.3f}")
-    shell_front_points = [point for point in shell if point.dot(face_forward) >= shell_front - 0.015]
-    shell_rear_points = [point for point in shell if point.dot(face_forward) <= shell_rear + 0.015]
-    shell_front_center = sum(shell_front_points, Vector()) / len(shell_front_points)
-    shell_rear_center = sum(shell_rear_points, Vector()) / len(shell_rear_points)
-    if (front_marker - shell_front_center).length > .04 or \
-            (rear_marker - shell_rear_center).length > .04:
-        raise AssertionError(f"{path} helmet reference bones do not follow the measured shell ends")
-    print("PASS: actual eye/head geometry faces the front wheel and rear-retention hardware sits behind it",
-          f"faceBikeDot={face_alignment:.3f} retentionToEyes={retention_to_eyes:.3f}m "
-          f"retentionVertices={retention_count} shellLength={shell_front - shell_rear:.3f}m "
-          f"markerFaceDot={alignment:.3f}")
+    if (front_marker - metrics["physical_front"]).length > 0.005 or \
+            (rear_marker - metrics["physical_rear"]).length > 0.005:
+        raise AssertionError(f"{path} exported helmet reference bones do not mark the independently measured OBJ features")
+
+    original_vertices = [vertex.co.copy() for vertex in helmet.data.vertices]
+    try:
+        rotate_helmet_mesh_180(rig, helmet, metrics["head_center"], metrics["rider_up"])
+        reversed_metrics = helmet_semantics(rig, helmet, human)
+        try:
+            require_helmet_physical_forward(reversed_metrics, "deliberately reversed control")
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("helmet physical-feature regression accepted a deliberate 180-degree reverse")
+    finally:
+        for vertex, original in zip(helmet.data.vertices, original_vertices):
+            vertex.co = original
+        helmet.data.update()
+        bpy.context.view_layer.update()
+
+    print("PASS: source OBJ front lip is ahead of the face and rear shell tail is behind it",
+          f"faceBikeDot={metrics['face_bike_alignment']:.3f} noseBikeDot={metrics['nose_bike_alignment']:.3f} "
+          f"frontToEyes={metrics['front_to_eye']:.3f}m rearToEyes={metrics['rear_to_eye']:.3f}m "
+          f"featureBikeDot={metrics['front_bike_alignment']:.3f} "
+          f"sourceFitError={metrics['source_fit_error']:.9f}m; deliberate reverse rejected")
 
 
 def inspect(path, require_shoes=False):

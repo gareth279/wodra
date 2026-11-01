@@ -790,15 +790,16 @@ photograph is redistributed.
 
 The owner-provided `sport_cycling_helmet` OBJ, MTL, diffuse map, and preview
 renders from `wodra_bikes` were recovered into `source/helmet/`. The production
-GLB now uses that helmet. `polish_rider.py` corrects the OBJ's forward/up axes,
-fits the connected shell to the evaluated head bounds, rebuilds normals, and
-binds the shell and strap pieces to the head bone. It retains the supplied
-vented shell geometry, uses a neutralized diffuse map with a restrained matte
-material, and places the helmet rim above the brow and ears. The chin straps
-follow the head through the existing rider animation. Actual Godot 4.6.2
-RideScreen captures show front, side, three-quarter, and rear views with the
-helmet on/off. The owner archive contained no original license metadata; its
-source is retained as the owner-provided asset.
+GLB uses that helmet. The earlier import treated the OBJ's positive-Y axis as
+physical forward; standalone Blender inspection now identifies the short
+projecting brow lip at negative Y and the long tapered rear tail at positive Y.
+`polish_rider.py` imports using that corrected orientation, fits the connected
+shell to evaluated head bounds, rebuilds normals, and binds the shell and strap
+pieces to the head bone. It retains the supplied vented shell geometry, uses a
+neutralized diffuse map with a restrained matte material, and places the helmet
+rim above the brow and ears. The chin straps follow the head through the
+existing rider animation. The owner archive contained no original license
+metadata; its source is retained as the owner-provided asset.
 
 `retarget_pedals_163.py` starts with the accepted issue #159 sculpted-hands
 blend and leaves the bicycle and torso unchanged. It locates each real imported
@@ -904,19 +905,65 @@ check compares every hand-weighted source vertex and weight and requires the
 owner-supplied helmet mesh and both separate shoe attachments in the rebuilt
 blend.
 
-Helmet orientation uses the rider's geometry rather than a shell-width
-heuristic. Blender derives face-forward from the weighted head center to the
-actual eye surface, derives bicycle-forward from the front/rear wheel anchors,
-and locates the central rear-retention component in the supplied helmet mesh.
-It rotates the helmet only if that hardware lies ahead of the rider's eyes,
-using the head rest-to-world transform; the deliberately flipped-source
-control was detected at +23 mm and corrected to 211 mm behind the eyes. The
-Godot import regression welds duplicated glTF seam vertices, skins the imported
-helmet against its real bones, and checks the retention component, eye-to-bike
-axis, shell end regions, and reference bones in the live RideScreen. The final
-import measures the retention component 217 mm behind the eyes, face-to-bike
-dot 0.845, shell length 237 mm, and front/rear reference errors of 27/20 mm.
-Helmet topology and the 9,060 accepted hand-weighted vertices remain unchanged.
+The helmet is oriented from its original supplied OBJ, inspected by itself in
+Blender with a neutral material and orthographic side, front, and rear views.
+The short projecting brow/visor lip is physically at the OBJ's negative-Y end;
+the long tapered aero shell and rear-retention cradle are at positive Y. The
+earlier rebuild guessed that a central mesh component was the rear-retention
+hardware from component size and position, then derived front/rear shell
+markers by projecting the shell along the rider's face axis. Those markers
+therefore aligned with the face even when the physical helmet was backwards.
+In the failing PR capture, the actual OBJ brow lip sat 196 mm behind the eyes
+and the long rear tail sat 107 mm ahead. The corrected rebuild rotates only
+the helmet mesh 180 degrees around the measured head-up axis: the source brow
+lip is now 143 mm ahead of the eyes, the rear tail is 160 mm behind, and the
+physical feature axis aligns with bicycle-forward at 0.991. The source-vertex
+correspondence residual is below 0.0003 mm. A deterministic Blender snapshot
+of every non-helmet mesh, object transform, non-marker bone, and action curve
+produced the same serialized SHA-256 before and after this helmet-only change.
+
+The exported `helmet_front_ref` and `helmet_rear_ref` are now placed from those
+independently measured OBJ lip/tail vertices, never from the face axis. The
+Godot 4.6.2 production RideScreen regression skins the imported helmet and
+checks those features against the real mesh, actual eyes/nose, and wheel
+anchors. In the production side camera, the rear-tail marker projects left of
+the eye center and the brow-lip marker projects right, in the rider's direction
+of travel. The test also rotates the rendered helmet and both physical feature
+points 180 degrees around the head as a negative control, so the lip/tail remain
+attached to the mesh while their reversed direction must be rejected. The source
+regression does the same with the Blender mesh. The accepted 35,632-vertex
+vented helmet and chin straps remain present, as do the 9,060 hand-weighted
+sculpted-hand vertices.
+
+Rebuild from the accepted issue #163 source with Blender 5.2.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.blend'
+$fixedGlb = 'src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb'
+& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
+  --blend tools/modeling/source/WodraCyclist.issue163-final.blend `
+  --output-blend $fixedBlend --output-glb $fixedGlb
+```
+
+To correct an already pedal-corrected checkpoint without recomputing its leg
+animation, add `--helmet-only` and use that checkpoint as `--blend`. The
+helmet-only path changes only the supplied helmet mesh and its non-deforming
+physical-feature reference bones, then re-exports the existing `PedalCycle`.
+The validated editable issue #164 result is also committed as
+`tools/modeling/source/WodraCyclist.issue164-final.blend`; use it with
+`--helmet-only` to reproduce the same corrected GLB without changing the
+accepted pedal cycle. This round-trip was run with Blender 5.2.2 and produced
+the exact committed GLB SHA-256 `79D558979BAF622A09679D00133F319A313F5CFD5E4F8C6B155C9FE17119F16E`:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$sourceBlend = 'tools/modeling/source/WodraCyclist.issue164-final.blend'
+$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-reexport.blend'
+$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue164-reexport.glb'
+& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
+  --blend $sourceBlend --output-blend $fixedBlend --output-glb $fixedGlb --helmet-only
+```
 
 Production RideScreen stills at all eight live 85 rpm phases, the baseline
 comparison, and the 480-frame motion clip are documented in
