@@ -20,7 +20,7 @@ public partial class RiderMotionReviewTest : Node
             var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
             if (string.IsNullOrWhiteSpace(output))
                 output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts",
-                    "alpha48-hand-correction", "cockpit-v22", "godot-motion-frames-v22");
+                    "issue85-leg-failure", "motion-frames");
             else
                 output = Path.GetFullPath(output);
             Directory.CreateDirectory(output);

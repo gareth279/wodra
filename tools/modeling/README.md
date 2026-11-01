@@ -858,14 +858,24 @@ available for this model review.
 
 The focused alpha.85 rider fix is based on the accepted sculpted-hands source
 [`source/WodraCyclist.issue85-pedalling-fix.blend`](source/WodraCyclist.issue85-pedalling-fix.blend).
-It merges the thigh and shin helper bones, bakes a deterministic forward knee
-solve and 7-degree ankle roll to the imported pedal surfaces, reduces shoe
-height while retaining the forefoot point, and exports the outfit mask as
-glTF `COLOR_0`. The Godot import test requires both a full-cycle bilateral-foot
-clip (at least 72 keys per foot) and the jersey, shorts, shoe, and skin color
-masks. The 72-phase imported review checks knee flexion and direction, segment
-length, knee continuity including the wrap seam, pelvis/saddle distance, and
-shoe-to-pedal contact.
+It starts from the accepted issue #163 fitted rider, preserving the owner-supplied
+vented helmet and straps plus the sculpted hood hands. It merges the thigh and
+shin helper bones and keeps the deterministic forward knee solve. Each shoe
+gets a separately weighted shoe bone, calibrated from the actual outsole heel,
+toe, lateral, and sole-up axes; the ankle joint keeps its accepted leg path.
+The forefoot marker remains on the measured moving pedal platform while the
+shoe sole follows that platform with 4 degrees of phase-linked ankle roll. The
+toe points along measured bicycle-forward. The shoebox is shortened around its
+outsole, and the weighted outfit mask is explicitly exported as glTF `COLOR_0`.
+
+The Godot import test requires a fully keyed bilateral cycle, the jersey,
+shorts, shoe, and skin color masks, the supplied high-resolution helmet mesh,
+and the shoe/heel/toe/pedal bones. Its 72-phase checks measure toe-forward and
+sole-to-platform angles, heel and toe outsole heights relative to the actual
+platform plane, forefoot contact, left/right pedal association, knee flexion and
+direction, leg length, cycle continuity, and pelvis/saddle distance. The old
+test passed because it only checked the forefoot marker: that one point was
+correct while the foot bone kept its near-vertical source quaternion.
 
 Rebuild the reviewed asset with Blender 5.2.2:
 
@@ -874,9 +884,16 @@ $blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
 $fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.blend'
 $fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.glb'
 & $blender --background --python tools/modeling/retarget_pedals_163.py -- `
-  --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend `
+  --blend tools/modeling/source/WodraCyclist.issue163-final.blend `
   --output-blend $fixedBlend --output-glb $fixedGlb
+& $blender --background --python tools/modeling/verify_issue85_asset_regression.py -- `
+  tools/modeling/source/WodraCyclist.issue163-final.blend $fixedBlend
 ```
+
+The retarget script rejects the older generated helmet source. The preservation
+check compares every hand-weighted source vertex and weight and requires the
+owner-supplied helmet mesh and both separate shoe attachments in the rebuilt
+blend.
 
 Production RideScreen stills at all eight live 85 rpm phases, the baseline
 comparison, and the 480-frame motion clip are documented in

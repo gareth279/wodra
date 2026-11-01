@@ -18,7 +18,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             DisplayServer.WindowSetSize(new Vector2I(1500, 900));
             var output = System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_OUTPUT");
             if (string.IsNullOrWhiteSpace(output))
-                output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "alpha48-hand-correction", "cockpit-v22", "godot-candidate");
+                output = Path.Combine(ProjectSettings.GlobalizePath("res://../.."), "artifacts", "issue85-leg-failure", "after");
             else
                 output = Path.GetFullPath(output);
             Directory.CreateDirectory(output);
@@ -139,6 +139,14 @@ public partial class RiderFinishingSceneReviewTest : Node
             foreach (var other in FindAll<CyclistVisual>(world)) other.Visible = other == rider;
             var skeleton = Find<Skeleton3D>(rider) ?? throw new InvalidOperationException("Imported rider skeleton missing.");
             var human = Find<MeshInstance3D>(rider, "Human") ?? throw new InvalidOperationException("Weighted human mesh missing.");
+            var helmet = Find<MeshInstance3D>(rider, "CyclingHelmet");
+            var helmetVertices = helmet?.Mesh is { } helmetMesh
+                ? Enumerable.Range(0, helmetMesh.GetSurfaceCount()).Sum(surface =>
+                    helmetMesh.SurfaceGetArrays(surface)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Length)
+                : 0;
+            if (helmetVertices < 30000)
+                throw new InvalidOperationException($"Accepted supplied vented helmet/chin-strap mesh is missing or was replaced ({helmetVertices} vertices).");
+            GD.Print($"[RiderFinishingSceneReviewTest] accepted supplied helmet vertices={helmetVertices}; node={helmet!.GetPath()}");
             var surfaceCount = human.Mesh?.GetSurfaceCount() ?? 0;
             var eyeSurfaceCount = 0;
             for (var surface = 0; surface < surfaceCount; surface++)
@@ -269,11 +277,15 @@ public partial class RiderFinishingSceneReviewTest : Node
             var rightFootBone = skeleton.FindBone("foot.R");
             var leftPedalContactBone = skeleton.FindBone("pedal_contact.L");
             var rightPedalContactBone = skeleton.FindBone("pedal_contact.R");
+            var shoeBones = new[] { skeleton.FindBone("shoe.L"), skeleton.FindBone("shoe.R") };
+            var shoeHeelBones = new[] { skeleton.FindBone("shoe_heel.L"), skeleton.FindBone("shoe_heel.R") };
+            var shoeToeBones = new[] { skeleton.FindBone("shoe_toe.L"), skeleton.FindBone("shoe_toe.R") };
             var pelvisBones = new[] { skeleton.FindBone("pelvis.L"), skeleton.FindBone("pelvis.R") }.Where(i => i >= 0).ToArray();
             if (leftPalmContact < 0 || rightPalmContact < 0 ||
                 leftFootBone < 0 || rightFootBone < 0 || leftPedalContactBone < 0 ||
-                rightPedalContactBone < 0 || pelvisBones.Length == 0)
-                throw new InvalidOperationException("Sculpted palm-contact, pelvis, or shoe-to-pedal contact bones are missing.");
+                rightPedalContactBone < 0 || pelvisBones.Length == 0 || shoeBones.Any(index => index < 0) ||
+                shoeHeelBones.Any(index => index < 0) || shoeToeBones.Any(index => index < 0))
+                throw new InvalidOperationException("Sculpted palms, pelvis, ankle/shoe separation, or shoe geometry markers are missing.");
             var leftPedalSurface = Find<Node3D>(rider, "Contact_LeftPedalSurface")
                 ?? throw new InvalidOperationException("Measured left pedal platform marker missing.");
             var rightPedalSurface = Find<Node3D>(rider, "Contact_RightPedalSurface")
@@ -297,6 +309,20 @@ public partial class RiderFinishingSceneReviewTest : Node
             var maxPelvis = 0f;
             var maxLeftShoeContact = 0f;
             var maxRightShoeContact = 0f;
+            var maxToeForwardError = new float[2];
+            var maxSoleNormalError = new float[2];
+            var maxShoeAxisStep = new float[2];
+            var maxShoeContactStep = new float[2];
+            var maxPedalSurfaceStep = new float[2];
+            var maxHeelPlaneError = new float[2];
+            var maxToePlaneError = new float[2];
+            var minHeelPlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var minToePlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var shoeToeAtStart = new Vector3[2];
+            var shoeToePrevious = new Vector3[2];
+            var shoeContactAtStart = new Vector3[2];
+            var shoeContactPrevious = new Vector3[2];
+            var pedalSurfacePrevious = new Vector3[2];
             var maxLeftShoePhase = 0;
             var maxRightShoePhase = 0;
             var maxLeftShoeError = Vector3.Zero;
@@ -305,6 +331,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             var maxFootTravel = 0f;
             var leftFootAtStart = Vector3.Zero;
             var rightFootAtStart = Vector3.Zero;
+            var pedalSurfaces = new[] { leftPedalSurface, rightPedalSurface };
             // Sample the entire imported cadence cycle, rather than relying on
             // a single still pose that could hide hand or pedal drift.
             const int fitSamples = 72;
@@ -318,6 +345,7 @@ public partial class RiderFinishingSceneReviewTest : Node
                 var rightFoot = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightFootBone).Origin;
                 var leftShoeBall = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(leftPedalContactBone).Origin;
                 var rightShoeBall = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightPedalContactBone).Origin;
+                var shoeContactPositions = new[] { leftShoeBall, rightShoeBall };
                 var pelvis = pelvisBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin)
                     .Aggregate(Vector3.Zero, (sum, p) => sum + p) / pelvisBones.Length;
                 for (var side = 0; side < 2; side++)
@@ -353,6 +381,47 @@ public partial class RiderFinishingSceneReviewTest : Node
                 maxPelvis = Math.Max(maxPelvis, pelvis.DistanceTo(saddle.GlobalPosition));
                 var leftShoeError = leftShoeBall - leftPedalSurface.GlobalPosition;
                 var rightShoeError = rightShoeBall - rightPedalSurface.GlobalPosition;
+                for (var side = 0; side < 2; side++)
+                {
+                    var shoePose = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeBones[side]);
+                    var toeAxis = shoePose.Basis.Y.Normalized();
+                    var soleUp = shoePose.Basis.Z.Normalized();
+                    if (sample == 0)
+                    {
+                        shoeToeAtStart[side] = toeAxis;
+                        shoeContactAtStart[side] = shoeContactPositions[side];
+                    }
+                    else
+                    {
+                        maxShoeAxisStep[side] = Math.Max(maxShoeAxisStep[side],
+                            Mathf.Acos(Mathf.Clamp(shoeToePrevious[side].Dot(toeAxis), -1f, 1f)));
+                        maxShoeContactStep[side] = Math.Max(maxShoeContactStep[side],
+                            shoeContactPrevious[side].DistanceTo(shoeContactPositions[side]));
+                        maxPedalSurfaceStep[side] = Math.Max(maxPedalSurfaceStep[side],
+                            pedalSurfacePrevious[side].DistanceTo(pedalSurfaces[side].GlobalPosition));
+                    }
+                    shoeToePrevious[side] = toeAxis;
+                    shoeContactPrevious[side] = shoeContactPositions[side];
+                    pedalSurfacePrevious[side] = pedalSurfaces[side].GlobalPosition;
+                    var surfaceNormal = pedalSurfaces[side].GlobalBasis.Y.Normalized();
+                    var toeAngle = Mathf.Acos(Mathf.Clamp(toeAxis.Dot(bikeForward), -1f, 1f));
+                    var soleAngle = Mathf.Acos(Mathf.Clamp(soleUp.Dot(surfaceNormal), -1f, 1f));
+                    var heel = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeHeelBones[side]).Origin;
+                    var toe = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeToeBones[side]).Origin;
+                    var heelHeight = (heel - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
+                    var toeHeight = (toe - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
+                    maxToeForwardError[side] = Math.Max(maxToeForwardError[side], toeAngle);
+                    maxSoleNormalError[side] = Math.Max(maxSoleNormalError[side], soleAngle);
+                    maxHeelPlaneError[side] = Math.Max(maxHeelPlaneError[side], Math.Abs(heelHeight));
+                    maxToePlaneError[side] = Math.Max(maxToePlaneError[side], Math.Abs(toeHeight));
+                    minHeelPlane[side] = Math.Min(minHeelPlane[side], heelHeight);
+                    minToePlane[side] = Math.Min(minToePlane[side], toeHeight);
+                }
+                var leftCrossPedalDistance = leftShoeBall.DistanceTo(rightPedalSurface.GlobalPosition);
+                var rightCrossPedalDistance = rightShoeBall.DistanceTo(leftPedalSurface.GlobalPosition);
+                if (leftCrossPedalDistance < leftShoeError.Length() + .08f ||
+                    rightCrossPedalDistance < rightShoeError.Length() + .08f)
+                    throw new InvalidOperationException("A shoe is associated with the opposite pedal platform.");
                 var phase = sample * 360 / fitSamples;
                 if (leftShoeError.Length() > maxLeftShoeContact)
                 {
@@ -378,9 +447,18 @@ public partial class RiderFinishingSceneReviewTest : Node
                 }
             }
             for (var side = 0; side < 2; side++)
+            {
                 maxKneeStep[side] = Math.Max(maxKneeStep[side], kneeAtStart[side].DistanceTo(kneePrevious[side]));
+                maxShoeAxisStep[side] = Math.Max(maxShoeAxisStep[side],
+                    Mathf.Acos(Mathf.Clamp(shoeToeAtStart[side].Dot(shoeToePrevious[side]), -1f, 1f)));
+                maxShoeContactStep[side] = Math.Max(maxShoeContactStep[side],
+                    shoeContactAtStart[side].DistanceTo(shoeContactPrevious[side]));
+                maxPedalSurfaceStep[side] = Math.Max(maxPedalSurfaceStep[side],
+                    pedalSurfacePrevious[side].DistanceTo(pedalSurfaces[side].GlobalPosition));
+            }
             GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ball-of-foot to moving pedal top L={maxLeftShoeContact:F5}m@{maxLeftShoePhase}deg {maxLeftShoeError} R={maxRightShoeContact:F5}m@{maxRightShoePhase}deg {maxRightShoeError}; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
             GD.Print($"[RiderFinishingSceneReviewTest] anatomical knees step={maxKneeStep[0]:F4}/{maxKneeStep[1]:F4}m flex={Mathf.RadToDeg(minKneeFlex[0]):F1}-{Mathf.RadToDeg(maxKneeFlex[0]):F1}/{Mathf.RadToDeg(minKneeFlex[1]):F1}-{Mathf.RadToDeg(maxKneeFlex[1]):F1}deg forwardMin={minForwardKnee[0]:F4}/{minForwardKnee[1]:F4}m legLengthDelta={maxLegLengthDelta[0]:F5}/{maxLegLengthDelta[1]:F5}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] shoe toe error={Mathf.RadToDeg(maxToeForwardError[0]):F1}/{Mathf.RadToDeg(maxToeForwardError[1]):F1}deg sole error={Mathf.RadToDeg(maxSoleNormalError[0]):F1}/{Mathf.RadToDeg(maxSoleNormalError[1]):F1}deg heel plane={maxHeelPlaneError[0]:F3}/{maxHeelPlaneError[1]:F3}m toe plane={maxToePlaneError[0]:F3}/{maxToePlaneError[1]:F3}m signed min heel={minHeelPlane[0]:F3}/{minHeelPlane[1]:F3} toe={minToePlane[0]:F3}/{minToePlane[1]:F3}m shoe step={Mathf.RadToDeg(maxShoeAxisStep[0]):F2}/{Mathf.RadToDeg(maxShoeAxisStep[1]):F2}deg contact={maxShoeContactStep[0]:F3}/{maxShoeContactStep[1]:F3}m surface={maxPedalSurfaceStep[0]:F3}/{maxPedalSurfaceStep[1]:F3}m");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
@@ -397,6 +475,18 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException("Imported leg animation stretches the thigh or shin.");
             if (maxLeftShoeContact > .012f || maxRightShoeContact > .012f)
                 throw new InvalidOperationException($"A shoe leaves its actual moving pedal top (L={maxLeftShoeContact:F3}m, R={maxRightShoeContact:F3}m).");
+            if (maxToeForwardError.Any(value => value > Mathf.DegToRad(18f)))
+                throw new InvalidOperationException("A shoe toe points away from bicycle-forward.");
+            if (maxSoleNormalError.Any(value => value > Mathf.DegToRad(14f)))
+                throw new InvalidOperationException("A shoe sole tilts too far from the actual pedal platform.");
+            if (maxShoeAxisStep.Any(value => value > Mathf.DegToRad(1f)) ||
+                maxShoeContactStep.Any(value => value > .035f) ||
+                Enumerable.Range(0, 2).Any(side => maxShoeContactStep[side] > maxPedalSurfaceStep[side] +
+                    2f * (side == 0 ? maxLeftShoeContact : maxRightShoeContact) + .002f))
+                throw new InvalidOperationException("A shoe orientation or forefoot contact jumps during the pedal cycle.");
+            if (maxHeelPlaneError.Any(value => value > .030f) || maxToePlaneError.Any(value => value > .030f) ||
+                minHeelPlane.Any(value => value < -.030f) || minToePlane.Any(value => value < -.030f))
+                throw new InvalidOperationException("The heel or toe leaves the measured pedal-plane support envelope.");
             riderAnimation.Seek(0.0, true);
             await Settle(2);
             camera.Fov = 32f;
