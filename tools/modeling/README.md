@@ -905,66 +905,45 @@ check compares every hand-weighted source vertex and weight and requires the
 owner-supplied helmet mesh and both separate shoe attachments in the rebuilt
 blend.
 
-The helmet is oriented from its original supplied OBJ, inspected by itself in
-Blender with a neutral material and orthographic side, front, and rear views.
-The short projecting brow/visor lip is physically at the OBJ's negative-Y end;
-the long tapered aero shell and rear-retention cradle are at positive Y. The
-earlier rebuild guessed that a central mesh component was the rear-retention
-hardware from component size and position, then derived front/rear shell
-markers by projecting the shell along the rider's face axis. Those markers
-therefore aligned with the face even when the physical helmet was backwards.
-In the failing PR capture, the actual OBJ brow lip sat 196 mm behind the eyes
-and the long rear tail sat 107 mm ahead. The corrected rebuild rotates only
-the helmet mesh 180 degrees around the measured head-up axis: the source brow
-lip is now 143 mm ahead of the eyes, the rear tail is 160 mm behind, and the
-physical feature axis aligns with bicycle-forward at 0.991. The source-vertex
-correspondence residual is below 0.0003 mm. A deterministic Blender snapshot
-of every non-helmet mesh, object transform, non-marker bone, and action curve
-produced the same serialized SHA-256 before and after this helmet-only change.
+### Rigid helmet production integration
 
-The exported `helmet_front_ref` and `helmet_rear_ref` are now placed from those
-independently measured OBJ lip/tail vertices, never from the face axis. The
-Godot 4.6.2 production RideScreen regression skins the imported helmet and
-checks those features against the real mesh, actual eyes/nose, and wheel
-anchors. In the production side camera, the rear-tail marker projects left of
-the eye center and the brow-lip marker projects right, in the rider's direction
-of travel. The test also rotates the rendered helmet and both physical feature
-points 180 degrees around the head as a negative control, so the lip/tail remain
-attached to the mesh while their reversed direction must be rejected. The source
-regression does the same with the Blender mesh. The accepted 35,632-vertex
-vented helmet and chin straps remain present, as do the 9,060 hand-weighted
-sculpted-hand vertices.
+The previous helmet check was circular: it estimated helmet front/rear
+references from the rider's face-forward axis, so both the mesh and its
+references could agree while the visible shell faced backwards. The first
+production rigid-attachment attempt also inherited the animated head bone's
+forward pitch and stood the shell up over the face; the isolated preview had a
+reset head pose and did not expose that production transform interaction.
 
-Rebuild from the accepted issue #163 source with Blender 5.2.2:
+The production rider GLB is now left unchanged. Its legacy skinned helmet is
+hidden on each runtime instance, and the complete owner-supplied OBJ assembly
+(vented shell, retention pieces, and chin straps) is exported as
+`CyclingHelmetRigid.glb` by `export_cycling_helmet_rigid.py`. The OBJ brow lip
+and frontal ventilation identify its physical front at OBJ `-Y`; Blender's
+`NEGATIVE_Y` import and glTF axis conversion put that source direction at Godot
+`-Z`. The separate assembly is parented to the existing `head` bone with
+`BoneAttachment3D`. Its local basis is updated after the rider animation seek
+to keep the shell aligned to the measured bicycle frame while the attachment
+continues to follow the animated head position. Its fit uses the existing
+production shell's skinned bounds center and a 10 mm downward adjustment.
+No body mesh, skeleton, animation, or other rider asset is rebuilt.
 
-```powershell
-$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
-$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.blend'
-$fixedGlb = 'src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb'
-& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
-  --blend tools/modeling/source/WodraCyclist.issue163-final.blend `
-  --output-blend $fixedBlend --output-glb $fixedGlb
-```
+The Godot 4.6.2 `RiderFinishingSceneReviewTest.tscn` starts the real RideScreen
+on Dunedin One-way: Oval to Gardens Loop with Dummy Trainer at 85 rpm. It lets
+the live cadence update path reach all eight phase labels, then captures exact
+clip phases and clear helmet views from that same production rider. Those
+automated checks guard the separate head attachment, full supplied mesh, and
+front-axis placement. They do not replace visual review. The production views
+and four full-bike pedal phases are committed under
+[`docs/evidence/issue164-helmet-rigid/`](../../docs/evidence/issue164-helmet-rigid/).
 
-To correct an already pedal-corrected checkpoint without recomputing its leg
-animation, add `--helmet-only` and use that checkpoint as `--blend`. The
-helmet-only path changes only the supplied helmet mesh and its non-deforming
-physical-feature reference bones, then re-exports the existing `PedalCycle`.
-The validated editable issue #164 result is also committed as
-`tools/modeling/source/WodraCyclist.issue164-final.blend`; use it with
-`--helmet-only` to reproduce the same corrected GLB without changing the
-accepted pedal cycle. This round-trip was run with Blender 5.2.2 and produced
-the exact committed GLB SHA-256 `79D558979BAF622A09679D00133F319A313F5CFD5E4F8C6B155C9FE17119F16E`:
+Re-export the separate helmet assembly with Blender 5.2.2, then import it with
+Godot 4.6.2:
 
 ```powershell
 $blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
-$sourceBlend = 'tools/modeling/source/WodraCyclist.issue164-final.blend'
-$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-reexport.blend'
-$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue164-reexport.glb'
-& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
-  --blend $sourceBlend --output-blend $fixedBlend --output-glb $fixedGlb --helmet-only
+& $blender --background --python tools/modeling/export_cycling_helmet_rigid.py
+& $godot --headless --editor --path src/IndoorCycling.Game --quit
 ```
-
 Production RideScreen stills at all eight live 85 rpm phases, the baseline
 comparison, and the 480-frame motion clip are documented in
 [`artifacts/issue85-leg-failure/README.md`](../../artifacts/issue85-leg-failure/README.md).
