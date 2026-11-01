@@ -790,15 +790,16 @@ photograph is redistributed.
 
 The owner-provided `sport_cycling_helmet` OBJ, MTL, diffuse map, and preview
 renders from `wodra_bikes` were recovered into `source/helmet/`. The production
-GLB now uses that helmet. `polish_rider.py` corrects the OBJ's forward/up axes,
-fits the connected shell to the evaluated head bounds, rebuilds normals, and
-binds the shell and strap pieces to the head bone. It retains the supplied
-vented shell geometry, uses a neutralized diffuse map with a restrained matte
-material, and places the helmet rim above the brow and ears. The chin straps
-follow the head through the existing rider animation. Actual Godot 4.6.2
-RideScreen captures show front, side, three-quarter, and rear views with the
-helmet on/off. The owner archive contained no original license metadata; its
-source is retained as the owner-provided asset.
+GLB uses that helmet. The earlier import treated the OBJ's positive-Y axis as
+physical forward; standalone Blender inspection now identifies the short
+projecting brow lip at negative Y and the long tapered rear tail at positive Y.
+`polish_rider.py` imports using that corrected orientation, fits the connected
+shell to evaluated head bounds, rebuilds normals, and binds the shell and strap
+pieces to the head bone. It retains the supplied vented shell geometry, uses a
+neutralized diffuse map with a restrained matte material, and places the helmet
+rim above the brow and ears. The chin straps follow the head through the
+existing rider animation. The owner archive contained no original license
+metadata; its source is retained as the owner-provided asset.
 
 `retarget_pedals_163.py` starts with the accepted issue #159 sculpted-hands
 blend and leaves the bicycle and torso unchanged. It locates each real imported
@@ -853,3 +854,99 @@ frames across cadence, steering, camera changes, coast, stop, and restart. The
 accepted closed-grip sculpt, hood contact, posture, clothing, and bicycle were
 preserved. No physical riding, trainer hardware, or multiplayer session was
 available for this model review.
+
+## Alpha.85 lower-body correction
+
+The focused alpha.85 rider fix is based on the accepted sculpted-hands source
+[`source/WodraCyclist.issue85-pedalling-fix.blend`](source/WodraCyclist.issue85-pedalling-fix.blend).
+It starts from the accepted issue #163 fitted rider, preserving the owner-supplied
+vented helmet and straps plus the sculpted hood hands. It merges the thigh and
+shin helper bones and keeps the deterministic forward knee solve. Each shoe
+gets a separately weighted shoe bone, calibrated from the actual outsole heel,
+toe, lateral, and sole-up axes; the ankle joint keeps its accepted leg path.
+The forefoot marker remains on the measured moving pedal platform while the
+shoe sole follows that platform with 4 degrees of phase-linked ankle roll. The
+toe points along measured bicycle-forward. The shoebox is shortened around its
+outsole, and the weighted outfit mask is explicitly exported as glTF `COLOR_0`.
+
+The Godot import test requires a fully keyed bilateral cycle, the jersey,
+shorts, shoe, and skin color masks, the supplied high-resolution helmet mesh,
+and the shoe/heel/toe/pedal bones. Its 72-phase checks measure the actual
+ankle/foot bone against the imported shoe mesh and pedal normal, toe-forward and
+sole-to-platform angles, heel and toe outsole heights relative to the actual
+platform plane, forefoot contact, left/right pedal association, knee flexion and
+direction, leg length, cycle continuity, and pelvis/saddle distance. The prior
+review passed because it measured the independent shoe bone and forefoot marker
+but never compared the ankle/foot bone with the shoe. On the old imported GLB,
+the foot-bone axis was 36.5 degrees from the shoe's heel-to-toe axis and its
+sole normal was 155.5 degrees from the actual pedal normal, even though the
+shoe bone and marker passed. The corrected imported asset measures 0 degrees
+foot-to-shoe error and 4 degrees foot-to-pedal-normal error through all phases.
+The source shoe thickness is 128 mm; `SHOE_HEIGHT_SCALE = 0.46` yields a
+58.9 mm Blender mesh profile and 58.88 mm Godot mesh bound. This keeps the
+measured forefoot/cleat contact while bringing the heel and toe down to a
+credible road-shoe profile.
+
+Rebuild the reviewed asset with Blender 5.2.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.blend'
+$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.glb'
+& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
+  --blend tools/modeling/source/WodraCyclist.issue163-final.blend `
+  --output-blend $fixedBlend --output-glb $fixedGlb
+& $blender --background --python tools/modeling/verify_issue85_asset_regression.py -- `
+  tools/modeling/source/WodraCyclist.issue163-final.blend $fixedBlend
+```
+
+The retarget script rejects the older generated helmet source. The preservation
+check compares every hand-weighted source vertex and weight and requires the
+owner-supplied helmet mesh and both separate shoe attachments in the rebuilt
+blend.
+
+### Rigid helmet production integration
+
+The previous helmet check was circular: it estimated helmet front/rear
+references from the rider's face-forward axis, so both the mesh and its
+references could agree while the visible shell faced backwards. The first
+production rigid-attachment attempt also inherited the animated head bone's
+forward pitch and stood the shell up over the face; the isolated preview had a
+reset head pose and did not expose that production transform interaction.
+
+The production rider GLB is now left unchanged. Its legacy skinned helmet is
+hidden on each runtime instance, and the complete owner-supplied OBJ assembly
+(vented shell, retention pieces, and chin straps) is exported as
+`CyclingHelmetRigid.glb` by `export_cycling_helmet_rigid.py`. The OBJ brow lip
+and frontal ventilation identify its physical front at OBJ `-Y`; Blender's
+`NEGATIVE_Y` import and glTF axis conversion put that source direction at Godot
+`-Z`. The separate assembly is parented to the existing `head` bone with
+`BoneAttachment3D`. Its local basis is updated after the rider animation seek
+to keep the shell aligned to the measured bicycle frame while the attachment
+continues to follow the animated head position. Its fit uses the existing
+production shell's skinned bounds center and a 10 mm downward adjustment.
+No body mesh, skeleton, animation, or other rider asset is rebuilt.
+
+The Godot 4.6.2 `RiderFinishingSceneReviewTest.tscn` starts the real RideScreen
+on Dunedin One-way: Oval to Gardens Loop with Dummy Trainer at 85 rpm. It lets
+the live cadence update path reach all eight phase labels, then captures exact
+clip phases and clear helmet views from that same production rider. Those
+automated checks guard the separate head attachment, full supplied mesh, and
+front-axis placement. They do not replace visual review. The production views
+and four full-bike pedal phases are committed under
+[`docs/evidence/issue164-helmet-rigid/`](../../docs/evidence/issue164-helmet-rigid/).
+
+Re-export the separate helmet assembly with Blender 5.2.2, then import it with
+Godot 4.6.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+& $blender --background --python tools/modeling/export_cycling_helmet_rigid.py
+& $godot --headless --editor --path src/IndoorCycling.Game --quit
+```
+Production RideScreen stills at all eight live 85 rpm phases, the baseline
+comparison, and the 480-frame motion clip are documented in
+[`artifacts/issue85-leg-failure/README.md`](../../artifacts/issue85-leg-failure/README.md).
+The clip includes low/high cadence, steering and camera changes, coasting,
+stopping, and restart. No trainer hardware or multiplayer session was
+available; player and pacer visuals use the shared `CyclistVisual` importer.
