@@ -21,9 +21,11 @@ try
     Assert((await repository.EnsureRiderProfileAsync("Ignored")).Id == rider.Id, "profile is stable across launches");
     Assert((await repository.GetProfileAsync(rider.Id))?.Name == "Test Rider", "profile roundtrip");
     Assert(rider.TrainerDifficultyPercent == 50, "new profiles default trainer difficulty to 50 percent");
-    var renamed = rider with { Name = "Updated Rider", UpdatedAtUtc = DateTimeOffset.UtcNow, TrainerDifficultyPercent = 75 };
+    Assert(rider.JerseyColor == "Teal" && rider.HelmetColor == "Charcoal", "new profiles default to teal jersey and charcoal helmet");
+    var renamed = rider with { Name = "Updated Rider", UpdatedAtUtc = DateTimeOffset.UtcNow, TrainerDifficultyPercent = 75, JerseyColor = "Orange", HelmetColor = "White" };
     await repository.SaveProfileAsync(renamed);
     Assert((await repository.GetProfileAsync(rider.Id)) is { Name: "Updated Rider", TrainerDifficultyPercent: 75 }, "profile save retains per-profile trainer difficulty");
+    Assert((await repository.GetProfileAsync(rider.Id)) is { JerseyColor: "Orange", HelmetColor: "White" }, "profile clothing and helmet colours persist independently");
     var dev = new RiderProfileRecord(Guid.NewGuid(), "Dev Rider", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 75, 8, true);
     await repository.SaveProfileAsync(dev);
     Assert((await repository.GetAllProfilesAsync()).Count == 2 && (await repository.GetProfileAsync(dev.Id))?.IsTestProfile == true,
@@ -137,7 +139,7 @@ try
     await using (var database = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={repository.DatabasePath}"))
     {
         await database.OpenAsync(); await using var command = database.CreateCommand(); command.CommandText = "SELECT version FROM schema_info";
-        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 6, "0 to 6 achievement/profile/route-effort/workout metadata schema migration");
+        Assert(Convert.ToInt32(await command.ExecuteScalarAsync()) == 7, "0 to 7 achievement/profile/route-effort/workout/custom-colour metadata schema migration");
     }
     RiderProfileRecord.Validate("Valid", 75, 8);
     foreach (var weights in new[] { (29d, 8d), (201d, 8d), (75d, 3d), (75d, 31d), (75d, double.NaN) })

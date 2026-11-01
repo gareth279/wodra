@@ -165,6 +165,7 @@ public partial class RideWorldView : Node3D
         AddChild(_camera);
         _rider = new CyclistVisual { Name = "CyclistVisual" };
         _rider.Build();
+        _rider.SetCustomization(GameBootstrap.RiderProfile.JerseyColor, GameBootstrap.RiderProfile.HelmetColor);
         AddChild(_rider);
         _riderVisuals["player"] = _rider;
         AddChild(new DirectionalLight3D

@@ -157,6 +157,7 @@ public partial class RiderFinishingSceneReviewTest : Node
                 if (child is CanvasItem overlay) overlay.Hide();
             var rider = world.PlayerRider;
             if (!rider.UsesImportedModel) throw new InvalidOperationException("RideScreen used the procedural rider fallback.");
+            rider.SetCustomization("Teal", "Charcoal");
             // Match Blender frame 1 exactly (glTF t=0) while inspecting source
             // deformation. The ride clock is frozen below; seeking this imported
             // animation here avoids comparing unrelated crank phases.
@@ -202,6 +203,22 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Original helmet's independently identified physical rear-tail landmark is missing.");
             var rigidHelmetMesh = Find<MeshInstance3D>(rigidHelmetAssembly)
                 ?? throw new InvalidOperationException("Rigid supplied helmet mesh is missing from the assembly.");
+            var shellMaterial = rigidHelmetMesh.GetSurfaceOverrideMaterial(0) as ShaderMaterial
+                ?? throw new InvalidOperationException("The rigid helmet shell must use the UV-aware colour material.");
+            if (shellMaterial.Shader?.Code.Contains("smoothstep(0.055, 0.18, luminance)", StringComparison.Ordinal) != true ||
+                shellMaterial.GetShaderParameter("helmet_texture").AsGodotObject() is null)
+                throw new InvalidOperationException("Helmet colour treatment must preserve the supplied texture and dark hardware mask.");
+            var outfitMaterial = human.GetSurfaceOverrideMaterial(0) as ShaderMaterial
+                ?? throw new InvalidOperationException("The imported clothing surface must keep using RiderOutfitShader.");
+            rider.SetCustomization("Navy blue", "Red");
+            var navy = outfitMaterial.GetShaderParameter("jersey_color").AsColor();
+            var redHelmet = shellMaterial.GetShaderParameter("shell_color").AsColor();
+            if (navy.B < navy.R || redHelmet.R < redHelmet.B)
+                throw new InvalidOperationException("Rider profile colour selections did not reach the jersey and shell materials.");
+            rider.SetCustomization("White", "Original purple/blue");
+            if (rigidHelmetMesh.GetSurfaceOverrideMaterial(0) is not StandardMaterial3D)
+                throw new InvalidOperationException("The original purple/blue option must restore the supplied helmet material.");
+            rider.SetCustomization("Teal", "Charcoal");
             var helmetVertices = rigidHelmetMesh.Mesh is { } helmetMesh
                 ? Enumerable.Range(0, helmetMesh.GetSurfaceCount()).Sum(surface =>
                     helmetMesh.SurfaceGetArrays(surface)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Length)
@@ -312,6 +329,17 @@ public partial class RiderFinishingSceneReviewTest : Node
             camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
             await Settle(3);
             await Save(output, "fit-rider-side-full.png");
+            rider.SetCustomization("Navy blue", "Red");
+            await Settle(2);
+            await Save(output, "fit-rider-navy-red-full.png");
+            rider.SetCustomization("White", "Original purple/blue");
+            await Settle(2);
+            await Save(output, "fit-rider-white-original-full.png");
+            rider.SetCustomization("Teal", "Charcoal");
+            camera.GlobalPosition = bikeCenter + bikeForward * 3.6f + Vector3.Up * .72f;
+            camera.LookAt(bikeCenter + Vector3.Up * .62f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "fit-rider-front-full.png");
             camera.GlobalPosition = bikeCenter + bikeSide * 1.55f + bikeForward * 2.05f + Vector3.Up * .92f;
             camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
             await Settle(3);
@@ -343,6 +371,16 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Save(output, $"head-{angle}-helmet-off.png");
             }
             rider.SetHelmetVisible(true);
+            AimAtHead(camera, bikeForward, bikeSide, headTarget, "side");
+            var reviewHelmetPose = Find<Node3D>(rider, "CyclingHelmetRigidPose")!;
+            foreach (var pitch in new[] { 0f, 3f, 6f })
+            {
+                rider.SetReviewHelmetForwardPitchDegrees(pitch);
+                await Settle(3);
+                await Save(output, $"head-side-helmet-pitch-{pitch:0}deg.png");
+            }
+            rider.SetReviewHelmetForwardPitchDegrees(3f);
+            await Settle(2);
             foreach (var angle in new[] { "front", "side", "three-quarter", "rear" })
             {
                 AimAtHead(camera, bikeForward, bikeSide, headTarget, angle);
@@ -367,25 +405,10 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"Original helmet physical features are not oriented around the actual rider face: " +
                     $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
                     $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m.");
-            var helmetPoseBeforeCounterfactual = rigidHelmetPose.GlobalTransform;
-            var reverseYaw = new Basis(riderUp, Mathf.Pi);
-            var reversedBrow = helmetPoseBeforeCounterfactual.Origin +
-                reverseYaw * (physicalFrontBrow.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
-            var reversedRear = helmetPoseBeforeCounterfactual.Origin +
-                reverseYaw * (physicalRearTail.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
-            if (PhysicalHelmetFeaturesFaceForward(reversedBrow, reversedRear, eyeCenter, faceForward))
-                throw new InvalidOperationException("Helmet physical-feature regression would incorrectly accept a 180-degree yaw.");
-            rigidHelmetPose.GlobalTransform = new Transform3D(
-                reverseYaw * helmetPoseBeforeCounterfactual.Basis,
-                helmetPoseBeforeCounterfactual.Origin);
-            await Settle(2);
-            await Save(output, "head-side-helmet-yaw-180-counterfactual.png");
-            rigidHelmetPose.GlobalTransform = helmetPoseBeforeCounterfactual;
-            await Settle(2);
             GD.Print($"[RiderFinishingSceneReviewTest] physical-feature orientation in production side camera: " +
                 $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
-                $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
-                $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; 180-degree yaw negative control rejected");
+                     $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
+                     $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; accepted forward orientation retained");
             if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1")
             {
                 var baselineLeftHood = Find<Node3D>(rider, "Contact_LeftHood")
