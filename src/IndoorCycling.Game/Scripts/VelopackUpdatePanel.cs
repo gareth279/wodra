@@ -132,7 +132,7 @@ public partial class VelopackUpdatePanel : Control
             _installButton.Text = snapshot.Status switch
             {
                 UpdaterStatus.Staged => "Apply and Restart",
-                UpdaterStatus.Failed when snapshot.ProgressPercent >= 100 => "Retry Apply and Restart",
+                UpdaterStatus.Failed when snapshot.HasStagedPackage => "Retry Apply and Restart",
                 UpdaterStatus.Failed => "Retry Download and Install",
                 _ => "Download and Install"
             };
@@ -221,8 +221,7 @@ public partial class VelopackUpdatePanel : Control
         _service.LogUiEvent("update_ui_action", new { action = "download-or-apply", status = _service.Snapshot.Status.ToString() });
         _operationDetailsRequested = true;
         var snapshot = _service.Snapshot;
-        if (snapshot.Status == UpdaterStatus.Staged ||
-            snapshot.Status == UpdaterStatus.Failed && snapshot.ProgressPercent >= 100)
+        if (snapshot.HasStagedPackage)
         {
             _service.ApplyStagedUpdate();
             return;

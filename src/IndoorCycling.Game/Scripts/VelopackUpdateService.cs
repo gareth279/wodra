@@ -27,7 +27,8 @@ public sealed record UpdaterSnapshot(
     UpdateOffer? Offer,
     int ProgressPercent,
     string Message,
-    string? FailureKind = null);
+    string? FailureKind = null,
+    bool HasStagedPackage = false);
 
 public interface IUpdaterBackend
 {
@@ -92,7 +93,8 @@ public sealed class VelopackUpdateService
                 ? "Automatic installation is unavailable in this portable or development build."
                 : pending is null
                     ? "Updates are checked when online."
-                    : $"Wodra {pending.Version} is downloaded and ready to apply.");
+                    : $"Wodra {pending.Version} is downloaded and ready to apply.",
+            HasStagedPackage: pending is not null);
     }
 
     public void StartAutomaticCheck()
@@ -214,6 +216,11 @@ public sealed class VelopackUpdateService
                 SetState(UpdaterStatus.Failed, "There is no staged update to install. Check for updates and retry.", null, 0, "no-update");
                 return Task.FromResult(Snapshot);
             }
+            if (Snapshot.HasStagedPackage)
+            {
+                Log("update_download_skipped_already_staged", new { version = _offer.Version });
+                return Task.FromResult(Snapshot);
+            }
             _operationActive = true;
             _downloadCancellation = new CancellationTokenSource();
             _downloadTask = DownloadCoreAsync(_offer, _downloadCancellation.Token);
@@ -225,32 +232,45 @@ public sealed class VelopackUpdateService
     {
         try
         {
-            SetState(UpdaterStatus.Downloading, $"Downloading Wodra {offer.Version}…", offer, 0);
+            SetState(UpdaterStatus.Downloading, $"Downloading Wodra {offer.Version}…", offer, 0,
+                hasStagedPackage: false);
             Log("update_download_started", new { version = offer.Version, channel = Snapshot.Channel });
 
             await _backend.DownloadAsync(offer, ReportProgress, cancellationToken);
-            SetState(UpdaterStatus.Staged, $"Wodra {offer.Version} is downloaded and ready to apply.", offer, 100);
-            Log("update_download_staged", new { version = offer.Version });
+            var stagedOffer = _backend.PendingUpdate;
+            var expectedVersion = Velopack.SemanticVersion.Parse(offer.Version).ToString();
+            if (stagedOffer is null || !string.Equals(
+                    Velopack.SemanticVersion.Parse(stagedOffer.Version).ToString(), expectedVersion,
+                    StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Velopack did not confirm the downloaded version as staged.");
+
+            _offer = stagedOffer;
+            SetState(UpdaterStatus.Staged, $"Wodra {stagedOffer.Version} is downloaded and ready to apply.", stagedOffer, 100,
+                hasStagedPackage: true);
+            Log("update_download_staged", new { version = stagedOffer.Version });
 
             if (!_canApply())
             {
-                SetState(UpdaterStatus.Staged, "Download complete. Finish your ride or replay, then choose Apply and Restart.", offer, 100);
-                Log("update_apply_deferred_active_session", new { version = offer.Version });
+                SetState(UpdaterStatus.Staged, "Download complete. Finish your ride or replay, then choose Apply and Restart.", stagedOffer, 100,
+                    hasStagedPackage: true);
+                Log("update_apply_deferred_active_session", new { version = stagedOffer.Version });
                 return Snapshot;
             }
 
-            ApplyStagedUpdate(offer);
+            ApplyStagedUpdate(stagedOffer);
             return Snapshot;
         }
         catch (OperationCanceledException)
         {
-            SetState(UpdaterStatus.Failed, "The update download was interrupted. Retry when you are ready.", offer, Snapshot.ProgressPercent, "cancelled");
+            SetState(UpdaterStatus.Failed, "The update download was interrupted. Retry when you are ready.", offer,
+                Snapshot.ProgressPercent, "cancelled", hasStagedPackage: false);
             Log("update_download_cancelled", new { version = offer.Version, progress = Snapshot.ProgressPercent });
             return Snapshot;
         }
         catch (Exception ex)
         {
-            SetState(UpdaterStatus.Failed, $"Could not install the update. Your current install and rider data are unchanged. {Summarize(ex.Message)} Retry or continue riding.", offer, Snapshot.ProgressPercent, ex.GetType().Name);
+            SetState(UpdaterStatus.Failed, $"Could not install the update. Your current install and rider data are unchanged. {Summarize(ex.Message)} Retry or continue riding.", offer,
+                Snapshot.ProgressPercent, ex.GetType().Name, hasStagedPackage: false);
             Log("update_download_failed", new { version = offer.Version, progress = Snapshot.ProgressPercent, exceptionType = ex.GetType().Name, message = ex.Message });
             return Snapshot;
         }
@@ -267,7 +287,7 @@ public sealed class VelopackUpdateService
 
     public UpdaterSnapshot ApplyStagedUpdate()
     {
-        if (_offer is null)
+        if (!Snapshot.HasStagedPackage || _offer is null)
         {
             Log("update_apply_skipped_no_offer", new { status = Snapshot.Status.ToString() });
             SetState(UpdaterStatus.Failed, "There is no downloaded update ready to apply.", null, 0, "no-staged-update");
@@ -334,9 +354,18 @@ public sealed class VelopackUpdateService
         });
     }
 
-    private void SetState(UpdaterStatus status, string message, UpdateOffer? offer, int progress, string? failureKind = null)
+    private void SetState(UpdaterStatus status, string message, UpdateOffer? offer, int progress,
+        string? failureKind = null, bool? hasStagedPackage = null)
     {
-        var next = Snapshot with { Status = status, Offer = offer, ProgressPercent = progress, Message = message, FailureKind = failureKind };
+        var next = Snapshot with
+        {
+            Status = status,
+            Offer = offer,
+            ProgressPercent = progress,
+            Message = message,
+            FailureKind = failureKind,
+            HasStagedPackage = hasStagedPackage ?? Snapshot.HasStagedPackage
+        };
         Post(() =>
         {
             Snapshot = next;

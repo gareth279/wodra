@@ -25,9 +25,15 @@ The service now coalesces concurrent startup and Settings checks, applies a
 bounded timeout to metadata checks, distinguishes feed failures from a
 confirmed up-to-date result, and exposes retryable status. Package downloads
 have their own cancellation path without the short feed timeout. Velopack
-stages and verifies packages; the service calls apply/restart only after the
-ride/replay safety callback allows it. A return from the restart call is
-reported as a failure with a retry action.
+stages and verifies packages; only a successful return from the download and
+verification operation plus a matching `UpdateManager.UpdatePendingRestart`
+offer sets `HasStagedPackage`. A progress callback reporting 100 percent, or
+even a successful downloader return without that staged offer, is not proof
+that verification and local staging succeeded. The service calls apply/restart
+only after the ride/replay safety callback allows it. A return from the restart
+call is reported as a failure with a retry action. Failed downloads keep the
+update offer and retry the download; failed applies retain the explicit
+staged-package state and retry apply.
 
 ## Local installed-package review
 

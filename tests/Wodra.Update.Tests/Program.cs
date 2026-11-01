@@ -1,3 +1,4 @@
+using System.IO;
 using Velopack;
 
 var cases = new (string Name, string Installed, string Candidate, bool Expected)[]
@@ -115,6 +116,40 @@ static class UpdaterStateTests
 		Require(log.Contains("update_apply_failed") && log.Contains("update_apply_returned_unexpectedly"),
 			"apply failures and unexpected returns are logged");
 
+		var safeToApplyRetry = false;
+		var verifyBackend = new FakeUpdaterBackend
+		{
+			StageCompletedDownload = false,
+			Check = () => Task.FromResult<UpdateOffer?>(new UpdateOffer("0.1.0-alpha.2", "verify test", new object())),
+			Download = (_, progress, _) =>
+			{
+				progress(100);
+				return Task.FromException(new InvalidDataException("package verification failed"));
+			}
+		};
+		var verifyService = new VelopackUpdateService(verifyBackend, "0.1.0-alpha.1", "alpha",
+			() => safeToApplyRetry, (_, _) => { });
+		await verifyService.CheckForUpdatesAsync();
+		var verifyFailure = await verifyService.DownloadAndInstallAsync();
+		Require(verifyFailure.Status == UpdaterStatus.Failed && verifyFailure.ProgressPercent == 100 &&
+			!verifyFailure.HasStagedPackage && verifyBackend.ApplyCalls == 0,
+			"100 percent download progress followed by package verification failure is not staged");
+		verifyBackend.Download = (_, progress, _) => { progress(100); return Task.CompletedTask; };
+		var missingStage = await verifyService.DownloadAndInstallAsync();
+		Require(missingStage.Status == UpdaterStatus.Failed && missingStage.ProgressPercent == 100 &&
+			!missingStage.HasStagedPackage && verifyBackend.ApplyCalls == 0,
+			"completed download without a matching Velopack staged package remains retryable");
+		verifyBackend.StageCompletedDownload = true;
+		var verifiedRetry = await verifyService.DownloadAndInstallAsync();
+		Require(verifiedRetry.Status == UpdaterStatus.Staged && verifiedRetry.HasStagedPackage &&
+			verifyBackend.ApplyCalls == 0,
+			"failed verification retries the download and only successful staging enables apply");
+		safeToApplyRetry = true;
+		var verifiedApply = verifyService.ApplyStagedUpdate();
+		Require(verifiedApply.Status == UpdaterStatus.Failed && verifiedApply.HasStagedPackage &&
+			verifyBackend.ApplyCalls == 1,
+			"a staged package remains explicitly available to retry after apply fails");
+
 		var neverCompletes = new TaskCompletionSource<UpdateOffer?>(TaskCreationOptions.RunContinuationsAsynchronously);
 		var timeoutBackend = new FakeUpdaterBackend { Check = () => neverCompletes.Task };
 		var timeoutService = new VelopackUpdateService(timeoutBackend, "0.1.0-alpha.1", "alpha", () => true,
@@ -162,16 +197,22 @@ static class UpdaterStateTests
 
 sealed class FakeUpdaterBackend : IUpdaterBackend
 {
+	private UpdateOffer? _pendingUpdate;
 	public bool IsInstalled { get; set; } = true;
+	public bool StageCompletedDownload { get; set; } = true;
 	public string CurrentVersion { get; set; } = "0.1.0-alpha.1";
 	public string? Channel => "alpha";
-	public UpdateOffer? PendingUpdate => null;
+	public UpdateOffer? PendingUpdate => _pendingUpdate;
 	public int CheckCalls { get; private set; }
 	public int ApplyCalls { get; private set; }
 	public Func<Task<UpdateOffer?>> Check { get; set; } = () => Task.FromResult<UpdateOffer?>(null);
 	public Func<UpdateOffer, Action<int>, CancellationToken, Task> Download { get; set; } = (_, _, _) => Task.CompletedTask;
 	public Action<UpdateOffer> Apply { get; set; } = _ => { };
 	public Task<UpdateOffer?> CheckForUpdatesAsync() { CheckCalls++; return Check(); }
-	public Task DownloadAsync(UpdateOffer offer, Action<int> progress, CancellationToken cancellationToken) => Download(offer, progress, cancellationToken);
+	public async Task DownloadAsync(UpdateOffer offer, Action<int> progress, CancellationToken cancellationToken)
+	{
+		await Download(offer, progress, cancellationToken);
+		if (StageCompletedDownload) _pendingUpdate = offer;
+	}
 	public void ApplyAndRestart(UpdateOffer offer) { ApplyCalls++; Apply(offer); }
 }
