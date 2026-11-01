@@ -59,6 +59,10 @@
     <DefineConstants>$(DefineConstants);EOS_PLATFORM_WINDOWS_64;WODRA_EOS_SDK</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(EnableWodraLocalUpdateFeed)' == 'true'">
+    <DefineConstants>$(DefineConstants);WODRA_LOCAL_UPDATE_FEED_TEST</DefineConstants>
+  </PropertyGroup>
+
   <Target Name="RequireEpicOnlineServicesSdk" BeforeTargets="CoreCompile" Condition="'$(EnableEpicOnlineServices)' == 'true' and !Exists('$(EosSdkRoot)\SDK\Source\Generated\Bindings.cs')">
     <Error Text="EOS SDK was requested but not found. Set EOS_SDK_ROOT or EosSdkRoot to the extracted EOS C# SDK root." />
   </Target>

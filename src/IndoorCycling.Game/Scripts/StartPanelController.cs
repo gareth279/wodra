@@ -117,7 +117,7 @@ public partial class StartPanelController : Control
 			diagnosticsButton.Pressed += () => { _optionsWindow?.Hide(); _diagnosticPanel.OpenFor(this); };
 			startupColumn.AddChild(diagnosticsButton);
 			startupColumn.MoveChild(diagnosticsButton, startupColumn.GetNode<Button>("QuitButton").GetIndex());
-			_updatePanel = new VelopackUpdatePanel();
+			_updatePanel = new VelopackUpdatePanel(showAvailableUpdateAutomatically: true);
 			startupColumn.AddChild(_updatePanel);
 			// Keep update status/actions with the startup choices, before the terminal
 			// Quit action, rather than extending the menu below it.
@@ -259,6 +259,13 @@ public partial class StartPanelController : Control
 			if (_debugModeCheckButton is not null) { _debugModeCheckButton.Text = "Debug Overlay"; _debugModeCheckButton.Visible = true; _debugModeCheckButton.Reparent(_advancedOptionsContent); }
 			if (_fitReplayButton is not null) { _fitReplayButton.Visible = true; _fitReplayButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _fitReplayButton.Reparent(_advancedOptionsContent); }
 			if (_diagnosticsButton is not null) { _diagnosticsButton.Visible = true; _diagnosticsButton.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; _diagnosticsButton.Reparent(_advancedOptionsContent); }
+			content.AddChild(new HSeparator());
+			var updatesHeading = new Label { Text = "Updates" };
+			updatesHeading.AddThemeFontSizeOverride("font_size", 16);
+			content.AddChild(updatesHeading);
+			var settingsUpdatePanel = new VelopackUpdatePanel { Name = "SettingsUpdatePanel" };
+			content.AddChild(settingsUpdatePanel);
+			settingsUpdatePanel.Attach();
 			content.AddChild(new HSeparator());
 			var aboutHeading = new Label { Text = "About" }; aboutHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(aboutHeading);
 			_aboutBuildInformation = new Label
