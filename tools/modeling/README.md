@@ -786,36 +786,70 @@ The source model attribution is Andy Woodhead, CC BY 4.0, at
 Only its hand geometry is used in Wodra; no supplied bike, clothing, or source
 photograph is redistributed.
 
-### Optional owner-supplied road helmet candidate
+### Issue #163 — supplied road helmet and moving pedal fit
 
-The `sport_cycling_helmet` OBJ, MTL, diffuse texture, and preview renders from
-the owner-provided `C:\Users\garet\OneDrive\wodra_bikes\sport_cycling_helmet.zip`
-were recovered. The OBJ, MTL, and diffuse maps are staged in `source/helmet/`.
-`integrate_helmet_159.py --use-supplied`
-imports, neutralizes, head-skins, and exports that mesh for review. Production
-RideScreen head captures showed the source shell intersecting and covering the
-rider's face, so the final runtime GLB retains the fitted Wodra road helmet
-shell. The option is kept for continued alignment work; the supplied OBJ's
-original license metadata was not present in the archive.
+The owner-provided `sport_cycling_helmet` OBJ, MTL, diffuse map, and preview
+renders from `wodra_bikes` were recovered into `source/helmet/`. The production
+GLB now uses that helmet. `polish_rider.py` corrects the OBJ's forward/up axes,
+fits the connected shell to the evaluated head bounds, rebuilds normals, and
+binds the shell and strap pieces to the head bone. It retains the supplied
+vented shell geometry, uses a neutralized diffuse map with a restrained matte
+material, and places the helmet rim above the brow and ears. The chin straps
+follow the head through the existing rider animation. Actual Godot 4.6.2
+RideScreen captures show front, side, three-quarter, and rear views with the
+helmet on/off. The owner archive contained no original license metadata; its
+source is retained as the owner-provided asset.
 
-The production Wodra shell was resized around the evaluated head, its face
-normals were rebuilt for Godot back-face culling, and its six vents, neutral
-shell/trim materials, and head-weighted chin straps are preserved. The editable
-blend and the production test captures document the result.
+`retarget_pedals_163.py` starts with the accepted issue #159 sculpted-hands
+blend and leaves the bicycle and torso unchanged. It locates each real imported
+pedal platform with a Blender BVH query, then retargets the existing leg IK to
+the moving platform while using the authored shoe's forefoot/cleat vertex 45.
+The exported `PedalCycle` is baked for three revolutions and checked at all 217
+source frames. The regression checks the actual shoe mesh against the imported
+pedal mesh, its loop seam, knee continuity, and ankle rotation. The source
+check measured less than 0.03 mm between the shoe contact vertex and the pedal
+surface, 7 degrees of ankle articulation, and a maximum knee step of 42.6 mm.
+The production RideScreen test separately measures the imported animation at
+72 phases of a complete crank revolution; the maximum ball-of-foot marker error
+to the moving platform was 8.94 mm, within the 12 mm visual-fit limit.
 
-The matched production close-ups, elevated views, whole-rider captures and
-motion evidence are in `artifacts/issue159/final/`. The final photos are actual
-Godot 4.6.2 production RideScreen renders on the NVIDIA Quadro P620, not Blender
-previews. They show a more closed four-finger grip and opposed thumb than the
-prior extended-finger pose, while retaining the source sculpture's stylized
-proportions. This is a visible improvement, not owner visual acceptance. The
-owner should make that decision from the PR captures. No physical riding or
-hardware acceptance has been performed.
+The runtime rider visual advances the imported animation by half its 72-sample
+step to compensate for the measured Godot animation-import phase lag. The
+crank-mounted pedal bearings counter-rotate to keep the platform level. This is
+visual synchronization only: cadence, power, resistance, and ride simulation
+are unchanged. The production motion capture covers low/high cadence, steering,
+camera switching, coasting, stopping, and restarting. It spans 480 RideScreen
+frames at 30 fps (16 seconds).
 
-After importing the GLB in Godot, run `RiderFinishingSceneReviewTest.tscn` for
-production RideScreen views and 72 pedal-cycle fit samples, then
-`RiderMotionReviewTest.tscn` for 360 runtime frames covering cadence, steering,
-coasting and restart. The fit test reads `palm_contact.L/R`, verifies they stay
-within 45 mm of the hood targets, checks pelvis-to-saddle fit and requires foot
-travel. These geometric measurements support the screenshots but do not
-measure independent finger articulation or prove physical grip pressure.
+Reproduce the pipeline from the accepted hands source with Blender 5.2.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$pedalBlend = Join-Path $env:TEMP 'WodraCyclist.issue163-pedal-fit.blend'
+$pedalGlb = Join-Path $env:TEMP 'WodraCyclist.issue163-pedal-fit.glb'
+& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
+  --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend `
+  --output-blend $pedalBlend --output-glb $pedalGlb
+& $blender --background --python tools/modeling/integrate_helmet_159.py -- `
+  --blend $pedalBlend `
+  --glb src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb --use-supplied
+Copy-Item $pedalBlend tools/modeling/source/WodraCyclist.issue163-final.blend
+python tools/modeling/verify_road_bike_158.py
+```
+
+The committed `source/WodraCyclist.issue163-final.blend` is the complete
+editable rider, bicycle, rig, supplied helmet, and baked animation. The runtime
+GLB is 35.44 MB and contains 1,024,925 triangles across 16 render meshes (8.9%
+larger than the previous accepted rider GLB). The bike geometry and its
+documented #158 crank and pedal references are unchanged.
+
+Matched production images and the motion clip are in
+[`artifacts/issue163/final/README.md`](../../artifacts/issue163/final/README.md).
+They were captured from the actual RideScreen using Godot 4.6.2 and the NVIDIA
+Quadro P620 graphical renderer, not from Blender previews. `RiderFinishingSceneReviewTest.tscn`
+checks hood contacts, pelvis/saddle fit, and actual imported pedal contacts at
+all 72 cycle phases; `RiderMotionReviewTest.tscn` records 480 actual production
+frames across cadence, steering, camera changes, coast, stop, and restart. The
+accepted closed-grip sculpt, hood contact, posture, clothing, and bicycle were
+preserved. No physical riding, trainer hardware, or multiplayer session was
+available for this model review.

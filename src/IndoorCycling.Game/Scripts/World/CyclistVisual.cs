@@ -6,6 +6,9 @@ using IndoorCycling.Core.Models;
 public partial class CyclistVisual : Node3D
 {
     private const string ImportedModelPath = "res://Assets/Models/WodraCyclist.glb";
+    private const double ImportedCrankPhaseOffset = -Math.PI / 2.0;
+    private const int ImportedPedalSamplesPerRevolution = 72;
+    private const double ImportedAnimationPhaseOffset = Math.Tau / (ImportedPedalSamplesPerRevolution * 2.0);
     private sealed record Dimensions(double RiderHeight, float WheelRadius, float Wheelbase, float CrankRadius,
         float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
 
@@ -97,6 +100,8 @@ public partial class CyclistVisual : Node3D
     private MeshInstance3D _leftKnee = default!;
     private MeshInstance3D _rightKnee = default!;
     private Node3D _crankPivot = default!;
+    private Node3D? _leftPedalBearing;
+    private Node3D? _rightPedalBearing;
     private Node3D _bicycleModel = default!;
     private Node3D _riderModel = default!;
     private Node3D _upperBody = default!;
@@ -391,6 +396,8 @@ public partial class CyclistVisual : Node3D
         _frontWheel = FindModelNode<Node3D>(instance, "FrontWheelSpin")!;
         _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
         _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
+        _leftPedalBearing = FindModelNode<Node3D>(instance, "PedalBearingLeft")!;
+        _rightPedalBearing = FindModelNode<Node3D>(instance, "PedalBearingRight")!;
         _upperBody = null!; // The complete imported rider is animated by its Skeleton3D.
         _leftCrank = FindModelNode<MeshInstance3D>(instance, "LeftCrank")!;
         _rightCrank = FindModelNode<MeshInstance3D>(instance, "RightCrank")!;
@@ -398,7 +405,8 @@ public partial class CyclistVisual : Node3D
         _rightPedal = FindModelNode<MeshInstance3D>(instance, "RightPedal")!;
 
         if (_bicycleModel is null || _riderModel is null || _frontWheel is null || _rearWheel is null ||
-            _crankPivot is null || _leftCrank is null || _rightCrank is null ||
+            _crankPivot is null ||
+            _leftCrank is null || _rightCrank is null ||
             _leftPedal is null || _rightPedal is null)
         {
             GD.PushWarning($"Imported cyclist at {ImportedModelPath} does not match the Wodra animation-target contract; using procedural fallback.");
@@ -446,9 +454,33 @@ public partial class CyclistVisual : Node3D
     {
         if (!UsesImportedModel || _riderAnimationPlayer is null || _pedalCycleAnimation is null) return;
         _crankAngle = Math.Tau * ((degrees % 360 + 360) % 360) / 360.0;
-        _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
-        var cycleLength = _pedalCycleAnimation.Length / 3.0;
-        _riderAnimationPlayer.Seek((_crankAngle / Math.Tau) * cycleLength, true);
+        SetImportedCrankVisualPhase(_crankAngle);
+        SeekImportedRiderPhase(_crankAngle);
+    }
+
+    private void SeekImportedRiderPhase(double phase)
+    {
+        if (_riderAnimationPlayer is null || _pedalCycleAnimation is null) return;
+        // GLTF playback includes the repeated terminal sample in Animation.Length.
+        // Remove that endpoint before dividing the three revolutions, then apply
+        // a half-sample lead measured in Godot so the shoe stays on the moving
+        // contact surface at in-between cadence phases after import.
+        var terminalSample = 1.0 / ImportedPedalSamplesPerRevolution;
+        var cycleLength = Math.Max(0.0, (_pedalCycleAnimation.Length - terminalSample) / 3.0);
+        var animationPhase = CyclistAnimationMath.WrapAngle(phase + ImportedAnimationPhaseOffset);
+        _riderAnimationPlayer.Seek((animationPhase / Math.Tau) * cycleLength, true);
+    }
+
+    private void SetImportedCrankVisualPhase(double phase)
+    {
+        var sourcePhase = phase + ImportedCrankPhaseOffset;
+        // The imported crank pivot is 90 degrees out of phase with PedalCycle.
+        // Its bearings counter-rotate so each road pedal remains level while
+        // its spindle follows the actual crank circle.
+        _crankPivot.Rotation = new Vector3((float)-sourcePhase, 0, 0);
+        var bearingPhase = (float)sourcePhase;
+        if (_leftPedalBearing is not null) _leftPedalBearing.Rotation = new Vector3(bearingPhase, 0, 0);
+        if (_rightPedalBearing is not null) _rightPedalBearing.Rotation = new Vector3(bearingPhase, 0, 0);
     }
 
     private void CollectHelmetParts(Node node)
@@ -576,13 +608,9 @@ public partial class CyclistVisual : Node3D
             // The baked skeleton owns rider motion. Crank and wheel visuals remain driven
             // independently from cadence and road speed, respectively. At zero cadence the
             // crank phase and skeleton sample hold their last pose; restart resumes there.
-            _crankPivot.Rotation = new Vector3((float)-_crankAngle, 0, 0);
+            SetImportedCrankVisualPhase(_crankAngle);
             if (RiderAnimationSamplingEnabled && _riderAnimationPlayer is not null && _pedalCycleAnimation is not null)
-            {
-                var cycleLength = _pedalCycleAnimation.Length / 3.0;
-                var phase = CyclistAnimationMath.WrapAngle(_crankAngle) / Math.Tau;
-                _riderAnimationPlayer.Seek(phase * cycleLength, true);
-            }
+                SeekImportedRiderPhase(_crankAngle);
             return;
         }
         var bb=new Vector3(0,Size.CrankY,Size.CrankZ);

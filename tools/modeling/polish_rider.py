@@ -101,26 +101,84 @@ def make_helmet(rig, use_supplied=False):
     obj_path = source / "sport_cycling_helmet_main.obj"
     if use_supplied and obj_path.is_file():
         before = set(bpy.data.objects)
-        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="NEGATIVE_Z", up_axis="Y")
+        # This OBJ is authored Z-up with +Y facing forward. The previous
+        # guessed Y-up import stood the shell on its end, which caused the
+        # reported face intersection and bowl-like production silhouette.
+        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="Y", up_axis="Z")
         imported = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
         if len(imported) != 1:
             raise RuntimeError(f"Expected one mesh in supplied helmet OBJ, found {len(imported)}")
         helmet = imported[0]
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        evaluated = helmet.evaluated_get(depsgraph)
-        points = [helmet.matrix_world @ v.co for v in evaluated.data.vertices]
-        crown = max(p.z for p in points)
+        # The largest disconnected OBJ island is the shell. Use its actual
+        # bounds to set scale, brow rim and skull clearance; the other islands
+        # are the supplied straps and retain their relative positions.
+        bm = bmesh.new()
+        bm.from_mesh(helmet.data)
+        bm.verts.ensure_lookup_table()
+        visited = set()
+        components = []
+        for vert in bm.verts:
+            if vert.index in visited:
+                continue
+            stack = [vert]
+            visited.add(vert.index)
+            component = []
+            while stack:
+                current = stack.pop()
+                component.append(current)
+                for edge in current.link_edges:
+                    other = edge.other_vert(current)
+                    if other.index not in visited:
+                        visited.add(other.index)
+                        stack.append(other)
+            components.append(component)
+        shell = max(components, key=len)
+        shell_points = [helmet.matrix_world @ vert.co for vert in shell]
+        bm.free()
+        shell_min = Vector(tuple(min(p[i] for p in shell_points) for i in range(3)))
+        shell_max = Vector(tuple(max(p[i] for p in shell_points) for i in range(3)))
+        shell_center = (shell_min + shell_max) * .5
+
         head_bone = rig.pose.bones.get("head")
         if head_bone is None:
             raise RuntimeError("rider head bone is missing")
-        head_top = rig.matrix_world @ head_bone.tail
-        # The source helmet's shell sits on the skull exterior; its chin
-        # strap mesh extends below the crown and is included in the bounds.
-        head_center = Vector((head_top.x, head_top.y + .02, head_top.z + .07))
-        scale = .011
+        body = bpy.data.objects.get("Human")
+        head_group = body.vertex_groups.get("head") if body else None
+        if body is None or head_group is None:
+            raise RuntimeError("weighted rider head mesh is required to fit the supplied helmet")
+        evaluated_body = body.evaluated_get(depsgraph)
+        body_mesh = evaluated_body.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+        head_points = []
+        try:
+            for vertex in body_mesh.vertices:
+                weight = max((group.weight for group in vertex.groups if group.group == head_group.index),
+                             default=0.0)
+                if weight >= .2:
+                    head_points.append(evaluated_body.matrix_world @ vertex.co)
+        finally:
+            evaluated_body.to_mesh_clear()
+        if len(head_points) < 100:
+            raise RuntimeError("could not resolve the weighted rider head bounds")
+        head_min = Vector(tuple(min(p[i] for p in head_points) for i in range(3)))
+        head_max = Vector(tuple(max(p[i] for p in head_points) for i in range(3)))
+        head_center = (head_min + head_max) * .5
+        target_width = head_max.x - head_min.x + .014
+        scale = target_width / (shell_max.x - shell_min.x)
+        vertical_scale = scale * .90
+        shell_bottom = head_max.z - .105
+        print("SUPPLIED_HELMET_FIT", "sourceShell", tuple(round(v, 4) for v in shell_max - shell_min),
+              "head", tuple(round(v, 4) for v in head_max - head_min),
+              "uniformScale", round(scale, 6), "verticalScale", round(vertical_scale, 6),
+              "shellBottom", round(shell_bottom, 4))
         rest_from_world = rig.data.bones["head"].matrix_local @ head_bone.matrix.inverted() @ rig.matrix_world.inverted()
-        for vertex, point in zip(helmet.data.vertices, points):
-            fitted = head_center + Vector((point.x * scale, point.y * scale, (point.z - crown) * scale))
+        for vertex in helmet.data.vertices:
+            point = helmet.matrix_world @ vertex.co
+            fitted = Vector((
+                head_center.x + (point.x - shell_center.x) * scale,
+                head_center.y + (point.y - shell_center.y) * scale,
+                shell_bottom + (point.z - shell_min.z) * vertical_scale,
+            ))
             vertex.co = rest_from_world @ fitted
         helmet.data.update()
         # OBJ normals are inconsistent in the supplied archive. Rebuild them
@@ -137,12 +195,16 @@ def make_helmet(rig, use_supplied=False):
             material.use_nodes = True
             shader = material.node_tree.nodes.get("Principled BSDF")
             if shader:
+                shader.inputs["Base Color"].default_value = (0.82, 0.84, 0.82, 1.0)
                 shader.inputs["Roughness"].default_value = .48
-                shader.inputs["Metallic"].default_value = .08
+                shader.inputs["Metallic"].default_value = .035
             texture = source / "sport_cycling_helmet_diffuse_neutral.png"
             for node in material.node_tree.nodes:
                 if node.type == "TEX_IMAGE" and texture.is_file():
                     node.image = bpy.data.images.load(str(texture), check_existing=True)
+                    if shader and not any(link.to_node == shader and link.to_socket == shader.inputs["Base Color"]
+                                          for link in material.node_tree.links):
+                        material.node_tree.links.new(node.outputs["Color"], shader.inputs["Base Color"])
             for image in bpy.data.images:
                 if image.filepath and "sport_cycling_helmet_diffuse" in image.filepath:
                     image.pack()

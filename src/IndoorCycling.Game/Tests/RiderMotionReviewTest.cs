@@ -53,21 +53,32 @@ public partial class RiderMotionReviewTest : Node
             await Settle(120);
 
             var index = 0;
-            GD.Print("[RiderMotionReview] capture start: 85 rpm pedal, steer right, coast, restart at 85 rpm");
-            index = await Capture(output, index, 3, 85);  // 85 rpm baseline
+            GD.Print("[RiderMotionReview] capture start: low/high cadence, steering, camera changes, coast, stop, restart");
+            session.AdjustDummyCadence(-40);
+            index = await Capture(output, index, 2, 45);  // low cadence
+            session.AdjustDummyCadence(75);
+            index = await Capture(output, index, 2, 120); // high cadence
             SendSteering(Key.Right, true);
-            index = await Capture(output, index, 2, 85);  // steering while pedalling
+            index = await Capture(output, index, 2, 120); // steering while pedalling
             var steeringOffset = world.CurrentLateralOffsetMeters;
             GD.Print($"[RiderMotionReview] held-right lateral offset={steeringOffset:F3} m");
             if (Math.Abs(steeringOffset) < .05)
                 throw new InvalidOperationException($"Right steering event did not move the rider: {steeringOffset:F3} m.");
             SendSteering(Key.Right, false);
-            index = await Capture(output, index, 1, 85);  // release / return
-            session.AdjustDummyCadence(-85);
+            index = await Capture(output, index, 1, 120); // release / return
+            world.SelectCameraInspectionView(RiderCameraView.Side);
+            index = await Capture(output, index, 1, 120); // camera switch while pedalling
+            world.SelectCameraInspectionView(RiderCameraView.FrontThreeQuarter);
+            index = await Capture(output, index, 1, 120); // alternate camera view
+            world.SelectCameraInspectionView(RiderCameraView.GameplayRefined);
+            session.AdjustDummyCadence(-120);
             index = await Capture(output, index, 2, 0);   // coasting
+            session.ToggleRidePause();
+            index = await Capture(output, index, 1, 0);   // stopped/paused
             session.AdjustDummyCadence(85);
+            session.ToggleRidePause();
             index = await Capture(output, index, 4, 85);  // restart, several cycles
-            GD.Print($"[RiderMotionReview] PASS: {index} production RideScreen frames at 30 fps; output={output}");
+            GD.Print($"[RiderMotionReview] PASS: {index} production RideScreen frames at 30 fps across low/high cadence, steering, camera switches, coasting, stop, and restart; output={output}");
             GetTree().Quit(0);
         }
         catch (Exception error)
