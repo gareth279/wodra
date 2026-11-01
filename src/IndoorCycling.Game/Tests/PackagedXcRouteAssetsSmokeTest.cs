@@ -60,12 +60,14 @@ public partial class PackagedXcRouteAssetsSmokeTest : Node
                 throw new InvalidDataException("The portable XC route-points sidecar does not match its manifest geometry.");
 
             GD.Print($"[PackagedXcRouteAssetsSmoke] PASS: extracted Wodra.exe loaded XC route geometry, manifest, {terrain.Chunks.Length} terrain chunks, {vegetation.Trees.Count} trees, and {features.Features.Length} line choices.");
-            GetTree().Quit(0);
+            // This validator is launched through the production main scene. Direct process exit
+            // avoids unrelated scene teardown touching partially initialized UI nodes.
+            System.Environment.Exit(0);
         }
         catch (Exception error)
         {
             GD.PushError($"[PackagedXcRouteAssetsSmoke] FAIL: {error}");
-            GetTree().Quit(1);
+            System.Environment.Exit(1);
         }
     }
 }
