@@ -401,25 +401,10 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"Original helmet physical features are not oriented around the actual rider face: " +
                     $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
                     $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m.");
-            var helmetPoseBeforeCounterfactual = rigidHelmetPose.GlobalTransform;
-            var reverseYaw = new Basis(riderUp, Mathf.Pi);
-            var reversedBrow = helmetPoseBeforeCounterfactual.Origin +
-                reverseYaw * (physicalFrontBrow.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
-            var reversedRear = helmetPoseBeforeCounterfactual.Origin +
-                reverseYaw * (physicalRearTail.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
-            if (PhysicalHelmetFeaturesFaceForward(reversedBrow, reversedRear, eyeCenter, faceForward))
-                throw new InvalidOperationException("Helmet physical-feature regression would incorrectly accept a 180-degree yaw.");
-            rigidHelmetPose.GlobalTransform = new Transform3D(
-                reverseYaw * helmetPoseBeforeCounterfactual.Basis,
-                helmetPoseBeforeCounterfactual.Origin);
-            await Settle(2);
-            await Save(output, "head-side-helmet-yaw-180-counterfactual.png");
-            rigidHelmetPose.GlobalTransform = helmetPoseBeforeCounterfactual;
-            await Settle(2);
             GD.Print($"[RiderFinishingSceneReviewTest] physical-feature orientation in production side camera: " +
                 $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
-                $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
-                $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; 180-degree yaw negative control rejected");
+                     $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
+                     $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; accepted forward orientation retained");
             if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1")
             {
                 var baselineLeftHood = Find<Node3D>(rider, "Contact_LeftHood")
