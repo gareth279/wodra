@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,87 @@ public partial class RiderFinishingSceneReviewTest : Node
 {
     private Viewport? _captureViewport;
     private bool _skipCaptures;
+
+    private static Vector3[] SkinVerticesToWorld(Skeleton3D skeleton, MeshInstance3D mesh,
+        Vector3[] vertices, int[] boneIndices, float[] weights)
+    {
+        var skin = mesh.Skin ?? throw new InvalidOperationException("Supplied helmet mesh has no imported skin.");
+        if (boneIndices.Length != vertices.Length * 4 || weights.Length != boneIndices.Length ||
+            skin.GetBindCount() != skeleton.GetBoneCount())
+            throw new InvalidOperationException("Imported helmet vertex skin arrays do not match its skeleton binds.");
+        var transforms = new Transform3D[skeleton.GetBoneCount()];
+        for (var bone = 0; bone < transforms.Length; bone++)
+            transforms[bone] = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(bone) * skin.GetBindPose(bone);
+        var result = new Vector3[vertices.Length];
+        for (var vertex = 0; vertex < vertices.Length; vertex++)
+        {
+            var skinned = Vector3.Zero;
+            for (var influence = 0; influence < 4; influence++)
+            {
+                var offset = vertex * 4 + influence;
+                var weight = weights[offset];
+                if (weight <= 0f) continue;
+                var bone = boneIndices[offset];
+                if ((uint)bone >= transforms.Length)
+                    throw new InvalidOperationException($"Imported helmet vertex {vertex} references invalid bone {bone}.");
+                skinned += transforms[bone] * vertices[vertex] * weight;
+            }
+            result[vertex] = skinned;
+        }
+        return result;
+    }
+
+    private static List<int[]> FindConnectedVertexComponents(Vector3[] vertices, int[] indices)
+    {
+        var vertexCount = vertices.Length;
+        if (indices.Length < 3 || indices.Length % 3 != 0)
+            throw new InvalidOperationException("Imported helmet topology does not contain indexed triangles.");
+        var parents = Enumerable.Range(0, vertexCount).ToArray();
+        int Find(int index)
+        {
+            while (parents[index] != index)
+            {
+                parents[index] = parents[parents[index]];
+                index = parents[index];
+            }
+            return index;
+        }
+        void Union(int left, int right)
+        {
+            var leftRoot = Find(left);
+            var rightRoot = Find(right);
+            if (leftRoot != rightRoot) parents[rightRoot] = leftRoot;
+        }
+        // glTF import may duplicate a geometric vertex at UV/normal seams.
+        // Weld coincident skinned positions before identifying the physical
+        // shell and separate retention hardware components.
+        var coincidentVertices = new Dictionary<Vector3I, int>();
+        for (var vertex = 0; vertex < vertexCount; vertex++)
+        {
+            var point = vertices[vertex];
+            var key = new Vector3I(
+                Mathf.RoundToInt(point.X * 10000f),
+                Mathf.RoundToInt(point.Y * 10000f),
+                Mathf.RoundToInt(point.Z * 10000f));
+            if (coincidentVertices.TryGetValue(key, out var coincident)) Union(vertex, coincident);
+            else coincidentVertices.Add(key, vertex);
+        }
+        for (var triangle = 0; triangle < indices.Length; triangle += 3)
+        {
+            var a = indices[triangle];
+            var b = indices[triangle + 1];
+            var c = indices[triangle + 2];
+            if ((uint)a >= (uint)vertexCount || (uint)b >= (uint)vertexCount || (uint)c >= (uint)vertexCount)
+                throw new InvalidOperationException("Imported helmet topology contains an invalid vertex index.");
+            Union(a, b);
+            Union(b, c);
+        }
+        return Enumerable.Range(0, vertexCount)
+            .GroupBy(Find)
+            .Select(group => group.ToArray())
+            .OrderByDescending(group => group.Length)
+            .ToList();
+    }
 
     public override async void _Ready()
     {
@@ -146,6 +228,112 @@ public partial class RiderFinishingSceneReviewTest : Node
                 : 0;
             if (helmetVertices < 30000)
                 throw new InvalidOperationException($"Accepted supplied vented helmet/chin-strap mesh is missing or was replaced ({helmetVertices} vertices).");
+            var helmetHeadBone = skeleton.FindBone("head");
+            var helmetArrays = helmet!.Mesh!.SurfaceGetArrays(0);
+            var helmetVertexArray = helmetArrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+            var helmetBoneArray = helmetArrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
+            var helmetWeightArray = helmetArrays[(int)Mesh.ArrayType.Weights].AsFloat32Array();
+            var helmetIndexArray = helmetArrays[(int)Mesh.ArrayType.Index].AsInt32Array();
+            var helmetFrontRef = skeleton.FindBone("helmet_front_ref");
+            var helmetRearRef = skeleton.FindBone("helmet_rear_ref");
+            if (helmetHeadBone < 0 || helmetFrontRef < 0 || helmetRearRef < 0 ||
+                skeleton.GetBoneParent(helmetFrontRef) != helmetHeadBone ||
+                skeleton.GetBoneParent(helmetRearRef) != helmetHeadBone)
+                throw new InvalidOperationException("Face-derived helmet front/rear references are not attached to the rider's head bone.");
+            var helmetFrontPoint = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(helmetFrontRef).Origin;
+            var helmetRearPoint = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(helmetRearRef).Origin;
+            var helmetLongAxis = helmetFrontPoint - helmetRearPoint;
+            var helmetBikeForward = (liveFrontWheel.GlobalPosition - liveRearWheel.GlobalPosition).Normalized();
+            var helmetWorldVertices = SkinVerticesToWorld(skeleton, helmet,
+                helmetVertexArray, helmetBoneArray, helmetWeightArray);
+            var riderUp = skeleton.GlobalTransform.Basis.Y.Normalized();
+            var helmetSide = helmetBikeForward.Cross(riderUp).Normalized();
+
+            var headPoints = new List<Vector3>();
+            var eyePoints = new List<Vector3>();
+            for (var surface = 0; surface < human.Mesh!.GetSurfaceCount(); surface++)
+            {
+                var humanArrays = human.Mesh.SurfaceGetArrays(surface);
+                var vertices = humanArrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+                var bones = humanArrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
+                var weights = humanArrays[(int)Mesh.ArrayType.Weights].AsFloat32Array();
+                if (vertices.Length == 0 || bones.Length != vertices.Length * 4 || weights.Length != bones.Length)
+                    throw new InvalidOperationException($"Imported rider surface {surface} has incomplete skin data.");
+                var worldPoints = SkinVerticesToWorld(skeleton, human, vertices, bones, weights);
+                if (human.Mesh.SurfaceGetMaterial(surface)?.ResourceName.Contains("Rider Eye", StringComparison.OrdinalIgnoreCase) == true)
+                    eyePoints.AddRange(worldPoints);
+                for (var vertex = 0; vertex < vertices.Length; vertex++)
+                {
+                    var headWeight = 0f;
+                    for (var influence = 0; influence < 4; influence++)
+                    {
+                        var offset = vertex * 4 + influence;
+                        if (bones[offset] == helmetHeadBone) headWeight += weights[offset];
+                    }
+                    if (headWeight > .5f) headPoints.Add(worldPoints[vertex]);
+                }
+            }
+            if (headPoints.Count < 500 || eyePoints.Count < 20)
+                throw new InvalidOperationException("Imported rider face or weighted head geometry is incomplete.");
+            var headCenter = headPoints.Aggregate(Vector3.Zero, (sum, point) => sum + point) / headPoints.Count;
+            var eyeCenter = eyePoints.Aggregate(Vector3.Zero, (sum, point) => sum + point) / eyePoints.Count;
+            var faceForward = eyeCenter - headCenter;
+            if (faceForward.Length() < .01f)
+                throw new InvalidOperationException("Imported eye/head landmarks do not define a face-forward axis.");
+            faceForward = faceForward.Normalized();
+            var faceBikeAlignment = faceForward.Dot(helmetBikeForward);
+            if (faceBikeAlignment < .5f)
+                throw new InvalidOperationException($"Actual eye/head geometry does not face the front wheel (dot={faceBikeAlignment:F3}).");
+
+            var helmetComponents = FindConnectedVertexComponents(helmetWorldVertices, helmetIndexArray);
+            GD.Print($"[RiderFinishingSceneReviewTest] imported helmet welded components=" +
+                string.Join(",", helmetComponents.Take(8).Select(component => component.Length)));
+            if (helmetComponents.Count == 0 || helmetComponents[0].Length < 20000)
+                throw new InvalidOperationException("Imported accepted vented helmet shell component is missing.");
+            var retentionCandidates = helmetComponents.Skip(1)
+                .Where(component => component.Length is >= 500 and <= 4000)
+                .Select(component =>
+                {
+                    var center = component.Aggregate(Vector3.Zero, (sum, index) => sum + helmetWorldVertices[index]) / component.Length;
+                    return (component.Length, center,
+                        lateral: (center - headCenter).Dot(helmetSide),
+                        height: (center - headCenter).Dot(riderUp));
+                })
+                .Where(candidate => Math.Abs(candidate.lateral) <= .03f && candidate.height >= .05f)
+                .OrderBy(candidate => Math.Abs(candidate.lateral))
+                .ThenByDescending(candidate => candidate.height)
+                .ThenBy(candidate => Math.Abs(candidate.Length - 1250))
+                .ToArray();
+            if (retentionCandidates.Length == 0)
+                throw new InvalidOperationException("Imported helmet has no central rear-retention hardware component.");
+            var rearRetention = retentionCandidates[0].center;
+            var retentionToEyes = (rearRetention - eyeCenter).Dot(faceForward);
+            if (retentionToEyes >= -.05f)
+                throw new InvalidOperationException($"Rear-retention hardware is ahead of or level with the rider's eyes ({retentionToEyes:F3}m).");
+
+            var shellIndices = helmetComponents[0];
+            var shellPoints = shellIndices.Select(index => helmetWorldVertices[index]).ToArray();
+            var shellProjections = shellPoints.Select(point => point.Dot(faceForward)).ToArray();
+            var shellMinForward = shellProjections.Min();
+            var shellMaxForward = shellProjections.Max();
+            var shellFrontCenter = shellPoints.Where(point => point.Dot(faceForward) >= shellMaxForward - .015f)
+                .Aggregate(Vector3.Zero, (sum, point) => sum + point) /
+                shellPoints.Count(point => point.Dot(faceForward) >= shellMaxForward - .015f);
+            var shellRearCenter = shellPoints.Where(point => point.Dot(faceForward) <= shellMinForward + .015f)
+                .Aggregate(Vector3.Zero, (sum, point) => sum + point) /
+                shellPoints.Count(point => point.Dot(faceForward) <= shellMinForward + .015f);
+            var frontGeometryMarkerError = shellFrontCenter.DistanceTo(helmetFrontPoint);
+            var rearGeometryMarkerError = shellRearCenter.DistanceTo(helmetRearPoint);
+            var helmetFaceAlignment = helmetLongAxis.Normalized().Dot(faceForward);
+            var helmetForwardAlignment = helmetLongAxis.Normalized().Dot(helmetBikeForward);
+            GD.Print($"[RiderFinishingSceneReviewTest] imported helmet faceBikeDot={faceBikeAlignment:F3} " +
+                $"retentionToEyes={retentionToEyes:F3}m rearComponentVertices={retentionCandidates[0].Length} " +
+                $"shellLength={shellMaxForward - shellMinForward:F3}m markerErrors={frontGeometryMarkerError:F3}/{rearGeometryMarkerError:F3}m");
+            if (frontGeometryMarkerError > .04f || rearGeometryMarkerError > .04f ||
+                helmetLongAxis.Length() is < .15f or > .35f || helmetFaceAlignment < .75f || helmetForwardAlignment < .75f)
+                throw new InvalidOperationException("Helmet front/rear references disagree with actual eye, shell, rear-retention, or bicycle geometry.");
+            GD.Print($"[RiderFinishingSceneReviewTest] supplied helmet face/bike axes and rear-retention geometry are aligned: " +
+                $"faceBikeDot={faceBikeAlignment:F3} markerFaceDot={helmetFaceAlignment:F3} markerBikeDot={helmetForwardAlignment:F3}; vertices={helmetVertices}");
             GD.Print($"[RiderFinishingSceneReviewTest] accepted supplied helmet vertices={helmetVertices}; node={helmet!.GetPath()}");
             var surfaceCount = human.Mesh?.GetSurfaceCount() ?? 0;
             var eyeSurfaceCount = 0;
@@ -183,7 +371,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             var bikeSide = bikeForward.Cross(Vector3.Up).Normalized();
             var savedFov = camera.Fov;
             var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
-            camera.Fov = 42f;
+            camera.Fov = 50f;
             camera.GlobalPosition = bikeCenter + bikeSide * 2.65f + bikeForward * .08f + Vector3.Up * .54f;
             camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
             await Settle(3);
@@ -280,12 +468,19 @@ public partial class RiderFinishingSceneReviewTest : Node
             var shoeBones = new[] { skeleton.FindBone("shoe.L"), skeleton.FindBone("shoe.R") };
             var shoeHeelBones = new[] { skeleton.FindBone("shoe_heel.L"), skeleton.FindBone("shoe_heel.R") };
             var shoeToeBones = new[] { skeleton.FindBone("shoe_toe.L"), skeleton.FindBone("shoe_toe.R") };
+            var shoeMeshes = new[]
+            {
+                Find<MeshInstance3D>(rider, "CyclingShoeL"),
+                Find<MeshInstance3D>(rider, "CyclingShoeR")
+            };
             var pelvisBones = new[] { skeleton.FindBone("pelvis.L"), skeleton.FindBone("pelvis.R") }.Where(i => i >= 0).ToArray();
             if (leftPalmContact < 0 || rightPalmContact < 0 ||
                 leftFootBone < 0 || rightFootBone < 0 || leftPedalContactBone < 0 ||
                 rightPedalContactBone < 0 || pelvisBones.Length == 0 || shoeBones.Any(index => index < 0) ||
-                shoeHeelBones.Any(index => index < 0) || shoeToeBones.Any(index => index < 0))
+                shoeHeelBones.Any(index => index < 0) || shoeToeBones.Any(index => index < 0) || shoeMeshes.Any(mesh => mesh?.Mesh is null))
                 throw new InvalidOperationException("Sculpted palms, pelvis, ankle/shoe separation, or shoe geometry markers are missing.");
+            var shoeProfiles = shoeMeshes.Select(mesh => mesh!.Mesh!.GetAabb().Size).ToArray();
+            GD.Print($"[RiderFinishingSceneReviewTest] shoe mesh source bounds L={shoeProfiles[0]} R={shoeProfiles[1]}");
             var leftPedalSurface = Find<Node3D>(rider, "Contact_LeftPedalSurface")
                 ?? throw new InvalidOperationException("Measured left pedal platform marker missing.");
             var rightPedalSurface = Find<Node3D>(rider, "Contact_RightPedalSurface")
@@ -311,6 +506,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             var maxRightShoeContact = 0f;
             var maxToeForwardError = new float[2];
             var maxSoleNormalError = new float[2];
+            var maxFootToShoeAxisError = new float[2];
+            var maxFootToPedalNormalError = new float[2];
             var maxShoeAxisStep = new float[2];
             var maxShoeContactStep = new float[2];
             var maxPedalSurfaceStep = new float[2];
@@ -386,6 +583,22 @@ public partial class RiderFinishingSceneReviewTest : Node
                     var shoePose = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeBones[side]);
                     var toeAxis = shoePose.Basis.Y.Normalized();
                     var soleUp = shoePose.Basis.Z.Normalized();
+                    var footPose = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(ankleBones[side]);
+                    var footAxis = footPose.Basis.Y.Normalized();
+                    var footUp = footPose.Basis.Z.Normalized();
+                    var surfaceNormal = pedalSurfaces[side].GlobalBasis.Y.Normalized();
+                    var footToShoeAxisError = Mathf.Acos(Mathf.Clamp(footAxis.Dot(toeAxis), -1f, 1f));
+                    var footToPedalNormalError = Mathf.Acos(Mathf.Clamp(footUp.Dot(surfaceNormal), -1f, 1f));
+                    maxFootToShoeAxisError[side] = Math.Max(maxFootToShoeAxisError[side], footToShoeAxisError);
+                    maxFootToPedalNormalError[side] = Math.Max(maxFootToPedalNormalError[side], footToPedalNormalError);
+                    if (sample % 18 == 0)
+                    {
+                        GD.Print($"[RiderFinishingSceneReviewTest] phase={sample * 5} side={side} " +
+                            $"ankleToShoeAxis={Mathf.RadToDeg(footToShoeAxisError):F1}deg " +
+                            $"ankleToPedalNormal={Mathf.RadToDeg(footToPedalNormalError):F1}deg " +
+                            $"forefoot={shoeContactPositions[side]} heel={skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeHeelBones[side]).Origin} " +
+                            $"toe={skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeToeBones[side]).Origin}");
+                    }
                     if (sample == 0)
                     {
                         shoeToeAtStart[side] = toeAxis;
@@ -403,7 +616,6 @@ public partial class RiderFinishingSceneReviewTest : Node
                     shoeToePrevious[side] = toeAxis;
                     shoeContactPrevious[side] = shoeContactPositions[side];
                     pedalSurfacePrevious[side] = pedalSurfaces[side].GlobalPosition;
-                    var surfaceNormal = pedalSurfaces[side].GlobalBasis.Y.Normalized();
                     var toeAngle = Mathf.Acos(Mathf.Clamp(toeAxis.Dot(bikeForward), -1f, 1f));
                     var soleAngle = Mathf.Acos(Mathf.Clamp(soleUp.Dot(surfaceNormal), -1f, 1f));
                     var heel = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeHeelBones[side]).Origin;
@@ -458,7 +670,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ball-of-foot to moving pedal top L={maxLeftShoeContact:F5}m@{maxLeftShoePhase}deg {maxLeftShoeError} R={maxRightShoeContact:F5}m@{maxRightShoePhase}deg {maxRightShoeError}; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
             GD.Print($"[RiderFinishingSceneReviewTest] anatomical knees step={maxKneeStep[0]:F4}/{maxKneeStep[1]:F4}m flex={Mathf.RadToDeg(minKneeFlex[0]):F1}-{Mathf.RadToDeg(maxKneeFlex[0]):F1}/{Mathf.RadToDeg(minKneeFlex[1]):F1}-{Mathf.RadToDeg(maxKneeFlex[1]):F1}deg forwardMin={minForwardKnee[0]:F4}/{minForwardKnee[1]:F4}m legLengthDelta={maxLegLengthDelta[0]:F5}/{maxLegLengthDelta[1]:F5}m");
-            GD.Print($"[RiderFinishingSceneReviewTest] shoe toe error={Mathf.RadToDeg(maxToeForwardError[0]):F1}/{Mathf.RadToDeg(maxToeForwardError[1]):F1}deg sole error={Mathf.RadToDeg(maxSoleNormalError[0]):F1}/{Mathf.RadToDeg(maxSoleNormalError[1]):F1}deg heel plane={maxHeelPlaneError[0]:F3}/{maxHeelPlaneError[1]:F3}m toe plane={maxToePlaneError[0]:F3}/{maxToePlaneError[1]:F3}m signed min heel={minHeelPlane[0]:F3}/{minHeelPlane[1]:F3} toe={minToePlane[0]:F3}/{minToePlane[1]:F3}m shoe step={Mathf.RadToDeg(maxShoeAxisStep[0]):F2}/{Mathf.RadToDeg(maxShoeAxisStep[1]):F2}deg contact={maxShoeContactStep[0]:F3}/{maxShoeContactStep[1]:F3}m surface={maxPedalSurfaceStep[0]:F3}/{maxPedalSurfaceStep[1]:F3}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] shoe toe error={Mathf.RadToDeg(maxToeForwardError[0]):F1}/{Mathf.RadToDeg(maxToeForwardError[1]):F1}deg sole error={Mathf.RadToDeg(maxSoleNormalError[0]):F1}/{Mathf.RadToDeg(maxSoleNormalError[1]):F1}deg ankle-to-shoe axis={Mathf.RadToDeg(maxFootToShoeAxisError[0]):F1}/{Mathf.RadToDeg(maxFootToShoeAxisError[1]):F1}deg ankle-to-pedal normal={Mathf.RadToDeg(maxFootToPedalNormalError[0]):F1}/{Mathf.RadToDeg(maxFootToPedalNormalError[1]):F1}deg heel plane={maxHeelPlaneError[0]:F3}/{maxHeelPlaneError[1]:F3}m toe plane={maxToePlaneError[0]:F3}/{maxToePlaneError[1]:F3}m signed min heel={minHeelPlane[0]:F3}/{minHeelPlane[1]:F3} toe={minToePlane[0]:F3}/{minToePlane[1]:F3}m shoe step={Mathf.RadToDeg(maxShoeAxisStep[0]):F2}/{Mathf.RadToDeg(maxShoeAxisStep[1]):F2}deg contact={maxShoeContactStep[0]:F3}/{maxShoeContactStep[1]:F3}m surface={maxPedalSurfaceStep[0]:F3}/{maxPedalSurfaceStep[1]:F3}m");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
@@ -477,6 +689,10 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"A shoe leaves its actual moving pedal top (L={maxLeftShoeContact:F3}m, R={maxRightShoeContact:F3}m).");
             if (maxToeForwardError.Any(value => value > Mathf.DegToRad(18f)))
                 throw new InvalidOperationException("A shoe toe points away from bicycle-forward.");
+            if (maxFootToShoeAxisError.Any(value => value > Mathf.DegToRad(10f)))
+                throw new InvalidOperationException("Ankle/foot bones remain toe-down relative to the actual shoe geometry.");
+            if (maxFootToPedalNormalError.Any(value => value > Mathf.DegToRad(12f)))
+                throw new InvalidOperationException("Ankle/foot bones remain rotated away from the pedal platform.");
             if (maxSoleNormalError.Any(value => value > Mathf.DegToRad(14f)))
                 throw new InvalidOperationException("A shoe sole tilts too far from the actual pedal platform.");
             if (maxShoeAxisStep.Any(value => value > Mathf.DegToRad(1f)) ||
@@ -487,6 +703,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             if (maxHeelPlaneError.Any(value => value > .030f) || maxToePlaneError.Any(value => value > .030f) ||
                 minHeelPlane.Any(value => value < -.030f) || minToePlane.Any(value => value < -.030f))
                 throw new InvalidOperationException("The heel or toe leaves the measured pedal-plane support envelope.");
+            if (shoeProfiles.Any(size => size.Y is < .045f or > .065f || size.Z is < .24f or > .30f))
+                throw new InvalidOperationException($"Imported road shoe profile is outside measured proportions (L={shoeProfiles[0]}, R={shoeProfiles[1]}).");
             riderAnimation.Seek(0.0, true);
             await Settle(2);
             camera.Fov = 32f;
@@ -690,7 +908,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             var phaseForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
             var phaseSide = phaseForward.Cross(Vector3.Up).Normalized();
             var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
-            var target = bikeCenter + Vector3.Up * .42f;
+            var target = bikeCenter + Vector3.Up * .10f;
             camera.Fov = 42f;
             camera.GlobalPosition = bikeCenter + phaseSide * 2.35f + phaseForward * .08f + Vector3.Up * .54f;
             camera.LookAt(target, Vector3.Up);

@@ -1,13 +1,13 @@
-"""Retarget the preserved issue #159 rider to the imported moving pedals.
+"""Retarget the accepted issue #163 rider to the imported moving pedals.
 
 This pass starts from the accepted sculpted-hands source blend. It preserves
 the upper body and bicycle mesh while re-solving the bilateral leg chains
 against the real crank-mounted pedal surface points.
 
   blender --background --python tools/modeling/retarget_pedals_163.py -- \
-    --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend \
-    --output-blend tools/modeling/checkpoints/WodraCyclist.issue163-fit.blend \
-    --output-glb tools/modeling/exports/WodraCyclist-issue163-fit.glb
+    --blend tools/modeling/source/WodraCyclist.issue163-final.blend \
+    --output-blend tools/modeling/checkpoints/WodraCyclist.issue164-foot-orientation.blend \
+    --output-glb src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb
 """
 from __future__ import annotations
 
@@ -31,9 +31,12 @@ FOOT_PITCH_AMPLITUDE = math.radians(4)
 MAX_KNEE_STEP = 0.022
 MAX_BACKWARD_KNEE_OFFSET = 0.012
 MIN_FORWARD_KNEE_OFFSET_WHEN_FLEXED = 0.006
-SHOE_HEIGHT_SCALE = 0.62
+SHOE_HEIGHT_SCALE = 0.46  # 128 mm authored boot-height -> about 59 mm road-shoe profile
+MAX_SHOE_PROFILE_HEIGHT = 0.065
 MAX_SHOE_AXIS_DEVIATION = math.radians(18.0)
 MAX_SOLE_PLANE_DEVIATION = math.radians(14.0)
+MAX_FOOT_TO_SHOE_AXIS_DEVIATION = math.radians(10.0)
+MAX_FOOT_TO_PEDAL_NORMAL_DEVIATION = math.radians(12.0)
 MAX_HEEL_TO_PEDAL_HEIGHT = 0.030
 TARGET_LEG_SEGMENT_LENGTH = 0.45
 SIDES = {
@@ -219,7 +222,7 @@ def add_pedal_bearings():
 
 
 def fit_road_shoes():
-    """Reduce boot-like height while preserving the outsole and forefoot point."""
+    """Set a road-shoe profile from measured mesh height, preserving forefoot contact."""
     for side in SIDES:
         shoe = bpy.data.objects.get(f"CyclingShoe{side}")
         if shoe is None or len(shoe.data.vertices) <= BALL_VERTEX:
@@ -228,12 +231,22 @@ def fit_road_shoes():
         maximum = max(vertex.co.z for vertex in shoe.data.vertices)
         original_height = maximum - minimum
         forefoot_height = shoe.data.vertices[BALL_VERTEX].co.z
+        forefoot_before = shoe.data.vertices[BALL_VERTEX].co.copy()
         for vertex in shoe.data.vertices:
             vertex.co.z = forefoot_height + (vertex.co.z - forefoot_height) * SHOE_HEIGHT_SCALE
         shoe.data.update()
-        new_height = max(vertex.co.z for vertex in shoe.data.vertices) - minimum
-        print("ROAD_SHOE_HEIGHT", side, round(original_height, 4), "->", round(new_height, 4),
-              "forefoot", tuple(round(v, 4) for v in shoe.data.vertices[BALL_VERTEX].co))
+        fitted_minimum = min(vertex.co.z for vertex in shoe.data.vertices)
+        fitted_maximum = max(vertex.co.z for vertex in shoe.data.vertices)
+        fitted_height = fitted_maximum - fitted_minimum
+        forefoot_after = shoe.data.vertices[BALL_VERTEX].co.copy()
+        if (forefoot_after - forefoot_before).length > 1e-7:
+            raise RuntimeError(f"{shoe.name} shoe fitting moved its authored forefoot/cleat vertex")
+        if not .045 <= fitted_height <= MAX_SHOE_PROFILE_HEIGHT:
+            raise RuntimeError(f"{shoe.name} fitted shoe profile is implausible: {fitted_height:.4f} m")
+        print("ROAD_SHOE_GEOMETRY", side, "sourceHeight", round(original_height, 4),
+              "fittedHeight", round(fitted_height, 4), "length", round(shoe.dimensions.y, 4),
+              "width", round(shoe.dimensions.x, 4), "forefootPreserved",
+              tuple(round(v, 4) for v in forefoot_after))
 
 
 def add_pedal_contact_bones(rig, local_offsets):
@@ -606,7 +619,6 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
     max_knee_step = {side: 0.0 for side in SIDES}
     previous_knee = {}
     max_knee_frame = {side: 0 for side in SIDES}
-    foot_reference = {side: source_samples[start][side]["foot_rotation"] for side in SIDES}
     for frame in range(start, end + 1):
         index = frame - start
         phase = (index % SAMPLES_PER_REVOLUTION) * math.tau / SAMPLES_PER_REVOLUTION
@@ -628,12 +640,17 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
             desired_toe = bike_forward.normalized()
             desired_lateral = desired_toe.cross(surface_normal).normalized()
             desired_frame = frame_quaternion(desired_lateral, desired_toe, surface_normal)
-            # The ankle joint follows its accepted source orientation while an
-            # independently weighted shoe bone follows the actual pedal plane.
+            # Preserve the approved ankle target positions (and therefore the
+            # accepted knee path), but do not reuse the source's toe-down foot
+            # rotation. The foot bone now follows the same measured bicycle-
+            # forward and pedal-normal frame as the shoe, with only the
+            # authored, symmetric ankle pitch applied.
             pitch = FOOT_PITCH_AMPLITUDE * math.sin(phase + (math.pi if side == "L" else 0.0))
-            ankle_rotation = (foot_reference[side] @ Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
+            source_contact_rotation = (source_samples[start][side]["foot_rotation"] @
+                                       Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
             shoe_rotation = (desired_frame @ Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
-            ankle_target = surface.matrix_world.translation - ankle_rotation @ local_offsets[side]
+            ankle_rotation = shoe_rotation
+            ankle_target = surface.matrix_world.translation - source_contact_rotation @ local_offsets[side]
             shoe_targets[side].location = surface.matrix_world.translation
             shoe_targets[side].rotation_quaternion = shoe_rotation
             hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
@@ -751,6 +768,8 @@ def validate_full_cycle(rig, scene):
     max_foot_pitch = {side: 0.0 for side in SIDES}
     max_toe_forward_error = {side: 0.0 for side in SIDES}
     max_sole_normal_error = {side: 0.0 for side in SIDES}
+    max_foot_toe_error = {side: 0.0 for side in SIDES}
+    max_foot_normal_error = {side: 0.0 for side in SIDES}
     max_heel_plane_error = {side: 0.0 for side in SIDES}
     max_toe_plane_error = {side: 0.0 for side in SIDES}
     min_knee_flex = {side: math.inf for side in SIDES}
@@ -809,10 +828,17 @@ def validate_full_cycle(rig, scene):
                             Vector((0.0, 0.0, 1.0))).normalized()
             toe_error = math.acos(max(-1.0, min(1.0, shoe_frame["toe"].dot(bike_forward))))
             sole_error_angle = math.acos(max(-1.0, min(1.0, shoe_frame["up"].dot(pedal_normal))))
+            foot_world = world_pose(rig, rig.pose.bones[f"foot.{side}"])
+            foot_toe = (foot_world.to_3x3() @ Vector((0.0, 1.0, 0.0))).normalized()
+            foot_up = (foot_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+            foot_toe_error = math.acos(max(-1.0, min(1.0, foot_toe.dot(shoe_frame["toe"]))))
+            foot_normal_error = math.acos(max(-1.0, min(1.0, foot_up.dot(pedal_normal))))
             heel_plane = abs((shoe_frame["heel_point"] - surface).dot(pedal_normal))
             toe_plane = abs((shoe_frame["toe_point"] - surface).dot(pedal_normal))
             max_toe_forward_error[side] = max(max_toe_forward_error[side], toe_error)
             max_sole_normal_error[side] = max(max_sole_normal_error[side], sole_error_angle)
+            max_foot_toe_error[side] = max(max_foot_toe_error[side], foot_toe_error)
+            max_foot_normal_error[side] = max(max_foot_normal_error[side], foot_normal_error)
             max_heel_plane_error[side] = max(max_heel_plane_error[side], heel_plane)
             max_toe_plane_error[side] = max(max_toe_plane_error[side], toe_plane)
             if side not in foot_start:
@@ -862,6 +888,8 @@ def validate_full_cycle(rig, scene):
           "soleDelta", max_sole_delta, "footAngle", max_foot_pitch,
           "toeForwardErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_toe_forward_error.items()},
           "soleNormalErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_sole_normal_error.items()},
+          "footToShoeAxisErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_foot_toe_error.items()},
+          "footToPedalNormalErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_foot_normal_error.items()},
           "heelPlaneError", max_heel_plane_error, "toePlaneError", max_toe_plane_error,
           "kneeStep", {side: (value, knee_max_frame[side]) for side, value in max_knee_step.items()},
           "kneeFlexDeg", {side: (round(min_knee_flex[side], 1), round(max_knee_flex[side], 1)) for side in SIDES},
@@ -877,6 +905,10 @@ def validate_full_cycle(rig, scene):
         raise RuntimeError(f"a shoe toe points away from bicycle-forward: {max_toe_forward_error}")
     if max(max_sole_normal_error.values()) > MAX_SOLE_PLANE_DEVIATION:
         raise RuntimeError(f"a shoe sole tilts too far from its actual pedal platform: {max_sole_normal_error}")
+    if max(max_foot_toe_error.values()) > MAX_FOOT_TO_SHOE_AXIS_DEVIATION:
+        raise RuntimeError(f"an ankle/foot axis twists away from its shoe: {max_foot_toe_error}")
+    if max(max_foot_normal_error.values()) > MAX_FOOT_TO_PEDAL_NORMAL_DEVIATION:
+        raise RuntimeError(f"an ankle/foot frame twists away from its pedal plane: {max_foot_normal_error}")
     if max(max_heel_plane_error.values()) > MAX_HEEL_TO_PEDAL_HEIGHT or \
             max(max_toe_plane_error.values()) > MAX_HEEL_TO_PEDAL_HEIGHT:
         raise RuntimeError(f"shoe heel or toe leaves the pedal-plane support envelope: "
@@ -906,6 +938,206 @@ def validate_full_cycle(rig, scene):
           "kneeBackwardMax", {side: round(max_backward_knee[side], 4) for side in SIDES})
 
 
+def helmet_semantics(rig, helmet, human):
+    """Measure face direction, the actual rear-retention component, and shell."""
+    front = bpy.data.objects.get("FrontWheelSpin")
+    rear = bpy.data.objects.get("RearWheelSpin")
+    if front is None or rear is None:
+        raise RuntimeError("front/rear wheel anchors are required to orient the supplied helmet")
+    bike_forward = (front.matrix_world.translation - rear.matrix_world.translation).normalized()
+    rider_up = (rig.matrix_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+    bike_side = bike_forward.cross(rider_up).normalized()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+
+    evaluated_human = human.evaluated_get(depsgraph)
+    human_mesh = evaluated_human.to_mesh()
+    try:
+        head_group = human.vertex_groups.get("head")
+        if head_group is None:
+            raise RuntimeError("the actual weighted head mesh is required to orient the helmet")
+        head_indices = {
+            vertex.index for vertex in human.data.vertices
+            if any(group.group == head_group.index and group.weight > 0.5 for group in vertex.groups)
+        }
+        head_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
+                       for index in head_indices]
+        eye_materials = {index for index, material in enumerate(human.data.materials)
+                         if material and "Rider Eye" in material.name}
+        eye_indices = {index for polygon in human_mesh.polygons
+                       if polygon.material_index in eye_materials for index in polygon.vertices}
+        eye_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
+                      for index in eye_indices]
+        if len(head_points) < 500 or len(eye_points) < 20:
+            raise RuntimeError("the weighted face and eye geometry are incomplete")
+        head_center = sum(head_points, Vector()) / len(head_points)
+        eye_center = sum(eye_points, Vector()) / len(eye_points)
+        face_forward = (eye_center - head_center).normalized()
+        face_bike_alignment = face_forward.dot(bike_forward)
+        if face_bike_alignment < 0.5:
+            raise RuntimeError("the rider's actual eye-to-head direction does not face the bicycle front wheel: "
+                               f"dot={face_bike_alignment:.3f}")
+    finally:
+        evaluated_human.to_mesh_clear()
+
+    evaluated = helmet.evaluated_get(depsgraph)
+    mesh = evaluated.to_mesh()
+    try:
+        points = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
+        parent = list(range(len(points)))
+
+        def find(index):
+            while parent[index] != index:
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            return index
+
+        for edge in mesh.edges:
+            first = find(edge.vertices[0])
+            second = find(edge.vertices[1])
+            if first != second:
+                parent[second] = first
+        components = {}
+        for index, point in enumerate(points):
+            components.setdefault(find(index), []).append(point)
+    finally:
+        evaluated.to_mesh_clear()
+
+    component_points = sorted(components.values(), key=len, reverse=True)
+    shell = component_points[0]
+    if len(shell) < 20000:
+        raise RuntimeError("the accepted vented helmet shell component is missing")
+    retention_candidates = []
+    for component in component_points[1:]:
+        if not 500 <= len(component) <= 4000:
+            continue
+        center = sum(component, Vector()) / len(component)
+        side_offset = (center - head_center).dot(bike_side)
+        up_offset = (center - head_center).dot(rider_up)
+        if abs(side_offset) <= 0.03 and up_offset >= 0.05:
+            retention_candidates.append((center, len(component), side_offset, up_offset))
+    if not retention_candidates:
+        raise RuntimeError("the central rear-retention hardware is missing from the accepted helmet geometry")
+    retention_center, retention_vertices, _, _ = min(
+        retention_candidates,
+        key=lambda item: (abs(item[2]), -item[3], abs(item[1] - 1250)))
+    retention_offset = (retention_center - eye_center).dot(face_forward)
+    shell_forward = [point.dot(face_forward) for point in shell]
+    shell_rear = min(shell_forward)
+    shell_front = max(shell_forward)
+    return {
+        "bike_forward": bike_forward,
+        "bike_side": bike_side,
+        "rider_up": rider_up,
+        "head_center": head_center,
+        "eye_center": eye_center,
+        "face_forward": face_forward,
+        "face_bike_alignment": face_bike_alignment,
+        "retention_center": retention_center,
+        "retention_vertices": retention_vertices,
+        "retention_offset": retention_offset,
+        "shell": shell,
+        "shell_rear": shell_rear,
+        "shell_front": shell_front,
+    }
+
+
+def orient_helmet_to_rider(rig, helmet, human):
+    """Place the rear-retention assembly behind the actual rider face."""
+    metrics = helmet_semantics(rig, helmet, human)
+    print("HELMET_FACE_FRAME_BEFORE",
+          "faceBikeDot", round(metrics["face_bike_alignment"], 4),
+          "retentionToEyes", round(metrics["retention_offset"], 4),
+          "retentionVertices", metrics["retention_vertices"],
+          "shellFaceAxis", round(metrics["shell_front"] - metrics["shell_rear"], 4))
+    if metrics["retention_offset"] > 0.0:
+        print("HELMET_ROTATE_MESH_180", "rear-retention hardware is ahead of the actual eyes")
+        head_bone = rig.data.bones.get("head")
+        head_pose = rig.pose.bones.get("head")
+        if head_bone is None or head_pose is None:
+            raise RuntimeError("the accepted rider head bone is required to orient the helmet")
+        rest_to_world = (rig.matrix_world @ head_pose.matrix @ head_bone.matrix_local.inverted() @
+                         rig.matrix_world.inverted() @ helmet.matrix_world)
+        world_to_rest = rest_to_world.inverted()
+        vertices = helmet.data.vertices
+        center_world = metrics["head_center"]
+        yaw_180 = Quaternion(metrics["rider_up"], math.pi)
+        for vertex in vertices:
+            point_world = rest_to_world @ vertex.co
+            flipped_world = center_world + yaw_180 @ (point_world - center_world)
+            vertex.co = world_to_rest @ flipped_world
+        helmet.data.update()
+        bpy.context.view_layer.update()
+        metrics = helmet_semantics(rig, helmet, human)
+    if metrics["retention_offset"] > -0.05:
+        raise RuntimeError("the helmet's actual rear-retention hardware is not behind the rider's eyes: "
+                           f"offset={metrics['retention_offset']:.3f}m")
+    shell_axis = metrics["face_forward"]
+    if metrics["shell_front"] <= metrics["shell_rear"] or \
+            shell_axis.dot(metrics["bike_forward"]) < 0.5:
+        raise RuntimeError("the accepted helmet shell does not follow the actual face and bicycle-forward frames")
+    print("HELMET_FACE_FRAME_PASS",
+          "faceBikeDot", round(metrics["face_bike_alignment"], 4),
+          "rearRetentionBehindEyes", round(metrics["retention_offset"], 4),
+          "retentionVertices", metrics["retention_vertices"],
+          "shellLength", round(metrics["shell_front"] - metrics["shell_rear"], 4))
+
+
+def add_helmet_frame_markers(rig, helmet, human):
+    """Export non-deforming bones from the shell along actual face-forward."""
+    metrics = helmet_semantics(rig, helmet, human)
+    shell = metrics["shell"]
+    face_forward = metrics["face_forward"]
+    front_points = [point for point in shell
+                    if point.dot(face_forward) >= metrics["shell_front"] - 0.015]
+    rear_points = [point for point in shell
+                   if point.dot(face_forward) <= metrics["shell_rear"] + 0.015]
+    front_world = sum(front_points, Vector()) / len(front_points)
+    rear_world = sum(rear_points, Vector()) / len(rear_points)
+    rig_world_inverse = rig.matrix_world.inverted()
+    head_pose = rig.pose.bones["head"]
+    head_pose_inverse = head_pose.matrix.inverted()
+    head_rest = rig.data.bones["head"].matrix_local.copy()
+    front_rest = head_rest @ head_pose_inverse @ (rig_world_inverse @ front_world)
+    rear_rest = head_rest @ head_pose_inverse @ (rig_world_inverse @ rear_world)
+
+    previous_active = bpy.context.view_layer.objects.active
+    previous_selection = list(bpy.context.selected_objects)
+    bpy.ops.object.select_all(action="DESELECT")
+    rig.select_set(True)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode="EDIT")
+    edit_bones = rig.data.edit_bones
+    for name, point in (("helmet_front_ref", front_rest), ("helmet_rear_ref", rear_rest)):
+        previous = edit_bones.get(name)
+        if previous is not None:
+            edit_bones.remove(previous)
+        marker = edit_bones.new(name)
+        marker.head = point
+        marker.tail = point + head_rest.to_3x3() @ Vector((0.0, 0.01, 0.0))
+        marker.parent = edit_bones["head"]
+        marker.use_connect = False
+        marker.use_deform = False
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in previous_selection:
+        if bpy.data.objects.get(obj.name) is not None:
+            obj.select_set(True)
+    if previous_active is not None and bpy.data.objects.get(previous_active.name) is not None:
+        bpy.context.view_layer.objects.active = previous_active
+    bpy.context.view_layer.update()
+
+    front_actual = rig.matrix_world @ rig.pose.bones["helmet_front_ref"].matrix.translation
+    rear_actual = rig.matrix_world @ rig.pose.bones["helmet_rear_ref"].matrix.translation
+    bike_forward = metrics["bike_forward"]
+    alignment = (front_actual - rear_actual).normalized().dot(bike_forward)
+    print("HELMET_FRAME_MARKERS", "front", tuple(round(v, 4) for v in front_actual),
+          "rear", tuple(round(v, 4) for v in rear_actual), "forwardAlignment", round(alignment, 4))
+    if alignment < 0.75:
+        raise RuntimeError("face-derived helmet front/rear markers do not follow the actual bicycle-forward frame")
+    if (front_actual - rear_actual).normalized().dot(metrics["face_forward"]) < 0.75:
+        raise RuntimeError("helmet front/rear marker axis does not follow the actual rider face")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--blend", type=Path, required=True, help="accepted sculpted-hands source blend")
@@ -925,6 +1157,8 @@ def main():
                            "older generated helmet sources are rejected")
     print("ACCEPTED_HELMET_INPUT", helmet.get("source"), "vertices", len(helmet.data.vertices),
           "faces", len(helmet.data.polygons))
+    human = bpy.data.objects["Human"]
+    orient_helmet_to_rider(rig, helmet, human)
     source, local_offsets = sample_source_targets(rig, scene)
     fit_road_shoes()
     add_pedal_bearings()
@@ -938,6 +1172,7 @@ def main():
         bpy.data.objects[bearing_name].rotation_euler = (0.0, 0.0, 0.0)
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
+    add_helmet_frame_markers(rig, helmet, human)
 
     args.output_blend.parent.mkdir(parents=True, exist_ok=True)
     args.output_glb.parent.mkdir(parents=True, exist_ok=True)

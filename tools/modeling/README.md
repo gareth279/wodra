@@ -870,19 +870,28 @@ outsole, and the weighted outfit mask is explicitly exported as glTF `COLOR_0`.
 
 The Godot import test requires a fully keyed bilateral cycle, the jersey,
 shorts, shoe, and skin color masks, the supplied high-resolution helmet mesh,
-and the shoe/heel/toe/pedal bones. Its 72-phase checks measure toe-forward and
+and the shoe/heel/toe/pedal bones. Its 72-phase checks measure the actual
+ankle/foot bone against the imported shoe mesh and pedal normal, toe-forward and
 sole-to-platform angles, heel and toe outsole heights relative to the actual
 platform plane, forefoot contact, left/right pedal association, knee flexion and
-direction, leg length, cycle continuity, and pelvis/saddle distance. The old
-test passed because it only checked the forefoot marker: that one point was
-correct while the foot bone kept its near-vertical source quaternion.
+direction, leg length, cycle continuity, and pelvis/saddle distance. The prior
+review passed because it measured the independent shoe bone and forefoot marker
+but never compared the ankle/foot bone with the shoe. On the old imported GLB,
+the foot-bone axis was 36.5 degrees from the shoe's heel-to-toe axis and its
+sole normal was 155.5 degrees from the actual pedal normal, even though the
+shoe bone and marker passed. The corrected imported asset measures 0 degrees
+foot-to-shoe error and 4 degrees foot-to-pedal-normal error through all phases.
+The source shoe thickness is 128 mm; `SHOE_HEIGHT_SCALE = 0.46` yields a
+58.9 mm Blender mesh profile and 58.88 mm Godot mesh bound. This keeps the
+measured forefoot/cleat contact while bringing the heel and toe down to a
+credible road-shoe profile.
 
 Rebuild the reviewed asset with Blender 5.2.2:
 
 ```powershell
 $blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
-$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.blend'
-$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.glb'
+$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.blend'
+$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue164-foot-orientation.glb'
 & $blender --background --python tools/modeling/retarget_pedals_163.py -- `
   --blend tools/modeling/source/WodraCyclist.issue163-final.blend `
   --output-blend $fixedBlend --output-glb $fixedGlb
@@ -894,6 +903,20 @@ The retarget script rejects the older generated helmet source. The preservation
 check compares every hand-weighted source vertex and weight and requires the
 owner-supplied helmet mesh and both separate shoe attachments in the rebuilt
 blend.
+
+Helmet orientation uses the rider's geometry rather than a shell-width
+heuristic. Blender derives face-forward from the weighted head center to the
+actual eye surface, derives bicycle-forward from the front/rear wheel anchors,
+and locates the central rear-retention component in the supplied helmet mesh.
+It rotates the helmet only if that hardware lies ahead of the rider's eyes,
+using the head rest-to-world transform; the deliberately flipped-source
+control was detected at +23 mm and corrected to 211 mm behind the eyes. The
+Godot import regression welds duplicated glTF seam vertices, skins the imported
+helmet against its real bones, and checks the retention component, eye-to-bike
+axis, shell end regions, and reference bones in the live RideScreen. The final
+import measures the retention component 217 mm behind the eyes, face-to-bike
+dot 0.845, shell length 237 mm, and front/rear reference errors of 27/20 mm.
+Helmet topology and the 9,060 accepted hand-weighted vertices remain unchanged.
 
 Production RideScreen stills at all eight live 85 rpm phases, the baseline
 comparison, and the 480-frame motion clip are documented in
