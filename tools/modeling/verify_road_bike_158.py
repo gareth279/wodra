@@ -28,6 +28,13 @@ for i,node in enumerate(nodes):
     if name in indices: raise AssertionError(f"duplicate named node {name}")
     indices[name]=i
 
+def has_pedal_cycle():
+    # Blender may suffix duplicate Action datablocks on export (for example,
+    # `PedalCycle.001`). The production rider discovers the clip by this stable
+    # semantic name, so validate the same contract rather than exact spelling.
+    return any("PedalCycle" in (animation.get("name") or "")
+               for animation in doc.get("animations",[]))
+
 def require(name):
     assert name in indices,f"missing node {name}"
     return nodes[indices[name]]
@@ -44,7 +51,7 @@ if "RoadBikeFrontWheelAssembly" not in indices:
                  "RoadBikeDetail_Wodra_Stainless_Rotor_RearWheelSpin",
                  "RoadBikeDetail_Wodra_Machined_Alloy_BicycleModel"):
         require(name)
-assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),"weighted rider or pedal animation missing"
+assert len(doc.get("skins",[]))>=1 and has_pedal_cycle(),"weighted rider or pedal animation missing"
 
 world={}
 def visit(index,parent_matrix):
@@ -79,10 +86,12 @@ if "RoadBikeFrontWheelAssembly" in indices:
                        "RoadBikeSaddle","RoadBikeFrontWheelAssembly",
                        "RoadBikeRearWheelAssembly","FrontWheelSpin","RearWheelSpin",
                        "CrankPivot","LeftCrank","RightCrank","LeftPedal","RightPedal",
+                       "PedalBearingLeft","PedalBearingRight",
                        "Contact_LeftHood","Contact_RightHood","Contact_Saddle",
-                       "Contact_LeftPedal","Contact_RightPedal")
+                       "Contact_LeftPedal","Contact_RightPedal",
+                       "Contact_LeftPedalSurface","Contact_RightPedalSurface")
     for name in imported_required: require(name)
-    assert len(doc.get("skins",[]))>=1 and any(a.get("name")=="PedalCycle" for a in doc.get("animations",[])),\
+    assert len(doc.get("skins",[]))>=1 and has_pedal_cycle(),\
         "weighted rider or pedal animation missing"
     front=origin("FrontWheelSpin"); rear=origin("RearWheelSpin"); bb=origin("CrankPivot")
     wheelbase=abs(front[2]-rear[2])
@@ -107,6 +116,29 @@ if "RoadBikeFrontWheelAssembly" in indices:
         lo,hi=transformed_bounds("LeftPedal" if side=="left" else "RightPedal")
         assert all(lo[i]-.005<=p[i]<=hi[i]+.005 for i in range(3)),\
             f"{name} does not fall on the imported pedal surface"
+    for side in ("Left","Right"):
+        pedal_name=f"{side}Pedal"
+        bearing_name=f"PedalBearing{side}"
+        surface_name=f"Contact_{side}PedalSurface"
+        spindle_name=f"Contact_{side}Pedal"
+        assert parents[indices[pedal_name]]==indices[bearing_name],\
+            f"{pedal_name} must rotate around its own spindle bearing"
+        assert parents[indices[bearing_name]]==indices["CrankPivot"],\
+            f"{bearing_name} must follow CrankPivot"
+        assert parents[indices[surface_name]]==indices[bearing_name],\
+            f"{surface_name} must remain attached to the pedal platform"
+        assert parents[indices[spindle_name]]==indices["CrankPivot"],\
+            f"{spindle_name} must follow the actual crank spindle"
+        assert "mesh" not in require(surface_name),\
+            f"{surface_name} must be a fit marker, not rendered geometry"
+        lo,hi=transformed_bounds(pedal_name);p=origin(surface_name)
+        assert all(lo[i]-.004<=p[i]<=hi[i]+.004 for i in range(3)),\
+            f"{surface_name} is not on its actual pedal platform"
+
+    joint_names={nodes[index].get("name","") for skin in doc.get("skins",[]) for index in skin.get("joints",[])}
+    assert {"foot.L","foot.R","pedal_contact.L","pedal_contact.R"}<=joint_names,\
+        "full-cycle pedal contact bones are missing from the skinned rider"
+
     for side in ("Left","Right"):
         n=require("Contact_"+side+"Hood")
         assert "mesh" not in n and parents[indices[n["name"]]]==indices["BicycleModel"],\

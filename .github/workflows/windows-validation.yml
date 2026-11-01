@@ -100,6 +100,18 @@ jobs:
               $connectionOutput -match 'SCRIPT ERROR:|\[DeviceConnectionAutomationReview\] FAIL:') {
             throw 'Production device connection automation scene test did not report a clean pass.'
           }
+          $riderFitLog = "$env:RUNNER_TEMP\wodra-rider-fit-review.log"
+          $env:WODRA_VISUAL_REVIEW_SKIP_CAPTURES = '1'
+          $env:WODRA_VISUAL_REVIEW_OUTPUT = Join-Path $env:RUNNER_TEMP 'wodra-rider-fit-review'
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/RiderFinishingSceneReviewTest.tscn --log-file $riderFitLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production RideScreen rider fit regression failed.' }
+          $riderFitOutput = Get-Content -LiteralPath $riderFitLog -Raw
+          if ($riderFitOutput -notmatch '\[RiderFinishingSceneReview\] PASS:' -or
+              $riderFitOutput -match 'SCRIPT ERROR:|\[RiderFinishingSceneReview\] FAIL:') {
+            throw 'Production RideScreen rider fit regression did not report a clean pass.'
+          }
+          Remove-Item Env:WODRA_VISUAL_REVIEW_SKIP_CAPTURES -ErrorAction SilentlyContinue
+          Remove-Item Env:WODRA_VISUAL_REVIEW_OUTPUT -ErrorAction SilentlyContinue
           $preRideLayoutLog = "$env:RUNNER_TEMP\wodra-pre-ride-layout-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/PreRideHomeLayoutReviewTest.tscn --log-file $preRideLayoutLog
           if ($LASTEXITCODE -ne 0) { throw 'Production pre-ride home layout review failed.' }
