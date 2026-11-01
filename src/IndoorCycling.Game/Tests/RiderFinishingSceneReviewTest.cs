@@ -164,7 +164,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             Find<CollectibleCatLayer>(world, "CollectibleCats")?.Hide();
             await Settle(2);
             if (!_skipCaptures)
-                await CaptureLiveLegPhases(output, world, liveRider, camera, liveFrontWheel, liveRearWheel);
+                await CaptureLiveLegPhases(output, world, liveRider, camera, hud, liveFrontWheel, liveRearWheel);
 
             foreach (var debug in new[] { true, false })
             {
@@ -882,29 +882,44 @@ public partial class RiderFinishingSceneReviewTest : Node
     }
 
     private async Task CaptureLiveLegPhases(string output, RideWorldView world, CyclistVisual rider,
-        ChaseCamera camera, Node3D frontWheel, Node3D rearWheel)
+        ChaseCamera camera, HudController hud, Node3D frontWheel, Node3D rearWheel)
     {
         camera.MakeCurrent();
         var savedFov = camera.Fov;
         foreach (var degrees in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
         {
             var wanted = Math.Tau * degrees / 360.0;
-            var reached = false;
-            for (var frame = 0; frame < 90; frame++)
+            var previousDelta = Math.Atan2(Math.Sin(rider.CrankAngleRadians - wanted),
+                Math.Cos(rider.CrankAngleRadians - wanted));
+            var reached = Math.Abs(previousDelta) <= .08;
+            for (var frame = 0; frame < 240 && !reached; frame++)
             {
                 var delta = Math.Atan2(Math.Sin(rider.CrankAngleRadians - wanted),
                     Math.Cos(rider.CrankAngleRadians - wanted));
-                if (Math.Abs(delta) <= .08)
+                // At high render cost a cadence update can jump over the narrow
+                // in-phase window. Capture the nearest live sample that crosses
+                // the target instead of failing or waiting indefinitely.
+                var crossedTarget = previousDelta * delta < 0 && Math.Abs(previousDelta - delta) < Math.PI;
+                if (Math.Abs(delta) <= .08 || crossedTarget)
                 {
                     reached = true;
                     break;
                 }
+                previousDelta = delta;
                 await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
             }
             if (!reached)
                 throw new InvalidOperationException($"Live RideScreen crank did not reach {degrees} degrees at 85 rpm.");
             var livePhase = rider.CrankAngleRadians;
             world.SetProcess(false);
+            rider.SetProcess(false);
+            // The live 85 rpm update has reached/crossed this phase. Freeze the
+            // imported runtime rider at the exact corresponding clip sample so
+            // GPU render latency cannot make a phase-labeled evidence frame stale.
+            rider.SetReviewCrankPhase(degrees);
+            var capturedPhase = rider.CrankAngleRadians;
+            if (Math.Abs(Math.Atan2(Math.Sin(capturedPhase - wanted), Math.Cos(capturedPhase - wanted))) > .001)
+                throw new InvalidOperationException($"Live RideScreen phase capture target={degrees} actual={capturedPhase * 180 / Math.PI:F2}.");
             var phaseForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
             var phaseSide = phaseForward.Cross(Vector3.Up).Normalized();
             var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
@@ -915,11 +930,42 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Settle(2);
             await Save(output, $"legs-live-side-phase-{degrees:D3}.png");
             GD.Print($"[RiderFinishingSceneReviewTest] live RideScreen phase target={degrees} " +
-                $"actual={livePhase * 180 / Math.PI:F1} cadence=85rpm");
+                $"crossing={livePhase * 180 / Math.PI:F1} capture={capturedPhase * 180 / Math.PI:F1} cadence=85rpm");
+            rider.SetProcess(true);
             world.SetProcess(true);
             world.SelectCameraInspectionView(RiderCameraView.Side);
         }
         camera.Fov = savedFov;
+
+        // The cadence-driven captures above prove the live 85 rpm update path.
+        // For clean visual comparisons, pause that same imported RideScreen
+        // rider and seek its baked clip and pedal visuals to exact labeled phases.
+        // This avoids labeling a slow-render frame with a phase it has already
+        // advanced past while the screenshot is being rendered.
+        var hudWasVisible = hud.Visible;
+        world.SetProcess(false);
+        rider.SetProcess(false);
+        hud.Hide();
+        camera.Fov = 42f;
+        var fullBikeForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
+        var fullBikeSide = fullBikeForward.Cross(Vector3.Up).Normalized();
+        var fullBikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
+        camera.GlobalPosition = fullBikeCenter + fullBikeSide * 2.35f + fullBikeForward * .08f + Vector3.Up * .54f;
+        camera.LookAt(fullBikeCenter + Vector3.Up * .20f, Vector3.Up);
+        foreach (var degrees in new[] { 0, 90, 180, 270 })
+        {
+            rider.SetReviewCrankPhase(degrees);
+            var exactPhase = rider.CrankAngleRadians * 180 / Math.PI;
+            if (Math.Abs(exactPhase - degrees) > .01)
+                throw new InvalidOperationException($"Clear RideScreen phase target={degrees} actual={exactPhase:F2}.");
+            await Settle(2);
+            await Save(output, $"rider-side-full-phase-{degrees:D3}.png");
+            GD.Print($"[RiderFinishingSceneReviewTest] clear RideScreen phase target={degrees} actual={exactPhase:F1} imported model");
+        }
+        if (hudWasVisible) hud.Show();
+        rider.SetProcess(true);
+        world.SetProcess(true);
+        world.SelectCameraInspectionView(RiderCameraView.Side);
     }
 
     private static string sideName(float side) => side < 0 ? "Left" : "Right";

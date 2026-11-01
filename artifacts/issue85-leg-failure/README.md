@@ -1,6 +1,6 @@
 # Alpha.85 rider leg and pedalling correction
 
-These are genuine captures from the Godot 4.6.2 production `RideScreen` on the NVIDIA Quadro P620. The after images use Dummy Trainer at 85 rpm on `Dunedin One-way: Oval to Gardens Loop`; the eight close side views are reached through `CyclistVisual`'s live cadence update. The motion clip contains 480 production frames at 30 fps (16 seconds), including low and high cadence, steering and camera changes, coasting, stopping, and restart.
+These are genuine captures from the Godot 4.6.2 production `RideScreen` on the NVIDIA Quadro P620. The after images use Dummy Trainer at 85 rpm on `Dunedin One-way: Oval to Gardens Loop`. The eight close side views are triggered by the live `CyclistVisual` cadence update; the harness logs the observed live crossing, then freezes the imported rider at the exact labeled clip phase while the frame renders. This keeps GPU latency from making a labeled evidence image show a later pedal phase. The motion clip contains 480 production frames at 30 fps (16 seconds), including low and high cadence, steering and camera changes, coasting, stopping, and restart.
 
 ## Before and after
 
@@ -20,6 +20,23 @@ The before captures were taken from the unmodified alpha.85 GLB and runtime in a
 - [225 degrees](after/legs-live-side-phase-225.png)
 - [270 degrees](after/legs-live-side-phase-270.png)
 - [315 degrees](after/legs-live-side-phase-315.png)
+
+## Clear full-rider side views
+
+These unobstructed side views use the same imported rider and bicycle in the
+production RideScreen review scene, with the baked rider clip and pedals held at
+the exact labeled crank phase. The live Dummy Trainer 85 rpm phase captures and
+motion clip below exercise the actual cadence update path; these stills make it
+possible to compare the accepted forward-facing helmet, knee path, and both
+shoes without the HUD covering them.
+
+| 0 degrees | 90 degrees |
+| --- | --- |
+| ![Full rider at 0 degrees](after/rider-side-full-phase-000.png) | ![Full rider at 90 degrees](after/rider-side-full-phase-090.png) |
+
+| 180 degrees | 270 degrees |
+| --- | --- |
+| ![Full rider at 180 degrees](after/rider-side-full-phase-180.png) | ![Full rider at 270 degrees](after/rider-side-full-phase-270.png) |
 
 ## Complete production motion capture
 
