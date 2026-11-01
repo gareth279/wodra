@@ -43,7 +43,7 @@ public sealed class SqliteRideHistoryRepository : IRideHistoryRepository
             query.CommandText = "SELECT version FROM schema_info LIMIT 1";
             version = Convert.ToInt32(await query.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
         }
-        if (version > 6) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
+        if (version > 7) throw new InvalidOperationException($"Ride history schema {version} is newer than this application supports.");
         if (version == 0)
         {
             using var transaction = db.BeginTransaction();
@@ -146,16 +146,25 @@ UPDATE schema_info SET version=6;";
             await migrate.ExecuteNonQueryAsync(cancellationToken);
             version = 6;
         }
+        if (version == 6)
+        {
+            await using var migrate = db.CreateCommand();
+            migrate.CommandText = @"ALTER TABLE rider_profiles ADD COLUMN jersey_color TEXT NOT NULL DEFAULT 'Teal';
+ALTER TABLE rider_profiles ADD COLUMN helmet_color TEXT NOT NULL DEFAULT 'Charcoal';
+UPDATE schema_info SET version=7;";
+            await migrate.ExecuteNonQueryAsync(cancellationToken);
+            version = 7;
+        }
     }
 
     public async Task<RiderProfileRecord> EnsureRiderProfileAsync(string defaultName, CancellationToken cancellationToken = default)
     {
         await using var db = await OpenAsync(cancellationToken);
         await using var query = db.CreateCommand();
-        query.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent FROM rider_profiles ORDER BY created_utc LIMIT 1";
+        query.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent,jersey_color,helmet_color FROM rider_profiles ORDER BY created_utc LIMIT 1";
         await using var reader = await query.ExecuteReaderAsync(cancellationToken);
         if (await reader.ReadAsync(cancellationToken))
-            return new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7));
+            return new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7), reader.GetString(8), reader.GetString(9));
         await reader.DisposeAsync();
         var now = DateTimeOffset.UtcNow;
         var profile = new RiderProfileRecord(Guid.NewGuid(), string.IsNullOrWhiteSpace(defaultName) ? "Rider" : defaultName.Trim(), now, now);
@@ -172,28 +181,29 @@ UPDATE schema_info SET version=6;";
     public async Task<RiderProfileRecord?> GetProfileAsync(Guid profileId, CancellationToken cancellationToken = default)
     {
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
-        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent FROM rider_profiles WHERE id=$id"; command.Parameters.AddWithValue("$id", profileId.ToString("D"));
+        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent,jersey_color,helmet_color FROM rider_profiles WHERE id=$id"; command.Parameters.AddWithValue("$id", profileId.ToString("D"));
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await reader.ReadAsync(cancellationToken) ? new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7)) : null;
+        return await reader.ReadAsync(cancellationToken) ? new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7), reader.GetString(8), reader.GetString(9)) : null;
     }
 
     public async Task SaveProfileAsync(RiderProfileRecord profile, CancellationToken cancellationToken = default)
     {
         RiderProfileRecord.Validate(profile.Name, profile.BodyWeightKg, profile.BikeWeightKg, profile.TrainerDifficultyPercent);
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
-        command.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent) VALUES($id,$name,$created,$updated,$body,$bike,$test,$difficulty) ON CONFLICT(id) DO UPDATE SET name=excluded.name,updated_utc=excluded.updated_utc,body_weight_kg=excluded.body_weight_kg,bike_weight_kg=excluded.bike_weight_kg,is_test_profile=excluded.is_test_profile,trainer_difficulty_percent=excluded.trainer_difficulty_percent";
+        command.CommandText = "INSERT INTO rider_profiles(id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent,jersey_color,helmet_color) VALUES($id,$name,$created,$updated,$body,$bike,$test,$difficulty,$jersey,$helmet) ON CONFLICT(id) DO UPDATE SET name=excluded.name,updated_utc=excluded.updated_utc,body_weight_kg=excluded.body_weight_kg,bike_weight_kg=excluded.bike_weight_kg,is_test_profile=excluded.is_test_profile,trainer_difficulty_percent=excluded.trainer_difficulty_percent,jersey_color=excluded.jersey_color,helmet_color=excluded.helmet_color";
         Add(command, "$id", profile.Id.ToString("D")); Add(command, "$name", profile.Name); Add(command, "$created", Time(profile.CreatedAtUtc)); Add(command, "$updated", Time(profile.UpdatedAtUtc));
         Add(command, "$body", profile.BodyWeightKg); Add(command, "$bike", profile.BikeWeightKg); Add(command, "$test", profile.IsTestProfile ? 1 : 0); Add(command, "$difficulty", profile.TrainerDifficultyPercent);
+        Add(command, "$jersey", profile.JerseyColor); Add(command, "$helmet", profile.HelmetColor);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<RiderProfileRecord>> GetAllProfilesAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await OpenAsync(cancellationToken); await using var command = db.CreateCommand();
-        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent FROM rider_profiles ORDER BY created_utc";
+        command.CommandText = "SELECT id,name,created_utc,updated_utc,body_weight_kg,bike_weight_kg,is_test_profile,trainer_difficulty_percent,jersey_color,helmet_color FROM rider_profiles ORDER BY created_utc";
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var result = new List<RiderProfileRecord>();
-        while (await reader.ReadAsync(cancellationToken)) result.Add(new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7)));
+        while (await reader.ReadAsync(cancellationToken)) result.Add(new(Guid.Parse(reader.GetString(0)), reader.GetString(1), ParseTime(reader.GetString(2)), ParseTime(reader.GetString(3)), reader.GetDouble(4), reader.GetDouble(5), reader.GetInt32(6) != 0, reader.GetInt32(7), reader.GetString(8), reader.GetString(9)));
         return result;
     }
 

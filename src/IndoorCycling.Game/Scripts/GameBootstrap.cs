@@ -403,7 +403,7 @@ public partial class GameBootstrap : Node
 	private static void ApplyActiveProfile(RiderProfileRecord profile)
 	{
 		RiderProfile = new RiderProfile(profile.Name, profile.BodyWeightKg, profile.Id, profile.BikeWeightKg,
-			profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc);
+			profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc, profile.JerseyColor, profile.HelmetColor);
 		BikeProfile = new BikeProfile(Settings.Rider.BikeName, profile.BikeWeightKg);
 		GameLogger.Log("rider_profile_activated", new { profileId = profile.Id, displayName = profile.Name });
 	}

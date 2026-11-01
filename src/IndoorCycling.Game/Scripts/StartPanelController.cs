@@ -33,6 +33,10 @@ public partial class StartPanelController : Control
 	private SpinBox? _dummyCadence;
 	private Window? _profileWindow;
 	private LineEdit? _profileName;
+	private OptionButton? _profileJerseyColor;
+	private OptionButton? _profileHelmetColor;
+	private ColorRect? _profileJerseySwatch;
+	private ColorRect? _profileHelmetSwatch;
 	private SpinBox? _profileBody;
 	private SpinBox? _profileBike;
 	private HSlider? _profileTrainerDifficulty;
@@ -676,13 +680,20 @@ public partial class StartPanelController : Control
 
 	private void BuildProfileEditor()
 	{
-		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(480, 560), MinSize = new Vector2I(440, 500), Exclusive = true };
+		_profileWindow = new Window { Title = "Manage Rider Profiles", Size = new Vector2I(480, 680), MinSize = new Vector2I(440, 620), Exclusive = true };
 		var root = new VBoxContainer(); root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 		var margin = new MarginContainer(); margin.AddThemeConstantOverride("margin_left", 16); margin.AddThemeConstantOverride("margin_right", 16); margin.AddThemeConstantOverride("margin_top", 16); margin.AddThemeConstantOverride("margin_bottom", 16);
 		var body = new VBoxContainer(); margin.AddChild(body); root.AddChild(margin); _profileWindow.AddChild(root); AddChild(_profileWindow);
 		_profileEditPicker = new OptionButton(); _profileEditPicker.ItemSelected += OnEditProfileSelected; body.AddChild(_profileEditPicker);
 		var newButton = new Button { Text = "New Profile" }; newButton.Pressed += StartNewProfile; body.AddChild(newButton);
 		_profileName = new LineEdit { PlaceholderText = "Name" }; body.AddChild(_profileName);
+		_profileJerseyColor = ProfileColorPicker(["Teal", "Navy blue", "Red", "Green", "White", "Orange"]);
+		_profileHelmetColor = ProfileColorPicker(["Charcoal", "White", "Blue", "Red", "Teal", "Original purple/blue"]);
+		_profileJerseySwatch = ProfileSwatch(); _profileHelmetSwatch = ProfileSwatch();
+		_profileJerseyColor.ItemSelected += _ => UpdateProfileColorPreviews();
+		_profileHelmetColor.ItemSelected += _ => UpdateProfileColorPreviews();
+		body.AddChild(ProfileColorRow("Jersey colour", _profileJerseyColor, _profileJerseySwatch));
+		body.AddChild(ProfileColorRow("Helmet colour", _profileHelmetColor, _profileHelmetSwatch));
 		_profileBody = ProfileSpin(30, 200, 75); body.AddChild(Labeled("Body weight (kg)", _profileBody));
 		_profileBike = ProfileSpin(4, 30, 8); body.AddChild(Labeled("Bike weight (kg)", _profileBike));
 		_profileTrainerDifficulty = new HSlider { MinValue = 0, MaxValue = 100, Step = 5, Value = TrainerDifficultyPolicy.DefaultPercent, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -710,6 +721,10 @@ public partial class StartPanelController : Control
 	}
 
 	private static SpinBox ProfileSpin(double min, double max, double value) => new() { MinValue = min, MaxValue = max, Step = .1, Value = value };
+	private static OptionButton ProfileColorPicker(string[] labels) { var picker = new OptionButton(); foreach (var label in labels) picker.AddItem(label); return picker; }
+	private static ColorRect ProfileSwatch() => new() { CustomMinimumSize = new Vector2(32, 24), Color = Colors.Teal };
+	private static HBoxContainer ProfileColorRow(string title, OptionButton picker, ColorRect swatch) { var row = new HBoxContainer(); row.AddChild(new Label { Text = title, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }); row.AddChild(picker); row.AddChild(swatch); return row; }
+	private static void SelectColor(OptionButton picker, string color) { var index = color switch { "Navy" => "Navy blue", "Charcoal/black" => "Charcoal", "PurpleBlue" => "Original purple/blue", _ => color }; for (var i = 0; i < picker.ItemCount; i++) if (picker.GetItemText(i) == index) { picker.Select(i); return; } picker.Select(0); }
 	private static HBoxContainer Labeled(string title, Control field) { var row = new HBoxContainer(); row.AddChild(new Label { Text = title, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }); row.AddChild(field); return row; }
 	private async void ShowProfileEditor()
 	{
@@ -719,8 +734,15 @@ public partial class StartPanelController : Control
 		_profileWindow?.PopupCentered();
 	}
 	private void OnEditProfileSelected(long index) { if (index >= 0 && index < _profiles.Count) LoadProfileEditor(_profiles[(int)index]); }
-	private void LoadProfileEditor(RiderProfileRecord profile) { _stravaLinkCancellation?.Cancel(); _editingProfileId = profile.Id; _profileName!.Text = profile.Name; _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; _profileTrainerDifficulty!.Value = profile.TrainerDifficultyPercent; _profileTrainerDifficultyValue!.Text = $"{profile.TrainerDifficultyPercent}%"; RefreshStravaProfileUi(); }
-	private void StartNewProfile() { _stravaLinkCancellation?.Cancel(); _editingProfileId = null; _profileName!.Text = ""; _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileTrainerDifficulty!.Value = TrainerDifficultyPolicy.DefaultPercent; _profileTrainerDifficultyValue!.Text = $"{TrainerDifficultyPolicy.DefaultPercent}%"; RefreshStravaProfileUi(); _profileName.GrabFocus(); }
+	private void LoadProfileEditor(RiderProfileRecord profile) { _stravaLinkCancellation?.Cancel(); _editingProfileId = profile.Id; _profileName!.Text = profile.Name; SelectColor(_profileJerseyColor!, profile.JerseyColor); SelectColor(_profileHelmetColor!, profile.HelmetColor); UpdateProfileColorPreviews(); _profileBody!.Value = profile.BodyWeightKg; _profileBike!.Value = profile.BikeWeightKg; _profileTest!.ButtonPressed = profile.IsTestProfile; _profileTrainerDifficulty!.Value = profile.TrainerDifficultyPercent; _profileTrainerDifficultyValue!.Text = $"{profile.TrainerDifficultyPercent}%"; RefreshStravaProfileUi(); }
+	private void StartNewProfile() { _stravaLinkCancellation?.Cancel(); _editingProfileId = null; _profileName!.Text = ""; SelectColor(_profileJerseyColor!, "Teal"); SelectColor(_profileHelmetColor!, "Charcoal"); UpdateProfileColorPreviews(); _profileBody!.Value = 75; _profileBike!.Value = 8; _profileTest!.ButtonPressed = true; _profileTrainerDifficulty!.Value = TrainerDifficultyPolicy.DefaultPercent; _profileTrainerDifficultyValue!.Text = $"{TrainerDifficultyPolicy.DefaultPercent}%"; RefreshStravaProfileUi(); _profileName.GrabFocus(); }
+	private void UpdateProfileColorPreviews()
+	{
+		if (_profileJerseySwatch is not null && _profileJerseyColor is not null)
+			_profileJerseySwatch.Color = _profileJerseyColor.GetItemText(_profileJerseyColor.Selected) switch { "Navy blue" => new Color(.075f,.16f,.34f), "Red" => new Color(.68f,.09f,.10f), "Green" => new Color(.10f,.35f,.20f), "White" => new Color(.82f,.84f,.80f), "Orange" => new Color(.86f,.32f,.07f), _ => new Color(.05f,.42f,.43f) };
+		if (_profileHelmetSwatch is not null && _profileHelmetColor is not null)
+			_profileHelmetSwatch.Color = _profileHelmetColor.GetItemText(_profileHelmetColor.Selected) switch { "White" => new Color(.88f,.90f,.87f), "Blue" => new Color(.07f,.23f,.68f), "Red" => new Color(.68f,.055f,.065f), "Teal" => new Color(.025f,.42f,.40f), "Original purple/blue" => new Color(.36f,.20f,.63f), _ => new Color(.075f,.085f,.10f) };
+	}
 	private void RefreshStravaProfileUi(bool refreshStatus = true)
 	{
 		if (_stravaProfileStatus is null) return;
@@ -801,7 +823,8 @@ public partial class StartPanelController : Control
 			var now = DateTimeOffset.UtcNow;
 			var existing = _profiles.FirstOrDefault(p => p.Id == _editingProfileId);
 			var profile = new RiderProfileRecord(_editingProfileId ?? Guid.NewGuid(), _profileName!.Text.Trim(), existing?.CreatedAtUtc ?? now, now,
-				_profileBody!.Value, _profileBike!.Value, _profileTest!.ButtonPressed, (int)_profileTrainerDifficulty!.Value);
+				_profileBody!.Value, _profileBike!.Value, _profileTest!.ButtonPressed, (int)_profileTrainerDifficulty!.Value,
+				_profileJerseyColor!.GetItemText(_profileJerseyColor.Selected), _profileHelmetColor!.GetItemText(_profileHelmetColor.Selected));
 			await GameBootstrap.SaveProfileAsync(profile);
 			if (RiderProfileStartupSelection.ShouldActivateProfileAfterSave(_editingProfileId is null, GameBootstrap.Settings.ActiveProfileId))
 				await GameBootstrap.SetActiveProfileAsync(profile.Id);

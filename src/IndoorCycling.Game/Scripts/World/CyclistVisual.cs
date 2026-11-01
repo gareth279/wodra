@@ -17,6 +17,8 @@ public partial class CyclistVisual : Node3D
     private sealed record Dimensions(double RiderHeight, float WheelRadius, float Wheelbase, float CrankRadius,
         float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
 
+    // A small 3° nose-down shell pitch improves brow fit; applied about helmet-local right.
+    private float _rigidHelmetForwardPitchDegrees = 3f;
     // One seated road-cyclist reference pose drives all visible rider anchors. Coordinates use
     // +Y up and -Z forward, matching the bicycle and the existing cadence/IK solver.
     private sealed record RiderPose(Vector3 Pelvis, Vector3 LeftHip, Vector3 RightHip,
@@ -78,6 +80,23 @@ public partial class CyclistVisual : Node3D
             }
             """
     };
+    private static readonly Shader HelmetRecolorShader = new()
+    {
+        Code = """
+            shader_type spatial;
+            uniform sampler2D helmet_texture : source_color;
+            uniform vec4 shell_color : source_color = vec4(0.075, 0.085, 0.10, 1.0);
+            void fragment() {
+                vec4 source = texture(helmet_texture, UV);
+                float luminance = dot(source.rgb, vec3(0.299, 0.587, 0.114));
+                float shell = smoothstep(0.055, 0.18, luminance);
+                vec3 shaded_shell = shell_color.rgb * (0.42 + luminance * 0.78);
+                ALBEDO = mix(source.rgb, shaded_shell, shell);
+                ROUGHNESS = 0.72;
+                METALLIC = 0.02;
+            }
+            """
+    };
     private StandardMaterial3D _frameMaterial = FramePalette[0];
     private StandardMaterial3D _tyreMaterial = TyreMaterial;
     private StandardMaterial3D _rimMaterial = RimMaterial;
@@ -126,6 +145,9 @@ public partial class CyclistVisual : Node3D
     private Vector3 _rigidHelmetRootOrigin;
     private Vector3 _rigidHelmetHeadCenterOffset;
     private int _rigidHelmetHeadIndex = -1;
+    private ShaderMaterial? _outfitMaterial;
+    private ShaderMaterial? _helmetShellMaterial;
+    private StandardMaterial3D? _helmetOriginalMaterial;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
     private double _wheelAngle;
@@ -137,6 +159,39 @@ public partial class CyclistVisual : Node3D
     private int _approximateTriangleCount = 2200;
 
     public bool UsesImportedModel { get; private set; }
+
+    public void SetCustomization(string jerseyColor, string helmetColor)
+    {
+        var jersey = JerseyColor(jerseyColor);
+        _outfitMaterial?.SetShaderParameter("jersey_color", jersey);
+        _helmetShellMaterial?.SetShaderParameter("shell_color", HelmetColor(helmetColor));
+        if (_helmetShellMaterial is not null && helmetColor == "Original purple/blue" &&
+            _rigidHelmetPose is not null && FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } mesh)
+            mesh.SetSurfaceOverrideMaterial(0, _helmetOriginalMaterial);
+        else if (_helmetShellMaterial is not null && _rigidHelmetPose is not null &&
+                 FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } shellMesh)
+            shellMesh.SetSurfaceOverrideMaterial(0, _helmetShellMaterial);
+    }
+
+    /// <summary>Sets the production helmet pitch for controlled rendered review comparisons.</summary>
+    public void SetReviewHelmetForwardPitchDegrees(float degrees)
+    {
+        _rigidHelmetForwardPitchDegrees = Mathf.Clamp(degrees, 0f, 8f);
+        UpdateRigidHelmetPoseForCurrentFrame();
+    }
+
+    private static Color JerseyColor(string name) => name switch
+    {
+        "Navy" or "Navy blue" => new Color(.075f, .16f, .34f), "Red" => new Color(.68f, .09f, .10f),
+        "Green" => new Color(.10f, .35f, .20f), "White" => new Color(.82f, .84f, .80f),
+        "Orange" => new Color(.86f, .32f, .07f), _ => new Color(.05f, .42f, .43f)
+    };
+    private static Color HelmetColor(string name) => name switch
+    {
+        "White" => new Color(.88f, .90f, .87f), "Blue" => new Color(.07f, .23f, .68f),
+        "Red" => new Color(.68f, .055f, .065f), "Teal" => new Color(.025f, .42f, .40f),
+        _ => new Color(.075f, .085f, .10f)
+    };
 
     /// <summary>Allows the live performance review harness to isolate baked skeleton sampling.</summary>
     public bool RiderAnimationSamplingEnabled { get; set; } = true;
@@ -465,6 +520,17 @@ public partial class CyclistVisual : Node3D
             ?? throw new InvalidOperationException($"Rigid supplied helmet asset is missing: {RigidHelmetPath}.");
         var helmet = helmetScene.Instantiate<Node3D>();
         helmet.Name = "OriginalSuppliedHelmetRigidAssembly";
+        var helmetMesh = FindFirstNode<MeshInstance3D>(helmet)
+            ?? throw new InvalidOperationException("Supplied helmet has no mesh surface.");
+        _helmetOriginalMaterial = helmetMesh.Mesh?.SurfaceGetMaterial(0) as StandardMaterial3D;
+        if (_helmetOriginalMaterial?.AlbedoTexture is not { } helmetTexture)
+            throw new InvalidOperationException("Supplied helmet's textured shell material is missing.");
+        _helmetShellMaterial = new ShaderMaterial { Shader = HelmetRecolorShader };
+        _helmetShellMaterial.SetShaderParameter("helmet_texture", helmetTexture);
+        _helmetShellMaterial.SetShaderParameter("shell_color", HelmetColor("Charcoal"));
+        // The supplied UV atlas keeps the straps, clasp and vents near-black.
+        // The shader recolours brighter shell texels while retaining their local shading.
+        helmetMesh.SetSurfaceOverrideMaterial(0, _helmetShellMaterial);
 
         // Hide only the legacy helmet on this rider instance. The existing GLB,
         // skeleton, and all body/animation data remain unchanged.
@@ -491,7 +557,8 @@ public partial class CyclistVisual : Node3D
         var bikeForward = (frontWheelPosition - rearWheelPosition).Normalized();
         var riderUp = skeletonToRider.Basis.Y.Normalized();
         var desiredWorldRight = bikeForward.Cross(riderUp).Normalized();
-        var desiredWorldBasis = new Basis(desiredWorldRight, riderUp, -bikeForward).Orthonormalized();
+        var desiredWorldBasis = (new Basis(desiredWorldRight, riderUp, -bikeForward) *
+                                 new Basis(Vector3.Right, Mathf.DegToRad(-_rigidHelmetForwardPitchDegrees))).Orthonormalized();
         var attachmentWorld = skeletonToRider * skeleton.GetBoneGlobalPose(headIndex);
         var attachmentBasis = attachmentWorld.Basis.Orthonormalized();
         var importedRootBasis = helmet.Transform.Basis.Orthonormalized();
@@ -549,7 +616,8 @@ public partial class CyclistVisual : Node3D
         var bikeForward = (frontWheelPosition - rearWheelPosition).Normalized();
         var riderUp = skeletonToRider.Basis.Y.Normalized();
         var bikeRight = bikeForward.Cross(riderUp).Normalized();
-        var desiredWorldBasis = new Basis(bikeRight, riderUp, -bikeForward).Orthonormalized();
+        var desiredWorldBasis = (new Basis(bikeRight, riderUp, -bikeForward) *
+                                 new Basis(Vector3.Right, Mathf.DegToRad(-_rigidHelmetForwardPitchDegrees))).Orthonormalized();
         var attachmentTransform = skeletonToRider * _rigidHelmetSkeleton.GetBoneGlobalPose(_rigidHelmetHeadIndex);
         var attachmentBasis = attachmentTransform.Basis.Orthonormalized();
         var localBasis = (attachmentBasis.Inverse() * desiredWorldBasis * _rigidHelmetRootBasis.Inverse()).Orthonormalized();
@@ -640,6 +708,7 @@ public partial class CyclistVisual : Node3D
         var human = FindModelNode<MeshInstance3D>(root, "Human")
             ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh.");
         var outfit = new ShaderMaterial { Shader = RiderOutfitShader };
+        _outfitMaterial = outfit;
         outfit.SetShaderParameter("jersey_color", _jerseyMaterial.AlbedoColor);
         outfit.SetShaderParameter("shorts_color", new Color(.035f,.047f,.058f));
         outfit.SetShaderParameter("skin_color", new Color(.58f,.36f,.25f));

@@ -565,7 +565,8 @@ public partial class RideSessionNode : Node
 	{
 		_currentRiderProfileId = profile.Id;
 		_activeRideRiderProfile = new RiderProfile(profile.Name, profile.BodyWeightKg, profile.Id,
-			profile.BikeWeightKg, profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc);
+			profile.BikeWeightKg, profile.IsTestProfile, profile.CreatedAtUtc, profile.UpdatedAtUtc,
+			profile.JerseyColor, profile.HelmetColor);
 		_activeRideBikeProfile = new BikeProfile(GameBootstrap.Settings.Rider.BikeName, profile.BikeWeightKg);
 	}
 

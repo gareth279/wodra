@@ -4,7 +4,8 @@ public enum RideActivityStatus { InProgress, Completed, Abandoned }
 public enum RideActivityKind { Route, Workout, FitReplay }
 
 public sealed record RiderProfileRecord(Guid Id, string Name, DateTimeOffset CreatedAtUtc, DateTimeOffset UpdatedAtUtc,
-    double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false, int TrainerDifficultyPercent = 50)
+    double BodyWeightKg = 75, double BikeWeightKg = 8, bool IsTestProfile = false, int TrainerDifficultyPercent = 50,
+    string JerseyColor = "Teal", string HelmetColor = "Charcoal")
 {
     public Guid ProfileId => Id;
     public static void Validate(string name, double bodyWeightKg, double bikeWeightKg, int trainerDifficultyPercent = 50)
