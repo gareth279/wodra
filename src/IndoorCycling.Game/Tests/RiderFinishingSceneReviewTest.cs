@@ -11,6 +11,23 @@ public partial class RiderFinishingSceneReviewTest : Node
     private Viewport? _captureViewport;
     private bool _skipCaptures;
 
+    private static float NearestHelmetVertexDistance(MeshInstance3D helmetMesh, Vector3 worldPoint)
+    {
+        var closest = float.PositiveInfinity;
+        var mesh = helmetMesh.Mesh ?? throw new InvalidOperationException("Rigid helmet mesh is unavailable.");
+        for (var surface = 0; surface < mesh.GetSurfaceCount(); surface++)
+        {
+            var vertices = mesh.SurfaceGetArrays(surface)[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+            foreach (var vertex in vertices)
+                closest = Math.Min(closest, (helmetMesh.GlobalTransform * vertex).DistanceTo(worldPoint));
+        }
+        return closest;
+    }
+
+    private static bool PhysicalHelmetFeaturesFaceForward(Vector3 brow, Vector3 rearTail,
+        Vector3 eyeCenter, Vector3 faceForward) =>
+        (brow - eyeCenter).Dot(faceForward) > 0f && (rearTail - eyeCenter).Dot(faceForward) < 0f;
+
     private static Vector3[] SkinVerticesToWorld(Skeleton3D skeleton, MeshInstance3D mesh,
         Vector3[] vertices, int[] boneIndices, float[] weights)
     {
@@ -179,15 +196,26 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Production rider is missing the rigid helmet local pose.");
             var rigidHelmetAssembly = Find<Node3D>(rider, "OriginalSuppliedHelmetRigidAssembly")
                 ?? throw new InvalidOperationException("Production rider is missing the original supplied helmet assembly.");
+            var physicalFrontBrow = Find<Node3D>(rider, "HelmetPhysicalFrontBrowMarker")
+                ?? throw new InvalidOperationException("Original helmet's independently identified physical brow landmark is missing.");
+            var physicalRearTail = Find<Node3D>(rider, "HelmetPhysicalRearTailMarker")
+                ?? throw new InvalidOperationException("Original helmet's independently identified physical rear-tail landmark is missing.");
             var rigidHelmetMesh = Find<MeshInstance3D>(rigidHelmetAssembly)
                 ?? throw new InvalidOperationException("Rigid supplied helmet mesh is missing from the assembly.");
             var helmetVertices = rigidHelmetMesh.Mesh is { } helmetMesh
                 ? Enumerable.Range(0, helmetMesh.GetSurfaceCount()).Sum(surface =>
                     helmetMesh.SurfaceGetArrays(surface)[(int)Mesh.ArrayType.Vertex].AsVector3Array().Length)
                 : 0;
-            if (helmetAttachment.BoneName != "head" || !helmetAttachment.IsAncestorOf(rigidHelmetAssembly) ||
-                helmetVertices < 30000)
+            if (helmetAttachment.BoneName != "head" || !helmetAttachment.IsAncestorOf(rigidHelmetPose) ||
+                !rigidHelmetPose.IsAncestorOf(rigidHelmetAssembly) ||
+                !rigidHelmetAssembly.IsAncestorOf(physicalFrontBrow) ||
+                !rigidHelmetAssembly.IsAncestorOf(physicalRearTail) || helmetVertices < 30000)
                 throw new InvalidOperationException($"Rigid supplied helmet is not a complete assembly on the head bone ({helmetVertices} vertices).");
+            var browMeshDistance = NearestHelmetVertexDistance(rigidHelmetMesh, physicalFrontBrow.GlobalPosition);
+            var rearMeshDistance = NearestHelmetVertexDistance(rigidHelmetMesh, physicalRearTail.GlobalPosition);
+            if (browMeshDistance > .03f || rearMeshDistance > .03f)
+                throw new InvalidOperationException($"Physical helmet landmarks are detached from the imported mesh: " +
+                    $"brow={browMeshDistance:F3}m rear={rearMeshDistance:F3}m.");
             var helmetHeadBone = skeleton.FindBone("head");
             if (helmetHeadBone < 0) throw new InvalidOperationException("Imported head bone missing.");
             var helmetBikeForward = (liveFrontWheel.GlobalPosition - liveRearWheel.GlobalPosition).Normalized();
@@ -240,12 +268,8 @@ public partial class RiderFinishingSceneReviewTest : Node
                 noseVector.Normalized().Dot(helmetBikeForward) < .35f)
                 throw new InvalidOperationException("Actual nose geometry does not project toward the bicycle front wheel.");
 
-            var rigidHelmetForward = (-rigidHelmetPose.GlobalTransform.Basis.Z).Normalized();
-            var helmetBikeAlignment = rigidHelmetForward.Dot(helmetBikeForward);
-            if (helmetBikeAlignment < .95f)
-                throw new InvalidOperationException($"Rigid original helmet source front is not aligned with the live bicycle frame: bike={helmetBikeAlignment:F3}.");
             GD.Print($"[RiderFinishingSceneReviewTest] rigid original helmet attached to head; " +
-                     $"source front=-Z, forward/bike={helmetBikeAlignment:F3}, forward/face={rigidHelmetForward.Dot(faceForward):F3}, vertices={helmetVertices}");
+                     $"physical brow/rear landmarks parented to head assembly, vertices={helmetVertices}");
             GD.Print($"[RiderFinishingSceneReviewTest] legacy skinned helmet hidden; rigid assembly={rigidHelmetAssembly.GetPath()}");
             var surfaceCount = human.Mesh?.GetSurfaceCount() ?? 0;
             var eyeSurfaceCount = 0;
@@ -325,19 +349,43 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Settle(3);
                 await Save(output, $"head-{angle}-helmet-on.png");
             }
-            // The separate OBJ export has a physically inspected -Z front
-            // axis. Check the attached axis in the production side camera; do
-            // not use reference bones from the legacy skinned helmet.
+            // Validate actual physical features selected from the owner-supplied
+            // OBJ after inspecting its raw front/side/rear renders. The short
+            // brow lip must project in front of the face and the long rear tail
+            // behind it. This fails if the whole assembly is yawed 180 degrees;
+            // it does not infer helmet front from the pose basis or a reference bone.
             AimAtHead(camera, bikeForward, bikeSide, headTarget, "side");
             await Settle(2);
-            var frontAxisScreen = camera.UnprojectPosition(rigidHelmetPose.GlobalPosition + rigidHelmetForward * .12f);
-            var rearAxisScreen = camera.UnprojectPosition(rigidHelmetPose.GlobalPosition - rigidHelmetForward * .12f);
             var eyeScreen = camera.UnprojectPosition(eyeCenter);
-            if (frontAxisScreen.X <= eyeScreen.X + 1f || rearAxisScreen.X >= eyeScreen.X - 1f)
-                throw new InvalidOperationException($"Rigid helmet's physical source front/rear axes do not bracket the face in the production side camera: " +
-                    $"front/eyes/rear X={frontAxisScreen.X:F1}/{eyeScreen.X:F1}/{rearAxisScreen.X:F1}px.");
-            GD.Print($"[RiderFinishingSceneReviewTest] production side-camera source-axis projection: " +
-                $"rear={rearAxisScreen.X:F1}px eyes={eyeScreen.X:F1}px front={frontAxisScreen.X:F1}px");
+            var browScreen = camera.UnprojectPosition(physicalFrontBrow.GlobalPosition);
+            var tailScreen = camera.UnprojectPosition(physicalRearTail.GlobalPosition);
+            var browAlongFace = (physicalFrontBrow.GlobalPosition - eyeCenter).Dot(faceForward);
+            var tailAlongFace = (physicalRearTail.GlobalPosition - eyeCenter).Dot(faceForward);
+            if (!PhysicalHelmetFeaturesFaceForward(physicalFrontBrow.GlobalPosition,
+                    physicalRearTail.GlobalPosition, eyeCenter, faceForward) ||
+                browScreen.X <= eyeScreen.X + 1f || tailScreen.X >= eyeScreen.X - 1f)
+                throw new InvalidOperationException($"Original helmet physical features are not oriented around the actual rider face: " +
+                    $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
+                    $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m.");
+            var helmetPoseBeforeCounterfactual = rigidHelmetPose.GlobalTransform;
+            var reverseYaw = new Basis(riderUp, Mathf.Pi);
+            var reversedBrow = helmetPoseBeforeCounterfactual.Origin +
+                reverseYaw * (physicalFrontBrow.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
+            var reversedRear = helmetPoseBeforeCounterfactual.Origin +
+                reverseYaw * (physicalRearTail.GlobalPosition - helmetPoseBeforeCounterfactual.Origin);
+            if (PhysicalHelmetFeaturesFaceForward(reversedBrow, reversedRear, eyeCenter, faceForward))
+                throw new InvalidOperationException("Helmet physical-feature regression would incorrectly accept a 180-degree yaw.");
+            rigidHelmetPose.GlobalTransform = new Transform3D(
+                reverseYaw * helmetPoseBeforeCounterfactual.Basis,
+                helmetPoseBeforeCounterfactual.Origin);
+            await Settle(2);
+            await Save(output, "head-side-helmet-yaw-180-counterfactual.png");
+            rigidHelmetPose.GlobalTransform = helmetPoseBeforeCounterfactual;
+            await Settle(2);
+            GD.Print($"[RiderFinishingSceneReviewTest] physical-feature orientation in production side camera: " +
+                $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
+                $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
+                $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; 180-degree yaw negative control rejected");
             if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1")
             {
                 var baselineLeftHood = Find<Node3D>(rider, "Contact_LeftHood")

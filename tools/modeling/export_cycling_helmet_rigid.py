@@ -77,8 +77,11 @@ for component in components:
         Vector(tuple(max(point[axis] for point in points) for axis in range(3))),
     ))
 
-# This disconnected island is the molded brow/visor lip, physically visible at
-# the front of the supplied shell. It follows the shell fit, not the straps.
+# Raw renders of the owner ZIP (unmodified OBJ, MTL and texture) establish that
+# OBJ -Y is the forehead/brow-lip end: it has the short brow edge and frontal
+# vents. OBJ +Y is the longer occipital tail. Blender's NEGATIVE_Y import maps
+# that physical front to Blender +Y. The bounds below locate the already
+# identified brow-lip island; they do not decide which end is the front.
 front_lip_components = [
     index for index, (minimum, maximum) in enumerate(component_bounds)
     if index != shell_component
@@ -87,6 +90,7 @@ front_lip_components = [
 ]
 if len(front_lip_components) != 1:
     raise RuntimeError(f"expected one visually identified front brow lip island, found {front_lip_components}")
+front_lip_component = front_lip_components[0]
 shell_components = {shell_component, *front_lip_components}
 
 # The central clasp is the small, centered, lowest physical hardware island.
@@ -107,6 +111,27 @@ shell_world = [source_points[vertex.index] for vertex in shell]
 shell_min = Vector(tuple(min(point[axis] for point in shell_world) for axis in range(3)))
 shell_max = Vector(tuple(max(point[axis] for point in shell_world) for axis in range(3)))
 shell_center = (shell_min + shell_max) * 0.5
+
+# Export two non-rendering landmarks from independently inspected physical
+# features. They let the production RideScreen regression check the brow lip
+# and rear tail against the rider's actual face, instead of assuming a helmet
+# local axis means "forward". The rear marker is taken from the raw OBJ +Y end,
+# which the configured Blender import places at the shell's minimum Y.
+def fit_shell_point(point):
+    return ((point - shell_center) * SHELL_SCALE + SHELL_OFFSET_CM) * SOURCE_CENTIMETRES_TO_METRES
+
+
+front_lip_points = [source_points[vertex.index] for vertex in components[front_lip_component]]
+front_brow_marker = fit_shell_point(sum(front_lip_points, Vector()) / len(front_lip_points))
+rear_tail_vertices = [
+    vertex for vertex in components[shell_component]
+    if source_points[vertex.index].y <= shell_min.y + 0.01
+]
+if not rear_tail_vertices:
+    raise RuntimeError("could not locate the independently identified OBJ +Y rear tail")
+rear_tail_marker = fit_shell_point(
+    sum((source_points[vertex.index] for vertex in rear_tail_vertices), Vector()) / len(rear_tail_vertices)
+)
 bm.free()
 
 # Keep the assembly origin and coordinate conversion unchanged. Fit the shell
@@ -138,6 +163,19 @@ helmet.location = (0.0, 0.0, 0.0)
 helmet.rotation_euler = (0.0, 0.0, 0.0)
 helmet.scale = (1.0, 1.0, 1.0)
 helmet.data.update()
+
+landmarks = []
+for name, position, description in (
+    ("HelmetPhysicalFrontBrowMarker", front_brow_marker, "owner OBJ -Y brow lip, confirmed in raw front and side renders"),
+    ("HelmetPhysicalRearTailMarker", rear_tail_marker, "owner OBJ +Y occipital tail, confirmed in raw rear and side renders"),
+):
+    marker = bpy.data.objects.new(name, None)
+    marker.empty_display_type = "SPHERE"
+    marker.empty_display_size = 0.004
+    marker.location = position
+    marker["physical_feature"] = description
+    bpy.context.collection.objects.link(marker)
+    landmarks.append(marker)
 
 if not helmet.data.materials:
     material = bpy.data.materials.new("Supplied helmet diffuse")
@@ -171,6 +209,8 @@ helmet["shell_origin"] = "largest connected shell bounds center"
 helmet["fit_method"] = "measured production head fit: shell 0.95/0.95/0.95; rearward 31.5 mm; strap anchors blend to fixed jaw clasp"
 bpy.ops.object.select_all(action="DESELECT")
 helmet.select_set(True)
+for marker in landmarks:
+    marker.select_set(True)
 bpy.context.view_layer.objects.active = helmet
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.export_scene.gltf(
@@ -181,3 +221,4 @@ print("RIGID_HELMET_SOURCE_AXES", "OBJ physical front=-Y -> Blender +Y -> Godot 
 print("RIGID_HELMET_SHELL_BOUNDS_M", tuple(round(value, 4) for value in shell_max - shell_min))
 print("RIGID_HELMET_FIT", "scaleXYZ", tuple(SHELL_SCALE), "offsetXYZ_cm", tuple(SHELL_OFFSET_CM),
       "front lip island", front_lip_components, "jaw clasp island", clasp_component)
+print("RIGID_HELMET_PHYSICAL_LANDMARKS_M", "front brow", tuple(front_brow_marker), "rear tail", tuple(rear_tail_marker))
