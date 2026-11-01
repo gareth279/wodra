@@ -336,6 +336,10 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Settle(2);
             await Save(output, "fit-rider-white-original-full.png");
             rider.SetCustomization("Teal", "Charcoal");
+            camera.GlobalPosition = bikeCenter + bikeForward * 3.6f + Vector3.Up * .72f;
+            camera.LookAt(bikeCenter + Vector3.Up * .62f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "fit-rider-front-full.png");
             camera.GlobalPosition = bikeCenter + bikeSide * 1.55f + bikeForward * 2.05f + Vector3.Up * .92f;
             camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
             await Settle(3);
