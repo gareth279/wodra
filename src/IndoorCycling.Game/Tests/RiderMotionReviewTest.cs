@@ -34,8 +34,8 @@ public partial class RiderMotionReviewTest : Node
             GameBootstrap.Settings.DummyTrainer.CadenceRpm = 85;
             GameBootstrap.ConfigureFakeTrainerMode();
             var session = screen.GetNode<RideSessionNode>("RideSessionNode");
-            if (!await session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-rolling-loop")))
-                throw new InvalidOperationException("Could not start the production Rolling City ride.");
+            if (!await session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-one-way-oval-gardens")))
+                throw new InvalidOperationException("Could not start the production Dunedin One-way ride.");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
             var hud = screen.GetNode<HudController>("HudController");
             hud.Show();

@@ -50,11 +50,12 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             await Settle(12);
             GameBootstrap.Settings.DebugModeEnabled = true;
+            GameBootstrap.Settings.DummyTrainer.CadenceRpm = 85;
             GameBootstrap.Settings.Recording.OutputFolder = Path.Combine(output, "fit");
             GameBootstrap.ConfigureFakeTrainerMode();
             var session = screen.GetNode<RideSessionNode>("RideSessionNode");
-            if (!await session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-rolling-loop")))
-                throw new InvalidOperationException("Could not start Rolling City in RideScreen.");
+            if (!await session.StartTrainerSessionAsync(RouteCatalog.GetById("dunedin-one-way-oval-gardens")))
+                throw new InvalidOperationException("Could not start Dunedin One-way: Oval to Gardens Loop in RideScreen.");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
             var hud = screen.GetNode<HudController>("HudController");
             // Keep the model review camera clear of a collectible card that can
@@ -64,6 +65,13 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Settle(12);
             foreach (var window in screen.GetNode<StartPanelController>("StartPanel").GetChildren().OfType<Window>()) window.Hide();
             screen.GetNode<StartPanelController>("StartPanel").Hide();
+            var liveRider = world.PlayerRider;
+            var liveFrontWheel = Find<Node3D>(liveRider, "FrontWheelSpin")
+                ?? throw new InvalidOperationException("Imported front wheel anchor missing for live leg inspection.");
+            var liveRearWheel = Find<Node3D>(liveRider, "RearWheelSpin")
+                ?? throw new InvalidOperationException("Imported rear wheel anchor missing for live leg inspection.");
+            var camera = world.InspectionCamera;
+            world.SelectCameraInspectionView(RiderCameraView.Side);
             session.JumpToRouteDistance("738.5");
             session.ConfirmDebugDistanceJump();
             hud.HideDebugJumpConfirmation();
@@ -73,8 +81,9 @@ public partial class RiderFinishingSceneReviewTest : Node
             // starts; hide it again so production fit screenshots show only the rider.
             Find<CollectibleCatLayer>(world, "CollectibleCats")?.Hide();
             await Settle(2);
+            if (!_skipCaptures)
+                await CaptureLiveLegPhases(output, world, liveRider, camera, liveFrontWheel, liveRearWheel);
 
-            var camera = world.InspectionCamera;
             foreach (var debug in new[] { true, false })
             {
                 hud.SetDebugDisplayEnabled(debug);
@@ -107,6 +116,24 @@ public partial class RiderFinishingSceneReviewTest : Node
             rider.SetProcess(false);
             var riderAnimation = Find<AnimationPlayer>(rider)
                 ?? throw new InvalidOperationException("Imported rider AnimationPlayer missing.");
+            var activeRiderClipName = riderAnimation.GetAnimationList()
+                .Where(name => name.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(name => Math.Min(
+                    CountBoneTrackKeys(riderAnimation.GetAnimation(name), "foot.L"),
+                    CountBoneTrackKeys(riderAnimation.GetAnimation(name), "foot.R")))
+                .First();
+            GD.Print($"[RiderFinishingSceneReviewTest] animations={string.Join(";", riderAnimation.GetAnimationList()
+                .Select(name => { var clip = riderAnimation.GetAnimation(name); return $"{name}:{clip.Length:F3}s/{clip.GetTrackCount()}tracks/foot={Enumerable.Range(0, clip.GetTrackCount()).Where(i => clip.TrackGetPath(i).ToString().Contains("foot.L", StringComparison.OrdinalIgnoreCase)).Sum(i => clip.TrackGetKeyCount(i))}"; }))}");
+            var activeRiderClip = riderAnimation.GetAnimation(activeRiderClipName);
+            if (Math.Min(CountBoneTrackKeys(activeRiderClip, "foot.L"),
+                         CountBoneTrackKeys(activeRiderClip, "foot.R")) < 72)
+                throw new InvalidOperationException($"Selected imported PedalCycle clip {activeRiderClipName} does not animate both feet through a full cycle.");
+            var activeTrackCount = activeRiderClip.GetTrackCount();
+            GD.Print($"[RiderFinishingSceneReviewTest] active clip={activeRiderClipName} " +
+                $"tracks={activeTrackCount} footTracks={string.Join(";", Enumerable.Range(0, activeTrackCount)
+                    .Where(index => activeRiderClip.TrackGetPath(index).ToString().Contains("foot", StringComparison.OrdinalIgnoreCase) ||
+                                   activeRiderClip.TrackGetPath(index).ToString().Contains("lowerleg01", StringComparison.OrdinalIgnoreCase))
+                    .Select(index => $"{activeRiderClip.TrackGetPath(index)}:{activeRiderClip.TrackGetKeyCount(index)}"))}");
             riderAnimation.Seek(0.0, true);
             await Settle(2);
             foreach (var other in FindAll<CyclistVisual>(world)) other.Visible = other == rider;
@@ -125,6 +152,15 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             if (surfaceCount != 2 || eyeSurfaceCount != 1)
                 throw new InvalidOperationException($"Expected outfit and preserved eye materials; surfaces={surfaceCount}, eyeSurfaces={eyeSurfaceCount}.");
+            var outfitColors = human.Mesh!.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Color].AsColorArray();
+            var jerseyMaskCount = outfitColors.Count(color => color.R > .25f);
+            var shortsMaskCount = outfitColors.Count(color => color.G > .25f);
+            var shoeMaskCount = outfitColors.Count(color => color.B > .25f);
+            var skinMaskCount = outfitColors.Count(color => color.R + color.G + color.B < .05f);
+            if (outfitColors.Length == 0 || jerseyMaskCount < 100 || shortsMaskCount < 100 ||
+                shoeMaskCount < 20 || skinMaskCount < 100)
+                throw new InvalidOperationException($"Imported RiderOutfitWeights mask is missing or flattened: vertices={outfitColors.Length}, jersey={jerseyMaskCount}, shorts={shortsMaskCount}, shoes={shoeMaskCount}, skin={skinMaskCount}.");
+            GD.Print($"[RiderFinishingSceneReviewTest] outfit COLOR_0 vertices={outfitColors.Length} jersey={jerseyMaskCount} shorts={shortsMaskCount} shoes={shoeMaskCount} skin={skinMaskCount}");
             var garmentDetails = Find<MeshInstance3D>(rider, "RiderRoadKitDetails")
                 ?? throw new InvalidOperationException("Skinned jersey and bib finishing details are missing.");
             if ((garmentDetails.Mesh?.GetSurfaceCount() ?? 0) < 3)
@@ -242,6 +278,20 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("Measured left pedal platform marker missing.");
             var rightPedalSurface = Find<Node3D>(rider, "Contact_RightPedalSurface")
                 ?? throw new InvalidOperationException("Measured right pedal platform marker missing.");
+            var hipBones = new[] { skeleton.FindBone("upperleg01.L"), skeleton.FindBone("upperleg01.R") };
+            var kneeBones = new[] { skeleton.FindBone("lowerleg01.L"), skeleton.FindBone("lowerleg01.R") };
+            var ankleBones = new[] { skeleton.FindBone("foot.L"), skeleton.FindBone("foot.R") };
+            if (hipBones.Any(index => index < 0) || kneeBones.Any(index => index < 0) || ankleBones.Any(index => index < 0))
+                throw new InvalidOperationException("Imported anatomical hip/knee/ankle bones are missing.");
+            var maxKneeStep = new float[2];
+            var maxLegLengthDelta = new float[2];
+            var minKneeFlex = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var maxKneeFlex = new float[2];
+            var minForwardKnee = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var kneeAtStart = new Vector3[2];
+            var kneePrevious = new Vector3[2];
+            var upperLengthAtStart = new float[2];
+            var lowerLengthAtStart = new float[2];
             var maxLeftPalm = 0f;
             var maxRightPalm = 0f;
             var maxPelvis = 0f;
@@ -270,6 +320,34 @@ public partial class RiderFinishingSceneReviewTest : Node
                 var rightShoeBall = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(rightPedalContactBone).Origin;
                 var pelvis = pelvisBones.Select(i => skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(i).Origin)
                     .Aggregate(Vector3.Zero, (sum, p) => sum + p) / pelvisBones.Length;
+                for (var side = 0; side < 2; side++)
+                {
+                    var hip = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(hipBones[side]).Origin;
+                    var knee = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(kneeBones[side]).Origin;
+                    var ankle = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(ankleBones[side]).Origin;
+                    var upperLength = hip.DistanceTo(knee);
+                    var lowerLength = knee.DistanceTo(ankle);
+                    var flexion = Mathf.Pi - (hip - knee).AngleTo(ankle - knee);
+                    var legAxis = ankle - hip;
+                    var closest = hip + legAxis * Mathf.Clamp((knee - hip).Dot(legAxis) / legAxis.LengthSquared(), 0f, 1f);
+                    var forwardOffset = (knee - closest).Dot(bikeForward);
+                    minKneeFlex[side] = Math.Min(minKneeFlex[side], flexion);
+                    maxKneeFlex[side] = Math.Max(maxKneeFlex[side], flexion);
+                    minForwardKnee[side] = Math.Min(minForwardKnee[side], forwardOffset);
+                    if (sample == 0)
+                    {
+                        kneeAtStart[side] = knee;
+                        upperLengthAtStart[side] = upperLength;
+                        lowerLengthAtStart[side] = lowerLength;
+                    }
+                    else
+                    {
+                        maxKneeStep[side] = Math.Max(maxKneeStep[side], knee.DistanceTo(kneePrevious[side]));
+                        maxLegLengthDelta[side] = Math.Max(maxLegLengthDelta[side],
+                            Math.Max(Math.Abs(upperLength - upperLengthAtStart[side]), Math.Abs(lowerLength - lowerLengthAtStart[side])));
+                    }
+                    kneePrevious[side] = knee;
+                }
                 maxLeftPalm = Math.Max(maxLeftPalm, leftPalm.DistanceTo(leftHood.GlobalPosition));
                 maxRightPalm = Math.Max(maxRightPalm, rightPalm.DistanceTo(rightHood.GlobalPosition));
                 maxPelvis = Math.Max(maxPelvis, pelvis.DistanceTo(saddle.GlobalPosition));
@@ -299,13 +377,24 @@ public partial class RiderFinishingSceneReviewTest : Node
                     maxFootTravel = Math.Max(maxFootTravel, Math.Max(leftFoot.DistanceTo(leftFootAtStart), rightFoot.DistanceTo(rightFootAtStart)));
                 }
             }
+            for (var side = 0; side < 2; side++)
+                maxKneeStep[side] = Math.Max(maxKneeStep[side], kneeAtStart[side].DistanceTo(kneePrevious[side]));
             GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ball-of-foot to moving pedal top L={maxLeftShoeContact:F5}m@{maxLeftShoePhase}deg {maxLeftShoeError} R={maxRightShoeContact:F5}m@{maxRightShoePhase}deg {maxRightShoeError}; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] anatomical knees step={maxKneeStep[0]:F4}/{maxKneeStep[1]:F4}m flex={Mathf.RadToDeg(minKneeFlex[0]):F1}-{Mathf.RadToDeg(maxKneeFlex[0]):F1}/{Mathf.RadToDeg(minKneeFlex[1]):F1}-{Mathf.RadToDeg(maxKneeFlex[1]):F1}deg forwardMin={minForwardKnee[0]:F4}/{minForwardKnee[1]:F4}m legLengthDelta={maxLegLengthDelta[0]:F5}/{maxLegLengthDelta[1]:F5}m");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
                 throw new InvalidOperationException($"Pelvis left the saddle fit envelope ({maxPelvis:F3}m).");
             if (maxFootTravel < .05f)
                 throw new InvalidOperationException("PedalCycle did not animate the feet through the full cycle.");
+            if (minKneeFlex.Any(value => value < Mathf.DegToRad(2f)) || maxKneeFlex.Any(value => value > Mathf.DegToRad(125f)))
+                throw new InvalidOperationException("Imported knee flexion leaves the validated road-cycling range.");
+            if (minForwardKnee.Any(value => value < -.012f))
+                throw new InvalidOperationException("An imported knee bends backwards behind its hip-to-ankle line.");
+            if (maxKneeStep.Any(value => value > .022f))
+                throw new InvalidOperationException("Imported knee movement has an abrupt step or cycle seam.");
+            if (maxLegLengthDelta.Any(value => value > .003f))
+                throw new InvalidOperationException("Imported leg animation stretches the thigh or shin.");
             if (maxLeftShoeContact > .012f || maxRightShoeContact > .012f)
                 throw new InvalidOperationException($"A shoe leaves its actual moving pedal top (L={maxLeftShoeContact:F3}m, R={maxRightShoeContact:F3}m).");
             riderAnimation.Seek(0.0, true);
@@ -376,7 +465,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             var crank = Find<Node3D>(rider, "CrankPivot")
                 ?? throw new InvalidOperationException("Imported crank pivot missing from pedal review.");
-            foreach (var degrees in new[] { 0, 90, 180, 270 })
+            foreach (var degrees in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
             {
                 rider.SetReviewCrankPhase(degrees);
                 var crankCenter = crank.GlobalPosition;
@@ -484,7 +573,57 @@ public partial class RiderFinishingSceneReviewTest : Node
         GD.Print($"[RiderFinishingSceneReview] captured {path}");
     }
 
+    private async Task CaptureLiveLegPhases(string output, RideWorldView world, CyclistVisual rider,
+        ChaseCamera camera, Node3D frontWheel, Node3D rearWheel)
+    {
+        camera.MakeCurrent();
+        var savedFov = camera.Fov;
+        foreach (var degrees in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
+        {
+            var wanted = Math.Tau * degrees / 360.0;
+            var reached = false;
+            for (var frame = 0; frame < 90; frame++)
+            {
+                var delta = Math.Atan2(Math.Sin(rider.CrankAngleRadians - wanted),
+                    Math.Cos(rider.CrankAngleRadians - wanted));
+                if (Math.Abs(delta) <= .08)
+                {
+                    reached = true;
+                    break;
+                }
+                await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            }
+            if (!reached)
+                throw new InvalidOperationException($"Live RideScreen crank did not reach {degrees} degrees at 85 rpm.");
+            var livePhase = rider.CrankAngleRadians;
+            world.SetProcess(false);
+            var phaseForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
+            var phaseSide = phaseForward.Cross(Vector3.Up).Normalized();
+            var bikeCenter = (frontWheel.GlobalPosition + rearWheel.GlobalPosition) * .5f + Vector3.Up * .30f;
+            var target = bikeCenter + Vector3.Up * .42f;
+            camera.Fov = 42f;
+            camera.GlobalPosition = bikeCenter + phaseSide * 2.35f + phaseForward * .08f + Vector3.Up * .54f;
+            camera.LookAt(target, Vector3.Up);
+            await Settle(2);
+            await Save(output, $"legs-live-side-phase-{degrees:D3}.png");
+            GD.Print($"[RiderFinishingSceneReviewTest] live RideScreen phase target={degrees} " +
+                $"actual={livePhase * 180 / Math.PI:F1} cadence=85rpm");
+            world.SetProcess(true);
+            world.SelectCameraInspectionView(RiderCameraView.Side);
+        }
+        camera.Fov = savedFov;
+    }
+
     private static string sideName(float side) => side < 0 ? "Left" : "Right";
+
+    private static int CountBoneTrackKeys(Animation animation, string boneName)
+    {
+        var total = 0;
+        for (var track = 0; track < animation.GetTrackCount(); track++)
+            if (animation.TrackGetPath(track).ToString().Contains(boneName, StringComparison.OrdinalIgnoreCase))
+                total += animation.TrackGetKeyCount(track);
+        return total;
+    }
 
     private async Task Settle(int frames)
     {

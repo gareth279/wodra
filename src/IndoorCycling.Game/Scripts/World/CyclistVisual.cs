@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using IndoorCycling.Core.Models;
 
@@ -113,7 +114,7 @@ public partial class CyclistVisual : Node3D
     private Node3D _rightLegRig = default!;
     private AnimationPlayer? _riderAnimationPlayer;
     private Animation? _pedalCycleAnimation;
-    private StringName _pedalCycleName;
+    private StringName _pedalCycleName = new();
     private readonly System.Collections.Generic.List<Node3D> _helmetParts = new();
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
@@ -374,12 +375,32 @@ public partial class CyclistVisual : Node3D
             instance.QueueFree();
             return false;
         }
-        foreach (var animationName in _riderAnimationPlayer.GetAnimationList())
+        var pedalClips = _riderAnimationPlayer.GetAnimationList()
+            .Where(name => name.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase))
+            .Select(name => (Name: name, Clip: _riderAnimationPlayer.GetAnimation(name)))
+            .Select(candidate => (candidate.Name, candidate.Clip,
+                LeftFootKeys: CountBoneTrackKeys(candidate.Clip, "foot.L"),
+                RightFootKeys: CountBoneTrackKeys(candidate.Clip, "foot.R")))
+            .OrderByDescending(candidate => Math.Min(candidate.LeftFootKeys, candidate.RightFootKeys))
+            .ThenByDescending(candidate => candidate.Clip.Length)
+            .ToArray();
+        if (pedalClips.Length > 0)
         {
-            if (!animationName.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase)) continue;
-            _pedalCycleName = animationName;
-            _pedalCycleAnimation = _riderAnimationPlayer.GetAnimation(animationName);
-            break;
+            var selected = pedalClips[0];
+            if (Math.Min(selected.LeftFootKeys, selected.RightFootKeys) < 72)
+            {
+                GD.PushWarning($"Imported cyclist at {ImportedModelPath} has no full-cycle bilateral PedalCycle clip; " +
+                    $"best candidate {selected.Name} has {selected.LeftFootKeys}/{selected.RightFootKeys} foot keys; using procedural fallback.");
+                RemoveChild(instance);
+                instance.QueueFree();
+                return false;
+            }
+            _pedalCycleName = selected.Name;
+            _pedalCycleAnimation = selected.Clip;
+            GD.Print($"[Cyclist GLB] PedalCycle selected={selected.Name} " +
+                $"bilateralFootKeys={selected.LeftFootKeys}/{selected.RightFootKeys}; " +
+                $"candidates={string.Join(",", pedalClips.Select(candidate =>
+                    $"{candidate.Name}:{candidate.LeftFootKeys}/{candidate.RightFootKeys}"))}");
         }
         if (_pedalCycleAnimation is null || _pedalCycleAnimation.Length <= 0)
         {
@@ -447,6 +468,15 @@ public partial class CyclistVisual : Node3D
         if (outfitSurfaces == 0)
             throw new InvalidOperationException("Imported rider has no outfit surface for its colour shader.");
         GD.Print($"[Cyclist GLB] Human outfit shader applied to {outfitSurfaces}/{surfaces} surfaces; eye material remains separate.");
+    }
+
+    private static int CountBoneTrackKeys(Animation animation, string boneName)
+    {
+        var total = 0;
+        for (var track = 0; track < animation.GetTrackCount(); track++)
+            if (animation.TrackGetPath(track).ToString().Contains(boneName, StringComparison.OrdinalIgnoreCase))
+                total += animation.TrackGetKeyCount(track);
+        return total;
     }
 
     /// <summary>Set an exact baked pedal phase for the Godot visual review harness.</summary>

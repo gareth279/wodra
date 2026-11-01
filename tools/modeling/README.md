@@ -853,3 +853,34 @@ frames across cadence, steering, camera changes, coast, stop, and restart. The
 accepted closed-grip sculpt, hood contact, posture, clothing, and bicycle were
 preserved. No physical riding, trainer hardware, or multiplayer session was
 available for this model review.
+
+## Alpha.85 lower-body correction
+
+The focused alpha.85 rider fix is based on the accepted sculpted-hands source
+[`source/WodraCyclist.issue85-pedalling-fix.blend`](source/WodraCyclist.issue85-pedalling-fix.blend).
+It merges the thigh and shin helper bones, bakes a deterministic forward knee
+solve and 7-degree ankle roll to the imported pedal surfaces, reduces shoe
+height while retaining the forefoot point, and exports the outfit mask as
+glTF `COLOR_0`. The Godot import test requires both a full-cycle bilateral-foot
+clip (at least 72 keys per foot) and the jersey, shorts, shoe, and skin color
+masks. The 72-phase imported review checks knee flexion and direction, segment
+length, knee continuity including the wrap seam, pelvis/saddle distance, and
+shoe-to-pedal contact.
+
+Rebuild the reviewed asset with Blender 5.2.2:
+
+```powershell
+$blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
+$fixedBlend = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.blend'
+$fixedGlb = Join-Path $env:TEMP 'WodraCyclist.issue85-pedalling-fix.glb'
+& $blender --background --python tools/modeling/retarget_pedals_163.py -- `
+  --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend `
+  --output-blend $fixedBlend --output-glb $fixedGlb
+```
+
+Production RideScreen stills at all eight live 85 rpm phases, the baseline
+comparison, and the 480-frame motion clip are documented in
+[`artifacts/issue85-leg-failure/README.md`](../../artifacts/issue85-leg-failure/README.md).
+The clip includes low/high cadence, steering and camera changes, coasting,
+stopping, and restart. No trainer hardware or multiplayer session was
+available; player and pacer visuals use the shared `CyclistVisual` importer.
