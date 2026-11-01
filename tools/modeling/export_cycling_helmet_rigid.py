@@ -16,6 +16,19 @@ TEXTURE = SOURCE.parent / "sport_cycling_helmet_diffuse.png"
 OUTPUT = ROOT / "src" / "IndoorCycling.Game" / "Assets" / "Models" / "CyclingHelmetRigid.glb"
 SOURCE_CENTIMETRES_TO_METRES = 0.01
 
+# Fit measured in the production RideScreen frame against the weighted Human
+# head mesh at the PedalCycle pose. The head crown is +0.1726 m above eye level;
+# the current shell center is +0.112 m, and the shell half-height is 0.0748 m.
+# A 0.95 vertical fit leaves about 0.010 m above the crown while raising the
+# lower brow edge slightly for forehead clearance. The brow's most forward
+# point is +0.0685 m; the scaled shell front is kept 0.025 m beyond it. The
+# rearward shift covers the exposed rear of the skull without changing the
+# helmet's verified forward direction.
+SHELL_SCALE = Vector((0.95, 0.95, 0.95))  # Blender frame: lateral, forward, up.
+SHELL_OFFSET_CM = Vector((0.0, -3.15, -0.05))  # rearward, nearly level with the old origin.
+STRAP_CLASP_SOURCE_Z_CM = -11.6
+STRAP_SHELL_ANCHOR_SOURCE_Z_CM = 1.25
+
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.obj_import(filepath=str(SOURCE), forward_axis="NEGATIVE_Y", up_axis="Z")
@@ -48,18 +61,77 @@ for start in bm.verts:
     components.append(component)
 if not components:
     raise RuntimeError("supplied helmet OBJ has no vertices")
-shell = max(components, key=len)
-shell_world = [helmet.matrix_world @ vertex.co for vertex in shell]
+shell_component = max(range(len(components)), key=lambda index: len(components[index]))
+shell = components[shell_component]
+component_by_vertex = {
+    vertex.index: component_index
+    for component_index, component in enumerate(components)
+    for vertex in component
+}
+source_points = [helmet.matrix_world @ vertex.co for vertex in bm.verts]
+component_bounds = []
+for component in components:
+    points = [source_points[vertex.index] for vertex in component]
+    component_bounds.append((
+        Vector(tuple(min(point[axis] for point in points) for axis in range(3))),
+        Vector(tuple(max(point[axis] for point in points) for axis in range(3))),
+    ))
+
+# This disconnected island is the molded brow/visor lip, physically visible at
+# the front of the supplied shell. It follows the shell fit, not the straps.
+front_lip_components = [
+    index for index, (minimum, maximum) in enumerate(component_bounds)
+    if index != shell_component
+    and minimum.y > 8.0 and maximum.y > 8.0
+    and minimum.z > 0.0 and maximum.z < 5.0
+]
+if len(front_lip_components) != 1:
+    raise RuntimeError(f"expected one visually identified front brow lip island, found {front_lip_components}")
+shell_components = {shell_component, *front_lip_components}
+
+# The central clasp is the small, centered, lowest physical hardware island.
+# Keeping it fixed preserves its measured under-jaw position while the strap
+# paths are reshaped to meet the shell's new anchor locations.
+clasp_components = [
+    index for index, (minimum, maximum) in enumerate(component_bounds)
+    if index not in shell_components
+    and maximum.z < -10.0
+    and max(abs(minimum.x), abs(maximum.x)) < 1.5
+    and minimum.y > -2.0 and maximum.y < 2.0
+]
+if len(clasp_components) != 1:
+    raise RuntimeError(f"expected one central under-jaw clasp island, found {clasp_components}")
+clasp_component = clasp_components[0]
+
+shell_world = [source_points[vertex.index] for vertex in shell]
 shell_min = Vector(tuple(min(point[axis] for point in shell_world) for axis in range(3)))
 shell_max = Vector(tuple(max(point[axis] for point in shell_world) for axis in range(3)))
 shell_center = (shell_min + shell_max) * 0.5
 bm.free()
 
-# Independently inspected source geometry: the physical brow/front is OBJ -Y.
-# Blender's NEGATIVE_Y import maps it to Blender +Y; glTF maps that to Godot -Z.
-# Blender +Z up becomes Godot +Y up. Bake the import basis exactly once here.
+# Keep the assembly origin and coordinate conversion unchanged. Fit the shell
+# and its front lip around the measured skull landmarks. The two strap branches,
+# ear adjusters, and rear retention pieces blend from the existing jaw clasp to
+# their newly fitted shell anchors, preventing detached ends or a loose loop.
+# The source OBJ is in centimetres and this imported Blender frame is lateral,
+# physical-front, up; the existing glTF/Godot axis conversion is kept intact.
 for vertex in helmet.data.vertices:
-    vertex.co = (helmet.matrix_world @ vertex.co - shell_center) * SOURCE_CENTIMETRES_TO_METRES
+    point = source_points[vertex.index]
+    local = point - shell_center
+    component_index = component_by_vertex.get(vertex.index)
+    if component_index is None:
+        raise RuntimeError(f"helmet vertex {vertex.index} was not assigned to a connected component")
+
+    fitted_shell = local * SHELL_SCALE + SHELL_OFFSET_CM
+    if component_index in shell_components:
+        fitted = fitted_shell
+    elif component_index == clasp_component:
+        fitted = local
+    else:
+        vertical_span = STRAP_SHELL_ANCHOR_SOURCE_Z_CM - STRAP_CLASP_SOURCE_Z_CM
+        anchor_weight = max(0.0, min(1.0, (point.z - STRAP_CLASP_SOURCE_Z_CM) / vertical_span))
+        fitted = local.lerp(fitted_shell, anchor_weight)
+    vertex.co = fitted * SOURCE_CENTIMETRES_TO_METRES
 helmet.parent = None
 helmet.matrix_world = Matrix.Identity(4)
 helmet.location = (0.0, 0.0, 0.0)
@@ -96,6 +168,7 @@ helmet["godot_front_axis"] = "-Z"
 helmet["godot_up_axis"] = "+Y"
 helmet["units"] = "centimetres converted to metres"
 helmet["shell_origin"] = "largest connected shell bounds center"
+helmet["fit_method"] = "measured production head fit: shell 0.95/0.95/0.95; rearward 31.5 mm; strap anchors blend to fixed jaw clasp"
 bpy.ops.object.select_all(action="DESELECT")
 helmet.select_set(True)
 bpy.context.view_layer.objects.active = helmet
@@ -106,3 +179,5 @@ bpy.ops.export_scene.gltf(
 print("RIGID_HELMET_EXPORT", OUTPUT)
 print("RIGID_HELMET_SOURCE_AXES", "OBJ physical front=-Y -> Blender +Y -> Godot -Z", "up=Blender +Z -> Godot +Y")
 print("RIGID_HELMET_SHELL_BOUNDS_M", tuple(round(value, 4) for value in shell_max - shell_min))
+print("RIGID_HELMET_FIT", "scaleXYZ", tuple(SHELL_SCALE), "offsetXYZ_cm", tuple(SHELL_OFFSET_CM),
+      "front lip island", front_lip_components, "jaw clasp island", clasp_component)
