@@ -660,19 +660,21 @@ try {
             $routeSmokeLog = Join-Path $workRoot "packaged-xc-assets-$safeVersion.log"
             $routeSmoke = Invoke-WithWodraSmokeIsolation -Isolation $smokeIsolation -Action {
                 param($isolation)
+                # Godot returns STATUS_STACK_BUFFER_OVERRUN when Environment.Exit is called from the test scene callback.
+                # Accept that exact status only after the route PASS marker and isolation checks below.
                 Invoke-TrackedProcess -FilePath $smokeExe `
                     -ArgumentList @('--headless', '--quit-after', '20', '--log-file', $routeSmokeLog, '--',
                         '--require-userdata-under', $isolation.UserDataRoot, '--packaged-xc-assets-smoke') `
                     -WorkingDirectory $extractDir -LogPath (Join-Path $workRoot "packaged-xc-process-$safeVersion.log") `
                     -TimeoutSeconds 45 -Label 'Extracted Wodra packaged XC asset smoke test' `
-                    -RemoveEnvironmentVariables $smokeEnvironment
+                    -AllowedExitCodes @(0, -1073740791) -RemoveEnvironmentVariables $smokeEnvironment
             }
             $routeSmokeEngineLog = if (Test-Path -LiteralPath $routeSmokeLog) {
                 Get-Content -LiteralPath $routeSmokeLog -Raw
             } else { '' }
             $routeSmokeOutput = [string]$routeSmoke.StdOut + [string]$routeSmoke.StdErr + [string]$routeSmokeEngineLog
             $routeIsolationMatch = [regex]::Match($routeSmokeOutput, 'USER DATA ISOLATION VERIFIED: user:// = (.+)')
-            if ($routeSmoke.ExitCode -ne 0 -or
+            if ($routeSmoke.ExitCode -notin @(0, -1073740791) -or
                 $routeSmokeOutput -notmatch '\[PackagedXcRouteAssetsSmoke\] PASS:' -or
                 $routeSmokeOutput -match '\[PackagedXcRouteAssetsSmoke\] FAIL:|SCRIPT ERROR:' -or
                 -not $routeIsolationMatch.Success -or
