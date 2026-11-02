@@ -8,7 +8,7 @@ The green jaw came from the imported Human mesh's `COLOR_0` jersey channel, not 
 
 The supplied helmet shell fit remains candidate B (+10 mm forward, 12° pitch, existing vertical fit). Only the two forward strap branches were rerouted posteriorly and slightly outward to keep the cheek clear and place their junction below the ear. The chin strap and buckle remain integrated in the supplied helmet assembly.
 
-The separate neck-plane extrusion caused the diagonal raised strip in side view. It was removed; the fitted jersey's own neckline is retained. Shorts hem contours are smoothed on both the garment boundary and gripper, and grippers now use the same outfit shader/material as the shorts for a continuous boundary.
+The separate neck-plane extrusion caused the diagonal raised strip in side view. It was removed; the fitted jersey's own neckline is retained. Shorts hem contours are smoothed on both the garment boundary and gripper, and grippers now use a pure shorts color channel and the same outfit shader/material as the shorts for a continuous boundary.
 
 ## Face and helmet
 

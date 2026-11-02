@@ -356,7 +356,7 @@ internal static class RiderGarmentMeshBuilder
         shortsBuilder.Commit(shortsMesh);
         if (shortsMesh.GetSurfaceCount() == 0)
             throw new InvalidOperationException("The shorts outfit mask generated no continuous fabric surface.");
-        gripperBuilder.Commit(shortsMesh);
+        gripperBuilder.Commit(shortsMesh, new Color(0f, 1f, 0f, 1f));
         if (gripperBuilder.TriangleCount == 0)
             throw new InvalidOperationException("The two fitted bib-short leg grippers generated no garment surface.");
         shortsMesh.SurfaceSetName(0, "Bib shorts fabric");
