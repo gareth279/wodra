@@ -106,6 +106,15 @@ clasp_components = [
 if len(clasp_components) != 1:
     raise RuntimeError(f"expected one central under-jaw clasp island, found {clasp_components}")
 clasp_component = clasp_components[0]
+front_strap_components = [
+    index for index, (minimum, maximum) in enumerate(component_bounds)
+    if index not in shell_components and index != clasp_component
+    and min(abs(minimum.x), abs(maximum.x)) > 6.0
+    and maximum.y < 0.0 and minimum.y < -5.0
+    and minimum.z > -6.0 and maximum.z < 0.0
+]
+if len(front_strap_components) != 2:
+    raise RuntimeError(f"expected the two supplied forward strap branches for a focused routing correction, found {front_strap_components}")
 
 shell_world = [source_points[vertex.index] for vertex in shell]
 shell_min = Vector(tuple(min(point[axis] for point in shell_world) for axis in range(3)))
@@ -156,6 +165,15 @@ for vertex in helmet.data.vertices:
         vertical_span = STRAP_SHELL_ANCHOR_SOURCE_Z_CM - STRAP_CLASP_SOURCE_Z_CM
         anchor_weight = max(0.0, min(1.0, (point.z - STRAP_CLASP_SOURCE_Z_CM) / vertical_span))
         fitted = local.lerp(fitted_shell, anchor_weight)
+        if component_index in front_strap_components:
+            # Candidate B moves the helmet shell forward and pitches it down;
+            # that pulls the supplied front branches into the cheek. Keep their
+            # shell ends attached, then ease only the lower run 10 mm rearward
+            # and 5 mm outward toward the ear/junction. The rear branch and
+            # chin clasp remain the original supplied geometry.
+            fitted.y -= 1.0 * (1.0 - anchor_weight)
+            lateral_sign = 1.0 if point.x > 0 else -1.0
+            fitted.x += lateral_sign * 1.0 * (1.0 - anchor_weight)
     vertex.co = fitted * SOURCE_CENTIMETRES_TO_METRES
 helmet.parent = None
 helmet.matrix_world = Matrix.Identity(4)
@@ -220,5 +238,6 @@ print("RIGID_HELMET_EXPORT", OUTPUT)
 print("RIGID_HELMET_SOURCE_AXES", "OBJ physical front=-Y -> Blender +Y -> Godot -Z", "up=Blender +Z -> Godot +Y")
 print("RIGID_HELMET_SHELL_BOUNDS_M", tuple(round(value, 4) for value in shell_max - shell_min))
 print("RIGID_HELMET_FIT", "scaleXYZ", tuple(SHELL_SCALE), "offsetXYZ_cm", tuple(SHELL_OFFSET_CM),
-      "front lip island", front_lip_components, "jaw clasp island", clasp_component)
+      "front lip island", front_lip_components, "jaw clasp island", clasp_component,
+      "rearward-routed front strap islands", front_strap_components)
 print("RIGID_HELMET_PHYSICAL_LANDMARKS_M", "front brow", tuple(front_brow_marker), "rear tail", tuple(rear_tail_marker))
