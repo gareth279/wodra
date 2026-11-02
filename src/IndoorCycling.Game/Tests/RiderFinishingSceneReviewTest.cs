@@ -392,26 +392,26 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"The fitted jersey mask does not cover the central upper chest up to the neck base: covered={coveredUpperChestVertices}/{upperChestVertices.Length}, verticalBand={upperChestLow:F3}-{upperChestHigh:F3}m.");
             GD.Print($"[RiderFinishingSceneReviewTest] outfit COLOR_0 vertices={outfitColors.Length} jersey={jerseyMaskCount} shorts={shortsMaskCount} shoes={shoeMaskCount} skin={skinMaskCount}");
             GD.Print($"[RiderFinishingSceneReviewTest] upper-chest jersey coverage={coveredUpperChestVertices}/{upperChestVertices.Length} central vertices through neck-base band");
-            var garmentDetails = Find<MeshInstance3D>(rider, "RiderRoadKitDetails")
-                ?? throw new InvalidOperationException("Skinned jersey and bib finishing details are missing.");
-            if ((garmentDetails.Mesh?.GetSurfaceCount() ?? 0) < 3)
-                throw new InvalidOperationException("Expected collar/zip, sleeve, and bib-gripper detail materials.");
+            var jerseyShell = Find<MeshInstance3D>(rider, "RiderJerseyShell")
+                ?? throw new InvalidOperationException("The imported skinned jersey surface is missing.");
+            var shortsShell = Find<MeshInstance3D>(rider, "RiderBibShortsShell")
+                ?? throw new InvalidOperationException("The imported skinned bib-short surface is missing.");
+            if (Find<Node>(rider, "RiderRoadKitDetails") is not null || Find<Node>(rider, "RiderJerseyCollar") is not null)
+                throw new InvalidOperationException("Obsolete projected garment overlays must be removed before reviewing the fitted surfaces.");
+            if (jerseyShell.Mesh is null || jerseyShell.Mesh.GetSurfaceCount() != 4 || jerseyShell.Skin is null ||
+                shortsShell.Mesh is null || shortsShell.Mesh.GetSurfaceCount() != 2 || shortsShell.Skin is null)
+                throw new InvalidOperationException("The jersey and bib shorts need continuous skinned fabric surfaces.");
             if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") != "1")
             {
                 rider.SetCustomization("Navy blue", "Charcoal");
-                var jerseyCollar = Find<MeshInstance3D>(rider, "RiderJerseyCollar")
-                    ?? throw new InvalidOperationException("The imported skinned jersey collar mesh is missing.");
-                var collarBounds = SkinnedMeshBoundsInWorld(skeleton, jerseyCollar).Size;
-                var collarHorizontalDiameter = Mathf.Sqrt(collarBounds.X * collarBounds.X + collarBounds.Z * collarBounds.Z);
-                if (jerseyCollar.Mesh!.GetSurfaceCount() != 1 || collarBounds.Y is < .008f or > .030f ||
-                    collarHorizontalDiameter < .11f)
-                    throw new InvalidOperationException($"The fitted collar must be a closely fitted 10–20 mm neck band; posed world bounds={collarBounds}, horizontal diameter={collarHorizontalDiameter:F3}m.");
-                if (jerseyCollar.MaterialOverride is not StandardMaterial3D collarMaterial ||
-                    Math.Abs(collarMaterial.AlbedoColor.R - JerseyReviewColor("Navy blue").R) > .02f ||
-                    Math.Abs(collarMaterial.AlbedoColor.G - JerseyReviewColor("Navy blue").G) > .02f ||
-                    Math.Abs(collarMaterial.AlbedoColor.B - JerseyReviewColor("Navy blue").B) > .02f)
-                    throw new InvalidOperationException("The fitted collar must inherit the selected jersey colour.");
-                GD.Print($"[RiderFinishingSceneReviewTest] imported posed jersey collar bounds={collarBounds} selectedColour={collarMaterial.AlbedoColor}");
+                var jerseyMaterial = jerseyShell.GetSurfaceOverrideMaterial(0) as ShaderMaterial;
+                var selectedJerseyColor = jerseyMaterial?.GetShaderParameter("jersey_color").AsColor() ?? Colors.Transparent;
+                var expectedJerseyColor = JerseyReviewColor("Navy blue");
+                if (jerseyMaterial is null || Math.Abs(selectedJerseyColor.R - expectedJerseyColor.R) > .02f ||
+                    Math.Abs(selectedJerseyColor.G - expectedJerseyColor.G) > .02f ||
+                    Math.Abs(selectedJerseyColor.B - expectedJerseyColor.B) > .02f)
+                    throw new InvalidOperationException("The skinned jersey fabric must inherit the selected profile colour.");
+                GD.Print($"[RiderFinishingSceneReviewTest] skinned garments jerseySurfaces={jerseyShell.Mesh.GetSurfaceCount()} shortsSurfaces={shortsShell.Mesh.GetSurfaceCount()} selectedColour={selectedJerseyColor}");
             }
             var headIndex = skeleton.FindBone("head");
             if (headIndex < 0) throw new InvalidOperationException("Imported head bone missing.");
@@ -459,6 +459,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Settle(3);
             await Save(output, "bike-only-front-three-quarter.png");
             rider.SetRiderVisible(true);
+            await CaptureGarmentEvidence(output, rider, skeleton, camera, bikeForward, bikeSide);
             // Keep the complete head and neck visible without the perspective
             // exaggeration of the earlier 0.58 m macro framing.
             camera.Fov = 46f;
@@ -504,24 +505,6 @@ public partial class RiderFinishingSceneReviewTest : Node
             }
             rider.SetCustomization("Navy blue", "Charcoal");
             rider.SetReviewCrankPhase(0);
-            camera.Fov = 36f;
-            var collarMeshForReview = Find<MeshInstance3D>(rider, "RiderJerseyCollar")
-                ?? throw new InvalidOperationException("The imported jersey collar is unavailable for rendered review.");
-            var collarTarget = SkinnedMeshBoundsInWorld(skeleton, collarMeshForReview).GetCenter();
-            foreach (var angle in new[] { "front", "side", "rear", "three-quarter" })
-            {
-                var direction = angle switch
-                {
-                    "front" => bikeForward,
-                    "rear" => -bikeForward,
-                    "side" => bikeSide,
-                    _ => (bikeForward + bikeSide).Normalized()
-                };
-                camera.GlobalPosition = collarTarget + direction * .65f + Vector3.Up * .025f;
-                camera.LookAt(collarTarget, Vector3.Up);
-                await Settle(3);
-                await Save(output, $"jersey-collar-angle-{angle}.png");
-            }
             camera.Fov = 46f;
             rider.SetCustomization("Teal", "Charcoal");
             // Validate actual physical features selected from the owner-supplied
@@ -1022,6 +1005,76 @@ public partial class RiderFinishingSceneReviewTest : Node
         };
         camera.GlobalPosition = head + direction * .95f + Vector3.Up * .02f;
         camera.LookAt(head, Vector3.Up);
+    }
+
+    private static Vector3 BoneWorldPosition(Skeleton3D skeleton, string boneName)
+    {
+        var index = skeleton.FindBone(boneName);
+        if (index < 0) throw new InvalidOperationException($"Imported {boneName} bone is unavailable for garment review.");
+        return skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(index).Origin;
+    }
+
+    private async Task CaptureGarmentEvidence(string output, CyclistVisual rider, Skeleton3D skeleton,
+        Camera3D camera, Vector3 bikeForward, Vector3 bikeSide)
+    {
+        var savedFov = camera.Fov;
+        var views = new[]
+        {
+            ("front", bikeForward),
+            ("side", bikeSide),
+            ("rear", -bikeForward),
+            ("three-quarter", (bikeForward + bikeSide).Normalized())
+        };
+        rider.SetCustomization("Teal", "Charcoal");
+        rider.SetReviewCrankPhase(0);
+        camera.Fov = 40f;
+        var neckBase = BoneWorldPosition(skeleton, "neck01");
+        var collarTarget = neckBase + Vector3.Down * .025f;
+        camera.Fov = 38f;
+        foreach (var (angle, direction) in views.Where(view => view.Item1 is "front" or "side" or "rear"))
+        {
+            camera.GlobalPosition = collarTarget + direction * .56f + Vector3.Up * .09f;
+            camera.LookAt(collarTarget, Vector3.Up);
+            await Settle(3);
+            await Save(output, $"garment-collar-{angle}.png");
+        }
+
+        foreach (var (angle, direction) in views)
+        {
+            var neck = BoneWorldPosition(skeleton, "neck01");
+            var target = neck + Vector3.Down * .05f;
+            camera.GlobalPosition = target + direction * .78f + Vector3.Up * .025f;
+            camera.LookAt(target, Vector3.Up);
+            await Settle(3);
+            await Save(output, $"garment-jersey-{angle}.png");
+        }
+
+        camera.Fov = 50f;
+        rider.SetCustomization("Navy blue", "Charcoal");
+        foreach (var (angle, direction) in views)
+        {
+            var pelvis = (BoneWorldPosition(skeleton, "pelvis.L") + BoneWorldPosition(skeleton, "pelvis.R")) * .5f;
+            var upperLegs = (BoneWorldPosition(skeleton, "upperleg01.L") + BoneWorldPosition(skeleton, "upperleg01.R")) * .5f;
+            var target = pelvis.Lerp(upperLegs, .62f) + Vector3.Up * .015f;
+            camera.GlobalPosition = target + direction * .98f + Vector3.Up * .01f;
+            camera.LookAt(target, Vector3.Up);
+            await Settle(3);
+            await Save(output, $"garment-shorts-{angle}.png");
+        }
+
+        foreach (var degrees in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
+        {
+            rider.SetReviewCrankPhase(degrees);
+            var pelvis = (BoneWorldPosition(skeleton, "pelvis.L") + BoneWorldPosition(skeleton, "pelvis.R")) * .5f;
+            var upperLegs = (BoneWorldPosition(skeleton, "upperleg01.L") + BoneWorldPosition(skeleton, "upperleg01.R")) * .5f;
+            var target = pelvis.Lerp(upperLegs, .62f) + Vector3.Up * .015f;
+            camera.GlobalPosition = target + bikeSide * .98f + Vector3.Up * .01f;
+            camera.LookAt(target, Vector3.Up);
+            await Settle(3);
+            await Save(output, $"garment-shorts-side-phase-{degrees:D3}.png");
+        }
+        rider.SetReviewCrankPhase(0);
+        camera.Fov = savedFov;
     }
 
     private void VerifySideCenter(RideWorldView world, HudController hud, bool debug)

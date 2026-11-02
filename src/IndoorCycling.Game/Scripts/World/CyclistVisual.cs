@@ -61,17 +61,18 @@ public partial class CyclistVisual : Node3D
     {
         Code = """
             shader_type spatial;
-            render_mode cull_back;
+            render_mode cull_disabled;
             uniform vec4 jersey_color : source_color = vec4(0.58, 0.13, 0.09, 1.0);
             uniform vec4 shorts_color : source_color = vec4(0.035, 0.047, 0.058, 1.0);
             uniform vec4 skin_color : source_color = vec4(0.58, 0.36, 0.25, 1.0);
             uniform vec4 shoe_color : source_color = vec4(0.68, 0.66, 0.58, 1.0);
+            uniform float fabric_tone = 1.0;
             void fragment() {
                 float jersey_weight = COLOR.r;
                 float shorts_weight = COLOR.g;
                 float shoe_weight = COLOR.b;
                 float skin_weight = max(0.0, 1.0 - jersey_weight - shorts_weight - shoe_weight);
-                vec3 outfit_color = jersey_weight * jersey_color.rgb + shorts_weight * shorts_color.rgb +
+                vec3 outfit_color = jersey_weight * jersey_color.rgb * fabric_tone + shorts_weight * shorts_color.rgb +
                                     skin_weight * skin_color.rgb + shoe_weight * shoe_color.rgb;
                 ALBEDO = outfit_color;
                 // The low route sun can leave exposed skin nearly black.
@@ -148,10 +149,10 @@ public partial class CyclistVisual : Node3D
     private Vector3 _rigidHelmetHeadCenterOffset;
     private int _rigidHelmetHeadIndex = -1;
     private ShaderMaterial? _outfitMaterial;
+    private ShaderMaterial? _collarMaterial;
+    private ShaderMaterial? _jerseyTrimMaterial;
+    private ShaderMaterial? _zipperMaterial;
     private ShaderMaterial? _helmetShellMaterial;
-    private MeshInstance3D? _jerseyCollar;
-    private StandardMaterial3D? _jerseyCollarMaterial;
-    private Color _selectedJerseyColor = new(.05f, .42f, .43f);
     private StandardMaterial3D? _helmetOriginalMaterial;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
@@ -168,9 +169,10 @@ public partial class CyclistVisual : Node3D
     public void SetCustomization(string jerseyColor, string helmetColor)
     {
         var jersey = JerseyColor(jerseyColor);
-        _selectedJerseyColor = jersey;
         _outfitMaterial?.SetShaderParameter("jersey_color", jersey);
-        ApplyJerseyCollarColor();
+        _collarMaterial?.SetShaderParameter("jersey_color", jersey);
+        _jerseyTrimMaterial?.SetShaderParameter("jersey_color", jersey);
+        _zipperMaterial?.SetShaderParameter("jersey_color", jersey);
         _helmetShellMaterial?.SetShaderParameter("shell_color", HelmetColor(helmetColor));
         if (_helmetShellMaterial is not null && helmetColor == "Original purple/blue" &&
             _rigidHelmetPose is not null && FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } mesh)
@@ -199,18 +201,6 @@ public partial class CyclistVisual : Node3D
         "Red" => new Color(.68f, .055f, .065f), "Teal" => new Color(.025f, .42f, .40f),
         _ => new Color(.075f, .085f, .10f)
     };
-
-    private void ApplyJerseyCollarColor()
-    {
-        if (_jerseyCollar is null) return;
-        _jerseyCollarMaterial ??= new StandardMaterial3D
-        {
-            Roughness = .82f,
-            CullMode = BaseMaterial3D.CullModeEnum.Disabled
-        };
-        _jerseyCollarMaterial.AlbedoColor = _selectedJerseyColor;
-        _jerseyCollar.MaterialOverride = _jerseyCollarMaterial;
-    }
 
     /// <summary>Allows the live performance review harness to isolate baked skeleton sampling.</summary>
     public bool RiderAnimationSamplingEnabled { get; set; } = true;
@@ -498,8 +488,6 @@ public partial class CyclistVisual : Node3D
         GD.Print($"[Cyclist GLB] Skeleton bones={skeleton.GetBoneCount()} animation={_pedalCycleName} length={_pedalCycleAnimation.Length:F3}s");
         _bicycleModel = FindModelNode<Node3D>(instance, "BicycleModel")!;
         _riderModel = FindModelNode<Node3D>(instance, "RiderModel")!;
-        _jerseyCollar = FindModelNode<MeshInstance3D>(instance, "RiderJerseyCollar");
-        ApplyJerseyCollarColor();
         _frontWheel = FindModelNode<Node3D>(instance, "FrontWheelSpin")!;
         _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
         _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
@@ -522,6 +510,14 @@ public partial class CyclistVisual : Node3D
             return false;
         }
 
+        var human = FindModelNode<MeshInstance3D>(instance, "Human")
+            ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh for fitted garments.");
+        RemoveLegacyGarmentDetails(instance);
+        var frontWheelInModel = TransformToAncestor(_frontWheel, instance).Origin;
+        var rearWheelInModel = TransformToAncestor(_rearWheel, instance).Origin;
+        RiderGarmentMeshBuilder.Attach(human, skeleton,
+            (frontWheelInModel - rearWheelInModel).Normalized(), instance);
+
         // Imported bike assets own their frame finish and material groups.
         // The palette override remains available to the generated fallback,
         // but would erase the authored source-bike materials on this model.
@@ -530,6 +526,18 @@ public partial class CyclistVisual : Node3D
         AttachRigidHelmet(instance, skeleton);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private static void RemoveLegacyGarmentDetails(Node importedModel)
+    {
+        foreach (var name in new[] { "RiderJerseyCollar", "RiderRoadKitDetails" })
+        {
+            var details = FindModelNode<Node>(importedModel, name);
+            if (details is null) continue;
+            details.GetParent()?.RemoveChild(details);
+            details.QueueFree();
+            GD.Print($"[Cyclist GLB] removed obsolete projected garment decoration {name}; fitted shells replace it.");
+        }
     }
 
     private void AttachRigidHelmet(Node rider, Skeleton3D skeleton)
@@ -731,10 +739,7 @@ public partial class CyclistVisual : Node3D
             ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh.");
         var outfit = new ShaderMaterial { Shader = RiderOutfitShader };
         _outfitMaterial = outfit;
-        outfit.SetShaderParameter("jersey_color", _jerseyMaterial.AlbedoColor);
-        outfit.SetShaderParameter("shorts_color", new Color(.035f,.047f,.058f));
-        outfit.SetShaderParameter("skin_color", new Color(.58f,.36f,.25f));
-        outfit.SetShaderParameter("shoe_color", new Color(.68f,.66f,.58f));
+        ConfigureOutfitShader(outfit, _jerseyMaterial.AlbedoColor, 1f);
         var surfaces = human.Mesh?.GetSurfaceCount() ?? 0;
         var outfitSurfaces = 0;
         for (var surface = 0; surface < surfaces; surface++)
@@ -749,6 +754,54 @@ public partial class CyclistVisual : Node3D
         if (outfitSurfaces == 0)
             throw new InvalidOperationException("Imported rider has no outfit surface for its colour shader.");
         GD.Print($"[Cyclist GLB] Human outfit shader applied to {outfitSurfaces}/{surfaces} surfaces; eye material remains separate.");
+
+        var jersey = FindModelNode<MeshInstance3D>(root, "RiderJerseyShell")
+            ?? throw new InvalidOperationException("Imported rider is missing the skinned jersey shell.");
+        var shorts = FindModelNode<MeshInstance3D>(root, "RiderBibShortsShell")
+            ?? throw new InvalidOperationException("Imported rider is missing the skinned bib-short shell.");
+        if (jersey.Mesh?.GetSurfaceCount() != 4 || shorts.Mesh?.GetSurfaceCount() != 2)
+            throw new InvalidOperationException($"Expected continuous jersey, collar, sleeve cuffs, zipper, bib fabric and gripper surfaces; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
+        jersey.SetSurfaceOverrideMaterial(0, outfit);
+        _collarMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
+        ConfigureOutfitShader(_collarMaterial, _jerseyMaterial.AlbedoColor, .78f);
+        jersey.SetSurfaceOverrideMaterial(1, _collarMaterial);
+        _jerseyTrimMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
+        ConfigureOutfitShader(_jerseyTrimMaterial, _jerseyMaterial.AlbedoColor, .92f);
+        jersey.SetSurfaceOverrideMaterial(2, _jerseyTrimMaterial);
+        _zipperMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
+        ConfigureOutfitShader(_zipperMaterial, _jerseyMaterial.AlbedoColor, .48f);
+        jersey.SetSurfaceOverrideMaterial(3, _zipperMaterial);
+        shorts.SetSurfaceOverrideMaterial(0, outfit);
+        shorts.SetSurfaceOverrideMaterial(1, new StandardMaterial3D
+        {
+            AlbedoColor = new Color(.022f, .030f, .038f),
+            Roughness = .90f,
+            CullMode = BaseMaterial3D.CullModeEnum.Disabled
+        });
+        GD.Print("[Cyclist GLB] fitted jersey, neck-axis collar, short-sleeve cuffs, centre zipper, and bib shorts/grippers use the production Human Skin and skeleton.");
+    }
+
+    private static void ConfigureOutfitShader(ShaderMaterial material, Color jerseyColor, float tone)
+    {
+        material.SetShaderParameter("jersey_color", jerseyColor);
+        material.SetShaderParameter("shorts_color", new Color(.035f, .047f, .058f));
+        material.SetShaderParameter("skin_color", new Color(.58f, .36f, .25f));
+        material.SetShaderParameter("shoe_color", new Color(.68f, .66f, .58f));
+        material.SetShaderParameter("fabric_tone", tone);
+    }
+
+    private static Transform3D TransformToAncestor(Node3D node, Node ancestor)
+    {
+        var transform = Transform3D.Identity;
+        Node? current = node;
+        while (current != ancestor)
+        {
+            if (current is not Node3D current3D || current.GetParent() is null)
+                throw new InvalidOperationException($"{node.Name} is not beneath imported model root {ancestor.Name}.");
+            transform = current3D.Transform * transform;
+            current = current.GetParent();
+        }
+        return transform;
     }
 
     private static int CountBoneTrackKeys(Animation animation, string boneName)
