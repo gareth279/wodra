@@ -7,7 +7,8 @@ public sealed record RiderProfile(
     double BikeWeightKg = 8,
     bool IsTestProfile = false,
     DateTimeOffset CreatedAtUtc = default,
-    DateTimeOffset UpdatedAtUtc = default)
+    DateTimeOffset UpdatedAtUtc = default,
+    string JerseyColor = "Teal", string HelmetColor = "Charcoal")
 {
     public string DisplayName => Name;
     public double BodyWeightKg => WeightKg;

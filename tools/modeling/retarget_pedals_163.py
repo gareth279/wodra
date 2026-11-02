@@ -1,13 +1,13 @@
-"""Retarget the preserved issue #159 rider to the imported moving pedals.
+"""Retarget the accepted issue #163 rider to the imported moving pedals.
 
 This pass starts from the accepted sculpted-hands source blend. It preserves
-the body, torso, bicycle mesh, and hand animation while re-solving only the
-four-bone legs against the real crank-mounted pedal surface points.
+the upper body and bicycle mesh while re-solving the bilateral leg chains
+against the real crank-mounted pedal surface points.
 
   blender --background --python tools/modeling/retarget_pedals_163.py -- \
-    --blend tools/modeling/source/WodraCyclist.issue159-sculpted-hands.blend \
-    --output-blend tools/modeling/checkpoints/WodraCyclist.issue163-fit.blend \
-    --output-glb tools/modeling/exports/WodraCyclist-issue163-fit.glb
+    --blend tools/modeling/source/WodraCyclist.issue163-final.blend \
+    --output-blend tools/modeling/checkpoints/WodraCyclist.issue164-foot-orientation.blend \
+    --output-glb src/IndoorCycling.Game/Assets/Models/WodraCyclist.glb
 """
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 import bpy
+import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 from mathutils.bvhtree import BVHTree
 
@@ -24,14 +25,29 @@ from mathutils.bvhtree import BVHTree
 SAMPLES_PER_REVOLUTION = 72
 BALL_VERTEX = 45  # underside vertex at the authored forefoot station, y=118 mm
 CRANK_PHASE_OFFSET = -math.pi / 2  # imported crank starts 90 degrees ahead of PedalCycle
-FOOT_PITCH_AMPLITUDE = math.radians(7)
-KNEE_POLE_ANGLE = {"L": 0.0, "R": 0.0}
+FOOT_PITCH_AMPLITUDE = math.radians(4)
+# A road cyclist's knees track forward in the bike's sagittal plane. Do not
+# derive this direction from the split lower-leg helper bones: the two sides'
+# keyed helpers use mirrored local axes and can make one knee bend backwards.
+MAX_KNEE_STEP = 0.022
+MAX_BACKWARD_KNEE_OFFSET = 0.012
+MIN_FORWARD_KNEE_OFFSET_WHEN_FLEXED = 0.006
+SHOE_HEIGHT_SCALE = 0.46  # 128 mm authored boot-height -> about 59 mm road-shoe profile
+MAX_SHOE_PROFILE_HEIGHT = 0.065
+MAX_SHOE_AXIS_DEVIATION = math.radians(18.0)
+MAX_SOLE_PLANE_DEVIATION = math.radians(14.0)
+MAX_FOOT_TO_SHOE_AXIS_DEVIATION = math.radians(10.0)
+MAX_FOOT_TO_PEDAL_NORMAL_DEVIATION = math.radians(12.0)
+MAX_HEEL_TO_PEDAL_HEIGHT = 0.030
+TARGET_LEG_SEGMENT_LENGTH = 0.45
 SIDES = {
     "L": ("left", "LeftPedal", "Contact_LeftPedal", "PedalBearingLeft",
           "Contact_LeftPedalSurface", "left_foot_ik", "left_knee_ik"),
     "R": ("right", "RightPedal", "Contact_RightPedal", "PedalBearingRight",
           "Contact_RightPedalSurface", "right_foot_ik", "right_knee_ik"),
 }
+HELMET_SOURCE_OBJ = (Path(__file__).resolve().parent / "source" / "helmet" /
+                     "sport_cycling_helmet_main.obj")
 
 
 def action_curves(action):
@@ -43,8 +59,18 @@ def action_curves(action):
                     yield from bag.fcurves
 
 
-def remove_control_animation(action, control_names):
-    """Keep rider motion but free the leg IK targets for pedal retargeting."""
+def remove_control_animation(action, control_names, rig):
+    """Keep accepted upper-body motion and release the full lower body for IK."""
+    leg_bones = set()
+    for side in SIDES:
+        root = rig.data.bones.get(f"pelvis.{side}")
+        if root is None:
+            raise RuntimeError(f"the {side} pelvic anchor is missing")
+        pending = [root]
+        while pending:
+            bone = pending.pop()
+            leg_bones.add(bone.name)
+            pending.extend(bone.children)
     removed = 0
     for layer in action.layers:
         for strip in layer.strips:
@@ -53,10 +79,14 @@ def remove_control_animation(action, control_names):
                 if bag is None:
                     continue
                 for curve in list(bag.fcurves):
-                    if any(f'pose.bones["{name}"]' in curve.data_path for name in control_names):
+                    if any(f'pose.bones["{name}"]' in curve.data_path
+                           for name in control_names | leg_bones):
                         bag.fcurves.remove(curve)
                         removed += 1
-    print("IK_TARGET_CURVES_REMOVED", removed, sorted(control_names))
+    for name in leg_bones:
+        rig.pose.bones[name].matrix_basis = Matrix.Identity(4)
+    bpy.context.view_layer.update()
+    print("LOWER_BODY_CURVES_REMOVED", removed, "bones", sorted(leg_bones))
 
 
 def world_pose(rig, pose_bone):
@@ -71,6 +101,109 @@ def evaluated_vertex_world(obj, index):
         return evaluated.matrix_world @ mesh.vertices[index].co
     finally:
         evaluated.to_mesh_clear()
+
+
+def shoe_frame_world(shoe, side):
+    """Measure physical toe-box and heel-cup ends from the authored mesh shape.
+
+    The toe box is the wider of the two longitudinal outsole ends; the heel
+    cup is narrower.  Resolve the long and lateral mesh axes from PCA rather
+    than assigning either end from a local coordinate sign or a vertex ID.
+    """
+    local = [vertex.co.copy() for vertex in shoe.data.vertices]
+    low_z = min(point.z for point in local)
+    outsole = [index for index, point in enumerate(local) if point.z <= low_z + .04]
+    if len(outsole) < 8:
+        raise RuntimeError(f"{shoe.name} has too few vertices near the outsole")
+    points_2d = np.array([(point.x, point.y) for point in local], dtype=float)
+    centered = points_2d - points_2d.mean(axis=0)
+    covariance = np.cov(centered.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    long_axis = eigenvectors[:, int(np.argmax(eigenvalues))]
+    across_axis = eigenvectors[:, int(np.argmin(eigenvalues))]
+    coordinates = centered @ long_axis
+    widths = centered @ across_axis
+    if float(np.ptp(coordinates)) < .18 or float(np.ptp(widths)) < .045:
+        raise RuntimeError(f"{shoe.name} has implausible longitudinal/lateral shape: "
+                           f"{np.ptp(coordinates):.3f} x {np.ptp(widths):.3f} m")
+    outsole_coordinates = coordinates[outsole]
+    end_span = float(np.ptp(outsole_coordinates)) * .12
+    low_end = [outsole[i] for i, value in enumerate(outsole_coordinates)
+               if value <= float(np.min(outsole_coordinates)) + end_span]
+    high_end = [outsole[i] for i, value in enumerate(outsole_coordinates)
+                if value >= float(np.max(outsole_coordinates)) - end_span]
+    if min(len(low_end), len(high_end)) < 3:
+        raise RuntimeError(f"{shoe.name} outsole has too few vertices at the physical ends")
+    width_at_end = lambda indexes: float(np.ptp([widths[index] for index in indexes]))
+    low_width, high_width = width_at_end(low_end), width_at_end(high_end)
+    if abs(low_width - high_width) < .008:
+        raise RuntimeError(f"{shoe.name} toe box and heel cup are not independently distinguishable: "
+                           f"end widths {low_width:.3f}/{high_width:.3f} m")
+    # The broad, rounded toe box is physically distinct from the narrower heel
+    # cup. Determine that from measured outsole shape, independently per shoe.
+    toe_group, heel_group = (low_end, high_end) if low_width > high_width else (high_end, low_end)
+    left_group = [index for index in range(len(local))
+                  if widths[index] <= float(np.min(widths)) + float(np.ptp(widths)) * .12]
+    right_group = [index for index in range(len(local))
+                   if widths[index] >= float(np.max(widths)) - float(np.ptp(widths)) * .12]
+    if min(map(len, (toe_group, heel_group, left_group, right_group))) < 2:
+        raise RuntimeError(f"{shoe.name} mesh does not expose measurable toe, heel, and sides")
+    evaluated = shoe.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
+    try:
+        if len(mesh.vertices) != len(local):
+            raise RuntimeError(f"{shoe.name} evaluated topology changed while resolving shoe axes")
+        world = [evaluated.matrix_world @ mesh.vertices[index].co for index in range(len(mesh.vertices))]
+    finally:
+        evaluated.to_mesh_clear()
+    mean = lambda indexes: sum((world[index] for index in indexes), Vector()) / len(indexes)
+    toe = (mean(toe_group) - mean(heel_group)).normalized()
+    print("SHOE_PHYSICAL_FEATURES", shoe.name, "toeBoxEndWidth", round(max(low_width, high_width), 4),
+          "heelCupEndWidth", round(min(low_width, high_width), 4),
+          "toeBoxLocal", tuple(round(v, 4) for v in mean(toe_group)),
+          "heelCupLocal", tuple(round(v, 4) for v in mean(heel_group)))
+    measured_lateral = (mean(right_group) - mean(left_group)).normalized()
+    sole_up = toe.cross(measured_lateral).normalized()
+    if sole_up.z < 0.0:
+        sole_up.negate()
+    lateral = toe.cross(sole_up).normalized()
+    if toe.length < .9 or lateral.length < .9 or sole_up.z < .2:
+        raise RuntimeError(f"{shoe.name} mesh frame is degenerate or inverted: "
+                           f"toe={tuple(round(v, 3) for v in toe)}, "
+                           f"lateral={tuple(round(v, 3) for v in lateral)}, "
+                           f"soleUp={tuple(round(v, 3) for v in sole_up)}")
+    # Find the rear ankle opening from the actual cross-section rings. This is
+    # the heel-side upper rim above the outsole, not a guessed vertex or the
+    # pedal-contact point. Work in the measured shoe axes and world frame.
+    longitudinal = [point.dot(toe) for point in world]
+    vertical = [point.dot(sole_up) for point in world]
+    sole_level = min(vertical)
+    rings = {}
+    for index, value in enumerate(longitudinal):
+        # A cross-section can span a few millimetres along the principal axis
+        # after skinning and pedal pitch; group by a 15 mm axial neighborhood.
+        rings.setdefault(round(value / .015), []).append(index)
+    opening_rings = []
+    for indexes in rings.values():
+        if len(indexes) < 6 or max(vertical[index] for index in indexes) < sole_level + .025:
+            continue
+        opening_rings.append(indexes)
+    if not opening_rings:
+        raise RuntimeError(f"{shoe.name} has no measurable heel-side upper opening ring")
+    heel_projection = sum(world[index].dot(toe) for index in heel_group) / len(heel_group)
+    opening_ring = min(opening_rings,
+                       key=lambda indexes: abs(sum(longitudinal[index] for index in indexes) / len(indexes) - heel_projection))
+    ankle_opening = mean(opening_ring)
+    ball = evaluated_vertex_world(shoe, BALL_VERTEX)
+    return {"toe": toe, "lateral": lateral, "up": sole_up,
+            "toe_point": mean(toe_group), "heel_point": mean(heel_group),
+            "ankle_opening": ankle_opening, "ball": ball}
+
+
+def frame_quaternion(lateral, toe, up):
+    """Quaternion whose basis columns are measured lateral, toe, and sole-up."""
+    matrix = Matrix((lateral, toe, up)).transposed()
+    return matrix.to_quaternion().normalized()
 
 
 def add_pedal_bearings():
@@ -138,6 +271,34 @@ def add_pedal_bearings():
                   "normal", tuple(round(v, 3) for v in world_normal))
 
 
+def fit_road_shoes():
+    """Set a road-shoe profile from measured mesh height, preserving forefoot contact."""
+    for side in SIDES:
+        shoe = bpy.data.objects.get(f"CyclingShoe{side}")
+        if shoe is None or len(shoe.data.vertices) <= BALL_VERTEX:
+            raise RuntimeError(f"CyclingShoe{side} is missing its authored forefoot point")
+        minimum = min(vertex.co.z for vertex in shoe.data.vertices)
+        maximum = max(vertex.co.z for vertex in shoe.data.vertices)
+        original_height = maximum - minimum
+        forefoot_height = shoe.data.vertices[BALL_VERTEX].co.z
+        forefoot_before = shoe.data.vertices[BALL_VERTEX].co.copy()
+        for vertex in shoe.data.vertices:
+            vertex.co.z = forefoot_height + (vertex.co.z - forefoot_height) * SHOE_HEIGHT_SCALE
+        shoe.data.update()
+        fitted_minimum = min(vertex.co.z for vertex in shoe.data.vertices)
+        fitted_maximum = max(vertex.co.z for vertex in shoe.data.vertices)
+        fitted_height = fitted_maximum - fitted_minimum
+        forefoot_after = shoe.data.vertices[BALL_VERTEX].co.copy()
+        if (forefoot_after - forefoot_before).length > 1e-7:
+            raise RuntimeError(f"{shoe.name} shoe fitting moved its authored forefoot/cleat vertex")
+        if not .045 <= fitted_height <= MAX_SHOE_PROFILE_HEIGHT:
+            raise RuntimeError(f"{shoe.name} fitted shoe profile is implausible: {fitted_height:.4f} m")
+        print("ROAD_SHOE_GEOMETRY", side, "sourceHeight", round(original_height, 4),
+              "fittedHeight", round(fitted_height, 4), "length", round(shoe.dimensions.y, 4),
+              "width", round(shoe.dimensions.x, 4), "forefootPreserved",
+              tuple(round(v, 4) for v in forefoot_after))
+
+
 def add_pedal_contact_bones(rig, local_offsets):
     bpy.context.view_layer.objects.active = rig
     rig.select_set(True)
@@ -150,16 +311,38 @@ def add_pedal_contact_bones(rig, local_offsets):
         if old:
             rig.data.edit_bones.remove(old)
         edit = rig.data.edit_bones.new(name)
-        foot_name = f"foot.{side}"
-        foot_rest = rig.data.bones[foot_name].matrix_local
-        head = foot_rest @ local_offsets[side]
+        shoe_name = f"shoe.{side}"
+        shoe_rest = rig.data.bones[shoe_name].matrix_local
+        head = shoe_rest.translation.copy()
         edit.head = head
         edit.tail = head + Vector((0.0, 0.0, .008))
-        edit.parent = rig.data.edit_bones[foot_name]
+        edit.parent = rig.data.edit_bones[shoe_name]
         edit.use_connect = False
         edit.use_deform = False
     bpy.ops.object.mode_set(mode="OBJECT")
     bpy.context.view_layer.update()
+    human = bpy.data.objects.get("Human")
+    if human is None:
+        raise RuntimeError("human foot mesh is required to bind visible toes with each shoe")
+    for side in SIDES:
+        deform_names = [name for name in human.vertex_groups.keys()
+                        if name == f"foot.{side}" or name.startswith("toe") and name.endswith("." + side)]
+        deform_indexes = {human.vertex_groups[name].index for name in deform_names}
+        lower_indexes = {group.index for group in human.vertex_groups
+                         if group.name.startswith("lowerleg") and group.name.endswith("." + side)}
+        shoe_group = human.vertex_groups.get(f"shoe.{side}") or human.vertex_groups.new(name=f"shoe.{side}")
+        transfers = []
+        for vertex in human.data.vertices:
+            weights = {entry.group: entry.weight for entry in vertex.groups}
+            foot_weight = sum(weights.get(index, 0.0) for index in deform_indexes)
+            lower_weight = sum(weights.get(index, 0.0) for index in lower_indexes)
+            if foot_weight >= .50 and lower_weight < .05:
+                transfers.append((vertex.index, foot_weight))
+        for vertex_index, weight in transfers:
+            for name in deform_names:
+                human.vertex_groups[name].remove([vertex_index])
+            shoe_group.add([vertex_index], weight, "REPLACE")
+        print("VISIBLE_FOOT_SKIN_BOUND_TO_SHOE", side, "vertices", len(transfers))
 
 
 def add_leg_ik_targets():
@@ -167,12 +350,12 @@ def add_leg_ik_targets():
     poles = {}
     for side in SIDES:
         target = bpy.data.objects.new(f"PedalFitTarget{side}", None)
-        pole = bpy.data.objects.new(f"PedalFitPole{side}", None)
+        pole = bpy.data.objects.new(f"PedalKneeTarget{side}", None)
         bpy.context.scene.collection.objects.link(target)
         bpy.context.scene.collection.objects.link(pole)
         target.empty_display_type = "SPHERE"
         target.empty_display_size = .01
-        pole.empty_display_type = "PLAIN_AXES"
+        pole.empty_display_type = "SPHERE"
         pole.empty_display_size = .01
         target.rotation_mode = "QUATERNION"
         targets[side] = target
@@ -180,45 +363,275 @@ def add_leg_ik_targets():
     return targets, poles
 
 
-def enable_leg_ik(rig, targets, poles):
-    """Solve from the actual ankle/foot head, not the lower-leg tail helper."""
+def merge_vertex_groups(mesh_object, source_name, target_name):
+    source = mesh_object.vertex_groups.get(source_name)
+    if source is None:
+        return
+    target = mesh_object.vertex_groups.get(target_name)
+    if target is None:
+        target = mesh_object.vertex_groups.new(name=target_name)
+    source_index = source.index
+    for vertex in mesh_object.data.vertices:
+        weight = next((entry.weight for entry in vertex.groups if entry.group == source_index), 0.0)
+        if weight > 0.0:
+            target.add([vertex.index], weight, "ADD")
+    mesh_object.vertex_groups.remove(source)
+
+
+def stretch_along_segment(point, start, end, factor):
+    axis = (end - start).normalized()
+    along = (point - start).dot(axis)
+    radial = point - (start + axis * along)
+    return start + axis * (along * factor) + radial
+
+
+def collapse_helper_leg_bones(rig):
+    """Replace split thigh/shin helpers with one deform bone per anatomical segment."""
+    if bpy.context.object and bpy.context.object.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    meshes = [obj for obj in bpy.data.objects if obj.type == "MESH" and
+              any(mod.type == "ARMATURE" and mod.object == rig for mod in obj.modifiers)]
+    transforms = {}
     for side in SIDES:
-        for bone_name in (f"upperleg02.{side}", f"lowerleg02.{side}", f"foot.{side}"):
+        thigh_head = rig.data.bones[f"upperleg01.{side}"].head_local.copy()
+        knee = rig.data.bones[f"upperleg02.{side}"].tail_local.copy()
+        ankle = rig.data.bones[f"lowerleg02.{side}"].tail_local.copy()
+        thigh_factor = TARGET_LEG_SEGMENT_LENGTH / (knee - thigh_head).length
+        shin_factor = TARGET_LEG_SEGMENT_LENGTH / (ankle - knee).length
+        transforms[side] = (thigh_head, knee, ankle, thigh_factor, shin_factor)
+
+    for mesh_object in meshes:
+        mesh_to_rig = rig.matrix_world.inverted() @ mesh_object.matrix_world
+        rig_to_mesh = mesh_to_rig.inverted()
+        group_indexes = {}
+        for side in SIDES:
+            group_indexes[side] = tuple(
+                mesh_object.vertex_groups.get(f"{name}.{side}").index
+                if mesh_object.vertex_groups.get(f"{name}.{side}") is not None else -1
+                for name in ("upperleg01", "upperleg02", "lowerleg01", "lowerleg02"))
+        for vertex in mesh_object.data.vertices:
+            influences = {entry.group: entry.weight for entry in vertex.groups}
+            if not influences:
+                continue
+            total = sum(influences.values())
+            if total <= 1e-6:
+                continue
+            point = mesh_to_rig @ vertex.co
+            segment_influences = []
+            leg_weight = 0.0
+            for side in SIDES:
+                upper_a, upper_b, lower_a, lower_b = group_indexes[side]
+                weights = [influences.get(index, 0.0) if index >= 0 else 0.0
+                           for index in (upper_a, upper_b, lower_a, lower_b)]
+                thigh_weight = min(1.0, (weights[0] + weights[1]) / total)
+                shin_weight = min(1.0 - thigh_weight, (weights[2] + weights[3]) / total)
+                if thigh_weight <= 0.0 and shin_weight <= 0.0:
+                    continue
+                hip, knee, ankle, thigh_factor, shin_factor = transforms[side]
+                segment_influences.append((side, thigh_weight, shin_weight))
+                leg_weight += thigh_weight + shin_weight
+            if leg_weight > 1.0:
+                segment_influences = [(side, thigh / leg_weight, shin / leg_weight)
+                                      for side, thigh, shin in segment_influences]
+                leg_weight = 1.0
+            result = point * (1.0 - leg_weight)
+            for side, thigh_weight, shin_weight in segment_influences:
+                hip, knee, ankle, thigh_factor, shin_factor = transforms[side]
+                if thigh_weight > 0.0:
+                    result += stretch_along_segment(point, hip, knee, thigh_factor) * thigh_weight
+                if shin_weight > 0.0:
+                    result += stretch_along_segment(point, knee, ankle, shin_factor) * shin_weight
+            vertex.co = rig_to_mesh @ result
+        mesh_object.data.update()
+
+    for mesh_object in meshes:
+        for side in SIDES:
+            merge_vertex_groups(mesh_object, f"upperleg02.{side}", f"upperleg01.{side}")
+            merge_vertex_groups(mesh_object, f"lowerleg02.{side}", f"lowerleg01.{side}")
+
+    bpy.context.view_layer.objects.active = rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    for side in SIDES:
+        thigh = rig.data.edit_bones[f"upperleg01.{side}"]
+        thigh_knee = rig.data.edit_bones[f"upperleg02.{side}"].tail.copy()
+        shin = rig.data.edit_bones[f"lowerleg01.{side}"]
+        ankle = rig.data.edit_bones[f"lowerleg02.{side}"].tail.copy()
+        foot = rig.data.edit_bones[f"foot.{side}"]
+        hip = thigh.head.copy()
+        knee_offset = (thigh_knee - hip).normalized() * TARGET_LEG_SEGMENT_LENGTH
+        shin_offset = (ankle - thigh_knee).normalized() * TARGET_LEG_SEGMENT_LENGTH
+        new_knee = hip + knee_offset
+        new_ankle = new_knee + shin_offset
+        thigh.tail = new_knee
+        thigh.use_connect = True
+        shin.head = new_knee
+        shin.tail = new_ankle
+        shin.parent = thigh
+        shin.use_connect = True
+        foot.head = new_ankle
+        foot.parent = shin
+        foot.use_connect = True
+        rig.data.edit_bones.remove(rig.data.edit_bones[f"upperleg02.{side}"])
+        rig.data.edit_bones.remove(rig.data.edit_bones[f"lowerleg02.{side}"])
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.context.view_layer.update()
+    for side in SIDES:
+        thigh_length = rig.data.bones[f"upperleg01.{side}"].length
+        shin_length = rig.data.bones[f"lowerleg01.{side}"].length
+        if not (.42 <= thigh_length <= .47 and .42 <= shin_length <= .47):
+            raise RuntimeError(f"collapsed {side} leg has implausible segment lengths: {thigh_length}, {shin_length}")
+        print("ANATOMICAL_LEG_CHAIN", side, "thigh", round(thigh_length, 4),
+              "shin", round(shin_length, 4), "bones", "upperleg01", "lowerleg01", "foot")
+
+
+def refresh_shoe_bone_offsets(rig, scene, local_offsets):
+    """Attach the lower leg over each measured heel-side shoe opening."""
+    scene.frame_set(scene.frame_start)
+    bpy.context.view_layer.update()
+    for side in SIDES:
+        shoe = bpy.data.objects[f"CyclingShoe{side}"]
+        measured = shoe_frame_world(shoe, side)
+        frame = frame_quaternion(measured["lateral"], measured["toe"], measured["up"])
+        ankle = measured["ankle_opening"] + measured["toe"] * .025 + measured["up"] * .055
+        local_offsets[side] = frame.inverted() @ (measured["ball"] - ankle)
+        print("ANATOMICAL_ANKLE_ATTACHMENT", side,
+              "opening", tuple(round(v, 4) for v in measured["ankle_opening"]),
+              "ankle", tuple(round(v, 4) for v in ankle),
+              "ball", tuple(round(v, 4) for v in measured["ball"]),
+              "heel", tuple(round(v, 4) for v in measured["heel_point"]),
+              "toe", tuple(round(v, 4) for v in measured["toe_point"]),
+              "ballOffsetInShoeFrame", tuple(round(v, 4) for v in local_offsets[side]))
+
+
+def add_shoe_attachment_bones(rig):
+    """Separate ankle-joint orientation from the shoe's measured pedal frame."""
+    if bpy.context.object and bpy.context.object.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    scene = bpy.context.scene
+    scene.frame_set(scene.frame_start)
+    bpy.context.view_layer.update()
+    rig_inv = rig.matrix_world.inverted()
+    bpy.context.view_layer.objects.active = rig
+    rig.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    for side in SIDES:
+        shoe = bpy.data.objects[f"CyclingShoe{side}"]
+        measured = shoe_frame_world(shoe, side)
+        bone_name = f"shoe.{side}"
+        if rig.data.edit_bones.get(bone_name):
+            rig.data.edit_bones.remove(rig.data.edit_bones[bone_name])
+        edit = rig.data.edit_bones.new(bone_name)
+        head = rig_inv @ measured["ball"]
+        toe = (rig_inv.to_3x3() @ measured["toe"]).normalized()
+        up = (rig_inv.to_3x3() @ measured["up"]).normalized()
+        edit.head = head
+        edit.tail = head + toe * .10
+        edit.parent = rig.data.edit_bones[f"foot.{side}"]
+        edit.use_connect = False
+        edit.use_deform = True
+        edit.align_roll(up)
+        for role in ("heel", "toe", "ankle_opening"):
+            marker_name = f"shoe_{role}.{side}"
+            if rig.data.edit_bones.get(marker_name):
+                rig.data.edit_bones.remove(rig.data.edit_bones[marker_name])
+            marker = rig.data.edit_bones.new(marker_name)
+            feature_point = measured["ankle_opening"] if role == "ankle_opening" else measured[f"{role}_point"]
+            marker.head = rig_inv @ feature_point
+            marker.tail = marker.head + up * .002
+            marker.parent = edit
+            marker.use_connect = False
+            marker.use_deform = False
+        group = shoe.vertex_groups.get(f"foot.{side}")
+        if group:
+            shoe.vertex_groups.remove(group)
+        group = shoe.vertex_groups.get(bone_name) or shoe.vertex_groups.new(name=bone_name)
+        group.add(list(range(len(shoe.data.vertices))), 1.0, "REPLACE")
+        print("SHOE_BONE_BIND", side, "head", tuple(round(v, 4) for v in head),
+              "toe", tuple(round(v, 3) for v in toe), "up", tuple(round(v, 3) for v in up),
+              "vertices", len(shoe.data.vertices))
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.context.view_layer.update()
+
+
+def enable_leg_ik(rig, targets, poles):
+    """Solve thigh and shin independently around an explicitly placed knee."""
+    for side in SIDES:
+        pelvis = rig.pose.bones[f"pelvis.{side}"]
+        for constraint in list(pelvis.constraints):
+            if constraint.type == "LIMIT_ROTATION" and constraint.name == "PinSeatedPelvis":
+                pelvis.constraints.remove(constraint)
+        pin = pelvis.constraints.new("LIMIT_ROTATION")
+        pin.name = "PinSeatedPelvis"
+        pin.owner_space = "LOCAL"
+        pin.use_limit_x = pin.use_limit_y = pin.use_limit_z = True
+        pin.min_x = pin.max_x = pin.min_y = pin.max_y = pin.min_z = pin.max_z = 0.0
+
+        for bone_name in (f"upperleg01.{side}", f"lowerleg01.{side}", f"foot.{side}"):
             bone = rig.pose.bones[bone_name]
             for constraint in list(bone.constraints):
                 if constraint.type == "IK":
                     bone.constraints.remove(constraint)
+        for bone_name, target, label in (
+            (f"upperleg01.{side}", poles[side], "ThighToKnee"),
+            (f"lowerleg01.{side}", targets[side], "ShinToAnkle"),
+        ):
+            ik = rig.pose.bones[bone_name].constraints.new("IK")
+            ik.name = f"{label}_{side}"
+            ik.target = target
+            ik.chain_count = 1
+            ik.use_tail = True
+            ik.use_stretch = False
+            ik.use_rotation = False
+            ik.influence = 1.0
         foot = rig.pose.bones[f"foot.{side}"]
-        ik = foot.constraints.new("IK")
-        ik.name = f"PedalContactIK_{side}"
-        ik.target = targets[side]
-        ik.chain_count = 5
-        ik.use_tail = False
-        ik.use_stretch = False
-        ik.use_rotation = False
-        ik.pole_target = poles[side]
-        ik.pole_angle = KNEE_POLE_ANGLE[side]
-        ik.influence = 1.0
         copy_rotation = foot.constraints.new("COPY_ROTATION")
         copy_rotation.name = f"PedalFootOrientation_{side}"
         copy_rotation.target = targets[side]
         copy_rotation.owner_space = "WORLD"
         copy_rotation.target_space = "WORLD"
         copy_rotation.mix_mode = "REPLACE"
-    print("PEDAL_IK_READY", [(side, next(c.chain_count for c in rig.pose.bones[f"foot.{side}"].constraints
-                                        if c.type == "IK")) for side in SIDES])
+    print("PEDAL_IK_READY", [(side,
+          next(c.chain_count for c in rig.pose.bones[f"upperleg01.{side}"].constraints if c.type == "IK"),
+          next(c.chain_count for c in rig.pose.bones[f"lowerleg01.{side}"].constraints if c.type == "IK"))
+          for side in SIDES])
 
 
-def stable_knee_pole(hip, ankle, bend_direction, side):
-    """Keep a fixed, source-measured knee bend plane across the whole crank turn."""
-    axis = (hip - ankle).normalized()
-    bend = bend_direction - axis * bend_direction.dot(axis)
+def enable_shoe_platform_follow(rig, targets):
+    """Aim each weighted shoe bone at the real pedal frame independently of the ankle joint."""
+    for side in SIDES:
+        shoe = rig.pose.bones[f"shoe.{side}"]
+        for constraint in list(shoe.constraints):
+            shoe.constraints.remove(constraint)
+        location = shoe.constraints.new("COPY_LOCATION")
+        location.name = f"ShoeBallOnPedal_{side}"
+        location.target = targets[side]
+        location.owner_space = "WORLD"
+        location.target_space = "WORLD"
+        rotation = shoe.constraints.new("COPY_ROTATION")
+        rotation.name = f"ShoeSoleOnPedal_{side}"
+        rotation.target = targets[side]
+        rotation.owner_space = "WORLD"
+        rotation.target_space = "WORLD"
+        rotation.mix_mode = "REPLACE"
+    print("SHOE_PLATFORM_FOLLOW_READY", sorted(SIDES))
+
+
+def solve_anatomical_knee(hip, ankle, bend_direction, upper_length, lower_length):
+    """Place the knee by the two-segment law of cosines on the forward side."""
+    leg_axis = ankle - hip
+    distance = leg_axis.length
+    if distance <= 1e-6 or distance >= upper_length + lower_length:
+        raise RuntimeError(f"pedal target is unreachable from the seated hip: {distance:.4f} m")
+    if distance < abs(upper_length - lower_length):
+        raise RuntimeError(f"pedal target folds the leg beyond its anatomical range: {distance:.4f} m")
+    direction = leg_axis / distance
+    along = (upper_length * upper_length - lower_length * lower_length + distance * distance) / (2.0 * distance)
+    perpendicular_length = math.sqrt(max(0.0, upper_length * upper_length - along * along))
+    bend = bend_direction - direction * bend_direction.dot(direction)
     if bend.length < .035:
-        bend = Vector((-1.0 if side == "L" else 1.0, 0.0, 0.0))
-        bend -= axis * bend.dot(axis)
-        if bend.length < .035:
-            bend = Vector((0.0, 1.0, 0.0)) - axis * axis.y
-    return (hip + ankle) * .5 + bend.normalized() * .20
+        raise RuntimeError("bike-forward knee plane is singular for this leg pose")
+    return hip + direction * along + bend.normalized() * perpendicular_length
 
 
 def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
@@ -235,23 +648,30 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
     # moving CGTrader pedal surface points.
     remove_control_animation(old_action, {
         name for side in SIDES.values() for name in (side[5], side[6])
-    })
+    }, rig)
+    collapse_helper_leg_bones(rig)
+    refresh_shoe_bone_offsets(rig, scene, local_offsets)
+    add_shoe_attachment_bones(rig)
+    add_pedal_contact_bones(rig, local_offsets)
     targets, poles = add_leg_ik_targets()
     enable_leg_ik(rig, targets, poles)
+    shoe_targets = {}
+    for side in SIDES:
+        target = bpy.data.objects.new(f"ShoePlatformTarget{side}", None)
+        bpy.context.scene.collection.objects.link(target)
+        target.rotation_mode = "QUATERNION"
+        shoe_targets[side] = target
+    enable_shoe_platform_follow(rig, shoe_targets)
     scene.frame_set(start)
     bpy.context.view_layer.update()
-    bend_directions = {}
-    for side in SIDES:
-        hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
-        ankle = source_samples[start][side]["old_foot_target"]
-        knee = source_samples[start][side]["old_knee_target"]
-        axis = (hip - ankle).normalized()
-        bend = knee - (ankle + axis * (knee - ankle).dot(axis))
-        if bend.length < .035:
-            bend = Vector((-1.0 if side == "L" else 1.0, 0.0, 0.0))
-        bend_directions[side] = bend.normalized()
-    print("KNEE_BEND_DIRECTIONS", {side: tuple(round(v, 4) for v in direction)
-                                   for side, direction in bend_directions.items()})
+    front = bpy.data.objects.get("FrontWheelSpin")
+    rear = bpy.data.objects.get("RearWheelSpin")
+    if front is None or rear is None:
+        raise RuntimeError("bike forward anchors are required for anatomical knee poles")
+    bike_forward = (front.matrix_world.translation - rear.matrix_world.translation).normalized()
+    upper_lengths = {side: rig.data.bones[f"upperleg01.{side}"].length for side in SIDES}
+    lower_lengths = {side: rig.data.bones[f"lowerleg01.{side}"].length for side in SIDES}
+    print("ANATOMICAL_KNEE_PLANE_FORWARD", tuple(round(v, 4) for v in bike_forward))
     max_ik_contact = {side: 0.0 for side in SIDES}
     max_knee_step = {side: 0.0 for side in SIDES}
     previous_knee = {}
@@ -273,24 +693,40 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
 
         for side, (suffix, _pedal, _contact_name, _bearing, surface_name, foot_ik_name, knee_ik_name) in SIDES.items():
             surface = bpy.data.objects[surface_name]
-            foot_rotation = source[side]["foot_rotation"]
-            # A small phase-linked toe roll gives the ankles visible, restrained
-            # articulation while preserving the accepted shoe-to-pedal path.
+            surface_normal = (surface.matrix_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+            desired_toe = bike_forward.normalized()
+            desired_lateral = desired_toe.cross(surface_normal).normalized()
+            desired_frame = frame_quaternion(desired_lateral, desired_toe, surface_normal)
+            # Keep the lower leg anatomically attached at the shoe's measured
+            # heel-side opening while the independent shoe bone stays planted
+            # on the pedal. Both use this measured bicycle-forward/pedal-normal
+            # frame, with only the authored symmetric ankle pitch applied.
             pitch = FOOT_PITCH_AMPLITUDE * math.sin(phase + (math.pi if side == "L" else 0.0))
-            target_rotation = foot_rotation @ Quaternion((1.0, 0.0, 0.0), pitch)
-            ball_world_offset = target_rotation @ local_offsets[side]
-            target = surface.matrix_world.translation - ball_world_offset
-            shift = target - source[side]["old_foot_target"]
+            shoe_rotation = (desired_frame @ Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
+            ankle_rotation = shoe_rotation
+            ankle_target = surface.matrix_world.translation - shoe_rotation @ local_offsets[side]
+            shoe_targets[side].location = surface.matrix_world.translation
+            shoe_targets[side].rotation_quaternion = shoe_rotation
             hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
-            pole = stable_knee_pole(hip, target, bend_directions[side], side)
-            targets[side].location = target
-            targets[side].rotation_quaternion = target_rotation
-            poles[side].location = pole
+            knee_target = solve_anatomical_knee(hip, ankle_target, bike_forward,
+                                                 upper_lengths[side], lower_lengths[side])
+            targets[side].location = ankle_target
+            targets[side].rotation_quaternion = ankle_rotation
+            poles[side].location = knee_target
             for obj in (targets[side], poles[side]):
                 obj.keyframe_insert(data_path="location", frame=frame)
             targets[side].keyframe_insert(data_path="rotation_quaternion", frame=frame)
+            shoe_targets[side].keyframe_insert(data_path="location", frame=frame)
+            shoe_targets[side].keyframe_insert(data_path="rotation_quaternion", frame=frame)
 
         bpy.context.view_layer.update()
+        if frame == start:
+            # The first solve follows a freshly-created IK target and the
+            # source action's prior evaluated frame. Re-evaluate frame 1 so
+            # Blender's constraint graph starts the baked cycle from the same
+            # converged state used for every subsequent sample.
+            scene.frame_set(frame)
+            bpy.context.view_layer.update()
         for side, (_suffix, _pedal, _contact, _bearing, surface_name, *_rest) in SIDES.items():
             marker = rig.matrix_world @ rig.pose.bones[f"pedal_contact.{side}"].head
             surface_point = bpy.data.objects[surface_name].matrix_world.translation
@@ -325,13 +761,14 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
     print("PEDAL_IK_BAKED", len(list(action_curves(baked))), "curves",
           start, end, "kneeStepMax", {side: (round(value, 5), max_knee_frame[side])
                                       for side, value in max_knee_step.items()})
-    for obj in list(targets.values()) + list(poles.values()):
+    for obj in list(targets.values()) + list(poles.values()) + list(shoe_targets.values()):
         bpy.data.objects.remove(obj, do_unlink=True)
 
 
 def sample_source_targets(rig, scene):
     source = {}
     local_offsets = {}
+    shoe_frames = {}
     for frame in range(scene.frame_start, scene.frame_end + 1):
         scene.frame_set(frame)
         bpy.context.view_layer.update()
@@ -344,6 +781,14 @@ def sample_source_targets(rig, scene):
                 raise RuntimeError(f"CyclingShoe{side} lacks its authored forefoot contact vertex")
             ball_world = evaluated_vertex_world(shoe, BALL_VERTEX)
             ball_local = foot_world.inverted() @ ball_world
+            measured_frame = shoe_frame_world(shoe, side)
+            shoe_frame_world_q = frame_quaternion(measured_frame["lateral"],
+                                                  measured_frame["toe"], measured_frame["up"])
+            shoe_frame_in_foot = foot_world.to_quaternion().inverted() @ shoe_frame_world_q
+            if side not in shoe_frames:
+                shoe_frames[side] = shoe_frame_in_foot.normalized()
+            elif abs(shoe_frames[side].dot(shoe_frame_in_foot.normalized())) < math.cos(math.radians(2.0)):
+                raise RuntimeError(f"{side} shoe twists relative to foot.{side} in the source cycle")
             if side not in local_offsets:
                 local_offsets[side] = ball_local
             elif (ball_local - local_offsets[side]).length > .002:
@@ -352,11 +797,15 @@ def sample_source_targets(rig, scene):
             knee_control = rig.pose.bones[knee_ik_name]
             source[frame][side] = {
                 "foot_rotation": foot_world.to_quaternion().normalized(),
+                "shoe_frame_in_foot": shoe_frames[side],
+                "shoe_toe_axis": measured_frame["toe"],
+                "shoe_sole_up": measured_frame["up"],
+                "shoe_heel": measured_frame["heel_point"],
+                "shoe_toe": measured_frame["toe_point"],
                 "old_foot_target": (rig.matrix_world @ foot_control.matrix).translation.copy(),
-                # The authored knee-pole control has discontinuous keyed jumps
-                # at phase zero. Use the evaluated anatomical knee joint as the
-                # measured bend reference instead.
-                "old_knee_target": (rig.matrix_world @ rig.pose.bones[f"lowerleg02.{side}"].head).copy(),
+                # Keep the actual knee joint available for diagnostics. The
+                # lowerleg02 head is below the knee and is only a shin helper.
+                "source_knee": (rig.matrix_world @ rig.pose.bones[f"lowerleg01.{side}"].head).copy(),
             }
     print("SHOE_BALL_BONE_OFFSETS", {side: tuple(round(v, 5) for v in value) for side, value in local_offsets.items()})
     return source, local_offsets
@@ -371,10 +820,30 @@ def validate_full_cycle(rig, scene):
     max_sole_delta = {side: 0.0 for side in SIDES}
     max_knee_step = {side: 0.0 for side in SIDES}
     max_foot_pitch = {side: 0.0 for side in SIDES}
+    max_toe_forward_error = {side: 0.0 for side in SIDES}
+    max_sole_normal_error = {side: 0.0 for side in SIDES}
+    max_foot_toe_error = {side: 0.0 for side in SIDES}
+    max_foot_normal_error = {side: 0.0 for side in SIDES}
+    max_heel_plane_error = {side: 0.0 for side in SIDES}
+    max_toe_plane_error = {side: 0.0 for side in SIDES}
+    min_knee_flex = {side: math.inf for side in SIDES}
+    max_knee_flex = {side: 0.0 for side in SIDES}
+    min_forward_knee = {side: math.inf for side in SIDES}
+    min_flexed_forward_knee = {side: math.inf for side in SIDES}
+    max_backward_knee = {side: 0.0 for side in SIDES}
+    max_upper_leg_delta = {side: 0.0 for side in SIDES}
+    max_lower_leg_delta = {side: 0.0 for side in SIDES}
     foot_start = {}
     knee_previous = {}
     knee_max_frame = {side: 0 for side in SIDES}
     pose_start = None
+
+    front = bpy.data.objects.get("FrontWheelSpin")
+    rear = bpy.data.objects.get("RearWheelSpin")
+    if front is None or rear is None:
+        raise RuntimeError("bike forward anchors are required for leg validation")
+    bike_forward = (front.matrix_world.translation - rear.matrix_world.translation).normalized()
+    reference_lengths = {}
 
     for frame in range(start, end + 1):
         index = frame - start
@@ -408,12 +877,51 @@ def validate_full_cycle(rig, scene):
             max_ball_mesh[side] = max(max_ball_mesh[side], nearest[3])
 
             foot_rotation = world_pose(rig, rig.pose.bones[f"foot.{side}"]).to_quaternion().normalized()
+            shoe_frame = shoe_frame_world(shoe, side)
+            pedal_normal = (bpy.data.objects[surface_name].matrix_world.to_3x3() @
+                            Vector((0.0, 0.0, 1.0))).normalized()
+            toe_error = math.acos(max(-1.0, min(1.0, shoe_frame["toe"].dot(bike_forward))))
+            sole_error_angle = math.acos(max(-1.0, min(1.0, shoe_frame["up"].dot(pedal_normal))))
+            foot_world = world_pose(rig, rig.pose.bones[f"foot.{side}"])
+            foot_toe = (foot_world.to_3x3() @ Vector((0.0, 1.0, 0.0))).normalized()
+            foot_up = (foot_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+            foot_toe_error = math.acos(max(-1.0, min(1.0, foot_toe.dot(shoe_frame["toe"]))))
+            foot_normal_error = math.acos(max(-1.0, min(1.0, foot_up.dot(pedal_normal))))
+            heel_plane = abs((shoe_frame["heel_point"] - surface).dot(pedal_normal))
+            toe_plane = abs((shoe_frame["toe_point"] - surface).dot(pedal_normal))
+            max_toe_forward_error[side] = max(max_toe_forward_error[side], toe_error)
+            max_sole_normal_error[side] = max(max_sole_normal_error[side], sole_error_angle)
+            max_foot_toe_error[side] = max(max_foot_toe_error[side], foot_toe_error)
+            max_foot_normal_error[side] = max(max_foot_normal_error[side], foot_normal_error)
+            max_heel_plane_error[side] = max(max_heel_plane_error[side], heel_plane)
+            max_toe_plane_error[side] = max(max_toe_plane_error[side], toe_plane)
             if side not in foot_start:
                 foot_start[side] = foot_rotation.copy()
             dot = abs(sum(a * b for a, b in zip(foot_start[side], foot_rotation)))
             angle = 2.0 * math.acos(min(1.0, max(0.0, dot)))
             max_foot_pitch[side] = max(max_foot_pitch[side], angle)
             knee = rig.matrix_world @ rig.pose.bones[f"lowerleg01.{side}"].head
+            hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
+            ankle = rig.matrix_world @ rig.pose.bones[f"foot.{side}"].head
+            upper_length = (hip - knee).length
+            lower_length = (knee - ankle).length
+            if side not in reference_lengths:
+                reference_lengths[side] = (upper_length, lower_length)
+            max_upper_leg_delta[side] = max(max_upper_leg_delta[side],
+                                             abs(upper_length - reference_lengths[side][0]))
+            max_lower_leg_delta[side] = max(max_lower_leg_delta[side],
+                                             abs(lower_length - reference_lengths[side][1]))
+            flexion = math.pi - (hip - knee).angle(ankle - knee)
+            flexion_degrees = math.degrees(flexion)
+            min_knee_flex[side] = min(min_knee_flex[side], flexion_degrees)
+            max_knee_flex[side] = max(max_knee_flex[side], flexion_degrees)
+            leg_axis = ankle - hip
+            closest = hip + leg_axis * max(0.0, min(1.0, (knee - hip).dot(leg_axis) / leg_axis.length_squared))
+            forward_offset = (knee - closest).dot(bike_forward)
+            min_forward_knee[side] = min(min_forward_knee[side], forward_offset)
+            max_backward_knee[side] = max(max_backward_knee[side], max(0.0, -forward_offset))
+            if flexion_degrees > 15.0:
+                min_flexed_forward_knee[side] = min(min_flexed_forward_knee[side], forward_offset)
             if side in knee_previous:
                 step = (knee - knee_previous[side]).length
                 if step > max_knee_step[side]:
@@ -432,25 +940,289 @@ def validate_full_cycle(rig, scene):
 
     print("PEDAL_FIT_METRICS", "marker", max_marker_surface, "mesh", max_ball_mesh,
           "soleDelta", max_sole_delta, "footAngle", max_foot_pitch,
-          "kneeStep", {side: (value, knee_max_frame[side]) for side, value in max_knee_step.items()})
+          "toeForwardErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_toe_forward_error.items()},
+          "soleNormalErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_sole_normal_error.items()},
+          "footToShoeAxisErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_foot_toe_error.items()},
+          "footToPedalNormalErrorDeg", {side: round(math.degrees(value), 2) for side, value in max_foot_normal_error.items()},
+          "heelPlaneError", max_heel_plane_error, "toePlaneError", max_toe_plane_error,
+          "kneeStep", {side: (value, knee_max_frame[side]) for side, value in max_knee_step.items()},
+          "kneeFlexDeg", {side: (round(min_knee_flex[side], 1), round(max_knee_flex[side], 1)) for side in SIDES},
+          "kneeForwardOffset", {side: (round(min_forward_knee[side], 4), round(max_backward_knee[side], 4)) for side in SIDES},
+          "legLengthDelta", {side: (round(max_upper_leg_delta[side], 5), round(max_lower_leg_delta[side], 5)) for side in SIDES})
     if max(max_marker_surface.values()) > .012:
         raise RuntimeError(f"shoe ball markers leave the actual moving pedal top: {max_marker_surface}")
     if max(max_sole_delta.values()) > .002:
         raise RuntimeError(f"shoe contact marker no longer matches the authored outsole: {max_sole_delta}")
     if max(max_ball_mesh.values()) > .012:
         raise RuntimeError(f"shoe sole floats above or intersects the pedal surface: {max_ball_mesh}")
+    if max(max_toe_forward_error.values()) > MAX_SHOE_AXIS_DEVIATION:
+        raise RuntimeError(f"a shoe toe points away from bicycle-forward: {max_toe_forward_error}")
+    if max(max_sole_normal_error.values()) > MAX_SOLE_PLANE_DEVIATION:
+        raise RuntimeError(f"a shoe sole tilts too far from its actual pedal platform: {max_sole_normal_error}")
+    if max(max_foot_toe_error.values()) > MAX_FOOT_TO_SHOE_AXIS_DEVIATION:
+        raise RuntimeError(f"an ankle/foot axis twists away from its shoe: {max_foot_toe_error}")
+    if max(max_foot_normal_error.values()) > MAX_FOOT_TO_PEDAL_NORMAL_DEVIATION:
+        raise RuntimeError(f"an ankle/foot frame twists away from its pedal plane: {max_foot_normal_error}")
+    if max(max_heel_plane_error.values()) > MAX_HEEL_TO_PEDAL_HEIGHT or \
+            max(max_toe_plane_error.values()) > MAX_HEEL_TO_PEDAL_HEIGHT:
+        raise RuntimeError(f"shoe heel or toe leaves the pedal-plane support envelope: "
+                           f"heel={max_heel_plane_error}, toe={max_toe_plane_error}")
     if min(max_foot_pitch.values()) < math.radians(3.0):
         raise RuntimeError(f"ankles remain too rigid through PedalCycle: {max_foot_pitch}")
     if max(max_foot_pitch.values()) > math.radians(18.0):
         raise RuntimeError(f"ankle articulation is excessive: {max_foot_pitch}")
-    if max(max_knee_step.values()) > .045:
+    if max(max_knee_step.values()) > MAX_KNEE_STEP:
         raise RuntimeError(f"knee path has a visible jump: {max_knee_step}")
+    if min(min_knee_flex.values()) < 2.0 or max(max_knee_flex.values()) > 125.0:
+        raise RuntimeError(f"knee flexion leaves the road-cycling range: {min_knee_flex}, {max_knee_flex}")
+    if max(max_backward_knee.values()) > MAX_BACKWARD_KNEE_OFFSET:
+        raise RuntimeError(f"a knee bends behind the hip-to-ankle line: {max_backward_knee}")
+    for side in SIDES:
+        if min_flexed_forward_knee[side] < MIN_FORWARD_KNEE_OFFSET_WHEN_FLEXED:
+            raise RuntimeError(f"{side} knee does not track forward through flexion: {min_flexed_forward_knee[side]}")
+    if max(max_upper_leg_delta.values()) > .003 or max(max_lower_leg_delta.values()) > .003:
+        raise RuntimeError(f"IK stretched a leg chain: upper={max_upper_leg_delta}, lower={max_lower_leg_delta}")
     print("PEDAL_FIT_163_PASS",
           "samples", end - start + 1,
           "marker-to-top", {side: round(value, 5) for side, value in max_marker_surface.items()},
           "sole-to-mesh", {side: round(value, 5) for side, value in max_ball_mesh.items()},
           "anklePitchMaxDeg", {side: round(math.degrees(value), 2) for side, value in max_foot_pitch.items()},
-          "kneeStepMax", {side: round(value, 5) for side, value in max_knee_step.items()})
+          "kneeStepMax", {side: round(value, 5) for side, value in max_knee_step.items()},
+          "kneeFlexDeg", {side: (round(min_knee_flex[side], 1), round(max_knee_flex[side], 1)) for side in SIDES},
+          "kneeBackwardMax", {side: round(max_backward_knee[side], 4) for side in SIDES})
+
+
+def helmet_source_feature_indices(helmet):
+    """Map independently inspected OBJ brow-lip and rear-tail features to the fitted mesh.
+
+    A neutral, standalone Blender inspection of the supplied OBJ shows its short
+    projecting brow/visor lip at the negative-Y end and its long tapered rear
+    shell tail at the positive-Y end. Importing with the OBJ's physical Z-up
+    frame keeps those measured source coordinates intact. These are physical
+    source features; neither their labels nor positions come from the rider,
+    reference bones, or a connected-component size heuristic.
+    """
+    if not HELMET_SOURCE_OBJ.is_file():
+        raise RuntimeError(f"independently inspected helmet source is missing: {HELMET_SOURCE_OBJ}")
+    existing_objects = set(bpy.data.objects)
+    bpy.ops.wm.obj_import(filepath=str(HELMET_SOURCE_OBJ), forward_axis="Y", up_axis="Z")
+    imported = [obj for obj in bpy.data.objects if obj not in existing_objects and obj.type == "MESH"]
+    if len(imported) != 1:
+        raise RuntimeError(f"expected one independently imported supplied helmet mesh, got {len(imported)}")
+    source = imported[0]
+    try:
+        if len(source.data.vertices) != len(helmet.data.vertices):
+            raise RuntimeError("supplied helmet source and fitted mesh vertex counts differ")
+        if not source.matrix_world.is_identity:
+            raise RuntimeError("source inspection import must preserve its measured +Z-up coordinate frame")
+        source_points = np.asarray([vertex.co[:] for vertex in source.data.vertices], dtype=np.float64)
+        fitted_points = np.asarray([vertex.co[:] for vertex in helmet.data.vertices], dtype=np.float64)
+        source_homogeneous = np.column_stack((source_points, np.ones(len(source_points))))
+        transform, _, _, _ = np.linalg.lstsq(source_homogeneous, fitted_points, rcond=None)
+        residual = source_homogeneous @ transform - fitted_points
+        max_residual = float(np.max(np.linalg.norm(residual, axis=1)))
+        if max_residual > 1e-5:
+            raise RuntimeError(f"helmet source vertex correspondence is not affine/reproducible: {max_residual:.8f}m")
+
+        source_y = source_points[:, 1]
+        front_indices = np.flatnonzero(source_y <= source_y.min() + 0.10)
+        rear_indices = np.flatnonzero(source_y >= source_y.max() - 0.10)
+        if not 80 <= len(front_indices) <= 300 or not 5 <= len(rear_indices) <= 80:
+            raise RuntimeError("independently measured helmet brow-lip or rear-tail feature cluster changed")
+        return front_indices.tolist(), rear_indices.tolist(), max_residual
+    finally:
+        source_mesh = source.data
+        bpy.data.objects.remove(source, do_unlink=True)
+        if source_mesh.users == 0:
+            bpy.data.meshes.remove(source_mesh)
+
+
+def helmet_semantics(rig, helmet, human):
+    """Measure source-verified physical ends, face, and bicycle axes independently."""
+    front_anchor = bpy.data.objects.get("FrontWheelSpin")
+    rear_anchor = bpy.data.objects.get("RearWheelSpin")
+    if front_anchor is None or rear_anchor is None:
+        raise RuntimeError("front/rear wheel anchors are required to orient the supplied helmet")
+    bike_forward = (front_anchor.matrix_world.translation - rear_anchor.matrix_world.translation).normalized()
+    rider_up = (rig.matrix_world.to_3x3() @ Vector((0.0, 0.0, 1.0))).normalized()
+    bike_side = bike_forward.cross(rider_up).normalized()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+
+    evaluated_human = human.evaluated_get(depsgraph)
+    human_mesh = evaluated_human.to_mesh()
+    try:
+        head_group = human.vertex_groups.get("head")
+        if head_group is None:
+            raise RuntimeError("the actual weighted head mesh is required to orient the helmet")
+        head_indices = {
+            vertex.index for vertex in human.data.vertices
+            if any(group.group == head_group.index and group.weight > 0.5 for group in vertex.groups)
+        }
+        head_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
+                       for index in head_indices]
+        eye_materials = {index for index, material in enumerate(human.data.materials)
+                         if material and "Rider Eye" in material.name}
+        eye_indices = {index for polygon in human_mesh.polygons
+                       if polygon.material_index in eye_materials for index in polygon.vertices}
+        eye_points = [evaluated_human.matrix_world @ human_mesh.vertices[index].co
+                      for index in eye_indices]
+        if len(head_points) < 500 or len(eye_points) < 20:
+            raise RuntimeError("the weighted face and eye geometry are incomplete")
+        head_center = sum(head_points, Vector()) / len(head_points)
+        eye_center = sum(eye_points, Vector()) / len(eye_points)
+        face_forward = (eye_center - head_center).normalized()
+        face_bike_alignment = face_forward.dot(bike_forward)
+        face_candidates = [point for point in head_points
+                           if abs((point - eye_center).dot(bike_side)) <= 0.03 and
+                           abs((point - eye_center).dot(rider_up)) <= 0.09]
+        if not face_candidates:
+            raise RuntimeError("actual central face geometry is unavailable for the nose check")
+        nose_tip = max(face_candidates, key=lambda point: point.dot(bike_forward))
+        nose_to_eye = nose_tip - eye_center
+        if nose_to_eye.length < 0.02:
+            raise RuntimeError("actual forehead/eye and nose geometry do not define a face direction")
+        nose_bike_alignment = nose_to_eye.normalized().dot(bike_forward)
+        if face_bike_alignment < 0.5 or nose_to_eye.dot(bike_forward) < 0.02 or nose_bike_alignment < 0.35:
+            raise RuntimeError("actual rider eye/head/nose geometry does not face the bicycle front wheel: "
+                               f"eyeHeadDot={face_bike_alignment:.3f} noseDot={nose_bike_alignment:.3f}")
+    finally:
+        evaluated_human.to_mesh_clear()
+
+    front_indices, rear_indices, source_fit_error = helmet_source_feature_indices(helmet)
+    evaluated = helmet.evaluated_get(depsgraph)
+    mesh = evaluated.to_mesh()
+    try:
+        if len(mesh.vertices) != len(helmet.data.vertices):
+            raise RuntimeError("evaluated supplied helmet vertex indices changed during skinning")
+        points = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
+        physical_front = sum((points[index] for index in front_indices), Vector()) / len(front_indices)
+        physical_rear = sum((points[index] for index in rear_indices), Vector()) / len(rear_indices)
+    finally:
+        evaluated.to_mesh_clear()
+    physical_axis = (physical_front - physical_rear).normalized()
+    return {
+        "bike_forward": bike_forward,
+        "bike_side": bike_side,
+        "rider_up": rider_up,
+        "head_center": head_center,
+        "eye_center": eye_center,
+        "nose_tip": nose_tip,
+        "face_forward": face_forward,
+        "face_bike_alignment": face_bike_alignment,
+        "nose_bike_alignment": nose_bike_alignment,
+        "physical_front": physical_front,
+        "physical_rear": physical_rear,
+        "physical_axis": physical_axis,
+        "front_bike_alignment": physical_axis.dot(bike_forward),
+        "front_face_alignment": physical_axis.dot(face_forward),
+        "front_to_eye": (physical_front - eye_center).dot(bike_forward),
+        "rear_to_eye": (physical_rear - eye_center).dot(bike_forward),
+        "physical_length": (physical_front - physical_rear).length,
+        "front_indices": front_indices,
+        "rear_indices": rear_indices,
+        "source_fit_error": source_fit_error,
+    }
+
+
+def rotate_helmet_mesh_180(rig, helmet, center_world, rider_up):
+    """Rotate only the supplied helmet about the measured head-up axis."""
+    head_bone = rig.data.bones.get("head")
+    head_pose = rig.pose.bones.get("head")
+    if head_bone is None or head_pose is None:
+        raise RuntimeError("the accepted rider head bone is required to orient the helmet")
+    rest_to_world = (rig.matrix_world @ head_pose.matrix @ head_bone.matrix_local.inverted() @
+                     rig.matrix_world.inverted() @ helmet.matrix_world)
+    world_to_rest = rest_to_world.inverted()
+    yaw_180 = Quaternion(rider_up, math.pi)
+    for vertex in helmet.data.vertices:
+        point_world = rest_to_world @ vertex.co
+        vertex.co = world_to_rest @ (center_world + yaw_180 @ (point_world - center_world))
+    helmet.data.update()
+    bpy.context.view_layer.update()
+
+
+def require_helmet_physical_forward(metrics, label="helmet"):
+    if (metrics["front_bike_alignment"] < 0.75 or metrics["front_face_alignment"] < 0.60 or
+            metrics["front_to_eye"] <= 0.05 or metrics["rear_to_eye"] >= -0.05):
+        raise RuntimeError(f"{label} physical brow lip/rear tail orientation is wrong: "
+                           f"frontBikeDot={metrics['front_bike_alignment']:.3f} "
+                           f"frontFaceDot={metrics['front_face_alignment']:.3f} "
+                           f"frontToEye={metrics['front_to_eye']:.3f}m "
+                           f"rearToEye={metrics['rear_to_eye']:.3f}m")
+
+
+def orient_helmet_to_rider(rig, helmet, human):
+    """Turn the source-measured brow lip to the actual face and bicycle front."""
+    metrics = helmet_semantics(rig, helmet, human)
+    print("HELMET_PHYSICAL_FEATURES_BEFORE",
+          "sourceFitError", round(metrics["source_fit_error"], 9),
+          "frontLipToEyes", round(metrics["front_to_eye"], 4),
+          "rearTailToEyes", round(metrics["rear_to_eye"], 4),
+          "frontBikeDot", round(metrics["front_bike_alignment"], 4),
+          "faceBikeDot", round(metrics["face_bike_alignment"], 4),
+          "noseBikeDot", round(metrics["nose_bike_alignment"], 4))
+    if metrics["front_bike_alignment"] < 0.0:
+        print("HELMET_ROTATE_MESH_180", "source-verified brow lip is behind the actual face")
+        rotate_helmet_mesh_180(rig, helmet, metrics["head_center"], metrics["rider_up"])
+        metrics = helmet_semantics(rig, helmet, human)
+    require_helmet_physical_forward(metrics)
+    print("HELMET_PHYSICAL_FEATURES_PASS",
+          "frontLipAheadOfEyes", round(metrics["front_to_eye"], 4),
+          "rearTailBehindEyes", round(metrics["rear_to_eye"], 4),
+          "frontBikeDot", round(metrics["front_bike_alignment"], 4),
+          "frontFaceDot", round(metrics["front_face_alignment"], 4),
+          "noseBikeDot", round(metrics["nose_bike_alignment"], 4),
+          "sourceFitError", round(metrics["source_fit_error"], 9))
+
+
+def add_helmet_frame_markers(rig, helmet, human):
+    """Export head-attached references sampled from the physical source lip and tail."""
+    metrics = helmet_semantics(rig, helmet, human)
+    front_world = metrics["physical_front"]
+    rear_world = metrics["physical_rear"]
+    rig_world_inverse = rig.matrix_world.inverted()
+    head_pose = rig.pose.bones["head"]
+    head_pose_inverse = head_pose.matrix.inverted()
+    head_rest = rig.data.bones["head"].matrix_local.copy()
+    front_rest = head_rest @ head_pose_inverse @ (rig_world_inverse @ front_world)
+    rear_rest = head_rest @ head_pose_inverse @ (rig_world_inverse @ rear_world)
+
+    previous_active = bpy.context.view_layer.objects.active
+    previous_selection = list(bpy.context.selected_objects)
+    bpy.ops.object.select_all(action="DESELECT")
+    rig.select_set(True)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode="EDIT")
+    edit_bones = rig.data.edit_bones
+    for name, point in (("helmet_front_ref", front_rest), ("helmet_rear_ref", rear_rest)):
+        previous = edit_bones.get(name)
+        if previous is not None:
+            edit_bones.remove(previous)
+        marker = edit_bones.new(name)
+        marker.head = point
+        marker.tail = point + head_rest.to_3x3() @ Vector((0.0, 0.01, 0.0))
+        marker.parent = edit_bones["head"]
+        marker.use_connect = False
+        marker.use_deform = False
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in previous_selection:
+        if bpy.data.objects.get(obj.name) is not None:
+            obj.select_set(True)
+    if previous_active is not None and bpy.data.objects.get(previous_active.name) is not None:
+        bpy.context.view_layer.objects.active = previous_active
+    bpy.context.view_layer.update()
+
+    front_actual = rig.matrix_world @ rig.pose.bones["helmet_front_ref"].matrix.translation
+    rear_actual = rig.matrix_world @ rig.pose.bones["helmet_rear_ref"].matrix.translation
+    bike_forward = metrics["bike_forward"]
+    alignment = (front_actual - rear_actual).normalized().dot(bike_forward)
+    print("HELMET_SOURCE_FEATURE_MARKERS", "frontLip", tuple(round(v, 4) for v in front_actual),
+          "rearTail", tuple(round(v, 4) for v in rear_actual), "forwardAlignment", round(alignment, 4))
+    if (alignment < 0.75 or (front_actual - rear_actual).normalized().dot(metrics["face_forward"]) < 0.65 or
+            (front_actual - metrics["eye_center"]).dot(bike_forward) <= 0.05 or
+            (rear_actual - metrics["eye_center"]).dot(bike_forward) >= -0.05):
+        raise RuntimeError("source-verified helmet brow-lip/tail markers do not match the actual face and bicycle frame")
 
 
 def main():
@@ -458,6 +1230,8 @@ def main():
     parser.add_argument("--blend", type=Path, required=True, help="accepted sculpted-hands source blend")
     parser.add_argument("--output-blend", type=Path, required=True)
     parser.add_argument("--output-glb", type=Path, required=True)
+    parser.add_argument("--helmet-only", action="store_true",
+                        help="correct only the helmet on an already pedal-corrected issue #164 blend")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
     bpy.ops.wm.open_mainfile(filepath=str(args.blend))
@@ -465,11 +1239,30 @@ def main():
     scene = bpy.context.scene
     if rig is None or bpy.data.objects.get("Human") is None:
         raise RuntimeError("accepted fitted rider and weighted human mesh are required")
-    source, local_offsets = sample_source_targets(rig, scene)
-    add_pedal_bearings()
-    add_pedal_contact_bones(rig, local_offsets)
-    bake_actual_pedal_cycle(rig, scene, source, local_offsets)
-    validate_full_cycle(rig, scene)
+    helmet = bpy.data.objects.get("CyclingHelmet")
+    if (helmet is None or helmet.get("source") != "Owner-supplied sport_cycling_helmet OBJ" or
+            len(helmet.data.vertices) < 30000):
+        raise RuntimeError("input must be the accepted issue #163 rider with the supplied vented helmet; "
+                           "older generated helmet sources are rejected")
+    print("ACCEPTED_HELMET_INPUT", helmet.get("source"), "vertices", len(helmet.data.vertices),
+          "faces", len(helmet.data.polygons))
+    human = bpy.data.objects["Human"]
+    orient_helmet_to_rider(rig, helmet, human)
+    if args.helmet_only:
+        required = [f"{name}.{side}" for side in ("L", "R")
+                    for name in ("shoe", "shoe_heel", "shoe_toe", "pedal_contact")]
+        missing = [name for name in required if rig.data.bones.get(name) is None]
+        pedal_cycle = bpy.data.actions.get("PedalCycle")
+        if missing or pedal_cycle is None:
+            raise RuntimeError("--helmet-only requires an already pedal-corrected issue #164 blend; "
+                               f"missing={missing} pedalCycle={pedal_cycle is not None}")
+        print("HELMET_ONLY_PRESERVING_EXISTING_PEDAL_CYCLE", pedal_cycle.name)
+    else:
+        source, local_offsets = sample_source_targets(rig, scene)
+        fit_road_shoes()
+        add_pedal_bearings()
+        bake_actual_pedal_cycle(rig, scene, source, local_offsets)
+        validate_full_cycle(rig, scene)
 
     # Restore the production model's neutral transform. CyclistVisual supplies
     # the measured phase offset and pedal bearing rotation at runtime.
@@ -478,10 +1271,47 @@ def main():
         bpy.data.objects[bearing_name].rotation_euler = (0.0, 0.0, 0.0)
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
+    add_helmet_frame_markers(rig, helmet, human)
+
+    # Rebuild the skinned garment details from the same accepted source pose.
+    # This replaces the old 1.2 mm neckline seam with the fitted collar band.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import polish_rider
+    polish_rider.add_road_kit_garment_details(rig)
+    polish_rider.round_clothing_edges()
+    collar = bpy.data.objects.get("RiderJerseyCollar")
+    if collar is None or len(collar.data.vertices) < 100:
+        raise RuntimeError("the fitted skinned jersey collar was not generated")
+    print("FITTED_JERSEY_COLLAR", "height", .015, "vertices", len(collar.data.vertices),
+          "materials", [material.name for material in collar.data.materials])
 
     args.output_blend.parent.mkdir(parents=True, exist_ok=True)
     args.output_glb.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.output_blend), compress=True)
+    # Keep the editable blend's authoring graph intact, but explicitly connect
+    # the weighted outfit mask on this export pass. Without this glTF's COLOR_0
+    # falls back to white after the body mesh is rebuilt and Godot renders the
+    # jersey, shorts, and shoes as skin.
+    human = bpy.data.objects["Human"]
+    outfit = next((material for material in human.data.materials
+                   if material and "Rider Outfit" in material.name), None)
+    if outfit is None or human.data.color_attributes.get("RiderOutfitWeights") is None:
+        raise RuntimeError("weighted rider outfit color attribute is required for glTF export")
+    outfit.use_nodes = True
+    nodes = outfit.node_tree.nodes
+    links = outfit.node_tree.links
+    bsdf = next((node for node in nodes if node.type == "BSDF_PRINCIPLED"), None)
+    if bsdf is None:
+        raise RuntimeError("Rider Outfit material has no Principled BSDF for COLOR_0 export")
+    color = next((node for node in nodes if node.type == "VERTEX_COLOR" and
+                  node.layer_name == "RiderOutfitWeights"), None)
+    if color is None:
+        color = nodes.new("ShaderNodeVertexColor")
+        color.layer_name = "RiderOutfitWeights"
+    for link in list(bsdf.inputs["Base Color"].links):
+        links.remove(link)
+    links.new(color.outputs["Color"], bsdf.inputs["Base Color"])
+    print("GLTF_EXPORT_COLOR_ATTRIBUTE", color.layer_name, "directly connected to base color")
     bpy.ops.object.select_all(action="SELECT")
     bike = bpy.data.objects["BicycleModel"]
     bpy.context.view_layer.objects.active = bike

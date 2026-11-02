@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using IndoorCycling.Core.Models;
 
@@ -6,12 +7,20 @@ using IndoorCycling.Core.Models;
 public partial class CyclistVisual : Node3D
 {
     private const string ImportedModelPath = "res://Assets/Models/WodraCyclist.glb";
+    private const string RigidHelmetPath = "res://Assets/Models/CyclingHelmetRigid.glb";
     private const double ImportedCrankPhaseOffset = -Math.PI / 2.0;
     private const int ImportedPedalSamplesPerRevolution = 72;
     private const double ImportedAnimationPhaseOffset = Math.Tau / (ImportedPedalSamplesPerRevolution * 2.0);
+    // The rigid shell is centered on the existing production shell's measured
+    // bounds. Lower that fit by 10 mm, within the approved minor-adjustment range.
+    private static readonly Vector3 RigidHelmetFitOffset = new(0, -.01f, 0);
+    // Candidate B moves the unchanged rigid assembly 10 mm toward the front wheel.
+    private const float RigidHelmetForwardFitOffsetMeters = .010f;
     private sealed record Dimensions(double RiderHeight, float WheelRadius, float Wheelbase, float CrankRadius,
         float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
 
+    // Retain the reviewed 12° nose-down shell pitch; applied about helmet-local right.
+    private float _rigidHelmetForwardPitchDegrees = 12f;
     // One seated road-cyclist reference pose drives all visible rider anchors. Coordinates use
     // +Y up and -Z forward, matching the bicycle and the existing cadence/IK solver.
     private sealed record RiderPose(Vector3 Pelvis, Vector3 LeftHip, Vector3 RightHip,
@@ -52,17 +61,18 @@ public partial class CyclistVisual : Node3D
     {
         Code = """
             shader_type spatial;
-            render_mode cull_back;
+            render_mode cull_disabled;
             uniform vec4 jersey_color : source_color = vec4(0.58, 0.13, 0.09, 1.0);
             uniform vec4 shorts_color : source_color = vec4(0.035, 0.047, 0.058, 1.0);
             uniform vec4 skin_color : source_color = vec4(0.58, 0.36, 0.25, 1.0);
             uniform vec4 shoe_color : source_color = vec4(0.68, 0.66, 0.58, 1.0);
+            uniform float fabric_tone = 1.0;
             void fragment() {
                 float jersey_weight = COLOR.r;
                 float shorts_weight = COLOR.g;
                 float shoe_weight = COLOR.b;
                 float skin_weight = max(0.0, 1.0 - jersey_weight - shorts_weight - shoe_weight);
-                vec3 outfit_color = jersey_weight * jersey_color.rgb + shorts_weight * shorts_color.rgb +
+                vec3 outfit_color = jersey_weight * jersey_color.rgb * fabric_tone + shorts_weight * shorts_color.rgb +
                                     skin_weight * skin_color.rgb + shoe_weight * shoe_color.rgb;
                 ALBEDO = outfit_color;
                 // The low route sun can leave exposed skin nearly black.
@@ -70,6 +80,23 @@ public partial class CyclistVisual : Node3D
                 // preserves the skin hue without brightening clothing or world.
                 EMISSION = skin_weight * skin_color.rgb * 0.55;
                 ROUGHNESS = 0.82;
+            }
+            """
+    };
+    private static readonly Shader HelmetRecolorShader = new()
+    {
+        Code = """
+            shader_type spatial;
+            uniform sampler2D helmet_texture : source_color;
+            uniform vec4 shell_color : source_color = vec4(0.075, 0.085, 0.10, 1.0);
+            void fragment() {
+                vec4 source = texture(helmet_texture, UV);
+                float luminance = dot(source.rgb, vec3(0.299, 0.587, 0.114));
+                float shell = smoothstep(0.055, 0.18, luminance);
+                vec3 shaded_shell = shell_color.rgb * (0.42 + luminance * 0.78);
+                ALBEDO = mix(source.rgb, shaded_shell, shell);
+                ROUGHNESS = 0.72;
+                METALLIC = 0.02;
             }
             """
     };
@@ -113,8 +140,18 @@ public partial class CyclistVisual : Node3D
     private Node3D _rightLegRig = default!;
     private AnimationPlayer? _riderAnimationPlayer;
     private Animation? _pedalCycleAnimation;
-    private StringName _pedalCycleName;
+    private StringName _pedalCycleName = new();
     private readonly System.Collections.Generic.List<Node3D> _helmetParts = new();
+    private Skeleton3D? _rigidHelmetSkeleton;
+    private Node3D? _rigidHelmetPose;
+    private Basis _rigidHelmetRootBasis = Basis.Identity;
+    private Vector3 _rigidHelmetRootOrigin;
+    private Vector3 _rigidHelmetHeadCenterOffset;
+    private int _rigidHelmetHeadIndex = -1;
+    private ShaderMaterial? _outfitMaterial;
+    private ShaderMaterial? _zipperMaterial;
+    private ShaderMaterial? _helmetShellMaterial;
+    private StandardMaterial3D? _helmetOriginalMaterial;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
     private double _wheelAngle;
@@ -126,6 +163,40 @@ public partial class CyclistVisual : Node3D
     private int _approximateTriangleCount = 2200;
 
     public bool UsesImportedModel { get; private set; }
+
+    public void SetCustomization(string jerseyColor, string helmetColor)
+    {
+        var jersey = JerseyColor(jerseyColor);
+        _outfitMaterial?.SetShaderParameter("jersey_color", jersey);
+        _zipperMaterial?.SetShaderParameter("jersey_color", jersey);
+        _helmetShellMaterial?.SetShaderParameter("shell_color", HelmetColor(helmetColor));
+        if (_helmetShellMaterial is not null && helmetColor == "Original purple/blue" &&
+            _rigidHelmetPose is not null && FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } mesh)
+            mesh.SetSurfaceOverrideMaterial(0, _helmetOriginalMaterial);
+        else if (_helmetShellMaterial is not null && _rigidHelmetPose is not null &&
+                 FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } shellMesh)
+            shellMesh.SetSurfaceOverrideMaterial(0, _helmetShellMaterial);
+    }
+
+    /// <summary>Sets the production helmet pitch for controlled rendered review comparisons.</summary>
+    public void SetReviewHelmetForwardPitchDegrees(float degrees)
+    {
+        _rigidHelmetForwardPitchDegrees = Mathf.Clamp(degrees, 0f, 16f);
+        UpdateRigidHelmetPoseForCurrentFrame();
+    }
+
+    private static Color JerseyColor(string name) => name switch
+    {
+        "Navy" or "Navy blue" => new Color(.075f, .16f, .34f), "Red" => new Color(.68f, .09f, .10f),
+        "Green" => new Color(.10f, .35f, .20f), "White" => new Color(.82f, .84f, .80f),
+        "Orange" => new Color(.86f, .32f, .07f), _ => new Color(.05f, .42f, .43f)
+    };
+    private static Color HelmetColor(string name) => name switch
+    {
+        "White" => new Color(.88f, .90f, .87f), "Blue" => new Color(.07f, .23f, .68f),
+        "Red" => new Color(.68f, .055f, .065f), "Teal" => new Color(.025f, .42f, .40f),
+        _ => new Color(.075f, .085f, .10f)
+    };
 
     /// <summary>Allows the live performance review harness to isolate baked skeleton sampling.</summary>
     public bool RiderAnimationSamplingEnabled { get; set; } = true;
@@ -374,12 +445,32 @@ public partial class CyclistVisual : Node3D
             instance.QueueFree();
             return false;
         }
-        foreach (var animationName in _riderAnimationPlayer.GetAnimationList())
+        var pedalClips = _riderAnimationPlayer.GetAnimationList()
+            .Where(name => name.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase))
+            .Select(name => (Name: name, Clip: _riderAnimationPlayer.GetAnimation(name)))
+            .Select(candidate => (candidate.Name, candidate.Clip,
+                LeftFootKeys: CountBoneTrackKeys(candidate.Clip, "foot.L"),
+                RightFootKeys: CountBoneTrackKeys(candidate.Clip, "foot.R")))
+            .OrderByDescending(candidate => Math.Min(candidate.LeftFootKeys, candidate.RightFootKeys))
+            .ThenByDescending(candidate => candidate.Clip.Length)
+            .ToArray();
+        if (pedalClips.Length > 0)
         {
-            if (!animationName.ToString().Contains("PedalCycle", StringComparison.OrdinalIgnoreCase)) continue;
-            _pedalCycleName = animationName;
-            _pedalCycleAnimation = _riderAnimationPlayer.GetAnimation(animationName);
-            break;
+            var selected = pedalClips[0];
+            if (Math.Min(selected.LeftFootKeys, selected.RightFootKeys) < 72)
+            {
+                GD.PushWarning($"Imported cyclist at {ImportedModelPath} has no full-cycle bilateral PedalCycle clip; " +
+                    $"best candidate {selected.Name} has {selected.LeftFootKeys}/{selected.RightFootKeys} foot keys; using procedural fallback.");
+                RemoveChild(instance);
+                instance.QueueFree();
+                return false;
+            }
+            _pedalCycleName = selected.Name;
+            _pedalCycleAnimation = selected.Clip;
+            GD.Print($"[Cyclist GLB] PedalCycle selected={selected.Name} " +
+                $"bilateralFootKeys={selected.LeftFootKeys}/{selected.RightFootKeys}; " +
+                $"candidates={string.Join(",", pedalClips.Select(candidate =>
+                    $"{candidate.Name}:{candidate.LeftFootKeys}/{candidate.RightFootKeys}"))}");
         }
         if (_pedalCycleAnimation is null || _pedalCycleAnimation.Length <= 0)
         {
@@ -415,13 +506,227 @@ public partial class CyclistVisual : Node3D
             return false;
         }
 
+        var human = FindModelNode<MeshInstance3D>(instance, "Human")
+            ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh for fitted garments.");
+        RemoveLegacyGarmentDetails(instance);
+        var frontWheelInModel = TransformToAncestor(_frontWheel, instance).Origin;
+        var rearWheelInModel = TransformToAncestor(_rearWheel, instance).Origin;
+        RiderGarmentMeshBuilder.Attach(human, skeleton,
+            (frontWheelInModel - rearWheelInModel).Normalized(), instance);
+
         // Imported bike assets own their frame finish and material groups.
         // The palette override remains available to the generated fallback,
         // but would erase the authored source-bike materials on this model.
         ApplyImportedRiderMaterials(instance);
         CollectHelmetParts(instance);
+        AttachRigidHelmet(instance, skeleton);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private static void RemoveLegacyGarmentDetails(Node importedModel)
+    {
+        foreach (var name in new[] { "RiderJerseyCollar", "RiderRoadKitDetails" })
+        {
+            var details = FindModelNode<Node>(importedModel, name);
+            if (details is null) continue;
+            details.GetParent()?.RemoveChild(details);
+            details.QueueFree();
+            GD.Print($"[Cyclist GLB] removed obsolete projected garment decoration {name}; fitted shells replace it.");
+        }
+    }
+
+    private void AttachRigidHelmet(Node rider, Skeleton3D skeleton)
+    {
+        var headIndex = skeleton.FindBone("head");
+        if (headIndex < 0) throw new InvalidOperationException("Imported rider is missing its head bone for the rigid helmet attachment.");
+
+        var helmetScene = ResourceLoader.Load<PackedScene>(RigidHelmetPath)
+            ?? throw new InvalidOperationException($"Rigid supplied helmet asset is missing: {RigidHelmetPath}.");
+        var helmet = helmetScene.Instantiate<Node3D>();
+        helmet.Name = "OriginalSuppliedHelmetRigidAssembly";
+        var helmetMesh = FindFirstNode<MeshInstance3D>(helmet)
+            ?? throw new InvalidOperationException("Supplied helmet has no mesh surface.");
+        _helmetOriginalMaterial = helmetMesh.Mesh?.SurfaceGetMaterial(0) as StandardMaterial3D;
+        if (_helmetOriginalMaterial?.AlbedoTexture is not { } helmetTexture)
+            throw new InvalidOperationException("Supplied helmet's textured shell material is missing.");
+        _helmetShellMaterial = new ShaderMaterial { Shader = HelmetRecolorShader };
+        _helmetShellMaterial.SetShaderParameter("helmet_texture", helmetTexture);
+        _helmetShellMaterial.SetShaderParameter("shell_color", HelmetColor("Charcoal"));
+        // The supplied UV atlas keeps the straps, clasp and vents near-black.
+        // The shader recolours brighter shell texels while retaining their local shading.
+        helmetMesh.SetSurfaceOverrideMaterial(0, _helmetShellMaterial);
+
+        // Hide only the legacy helmet on this rider instance. The existing GLB,
+        // skeleton, and all body/animation data remain unchanged.
+        var legacyPartCount = _helmetParts.Count;
+        foreach (var legacyPart in _helmetParts) legacyPart.Visible = false;
+        _helmetParts.Clear();
+
+        var attachment = new BoneAttachment3D
+        {
+            Name = "CyclingHelmetHeadAttachment",
+            BoneName = "head",
+            OverridePose = false
+        };
+        skeleton.AddChild(attachment);
+
+        // The original OBJ's physical brow/front is -Y. The standalone export
+        // bakes Blender's NEGATIVE_Y import basis and glTF's axis conversion,
+        // so its Godot-local front is -Z and its up is +Y. Convert that source
+        // frame into the live bike/head frames rather than rotating the skinned
+        // rider mesh or composing a Blender-space yaw with the armature.
+        var skeletonToRider = GetTransformRelativeToCyclist(skeleton);
+        var frontWheelPosition = GetTransformRelativeToCyclist(_frontWheel).Origin;
+        var rearWheelPosition = GetTransformRelativeToCyclist(_rearWheel).Origin;
+        var bikeForward = (frontWheelPosition - rearWheelPosition).Normalized();
+        var riderUp = skeletonToRider.Basis.Y.Normalized();
+        var desiredWorldRight = bikeForward.Cross(riderUp).Normalized();
+        var desiredWorldBasis = (new Basis(desiredWorldRight, riderUp, -bikeForward) *
+                                 new Basis(Vector3.Right, Mathf.DegToRad(-_rigidHelmetForwardPitchDegrees))).Orthonormalized();
+        var attachmentWorld = skeletonToRider * skeleton.GetBoneGlobalPose(headIndex);
+        var attachmentBasis = attachmentWorld.Basis.Orthonormalized();
+        var importedRootBasis = helmet.Transform.Basis.Orthonormalized();
+        var desiredLocalBasis = (attachmentBasis.Inverse() * desiredWorldBasis * importedRootBasis.Inverse()).Orthonormalized();
+        var headCenter = FindWeightedHeadCenter(rider, skeleton, skeletonToRider, headIndex, attachmentWorld.Origin);
+        var legacyShellCenter = FindLegacyHelmetShellCenter(rider, skeleton, skeletonToRider, attachmentWorld.Origin);
+        _rigidHelmetSkeleton = skeleton;
+        _rigidHelmetHeadIndex = headIndex;
+        _rigidHelmetRootBasis = importedRootBasis;
+        _rigidHelmetRootOrigin = helmet.Transform.Origin;
+        _rigidHelmetHeadCenterOffset = attachmentBasis.Inverse() * (legacyShellCenter - attachmentWorld.Origin);
+        var desiredLocalOrigin = _rigidHelmetHeadCenterOffset - desiredLocalBasis * _rigidHelmetRootOrigin +
+                                 desiredLocalBasis * RigidHelmetFitOffset;
+
+        var pose = new Node3D
+        {
+            Name = "CyclingHelmetRigidPose",
+            Transform = new Transform3D(desiredLocalBasis, desiredLocalOrigin)
+        };
+        attachment.AddChild(pose);
+        pose.AddChild(helmet);
+        _rigidHelmetPose = pose;
+        _helmetParts.Add(pose);
+
+        GD.Print($"[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, " +
+                 $"local fit offset={RigidHelmetFitOffset}, legacy parts hidden={legacyPartCount}");
+        GD.Print($"[Cyclist GLB] helmet fit reference: weighted head center={headCenter}, " +
+                 $"legacy shell center={legacyShellCenter}, delta={legacyShellCenter - headCenter}");
+    }
+
+    private Transform3D GetTransformRelativeToCyclist(Node3D node)
+    {
+        var transform = Transform3D.Identity;
+        Node current = node;
+        while (current != this)
+        {
+            if (current is not Node3D spatial || spatial.GetParent() is null)
+                throw new InvalidOperationException($"{node.Name} is not beneath this cyclist visual.");
+            transform = spatial.Transform * transform;
+            current = spatial.GetParent();
+        }
+        return transform;
+    }
+
+    private void UpdateRigidHelmetPoseForCurrentFrame()
+    {
+        if (_rigidHelmetSkeleton is null || _rigidHelmetPose is null || _rigidHelmetHeadIndex < 0) return;
+
+        // The PedalCycle clip can pitch the head bone forward. Keep the mesh a
+        // rigid assembly above the face and aligned to the bicycle while the
+        // BoneAttachment continues to follow the animated head position.
+        var skeletonToRider = GetTransformRelativeToCyclist(_rigidHelmetSkeleton);
+        var frontWheelPosition = GetTransformRelativeToCyclist(_frontWheel).Origin;
+        var rearWheelPosition = GetTransformRelativeToCyclist(_rearWheel).Origin;
+        var bikeForward = (frontWheelPosition - rearWheelPosition).Normalized();
+        var riderUp = skeletonToRider.Basis.Y.Normalized();
+        var bikeRight = bikeForward.Cross(riderUp).Normalized();
+        var desiredWorldBasis = (new Basis(bikeRight, riderUp, -bikeForward) *
+                                 new Basis(Vector3.Right, Mathf.DegToRad(-_rigidHelmetForwardPitchDegrees))).Orthonormalized();
+        var attachmentTransform = skeletonToRider * _rigidHelmetSkeleton.GetBoneGlobalPose(_rigidHelmetHeadIndex);
+        var attachmentBasis = attachmentTransform.Basis.Orthonormalized();
+        var localBasis = (attachmentBasis.Inverse() * desiredWorldBasis * _rigidHelmetRootBasis.Inverse()).Orthonormalized();
+        var localOrigin = _rigidHelmetHeadCenterOffset - localBasis * _rigidHelmetRootOrigin +
+                          localBasis * RigidHelmetFitOffset +
+                          attachmentBasis.Inverse() * bikeForward * RigidHelmetForwardFitOffsetMeters;
+        _rigidHelmetPose.Transform = new Transform3D(localBasis, localOrigin);
+    }
+
+    private static Vector3 FindWeightedHeadCenter(Node rider, Skeleton3D skeleton, Transform3D skeletonToRider,
+        int headBone, Vector3 fallback)
+    {
+        var human = FindModelNode<MeshInstance3D>(rider, "Human");
+        if (human?.Mesh is null || human.Skin is null) return fallback;
+
+        var boneTransforms = new Transform3D[skeleton.GetBoneCount()];
+        for (var bone = 0; bone < boneTransforms.Length; bone++)
+            boneTransforms[bone] = skeletonToRider * skeleton.GetBoneGlobalPose(bone) * human.Skin.GetBindPose(bone);
+
+        var points = new System.Collections.Generic.List<Vector3>();
+        for (var surface = 0; surface < human.Mesh.GetSurfaceCount(); surface++)
+        {
+            var arrays = human.Mesh.SurfaceGetArrays(surface);
+            var vertices = arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+            var bones = arrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
+            var weights = arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array();
+            if (vertices.Length == 0 || bones.Length != vertices.Length * 4 || weights.Length != bones.Length) continue;
+            for (var vertex = 0; vertex < vertices.Length; vertex++)
+            {
+                var headWeight = 0f;
+                var point = Vector3.Zero;
+                for (var influence = 0; influence < 4; influence++)
+                {
+                    var offset = vertex * 4 + influence;
+                    var weight = weights[offset];
+                    if (weight <= 0) continue;
+                    var bone = bones[offset];
+                    if ((uint)bone >= boneTransforms.Length) continue;
+                    if (bone == headBone) headWeight += weight;
+                    point += boneTransforms[bone] * vertices[vertex] * weight;
+                }
+                if (headWeight > .5f) points.Add(point);
+            }
+        }
+        return points.Count > 0 ? points.Aggregate(Vector3.Zero, (sum, point) => sum + point) / points.Count : fallback;
+    }
+
+    private static Vector3 FindLegacyHelmetShellCenter(Node rider, Skeleton3D skeleton,
+        Transform3D skeletonToRider, Vector3 fallback)
+    {
+        var shell = FindModelNode<MeshInstance3D>(rider, "CyclingHelmet");
+        if (shell?.Mesh is null || shell.Skin is null) return fallback;
+
+        var boneTransforms = new Transform3D[skeleton.GetBoneCount()];
+        for (var bone = 0; bone < boneTransforms.Length; bone++)
+            boneTransforms[bone] = skeletonToRider * skeleton.GetBoneGlobalPose(bone) * shell.Skin.GetBindPose(bone);
+
+        var minimum = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        var maximum = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        var count = 0;
+        for (var surface = 0; surface < shell.Mesh.GetSurfaceCount(); surface++)
+        {
+            var arrays = shell.Mesh.SurfaceGetArrays(surface);
+            var vertices = arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+            var bones = arrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
+            var weights = arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array();
+            if (vertices.Length == 0 || bones.Length != vertices.Length * 4 || weights.Length != bones.Length) continue;
+            for (var vertex = 0; vertex < vertices.Length; vertex++)
+            {
+                var point = Vector3.Zero;
+                for (var influence = 0; influence < 4; influence++)
+                {
+                    var offset = vertex * 4 + influence;
+                    var weight = weights[offset];
+                    var bone = bones[offset];
+                    if (weight <= 0 || (uint)bone >= boneTransforms.Length) continue;
+                    point += boneTransforms[bone] * vertices[vertex] * weight;
+                }
+                minimum = minimum.Min(point);
+                maximum = maximum.Max(point);
+                count++;
+            }
+        }
+        return count > 0 ? (minimum + maximum) * .5f : fallback;
     }
 
     private void ApplyImportedRiderMaterials(Node root)
@@ -429,10 +734,8 @@ public partial class CyclistVisual : Node3D
         var human = FindModelNode<MeshInstance3D>(root, "Human")
             ?? throw new InvalidOperationException("Imported rider is missing the weighted Human mesh.");
         var outfit = new ShaderMaterial { Shader = RiderOutfitShader };
-        outfit.SetShaderParameter("jersey_color", _jerseyMaterial.AlbedoColor);
-        outfit.SetShaderParameter("shorts_color", new Color(.035f,.047f,.058f));
-        outfit.SetShaderParameter("skin_color", new Color(.58f,.36f,.25f));
-        outfit.SetShaderParameter("shoe_color", new Color(.68f,.66f,.58f));
+        _outfitMaterial = outfit;
+        ConfigureOutfitShader(outfit, _jerseyMaterial.AlbedoColor, 1f);
         var surfaces = human.Mesh?.GetSurfaceCount() ?? 0;
         var outfitSurfaces = 0;
         for (var surface = 0; surface < surfaces; surface++)
@@ -447,6 +750,53 @@ public partial class CyclistVisual : Node3D
         if (outfitSurfaces == 0)
             throw new InvalidOperationException("Imported rider has no outfit surface for its colour shader.");
         GD.Print($"[Cyclist GLB] Human outfit shader applied to {outfitSurfaces}/{surfaces} surfaces; eye material remains separate.");
+
+        var jersey = FindModelNode<MeshInstance3D>(root, "RiderJerseyShell")
+            ?? throw new InvalidOperationException("Imported rider is missing the skinned jersey shell.");
+        var shorts = FindModelNode<MeshInstance3D>(root, "RiderBibShortsShell")
+            ?? throw new InvalidOperationException("Imported rider is missing the skinned bib-short shell.");
+        if (jersey.Mesh?.GetSurfaceCount() != 3 || shorts.Mesh?.GetSurfaceCount() != 2)
+            throw new InvalidOperationException($"Expected continuous jersey, sleeve cuffs, zipper, bib fabric and gripper surfaces; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
+        jersey.SetSurfaceOverrideMaterial(0, outfit);
+        jersey.SetSurfaceOverrideMaterial(1, outfit);
+        _zipperMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
+        ConfigureOutfitShader(_zipperMaterial, _jerseyMaterial.AlbedoColor, .48f);
+        jersey.SetSurfaceOverrideMaterial(2, _zipperMaterial);
+        shorts.SetSurfaceOverrideMaterial(0, outfit);
+        shorts.SetSurfaceOverrideMaterial(1, outfit);
+        GD.Print("[Cyclist GLB] fitted jersey, continuous neckline, short-sleeve cuffs, centre zipper, and bib shorts/grippers use the production Human Skin and skeleton.");
+    }
+
+    private static void ConfigureOutfitShader(ShaderMaterial material, Color jerseyColor, float tone)
+    {
+        material.SetShaderParameter("jersey_color", jerseyColor);
+        material.SetShaderParameter("shorts_color", new Color(.035f, .047f, .058f));
+        material.SetShaderParameter("skin_color", new Color(.58f, .36f, .25f));
+        material.SetShaderParameter("shoe_color", new Color(.68f, .66f, .58f));
+        material.SetShaderParameter("fabric_tone", tone);
+    }
+
+    private static Transform3D TransformToAncestor(Node3D node, Node ancestor)
+    {
+        var transform = Transform3D.Identity;
+        Node? current = node;
+        while (current != ancestor)
+        {
+            if (current is not Node3D current3D || current.GetParent() is null)
+                throw new InvalidOperationException($"{node.Name} is not beneath imported model root {ancestor.Name}.");
+            transform = current3D.Transform * transform;
+            current = current.GetParent();
+        }
+        return transform;
+    }
+
+    private static int CountBoneTrackKeys(Animation animation, string boneName)
+    {
+        var total = 0;
+        for (var track = 0; track < animation.GetTrackCount(); track++)
+            if (animation.TrackGetPath(track).ToString().Contains(boneName, StringComparison.OrdinalIgnoreCase))
+                total += animation.TrackGetKeyCount(track);
+        return total;
     }
 
     /// <summary>Set an exact baked pedal phase for the Godot visual review harness.</summary>
@@ -469,6 +819,7 @@ public partial class CyclistVisual : Node3D
         var cycleLength = Math.Max(0.0, (_pedalCycleAnimation.Length - terminalSample) / 3.0);
         var animationPhase = CyclistAnimationMath.WrapAngle(phase + ImportedAnimationPhaseOffset);
         _riderAnimationPlayer.Seek((animationPhase / Math.Tau) * cycleLength, true);
+        UpdateRigidHelmetPoseForCurrentFrame();
     }
 
     private void SetImportedCrankVisualPhase(double phase)

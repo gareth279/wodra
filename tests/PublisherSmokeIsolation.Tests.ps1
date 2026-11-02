@@ -12,7 +12,10 @@ if ($publisher -notmatch "PublisherSmokeIsolation\.ps1" -or
     $publisher -notmatch '--packaged-xc-assets-smoke' -or
     $publisher -match "'--scene'" -or
     $publisher -notmatch "--require-userdata-under" -or
-    $publisher -notmatch "AllowedExitCodes @\(41\)") {
+    $publisher -notmatch "AllowedExitCodes @\(41\)" -or
+    $publisher -notmatch "AllowedExitCodes @\(0, -1073740791\)" -or
+    $publisher -notmatch '\$routeSmoke\.ExitCode -notin @\(0, -1073740791\)' -or
+    $publisher -notmatch 'routeSmokeOutput -notmatch.*PackagedXcRouteAssetsSmoke') {
     throw 'The extracted-app publisher smoke no longer establishes and verifies disposable user-data isolation.'
 }
 $tokens = $null

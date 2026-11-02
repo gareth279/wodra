@@ -101,10 +101,11 @@ def make_helmet(rig, use_supplied=False):
     obj_path = source / "sport_cycling_helmet_main.obj"
     if use_supplied and obj_path.is_file():
         before = set(bpy.data.objects)
-        # This OBJ is authored Z-up with +Y facing forward. The previous
-        # guessed Y-up import stood the shell on its end, which caused the
-        # reported face intersection and bowl-like production silhouette.
-        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="Y", up_axis="Z")
+        # Inspecting the standalone, neutral-material OBJ from the side shows
+        # its short projecting brow/visor lip at -Y and the long tapered shell
+        # tail at +Y. Import using that verified physical forward direction;
+        # the old +Y assumption put the genuine front behind the rider.
+        bpy.ops.wm.obj_import(filepath=str(obj_path), forward_axis="NEGATIVE_Y", up_axis="Z")
         imported = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
         if len(imported) != 1:
             raise RuntimeError(f"Expected one mesh in supplied helmet OBJ, found {len(imported)}")
@@ -334,6 +335,11 @@ def add_road_kit_garment_details(rig):
     zipper=mat("Road kit | zipper and seam",(.075,.012,.012),.88)
     jersey_trim=mat("Road kit | collar and sleeve edge",(.12,.025,.02),.88)
     bib_trim=mat("Road kit | short leg gripper",(.018,.022,.024),.88)
+    neck_bone=rig.data.bones.get("neck01")
+    if neck_bone is None:
+        raise RuntimeError("neck01 is required to place the fitted jersey collar")
+    neck_base_local=neck_bone.head_local.copy()
+    neck_center_world=rig.matrix_world @ neck_base_local
     depsgraph=bpy.context.evaluated_depsgraph_get()
     evaluated=human.evaluated_get(depsgraph)
     evaluated_mesh=evaluated.to_mesh(preserve_all_data_layers=True,depsgraph=depsgraph)
@@ -440,14 +446,78 @@ def add_road_kit_garment_details(rig):
         modifier=obj.modifiers.new("Garment skin","ARMATURE"); modifier.object=rig
         obj["garment_detail"]=True
 
+    def skin_band(name,guide_points,material,height,bind_bone=None):
+        """Build a short fitted fabric band with the rider's sampled skin weights."""
+        lower=[]; upper=[]; thickness=[]; ring_weights=[]
+        for point in guide_points:
+            lower_point,lower_normal,weights=project(point)
+            upper_point,upper_normal,_=project((point[0],point[1],point[2]+height))
+            if bind_bone is not None:
+                # A single neck influence keeps this small band rigid and
+                # prevents mixed spine/head inverse binds from stretching it.
+                weights={bind_bone:1.0}
+            # The accepted rider's interpolated neck normals point upward at
+            # the center front, which folds an offset band into the body. Use
+            # the measured radial direction from the neck center so the fabric
+            # stays outside the neck around the full circumference.
+            outward=Vector((point[0]-neck_center_world.x,point[1]-neck_center_world.y,0)).normalized()
+            if outward.length < .5:
+                outward=Vector((0,1,0))
+            lower.append(lower_point+outward*.008)
+            upper.append(upper_point+outward*.008)
+            thickness.append((outward,outward))
+            ring_weights.append(weights)
+        verts=[]; faces=[]; section_stride=4
+        for low,high,(low_normal,high_normal) in zip(lower,upper,thickness):
+            verts.extend((low,high,low-low_normal*.0015,high-high_normal*.0015))
+        # A closed 1.6 mm fabric shell follows the neckline and rises 15 mm
+        # toward the neck without flaring outward.
+        for i in range(len(guide_points)-1):
+            a=i*section_stride; b=(i+1)*section_stride
+            faces.extend(((a,b,b+1,a+1),
+                          (a+2,a+3,b+3,b+2),
+                          (a,a+2,b+2,b),
+                          (a+1,b+1,b+3,a+3)))
+        mesh=bpy.data.meshes.new(name+"Mesh")
+        rig_world_to_local=rig.matrix_world.inverted()
+        mesh.from_pydata([tuple(rig_world_to_local@vertex) for vertex in verts],[],faces)
+        mesh.materials.append(material)
+        for face in mesh.polygons: face.use_smooth=True
+        obj=bpy.data.objects.new(name,mesh); bpy.context.scene.collection.objects.link(obj)
+        obj.parent=rig; obj.matrix_parent_inverse=Matrix.Identity(4)
+        deform={}
+        for bone_name in {bone for weights in ring_weights for bone in weights}:
+            pose_bone=rig.pose.bones[bone_name]; data_bone=rig.data.bones[bone_name]
+            deform[bone_name]=pose_bone.matrix@data_bone.matrix_local.inverted()
+            obj.vertex_groups.new(name=bone_name)
+        for ring_index,weights in enumerate(ring_weights):
+            blended=Matrix(((0.,0.,0.,0.),(0.,0.,0.,0.),(0.,0.,0.,0.),(0.,0.,0.,0.)))
+            for bone_name,weight in weights.items(): blended+=deform[bone_name]*weight
+            inverse=blended.inverted()
+            for vertex_index in range(ring_index*section_stride,(ring_index+1)*section_stride):
+                mesh.vertices[vertex_index].co=inverse@mesh.vertices[vertex_index].co
+                for bone_name,weight in weights.items():
+                    obj.vertex_groups[bone_name].add([vertex_index],weight,"REPLACE")
+        modifier=obj.modifiers.new("Collar skin","ARMATURE"); modifier.object=rig
+        obj["garment_detail"]=True; obj["garment_role"]="jersey_collar"
+
     # Chest seam, collar ring, and zipped closure all project to the current
     # skinned surface and inherit its interpolated bone weights.
-    skin_detail("RiderJerseyCollarSeam",
-                [(0.075*math.cos(math.tau*i/48),.13+.045*math.sin(math.tau*i/48),1.37)
-                 for i in range(49)],jersey_trim,.0012,closed=True)
+    # Build from the actual neck01 attachment in rig-local space. The previous
+    # hard-coded world Y/Z path was about 45 cm off the neck after the rider's
+    # mirrored rig transform, so projection landed on chest/shoulder surfaces.
+    collar_path=[tuple(rig.matrix_world @ Vector((
+                     neck_base_local.x+.071*math.cos(math.tau*i/48),
+                     neck_base_local.y+.033*math.sin(math.tau*i/48),
+                     neck_base_local.z-.014))) for i in range(49)]
+    skin_band("RiderJerseyCollar",collar_path,jersey_trim,.015,bind_bone="neck01")
+    skin_detail("RiderJerseyCollarSeam",collar_path,jersey_trim,.0012,closed=True)
+    # The imported bike faces Godot -Z; the rig's local Blender Y is mirrored
+    # through the retarget root, so positive local Y maps to the actual front.
+    zipper_local=[(0,neck_base_local.y+.034,neck_base_local.z-.012),
+                  (0,.060,1.365),(0,.082,1.30),(0,.105,1.22),(0,.125,1.12)]
     skin_detail("RiderJerseyFrontZip",
-                [(0,.31,1.42),(0,.27,1.38),(0,.23,1.33),(0,.18,1.28),
-                 (0,.13,1.23),(0,.08,1.18)],zipper,.0009)
+                [tuple(rig.matrix_world @ Vector(point)) for point in zipper_local],zipper,.0009)
     for side in ("L","R"):
         sign=-1 if side=="L" else 1
         sleeve=[]
@@ -455,7 +525,8 @@ def add_road_kit_garment_details(rig):
             angle=math.tau*i/48
             sleeve.append((sign*(.19+.036*math.cos(angle)),.145+.036*math.sin(angle),1.25))
         skin_detail(f"RiderJerseySleeveCuff{side}",sleeve,jersey_trim,.0009,closed=True)
-        upper=rig.pose.bones.get(f"upperleg02.{side}")
+        upper=(rig.pose.bones.get(f"upperleg02.{side}") or
+               rig.pose.bones.get(f"upperleg01.{side}"))
         if upper is None:
             raise RuntimeError(f"missing bib short attachment bone upperleg02.{side}")
         start=rig.matrix_world@upper.head; end=rig.matrix_world@upper.tail
@@ -466,7 +537,8 @@ def add_road_kit_garment_details(rig):
             angle=math.tau*i/48
             band.append(tuple(center+.065*(across*math.cos(angle)+depth*math.sin(angle))))
         skin_detail(f"RiderBibLegGripper{side}",band,bib_trim,.001,closed=True)
-    details=[obj for obj in bpy.context.scene.objects if obj.get("garment_detail")]
+    details=[obj for obj in bpy.context.scene.objects if obj.get("garment_detail") and
+             obj.get("garment_role")!="jersey_collar"]
     if details:
         bpy.ops.object.select_all(action="DESELECT")
         for obj in details: obj.select_set(True)
@@ -730,6 +802,7 @@ def round_clothing_edges():
     mesh=human.data
     groups={g.name:g.index for g in human.vertex_groups}
     head_idx=groups.get("head")
+    upper_neck_idx=groups.get("neck03")
     foot_indices=[idx for name,idx in groups.items() if name in ("foot.L","foot.R") or name.startswith("toe")]
     def smooth(value,lo,hi):
         t=max(0.0,min(1.0,(value-lo)/(hi-lo)))
@@ -743,11 +816,17 @@ def round_clothing_edges():
         x,y,z=vertex.co
         ax=abs(x)
         head=group_weight(vertex,head_idx)
-        jersey=(smooth(z,.955,.99)*(1-smooth(z,1.39,1.42))*(1-smooth(ax,.26,.36))
-                *(1-smooth(head,.08,.50)))
-        face_center=1-smooth(ax,.075,.15)
-        face_upper=smooth(z,1.29,1.34)
-        jersey*=1-face_center*face_upper
+        upper_neck=group_weight(vertex,upper_neck_idx)
+        # Keep the fitted jersey on the torso up to the neck, but never assign
+        # jersey color to a vertex skinned by the upper neck or head bones. The runtime shell
+        # clips at this same mask boundary, while skin and facial proportions
+        # remain part of the original Human mesh.
+        jersey=(smooth(z,.955,.99)*(1-smooth(z,1.455,1.48))*(1-smooth(ax,.26,.36))
+                *(1.0 if max(head,upper_neck) <= .001 else 0.0))
+        # Head weighting already separates the face and neck from the torso.
+        # A second centerline/height cut removed the upper sternum as if it
+        # were face skin, creating the deep exposed-chest neckline seen in
+        # production. Keep the fitted jersey mask continuous up to the neck.
         shorts=smooth(z,.70,.74)*(1-smooth(z,1.00,1.04))*(1-smooth(ax,.20,.23))
         shoe=(1-smooth(z,.10,.13))*(1-smooth(y,-.075,-.045))
         foot=max((group_weight(vertex,idx) for idx in foot_indices),default=0.0)

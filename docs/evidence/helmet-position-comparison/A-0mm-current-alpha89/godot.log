@@ -1,0 +1,166 @@
+Godot Engine v4.6.2.stable.mono.official.71f334935 - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 582.67 - Compatibility - Using Device: NVIDIA - Quadro P620
+
+Wodra log: C:/Users/garet/AppData/Local/Temp/Wodra-alpha90-forward-comparison/userdata-final-A-current/Godot/app_userdata/Wodra/logs\wodra-20261102-215023-c2b1d9638a944e0cacb9588a2c6471e2.jsonl
+GameBootstrap initialised.
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[CameraInspect] RideWorldView ready node=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView visible=False inputProcessing=True debugBuild=true assembly=1.0.0.0 mvid=26046390-479f-474f-bb7c-c461fc12c43b loadedPath='' debugDll=C:/Users/garet/.codex/worktrees/alpha90-rider-garments/src/IndoorCycling.Game/.godot/mono/temp/bin/Debug/IndoorCycling.Game.dll debugDllModifiedUtc=2026-11-02T08:50:10.5080553Z camera=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/ChaseCamera initial=GameplayRefined current=(0, 0, 0)
+Configured fake trainer mode.
+Trainer ride session started.
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+Buildings visual: loaded=902 corridorSuppressed=0 detailed=536 pitchedRoofs=902 triangles=68975 facade=11040 roof=3989 windows=53946 chunks=16 meshInstances=16 surfaces=48 sharedMaterials=3 buildMs=319.7
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/372554474 route=1034.6m elevation=14.04m samples=4 overlaps background road OSM 372554472
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/381860107 route=1183.6m elevation=10.53m samples=4 overlaps background road OSM 772999267
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/479412249 route=1183.6m elevation=9.77m samples=4 overlaps background road OSM 772999267
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/106727129 route=2279.5m elevation=9.10m samples=5 overlaps background road OSM 225051723
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/1559284084 route=2752.2m elevation=11.48m samples=3 overlaps background road OSM 60197784
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/625848056 route=4159.5m elevation=2.53m samples=1 overlaps background road OSM 21436162
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/625848064 route=4157.6m elevation=2.44m samples=2 overlaps background road OSM 21436162
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/710779787 route=4122.2m elevation=2.35m samples=1 overlaps background road OSM 19782029
+[CameraInspect] ride active route=dunedin-one-way-oval-gardens node=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView visible=True inputProcessing=True mode=GameplayRefined camera=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/ChaseCamera
+[CameraInspect] selector accepted before=GameplayRefined after=Side positionBefore=(0.33765113, 2.2909033, 5.253196) positionAfter=(3.0448294, 1.5059243, -1.0022514) transform=[X: (-0.13813923, 0, -0.99041283), Y: (-0.105524644, 0.99430776, 0.014718199), Z: (0.9847752, 0.10654613, -0.13735291), O: (3.0448294, 1.5059243, -1.0022514)] current=True
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(278.13895, 1.7563434, -685.8675) positionAfter=(278.13895, 1.7563434, -685.8675) transform=[X: (0.3636581, 0, -0.9315325), Y: (-0.09773484, 0.99448085, -0.038154405), Z: (0.92639124, 0.10491834, 0.36165103), O: (278.13895, 1.7563434, -685.8675)] current=True
+[RiderFinishingSceneReview] side centered debug=True: subject=(0.49029365, 0.5059482), safeCenter=(0.48906252, 0.5), offset=(0.0012311339, 0.005948186)
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(279.22192, 1.7886802, -687.92285) positionAfter=(279.22192, 1.7886802, -687.92285) transform=[X: (0.5168319, 0, -0.8560869), Y: (-0.12960489, 0.9884738, -0.07824432), Z: (0.8462195, 0.15139222, 0.51087475), O: (279.22192, 1.7886802, -687.92285)] current=True
+[RiderFinishingSceneReview] side centered debug=False: subject=(0.41420525, 0.46365926), safeCenter=(0.40520832, 0.46574074), offset=(0.008996934, -0.0020814836)
+[CameraInspect] selector accepted before=Side after=GameplayRefined positionBefore=(280.01108, 1.8047707, -689.5668) positionAfter=(274.50677, 2.558917, -685.58575) transform=[X: (0.9649173, 0, 0.26255405), Y: (0.03233667, 0.99238664, -0.1188411), Z: (-0.26055512, 0.12316194, 0.95757097), O: (274.50677, 2.558917, -685.58575)] current=True
+[CameraInspect] selector accepted before=GameplayRefined after=FrontThreeQuarter positionBefore=(275.10004, 2.5642936, -687.02155) positionAfter=(280.0114, 2.30312, -696.92017) transform=[X: (-0.521345, 0, -0.85334605), Y: (-0.21945077, 0.96636754, 0.13407171), Z: (0.8246459, 0.25716507, -0.5038109), O: (280.0114, 2.30312, -696.92017)] current=True
+[RiderFinishingSceneReviewTest] animations=PedalCycle:3.014s/93tracks/foot=89;PedalCycle_001:3.014s/93tracks/foot=1
+[RiderFinishingSceneReviewTest] active clip=PedalCycle tracks=93 footTracks=WodraCyclist/RiderModel/Human_rig/Skeleton3D:left_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:left_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:lowerleg01.L:86;WodraCyclist/RiderModel/Human_rig/Skeleton3D:foot.L:89;WodraCyclist/RiderModel/Human_rig/Skeleton3D:lowerleg01.R:86;WodraCyclist/RiderModel/Human_rig/Skeleton3D:foot.R:89;WodraCyclist/RiderModel/Human_rig/Skeleton3D:right_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:right_foot_ik:1
+[HelmetFitSurvey] rejectedBand landmarks points=357 faceAxisVsBike=0.7754 targetBrow=(277.14905, 1.6560174, -695.7572) targetRear=(277.09885, 1.7497259, -695.55865) targetSpan=0.2252m physicalBrowRearSpan=0.2689m rearResidualAfterBrowFit=0.0541m
+[HelmetFitSurvey] GodotWorld rider=[X: (0.9298707, 0.009071138, 0.3677694), Y: (-0.009421645, 0.9999531, -0.0008423913), Z: (-0.36776114, -0.0026816872, 0.92991596), O: (277.01813, 0.323502, -695.3678)] skeleton=[X: (-0.9298708, -0.009071138, -0.3677693), Y: (-0.009421645, 0.9999531, -0.0008423913), Z: (0.36776105, 0.0026816865, -0.929916), O: (276.91956, 0.5177876, -695.1234)] headBone=[X: (-0.9304822, -0.008383098, -0.36623576), Y: (0.28152132, 0.62333393, -0.72951925), Z: (0.2344035, -0.7819094, -0.57764286), O: (277.11154, 1.6762414, -695.6378)] human=[X: (-0.9298708, -0.009071138, -0.3677693), Y: (-0.009421645, 0.9999531, -0.0008423913), Z: (0.36776105, 0.0026816865, -0.929916), O: (276.91956, 0.5177876, -695.1234)] helmetAttachment=[X: (-0.9304822, -0.008383098, -0.36623576), Y: (0.28152132, 0.62333393, -0.72951925), Z: (0.2344035, -0.7819094, -0.57764286), O: (277.11154, 1.6762414, -695.6378)] pose=[X: (0.9298707, 0.00907114, 0.36776936), Y: (0.0672462, 0.9786601, -0.19416463), Z: (-0.36168343, 0.20527995, 0.90941966), O: (277.13733, 1.750577, -695.7052)] assembly=[X: (0.9298707, 0.00907114, 0.36776936), Y: (0.0672462, 0.9786601, -0.19416463), Z: (-0.36168343, 0.20527995, 0.90941966), O: (277.13733, 1.750577, -695.7052)] mesh=[X: (0.9298707, 0.00907114, 0.36776936), Y: (0.0672462, 0.9786601, -0.19416463), Z: (-0.36168343, 0.20527995, 0.90941966), O: (277.13733, 1.750577, -695.7052)]
+[HelmetFitSurvey] skull eyeCenter=(277.14105, 1.6384685, -695.7119) headCenter=(277.13095, 1.6617892, -695.68494) faceAxis=(0.27254334, -0.6292144, -0.7278801) bikeForward=(0.3677781, 0.0026816672, -0.9299097) dot=0.7754 skullAlongBike=748.7280..748.9484 skullUp=-0.4435..-0.2141
+[HelmetFitSurvey] suppliedAssembly localAabb=(-0.084463544, -0.166772, -0.11552675), (0.16892709, 0.23733863, 0.27703804) worldAlongBike=748.7173..748.9792 worldAcrossBike=1.7607..1.9296 worldUp=-0.4428..-0.1974 physicalBrow=(277.17285, 1.7034202, -695.7939) physicalRear=(277.0803, 1.8038752, -695.5623) markerSeparation=0.2689m
+[HelmetFitSurvey] upperSkull points=156 alongBike=748.7280..748.9484 up=-0.3507..-0.2141
+[HelmetFitSurvey] nearest shell vertices (point-cloud distances; rendering is final check): brow=0.0413m crown=0.0016m leftTemple=0.0085m rightTemple=0.0083m rearSkull=0.0628m
+[HelmetFitSurvey] upper-face region points forehead=102 at=(277.16553, 1.7014943, -695.7755) shellDistance=0.0068m; occiput=(277.08893, 1.658941, -695.6288) shellDistance=0.0464m foreheadToOcciput=0.1709m
+[RiderFinishingSceneReviewTest] rigid original helmet attached to head; physical brow/rear landmarks parented to head assembly, vertices=39535
+[RiderFinishingSceneReviewTest] legacy skinned helmet hidden; rigid assembly=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/CyclistVisual/WodraCyclist2/WodraCyclist/RiderModel/Human_rig/Skeleton3D/CyclingHelmetHeadAttachment/CyclingHelmetRigidPose/OriginalSuppliedHelmetRigidAssembly
+[RiderFinishingSceneReview] human surface=0 material=Rider Outfit | glTF vertex masks
+[RiderFinishingSceneReview] surface=0 albedo=(1, 1, 1, 1) roughness=0.82 metallic=0
+[RiderFinishingSceneReview] human surface=1 material=Rider Eye | muted warm brown
+[RiderFinishingSceneReview] surface=1 albedo=(0.2827793, 0.2347951, 0.20598418, 1) roughness=0.92 metallic=0
+[RiderFinishingSceneReviewTest] outfit COLOR_0 vertices=19761 jersey=2858 shorts=740 shoes=2261 skin=13641
+[RiderFinishingSceneReviewTest] upper-chest jersey coverage=434/434 central vertices through neck-base band
+[RiderFinishingSceneReviewTest] imported posed jersey collar bounds=(0.124298096, 0.016236901, 0.0725708) selectedColour=(0.075, 0.16, 0.34, 1)
+[RiderFinishingSceneReview] Human local bounds=(-0.51017433, 0.19500005, 0.0035098195), (1.0176873, 1.6442152, 0.34944403), node=[X: (1, 0, 0), Y: (0, 1, 0), Z: (0, 0, 1), O: (0, 0, 0)], headBone=[X: (0.99999833, 0.0006924793, -0.001649091), Y: (0.0008620024, 0.6212695, 0.78359646), Z: (0.00156717, -0.783598, 0.6212675), O: (0.00013829896, 1.1570289, 0.55204743)]
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-forward-comparison\A-current\head-front-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-forward-comparison\A-current\head-side-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-forward-comparison\A-current\head-three-quarter-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-forward-comparison\A-current\head-rear-helmet-on.png
+[RiderFinishingSceneReviewTest] physical-feature orientation in production side camera: brow/eyes/rear-tail X=1184.3/1066.6/850.6px, face projections=0.027/-0.230m; mesh proximity=0.004/0.000m; accepted forward orientation retained
+[RiderFinishingSceneReviewTest] shoe mesh source bounds L=(0.10400003, 0.058880046, 0.26999998) R=(0.10399996, 0.058879957, 0.27000004)
+[RiderFinishingSceneReviewTest] phase=0 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.1deg forefoot=(276.87515, 0.43634257, -695.3406) heel=(276.80215, 0.44959328, -695.15625) toe=(276.90146, 0.44983953, -695.40735)
+[RiderFinishingSceneReviewTest] phase=0 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.1deg forefoot=(277.11343, 0.76574504, -695.255) heel=(277.04037, 0.77829397, -695.0706) toe=(277.13968, 0.77949595, -695.3218)
+[RiderFinishingSceneReviewTest] phase=90 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(276.81522, 0.5922707, -695.1929) heel=(276.74255, 0.6188859, -695.0099) toe=(276.84183, 0.60088664, -695.2604)
+[RiderFinishingSceneReviewTest] phase=90 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(277.17343, 0.6092879, -695.4028) heel=(277.10037, 0.6084111, -695.21796) toe=(277.19925, 0.6278541, -695.4685)
+[RiderFinishingSceneReviewTest] phase=180 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.2deg forefoot=(276.87097, 0.7631399, -695.338) heel=(276.79794, 0.7766437, -695.15375) toe=(276.89725, 0.7765452, -695.40485)
+[RiderFinishingSceneReviewTest] phase=180 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.2deg forefoot=(277.1176, 0.43875042, -695.2575) heel=(277.04456, 0.45104614, -695.0731) toe=(277.14386, 0.452593, -695.3242)
+[RiderFinishingSceneReviewTest] phase=270 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(276.9351, 0.6073191, -695.49634) heel=(276.86203, 0.6064418, -695.3116) toe=(276.9609, 0.6258855, -695.56213)
+[RiderFinishingSceneReviewTest] phase=270 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(277.05356, 0.5942403, -695.0993) heel=(276.98093, 0.62085587, -694.91626) toe=(277.08014, 0.6028561, -695.16675)
+[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L=0.000m R=0.000m; pelvis-to-saddle=0.096m; ball-of-foot to moving pedal top L=0.00757m@75deg (0.0010681152, -0.0070204735, -0.0026245117) R=0.00756m@255deg (0.0011291504, -0.0070221424, -0.0025634766); ankle-bone travel=0.008-0.327m
+[RiderFinishingSceneReviewTest] anatomical knees step=0.0175/0.0189m flex=26.5-105.1/26.1-104.9deg forwardMin=0.1029/0.1011m legLengthDelta=0.00004/0.00004m
+[RiderFinishingSceneReviewTest] shoe toe error=4.0/4.0deg sole error=4.0/4.0deg ankle-to-shoe axis=0.0/0.0deg ankle-to-pedal normal=4.0/4.0deg heel plane=0.020/0.020m toe plane=0.025/0.025m signed min heel=0.006/0.006 toe=0.001/0.001m shoe step=0.62/0.62deg contact=0.026/0.025m surface=0.014/0.014m
+[RiderFinishingSceneReviewTest] physical toe-box/heel-cup width advantage=0.028/0.028m; physical toe-axis error=6.3/6.3deg; ankle/opening distance=0.070/0.072m; ankle fraction heel-to-toe=0.20-0.24/0.20-0.24
+[RiderFinishingSceneReview] hood centers L=(276.98737, 1.27079, -695.91705) R=(277.40024, 1.2748176, -695.7538) target=(277.1938, 1.2728038, -695.83545)
+[RiderFinishingSceneReview] PASS: imported GLB in RideScreen; evidence: C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-forward-comparison\A-current
+WARNING: 1 RID of type "Canvas" was leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2690)
+WARNING: 10 RIDs of type "CanvasItem" were leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2692)
+ERROR: 1 RID allocations of type 'N5GLES312LightStorage11ShadowAtlasE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N5GLES312RenderTargetE' were leaked at exit.
+ERROR: 20 RID allocations of type 'N5GLES37TextureE' were leaked at exit.
+ERROR: Texture with GL ID of 22: leaked 760 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 29: leaked 4092 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 35: leaked 4092 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 58: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 59: leaked 1364 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 67: leaked 174762 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 68: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 69: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 70: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 71: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 74: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 75: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 76: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 77: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 78: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 89: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 90: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 60: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: 1 RID allocations of type 'N16RendererViewport8ViewportE' were leaked at exit.
+ERROR: 15 RID allocations of type 'PN18TextServerAdvanced22ShapedTextDataAdvancedE' were leaked at exit.
+ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)
