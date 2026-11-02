@@ -104,30 +104,50 @@ def evaluated_vertex_world(obj, index):
 
 
 def shoe_frame_world(shoe, side):
-    """Measure outsole heel/toe/lateral axes from the authored mesh itself."""
+    """Measure physical toe-box and heel-cup ends from the authored mesh shape.
+
+    The toe box is the wider of the two longitudinal outsole ends; the heel
+    cup is narrower.  Resolve the long and lateral mesh axes from PCA rather
+    than assigning either end from a local coordinate sign or a vertex ID.
+    """
     local = [vertex.co.copy() for vertex in shoe.data.vertices]
     low_z = min(point.z for point in local)
     outsole = [index for index, point in enumerate(local) if point.z <= low_z + .04]
     if len(outsole) < 8:
         raise RuntimeError(f"{shoe.name} has too few vertices near the outsole")
-    outsole_min_y = min(local[index].y for index in outsole)
-    outsole_max_y = max(local[index].y for index in outsole)
-    low_y = min(point.y for point in local)
-    high_y = max(point.y for point in local)
-    low_x = min(point.x for point in local)
-    high_x = max(point.x for point in local)
-    y_span = high_y - low_y
-    x_span = high_x - low_x
-    if y_span < .18 or x_span < .045:
-        raise RuntimeError(f"{shoe.name} has implausible heel/toe geometry: {y_span:.3f} x {x_span:.3f} m")
-    # The shoe mesh's long axis is local Y. Vertex 45 is its authored ball
-    # station; the outsole's negative-Y end is the toe and positive-Y end heel.
-    toe_group = [index for index in outsole if local[index].y <= outsole_min_y + (outsole_max_y-outsole_min_y) * .12]
-    heel_group = [index for index in outsole if local[index].y >= outsole_max_y - (outsole_max_y-outsole_min_y) * .12]
-    left_group = [index for index in range(len(local)) if local[index].x <= low_x + x_span * .12]
-    right_group = [index for index in range(len(local)) if local[index].x >= high_x - x_span * .12]
+    points_2d = np.array([(point.x, point.y) for point in local], dtype=float)
+    centered = points_2d - points_2d.mean(axis=0)
+    covariance = np.cov(centered.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+    long_axis = eigenvectors[:, int(np.argmax(eigenvalues))]
+    across_axis = eigenvectors[:, int(np.argmin(eigenvalues))]
+    coordinates = centered @ long_axis
+    widths = centered @ across_axis
+    if float(np.ptp(coordinates)) < .18 or float(np.ptp(widths)) < .045:
+        raise RuntimeError(f"{shoe.name} has implausible longitudinal/lateral shape: "
+                           f"{np.ptp(coordinates):.3f} x {np.ptp(widths):.3f} m")
+    outsole_coordinates = coordinates[outsole]
+    end_span = float(np.ptp(outsole_coordinates)) * .12
+    low_end = [outsole[i] for i, value in enumerate(outsole_coordinates)
+               if value <= float(np.min(outsole_coordinates)) + end_span]
+    high_end = [outsole[i] for i, value in enumerate(outsole_coordinates)
+                if value >= float(np.max(outsole_coordinates)) - end_span]
+    if min(len(low_end), len(high_end)) < 3:
+        raise RuntimeError(f"{shoe.name} outsole has too few vertices at the physical ends")
+    width_at_end = lambda indexes: float(np.ptp([widths[index] for index in indexes]))
+    low_width, high_width = width_at_end(low_end), width_at_end(high_end)
+    if abs(low_width - high_width) < .008:
+        raise RuntimeError(f"{shoe.name} toe box and heel cup are not independently distinguishable: "
+                           f"end widths {low_width:.3f}/{high_width:.3f} m")
+    # The broad, rounded toe box is physically distinct from the narrower heel
+    # cup. Determine that from measured outsole shape, independently per shoe.
+    toe_group, heel_group = (low_end, high_end) if low_width > high_width else (high_end, low_end)
+    left_group = [index for index in range(len(local))
+                  if widths[index] <= float(np.min(widths)) + float(np.ptp(widths)) * .12]
+    right_group = [index for index in range(len(local))
+                   if widths[index] >= float(np.max(widths)) - float(np.ptp(widths)) * .12]
     if min(map(len, (toe_group, heel_group, left_group, right_group))) < 2:
-        raise RuntimeError(f"{shoe.name} outsole does not expose measurable heel, toe, and side regions")
+        raise RuntimeError(f"{shoe.name} mesh does not expose measurable toe, heel, and sides")
     evaluated = shoe.evaluated_get(bpy.context.evaluated_depsgraph_get())
     mesh = evaluated.to_mesh()
     try:
@@ -138,6 +158,10 @@ def shoe_frame_world(shoe, side):
         evaluated.to_mesh_clear()
     mean = lambda indexes: sum((world[index] for index in indexes), Vector()) / len(indexes)
     toe = (mean(toe_group) - mean(heel_group)).normalized()
+    print("SHOE_PHYSICAL_FEATURES", shoe.name, "toeBoxEndWidth", round(max(low_width, high_width), 4),
+          "heelCupEndWidth", round(min(low_width, high_width), 4),
+          "toeBoxLocal", tuple(round(v, 4) for v in mean(toe_group)),
+          "heelCupLocal", tuple(round(v, 4) for v in mean(heel_group)))
     measured_lateral = (mean(right_group) - mean(left_group)).normalized()
     sole_up = toe.cross(measured_lateral).normalized()
     if sole_up.z < 0.0:
@@ -148,9 +172,32 @@ def shoe_frame_world(shoe, side):
                            f"toe={tuple(round(v, 3) for v in toe)}, "
                            f"lateral={tuple(round(v, 3) for v in lateral)}, "
                            f"soleUp={tuple(round(v, 3) for v in sole_up)}")
+    # Find the rear ankle opening from the actual cross-section rings. This is
+    # the heel-side upper rim above the outsole, not a guessed vertex or the
+    # pedal-contact point. Work in the measured shoe axes and world frame.
+    longitudinal = [point.dot(toe) for point in world]
+    vertical = [point.dot(sole_up) for point in world]
+    sole_level = min(vertical)
+    rings = {}
+    for index, value in enumerate(longitudinal):
+        # A cross-section can span a few millimetres along the principal axis
+        # after skinning and pedal pitch; group by a 15 mm axial neighborhood.
+        rings.setdefault(round(value / .015), []).append(index)
+    opening_rings = []
+    for indexes in rings.values():
+        if len(indexes) < 6 or max(vertical[index] for index in indexes) < sole_level + .025:
+            continue
+        opening_rings.append(indexes)
+    if not opening_rings:
+        raise RuntimeError(f"{shoe.name} has no measurable heel-side upper opening ring")
+    heel_projection = sum(world[index].dot(toe) for index in heel_group) / len(heel_group)
+    opening_ring = min(opening_rings,
+                       key=lambda indexes: abs(sum(longitudinal[index] for index in indexes) / len(indexes) - heel_projection))
+    ankle_opening = mean(opening_ring)
     ball = evaluated_vertex_world(shoe, BALL_VERTEX)
     return {"toe": toe, "lateral": lateral, "up": sole_up,
-            "toe_point": mean(toe_group), "heel_point": mean(heel_group), "ball": ball}
+            "toe_point": mean(toe_group), "heel_point": mean(heel_group),
+            "ankle_opening": ankle_opening, "ball": ball}
 
 
 def frame_quaternion(lateral, toe, up):
@@ -439,16 +486,22 @@ def collapse_helper_leg_bones(rig):
 
 
 def refresh_shoe_bone_offsets(rig, scene, local_offsets):
-    """Measure the forefoot point again after rebuilding the leg rest matrices."""
+    """Attach the lower leg over each measured heel-side shoe opening."""
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
     for side in SIDES:
-        foot_world = world_pose(rig, rig.pose.bones[f"foot.{side}"])
         shoe = bpy.data.objects[f"CyclingShoe{side}"]
-        ball_world = evaluated_vertex_world(shoe, BALL_VERTEX)
-        local_offsets[side] = foot_world.inverted() @ ball_world
-    print("REBUILT_SHOE_BALL_BONE_OFFSETS",
-          {side: tuple(round(v, 5) for v in value) for side, value in local_offsets.items()})
+        measured = shoe_frame_world(shoe, side)
+        frame = frame_quaternion(measured["lateral"], measured["toe"], measured["up"])
+        ankle = measured["ankle_opening"] + measured["toe"] * .025 + measured["up"] * .055
+        local_offsets[side] = frame.inverted() @ (measured["ball"] - ankle)
+        print("ANATOMICAL_ANKLE_ATTACHMENT", side,
+              "opening", tuple(round(v, 4) for v in measured["ankle_opening"]),
+              "ankle", tuple(round(v, 4) for v in ankle),
+              "ball", tuple(round(v, 4) for v in measured["ball"]),
+              "heel", tuple(round(v, 4) for v in measured["heel_point"]),
+              "toe", tuple(round(v, 4) for v in measured["toe_point"]),
+              "ballOffsetInShoeFrame", tuple(round(v, 4) for v in local_offsets[side]))
 
 
 def add_shoe_attachment_bones(rig):
@@ -478,12 +531,13 @@ def add_shoe_attachment_bones(rig):
         edit.use_connect = False
         edit.use_deform = True
         edit.align_roll(up)
-        for role in ("heel", "toe"):
+        for role in ("heel", "toe", "ankle_opening"):
             marker_name = f"shoe_{role}.{side}"
             if rig.data.edit_bones.get(marker_name):
                 rig.data.edit_bones.remove(rig.data.edit_bones[marker_name])
             marker = rig.data.edit_bones.new(marker_name)
-            marker.head = rig_inv @ measured[f"{role}_point"]
+            feature_point = measured["ankle_opening"] if role == "ankle_opening" else measured[f"{role}_point"]
+            marker.head = rig_inv @ feature_point
             marker.tail = marker.head + up * .002
             marker.parent = edit
             marker.use_connect = False
@@ -643,17 +697,14 @@ def bake_actual_pedal_cycle(rig, scene, source_samples, local_offsets):
             desired_toe = bike_forward.normalized()
             desired_lateral = desired_toe.cross(surface_normal).normalized()
             desired_frame = frame_quaternion(desired_lateral, desired_toe, surface_normal)
-            # Preserve the approved ankle target positions (and therefore the
-            # accepted knee path), but do not reuse the source's toe-down foot
-            # rotation. The foot bone now follows the same measured bicycle-
-            # forward and pedal-normal frame as the shoe, with only the
-            # authored, symmetric ankle pitch applied.
+            # Keep the lower leg anatomically attached at the shoe's measured
+            # heel-side opening while the independent shoe bone stays planted
+            # on the pedal. Both use this measured bicycle-forward/pedal-normal
+            # frame, with only the authored symmetric ankle pitch applied.
             pitch = FOOT_PITCH_AMPLITUDE * math.sin(phase + (math.pi if side == "L" else 0.0))
-            source_contact_rotation = (source_samples[start][side]["foot_rotation"] @
-                                       Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
             shoe_rotation = (desired_frame @ Quaternion((1.0, 0.0, 0.0), pitch)).normalized()
             ankle_rotation = shoe_rotation
-            ankle_target = surface.matrix_world.translation - source_contact_rotation @ local_offsets[side]
+            ankle_target = surface.matrix_world.translation - shoe_rotation @ local_offsets[side]
             shoe_targets[side].location = surface.matrix_world.translation
             shoe_targets[side].rotation_quaternion = shoe_rotation
             hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
@@ -1221,6 +1272,18 @@ def main():
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
     add_helmet_frame_markers(rig, helmet, human)
+
+    # Rebuild the skinned garment details from the same accepted source pose.
+    # This replaces the old 1.2 mm neckline seam with the fitted collar band.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import polish_rider
+    polish_rider.add_road_kit_garment_details(rig)
+    polish_rider.round_clothing_edges()
+    collar = bpy.data.objects.get("RiderJerseyCollar")
+    if collar is None or len(collar.data.vertices) < 100:
+        raise RuntimeError("the fitted skinned jersey collar was not generated")
+    print("FITTED_JERSEY_COLLAR", "height", .015, "vertices", len(collar.data.vertices),
+          "materials", [material.name for material in collar.data.materials])
 
     args.output_blend.parent.mkdir(parents=True, exist_ok=True)
     args.output_glb.parent.mkdir(parents=True, exist_ok=True)

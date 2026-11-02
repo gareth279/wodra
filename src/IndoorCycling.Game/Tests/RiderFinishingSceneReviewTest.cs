@@ -57,6 +57,76 @@ public partial class RiderFinishingSceneReviewTest : Node
         return result;
     }
 
+    private static Aabb SkinnedMeshBoundsInWorld(Skeleton3D skeleton, MeshInstance3D mesh)
+    {
+        var points = new List<Vector3>();
+        for (var surface = 0; surface < mesh.Mesh!.GetSurfaceCount(); surface++)
+        {
+            var arrays = mesh.Mesh.SurfaceGetArrays(surface);
+            points.AddRange(SkinVerticesToWorld(skeleton, mesh,
+                arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array(),
+                arrays[(int)Mesh.ArrayType.Bones].AsInt32Array(),
+                arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array()));
+        }
+        if (points.Count == 0) throw new InvalidOperationException($"{mesh.Name} has no skinned vertices.");
+        var minimum = points.Aggregate(new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity),
+            (current, point) => current.Min(point));
+        var maximum = points.Aggregate(new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity),
+            (current, point) => current.Max(point));
+        return new Aabb(minimum, maximum - minimum);
+    }
+
+    private static (Vector3 Toe, Vector3 Heel, Vector3 AnkleOpening, float WidthDifference) FindPhysicalShoeFeatures(
+        Skeleton3D skeleton, MeshInstance3D shoe, Vector3 bikeForward, Vector3 soleUp, Vector3 openingReference)
+    {
+        var points = new List<Vector3>();
+        for (var surface = 0; surface < shoe.Mesh!.GetSurfaceCount(); surface++)
+        {
+            var arrays = shoe.Mesh.SurfaceGetArrays(surface);
+            points.AddRange(SkinVerticesToWorld(skeleton, shoe,
+                arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array(),
+                arrays[(int)Mesh.ArrayType.Bones].AsInt32Array(),
+                arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array()));
+        }
+        var side = bikeForward.Cross(Vector3.Up).Normalized();
+        var along = points.Select(point => point.Dot(bikeForward)).ToArray();
+        var across = points.Select(point => point.Dot(side)).ToArray();
+        var low = along.Min(); var high = along.Max();
+        var depth = (high - low) * .12f;
+        var rear = Enumerable.Range(0, points.Count).Where(i => along[i] <= low + depth).ToArray();
+        var front = Enumerable.Range(0, points.Count).Where(i => along[i] >= high - depth).ToArray();
+        var rearWidth = across[rear.MaxBy(i => across[i])] - across[rear.MinBy(i => across[i])];
+        var frontWidth = across[front.MaxBy(i => across[i])] - across[front.MinBy(i => across[i])];
+        var difference = Math.Abs(frontWidth - rearWidth);
+        if (difference < .008f)
+            throw new InvalidOperationException($"{shoe.Name} toe box and heel cup are not distinguishable by actual mesh width: {frontWidth:F3}/{rearWidth:F3}m.");
+        var toeIndexes = frontWidth > rearWidth ? front : rear;
+        var heelIndexes = frontWidth > rearWidth ? rear : front;
+        var toe = toeIndexes.Aggregate(Vector3.Zero, (sum, index) => sum + points[index]) / toeIndexes.Length;
+        var heel = heelIndexes.Aggregate(Vector3.Zero, (sum, index) => sum + points[index]) / heelIndexes.Length;
+        // Resolve the actual heel-side upper opening from a rear cross-section
+        // above the outsole. The ring is independent of the ankle and contact
+        // markers, so this catches a correctly aimed shoe with a misplaced leg.
+        var vertical = points.Select(point => point.Dot(soleUp)).ToArray();
+        var lowestSole = vertical.Min();
+        var rings = Enumerable.Range(0, points.Count)
+            .GroupBy(index => (int)MathF.Round(along[index] / .015f))
+            .Select(group => group.ToArray())
+            .Where(indices => indices.Length >= 6 && indices.Max(index => vertical[index]) > lowestSole + .025f)
+            .ToArray();
+        if (rings.Length == 0)
+            throw new InvalidOperationException($"{shoe.Name} has no measurable heel-side ankle opening in its skinned mesh.");
+        var heelAlong = heel.Dot(bikeForward);
+        var openingRing = rings.MinBy(indices =>
+        {
+            var center = indices.Aggregate(Vector3.Zero, (sum, index) => sum + points[index]) / indices.Length;
+            var heelSide = Math.Abs(center.Dot(bikeForward) - heelAlong);
+            return center.DistanceTo(openingReference) + Math.Max(0f, heelSide - .12f) * .5f;
+        })!;
+        var opening = openingRing.Aggregate(Vector3.Zero, (sum, index) => sum + points[index]) / openingRing.Length;
+        return (toe, heel, opening, difference);
+    }
+
     public override async void _Ready()
     {
         try
@@ -302,6 +372,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             if (surfaceCount != 2 || eyeSurfaceCount != 1)
                 throw new InvalidOperationException($"Expected outfit and preserved eye materials; surfaces={surfaceCount}, eyeSurfaces={eyeSurfaceCount}.");
             var outfitColors = human.Mesh!.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Color].AsColorArray();
+            var humanVertices = human.Mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array();
             var jerseyMaskCount = outfitColors.Count(color => color.R > .25f);
             var shortsMaskCount = outfitColors.Count(color => color.G > .25f);
             var shoeMaskCount = outfitColors.Count(color => color.B > .25f);
@@ -309,11 +380,39 @@ public partial class RiderFinishingSceneReviewTest : Node
             if (outfitColors.Length == 0 || jerseyMaskCount < 100 || shortsMaskCount < 100 ||
                 shoeMaskCount < 20 || skinMaskCount < 100)
                 throw new InvalidOperationException($"Imported RiderOutfitWeights mask is missing or flattened: vertices={outfitColors.Length}, jersey={jerseyMaskCount}, shorts={shortsMaskCount}, shoes={shoeMaskCount}, skin={skinMaskCount}.");
+            var humanBounds = human.GetAabb();
+            var upperChestLow = humanBounds.Position.Y + humanBounds.Size.Y * .72f;
+            var upperChestHigh = humanBounds.Position.Y + humanBounds.Size.Y * .77f;
+            var upperChestVertices = Enumerable.Range(0, Math.Min(humanVertices.Length, outfitColors.Length))
+                .Where(index => Math.Abs(humanVertices[index].X) < .16f &&
+                                humanVertices[index].Y >= upperChestLow && humanVertices[index].Y <= upperChestHigh)
+                .ToArray();
+            var coveredUpperChestVertices = upperChestVertices.Count(index => outfitColors[index].R > .35f);
+            if (upperChestVertices.Length < 80 || coveredUpperChestVertices < upperChestVertices.Length * .70f)
+                throw new InvalidOperationException($"The fitted jersey mask does not cover the central upper chest up to the neck base: covered={coveredUpperChestVertices}/{upperChestVertices.Length}, verticalBand={upperChestLow:F3}-{upperChestHigh:F3}m.");
             GD.Print($"[RiderFinishingSceneReviewTest] outfit COLOR_0 vertices={outfitColors.Length} jersey={jerseyMaskCount} shorts={shortsMaskCount} shoes={shoeMaskCount} skin={skinMaskCount}");
+            GD.Print($"[RiderFinishingSceneReviewTest] upper-chest jersey coverage={coveredUpperChestVertices}/{upperChestVertices.Length} central vertices through neck-base band");
             var garmentDetails = Find<MeshInstance3D>(rider, "RiderRoadKitDetails")
                 ?? throw new InvalidOperationException("Skinned jersey and bib finishing details are missing.");
             if ((garmentDetails.Mesh?.GetSurfaceCount() ?? 0) < 3)
                 throw new InvalidOperationException("Expected collar/zip, sleeve, and bib-gripper detail materials.");
+            if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") != "1")
+            {
+                rider.SetCustomization("Navy blue", "Charcoal");
+                var jerseyCollar = Find<MeshInstance3D>(rider, "RiderJerseyCollar")
+                    ?? throw new InvalidOperationException("The imported skinned jersey collar mesh is missing.");
+                var collarBounds = SkinnedMeshBoundsInWorld(skeleton, jerseyCollar).Size;
+                var collarHorizontalDiameter = Mathf.Sqrt(collarBounds.X * collarBounds.X + collarBounds.Z * collarBounds.Z);
+                if (jerseyCollar.Mesh!.GetSurfaceCount() != 1 || collarBounds.Y is < .008f or > .030f ||
+                    collarHorizontalDiameter < .11f)
+                    throw new InvalidOperationException($"The fitted collar must be a closely fitted 10–20 mm neck band; posed world bounds={collarBounds}, horizontal diameter={collarHorizontalDiameter:F3}m.");
+                if (jerseyCollar.MaterialOverride is not StandardMaterial3D collarMaterial ||
+                    Math.Abs(collarMaterial.AlbedoColor.R - JerseyReviewColor("Navy blue").R) > .02f ||
+                    Math.Abs(collarMaterial.AlbedoColor.G - JerseyReviewColor("Navy blue").G) > .02f ||
+                    Math.Abs(collarMaterial.AlbedoColor.B - JerseyReviewColor("Navy blue").B) > .02f)
+                    throw new InvalidOperationException("The fitted collar must inherit the selected jersey colour.");
+                GD.Print($"[RiderFinishingSceneReviewTest] imported posed jersey collar bounds={collarBounds} selectedColour={collarMaterial.AlbedoColor}");
+            }
             var headIndex = skeleton.FindBone("head");
             if (headIndex < 0) throw new InvalidOperationException("Imported head bone missing.");
             GD.Print($"[RiderFinishingSceneReview] Human local bounds={human.GetAabb()}, node={human.Transform}, headBone={skeleton.GetBoneGlobalPose(headIndex)}");
@@ -344,6 +443,10 @@ public partial class RiderFinishingSceneReviewTest : Node
             camera.LookAt(bikeCenter + Vector3.Up * .42f, Vector3.Up);
             await Settle(3);
             await Save(output, "fit-rider-front-three-quarter-full.png");
+            camera.GlobalPosition = bikeCenter - bikeForward * 3.6f + Vector3.Up * .72f;
+            camera.LookAt(bikeCenter + Vector3.Up * .62f, Vector3.Up);
+            await Settle(3);
+            await Save(output, "fit-rider-rear-full.png");
             rider.SetRiderVisible(false);
             camera.Fov = 31f;
             camera.GlobalPosition = bikeCenter + bikeSide * 2.05f + Vector3.Up * .06f;
@@ -373,13 +476,13 @@ public partial class RiderFinishingSceneReviewTest : Node
             rider.SetHelmetVisible(true);
             AimAtHead(camera, bikeForward, bikeSide, headTarget, "side");
             var reviewHelmetPose = Find<Node3D>(rider, "CyclingHelmetRigidPose")!;
-            foreach (var pitch in new[] { 0f, 3f, 6f })
+            foreach (var pitch in new[] { 3f, 6f, 9f, 12f })
             {
                 rider.SetReviewHelmetForwardPitchDegrees(pitch);
                 await Settle(3);
                 await Save(output, $"head-side-helmet-pitch-{pitch:0}deg.png");
             }
-            rider.SetReviewHelmetForwardPitchDegrees(3f);
+            rider.SetReviewHelmetForwardPitchDegrees(12f);
             await Settle(2);
             foreach (var angle in new[] { "front", "side", "three-quarter", "rear" })
             {
@@ -387,6 +490,40 @@ public partial class RiderFinishingSceneReviewTest : Node
                 await Settle(3);
                 await Save(output, $"head-{angle}-helmet-on.png");
             }
+            camera.Fov = 32f;
+            foreach (var (degrees, color) in new[]
+                     { (0, "Navy blue"), (90, "Navy blue"), (180, "Teal"), (270, "Teal") })
+            {
+                rider.SetCustomization(color, "Charcoal");
+                rider.SetReviewCrankPhase(degrees);
+                var neckTarget = headTarget - Vector3.Up * .28f;
+                camera.GlobalPosition = neckTarget + bikeSide * .62f + Vector3.Up * .06f;
+                camera.LookAt(neckTarget, Vector3.Up);
+                await Settle(3);
+                await Save(output, $"jersey-collar-{color.ToLowerInvariant()}-phase-{degrees:D3}.png");
+            }
+            rider.SetCustomization("Navy blue", "Charcoal");
+            rider.SetReviewCrankPhase(0);
+            camera.Fov = 36f;
+            var collarMeshForReview = Find<MeshInstance3D>(rider, "RiderJerseyCollar")
+                ?? throw new InvalidOperationException("The imported jersey collar is unavailable for rendered review.");
+            var collarTarget = SkinnedMeshBoundsInWorld(skeleton, collarMeshForReview).GetCenter();
+            foreach (var angle in new[] { "front", "side", "rear", "three-quarter" })
+            {
+                var direction = angle switch
+                {
+                    "front" => bikeForward,
+                    "rear" => -bikeForward,
+                    "side" => bikeSide,
+                    _ => (bikeForward + bikeSide).Normalized()
+                };
+                camera.GlobalPosition = collarTarget + direction * .65f + Vector3.Up * .025f;
+                camera.LookAt(collarTarget, Vector3.Up);
+                await Settle(3);
+                await Save(output, $"jersey-collar-angle-{angle}.png");
+            }
+            camera.Fov = 46f;
+            rider.SetCustomization("Teal", "Charcoal");
             // Validate actual physical features selected from the owner-supplied
             // OBJ after inspecting its raw front/side/rear renders. The short
             // brow lip must project in front of the face and the long rear tail
@@ -409,7 +546,8 @@ public partial class RiderFinishingSceneReviewTest : Node
                 $"brow/eyes/rear-tail X={browScreen.X:F1}/{eyeScreen.X:F1}/{tailScreen.X:F1}px, " +
                      $"face projections={browAlongFace:F3}/{tailAlongFace:F3}m; " +
                      $"mesh proximity={browMeshDistance:F3}/{rearMeshDistance:F3}m; accepted forward orientation retained");
-            if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1")
+            if (System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE") == "1" &&
+                System.Environment.GetEnvironmentVariable("WODRA_VISUAL_REVIEW_BASELINE_DEEP") != "1")
             {
                 var baselineLeftHood = Find<Node3D>(rider, "Contact_LeftHood")
                     ?? throw new InvalidOperationException("Baseline left hood contact missing.");
@@ -464,6 +602,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             var shoeBones = new[] { skeleton.FindBone("shoe.L"), skeleton.FindBone("shoe.R") };
             var shoeHeelBones = new[] { skeleton.FindBone("shoe_heel.L"), skeleton.FindBone("shoe_heel.R") };
             var shoeToeBones = new[] { skeleton.FindBone("shoe_toe.L"), skeleton.FindBone("shoe_toe.R") };
+            var shoeOpeningBones = new[] { skeleton.FindBone("shoe_ankle_opening.L"), skeleton.FindBone("shoe_ankle_opening.R") };
             var shoeMeshes = new[]
             {
                 Find<MeshInstance3D>(rider, "CyclingShoeL"),
@@ -473,7 +612,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             if (leftPalmContact < 0 || rightPalmContact < 0 ||
                 leftFootBone < 0 || rightFootBone < 0 || leftPedalContactBone < 0 ||
                 rightPedalContactBone < 0 || pelvisBones.Length == 0 || shoeBones.Any(index => index < 0) ||
-                shoeHeelBones.Any(index => index < 0) || shoeToeBones.Any(index => index < 0) || shoeMeshes.Any(mesh => mesh?.Mesh is null))
+                shoeHeelBones.Any(index => index < 0) || shoeToeBones.Any(index => index < 0) ||
+                shoeOpeningBones.Any(index => index < 0) || shoeMeshes.Any(mesh => mesh?.Mesh is null))
                 throw new InvalidOperationException("Sculpted palms, pelvis, ankle/shoe separation, or shoe geometry markers are missing.");
             var shoeProfiles = shoeMeshes.Select(mesh => mesh!.Mesh!.GetAabb().Size).ToArray();
             GD.Print($"[RiderFinishingSceneReviewTest] shoe mesh source bounds L={shoeProfiles[0]} R={shoeProfiles[1]}");
@@ -513,6 +653,9 @@ public partial class RiderFinishingSceneReviewTest : Node
             var minForefootToeAdvantage = new float[] { float.PositiveInfinity, float.PositiveInfinity };
             var minHeelPlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
             var minToePlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var maxAnkleOpeningDistance = new float[2];
+            var minAnklePositionFromHeel = new float[] { float.PositiveInfinity, float.PositiveInfinity };
+            var maxAnklePositionFromHeel = new float[2];
             var shoeToeAtStart = new Vector3[2];
             var shoeToePrevious = new Vector3[2];
             var shoeContactAtStart = new Vector3[2];
@@ -618,34 +761,28 @@ public partial class RiderFinishingSceneReviewTest : Node
                     var soleAngle = Mathf.Acos(Mathf.Clamp(soleUp.Dot(surfaceNormal), -1f, 1f));
                     var heel = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeHeelBones[side]).Origin;
                     var toe = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeToeBones[side]).Origin;
-                    // Identify which skinned mesh end is the toe by its
-                    // distance to the forefoot contact on the pedal. This is
-                    // independent of the shoe_toe/heel bone labels and catches
-                    // a reversed mesh even if those labels were reversed too.
-                    var shoeGeometryPoints = new List<Vector3>();
-                    for (var surface = 0; surface < shoeMeshes[side]!.Mesh!.GetSurfaceCount(); surface++)
-                    {
-                        var arrays = shoeMeshes[side]!.Mesh!.SurfaceGetArrays(surface);
-                        shoeGeometryPoints.AddRange(SkinVerticesToWorld(skeleton, shoeMeshes[side]!,
-                            arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array(),
-                            arrays[(int)Mesh.ArrayType.Bones].AsInt32Array(),
-                            arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array()));
-                    }
-                    var endCount = Math.Max(3, shoeGeometryPoints.Count / 10);
-                    var geometryAlongBike = shoeGeometryPoints.OrderBy(point => point.Dot(bikeForward)).ToArray();
-                    var geometryRearEnd = geometryAlongBike.Take(endCount)
-                        .Aggregate(Vector3.Zero, (sum, point) => sum + point) / endCount;
-                    var geometryFrontEnd = geometryAlongBike.Skip(geometryAlongBike.Length - endCount)
-                        .Aggregate(Vector3.Zero, (sum, point) => sum + point) / endCount;
-                    var ballToFrontEnd = geometryFrontEnd.DistanceTo(shoeContactPositions[side]);
-                    var ballToRearEnd = geometryRearEnd.DistanceTo(shoeContactPositions[side]);
-                    var physicalToeEnd = ballToFrontEnd <= ballToRearEnd ? geometryFrontEnd : geometryRearEnd;
-                    var physicalHeelEnd = ballToFrontEnd <= ballToRearEnd ? geometryRearEnd : geometryFrontEnd;
-                    var physicalMeshAxis = (physicalToeEnd - physicalHeelEnd).Normalized();
+                    // Identify the physical toe from independently measured
+                    // toe-box/heel-cup widths in the skinned mesh. Neither the
+                    // pedal, contact markers, authored indices, bone labels,
+                    // nor presumed local-axis signs select either end.
+                    var openingMarker = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeOpeningBones[side]).Origin;
+                    var physicalFeatures = FindPhysicalShoeFeatures(skeleton, shoeMeshes[side]!, bikeForward, surfaceNormal, openingMarker);
+                    var physicalMeshAxis = (physicalFeatures.Toe - physicalFeatures.Heel).Normalized();
                     maxMeshAxisError[side] = Math.Max(maxMeshAxisError[side],
                         Mathf.Acos(Mathf.Clamp(physicalMeshAxis.Dot(bikeForward), -1f, 1f)));
                     minForefootToeAdvantage[side] = Math.Min(minForefootToeAdvantage[side],
-                        Math.Max(ballToFrontEnd, ballToRearEnd) - Math.Min(ballToFrontEnd, ballToRearEnd));
+                        physicalFeatures.WidthDifference);
+                    var ankleOpening = physicalFeatures.AnkleOpening;
+                    var ankleJoint = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(ankleBones[side]).Origin;
+                    var ankleOpeningDistance = ankleJoint.DistanceTo(ankleOpening);
+                    var markerToOpeningDistance = openingMarker.DistanceTo(ankleOpening);
+                    var heelToToeLength = (physicalFeatures.Toe - physicalFeatures.Heel).Dot(bikeForward);
+                    var ankleFromHeel = (ankleJoint - physicalFeatures.Heel).Dot(bikeForward) / heelToToeLength;
+                    maxAnkleOpeningDistance[side] = Math.Max(maxAnkleOpeningDistance[side], ankleOpeningDistance);
+                    minAnklePositionFromHeel[side] = Math.Min(minAnklePositionFromHeel[side], ankleFromHeel);
+                    maxAnklePositionFromHeel[side] = Math.Max(maxAnklePositionFromHeel[side], ankleFromHeel);
+                    if (markerToOpeningDistance > .020f)
+                        throw new InvalidOperationException($"{shoeMeshes[side]!.Name} opening marker disagrees with the physical heel-side upper rim by {markerToOpeningDistance:F3}m.");
                     var heelHeight = (heel - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
                     var toeHeight = (toe - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
                     maxToeForwardError[side] = Math.Max(maxToeForwardError[side], toeAngle);
@@ -697,7 +834,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ball-of-foot to moving pedal top L={maxLeftShoeContact:F5}m@{maxLeftShoePhase}deg {maxLeftShoeError} R={maxRightShoeContact:F5}m@{maxRightShoePhase}deg {maxRightShoeError}; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
             GD.Print($"[RiderFinishingSceneReviewTest] anatomical knees step={maxKneeStep[0]:F4}/{maxKneeStep[1]:F4}m flex={Mathf.RadToDeg(minKneeFlex[0]):F1}-{Mathf.RadToDeg(maxKneeFlex[0]):F1}/{Mathf.RadToDeg(minKneeFlex[1]):F1}-{Mathf.RadToDeg(maxKneeFlex[1]):F1}deg forwardMin={minForwardKnee[0]:F4}/{minForwardKnee[1]:F4}m legLengthDelta={maxLegLengthDelta[0]:F5}/{maxLegLengthDelta[1]:F5}m");
             GD.Print($"[RiderFinishingSceneReviewTest] shoe toe error={Mathf.RadToDeg(maxToeForwardError[0]):F1}/{Mathf.RadToDeg(maxToeForwardError[1]):F1}deg sole error={Mathf.RadToDeg(maxSoleNormalError[0]):F1}/{Mathf.RadToDeg(maxSoleNormalError[1]):F1}deg ankle-to-shoe axis={Mathf.RadToDeg(maxFootToShoeAxisError[0]):F1}/{Mathf.RadToDeg(maxFootToShoeAxisError[1]):F1}deg ankle-to-pedal normal={Mathf.RadToDeg(maxFootToPedalNormalError[0]):F1}/{Mathf.RadToDeg(maxFootToPedalNormalError[1]):F1}deg heel plane={maxHeelPlaneError[0]:F3}/{maxHeelPlaneError[1]:F3}m toe plane={maxToePlaneError[0]:F3}/{maxToePlaneError[1]:F3}m signed min heel={minHeelPlane[0]:F3}/{minHeelPlane[1]:F3} toe={minToePlane[0]:F3}/{minToePlane[1]:F3}m shoe step={Mathf.RadToDeg(maxShoeAxisStep[0]):F2}/{Mathf.RadToDeg(maxShoeAxisStep[1]):F2}deg contact={maxShoeContactStep[0]:F3}/{maxShoeContactStep[1]:F3}m surface={maxPedalSurfaceStep[0]:F3}/{maxPedalSurfaceStep[1]:F3}m");
-            GD.Print($"[RiderFinishingSceneReviewTest] skinned mesh toe-axis error={Mathf.RadToDeg(maxMeshAxisError[0]):F1}/{Mathf.RadToDeg(maxMeshAxisError[1]):F1}deg; forefoot-to-toe distance advantage over heel={minForefootToeAdvantage[0]:F3}/{minForefootToeAdvantage[1]:F3}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] physical toe-box/heel-cup width advantage={minForefootToeAdvantage[0]:F3}/{minForefootToeAdvantage[1]:F3}m; physical toe-axis error={Mathf.RadToDeg(maxMeshAxisError[0]):F1}/{Mathf.RadToDeg(maxMeshAxisError[1]):F1}deg; ankle/opening distance={maxAnkleOpeningDistance[0]:F3}/{maxAnkleOpeningDistance[1]:F3}m; ankle fraction heel-to-toe={minAnklePositionFromHeel[0]:F2}-{maxAnklePositionFromHeel[0]:F2}/{minAnklePositionFromHeel[1]:F2}-{maxAnklePositionFromHeel[1]:F2}");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
@@ -716,9 +853,13 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"A shoe leaves its actual moving pedal top (L={maxLeftShoeContact:F3}m, R={maxRightShoeContact:F3}m).");
             if (maxToeForwardError.Any(value => value > Mathf.DegToRad(18f)))
                 throw new InvalidOperationException("A shoe toe points away from bicycle-forward.");
-            if (maxMeshAxisError.Any(value => value > Mathf.DegToRad(18f)) ||
-                minForefootToeAdvantage.Any(value => value < .04f))
-                throw new InvalidOperationException("Skinned shoe geometry is reversed: the pedal forefoot contact is not closer to the physical toe end, or the shoe axis leaves bicycle-forward.");
+            if (maxMeshAxisError.Any(value => value > Mathf.DegToRad(12f)) ||
+                minForefootToeAdvantage.Any(value => value < .02f))
+                throw new InvalidOperationException("Physical toe-box geometry does not face bicycle-forward or the ankle-to-shoe articulation is invalid.");
+            if (maxAnkleOpeningDistance.Any(value => value > .085f) ||
+                minAnklePositionFromHeel.Any(value => value < .04f) ||
+                maxAnklePositionFromHeel.Any(value => value > .40f))
+                throw new InvalidOperationException("The lower-leg ankle joint is not attached near the physical heel-side shoe opening.");
             if (maxFootToShoeAxisError.Any(value => value > Mathf.DegToRad(10f)))
                 throw new InvalidOperationException("Ankle/foot bones remain toe-down relative to the actual shoe geometry.");
             if (maxFootToPedalNormalError.Any(value => value > Mathf.DegToRad(12f)))
@@ -992,11 +1133,102 @@ public partial class RiderFinishingSceneReviewTest : Node
             await Save(output, $"rider-side-full-phase-{degrees:D3}.png");
             GD.Print($"[RiderFinishingSceneReviewTest] clear RideScreen phase target={degrees} actual={exactPhase:F1} imported model");
         }
+        var reviewSkeleton = Find<Skeleton3D>(rider) ?? throw new InvalidOperationException("Shoe review skeleton missing.");
+        var ankleBones = new[] { reviewSkeleton.FindBone("foot.L"), reviewSkeleton.FindBone("foot.R") };
+        var pedalSurfacesForReview = new[]
+        {
+            Find<Node3D>(rider, "Contact_LeftPedalSurface") ?? throw new InvalidOperationException("Left pedal surface missing."),
+            Find<Node3D>(rider, "Contact_RightPedalSurface") ?? throw new InvalidOperationException("Right pedal surface missing.")
+        };
+        var pedalSpindlesForReview = new[]
+        {
+            Find<Node3D>(rider, "Contact_LeftPedal") ?? throw new InvalidOperationException("Left pedal spindle missing."),
+            Find<Node3D>(rider, "Contact_RightPedal") ?? throw new InvalidOperationException("Right pedal spindle missing.")
+        };
+        if (ankleBones.Any(index => index < 0)) throw new InvalidOperationException("Ankle joint bones are missing in shoe review.");
+        var featureBones = new (int Toe, int Heel)[]
+        {
+            (reviewSkeleton.FindBone("shoe_toe.L"), reviewSkeleton.FindBone("shoe_heel.L")),
+            (reviewSkeleton.FindBone("shoe_toe.R"), reviewSkeleton.FindBone("shoe_heel.R"))
+        };
+        if (featureBones.Any(pair => pair.Toe < 0 || pair.Heel < 0))
+            throw new InvalidOperationException("Imported physical shoe-feature markers are missing.");
+        var shoeMeshes = new[]
+        {
+            Find<MeshInstance3D>(rider, "CyclingShoeL") ?? throw new InvalidOperationException("Left shoe mesh missing."),
+            Find<MeshInstance3D>(rider, "CyclingShoeR") ?? throw new InvalidOperationException("Right shoe mesh missing.")
+        };
+        var labels = new Label3D[8];
+        for (var shoe = 0; shoe < 2; shoe++)
+        {
+            var first = shoe * 4;
+            labels[first] = MakeShoeLabel("T", new Color(.25f, 1f, .38f));
+            labels[first + 1] = MakeShoeLabel("H", new Color(1f, .63f, .18f));
+            labels[first + 2] = MakeShoeLabel("A", new Color(.35f, .78f, 1f));
+            labels[first + 3] = MakeShoeLabel("P", new Color(1f, .92f, .25f));
+            for (var marker = 0; marker < 4; marker++)
+            {
+                labels[first + marker].Visible = false;
+                rider.AddChild(labels[first + marker]);
+            }
+        }
+        foreach (var degrees in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
+        {
+            rider.SetReviewCrankPhase(degrees);
+            var skeletonToWorld = reviewSkeleton.GlobalTransform;
+            var sideForward = (frontWheel.GlobalPosition - rearWheel.GlobalPosition).Normalized();
+            var sideRight = sideForward.Cross(Vector3.Up).Normalized();
+            for (var shoe = 0; shoe < 2; shoe++)
+            {
+                foreach (var label in labels) label.Visible = false;
+                var openingMarker = reviewSkeleton.GlobalTransform * reviewSkeleton.GetBoneGlobalPose(
+                    reviewSkeleton.FindBone(shoe == 0 ? "shoe_ankle_opening.L" : "shoe_ankle_opening.R")).Origin;
+                var ends = FindPhysicalShoeFeatures(reviewSkeleton, shoeMeshes[shoe], sideForward,
+                    pedalSurfacesForReview[shoe].GlobalBasis.Y.Normalized(), openingMarker);
+                var toe = ends.Toe;
+                var heel = ends.Heel;
+                var center = (toe + heel) * .5f;
+                var first = shoe * 4;
+                var ankleJoint = reviewSkeleton.GlobalTransform * reviewSkeleton.GetBoneGlobalPose(ankleBones[shoe]).Origin;
+                var pedalSpindle = pedalSpindlesForReview[shoe].GlobalPosition;
+                camera.Fov = 23f;
+                var sign = shoe == 0 ? -1f : 1f;
+                camera.GlobalPosition = center + sideRight * (1.05f * sign) + sideForward * .04f + Vector3.Up * .12f;
+                camera.LookAt(center + Vector3.Up * .015f, Vector3.Up);
+                camera.MakeCurrent();
+                var frontScreenX = camera.UnprojectPosition(frontWheel.GlobalPosition).X;
+                var rearScreenX = camera.UnprojectPosition(rearWheel.GlobalPosition).X;
+                var toeScreenX = camera.UnprojectPosition(toe).X;
+                var heelScreenX = camera.UnprojectPosition(heel).X;
+                var frontProjectsRight = frontScreenX > rearScreenX;
+                var toeProjectsRight = toeScreenX > heelScreenX;
+                if (frontProjectsRight != toeProjectsRight)
+                    throw new InvalidOperationException($"Rendered physical toe points opposite the front wheel on the {(shoe == 0 ? "left" : "right")} shoe at {degrees}°: wheel X={frontScreenX:F1}/{rearScreenX:F1}, toe/heel X={toeScreenX:F1}/{heelScreenX:F1}.");
+                await Settle(3);
+                await Save(output, $"shoe-{(shoe == 0 ? "left" : "right")}-side-phase-{degrees:D3}-unannotated.png");
+                labels[first].GlobalPosition = toe + Vector3.Up * .012f;
+                labels[first + 1].GlobalPosition = heel + Vector3.Up * .012f;
+                labels[first + 2].GlobalPosition = ankleJoint + Vector3.Up * .012f;
+                labels[first + 3].GlobalPosition = pedalSpindle + Vector3.Up * .012f;
+                for (var marker = 0; marker < 4; marker++) labels[first + marker].Visible = true;
+                await Settle(1);
+                await Save(output, $"shoe-{(shoe == 0 ? "left" : "right")}-side-phase-{degrees:D3}-annotated.png");
+            }
+        }
+        foreach (var label in labels) label.QueueFree();
+        camera.Fov = savedFov;
         if (hudWasVisible) hud.Show();
         rider.SetProcess(true);
         world.SetProcess(true);
         world.SelectCameraInspectionView(RiderCameraView.Side);
     }
+
+    private static Label3D MakeShoeLabel(string text, Color color) => new()
+    {
+        Text = text, Modulate = color, FontSize = 12, PixelSize = .00055f,
+        OutlineSize = 1, NoDepthTest = true,
+        Billboard = BaseMaterial3D.BillboardModeEnum.Enabled
+    };
 
     private static string sideName(float side) => side < 0 ? "Left" : "Right";
 
@@ -1008,6 +1240,12 @@ public partial class RiderFinishingSceneReviewTest : Node
                 total += animation.TrackGetKeyCount(track);
         return total;
     }
+
+    private static Color JerseyReviewColor(string color) => color switch
+    {
+        "Navy blue" => new Color(.075f, .16f, .34f),
+        _ => new Color(.05f, .42f, .43f)
+    };
 
     private async Task Settle(int frames)
     {
