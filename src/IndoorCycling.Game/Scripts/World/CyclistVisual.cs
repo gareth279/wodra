@@ -149,8 +149,6 @@ public partial class CyclistVisual : Node3D
     private Vector3 _rigidHelmetHeadCenterOffset;
     private int _rigidHelmetHeadIndex = -1;
     private ShaderMaterial? _outfitMaterial;
-    private ShaderMaterial? _collarMaterial;
-    private ShaderMaterial? _jerseyTrimMaterial;
     private ShaderMaterial? _zipperMaterial;
     private ShaderMaterial? _helmetShellMaterial;
     private StandardMaterial3D? _helmetOriginalMaterial;
@@ -170,8 +168,6 @@ public partial class CyclistVisual : Node3D
     {
         var jersey = JerseyColor(jerseyColor);
         _outfitMaterial?.SetShaderParameter("jersey_color", jersey);
-        _collarMaterial?.SetShaderParameter("jersey_color", jersey);
-        _jerseyTrimMaterial?.SetShaderParameter("jersey_color", jersey);
         _zipperMaterial?.SetShaderParameter("jersey_color", jersey);
         _helmetShellMaterial?.SetShaderParameter("shell_color", HelmetColor(helmetColor));
         if (_helmetShellMaterial is not null && helmetColor == "Original purple/blue" &&
@@ -759,26 +755,16 @@ public partial class CyclistVisual : Node3D
             ?? throw new InvalidOperationException("Imported rider is missing the skinned jersey shell.");
         var shorts = FindModelNode<MeshInstance3D>(root, "RiderBibShortsShell")
             ?? throw new InvalidOperationException("Imported rider is missing the skinned bib-short shell.");
-        if (jersey.Mesh?.GetSurfaceCount() != 4 || shorts.Mesh?.GetSurfaceCount() != 2)
-            throw new InvalidOperationException($"Expected continuous jersey, collar, sleeve cuffs, zipper, bib fabric and gripper surfaces; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
+        if (jersey.Mesh?.GetSurfaceCount() != 3 || shorts.Mesh?.GetSurfaceCount() != 2)
+            throw new InvalidOperationException($"Expected continuous jersey, sleeve cuffs, zipper, bib fabric and gripper surfaces; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
         jersey.SetSurfaceOverrideMaterial(0, outfit);
-        _collarMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
-        ConfigureOutfitShader(_collarMaterial, _jerseyMaterial.AlbedoColor, .78f);
-        jersey.SetSurfaceOverrideMaterial(1, _collarMaterial);
-        _jerseyTrimMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
-        ConfigureOutfitShader(_jerseyTrimMaterial, _jerseyMaterial.AlbedoColor, .92f);
-        jersey.SetSurfaceOverrideMaterial(2, _jerseyTrimMaterial);
+        jersey.SetSurfaceOverrideMaterial(1, outfit);
         _zipperMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
         ConfigureOutfitShader(_zipperMaterial, _jerseyMaterial.AlbedoColor, .48f);
-        jersey.SetSurfaceOverrideMaterial(3, _zipperMaterial);
+        jersey.SetSurfaceOverrideMaterial(2, _zipperMaterial);
         shorts.SetSurfaceOverrideMaterial(0, outfit);
-        shorts.SetSurfaceOverrideMaterial(1, new StandardMaterial3D
-        {
-            AlbedoColor = new Color(.022f, .030f, .038f),
-            Roughness = .90f,
-            CullMode = BaseMaterial3D.CullModeEnum.Disabled
-        });
-        GD.Print("[Cyclist GLB] fitted jersey, neck-axis collar, short-sleeve cuffs, centre zipper, and bib shorts/grippers use the production Human Skin and skeleton.");
+        shorts.SetSurfaceOverrideMaterial(1, outfit);
+        GD.Print("[Cyclist GLB] fitted jersey, continuous neckline, short-sleeve cuffs, centre zipper, and bib shorts/grippers use the production Human Skin and skeleton.");
     }
 
     private static void ConfigureOutfitShader(ShaderMaterial material, Color jerseyColor, float tone)

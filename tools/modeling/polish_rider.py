@@ -802,6 +802,7 @@ def round_clothing_edges():
     mesh=human.data
     groups={g.name:g.index for g in human.vertex_groups}
     head_idx=groups.get("head")
+    upper_neck_idx=groups.get("neck03")
     foot_indices=[idx for name,idx in groups.items() if name in ("foot.L","foot.R") or name.startswith("toe")]
     def smooth(value,lo,hi):
         t=max(0.0,min(1.0,(value-lo)/(hi-lo)))
@@ -815,11 +816,13 @@ def round_clothing_edges():
         x,y,z=vertex.co
         ax=abs(x)
         head=group_weight(vertex,head_idx)
-        # MPFB blends the lower neck into the head group, so don't cut the
-        # jersey at the old low sternum threshold. Carry the garment to the
-        # actual neck base and suppress only vertices fully owned by the face.
+        upper_neck=group_weight(vertex,upper_neck_idx)
+        # Keep the fitted jersey on the torso up to the neck, but never assign
+        # jersey color to a vertex skinned by the upper neck or head bones. The runtime shell
+        # clips at this same mask boundary, while skin and facial proportions
+        # remain part of the original Human mesh.
         jersey=(smooth(z,.955,.99)*(1-smooth(z,1.455,1.48))*(1-smooth(ax,.26,.36))
-                *(1-smooth(head,.72,.98)))
+                *(1.0 if max(head,upper_neck) <= .001 else 0.0))
         # Head weighting already separates the face and neck from the torso.
         # A second centerline/height cut removed the upper sternum as if it
         # were face skin, creating the deep exposed-chest neckline seen in

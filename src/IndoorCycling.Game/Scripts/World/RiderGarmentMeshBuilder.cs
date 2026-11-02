@@ -29,6 +29,7 @@ internal static class RiderGarmentMeshBuilder
         public float Mask;
         public float JerseyMask;
         public float ShortsMask;
+        public float FaceWeight;
         public Color OutfitColor;
         public Vector3 SkeletonPosition;
         public int[] Bones = new int[4];
@@ -52,6 +53,7 @@ internal static class RiderGarmentMeshBuilder
                 Mask = Mathf.Lerp(a.Mask, b.Mask, t),
                 JerseyMask = Mathf.Lerp(a.JerseyMask, b.JerseyMask, t),
                 ShortsMask = Mathf.Lerp(a.ShortsMask, b.ShortsMask, t),
+                FaceWeight = Mathf.Lerp(a.FaceWeight, b.FaceWeight, t),
                 OutfitColor = a.OutfitColor.Lerp(b.OutfitColor, t),
                 SkeletonPosition = a.SkeletonPosition.Lerp(b.SkeletonPosition, t)
             };
@@ -163,6 +165,10 @@ internal static class RiderGarmentMeshBuilder
             bones.Length != positions.Length * 4 || weights.Length != bones.Length)
             throw new InvalidOperationException($"Production Human outfit arrays are incomplete: vertices={positions.Length}, normals={normals.Length}, colors={colors.Length}, bones={bones.Length}, weights={weights.Length}.");
 
+        var headIndex = skeleton.FindBone("head");
+        if (headIndex < 0) throw new InvalidOperationException("Production rider is missing the head bone needed to protect facial skin from the jersey mask.");
+        var upperNeckIndex = skeleton.FindBone("neck03");
+        if (upperNeckIndex < 0) throw new InvalidOperationException("Production rider is missing neck03 for the facial skin boundary.");
         var vertexData = new VertexData[positions.Length];
         for (var i = 0; i < positions.Length; i++)
         {
@@ -180,6 +186,9 @@ internal static class RiderGarmentMeshBuilder
                 OutfitColor = colors[i],
                 JerseyMask = colors[i].R,
                 ShortsMask = colors[i].G,
+                FaceWeight = Enumerable.Range(0, 4).Where(influence =>
+                        influences[influence] == headIndex || influences[influence] == upperNeckIndex)
+                    .Sum(influence => factors[influence]),
                 Bones = influences,
                 Weights = factors
             };
@@ -197,7 +206,8 @@ internal static class RiderGarmentMeshBuilder
         var neckCoverage = new float[vertexData.Length];
         for (var i = 0; i < vertexData.Length; i++)
         {
-            neckCoverage[i] = NeckJerseyCoverage(vertexData[i].SkeletonPosition, neckInSkeleton, neckAxisSkeleton);
+            neckCoverage[i] = NeckJerseyCoverage(vertexData[i].SkeletonPosition, neckInSkeleton,
+                neckAxisSkeleton, vertexData[i].FaceWeight);
             vertexData[i].JerseyMask *= neckCoverage[i];
             vertexData[i].OutfitColor = new Color(vertexData[i].OutfitColor.R * neckCoverage[i],
                 vertexData[i].OutfitColor.G, vertexData[i].OutfitColor.B, vertexData[i].OutfitColor.A);
@@ -226,8 +236,19 @@ internal static class RiderGarmentMeshBuilder
             triangles.Add(new TriangleData { A = vertexData[ia], B = vertexData[ib], C = vertexData[ic] });
         }
 
+        var shortsShellBoundaries = TraceLoops(CollectBoundarySegments(triangles, false, ShellCut));
+        var smoothedShortsBoundary = new Dictionary<PointKey, Vector3>();
+        foreach (var loop in shortsShellBoundaries)
+        {
+            var smoothed = SmoothLoop(loop, 6);
+            for (var i = 0; i < loop.Count; i++)
+            {
+                smoothedShortsBoundary[loop[i].KeyA] = smoothed[i].A.Position;
+                smoothedShortsBoundary[loop[i].KeyB] = smoothed[i].B.Position;
+            }
+        }
+
         var jerseyBuilder = new MeshBuilder();
-        var collarBuilder = new MeshBuilder();
         var sleeveHemBuilder = new MeshBuilder();
         var shortsBuilder = new MeshBuilder();
         var gripperBuilder = new MeshBuilder();
@@ -236,6 +257,9 @@ internal static class RiderGarmentMeshBuilder
             var jerseyPolygon = Clip(triangle, true, ShellCut);
             AddPolygon(jerseyBuilder, jerseyPolygon, null, JerseyOffset);
             var shortsPolygon = Clip(triangle, false, ShellCut);
+            foreach (var vertex in shortsPolygon)
+                if (smoothedShortsBoundary.TryGetValue(PointKey.From(vertex.Position), out var smoothPosition))
+                    vertex.Position = smoothPosition;
             AddPolygon(shortsBuilder, shortsPolygon, null, ShortsOffset);
         }
 
@@ -259,10 +283,9 @@ internal static class RiderGarmentMeshBuilder
         if (legGripperLoops.Length != 2)
             throw new InvalidOperationException($"Expected two anatomical bib-short thigh hems for grippers; found {legGripperLoops.Length}: {shortsDiagnostics}.");
         foreach (var loop in legGripperLoops)
-            AddHem(loop, gripperBuilder, .007f, ShortsOffset + .0005f);
+            AddHem(SmoothLoop(loop, 6), gripperBuilder, .014f, ShortsOffset + .0005f);
 
         var neck02Index = skeleton.FindBone("neck02");
-        var headIndex = skeleton.FindBone("head");
         var neck02InSkeleton = neck02Index >= 0 ? skeleton.GetBoneGlobalPose(neck02Index).Origin : Vector3.Zero;
         var headInSkeleton = headIndex >= 0 ? skeleton.GetBoneGlobalPose(headIndex).Origin : Vector3.Zero;
         if (neck02Index < 0)
@@ -291,9 +314,9 @@ internal static class RiderGarmentMeshBuilder
             throw new InvalidOperationException($"The collar contour is not at the anatomical neck base: center residual={neckDistance:F3}m, radial radius={neckRadius:F3}m.");
 
         var humanToModel = TransformToAncestor(human, modelRoot);
-        var neckOriginInMesh = humanToModel.AffineInverse() * (skeletonToModel * neckInSkeleton);
-        var neckAxisInMesh = (humanToModel.Basis.Inverse() * skeletonToModel.Basis * neckAxisSkeleton).Normalized();
-        AddCollar(neckLoop, collarBuilder, .010f, JerseyOffset, neckAxisInMesh);
+        // The neck-plane contour crosses the forward neck diagonally on this rig.
+        // Extruding it creates a raised strip toward the jaw, so keep the jersey's
+        // own fitted neckline and do not add a separate collar band.
         var localForward = humanToModel.Basis.Inverse() * bikeForwardInModel.Normalized();
         if (localForward.LengthSquared() < .5f)
             throw new InvalidOperationException("Could not transform the bicycle forward axis into the Human mesh frame.");
@@ -321,17 +344,13 @@ internal static class RiderGarmentMeshBuilder
         jerseyBuilder.Commit(jerseyMesh);
         if (jerseyMesh.GetSurfaceCount() == 0)
             throw new InvalidOperationException("The jersey outfit mask generated no continuous fabric surface.");
-        collarBuilder.Commit(jerseyMesh, new Color(1f, 0f, 0f, 1f));
-        if (collarBuilder.TriangleCount == 0)
-            throw new InvalidOperationException("The neck01 contour generated no fitted collar surface.");
         sleeveHemBuilder.Commit(jerseyMesh);
         if (sleeveHemBuilder.TriangleCount == 0)
             throw new InvalidOperationException("The two fitted short-sleeve cuffs generated no garment surface.");
         zipperBuilder.Commit(jerseyMesh, Colors.White);
         jerseyMesh.SurfaceSetName(0, "Jersey fabric shell");
-        jerseyMesh.SurfaceSetName(1, "Anatomically attached 10mm collar");
-        jerseyMesh.SurfaceSetName(2, "Fitted sleeve cuff hems");
-        jerseyMesh.SurfaceSetName(3, "Center front zipper seam");
+        jerseyMesh.SurfaceSetName(1, "Fitted sleeve cuff hems");
+        jerseyMesh.SurfaceSetName(2, "Center front zipper seam");
 
         var shortsMesh = new ArrayMesh();
         shortsBuilder.Commit(shortsMesh);
@@ -348,11 +367,13 @@ internal static class RiderGarmentMeshBuilder
 
         var jerseySourceTriangles = jerseyBuilder.TriangleCount;
         var shortsSourceTriangles = shortsBuilder.TriangleCount;
-        GD.Print($"[RiderGarments] generated jersey={jerseySourceTriangles} fabric triangles, collar={collarBuilder.TriangleCount} at 10mm, sleeve-hems={sleeveHemBuilder.TriangleCount}, zipTriangles={zipperBuilder.TriangleCount}; bib-shorts={shortsSourceTriangles} fabric triangles, grippers={gripperBuilder.TriangleCount}; collar residual={neckDistance:F3}m, radius={neckRadius:F3}m, mesh origin={neckOriginInMesh}, axis={neckAxisInMesh}; bikeForwardLocal={localForward}.");
+        GD.Print($"[RiderGarments] generated jersey={jerseySourceTriangles} fabric triangles, fitted-neckline=no-raised-band, sleeve-hems={sleeveHemBuilder.TriangleCount}, zipTriangles={zipperBuilder.TriangleCount}; bib-shorts={shortsSourceTriangles} fabric triangles, grippers={gripperBuilder.TriangleCount}; neck contour residual={neckDistance:F3}m, radius={neckRadius:F3}m; bikeForwardLocal={localForward}.");
     }
 
     private static List<VertexData> Clip(TriangleData triangle, bool jersey, float threshold)
     {
+        if (jersey && Math.Max(triangle.A.FaceWeight, Math.Max(triangle.B.FaceWeight, triangle.C.FaceWeight)) > .001f)
+            threshold = .99f;
         var input = new[] { triangle.A, triangle.B, triangle.C };
         var polygon = new List<VertexData>(4);
         for (var i = 0; i < 3; i++)
@@ -425,12 +446,16 @@ internal static class RiderGarmentMeshBuilder
         return bestCoverage;
     }
 
-    private static float NeckJerseyCoverage(Vector3 point, Vector3 neckOrigin, Vector3 neckAxis)
+    private static float NeckJerseyCoverage(Vector3 point, Vector3 neckOrigin, Vector3 neckAxis, float headWeight)
     {
+        // COLOR_0 in the shipped GLB still assigns jersey weight to some jaw
+        // vertices despite the Blender authoring mask's head-group cutoff.
+        // The actual skinning weights are authoritative for the face boundary.
+        if (headWeight > .001f) return 0f;
         var relative = point - neckOrigin;
         var height = relative.Dot(neckAxis);
         var radial = (relative - neckAxis * height).Length();
-        if (radial > .105f) return 1f;
+        if (radial > .28f) return 1f;
         // End the Human's painted torso mask at the actual collar base. The
         // generated collar shell supplies the short fabric rise above it.
         return 1f - Mathf.SmoothStep(-.004f, .002f, height);
@@ -476,7 +501,8 @@ internal static class RiderGarmentMeshBuilder
             builder.AddTriangle(polygon[0], polygon[i], polygon[i + 1], color, offset);
     }
 
-    private static List<BoundarySegment> CollectBoundarySegments(List<TriangleData> triangles, bool jersey)
+    private static List<BoundarySegment> CollectBoundarySegments(List<TriangleData> triangles, bool jersey,
+        float threshold = MaskCut)
     {
         var result = new List<BoundarySegment>();
         foreach (var triangle in triangles)
@@ -489,10 +515,10 @@ internal static class RiderGarmentMeshBuilder
             {
                 var a = source[i];
                 var b = source[(i + 1) % 3];
-                var aInside = a.Mask >= MaskCut;
-                var bInside = b.Mask >= MaskCut;
+                var aInside = a.Mask >= threshold;
+                var bInside = b.Mask >= threshold;
                 if (aInside) inside.Add(a);
-                if (aInside != bInside) intersections.Add(InterpolateMask(a, b, MaskCut));
+                if (aInside != bInside) intersections.Add(InterpolateMask(a, b, threshold));
             }
             if (intersections.Count != 2 || inside.Count == 0) continue;
             var center = inside.Aggregate(Vector3.Zero, (sum, vertex) => sum + vertex.Position) / inside.Count;
@@ -500,7 +526,7 @@ internal static class RiderGarmentMeshBuilder
             for (var i = 1; i < inside.Count; i++)
                 interior = VertexData.Blend(interior, inside[i], 1f / (i + 1f));
             interior.Position = center;
-            interior.Mask = MaskCut + .1f;
+            interior.Mask = threshold + .1f;
             result.Add(new BoundarySegment { A = intersections[0], B = intersections[1], Inside = interior });
         }
         return result;
@@ -581,30 +607,9 @@ internal static class RiderGarmentMeshBuilder
         list.Add(edge);
     }
 
-    private static void AddCollar(List<BoundarySegment> loop, MeshBuilder builder, float height,
-        float offset, Vector3 neckAxisInMesh)
-    {
-        foreach (var segment in loop)
-        {
-            var aBase = WithFabricMask(segment.A);
-            var bBase = WithFabricMask(segment.B);
-            var aTop = OffsetAlongAxis(aBase, neckAxisInMesh, height);
-            var bTop = OffsetAlongAxis(bBase, neckAxisInMesh, height);
-            builder.AddQuad(aBase, bBase, bTop, aTop, new Color(1f, 0f, 0f, 1f), offset);
-        }
-    }
-
     private static VertexData WithFabricMask(VertexData vertex)
     {
         var result = VertexData.Blend(vertex, vertex, 0f);
-        result.Mask = 1f;
-        return result;
-    }
-
-    private static VertexData OffsetAlongAxis(VertexData vertex, Vector3 axis, float amount)
-    {
-        var result = VertexData.Blend(vertex, vertex, 0f);
-        result.Position += axis * amount;
         result.Mask = 1f;
         return result;
     }
@@ -664,8 +669,10 @@ internal static class RiderGarmentMeshBuilder
         return transform;
     }
 
-    private static void AddHem(List<BoundarySegment> loop, MeshBuilder builder, float width, float shellOffset)
+    private static void AddHem(List<BoundarySegment> loop, MeshBuilder builder, float width, float shellOffset,
+        float outerExtend = 0f)
     {
+        var outer = new VertexData[loop.Count];
         var inner = new VertexData[loop.Count];
         for (var i = 0; i < loop.Count; i++)
         {
@@ -681,7 +688,10 @@ internal static class RiderGarmentMeshBuilder
                 direction = currentInward - normal * currentInward.Dot(normal);
             if (direction.LengthSquared() < 1e-8f)
                 throw new InvalidOperationException("A garment hem contour has no inward tangent direction.");
-            edge.Position += direction.Normalized() * width;
+            var inward = direction.Normalized();
+            outer[i] = VertexData.Blend(edge, edge, 0f);
+            outer[i].Position -= inward * outerExtend;
+            edge.Position += inward * width;
             edge.Normal = current.A.Normal;
             inner[i] = edge;
         }
@@ -689,9 +699,38 @@ internal static class RiderGarmentMeshBuilder
         for (var i = 0; i < loop.Count; i++)
         {
             var next = (i + 1) % loop.Count;
-            builder.AddQuad(WithFabricMask(loop[i].A), WithFabricMask(loop[i].B),
-                inner[next], inner[i], null, shellOffset + .0005f);
+            builder.AddQuad(outer[i], outer[next], inner[next], inner[i], null, shellOffset + .0005f);
         }
+    }
+
+    private static List<BoundarySegment> SmoothLoop(List<BoundarySegment> loop, int passes)
+    {
+        var result = loop.Select(segment => new BoundarySegment
+        {
+            A = VertexData.Blend(segment.A, segment.A, 0f),
+            B = VertexData.Blend(segment.B, segment.B, 0f),
+            Inside = segment.Inside
+        }).ToList();
+        for (var pass = 0; pass < passes; pass++)
+        {
+            var points = result.Select(segment => segment.A).ToArray();
+            var smoothed = new VertexData[points.Length];
+            for (var i = 0; i < points.Length; i++)
+            {
+                var previous = points[(i + points.Length - 1) % points.Length];
+                var current = points[i];
+                var next = points[(i + 1) % points.Length];
+                var average = VertexData.Blend(previous, current, .5f);
+                smoothed[i] = VertexData.Blend(average, next, 1f / 3f);
+                smoothed[i].Normal = (previous.Normal + current.Normal + next.Normal).Normalized();
+            }
+            for (var i = 0; i < result.Count; i++)
+            {
+                result[i].A = smoothed[i];
+                result[i].B = smoothed[(i + 1) % result.Count];
+            }
+        }
+        return result;
     }
 
     private static void AddZipper(List<BoundarySegment> neckLoop, List<TriangleData> triangles,
