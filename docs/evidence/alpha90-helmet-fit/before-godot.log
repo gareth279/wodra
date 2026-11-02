@@ -1,0 +1,280 @@
+Godot Engine v4.6.2.stable.mono.official.71f334935 - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 582.67 - Compatibility - Using Device: NVIDIA - Quadro P620
+
+Wodra log: C:/Users/garet/AppData/Local/Temp/Wodra-alpha90-userdata/Godot/app_userdata/Wodra/logs\wodra-20261102-212719-394756eb84bc4d14927b44915b147296.jsonl
+GameBootstrap initialised.
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[CameraInspect] RideWorldView ready node=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView visible=False inputProcessing=True debugBuild=true assembly=1.0.0.0 mvid=b68005d0-2b5b-463d-ad8b-d88b79585bfb loadedPath='' debugDll=C:/Users/garet/.codex/worktrees/alpha90-rider-garments/src/IndoorCycling.Game/.godot/mono/temp/bin/Debug/IndoorCycling.Game.dll debugDllModifiedUtc=2026-11-02T08:27:08.0915351Z camera=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/ChaseCamera initial=GameplayRefined current=(0, 0, 0)
+Configured fake trainer mode.
+Trainer ride session started.
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+[Cyclist GLB] PedalCycle selected=PedalCycle bilateralFootKeys=89/89; candidates=PedalCycle:89/89,PedalCycle_001:1/1
+[Cyclist GLB] Skeleton bones=181 animation=PedalCycle length=3.014s
+[Cyclist GLB] Human outfit shader applied to 1/2 surfaces; eye material remains separate.
+[Cyclist GLB] rigid supplied helmet attached to head; front=-Z/up=+Y, local fit offset=(0, -0.01, 0), legacy parts hidden=1
+[Cyclist GLB] helmet fit reference: weighted head center=(1.6677099E-05, 1.7226509, 0.17148818), legacy shell center=(-6.0465187E-05, 1.7987255, 0.23751995), delta=(-7.7142286E-05, 0.0760746, 0.06603177)
+[Cyclist GLB] Runtime model bounds: (0.48736036, 1.1510788, 1.6582773); meshes inspected: 18; non-unit scales: 0; largest mesh: WodraCyclist2/WodraCyclist/BicycleModel/RoadBikeStatic (1.08 m)
+Buildings visual: loaded=902 corridorSuppressed=0 detailed=536 pitchedRoofs=902 triangles=68975 facade=11040 roof=3989 windows=53946 chunks=16 meshInstances=16 surfaces=48 sharedMaterials=3 buildMs=325.4
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/372554474 route=1034.6m elevation=14.04m samples=4 overlaps background road OSM 372554472
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/381860107 route=1183.6m elevation=10.53m samples=4 overlaps background road OSM 772999267
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/479412249 route=1183.6m elevation=9.77m samples=4 overlaps background road OSM 772999267
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/106727129 route=2279.5m elevation=9.10m samples=5 overlaps background road OSM 225051723
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/1559284084 route=2752.2m elevation=11.48m samples=3 overlaps background road OSM 60197784
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/625848056 route=4159.5m elevation=2.53m samples=1 overlaps background road OSM 21436162
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/625848064 route=4157.6m elevation=2.44m samples=2 overlaps background road OSM 21436162
+[SceneryInspect] vegetation ground overlay suppressed: area OSM way/710779787 route=4122.2m elevation=2.35m samples=1 overlaps background road OSM 19782029
+[CameraInspect] ride active route=dunedin-one-way-oval-gardens node=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView visible=True inputProcessing=True mode=GameplayRefined camera=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/ChaseCamera
+[CameraInspect] selector accepted before=GameplayRefined after=Side positionBefore=(0.3353167, 2.290845, 5.275982) positionAfter=(2.9390926, 1.492965, -0.9650748) transform=[X: (-0.13968906, 0, -0.99019545), Y: (-0.099501595, 0.9949384, 0.01403691), Z: (0.9851834, 0.10048682, -0.138982), O: (2.9390926, 1.492965, -0.9650748)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-000.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=0 crossing=7.0 capture=0.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.0333, 1.4740123, -686.7192) positionAfter=(276.0333, 1.4740121, -686.7192) transform=[X: (0.34331477, 0, -0.9392204), Y: (-0.050677326, 0.99854326, -0.018524164), Z: (0.93785226, 0.0539568, 0.34281465), O: (276.0333, 1.4740121, -686.7192)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-045.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=45 crossing=73.2 capture=45.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.17096, 1.4754202, -687.055) positionAfter=(276.17096, 1.4754202, -687.055) transform=[X: (0.34786576, 0, -0.9375444), Y: (-0.046810165, 0.99875283, -0.017368408), Z: (0.9363751, 0.04992848, 0.3474319), O: (276.17096, 1.4754202, -687.055)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-090.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=90 crossing=116.2 capture=90.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.3219, 1.4767976, -687.42377) positionAfter=(276.3219, 1.4767976, -687.42377) transform=[X: (0.34591115, 0, -0.9382673), Y: (-0.04606741, 0.99879396, -0.016983679), Z: (0.9371357, 0.049098387, 0.34549394), O: (276.3219, 1.4767976, -687.42377)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-135.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=135 crossing=162.6 capture=135.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.4864, 1.4783003, -687.8261) positionAfter=(276.4864, 1.4783003, -687.8261) transform=[X: (0.34458247, 0, -0.9387561), Y: (-0.04568913, 0.99881494, -0.01677078), Z: (0.9376436, 0.048669863, 0.3441741), O: (276.4864, 1.4783003, -687.8261)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-180.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=180 crossing=210.5 capture=180.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.66034, 1.4798898, -688.25183) positionAfter=(276.66034, 1.4798898, -688.25183) transform=[X: (0.343623, 0, -0.9391077), Y: (-0.04548783, 0.99882627, -0.016644167), Z: (0.9380054, 0.048437286, 0.34321967), O: (276.66034, 1.4798898, -688.25183)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-225.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=225 crossing=256.0 capture=225.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.85544, 1.4816723, -688.72943) positionAfter=(276.85544, 1.4816723, -688.72943) transform=[X: (0.34284416, 0, -0.93939227), Y: (-0.045650396, 0.9988186, -0.016660742), Z: (0.93828243, 0.048595667, 0.34243912), O: (276.85544, 1.4816723, -688.72943)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-270.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=270 crossing=299.3 capture=270.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(277.04196, 1.4833765, -689.18604) positionAfter=(277.04196, 1.4833765, -689.18604) transform=[X: (0.3422853, 0, -0.9395961), Y: (-0.045808177, 0.9988109, -0.016687453), Z: (0.93847877, 0.048753053, 0.34187827), O: (277.04196, 1.4833765, -689.18604)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\legs-live-side-phase-315.png
+[RiderFinishingSceneReviewTest] live RideScreen phase target=315 crossing=346.3 capture=315.0 cadence=85rpm
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(277.25333, 1.4853084, -689.7034) positionAfter=(277.25333, 1.4853084, -689.7034) transform=[X: (0.34183452, 0, -0.93976015), Y: (-0.04594349, 0.9988043, -0.016711786), Z: (0.9386365, 0.048888527, 0.3414258), O: (277.25333, 1.4853084, -689.7034)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\rider-side-full-phase-000.png
+[RiderFinishingSceneReviewTest] clear RideScreen phase target=0 actual=0.0 imported model
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\rider-side-full-phase-090.png
+[RiderFinishingSceneReviewTest] clear RideScreen phase target=90 actual=90.0 imported model
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\rider-side-full-phase-180.png
+[RiderFinishingSceneReviewTest] clear RideScreen phase target=180 actual=180.0 imported model
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\rider-side-full-phase-270.png
+[RiderFinishingSceneReviewTest] clear RideScreen phase target=270 actual=270.0 imported model
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-000-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-000-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-000-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-000-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-045-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-045-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-045-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-045-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-090-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-090-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-090-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-090-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-135-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-135-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-135-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-135-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-180-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-180-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-180-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-180-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-225-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-225-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-225-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-225-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-270-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-270-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-270-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-270-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-315-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-left-side-phase-315-annotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-315-unannotated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\shoe-right-side-phase-315-annotated.png
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(276.05716, 0.8327434, -689.8605) positionAfter=(276.05716, 0.8327434, -689.8605) transform=[X: (-0.3408534, 0, -0.94011647), Y: (-0.58003974, 0.78697324, 0.21030216), Z: (0.7398465, 0.6169871, -0.2682425), O: (276.05716, 0.8327434, -689.8605)] current=True
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(288.2183, 1.7597785, -712.6677) positionAfter=(288.2183, 1.7597785, -712.6677) transform=[X: (0.35093603, 0, -0.93639946), Y: (-0.09309698, 0.99504554, -0.03489011), Z: (0.93176013, 0.09942016, 0.34919733), O: (288.2183, 1.7597785, -712.6677)] current=True
+[RiderFinishingSceneReview] side centered debug=True: subject=(0.48813882, 0.49733615), safeCenter=(0.48906252, 0.5), offset=(-0.0009236932, -0.0026638508)
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\ride-side-debug-on.png
+[CameraInspect] selector accepted before=Side after=Side positionBefore=(290.4732, 1.769484, -718.0544) positionAfter=(290.4732, 1.769484, -718.0544) transform=[X: (0.50514454, 0, -0.8630348), Y: (-0.12476611, 0.9894951, -0.0730271), Z: (0.8539686, 0.14456671, 0.49983802), O: (290.4732, 1.769484, -718.0544)] current=True
+[RiderFinishingSceneReview] side centered debug=False: subject=(0.4121805, 0.47537792), safeCenter=(0.40520832, 0.46574074), offset=(0.0069721937, 0.009637177)
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\ride-side-debug-off.png
+[CameraInspect] selector accepted before=Side after=GameplayRefined positionBefore=(291.7515, 1.7658322, -721.3506) positionAfter=(286.48438, 2.5318975, -717.23267) transform=[X: (0.973424, 0, 0.2290103), Y: (0.028205512, 0.9923865, -0.11988947), Z: (-0.22726674, 0.12316264, 0.9660129), O: (286.48438, 2.5318975, -717.23267)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\ride-chase.png
+[CameraInspect] selector accepted before=GameplayRefined after=FrontThreeQuarter positionBefore=(287.58588, 2.526357, -720.8172) positionAfter=(292.80634, 2.2444682, -730.87555) transform=[X: (-0.500125, 0, -0.86595327), Y: (-0.21906616, 0.9674724, 0.12652007), Z: (0.83778584, 0.2529769, -0.4838571), O: (292.80634, 2.2444682, -730.87555)] current=True
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\ride-front-three-quarter.png
+[RiderFinishingSceneReviewTest] animations=PedalCycle:3.014s/93tracks/foot=89;PedalCycle_001:3.014s/93tracks/foot=1
+[RiderFinishingSceneReviewTest] active clip=PedalCycle tracks=93 footTracks=WodraCyclist/RiderModel/Human_rig/Skeleton3D:left_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:left_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:lowerleg01.L:86;WodraCyclist/RiderModel/Human_rig/Skeleton3D:foot.L:89;WodraCyclist/RiderModel/Human_rig/Skeleton3D:lowerleg01.R:86;WodraCyclist/RiderModel/Human_rig/Skeleton3D:foot.R:89;WodraCyclist/RiderModel/Human_rig/Skeleton3D:right_foot_ik:1;WodraCyclist/RiderModel/Human_rig/Skeleton3D:right_foot_ik:1
+[HelmetFitSurvey] GodotWorld rider=[X: (0.91748416, -2.8306751E-05, 0.3977677), Y: (0.0001698726, 0.9999992, -0.00032066138), Z: (-0.39776823, 0.0003617723, 0.91748536), O: (290.83066, 0.2742122, -731.73816)] skeleton=[X: (-0.9174842, 2.8306782E-05, -0.3977676), Y: (0.0001698726, 0.9999992, -0.00032066138), Z: (0.39776814, -0.0003617723, -0.9174854), O: (290.72607, 0.46930718, -731.49695)] headBone=[X: (-0.9181385, 0.0007213821, -0.39625415), Y: (0.31100437, 0.62098557, -0.7194804), Z: (0.24554944, -0.7838221, -0.570376), O: (290.94574, 1.6261355, -732.00385)] human=[X: (-0.9174842, 2.8306782E-05, -0.3977676), Y: (0.0001698726, 0.9999992, -0.00032066138), Z: (0.39776814, -0.0003617723, -0.9174854), O: (290.72607, 0.46930718, -731.49695)] helmetAttachment=[X: (-0.9181385, 0.0007213821, -0.39625415), Y: (0.31100437, 0.62098557, -0.7194804), Z: (0.24554944, -0.7838221, -0.570376), O: (290.94574, 1.6261355, -732.00385)] pose=[X: (0.91748416, -2.8304523E-05, 0.39776766), Y: (0.08286697, 0.97807246, -0.1910699), Z: (-0.3890406, 0.20826653, 0.89736915), O: (290.9744, 1.7002555, -732.07025)] assembly=[X: (0.91748416, -2.8304523E-05, 0.39776766), Y: (0.08286697, 0.97807246, -0.1910699), Z: (-0.3890406, 0.20826653, 0.89736915), O: (290.9744, 1.7002555, -732.07025)] mesh=[X: (0.91748416, -2.8304523E-05, 0.39776766), Y: (0.08286697, 0.97807246, -0.1910699), Z: (-0.3890406, 0.20826653, 0.89736915), O: (290.9744, 1.7002555, -732.07025)]
+[HelmetFitSurvey] skull eyeCenter=(290.97723, 1.588118, -732.0769) headCenter=(290.961, 1.6115175, -732.0468) faceAxis=(0.39186168, -0.56478006, -0.72626996) bikeForward=(0.39779198, -0.00036184647, -0.9174755) dot=0.8224 skullAlongBike=787.2570..787.4789 skullUp=1.8154..2.0449
+[HelmetFitSurvey] suppliedAssembly localAabb=(-0.084463544, -0.166772, -0.11552675), (0.16892709, 0.23733863, 0.27703804) worldAlongBike=787.2477..787.5096 worldUp=1.8162..2.0615 physicalBrow=(291.01233, 1.6528063, -732.1577) physicalRear=(290.91327, 1.754024, -731.92926) markerSeparation=0.2688m
+[HelmetFitSurvey] upperSkull points=157 alongBike=787.2570..787.4789 up=1.9083..2.0449
+[RiderFinishingSceneReviewTest] rigid original helmet attached to head; physical brow/rear landmarks parented to head assembly, vertices=39535
+[RiderFinishingSceneReviewTest] legacy skinned helmet hidden; rigid assembly=/root/RiderFinishingSceneReviewTest/RoadBikeReviewViewport/Control/RideWorldView/CyclistVisual/WodraCyclist2/WodraCyclist/RiderModel/Human_rig/Skeleton3D/CyclingHelmetHeadAttachment/CyclingHelmetRigidPose/OriginalSuppliedHelmetRigidAssembly
+[RiderFinishingSceneReview] human surface=0 material=Rider Outfit | glTF vertex masks
+[RiderFinishingSceneReview] surface=0 albedo=(1, 1, 1, 1) roughness=0.82 metallic=0
+[RiderFinishingSceneReview] human surface=1 material=Rider Eye | muted warm brown
+[RiderFinishingSceneReview] surface=1 albedo=(0.2827793, 0.2347951, 0.20598418, 1) roughness=0.92 metallic=0
+[RiderFinishingSceneReviewTest] outfit COLOR_0 vertices=19761 jersey=2858 shorts=740 shoes=2261 skin=13641
+[RiderFinishingSceneReviewTest] upper-chest jersey coverage=434/434 central vertices through neck-base band
+[RiderFinishingSceneReviewTest] imported posed jersey collar bounds=(0.123168945, 0.01510787, 0.07519531) selectedColour=(0.075, 0.16, 0.34, 1)
+[RiderFinishingSceneReview] Human local bounds=(-0.51017433, 0.19500005, 0.0035098195), (1.0176873, 1.6442152, 0.34944403), node=[X: (1, 0, 0), Y: (0, 1, 0), Z: (0, 0, 1), O: (0, 0, 0)], headBone=[X: (0.99999833, 0.0006924793, -0.001649091), Y: (0.0008620024, 0.6212695, 0.78359646), Z: (0.00156717, -0.783598, 0.6212675), O: (0.00013829896, 1.1570289, 0.55204743)]
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-side-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-navy-red-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-white-original-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-front-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-front-three-quarter-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\fit-rider-rear-full.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\bike-only-side.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\bike-only-front-three-quarter.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-front-helmet-off.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-off.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-three-quarter-helmet-off.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-rear-helmet-off.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-pitch-3deg.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-pitch-6deg.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-pitch-9deg.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-pitch-12deg.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-front-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-side-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-three-quarter-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\head-rear-helmet-on.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-navy blue-phase-000.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-navy blue-phase-090.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-teal-phase-180.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-teal-phase-270.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-angle-front.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-angle-side.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-angle-rear.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\jersey-collar-angle-three-quarter.png
+[RiderFinishingSceneReviewTest] physical-feature orientation in production side camera: brow/eyes/rear-tail X=1184.3/1066.3/850.9px, face projections=0.036/-0.226m; mesh proximity=0.004/0.000m; accepted forward orientation retained
+[RiderFinishingSceneReviewTest] shoe mesh source bounds L=(0.10400003, 0.058880046, 0.26999998) R=(0.10399996, 0.058879957, 0.27000004)
+[RiderFinishingSceneReviewTest] phase=0 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.1deg forefoot=(290.688, 0.38840324, -731.7155) heel=(290.60913, 0.40225783, -731.5336) toe=(290.71655, 0.40168223, -731.78143)
+[RiderFinishingSceneReviewTest] phase=0 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.1deg forefoot=(290.92648, 0.7154641, -731.62195) heel=(290.8476, 0.7286171, -731.44006) toe=(290.95502, 0.72899723, -731.6878)
+[RiderFinishingSceneReviewTest] phase=90 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(290.62476, 0.5448226, -731.5697) heel=(290.54648, 0.5720381, -731.38916) toe=(290.65363, 0.55321807, -731.6363)
+[RiderFinishingSceneReviewTest] phase=90 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(290.98975, 0.5585154, -731.7678) heel=(290.9107, 0.5582432, -731.5855) toe=(291.01785, 0.57686734, -731.8327)
+[RiderFinishingSceneReviewTest] phase=180 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.2deg forefoot=(290.68683, 0.715225, -731.7128) heel=(290.608, 0.72933257, -731.531) toe=(290.7154, 0.7284123, -731.77875)
+[RiderFinishingSceneReviewTest] phase=180 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=0.2deg forefoot=(290.9276, 0.38844526, -731.62463) heel=(290.84875, 0.401345, -731.4427) toe=(290.95615, 0.40207008, -731.6904)
+[RiderFinishingSceneReviewTest] phase=270 side=0 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(290.75458, 0.5588785, -731.86914) heel=(290.67554, 0.5586059, -731.6868) toe=(290.78268, 0.5772305, -731.93396)
+[RiderFinishingSceneReviewTest] phase=270 side=1 ankleToShoeAxis=0.0deg ankleToPedalNormal=4.0deg forefoot=(290.85992, 0.54446024, -731.46844) heel=(290.78165, 0.5716761, -731.28784) toe=(290.8888, 0.5528557, -731.535)
+[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L=0.000m R=0.000m; pelvis-to-saddle=0.096m; ball-of-foot to moving pedal top L=0.00753m@75deg (0.0010375977, -0.0070289373, -0.0025024414) R=0.00757m@255deg (0.0011291504, -0.007031381, -0.0025634766); ankle-bone travel=0.008-0.327m
+[RiderFinishingSceneReviewTest] anatomical knees step=0.0175/0.0189m flex=26.5-105.1/26.1-104.9deg forwardMin=0.1029/0.1012m legLengthDelta=0.00004/0.00004m
+[RiderFinishingSceneReviewTest] shoe toe error=4.0/4.0deg sole error=4.0/4.0deg ankle-to-shoe axis=0.0/0.0deg ankle-to-pedal normal=4.0/4.0deg heel plane=0.020/0.020m toe plane=0.025/0.025m signed min heel=0.006/0.006 toe=0.001/0.001m shoe step=0.62/0.62deg contact=0.026/0.025m surface=0.014/0.014m
+[RiderFinishingSceneReviewTest] physical toe-box/heel-cup width advantage=0.028/0.028m; physical toe-axis error=6.3/6.3deg; ankle/opening distance=0.068/0.072m; ankle fraction heel-to-toe=0.19-0.24/0.20-0.24
+[RiderFinishingSceneReview] hood centers L=(290.8268, 1.2220361, -732.28735) R=(291.2342, 1.2220236, -732.1107) target=(291.03052, 1.2220299, -732.19904)
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\cockpit-no-hands-side.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\cockpit-no-hands-top.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\cockpit-no-hands-front-three-quarter.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\cockpit-rider-view.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hood-left-no-hands-close.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hood-right-no-hands-close.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hand-left-hood-close.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hand-left-hood-elevated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hand-right-hood-close.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\hand-right-hood-elevated.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-000.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-045.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-090.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-135.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-180.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-225.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-270.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-side-phase-315.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-front-alignment.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-rear-alignment.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-left-shoe-contact.png
+[RiderFinishingSceneReview] captured C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before\pedals-right-shoe-contact.png
+[RiderFinishingSceneReview] PASS: imported GLB in RideScreen; evidence: C:\Users\garet\AppData\Local\Temp\Wodra-alpha90-helmet-before
+WARNING: 1 RID of type "Canvas" was leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2690)
+WARNING: 10 RIDs of type "CanvasItem" were leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2692)
+ERROR: 1 RID allocations of type 'N5GLES312LightStorage11ShadowAtlasE' were leaked at exit.
+ERROR: 1 RID allocations of type 'N5GLES312RenderTargetE' were leaked at exit.
+ERROR: 21 RID allocations of type 'N5GLES37TextureE' were leaked at exit.
+ERROR: Texture with GL ID of 22: leaked 760 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 29: leaked 4092 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 35: leaked 4092 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 58: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 59: leaked 1364 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 67: leaked 174762 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 68: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 69: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 70: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 71: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 74: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 75: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 76: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 77: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 78: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 89: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 90: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 60: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: Texture with GL ID of 92: leaked 131072 bytes.
+   at: ~Utilities (drivers/gles3/storage/utilities.cpp:77)
+ERROR: 1 RID allocations of type 'N16RendererViewport8ViewportE' were leaked at exit.
+ERROR: 17 RID allocations of type 'PN18TextServerAdvanced22ShapedTextDataAdvancedE' were leaked at exit.
+ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)
