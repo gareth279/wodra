@@ -10,5 +10,6 @@
     <Compile Include="../../src/IndoorCycling.Game/Scripts/UpdateVersionPolicy.cs" Link="UpdateVersionPolicy.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/BuildIdentity.cs" Link="BuildIdentity.cs" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/VelopackStartup.cs" Link="VelopackStartup.cs" />
+    <Compile Include="../../src/IndoorCycling.Game/Scripts/VelopackUpdateService.cs" Link="VelopackUpdateService.cs" />
   </ItemGroup>
 </Project>

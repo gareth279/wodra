@@ -30,6 +30,7 @@ public partial class GameBootstrap : Node
 	public static BikeProfile BikeProfile { get; private set; } = default!;
 
 	public static AppSettings Settings { get; private set; } = default!;
+	public static VelopackUpdateService? UpdateService { get; private set; }
 	public static bool DebugModeEnabled => Settings?.DebugModeEnabled == true;
 	public static IRideHistoryRepository? RideHistory { get; private set; }
 	public static int TrainerDifficultyPercent => TrainerDifficultyPolicy.Normalize(
@@ -101,6 +102,7 @@ public partial class GameBootstrap : Node
 
 		Settings = AppSettings.LoadOrCreate();
 		GameLogger.Init();
+		InitializeUpdateService();
 		if (!OS.GetCmdlineUserArgs().Contains("--layout-smoke-test"))
 			StravaIntegrationClient.Shared.ResumePendingAutomaticUploads();
 		ConfigureMainWindow();
@@ -133,6 +135,44 @@ public partial class GameBootstrap : Node
 		});
 
 		GD.Print("GameBootstrap initialised.");
+	}
+
+	private static void InitializeUpdateService()
+	{
+		const string repositoryUrl = "https://github.com/gareth279/wodra";
+		var identity = BuildIdentity.Current;
+		var channel = BuildIdentity.UpdateChannelForChecks;
+		IUpdaterBackend backend;
+		try
+		{
+			string? localFeedDirectory = null;
+#if WODRA_LOCAL_UPDATE_FEED_TEST
+			localFeedDirectory = System.Environment.GetEnvironmentVariable("WODRA_LOCAL_UPDATE_FEED");
+			if (!string.IsNullOrWhiteSpace(localFeedDirectory))
+				GD.Print("Using the local Velopack feed enabled for installed-update testing.");
+#endif
+			backend = new VelopackUpdateBackend(repositoryUrl, channel, localFeedDirectory);
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("update_manager_initialization_failed", new
+			{
+				exceptionType = ex.GetType().Name,
+				message = ex.Message,
+				applicationVersion = identity.ApplicationVersion,
+				channel
+			});
+			backend = new UnavailableUpdaterBackend(identity.ApplicationVersion, channel,
+				identity.BuildType == "Packaged release", ex);
+		}
+
+		UpdateService = new VelopackUpdateService(
+			backend,
+			identity.ApplicationVersion,
+			channel,
+			canApply: () => Mode == SessionMode.None,
+			log: (eventName, payload) => GameLogger.Log(eventName, payload));
+		UpdateService.StartAutomaticCheck();
 	}
 
 	private static void RefreshInstalledShortcutIcons()
