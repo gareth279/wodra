@@ -18,7 +18,7 @@ public partial class CyclistVisual : Node3D
         float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
 
     // A small 3° nose-down shell pitch improves brow fit; applied about helmet-local right.
-    private float _rigidHelmetForwardPitchDegrees = 3f;
+    private float _rigidHelmetForwardPitchDegrees = 12f;
     // One seated road-cyclist reference pose drives all visible rider anchors. Coordinates use
     // +Y up and -Z forward, matching the bicycle and the existing cadence/IK solver.
     private sealed record RiderPose(Vector3 Pelvis, Vector3 LeftHip, Vector3 RightHip,
@@ -147,6 +147,9 @@ public partial class CyclistVisual : Node3D
     private int _rigidHelmetHeadIndex = -1;
     private ShaderMaterial? _outfitMaterial;
     private ShaderMaterial? _helmetShellMaterial;
+    private MeshInstance3D? _jerseyCollar;
+    private StandardMaterial3D? _jerseyCollarMaterial;
+    private Color _selectedJerseyColor = new(.05f, .42f, .43f);
     private StandardMaterial3D? _helmetOriginalMaterial;
     private Vector3 _previousForward;
     private bool _hasPreviousForward;
@@ -163,7 +166,9 @@ public partial class CyclistVisual : Node3D
     public void SetCustomization(string jerseyColor, string helmetColor)
     {
         var jersey = JerseyColor(jerseyColor);
+        _selectedJerseyColor = jersey;
         _outfitMaterial?.SetShaderParameter("jersey_color", jersey);
+        ApplyJerseyCollarColor();
         _helmetShellMaterial?.SetShaderParameter("shell_color", HelmetColor(helmetColor));
         if (_helmetShellMaterial is not null && helmetColor == "Original purple/blue" &&
             _rigidHelmetPose is not null && FindFirstNode<MeshInstance3D>(_rigidHelmetPose) is { } mesh)
@@ -176,7 +181,7 @@ public partial class CyclistVisual : Node3D
     /// <summary>Sets the production helmet pitch for controlled rendered review comparisons.</summary>
     public void SetReviewHelmetForwardPitchDegrees(float degrees)
     {
-        _rigidHelmetForwardPitchDegrees = Mathf.Clamp(degrees, 0f, 8f);
+        _rigidHelmetForwardPitchDegrees = Mathf.Clamp(degrees, 0f, 16f);
         UpdateRigidHelmetPoseForCurrentFrame();
     }
 
@@ -192,6 +197,18 @@ public partial class CyclistVisual : Node3D
         "Red" => new Color(.68f, .055f, .065f), "Teal" => new Color(.025f, .42f, .40f),
         _ => new Color(.075f, .085f, .10f)
     };
+
+    private void ApplyJerseyCollarColor()
+    {
+        if (_jerseyCollar is null) return;
+        _jerseyCollarMaterial ??= new StandardMaterial3D
+        {
+            Roughness = .82f,
+            CullMode = BaseMaterial3D.CullModeEnum.Disabled
+        };
+        _jerseyCollarMaterial.AlbedoColor = _selectedJerseyColor;
+        _jerseyCollar.MaterialOverride = _jerseyCollarMaterial;
+    }
 
     /// <summary>Allows the live performance review harness to isolate baked skeleton sampling.</summary>
     public bool RiderAnimationSamplingEnabled { get; set; } = true;
@@ -479,6 +496,8 @@ public partial class CyclistVisual : Node3D
         GD.Print($"[Cyclist GLB] Skeleton bones={skeleton.GetBoneCount()} animation={_pedalCycleName} length={_pedalCycleAnimation.Length:F3}s");
         _bicycleModel = FindModelNode<Node3D>(instance, "BicycleModel")!;
         _riderModel = FindModelNode<Node3D>(instance, "RiderModel")!;
+        _jerseyCollar = FindModelNode<MeshInstance3D>(instance, "RiderJerseyCollar");
+        ApplyJerseyCollarColor();
         _frontWheel = FindModelNode<Node3D>(instance, "FrontWheelSpin")!;
         _rearWheel = FindModelNode<Node3D>(instance, "RearWheelSpin")!;
         _crankPivot = FindModelNode<Node3D>(instance, "CrankPivot")!;
