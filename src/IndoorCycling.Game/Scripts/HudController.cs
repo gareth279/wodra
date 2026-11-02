@@ -933,7 +933,7 @@ public partial class HudController : Control
 		{
 			Name = "MediaControlsPanel", Visible = false,
 			CustomMinimumSize = new Vector2(RideHudOverlayLayoutPolicy.MediaPanelMinimumWidth, RideHudOverlayLayoutPolicy.MediaPanelHeight),
-			MouseFilter = Control.MouseFilterEnum.Stop, ZIndex = 20
+			MouseFilter = Control.MouseFilterEnum.Stop
 		};
 		var panelStyle = new StyleBoxFlat
 		{

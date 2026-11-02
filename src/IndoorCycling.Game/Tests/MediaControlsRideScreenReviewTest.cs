@@ -120,6 +120,28 @@ public partial class MediaControlsRideScreenReviewTest : Node
 			hud.SetDummyTrainerControls(GameBootstrap.TrainerClient as FakeTrainerClient);
 			await Until(() => hud.GetNode<Control>("BottomHudLane/MediaControlsPanel").IsVisibleInTree(), "mock media session to appear");
 			AssertMediaLayout(screen, "1280x720 debug hidden");
+			var menu = screen.GetNode<RideMenuPanelController>("RideMenuPanel");
+			var mediaPanel = hud.GetNode<Control>("BottomHudLane/MediaControlsPanel");
+			var mediaPosition = mediaPanel.GlobalPosition;
+			await OpenSettingsThroughRideMenu(menu);
+			await Frames(4);
+			if (!IsHeadless) Capture("menu-settings-media-behind.png");
+			AssertMenuLayering(screen, "1280x720 Settings open");
+			var backButton = menu.FindChildren("*", recursive: true, owned: false).OfType<Button>()
+				.FirstOrDefault(button => button.Text == "Back")
+				?? throw new InvalidOperationException("Settings menu Back button is missing from the production RideScreen.");
+			backButton.EmitSignal(Button.SignalName.Pressed);
+			await Frames(3);
+			Check(menu.IsMenuVisible && menu.FindChildren("*", recursive: true, owned: false).OfType<Label>()
+				.Any(label => label.Text == "Ride Menu"), "Settings Back button remains functional with the media panel visible");
+			var continueButton = menu.FindChildren("*", recursive: true, owned: false).OfType<Button>()
+				.FirstOrDefault(button => button.Text == "Continue Riding")
+				?? throw new InvalidOperationException("Ride Menu Continue Riding button is missing.");
+			continueButton.EmitSignal(Button.SignalName.Pressed);
+			await Frames(3);
+			Check(!menu.IsMenuVisible && mediaPanel.IsVisibleInTree() && mediaPanel.GlobalPosition.DistanceTo(mediaPosition) < 1f,
+				"closing the modal restores the visible media panel to its original position");
+			if (!IsHeadless) Capture("menu-closed-media-restored.png");
 			Check(Find<Label>(hud, "MediaTitle").Text == "A Long Ride Home", "current media session title is displayed");
 			Check(Find<Label>(hud, "MediaArtist").Text.Contains("Wodra Test Artist") && Find<Label>(hud, "MediaArtist").Text.Contains("Playing"),
 				"artist and playing state are displayed");
@@ -195,7 +217,15 @@ public partial class MediaControlsRideScreenReviewTest : Node
 				await Frames(6);
 				hud.ShowAchievementNotification("First ride");
 				AssertMediaLayout(screen, $"{name} debug visible");
+				await OpenSettingsThroughRideMenu(menu);
+				await Frames(3);
+				AssertMenuLayering(screen, $"{name} Settings open");
 				if (!IsHeadless) Capture($"media-{name}-debug-visible.png");
+				menu.ShowInRideMenu();
+				var dismiss = menu.FindChildren("*", recursive: true, owned: false).OfType<Button>()
+					.FirstOrDefault(button => button.Text == "Continue Riding");
+				dismiss?.EmitSignal(Button.SignalName.Pressed);
+				await Frames(2);
 			}
 			DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
 			await Frames(6);
@@ -285,6 +315,35 @@ public partial class MediaControlsRideScreenReviewTest : Node
 			if (child is { Visible: true } && (child.GetGlobalRect().Position.X < rect.Position.X || child.GetGlobalRect().End.X > rect.End.X))
 				throw new InvalidOperationException($"Media control {name} is clipped at {context}: panel={rect}, child={child.GetGlobalRect()}.");
 		}
+	}
+
+	private void AssertMenuLayering(Node screen, string context)
+	{
+		var hud = screen.GetNode<HudController>("HudController");
+		var menu = screen.GetNode<RideMenuPanelController>("RideMenuPanel");
+		var media = hud.GetNode<Control>("BottomHudLane/MediaControlsPanel");
+		var backdrop = menu.GetNode<ColorRect>("ColorRect");
+		var captureBaselineLayering = System.Environment.GetEnvironmentVariable("WODRA_CAPTURE_MEDIA_LAYERING_BASELINE") == "1";
+		Check(menu.IsMenuVisible && media.IsVisibleInTree(), $"modal and media panel are both visible at {context}");
+		Check(backdrop.GetGlobalRect().Intersects(media.GetGlobalRect()), $"media panel occupies space behind the modal at {context}");
+		if (captureBaselineLayering)
+			Check(media.ZIndex > menu.ZIndex && backdrop.MouseFilter == Control.MouseFilterEnum.Stop,
+				$"alpha.87 reproduces the media-above-modal z-index at {context}");
+		else
+			Check(screen.GetChildren().IndexOf(menu) > screen.GetChildren().IndexOf(hud) &&
+				media.ZIndex == 0 && menu.ZIndex == 0 && backdrop.MouseFilter == Control.MouseFilterEnum.Stop,
+				$"modal uses later sibling draw/input order over media at {context}");
+	}
+
+	private async Task OpenSettingsThroughRideMenu(RideMenuPanelController menu)
+	{
+		menu.ShowInRideMenu();
+		await Frames(2);
+		var settings = menu.FindChildren("*", recursive: true, owned: false).OfType<Button>()
+			.FirstOrDefault(button => button.Text == "Settings")
+			?? throw new InvalidOperationException("Ride Menu Settings button is missing.");
+		settings.EmitSignal(Button.SignalName.Pressed);
+		await Frames(3);
 	}
 
 	private async Task Until(Func<bool> condition, string label)

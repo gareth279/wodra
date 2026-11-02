@@ -509,6 +509,8 @@ public partial class RiderFinishingSceneReviewTest : Node
             var maxPedalSurfaceStep = new float[2];
             var maxHeelPlaneError = new float[2];
             var maxToePlaneError = new float[2];
+            var maxMeshAxisError = new float[2];
+            var minForefootToeAdvantage = new float[] { float.PositiveInfinity, float.PositiveInfinity };
             var minHeelPlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
             var minToePlane = new float[] { float.PositiveInfinity, float.PositiveInfinity };
             var shoeToeAtStart = new Vector3[2];
@@ -616,6 +618,34 @@ public partial class RiderFinishingSceneReviewTest : Node
                     var soleAngle = Mathf.Acos(Mathf.Clamp(soleUp.Dot(surfaceNormal), -1f, 1f));
                     var heel = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeHeelBones[side]).Origin;
                     var toe = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(shoeToeBones[side]).Origin;
+                    // Identify which skinned mesh end is the toe by its
+                    // distance to the forefoot contact on the pedal. This is
+                    // independent of the shoe_toe/heel bone labels and catches
+                    // a reversed mesh even if those labels were reversed too.
+                    var shoeGeometryPoints = new List<Vector3>();
+                    for (var surface = 0; surface < shoeMeshes[side]!.Mesh!.GetSurfaceCount(); surface++)
+                    {
+                        var arrays = shoeMeshes[side]!.Mesh!.SurfaceGetArrays(surface);
+                        shoeGeometryPoints.AddRange(SkinVerticesToWorld(skeleton, shoeMeshes[side]!,
+                            arrays[(int)Mesh.ArrayType.Vertex].AsVector3Array(),
+                            arrays[(int)Mesh.ArrayType.Bones].AsInt32Array(),
+                            arrays[(int)Mesh.ArrayType.Weights].AsFloat32Array()));
+                    }
+                    var endCount = Math.Max(3, shoeGeometryPoints.Count / 10);
+                    var geometryAlongBike = shoeGeometryPoints.OrderBy(point => point.Dot(bikeForward)).ToArray();
+                    var geometryRearEnd = geometryAlongBike.Take(endCount)
+                        .Aggregate(Vector3.Zero, (sum, point) => sum + point) / endCount;
+                    var geometryFrontEnd = geometryAlongBike.Skip(geometryAlongBike.Length - endCount)
+                        .Aggregate(Vector3.Zero, (sum, point) => sum + point) / endCount;
+                    var ballToFrontEnd = geometryFrontEnd.DistanceTo(shoeContactPositions[side]);
+                    var ballToRearEnd = geometryRearEnd.DistanceTo(shoeContactPositions[side]);
+                    var physicalToeEnd = ballToFrontEnd <= ballToRearEnd ? geometryFrontEnd : geometryRearEnd;
+                    var physicalHeelEnd = ballToFrontEnd <= ballToRearEnd ? geometryRearEnd : geometryFrontEnd;
+                    var physicalMeshAxis = (physicalToeEnd - physicalHeelEnd).Normalized();
+                    maxMeshAxisError[side] = Math.Max(maxMeshAxisError[side],
+                        Mathf.Acos(Mathf.Clamp(physicalMeshAxis.Dot(bikeForward), -1f, 1f)));
+                    minForefootToeAdvantage[side] = Math.Min(minForefootToeAdvantage[side],
+                        Math.Max(ballToFrontEnd, ballToRearEnd) - Math.Min(ballToFrontEnd, ballToRearEnd));
                     var heelHeight = (heel - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
                     var toeHeight = (toe - pedalSurfaces[side].GlobalPosition).Dot(surfaceNormal);
                     maxToeForwardError[side] = Math.Max(maxToeForwardError[side], toeAngle);
@@ -667,6 +697,7 @@ public partial class RiderFinishingSceneReviewTest : Node
             GD.Print($"[RiderFinishingSceneReviewTest] full-cycle max palm-to-hood L={maxLeftPalm:F3}m R={maxRightPalm:F3}m; pelvis-to-saddle={maxPelvis:F3}m; ball-of-foot to moving pedal top L={maxLeftShoeContact:F5}m@{maxLeftShoePhase}deg {maxLeftShoeError} R={maxRightShoeContact:F5}m@{maxRightShoePhase}deg {maxRightShoeError}; ankle-bone travel={minFootTravel:F3}-{maxFootTravel:F3}m");
             GD.Print($"[RiderFinishingSceneReviewTest] anatomical knees step={maxKneeStep[0]:F4}/{maxKneeStep[1]:F4}m flex={Mathf.RadToDeg(minKneeFlex[0]):F1}-{Mathf.RadToDeg(maxKneeFlex[0]):F1}/{Mathf.RadToDeg(minKneeFlex[1]):F1}-{Mathf.RadToDeg(maxKneeFlex[1]):F1}deg forwardMin={minForwardKnee[0]:F4}/{minForwardKnee[1]:F4}m legLengthDelta={maxLegLengthDelta[0]:F5}/{maxLegLengthDelta[1]:F5}m");
             GD.Print($"[RiderFinishingSceneReviewTest] shoe toe error={Mathf.RadToDeg(maxToeForwardError[0]):F1}/{Mathf.RadToDeg(maxToeForwardError[1]):F1}deg sole error={Mathf.RadToDeg(maxSoleNormalError[0]):F1}/{Mathf.RadToDeg(maxSoleNormalError[1]):F1}deg ankle-to-shoe axis={Mathf.RadToDeg(maxFootToShoeAxisError[0]):F1}/{Mathf.RadToDeg(maxFootToShoeAxisError[1]):F1}deg ankle-to-pedal normal={Mathf.RadToDeg(maxFootToPedalNormalError[0]):F1}/{Mathf.RadToDeg(maxFootToPedalNormalError[1]):F1}deg heel plane={maxHeelPlaneError[0]:F3}/{maxHeelPlaneError[1]:F3}m toe plane={maxToePlaneError[0]:F3}/{maxToePlaneError[1]:F3}m signed min heel={minHeelPlane[0]:F3}/{minHeelPlane[1]:F3} toe={minToePlane[0]:F3}/{minToePlane[1]:F3}m shoe step={Mathf.RadToDeg(maxShoeAxisStep[0]):F2}/{Mathf.RadToDeg(maxShoeAxisStep[1]):F2}deg contact={maxShoeContactStep[0]:F3}/{maxShoeContactStep[1]:F3}m surface={maxPedalSurfaceStep[0]:F3}/{maxPedalSurfaceStep[1]:F3}m");
+            GD.Print($"[RiderFinishingSceneReviewTest] skinned mesh toe-axis error={Mathf.RadToDeg(maxMeshAxisError[0]):F1}/{Mathf.RadToDeg(maxMeshAxisError[1]):F1}deg; forefoot-to-toe distance advantage over heel={minForefootToeAdvantage[0]:F3}/{minForefootToeAdvantage[1]:F3}m");
             if (maxLeftPalm > .045f || maxRightPalm > .045f)
                 throw new InvalidOperationException($"Hands leave the hood contact zones during PedalCycle (L={maxLeftPalm:F3}m, R={maxRightPalm:F3}m).");
             if (maxPelvis > .18f)
@@ -685,6 +716,9 @@ public partial class RiderFinishingSceneReviewTest : Node
                 throw new InvalidOperationException($"A shoe leaves its actual moving pedal top (L={maxLeftShoeContact:F3}m, R={maxRightShoeContact:F3}m).");
             if (maxToeForwardError.Any(value => value > Mathf.DegToRad(18f)))
                 throw new InvalidOperationException("A shoe toe points away from bicycle-forward.");
+            if (maxMeshAxisError.Any(value => value > Mathf.DegToRad(18f)) ||
+                minForefootToeAdvantage.Any(value => value < .04f))
+                throw new InvalidOperationException("Skinned shoe geometry is reversed: the pedal forefoot contact is not closer to the physical toe end, or the shoe axis leaves bicycle-forward.");
             if (maxFootToShoeAxisError.Any(value => value > Mathf.DegToRad(10f)))
                 throw new InvalidOperationException("Ankle/foot bones remain toe-down relative to the actual shoe geometry.");
             if (maxFootToPedalNormalError.Any(value => value > Mathf.DegToRad(12f)))
