@@ -14,10 +14,12 @@ public partial class CyclistVisual : Node3D
     // The rigid shell is centered on the existing production shell's measured
     // bounds. Lower that fit by 10 mm, within the approved minor-adjustment range.
     private static readonly Vector3 RigidHelmetFitOffset = new(0, -.01f, 0);
+    // Candidate B moves the unchanged rigid assembly 10 mm toward the front wheel.
+    private const float RigidHelmetForwardFitOffsetMeters = .010f;
     private sealed record Dimensions(double RiderHeight, float WheelRadius, float Wheelbase, float CrankRadius,
         float CrankY, float CrankZ, float SaddleY, float SaddleZ, float UpperLeg, float LowerLeg);
 
-    // A small 3° nose-down shell pitch improves brow fit; applied about helmet-local right.
+    // Retain the reviewed 12° nose-down shell pitch; applied about helmet-local right.
     private float _rigidHelmetForwardPitchDegrees = 12f;
     // One seated road-cyclist reference pose drives all visible rider anchors. Coordinates use
     // +Y up and -Z forward, matching the bicycle and the existing cadence/IK solver.
@@ -641,7 +643,8 @@ public partial class CyclistVisual : Node3D
         var attachmentBasis = attachmentTransform.Basis.Orthonormalized();
         var localBasis = (attachmentBasis.Inverse() * desiredWorldBasis * _rigidHelmetRootBasis.Inverse()).Orthonormalized();
         var localOrigin = _rigidHelmetHeadCenterOffset - localBasis * _rigidHelmetRootOrigin +
-                          localBasis * RigidHelmetFitOffset;
+                          localBasis * RigidHelmetFitOffset +
+                          attachmentBasis.Inverse() * bikeForward * RigidHelmetForwardFitOffsetMeters;
         _rigidHelmetPose.Transform = new Transform3D(localBasis, localOrigin);
     }
 
