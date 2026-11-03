@@ -19,6 +19,9 @@ texture=cv2.inpaint(texture,mask,10,cv2.INPAINT_TELEA)
 # the board top. Trim it away so the material contains timber only.
 texture=texture[45:height-24,110:width-100]
 texture=cv2.resize(texture,(width,height),interpolation=cv2.INTER_CUBIC)
+# Wodra's daylight material/exposure brightens the raw source crop; a restrained
+# source-space value correction keeps the in-game aged timber near the video tone.
+texture=np.clip(texture.astype(np.float32)*.78,0,255).astype(np.uint8)
 args.output.parent.mkdir(parents=True,exist_ok=True)
 cv2.imwrite(str(args.output),texture,[cv2.IMWRITE_JPEG_QUALITY,94])
 print(f'wrote fence-only {width}x{height}: {args.output}')

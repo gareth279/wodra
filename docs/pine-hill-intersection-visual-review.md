@@ -6,10 +6,10 @@
 
 The source frame and unredacted screenshots stay outside Git under `%LOCALAPPDATA%`:
 
-- Four-panel comparison: `Wodra\PineHillEvidence\Iteration6\pine-hill-intersection-four-panel.jpg`
-- Production chase screenshot with rider, bicycle, HUD: `Wodra\PineHillEvidence\Iteration6\pine-route-1372m-gameplay-improved.png`
-- Route-camera view at mapped chainage 1,371.735 m: `Wodra\PineHillEvidence\Iteration6\pine-route-1372m-static-route-camera.png`
-- Route-camera view at source GPS chainage 1,377.37 m: `Wodra\PineHillEvidence\Iteration6\pine-route-1372m-static-gps-camera.png`
+- Four-panel comparison: `Wodra\PineHillEvidence\Iteration9\pine-hill-intersection-four-panel.jpg`
+- Production chase screenshot with rider, bicycle, HUD: `Wodra\PineHillEvidence\Iteration9\pine-route-1372m-gameplay-improved.png`
+- Route-camera view at mapped chainage 1,371.735 m: `Wodra\PineHillEvidence\Iteration9\pine-route-1372m-static-route-camera.png`
+- Route-camera view at source GPS chainage 1,377.37 m: `Wodra\PineHillEvidence\Iteration9\pine-route-1372m-static-gps-camera.png`
 - Other approach views: `pine-route-approach-1362.0m-static.png` and `pine-route-approach-1368.5m-static.png` in the same folder.
 - Performance CSVs: `pine-render-performance.csv` and `dedicated-vram-samples.csv`.
 
@@ -29,7 +29,7 @@ The new render is visibly improved over the generic PR #176 baseline: the fence 
 
 Remaining differences visible in Panel C/D:
 
-- The fence reads too pale and too uniform in the Wodra daylight; its joints, weathering and run endpoints do not align closely enough with the source.
+- The fence tone is closer after a restrained source-texture value correction, but the board rhythm still looks too regular and the visible run endpoints do not align closely enough with the source.
 - House roof proportions and position only partly match the source. The second roofline and dense background greenery are not reconstructed; generic OSM scenery remains visible at the sides.
 - The near tree now has a branching canopy and trunk, but its projected relation to the sign and source tree still needs camera/geographic review. The second tree is a simplified visual stand-in.
 - The route-camera view is not a calibrated dashcam reprojection. Road-edge, triangle, transverse line, fence and sign screen positions differ from the source. Camera and scene alignment need review together.
@@ -49,13 +49,13 @@ On 2026-11-04, Windows / Godot 4.6.2 / OpenGL compatibility / Quadro P620, 1600Ã
 
 | Measure | RideScreen result | Scope |
 | --- | ---: | --- |
-| Median / minimum sampled FPS | 38.3 / 29.1 | 111 frame samples during the production review; one run, not a benchmark guarantee |
-| P95 frame time | 31.27 ms | Whole RideScreen scene |
+| Median / minimum sampled FPS | 37.9 / 28.7 | 113 frame samples during the production review; one run, not a benchmark guarantee |
+| P95 frame time | 29.44 ms | Whole RideScreen scene |
 | Peak draw calls | 962 | Whole frame |
 | Peak primitive count | 1,148,373 | Whole frame, Godot RenderingServer counter |
 | Focal authored asset triangles | 265,555 | One intersection asset plus two trees |
 | Godot render video memory | 212.9 MiB | RenderingServer `VideoMemUsed` counter |
-| Dedicated VRAM used / free | 1,544 / 504 MiB of 2,048 MiB | `nvidia-smi` card-wide sample during the run, includes desktop/other processes |
+| Dedicated VRAM used / free | 1,539 / 425 MiB of 2,048 MiB | `nvidia-smi` card-wide sample during the run, includes desktop/other processes |
 
 The RideScreen review loaded Pine Hill Test from the normal catalogue, selected its preview/elevation profile, loaded all required OSM/LINZ and authored scenery, captured at three approach poses plus the source GPS pose and chase view, then rode with the dummy trainer. Result: 28 production assertions passed; route length 1,679.8 m. The route is point-to-point, so no loop seam is claimed. Debug and Release Game builds succeeded. `IndoorCycling.VisualRoute.Tests` passed after updating the marking width assertion. Existing renderer/RID and text-server teardown leak messages still appear when the test process exits; they did not prevent capture or assertions.
 
