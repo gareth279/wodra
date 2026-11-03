@@ -44,7 +44,7 @@ The latest 1,147,861 peak primitive count and 962 peak draw calls show that broa
 - Publisher route-package and smoke-isolation tests: passed. The standard six-route bundle is unchanged; the explicit seven-route alpha bundle verifies runtime asset hashes and excludes raw footage/reference frames.
 - Production RideScreen review from the experimental bundle: 28 assertions passed, including catalogue preview/profile, authored assets, natural point-to-point finish, camera clearance at 395/775/1010/1372 m, and dummy-trainer movement through to the final 20 m.
 - Latest local P620 sample: 39.0 median FPS, 28.05 ms P95, 962 max draw calls, 212.9 MiB Godot renderer video memory. Card-wide VRAM sampling is still unavailable.
-- Earlier CI at the previously pushed PR head passed Debug and Release. Current asset changes still need a push and fresh CI.
+- GitHub validation for implementation head `d1296a7` passed in Debug and Release; CodeQL and all four language analysis jobs also passed.
 - No canonical publisher-built installation or normal online startup was tested because `%LOCALAPPDATA%\Wodra\eos-client.json` is absent. The local interactive app lacks ANT+ trainer setup; this is why its Start Ride path could not be used for the ride-through test.
 - No release package was published. Public distribution of the video-derived fence texture remains owner-approval gated.
 
