@@ -600,25 +600,25 @@
           "id": "yield-triangle",
           "objectType": "yield-triangle",
           "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 5.0,
+          "lateralPositionMeters": 0.5,
+          "forwardOffsetMeters": 2.0,
           "orientationDegrees": 0,
           "lengthMeters": 2.5,
-          "widthMeters": 4.0,
+          "widthMeters": 3.0,
           "heightMeters": 0.02,
           "variant": "hollow-white-outline",
           "colour": "#F2F1E8",
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.82,
-          "provenance": "Apex points back toward the approaching dash camera; the 5 m forward origin places its near-to-far extent ahead of the camera and the base close to the observed give-way line. Width and length (3.0 m by 2.5 m) are approximate screen-space estimates from frame 114 s, not surveyed measurements."
+          "provenance": "Apex points back toward the approach. Width was estimated by comparing the source-frame triangle with the mapped 7 m road (about 3 m); its 2.0 m forward and +0.5 m road-right offsets are informed by the frame registration. Camera-local ray/depth fit is uncertain (about 2 m trajectory RMS), so these are authoring estimates, not surveyed values."
         },
         {
           "id": "give-way-transverse-line",
           "objectType": "give-way-line",
           "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 9.5,
+          "lateralPositionMeters": 0.25,
+          "forwardOffsetMeters": 5.25,
           "orientationDegrees": 0,
           "lengthMeters": 7,
           "widthMeters": 0.16,
@@ -628,7 +628,7 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.72,
-          "provenance": "manually aligned to frame 114 s; transverse line is placed beyond the far edge of the yield triangle from the source perspective; longitudinal placement remains an estimate"
+          "provenance": "Transverse line position and near-center lateral offset are estimated from frame 114 s and the registered camera pose; the line remains 2.0 m beyond the triangle base. Camera/local-depth alignment has about 2 m RMS uncertainty; dimensions and placement are not surveyed."
         },
         {
           "id": "left-yellow-kerb-paint",

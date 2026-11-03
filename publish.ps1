@@ -8,6 +8,7 @@ param(
     [string]$EosClientConfigPath,
     [string]$ReleaseNotesPath,
     [switch]$SkipOfflineSmokeTest,
+    [switch]$IncludeExperimentalRoutes,
     [switch]$CreateGitHubDraft,
     [string]$GitHubTag
 )
@@ -439,7 +440,7 @@ try {
         throw "Visual C++ redistribution notice was not found: $vcRedistList"
     }
 
-    $routePackages = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepoDir)
+    $routePackages = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepoDir -IncludeExperimentalRoutes:$IncludeExperimentalRoutes)
     foreach ($package in $routePackages) {
         foreach ($kind in $package.Files) {
             $source = Join-Path $package.SourceDirectory "$($package.Id).$kind.json"
@@ -577,7 +578,7 @@ try {
     }
 
     $builtInRoot = Join-Path $PublishDirStage 'Routes'
-    [void](Write-WodraBuiltInRouteBundle -RepositoryRoot $RepoDir -DestinationRoot $builtInRoot -Version $PackageVersion)
+    [void](Write-WodraBuiltInRouteBundle -RepositoryRoot $RepoDir -DestinationRoot $builtInRoot -Version $PackageVersion -IncludeExperimentalRoutes:$IncludeExperimentalRoutes)
 
     # Symbols are development artifacts and can expose local source paths.
     Get-ChildItem -LiteralPath $PublishDirStage -Filter '*.pdb' -File -Recurse | Remove-Item -Force

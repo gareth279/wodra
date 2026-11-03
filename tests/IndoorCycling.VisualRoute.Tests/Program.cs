@@ -12,7 +12,7 @@ var tests = new (string Name, Action Run)[]
         {
             var radians = headingDegrees * MathF.PI / 180;
             var forward = new Vector3(MathF.Sin(radians), 0, -MathF.Cos(radians));
-            var marking = RouteSceneTransformMath.YieldTriangle(3, 4);
+            var marking = RouteSceneTransformMath.YieldTriangle(3, 2.5f);
             var localForward = RouteSceneTransformMath.LocalToWorldDirection(forward, -Vector3.UnitZ);
             var signFace = RouteSceneTransformMath.ApproachingDirection(forward);
             var triangleApex = RouteSceneTransformMath.LocalToWorldDirection(forward, marking.Apex);
@@ -32,6 +32,12 @@ var tests = new (string Name, Action Run)[]
             Near(1, right.Length());
             var position = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, 2, 4);
             NearVector(new Vector3(10, 3, -5) + right * 2 + forward * 4, position);
+            var triangleOrigin = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, .5f, 2);
+            var triangleBase = triangleOrigin + forward * 1.25f;
+            var lineCenter = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, .25f, 5.25f);
+            Near(.5f, Vector3.Dot(triangleOrigin - new Vector3(10, 3, -5), right));
+            Near(.25f, Vector3.Dot(lineCenter - new Vector3(10, 3, -5), right));
+            Near(2f, Vector3.Dot(lineCenter - triangleBase, forward));
         }
         if (!RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(0, 40, 0), Vector3.Zero, 36)
             || RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(36.1f, 0, 0), Vector3.Zero, 36))
@@ -77,17 +83,28 @@ var tests = new (string Name, Action Run)[]
             "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb");
         var yieldMark = authoredScene.Features.Single(feature => feature.ObjectType == "yield-triangle");
         var giveWayLine = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-line");
+        var giveWaySign = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-sign"
+            && feature.RouteChainageMeters is > 1370 and < 1374);
+        var kerbMarkings = authoredScene.Features.Single(feature => feature.ObjectType == "yellow-kerb-stripe"
+            && feature.RouteChainageMeters is > 1370 and < 1374);
         if (authoredScene.Features.Count < 24
             || intersectionAssets.Length != 3 || intersectionAsset is null
             || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
             || intersectionAssets.Count(feature => feature.Variant ==
                 "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb") != 2
-            || yieldMark.ForwardOffsetMeters != 5 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 4
-            || Vector3.Dot(
-                RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0, checked((float)giveWayLine.ForwardOffsetMeters))
-                    - RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0,
-                        checked((float)(yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2))),
-                Vector3.UnitZ * -1) < 2
+            || yieldMark.RouteChainageMeters != 1371.735 || yieldMark.LateralPositionMeters != .5
+            || yieldMark.ForwardOffsetMeters != 2 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
+            || giveWayLine.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || giveWayLine.LateralPositionMeters != .25 || giveWayLine.ForwardOffsetMeters != 5.25
+            || giveWayLine.LengthMeters != 7 || giveWayLine.WidthMeters != .16
+            || Math.Abs(giveWayLine.ForwardOffsetMeters -
+                (yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2) - 2.0) > .001
+            || giveWaySign.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || giveWaySign.LateralPositionMeters != -4.2 || giveWaySign.ForwardOffsetMeters != 5
+            || giveWaySign.OrientationDegrees != 0 || giveWaySign.HeightMeters != 2.6
+            || kerbMarkings.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || kerbMarkings.LateralPositionMeters != -3.9 || kerbMarkings.ForwardOffsetMeters != 4
+            || kerbMarkings.LengthMeters != 8
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1370)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters < 10)

@@ -4775,13 +4775,13 @@
   "elevation": {
     "dataset": "New Zealand Contour-Interpolated 8m DEM",
     "license": "CC-BY-4.0",
-    "attribution": "Geographx, Toit\u00c5\u00ab Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "Geographx, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "smoothingWindowMeters": 20.0,
     "gradientWindowMeters": 20.0,
     "resampleIntervalMeters": 4.999528824045206
   },
   "totalAscentMeters": 30.067704226222673,
-  "sourceAttribution": "\u00c2\u00a9 OpenStreetMap contributors; ODbL 1.0. Elevation: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u00c5\u00ab Te Whenua Land Information New Zealand; CC-BY-4.0.",
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors; ODbL 1.0. Elevation: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0.",
   "description": "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.",
   "renderRouteReferenceMarkings": false
 }

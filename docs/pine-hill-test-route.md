@@ -1,5 +1,7 @@
 # Pine Hill Test route prototype
 
+Release packaging, performance measurements, clean-install checks and current visual blockers are tracked in [Pine Hill Test alpha readiness](pine-hill-test-alpha-readiness.md).
+
 Pine Hill Test is the first capture-derived Wodra road route. It is a user-installed point-to-point package with ID `pine-hill-test`; it does not need source footage at runtime.
 
 ## Source capture and alignment

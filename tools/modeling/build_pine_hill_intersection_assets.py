@@ -216,7 +216,7 @@ def create_fence():
 
 def create_sign():
     # Face plane points toward approaching traffic (+Y in this route-local asset).
-    x,y=-5.3,-6.6
+    x,y=-4.2,-5.0
     box("Give-way steel post",(.085,.085,2.42),(x,y,1.21),metal,.025)
     w,h=.78,.86; z=2.13
     # Extruded inverted triangle sign plate with coloured border and cream inset.

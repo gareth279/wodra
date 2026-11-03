@@ -34,9 +34,9 @@ bpy.context.view_layer.objects.active = tree
 tree.select_set(True)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 decimate = tree.modifiers.new("Wodra runtime triangle budget", "DECIMATE")
-# The source tree is ~2.06M triangles. 0.06 retains its irregular leaf-card canopy
-# at about 124k triangles per tree; 0.02 visibly broke the canopy into sparse dots.
-# Two instances remain a bounded ~250k triangle contribution to the focal scene.
+# A reduced 0.05 candidate was compared in the production RideScreen. It produced
+# no repeatable frame-time or draw-call improvement and slightly softened leaf-card
+# silhouettes, so retain the reviewed 0.06 asset until a measured LOD wins.
 decimate.ratio = 0.06
 decimate.use_collapse_triangulate = True
 bpy.ops.object.modifier_apply(modifier=decimate.name)
