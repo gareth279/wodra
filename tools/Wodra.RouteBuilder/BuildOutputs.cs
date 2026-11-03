@@ -69,6 +69,7 @@ public static class BuildOutputs
         {
             id = config.Id,
             name = config.Name,
+            description = string.IsNullOrWhiteSpace(config.Description) ? null : config.Description,
             routeType,
             difficulty = config.Difficulty,
             routeDataVersion = config.RouteDataVersion,

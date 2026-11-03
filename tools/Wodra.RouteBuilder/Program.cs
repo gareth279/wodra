@@ -98,6 +98,7 @@ try
         config = new RouteAuthoringConfig
         {
             Id = config.Id, Name = config.Name, Loop = config.Loop, RouteType = config.RouteType,
+            Description = config.Description,
             Difficulty = config.Difficulty,
             RouteDataVersion = config.RouteDataVersion,
             Environment = config.Environment,

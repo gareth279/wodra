@@ -1,0 +1,4982 @@
+{
+  "id": "pine-hill-test",
+  "name": "Pine Hill Test",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "routingMode": "anchors",
+  "routeType": "pointToPoint",
+  "difficulty": "Unrated",
+  "routeDataVersion": 1,
+  "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+  "preferredRefs": [],
+  "boundingBox": {
+    "minLatitude": -45.85115791686618,
+    "minLongitude": 170.5107430235974,
+    "maxLatitude": -45.84218853369706,
+    "maxLongitude": 170.52354856172312
+  },
+  "profile": "cycling",
+  "routeCorridorMeters": 40,
+  "detourWarningRatio": 1.35,
+  "detourFailureRatio": 1.8,
+  "maxOutputSpacingMeters": 5,
+  "retainedOsmNodeCount": 11606,
+  "eligibleWayCount": 51,
+  "graphNodeCount": 628,
+  "graphEdgeCount": 1260,
+  "anchors": [
+    {
+      "anchor": {
+        "name": "GPS 0s",
+        "sourceDistanceMeters": 0,
+        "latitude": -45.84768741092232,
+        "longitude": 170.51374302359739
+      },
+      "fromNodeId": 1120864182,
+      "toNodeId": 1120864047,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.8477255,
+        "longitude": 170.51379250000002
+      },
+      "snapDistanceMeters": 5.711700108096337,
+      "bearingDegrees": 54.909326211995335,
+      "directionAlignmentDegrees": 5.432793451401551,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 3s",
+        "sourceDistanceMeters": 31.404,
+        "latitude": -45.84750426259624,
+        "longitude": 170.5140506193762
+      },
+      "fromNodeId": 1120864091,
+      "toNodeId": 1120864377,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84753411384568,
+        "longitude": 170.51409507400737
+      },
+      "snapDistanceMeters": 4.7826440153116065,
+      "bearingDegrees": 43.950115266066405,
+      "directionAlignmentDegrees": 2.4030476993846137,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 6s",
+        "sourceDistanceMeters": 67.007,
+        "latitude": -45.847272502205726,
+        "longitude": 170.5143674895641
+      },
+      "fromNodeId": 1120864377,
+      "toNodeId": 1120864362,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84729865012326,
+        "longitude": 170.5144091125888
+      },
+      "snapDistanceMeters": 4.34135481955971,
+      "bearingDegrees": 42.045872376579666,
+      "directionAlignmentDegrees": 0.6604587584482299,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 9s",
+        "sourceDistanceMeters": 103.207,
+        "latitude": -45.84702991588824,
+        "longitude": 170.51467914133744
+      },
+      "fromNodeId": 1120864362,
+      "toNodeId": 1120864674,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.847058506299824,
+        "longitude": 170.51472315032188
+      },
+      "snapDistanceMeters": 4.661147831923041,
+      "bearingDegrees": 43.00357928384108,
+      "directionAlignmentDegrees": 1.070176388812628,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 12s",
+        "sourceDistanceMeters": 139.081,
+        "latitude": -45.84679050234254,
+        "longitude": 170.51498907408782
+      },
+      "fromNodeId": 1120864674,
+      "toNodeId": 6490673627,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84683166905064,
+        "longitude": 170.51504302082756
+      },
+      "snapDistanceMeters": 6.197874964032434,
+      "bearingDegrees": 47.60925634901713,
+      "directionAlignmentDegrees": 0.5704576645544175,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 15s",
+        "sourceDistanceMeters": 175.247,
+        "latitude": -45.84659032795623,
+        "longitude": 170.51535679738916
+      },
+      "fromNodeId": 1120864276,
+      "toNodeId": 1120864165,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84663634141779,
+        "longitude": 170.515402948193
+      },
+      "snapDistanceMeters": 6.241512790379845,
+      "bearingDegrees": 55.05951050215555,
+      "directionAlignmentDegrees": 3.8469498630837156,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 18s",
+        "sourceDistanceMeters": 212.727,
+        "latitude": -45.84645171951174,
+        "longitude": 170.51579551293366
+      },
+      "fromNodeId": 6490673628,
+      "toNodeId": 1120864367,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.846487053309104,
+        "longitude": 170.51581850092344
+      },
+      "snapDistanceMeters": 4.3135822733157045,
+      "bearingDegrees": 65.62026712935233,
+      "directionAlignmentDegrees": 0.4116080581273172,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 21s",
+        "sourceDistanceMeters": 249.32,
+        "latitude": -45.846320336659055,
+        "longitude": 170.5162286524217
+      },
+      "fromNodeId": 1303010590,
+      "toNodeId": 6490673632,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84635573628217,
+        "longitude": 170.51625112216306
+      },
+      "snapDistanceMeters": 4.303862983833219,
+      "bearingDegrees": 66.14718790976207,
+      "directionAlignmentDegrees": 4.518888631363615,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 24s",
+        "sourceDistanceMeters": 286.494,
+        "latitude": -45.846138193095044,
+        "longitude": 170.51662892217433
+      },
+      "fromNodeId": 6489536142,
+      "toNodeId": 6489536143,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84617131136956,
+        "longitude": 170.51667796642306
+      },
+      "snapDistanceMeters": 5.290789632629634,
+      "bearingDegrees": 44.10988761196376,
+      "directionAlignmentDegrees": 1.246183150009285,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 27s",
+        "sourceDistanceMeters": 323.984,
+        "latitude": -45.8458598270686,
+        "longitude": 170.5168980146994
+      },
+      "fromNodeId": 6489536148,
+      "toNodeId": 6489536149,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84587460896695,
+        "longitude": 170.51694515111978
+      },
+      "snapDistanceMeters": 4.003988528800774,
+      "bearingDegrees": 24.236798852494758,
+      "directionAlignmentDegrees": 4.198457066866259,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 30s",
+        "sourceDistanceMeters": 360.296,
+        "latitude": -45.845558899423885,
+        "longitude": 170.51707923523438
+      },
+      "fromNodeId": 1120864692,
+      "toNodeId": 11523831439,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84556909211814,
+        "longitude": 170.51711810024034
+      },
+      "snapDistanceMeters": 3.2166810644104493,
+      "bearingDegrees": 20.630699581114413,
+      "directionAlignmentDegrees": 0.9809826910490166,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 33s",
+        "sourceDistanceMeters": 389.528,
+        "latitude": -45.84531217440786,
+        "longitude": 170.51720947270053
+      },
+      "fromNodeId": 11523831439,
+      "toNodeId": 6489536154,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84532308005538,
+        "longitude": 170.5172510612416
+      },
+      "snapDistanceMeters": 3.4420574823902,
+      "bearingDegrees": 20.628335346703807,
+      "directionAlignmentDegrees": 1.9755170663666708,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 36s",
+        "sourceDistanceMeters": 405.058,
+        "latitude": -45.84518853369706,
+        "longitude": 170.51730059326204
+      },
+      "fromNodeId": 6489536159,
+      "toNodeId": 6489536154,
+      "wayId": 96778203,
+      "snappedCoordinate": {
+        "latitude": -45.845253247385585,
+        "longitude": 170.51728404619098
+      },
+      "snapDistanceMeters": 7.309090187655361,
+      "bearingDegrees": 100.09949630169228,
+      "directionAlignmentDegrees": 4.03887267227548,
+      "highway": "residential",
+      "roadName": "Lowe Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 39s",
+        "sourceDistanceMeters": 439.366,
+        "latitude": -45.84534696692907,
+        "longitude": 170.51767989115157
+      },
+      "fromNodeId": 6489536169,
+      "toNodeId": 6489536157,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.845368734047774,
+        "longitude": 170.51765039012744
+      },
+      "snapDistanceMeters": 3.3286563561830484,
+      "bearingDegrees": 133.35299237413216,
+      "directionAlignmentDegrees": 4.553357884440297,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 42s",
+        "sourceDistanceMeters": 468.996,
+        "latitude": -45.84554458271565,
+        "longitude": 170.51793631405437
+      },
+      "fromNodeId": 6489536157,
+      "toNodeId": 6489536177,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.84556281172938,
+        "longitude": 170.5179079413601
+      },
+      "snapDistanceMeters": 2.9897242490805804,
+      "bearingDegrees": 137.31395731055187,
+      "directionAlignmentDegrees": 0.16786886538247073,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 45s",
+        "sourceDistanceMeters": 492.149,
+        "latitude": -45.845696753775535,
+        "longitude": 170.5181403108043
+      },
+      "fromNodeId": 6489536157,
+      "toNodeId": 6489536177,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.845715855796435,
+        "longitude": 170.51811057925687
+      },
+      "snapDistanceMeters": 3.132903815901883,
+      "bearingDegrees": 137.31395731055187,
+      "directionAlignmentDegrees": 0.6286649995330137,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 48s",
+        "sourceDistanceMeters": 534.506,
+        "latitude": -45.845973225308036,
+        "longitude": 170.51851648148786
+      },
+      "fromNodeId": 6489536157,
+      "toNodeId": 6489536177,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.845995836643176,
+        "longitude": 170.5184812877136
+      },
+      "snapDistanceMeters": 3.7084596406570185,
+      "bearingDegrees": 137.31395731055187,
+      "directionAlignmentDegrees": 0.02323825298334044,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 51s",
+        "sourceDistanceMeters": 587.508,
+        "latitude": -45.84632732350212,
+        "longitude": 170.51897453702784
+      },
+      "fromNodeId": 6489536177,
+      "toNodeId": 6489536690,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.84634553207119,
+        "longitude": 170.51894643679566
+      },
+      "snapDistanceMeters": 2.97267403926029,
+      "bearingDegrees": 137.06993725952242,
+      "directionAlignmentDegrees": 0.45189789364142535,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 54s",
+        "sourceDistanceMeters": 639.967,
+        "latitude": -45.84667251853051,
+        "longitude": 170.51943567960365
+      },
+      "fromNodeId": 6489536177,
+      "toNodeId": 6489536690,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.84669078167773,
+        "longitude": 170.51940749502754
+      },
+      "snapDistanceMeters": 2.9815809915141407,
+      "bearingDegrees": 137.06993725952242,
+      "directionAlignmentDegrees": 0.4945545794379921,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 57s",
+        "sourceDistanceMeters": 687.933,
+        "latitude": -45.8469829820267,
+        "longitude": 170.5198654041076
+      },
+      "fromNodeId": 6489536177,
+      "toNodeId": 6489536690,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.847006497821795,
+        "longitude": 170.51982911325504
+      },
+      "snapDistanceMeters": 3.8391069802300812,
+      "bearingDegrees": 137.06993725952242,
+      "directionAlignmentDegrees": 0.591478121390052,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 60s",
+        "sourceDistanceMeters": 721.937,
+        "latitude": -45.84720692553474,
+        "longitude": 170.52016426215673
+      },
+      "fromNodeId": 6489536177,
+      "toNodeId": 6489536690,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.84723037048779,
+        "longitude": 170.52012808053436
+      },
+      "snapDistanceMeters": 3.8275388012559666,
+      "bearingDegrees": 137.06993725952242,
+      "directionAlignmentDegrees": 1.1106284869972116,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 63s",
+        "sourceDistanceMeters": 747.005,
+        "latitude": -45.84737874819284,
+        "longitude": 170.52037374189138
+      },
+      "fromNodeId": 6489536177,
+      "toNodeId": 6489536690,
+      "wayId": 96778196,
+      "snappedCoordinate": {
+        "latitude": -45.84739525311384,
+        "longitude": 170.52034827047981
+      },
+      "snapDistanceMeters": 2.6945327050261367,
+      "bearingDegrees": 137.06993725952242,
+      "directionAlignmentDegrees": 5.793222912339096,
+      "highway": "residential",
+      "roadName": "Wilkinson Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 66s",
+        "sourceDistanceMeters": 771.625,
+        "latitude": -45.8475604091966,
+        "longitude": 170.52054856172313
+      },
+      "fromNodeId": 6489536689,
+      "toNodeId": 6489536184,
+      "wayId": 106717722,
+      "snappedCoordinate": {
+        "latitude": -45.8475848,
+        "longitude": 170.5205225
+      },
+      "snapDistanceMeters": 3.3808961521770247,
+      "bearingDegrees": 187.4348855267799,
+      "directionAlignmentDegrees": 0.47299591853175815,
+      "highway": "residential",
+      "roadName": "Pryde Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 69s",
+        "sourceDistanceMeters": 807.277,
+        "latitude": -45.847813593308,
+        "longitude": 170.5202870301711
+      },
+      "fromNodeId": 6489536686,
+      "toNodeId": 6489536688,
+      "wayId": 106717722,
+      "snappedCoordinate": {
+        "latitude": -45.84780746377161,
+        "longitude": 170.52027856391507
+      },
+      "snapDistanceMeters": 0.9458074614193606,
+      "bearingDegrees": 226.10617248508265,
+      "directionAlignmentDegrees": 0.04638444256616589,
+      "highway": "residential",
+      "roadName": "Pryde Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 72s",
+        "sourceDistanceMeters": 845.687,
+        "latitude": -45.84800055180371,
+        "longitude": 170.5198907410183
+      },
+      "fromNodeId": 6489536688,
+      "toNodeId": 1120864410,
+      "wayId": 106717722,
+      "snappedCoordinate": {
+        "latitude": -45.8480321259203,
+        "longitude": 170.51993287884468
+      },
+      "snapDistanceMeters": 4.793580728160988,
+      "bearingDegrees": 227.08906817531386,
+      "directionAlignmentDegrees": 8.413436598709632,
+      "highway": "residential",
+      "roadName": "Pryde Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 75s",
+        "sourceDistanceMeters": 880.081,
+        "latitude": -45.84815791686618,
+        "longitude": 170.51956772742517
+      },
+      "fromNodeId": 6489536124,
+      "toNodeId": 6489536127,
+      "wayId": 96778189,
+      "snappedCoordinate": {
+        "latitude": -45.8481481,
+        "longitude": 170.51961870000002
+      },
+      "snapDistanceMeters": 4.096166352957024,
+      "bearingDegrees": 283.3136163576221,
+      "directionAlignmentDegrees": 2.070258329199209,
+      "highway": "residential",
+      "roadName": "Hislop Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 78s",
+        "sourceDistanceMeters": 919.987,
+        "latitude": -45.84790549831225,
+        "longitude": 170.51920428992193
+      },
+      "fromNodeId": 6489536122,
+      "toNodeId": 5515286891,
+      "wayId": 96778189,
+      "snappedCoordinate": {
+        "latitude": -45.847885931725024,
+        "longitude": 170.51923441040904
+      },
+      "snapDistanceMeters": 3.19005290762732,
+      "bearingDegrees": 316.99771269104235,
+      "directionAlignmentDegrees": 0.8673879821954182,
+      "highway": "residential",
+      "roadName": "Hislop Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 81s",
+        "sourceDistanceMeters": 959.053,
+        "latitude": -45.84764702674373,
+        "longitude": 170.51886267065498
+      },
+      "fromNodeId": 6489536122,
+      "toNodeId": 5515286891,
+      "wayId": 96778189,
+      "snappedCoordinate": {
+        "latitude": -45.84762899980558,
+        "longitude": 170.5188904209453
+      },
+      "snapDistanceMeters": 2.939037503067311,
+      "bearingDegrees": 316.99771269104235,
+      "directionAlignmentDegrees": 0.4057533296817019,
+      "highway": "residential",
+      "roadName": "Hislop Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 84s",
+        "sourceDistanceMeters": 995.565,
+        "latitude": -45.847405154295345,
+        "longitude": 170.51854386047077
+      },
+      "fromNodeId": 6489536122,
+      "toNodeId": 5515286891,
+      "wayId": 96778189,
+      "snappedCoordinate": {
+        "latitude": -45.84738887047245,
+        "longitude": 170.51856892737337
+      },
+      "snapDistanceMeters": 2.6548492302305244,
+      "bearingDegrees": 316.99771269104235,
+      "directionAlignmentDegrees": 1.5318335429270875,
+      "highway": "residential",
+      "roadName": "Hislop Street"
+    },
+    {
+      "anchor": {
+        "name": "GPS 87s",
+        "sourceDistanceMeters": 1013.512,
+        "latitude": -45.84729950186007,
+        "longitude": 170.51837180862302
+      },
+      "fromNodeId": 5515286891,
+      "toNodeId": 11523831037,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.847306797643675,
+        "longitude": 170.51838164954626
+      },
+      "snapDistanceMeters": 1.1131628771065867,
+      "bearingDegrees": 226.78446053426086,
+      "directionAlignmentDegrees": 18.141450063003205,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 90s",
+        "sourceDistanceMeters": 1059.989,
+        "latitude": -45.84759685219794,
+        "longitude": 170.51795567623924
+      },
+      "fromNodeId": 11523831037,
+      "toNodeId": 1120864065,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.847591064177024,
+        "longitude": 170.5179478580299
+      },
+      "snapDistanceMeters": 0.8836973935321679,
+      "bearingDegrees": 226.74423491132367,
+      "directionAlignmentDegrees": 1.4078769456229994,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 93s",
+        "sourceDistanceMeters": 1104.447,
+        "latitude": -45.84787234909213,
+        "longitude": 170.5175397119247
+      },
+      "fromNodeId": 11523831037,
+      "toNodeId": 1120864065,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.84786503647476,
+        "longitude": 170.51752983432357
+      },
+      "snapDistanceMeters": 1.1164672749118603,
+      "bearingDegrees": 226.74423491132367,
+      "directionAlignmentDegrees": 5.04109601054725,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 96s",
+        "sourceDistanceMeters": 1143.689,
+        "latitude": -45.84805882191133,
+        "longitude": 170.51711333404526
+      },
+      "fromNodeId": 1120864371,
+      "toNodeId": 6489811645,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.848045840465225,
+        "longitude": 170.5171069044522
+      },
+      "snapDistanceMeters": 1.5269617734881504,
+      "bearingDegrees": 250.96548074875403,
+      "directionAlignmentDegrees": 0.41253719165123387,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 99s",
+        "sourceDistanceMeters": 1180.854,
+        "latitude": -45.84808348563449,
+        "longitude": 170.5166401758074
+      },
+      "fromNodeId": 6489811644,
+      "toNodeId": 1120864559,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.848068829047506,
+        "longitude": 170.51664211443108
+      },
+      "snapDistanceMeters": 1.6366406971169614,
+      "bearingDegrees": 275.26404381397185,
+      "directionAlignmentDegrees": 0.7534819741676168,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 102s",
+        "sourceDistanceMeters": 1221.467,
+        "latitude": -45.848004715351685,
+        "longitude": 170.51612868191387
+      },
+      "fromNodeId": 1120864559,
+      "toNodeId": 8399310102,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.84798861680304,
+        "longitude": 170.516134264502
+      },
+      "snapDistanceMeters": 1.84155961809232,
+      "bearingDegrees": 283.5797647822118,
+      "directionAlignmentDegrees": 0.49345883144012215,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 105s",
+        "sourceDistanceMeters": 1265.184,
+        "latitude": -45.84791188049159,
+        "longitude": 170.51558036191295
+      },
+      "fromNodeId": 1120864268,
+      "toNodeId": 1120864093,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.847898188058366,
+        "longitude": 170.51558495556517
+      },
+      "snapDistanceMeters": 1.5635498014584104,
+      "bearingDegrees": 283.15338241682514,
+      "directionAlignmentDegrees": 0.6980581327326323,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 108s",
+        "sourceDistanceMeters": 1310.888,
+        "latitude": -45.84783133708193,
+        "longitude": 170.51500178966668
+      },
+      "fromNodeId": 1120864268,
+      "toNodeId": 1120864093,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.84780471406189,
+        "longitude": 170.51501072137188
+      },
+      "snapDistanceMeters": 3.0401038526660864,
+      "bearingDegrees": 283.15338241682514,
+      "directionAlignmentDegrees": 6.449269881378022,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 111s",
+        "sourceDistanceMeters": 1351.919,
+        "latitude": -45.84765499167165,
+        "longitude": 170.51454482213174
+      },
+      "fromNodeId": 1120864154,
+      "toNodeId": 11523830953,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.847638741227314,
+        "longitude": 170.51456598524433
+      },
+      "snapDistanceMeters": 2.439685047000734,
+      "bearingDegrees": 312.212689795167,
+      "directionAlignmentDegrees": 7.697015031411541,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 114s",
+        "sourceDistanceMeters": 1377.37,
+        "latitude": -45.84749797586999,
+        "longitude": 170.5143058652815
+      },
+      "fromNodeId": 11523830953,
+      "toNodeId": 1120864377,
+      "wayId": 96778192,
+      "snappedCoordinate": {
+        "latitude": -45.84748503006658,
+        "longitude": 170.51432271871576
+      },
+      "snapDistanceMeters": 1.9432477216776014,
+      "bearingDegrees": 312.2025995589497,
+      "directionAlignmentDegrees": 1.4891902050717596,
+      "highway": "residential",
+      "roadName": "Allenby Avenue"
+    },
+    {
+      "anchor": {
+        "name": "GPS 117s",
+        "sourceDistanceMeters": 1387.017,
+        "latitude": -45.847437007189754,
+        "longitude": 170.51421725580076
+      },
+      "fromNodeId": 1120864377,
+      "toNodeId": 1120864362,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.8474312,
+        "longitude": 170.5142375
+      },
+      "snapDistanceMeters": 1.6957739514036947,
+      "bearingDegrees": 42.045872376579666,
+      "directionAlignmentDegrees": 28.022627655834572,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 120s",
+        "sourceDistanceMeters": 1416.948,
+        "latitude": -45.847234025726614,
+        "longitude": 170.51440050551517
+      },
+      "fromNodeId": 1120864377,
+      "toNodeId": 1120864362,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.847265993655746,
+        "longitude": 170.51445139298215
+      },
+      "snapDistanceMeters": 5.307655445236153,
+      "bearingDegrees": 42.045872376579666,
+      "directionAlignmentDegrees": 3.6030788506915927,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 123s",
+        "sourceDistanceMeters": 1452.981,
+        "latitude": -45.846997415092346,
+        "longitude": 170.51471820999623
+      },
+      "fromNodeId": 1120864362,
+      "toNodeId": 1120864674,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84702755023414,
+        "longitude": 170.51476459675308
+      },
+      "snapDistanceMeters": 4.9129885395568795,
+      "bearingDegrees": 43.00357928384108,
+      "directionAlignmentDegrees": 0.9720030543015578,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 126s",
+        "sourceDistanceMeters": 1496.5,
+        "latitude": -45.84671952314517,
+        "longitude": 170.5151131705738
+      },
+      "fromNodeId": 6490673627,
+      "toNodeId": 1120864276,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84676050127052,
+        "longitude": 170.51516048444455
+      },
+      "snapDistanceMeters": 5.847446962007664,
+      "bearingDegrees": 51.19096087036809,
+      "directionAlignmentDegrees": 0.5694642766995633,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 129s",
+        "sourceDistanceMeters": 1546.82,
+        "latitude": -45.846479236608644,
+        "longitude": 170.51566218255851
+      },
+      "fromNodeId": 1120864165,
+      "toNodeId": 6490673628,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.8465387,
+        "longitude": 170.51565490000002
+      },
+      "snapDistanceMeters": 6.636045110017389,
+      "bearingDegrees": 61.722381731528685,
+      "directionAlignmentDegrees": 0.22262512617662913,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 132s",
+        "sourceDistanceMeters": 1598.973,
+        "latitude": -45.84628758164505,
+        "longitude": 170.51627668921947
+      },
+      "fromNodeId": 6490673632,
+      "toNodeId": 6489536139,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.84633671165099,
+        "longitude": 170.51631096308105
+      },
+      "snapDistanceMeters": 6.07388729168556,
+      "bearingDegrees": 64.08261170770749,
+      "directionAlignmentDegrees": 4.7608184573065015,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 135s",
+        "sourceDistanceMeters": 1646.314,
+        "latitude": -45.84602844210008,
+        "longitude": 170.5167530506528
+      },
+      "fromNodeId": 6489536134,
+      "toNodeId": 6489536133,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.8460867,
+        "longitude": 170.51678410000002
+      },
+      "snapDistanceMeters": 6.9100111032212705,
+      "bearingDegrees": 38.02130430810149,
+      "directionAlignmentDegrees": 1.7241254501917784,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    },
+    {
+      "anchor": {
+        "name": "GPS 138s",
+        "sourceDistanceMeters": 1690.427,
+        "latitude": -45.84567452493635,
+        "longitude": 170.51700852939453
+      },
+      "fromNodeId": 6489536149,
+      "toNodeId": 1120864692,
+      "wayId": 96778202,
+      "snappedCoordinate": {
+        "latitude": -45.8456975,
+        "longitude": 170.5170487
+      },
+      "snapDistanceMeters": 4.025928820651601,
+      "bearingDegrees": 21.997774846889797,
+      "directionAlignmentDegrees": 4.697400263074452,
+      "highway": "tertiary",
+      "roadName": "Pine Hill Road"
+    }
+  ],
+  "legs": [
+    {
+      "fromAnchor": "GPS 0s",
+      "toAnchor": "GPS 3s",
+      "straightLineDistanceMeters": 31.34265680229426,
+      "distanceMeters": 31.74381963444531,
+      "roadDirectRatio": 1.0127992605949627,
+      "maximumCorridorDeviationMeters": 6.469429170058187,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 0s",
+          "sourceDistanceMeters": 0,
+          "latitude": -45.84768741092232,
+          "longitude": 170.51374302359739
+        },
+        "fromNodeId": 1120864182,
+        "toNodeId": 1120864047,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8477255,
+          "longitude": 170.51379250000002
+        },
+        "snapDistanceMeters": 5.711700108096337,
+        "bearingDegrees": 54.909326211995335,
+        "directionAlignmentDegrees": 5.432793451401551,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 3s",
+          "sourceDistanceMeters": 31.404,
+          "latitude": -45.84750426259624,
+          "longitude": 170.5140506193762
+        },
+        "fromNodeId": 1120864091,
+        "toNodeId": 1120864377,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84753411384568,
+          "longitude": 170.51409507400737
+        },
+        "snapDistanceMeters": 4.7826440153116065,
+        "bearingDegrees": 43.950115266066405,
+        "directionAlignmentDegrees": 2.4030476993846137,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8477255,
+          "longitude": 170.51379250000002
+        },
+        {
+          "latitude": -45.847684,
+          "longitude": 170.51387730000002
+        },
+        {
+          "latitude": -45.8475893,
+          "longitude": 170.5140187
+        },
+        {
+          "latitude": -45.84753411384568,
+          "longitude": 170.51409507400737
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 3s",
+      "toAnchor": "GPS 6s",
+      "straightLineDistanceMeters": 35.58784310771924,
+      "distanceMeters": 35.742390785432235,
+      "roadDirectRatio": 1.0043427098755382,
+      "maximumCorridorDeviationMeters": 4.878971984376245,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 3s",
+          "sourceDistanceMeters": 31.404,
+          "latitude": -45.84750426259624,
+          "longitude": 170.5140506193762
+        },
+        "fromNodeId": 1120864091,
+        "toNodeId": 1120864377,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84753411384568,
+          "longitude": 170.51409507400737
+        },
+        "snapDistanceMeters": 4.7826440153116065,
+        "bearingDegrees": 43.950115266066405,
+        "directionAlignmentDegrees": 2.4030476993846137,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 6s",
+          "sourceDistanceMeters": 67.007,
+          "latitude": -45.847272502205726,
+          "longitude": 170.5143674895641
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84729865012326,
+          "longitude": 170.5144091125888
+        },
+        "snapDistanceMeters": 4.34135481955971,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 0.6604587584482299,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84753411384568,
+          "longitude": 170.51409507400737
+        },
+        {
+          "latitude": -45.8474312,
+          "longitude": 170.5142375
+        },
+        {
+          "latitude": -45.84729865012326,
+          "longitude": 170.5144091125888
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 6s",
+      "toAnchor": "GPS 9s",
+      "straightLineDistanceMeters": 36.19828997818432,
+      "distanceMeters": 36.121596907844264,
+      "roadDirectRatio": 0.997881306813491,
+      "maximumCorridorDeviationMeters": 4.660158503253082,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 6s",
+          "sourceDistanceMeters": 67.007,
+          "latitude": -45.847272502205726,
+          "longitude": 170.5143674895641
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84729865012326,
+          "longitude": 170.5144091125888
+        },
+        "snapDistanceMeters": 4.34135481955971,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 0.6604587584482299,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 9s",
+          "sourceDistanceMeters": 103.207,
+          "latitude": -45.84702991588824,
+          "longitude": 170.51467914133744
+        },
+        "fromNodeId": 1120864362,
+        "toNodeId": 1120864674,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.847058506299824,
+          "longitude": 170.51472315032188
+        },
+        "snapDistanceMeters": 4.661147831923041,
+        "bearingDegrees": 43.00357928384108,
+        "directionAlignmentDegrees": 1.070176388812628,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84729865012326,
+          "longitude": 170.5144091125888
+        },
+        {
+          "latitude": -45.847129200000005,
+          "longitude": 170.51462850000001
+        },
+        {
+          "latitude": -45.847058506299824,
+          "longitude": 170.51472315032188
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 9s",
+      "toAnchor": "GPS 12s",
+      "straightLineDistanceMeters": 35.846928975529266,
+      "distanceMeters": 35.38101137205483,
+      "roadDirectRatio": 0.9870025796688889,
+      "maximumCorridorDeviationMeters": 6.168643139828145,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 9s",
+          "sourceDistanceMeters": 103.207,
+          "latitude": -45.84702991588824,
+          "longitude": 170.51467914133744
+        },
+        "fromNodeId": 1120864362,
+        "toNodeId": 1120864674,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.847058506299824,
+          "longitude": 170.51472315032188
+        },
+        "snapDistanceMeters": 4.661147831923041,
+        "bearingDegrees": 43.00357928384108,
+        "directionAlignmentDegrees": 1.070176388812628,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 12s",
+          "sourceDistanceMeters": 139.081,
+          "latitude": -45.84679050234254,
+          "longitude": 170.51498907408782
+        },
+        "fromNodeId": 1120864674,
+        "toNodeId": 6490673627,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84683166905064,
+          "longitude": 170.51504302082756
+        },
+        "snapDistanceMeters": 6.197874964032434,
+        "bearingDegrees": 47.60925634901713,
+        "directionAlignmentDegrees": 0.5704576645544175,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847058506299824,
+          "longitude": 170.51472315032188
+        },
+        {
+          "latitude": -45.8469008,
+          "longitude": 170.51493430000002
+        },
+        {
+          "latitude": -45.84683166905064,
+          "longitude": 170.51504302082756
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 12s",
+      "toAnchor": "GPS 15s",
+      "straightLineDistanceMeters": 36.148111790473095,
+      "distanceMeters": 35.38494692068002,
+      "roadDirectRatio": 0.9788878358511051,
+      "maximumCorridorDeviationMeters": 6.23257456266177,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 12s",
+          "sourceDistanceMeters": 139.081,
+          "latitude": -45.84679050234254,
+          "longitude": 170.51498907408782
+        },
+        "fromNodeId": 1120864674,
+        "toNodeId": 6490673627,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84683166905064,
+          "longitude": 170.51504302082756
+        },
+        "snapDistanceMeters": 6.197874964032434,
+        "bearingDegrees": 47.60925634901713,
+        "directionAlignmentDegrees": 0.5704576645544175,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 15s",
+          "sourceDistanceMeters": 175.247,
+          "latitude": -45.84659032795623,
+          "longitude": 170.51535679738916
+        },
+        "fromNodeId": 1120864276,
+        "toNodeId": 1120864165,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84663634141779,
+          "longitude": 170.515402948193
+        },
+        "snapDistanceMeters": 6.241512790379845,
+        "bearingDegrees": 55.05951050215555,
+        "directionAlignmentDegrees": 3.8469498630837156,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84683166905064,
+          "longitude": 170.51504302082756
+        },
+        {
+          "latitude": -45.8467866,
+          "longitude": 170.51511390000002
+        },
+        {
+          "latitude": -45.8467136,
+          "longitude": 170.5152442
+        },
+        {
+          "latitude": -45.84663634141779,
+          "longitude": 170.515402948193
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 15s",
+      "toAnchor": "GPS 18s",
+      "straightLineDistanceMeters": 37.31326259535868,
+      "distanceMeters": 36.2608702945409,
+      "roadDirectRatio": 0.9717957576577964,
+      "maximumCorridorDeviationMeters": 6.136136717731827,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 15s",
+          "sourceDistanceMeters": 175.247,
+          "latitude": -45.84659032795623,
+          "longitude": 170.51535679738916
+        },
+        "fromNodeId": 1120864276,
+        "toNodeId": 1120864165,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84663634141779,
+          "longitude": 170.515402948193
+        },
+        "snapDistanceMeters": 6.241512790379845,
+        "bearingDegrees": 55.05951050215555,
+        "directionAlignmentDegrees": 3.8469498630837156,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 18s",
+          "sourceDistanceMeters": 212.727,
+          "latitude": -45.84645171951174,
+          "longitude": 170.51579551293366
+        },
+        "fromNodeId": 6490673628,
+        "toNodeId": 1120864367,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.846487053309104,
+          "longitude": 170.51581850092344
+        },
+        "snapDistanceMeters": 4.3135822733157045,
+        "bearingDegrees": 65.62026712935233,
+        "directionAlignmentDegrees": 0.4116080581273172,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84663634141779,
+          "longitude": 170.515402948193
+        },
+        {
+          "latitude": -45.8466223,
+          "longitude": 170.51543180000002
+        },
+        {
+          "latitude": -45.8465387,
+          "longitude": 170.51565490000002
+        },
+        {
+          "latitude": -45.846487053309104,
+          "longitude": 170.51581850092344
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 18s",
+      "toAnchor": "GPS 21s",
+      "straightLineDistanceMeters": 36.5923144751053,
+      "distanceMeters": 36.55449641909895,
+      "roadDirectRatio": 0.9989665027602429,
+      "maximumCorridorDeviationMeters": 4.3685185900269765,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 18s",
+          "sourceDistanceMeters": 212.727,
+          "latitude": -45.84645171951174,
+          "longitude": 170.51579551293366
+        },
+        "fromNodeId": 6490673628,
+        "toNodeId": 1120864367,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.846487053309104,
+          "longitude": 170.51581850092344
+        },
+        "snapDistanceMeters": 4.3135822733157045,
+        "bearingDegrees": 65.62026712935233,
+        "directionAlignmentDegrees": 0.4116080581273172,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 21s",
+          "sourceDistanceMeters": 249.32,
+          "latitude": -45.846320336659055,
+          "longitude": 170.5162286524217
+        },
+        "fromNodeId": 1303010590,
+        "toNodeId": 6490673632,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84635573628217,
+          "longitude": 170.51625112216306
+        },
+        "snapDistanceMeters": 4.303862983833219,
+        "bearingDegrees": 66.14718790976207,
+        "directionAlignmentDegrees": 4.518888631363615,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.846487053309104,
+          "longitude": 170.51581850092344
+        },
+        {
+          "latitude": -45.8464576,
+          "longitude": 170.5159118
+        },
+        {
+          "latitude": -45.8463976,
+          "longitude": 170.5161152
+        },
+        {
+          "latitude": -45.84635573628217,
+          "longitude": 170.51625112216306
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 21s",
+      "toAnchor": "GPS 24s",
+      "straightLineDistanceMeters": 37.032794344504815,
+      "distanceMeters": 39.14382958748947,
+      "roadDirectRatio": 1.0570044815777697,
+      "maximumCorridorDeviationMeters": 6.559359343131335,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 21s",
+          "sourceDistanceMeters": 249.32,
+          "latitude": -45.846320336659055,
+          "longitude": 170.5162286524217
+        },
+        "fromNodeId": 1303010590,
+        "toNodeId": 6490673632,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84635573628217,
+          "longitude": 170.51625112216306
+        },
+        "snapDistanceMeters": 4.303862983833219,
+        "bearingDegrees": 66.14718790976207,
+        "directionAlignmentDegrees": 4.518888631363615,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 24s",
+          "sourceDistanceMeters": 286.494,
+          "latitude": -45.846138193095044,
+          "longitude": 170.51662892217433
+        },
+        "fromNodeId": 6489536142,
+        "toNodeId": 6489536143,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84617131136956,
+          "longitude": 170.51667796642306
+        },
+        "snapDistanceMeters": 5.290789632629634,
+        "bearingDegrees": 44.10988761196376,
+        "directionAlignmentDegrees": 1.246183150009285,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84635573628217,
+          "longitude": 170.51625112216306
+        },
+        {
+          "latitude": -45.8463433,
+          "longitude": 170.51629150000002
+        },
+        {
+          "latitude": -45.8462953,
+          "longitude": 170.51643330000002
+        },
+        {
+          "latitude": -45.846248800000005,
+          "longitude": 170.5165407
+        },
+        {
+          "latitude": -45.846219000000005,
+          "longitude": 170.51660230000002
+        },
+        {
+          "latitude": -45.846183,
+          "longitude": 170.51666170000001
+        },
+        {
+          "latitude": -45.84617131136956,
+          "longitude": 170.51667796642306
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 24s",
+      "toAnchor": "GPS 27s",
+      "straightLineDistanceMeters": 37.31646312934645,
+      "distanceMeters": 39.23700553952756,
+      "roadDirectRatio": 1.0514663569139475,
+      "maximumCorridorDeviationMeters": 6.7717931576018895,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 24s",
+          "sourceDistanceMeters": 286.494,
+          "latitude": -45.846138193095044,
+          "longitude": 170.51662892217433
+        },
+        "fromNodeId": 6489536142,
+        "toNodeId": 6489536143,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84617131136956,
+          "longitude": 170.51667796642306
+        },
+        "snapDistanceMeters": 5.290789632629634,
+        "bearingDegrees": 44.10988761196376,
+        "directionAlignmentDegrees": 1.246183150009285,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 27s",
+          "sourceDistanceMeters": 323.984,
+          "latitude": -45.8458598270686,
+          "longitude": 170.5168980146994
+        },
+        "fromNodeId": 6489536148,
+        "toNodeId": 6489536149,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84587460896695,
+          "longitude": 170.51694515111978
+        },
+        "snapDistanceMeters": 4.003988528800774,
+        "bearingDegrees": 24.236798852494758,
+        "directionAlignmentDegrees": 4.198457066866259,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84617131136956,
+          "longitude": 170.51667796642306
+        },
+        {
+          "latitude": -45.8461447,
+          "longitude": 170.516715
+        },
+        {
+          "latitude": -45.8461063,
+          "longitude": 170.51676210000002
+        },
+        {
+          "latitude": -45.8460867,
+          "longitude": 170.51678410000002
+        },
+        {
+          "latitude": -45.8460429,
+          "longitude": 170.51682540000002
+        },
+        {
+          "latitude": -45.8459748,
+          "longitude": 170.51688040000002
+        },
+        {
+          "latitude": -45.84587460896695,
+          "longitude": 170.51694515111978
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 27s",
+      "toAnchor": "GPS 30s",
+      "straightLineDistanceMeters": 36.28657178811349,
+      "distanceMeters": 36.52206008358862,
+      "roadDirectRatio": 1.0064896815508009,
+      "maximumCorridorDeviationMeters": 4.04235167281563,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 27s",
+          "sourceDistanceMeters": 323.984,
+          "latitude": -45.8458598270686,
+          "longitude": 170.5168980146994
+        },
+        "fromNodeId": 6489536148,
+        "toNodeId": 6489536149,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84587460896695,
+          "longitude": 170.51694515111978
+        },
+        "snapDistanceMeters": 4.003988528800774,
+        "bearingDegrees": 24.236798852494758,
+        "directionAlignmentDegrees": 4.198457066866259,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 30s",
+          "sourceDistanceMeters": 360.296,
+          "latitude": -45.845558899423885,
+          "longitude": 170.51707923523438
+        },
+        "fromNodeId": 1120864692,
+        "toNodeId": 11523831439,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84556909211814,
+          "longitude": 170.51711810024034
+        },
+        "snapDistanceMeters": 3.2166810644104493,
+        "bearingDegrees": 20.630699581114413,
+        "directionAlignmentDegrees": 0.9809826910490166,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84587460896695,
+          "longitude": 170.51694515111978
+        },
+        {
+          "latitude": -45.845862000000004,
+          "longitude": 170.5169533
+        },
+        {
+          "latitude": -45.8456975,
+          "longitude": 170.5170487
+        },
+        {
+          "latitude": -45.84556909211814,
+          "longitude": 170.51711810024034
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 30s",
+      "toAnchor": "GPS 33s",
+      "straightLineDistanceMeters": 29.230497672570674,
+      "distanceMeters": 29.229765382170157,
+      "roadDirectRatio": 0.9999749477272429,
+      "maximumCorridorDeviationMeters": 3.441951887612125,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 30s",
+          "sourceDistanceMeters": 360.296,
+          "latitude": -45.845558899423885,
+          "longitude": 170.51707923523438
+        },
+        "fromNodeId": 1120864692,
+        "toNodeId": 11523831439,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84556909211814,
+          "longitude": 170.51711810024034
+        },
+        "snapDistanceMeters": 3.2166810644104493,
+        "bearingDegrees": 20.630699581114413,
+        "directionAlignmentDegrees": 0.9809826910490166,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 33s",
+          "sourceDistanceMeters": 389.528,
+          "latitude": -45.84531217440786,
+          "longitude": 170.51720947270053
+        },
+        "fromNodeId": 11523831439,
+        "toNodeId": 6489536154,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84532308005538,
+          "longitude": 170.5172510612416
+        },
+        "snapDistanceMeters": 3.4420574823902,
+        "bearingDegrees": 20.628335346703807,
+        "directionAlignmentDegrees": 1.9755170663666708,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84556909211814,
+          "longitude": 170.51711810024034
+        },
+        {
+          "latitude": -45.8453293,
+          "longitude": 170.5172477
+        },
+        {
+          "latitude": -45.84532308005538,
+          "longitude": 170.5172510612416
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 33s",
+      "toAnchor": "GPS 36s",
+      "straightLineDistanceMeters": 15.45410794618168,
+      "distanceMeters": 18.53384146429528,
+      "roadDirectRatio": 1.1992825162629024,
+      "maximumCorridorDeviationMeters": 3.419615387043952,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 33s",
+          "sourceDistanceMeters": 389.528,
+          "latitude": -45.84531217440786,
+          "longitude": 170.51720947270053
+        },
+        "fromNodeId": 11523831439,
+        "toNodeId": 6489536154,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84532308005538,
+          "longitude": 170.5172510612416
+        },
+        "snapDistanceMeters": 3.4420574823902,
+        "bearingDegrees": 20.628335346703807,
+        "directionAlignmentDegrees": 1.9755170663666708,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 36s",
+          "sourceDistanceMeters": 405.058,
+          "latitude": -45.84518853369706,
+          "longitude": 170.51730059326204
+        },
+        "fromNodeId": 6489536159,
+        "toNodeId": 6489536154,
+        "wayId": 96778203,
+        "snappedCoordinate": {
+          "latitude": -45.845253247385585,
+          "longitude": 170.51728404619098
+        },
+        "snapDistanceMeters": 7.309090187655361,
+        "bearingDegrees": 100.09949630169228,
+        "directionAlignmentDegrees": 4.03887267227548,
+        "highway": "residential",
+        "roadName": "Lowe Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202,
+        96778203
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        },
+        {
+          "wayId": 96778203,
+          "highway": "residential",
+          "name": "Lowe Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84532308005538,
+          "longitude": 170.5172510612416
+        },
+        {
+          "latitude": -45.8452538,
+          "longitude": 170.5172885
+        },
+        {
+          "latitude": -45.8452454,
+          "longitude": 170.51722080000002
+        },
+        {
+          "latitude": -45.845253247385585,
+          "longitude": 170.51728404619098
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 36s",
+      "toAnchor": "GPS 39s",
+      "straightLineDistanceMeters": 34.25677585762633,
+      "distanceMeters": 31.76590398674399,
+      "roadDirectRatio": 0.9272881989468423,
+      "maximumCorridorDeviationMeters": 6.830517509314861,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 36s",
+          "sourceDistanceMeters": 405.058,
+          "latitude": -45.84518853369706,
+          "longitude": 170.51730059326204
+        },
+        "fromNodeId": 6489536159,
+        "toNodeId": 6489536154,
+        "wayId": 96778203,
+        "snappedCoordinate": {
+          "latitude": -45.845253247385585,
+          "longitude": 170.51728404619098
+        },
+        "snapDistanceMeters": 7.309090187655361,
+        "bearingDegrees": 100.09949630169228,
+        "directionAlignmentDegrees": 4.03887267227548,
+        "highway": "residential",
+        "roadName": "Lowe Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 39s",
+          "sourceDistanceMeters": 439.366,
+          "latitude": -45.84534696692907,
+          "longitude": 170.51767989115157
+        },
+        "fromNodeId": 6489536169,
+        "toNodeId": 6489536157,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845368734047774,
+          "longitude": 170.51765039012744
+        },
+        "snapDistanceMeters": 3.3286563561830484,
+        "bearingDegrees": 133.35299237413216,
+        "directionAlignmentDegrees": 4.553357884440297,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778203,
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778203,
+          "highway": "residential",
+          "name": "Lowe Street"
+        },
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.845253247385585,
+          "longitude": 170.51728404619098
+        },
+        {
+          "latitude": -45.8452538,
+          "longitude": 170.5172885
+        },
+        {
+          "latitude": -45.845264,
+          "longitude": 170.5173642
+        },
+        {
+          "latitude": -45.845276600000005,
+          "longitude": 170.5174251
+        },
+        {
+          "latitude": -45.8452831,
+          "longitude": 170.51745630000002
+        },
+        {
+          "latitude": -45.8452981,
+          "longitude": 170.51751240000002
+        },
+        {
+          "latitude": -45.845313600000004,
+          "longitude": 170.5175542
+        },
+        {
+          "latitude": -45.8453352,
+          "longitude": 170.51759940000002
+        },
+        {
+          "latitude": -45.845368734047774,
+          "longitude": 170.51765039012744
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 39s",
+      "toAnchor": "GPS 42s",
+      "straightLineDistanceMeters": 29.620094852141754,
+      "distanceMeters": 29.38980108772301,
+      "roadDirectRatio": 0.99222508349253,
+      "maximumCorridorDeviationMeters": 3.3182247219346612,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 39s",
+          "sourceDistanceMeters": 439.366,
+          "latitude": -45.84534696692907,
+          "longitude": 170.51767989115157
+        },
+        "fromNodeId": 6489536169,
+        "toNodeId": 6489536157,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845368734047774,
+          "longitude": 170.51765039012744
+        },
+        "snapDistanceMeters": 3.3286563561830484,
+        "bearingDegrees": 133.35299237413216,
+        "directionAlignmentDegrees": 4.553357884440297,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 42s",
+          "sourceDistanceMeters": 468.996,
+          "latitude": -45.84554458271565,
+          "longitude": 170.51793631405437
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84556281172938,
+          "longitude": 170.5179079413601
+        },
+        "snapDistanceMeters": 2.9897242490805804,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.16786886538247073,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.845368734047774,
+          "longitude": 170.51765039012744
+        },
+        {
+          "latitude": -45.8453717,
+          "longitude": 170.5176549
+        },
+        {
+          "latitude": -45.84556281172938,
+          "longitude": 170.5179079413601
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 42s",
+      "toAnchor": "GPS 45s",
+      "straightLineDistanceMeters": 23.15132642295611,
+      "distanceMeters": 23.150877044838253,
+      "roadDirectRatio": 0.9999805895303946,
+      "maximumCorridorDeviationMeters": 3.132845505893138,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 42s",
+          "sourceDistanceMeters": 468.996,
+          "latitude": -45.84554458271565,
+          "longitude": 170.51793631405437
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84556281172938,
+          "longitude": 170.5179079413601
+        },
+        "snapDistanceMeters": 2.9897242490805804,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.16786886538247073,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 45s",
+          "sourceDistanceMeters": 492.149,
+          "latitude": -45.845696753775535,
+          "longitude": 170.5181403108043
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845715855796435,
+          "longitude": 170.51811057925687
+        },
+        "snapDistanceMeters": 3.132903815901883,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.6286649995330137,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84556281172938,
+          "longitude": 170.5179079413601
+        },
+        {
+          "latitude": -45.845715855796435,
+          "longitude": 170.51811057925687
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 45s",
+      "toAnchor": "GPS 48s",
+      "straightLineDistanceMeters": 42.35636905988679,
+      "distanceMeters": 42.352445841044734,
+      "roadDirectRatio": 0.9999073759406405,
+      "maximumCorridorDeviationMeters": 3.708120744072215,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 45s",
+          "sourceDistanceMeters": 492.149,
+          "latitude": -45.845696753775535,
+          "longitude": 170.5181403108043
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845715855796435,
+          "longitude": 170.51811057925687
+        },
+        "snapDistanceMeters": 3.132903815901883,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.6286649995330137,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 48s",
+          "sourceDistanceMeters": 534.506,
+          "latitude": -45.845973225308036,
+          "longitude": 170.51851648148786
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845995836643176,
+          "longitude": 170.5184812877136
+        },
+        "snapDistanceMeters": 3.7084596406570185,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.02323825298334044,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.845715855796435,
+          "longitude": 170.51811057925687
+        },
+        {
+          "latitude": -45.845995836643176,
+          "longitude": 170.5184812877136
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 48s",
+      "toAnchor": "GPS 51s",
+      "straightLineDistanceMeters": 53.00101852091234,
+      "distanceMeters": 53.01034998761519,
+      "roadDirectRatio": 1.0001760620260376,
+      "maximumCorridorDeviationMeters": 3.7082062753840117,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 48s",
+          "sourceDistanceMeters": 534.506,
+          "latitude": -45.845973225308036,
+          "longitude": 170.51851648148786
+        },
+        "fromNodeId": 6489536157,
+        "toNodeId": 6489536177,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.845995836643176,
+          "longitude": 170.5184812877136
+        },
+        "snapDistanceMeters": 3.7084596406570185,
+        "bearingDegrees": 137.31395731055187,
+        "directionAlignmentDegrees": 0.02323825298334044,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 51s",
+          "sourceDistanceMeters": 587.508,
+          "latitude": -45.84632732350212,
+          "longitude": 170.51897453702784
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84634553207119,
+          "longitude": 170.51894643679566
+        },
+        "snapDistanceMeters": 2.97267403926029,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.45189789364142535,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.845995836643176,
+          "longitude": 170.5184812877136
+        },
+        {
+          "latitude": -45.846158,
+          "longitude": 170.518696
+        },
+        {
+          "latitude": -45.84634553207119,
+          "longitude": 170.51894643679566
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 51s",
+      "toAnchor": "GPS 54s",
+      "straightLineDistanceMeters": 52.43221409762251,
+      "distanceMeters": 52.43219918795221,
+      "roadDirectRatio": 0.9999997156391245,
+      "maximumCorridorDeviationMeters": 2.981584340120624,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 51s",
+          "sourceDistanceMeters": 587.508,
+          "latitude": -45.84632732350212,
+          "longitude": 170.51897453702784
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84634553207119,
+          "longitude": 170.51894643679566
+        },
+        "snapDistanceMeters": 2.97267403926029,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.45189789364142535,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 54s",
+          "sourceDistanceMeters": 639.967,
+          "latitude": -45.84667251853051,
+          "longitude": 170.51943567960365
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84669078167773,
+          "longitude": 170.51940749502754
+        },
+        "snapDistanceMeters": 2.9815809915141407,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.4945545794379921,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84634553207119,
+          "longitude": 170.51894643679566
+        },
+        {
+          "latitude": -45.84669078167773,
+          "longitude": 170.51940749502754
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 54s",
+      "toAnchor": "GPS 57s",
+      "straightLineDistanceMeters": 47.95457614399807,
+      "distanceMeters": 47.94689353872583,
+      "roadDirectRatio": 0.9998397941158073,
+      "maximumCorridorDeviationMeters": 3.838497091503461,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 54s",
+          "sourceDistanceMeters": 639.967,
+          "latitude": -45.84667251853051,
+          "longitude": 170.51943567960365
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84669078167773,
+          "longitude": 170.51940749502754
+        },
+        "snapDistanceMeters": 2.9815809915141407,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.4945545794379921,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 57s",
+          "sourceDistanceMeters": 687.933,
+          "latitude": -45.8469829820267,
+          "longitude": 170.5198654041076
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.847006497821795,
+          "longitude": 170.51982911325504
+        },
+        "snapDistanceMeters": 3.8391069802300812,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.591478121390052,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84669078167773,
+          "longitude": 170.51940749502754
+        },
+        {
+          "latitude": -45.847006497821795,
+          "longitude": 170.51982911325504
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 57s",
+      "toAnchor": "GPS 60s",
+      "straightLineDistanceMeters": 33.99882865418958,
+      "distanceMeters": 33.99881486435549,
+      "roadDirectRatio": 0.9999995944026709,
+      "maximumCorridorDeviationMeters": 3.8391041372280563,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 57s",
+          "sourceDistanceMeters": 687.933,
+          "latitude": -45.8469829820267,
+          "longitude": 170.5198654041076
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.847006497821795,
+          "longitude": 170.51982911325504
+        },
+        "snapDistanceMeters": 3.8391069802300812,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 0.591478121390052,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 60s",
+          "sourceDistanceMeters": 721.937,
+          "latitude": -45.84720692553474,
+          "longitude": 170.52016426215673
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84723037048779,
+          "longitude": 170.52012808053436
+        },
+        "snapDistanceMeters": 3.8275388012559666,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 1.1106284869972116,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847006497821795,
+          "longitude": 170.51982911325504
+        },
+        {
+          "latitude": -45.84723037048779,
+          "longitude": 170.52012808053436
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 60s",
+      "toAnchor": "GPS 63s",
+      "straightLineDistanceMeters": 25.065781849222535,
+      "distanceMeters": 25.04014844745435,
+      "roadDirectRatio": 0.9989773547889957,
+      "maximumCorridorDeviationMeters": 3.82362374411474,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 60s",
+          "sourceDistanceMeters": 721.937,
+          "latitude": -45.84720692553474,
+          "longitude": 170.52016426215673
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84723037048779,
+          "longitude": 170.52012808053436
+        },
+        "snapDistanceMeters": 3.8275388012559666,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 1.1106284869972116,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 63s",
+          "sourceDistanceMeters": 747.005,
+          "latitude": -45.84737874819284,
+          "longitude": 170.52037374189138
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84739525311384,
+          "longitude": 170.52034827047981
+        },
+        "snapDistanceMeters": 2.6945327050261367,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 5.793222912339096,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84723037048779,
+          "longitude": 170.52012808053436
+        },
+        {
+          "latitude": -45.84739525311384,
+          "longitude": 170.52034827047981
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 63s",
+      "toAnchor": "GPS 66s",
+      "straightLineDistanceMeters": 24.318339798351484,
+      "distanceMeters": 25.71460504762845,
+      "roadDirectRatio": 1.0574161419264163,
+      "maximumCorridorDeviationMeters": 3.380897552164784,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 63s",
+          "sourceDistanceMeters": 747.005,
+          "latitude": -45.84737874819284,
+          "longitude": 170.52037374189138
+        },
+        "fromNodeId": 6489536177,
+        "toNodeId": 6489536690,
+        "wayId": 96778196,
+        "snappedCoordinate": {
+          "latitude": -45.84739525311384,
+          "longitude": 170.52034827047981
+        },
+        "snapDistanceMeters": 2.6945327050261367,
+        "bearingDegrees": 137.06993725952242,
+        "directionAlignmentDegrees": 5.793222912339096,
+        "highway": "residential",
+        "roadName": "Wilkinson Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 66s",
+          "sourceDistanceMeters": 771.625,
+          "latitude": -45.8475604091966,
+          "longitude": 170.52054856172313
+        },
+        "fromNodeId": 6489536689,
+        "toNodeId": 6489536184,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.8475848,
+          "longitude": 170.5205225
+        },
+        "snapDistanceMeters": 3.3808961521770247,
+        "bearingDegrees": 187.4348855267799,
+        "directionAlignmentDegrees": 0.47299591853175815,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778196,
+        106717722
+      ],
+      "ways": [
+        {
+          "wayId": 96778196,
+          "highway": "residential",
+          "name": "Wilkinson Street"
+        },
+        {
+          "wayId": 106717722,
+          "highway": "residential",
+          "name": "Pryde Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84739525311384,
+          "longitude": 170.52034827047981
+        },
+        {
+          "latitude": -45.8474906,
+          "longitude": 170.5204756
+        },
+        {
+          "latitude": -45.84752,
+          "longitude": 170.5204998
+        },
+        {
+          "latitude": -45.847534200000005,
+          "longitude": 170.52050780000002
+        },
+        {
+          "latitude": -45.847546200000004,
+          "longitude": 170.5205146
+        },
+        {
+          "latitude": -45.8475848,
+          "longitude": 170.5205225
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 66s",
+      "toAnchor": "GPS 69s",
+      "straightLineDistanceMeters": 34.68315099921555,
+      "distanceMeters": 32.072522529976695,
+      "roadDirectRatio": 0.9247292015279148,
+      "maximumCorridorDeviationMeters": 2.8583879619773773,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 66s",
+          "sourceDistanceMeters": 771.625,
+          "latitude": -45.8475604091966,
+          "longitude": 170.52054856172313
+        },
+        "fromNodeId": 6489536689,
+        "toNodeId": 6489536184,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.8475848,
+          "longitude": 170.5205225
+        },
+        "snapDistanceMeters": 3.3808961521770247,
+        "bearingDegrees": 187.4348855267799,
+        "directionAlignmentDegrees": 0.47299591853175815,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 69s",
+          "sourceDistanceMeters": 807.277,
+          "latitude": -45.847813593308,
+          "longitude": 170.5202870301711
+        },
+        "fromNodeId": 6489536686,
+        "toNodeId": 6489536688,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.84780746377161,
+          "longitude": 170.52027856391507
+        },
+        "snapDistanceMeters": 0.9458074614193606,
+        "bearingDegrees": 226.10617248508265,
+        "directionAlignmentDegrees": 0.04638444256616589,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        106717722
+      ],
+      "ways": [
+        {
+          "wayId": 106717722,
+          "highway": "residential",
+          "name": "Pryde Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8475848,
+          "longitude": 170.5205225
+        },
+        {
+          "latitude": -45.8476243,
+          "longitude": 170.5205151
+        },
+        {
+          "latitude": -45.8476555,
+          "longitude": 170.52049580000002
+        },
+        {
+          "latitude": -45.847691700000006,
+          "longitude": 170.52045130000002
+        },
+        {
+          "latitude": -45.84780746377161,
+          "longitude": 170.52027856391507
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 69s",
+      "toAnchor": "GPS 72s",
+      "straightLineDistanceMeters": 37.071843321708734,
+      "distanceMeters": 36.619614096126156,
+      "roadDirectRatio": 0.9878012749013276,
+      "maximumCorridorDeviationMeters": 4.737132667294705,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 69s",
+          "sourceDistanceMeters": 807.277,
+          "latitude": -45.847813593308,
+          "longitude": 170.5202870301711
+        },
+        "fromNodeId": 6489536686,
+        "toNodeId": 6489536688,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.84780746377161,
+          "longitude": 170.52027856391507
+        },
+        "snapDistanceMeters": 0.9458074614193606,
+        "bearingDegrees": 226.10617248508265,
+        "directionAlignmentDegrees": 0.04638444256616589,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 72s",
+          "sourceDistanceMeters": 845.687,
+          "latitude": -45.84800055180371,
+          "longitude": 170.5198907410183
+        },
+        "fromNodeId": 6489536688,
+        "toNodeId": 1120864410,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.8480321259203,
+          "longitude": 170.51993287884468
+        },
+        "snapDistanceMeters": 4.793580728160988,
+        "bearingDegrees": 227.08906817531386,
+        "directionAlignmentDegrees": 8.413436598709632,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        106717722
+      ],
+      "ways": [
+        {
+          "wayId": 106717722,
+          "highway": "residential",
+          "name": "Pryde Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84780746377161,
+          "longitude": 170.52027856391507
+        },
+        {
+          "latitude": -45.8478317,
+          "longitude": 170.5202424
+        },
+        {
+          "latitude": -45.8480321259203,
+          "longitude": 170.51993287884468
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 72s",
+      "toAnchor": "GPS 75s",
+      "straightLineDistanceMeters": 30.530752507917057,
+      "distanceMeters": 29.151266685196287,
+      "roadDirectRatio": 0.9548165141896503,
+      "maximumCorridorDeviationMeters": 6.716961441489667,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 72s",
+          "sourceDistanceMeters": 845.687,
+          "latitude": -45.84800055180371,
+          "longitude": 170.5198907410183
+        },
+        "fromNodeId": 6489536688,
+        "toNodeId": 1120864410,
+        "wayId": 106717722,
+        "snappedCoordinate": {
+          "latitude": -45.8480321259203,
+          "longitude": 170.51993287884468
+        },
+        "snapDistanceMeters": 4.793580728160988,
+        "bearingDegrees": 227.08906817531386,
+        "directionAlignmentDegrees": 8.413436598709632,
+        "highway": "residential",
+        "roadName": "Pryde Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 75s",
+          "sourceDistanceMeters": 880.081,
+          "latitude": -45.84815791686618,
+          "longitude": 170.51956772742517
+        },
+        "fromNodeId": 6489536124,
+        "toNodeId": 6489536127,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.8481481,
+          "longitude": 170.51961870000002
+        },
+        "snapDistanceMeters": 4.096166352957024,
+        "bearingDegrees": 283.3136163576221,
+        "directionAlignmentDegrees": 2.070258329199209,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        106717722,
+        96778189
+      ],
+      "ways": [
+        {
+          "wayId": 106717722,
+          "highway": "residential",
+          "name": "Pryde Street"
+        },
+        {
+          "wayId": 96778189,
+          "highway": "residential",
+          "name": "Hislop Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8480321259203,
+          "longitude": 170.51993287884468
+        },
+        {
+          "latitude": -45.8481194,
+          "longitude": 170.5197981
+        },
+        {
+          "latitude": -45.8481377,
+          "longitude": 170.51975850000002
+        },
+        {
+          "latitude": -45.848148,
+          "longitude": 170.51972690000002
+        },
+        {
+          "latitude": -45.848153,
+          "longitude": 170.5196902
+        },
+        {
+          "latitude": -45.8481541,
+          "longitude": 170.51965510000002
+        },
+        {
+          "latitude": -45.8481481,
+          "longitude": 170.51961870000002
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 75s",
+      "toAnchor": "GPS 78s",
+      "straightLineDistanceMeters": 39.75180703729353,
+      "distanceMeters": 41.89811431324189,
+      "roadDirectRatio": 1.0539926970850604,
+      "maximumCorridorDeviationMeters": 4.096171996088851,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 75s",
+          "sourceDistanceMeters": 880.081,
+          "latitude": -45.84815791686618,
+          "longitude": 170.51956772742517
+        },
+        "fromNodeId": 6489536124,
+        "toNodeId": 6489536127,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.8481481,
+          "longitude": 170.51961870000002
+        },
+        "snapDistanceMeters": 4.096166352957024,
+        "bearingDegrees": 283.3136163576221,
+        "directionAlignmentDegrees": 2.070258329199209,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 78s",
+          "sourceDistanceMeters": 919.987,
+          "latitude": -45.84790549831225,
+          "longitude": 170.51920428992193
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.847885931725024,
+          "longitude": 170.51923441040904
+        },
+        "snapDistanceMeters": 3.19005290762732,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 0.8673879821954182,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778189
+      ],
+      "ways": [
+        {
+          "wayId": 96778189,
+          "highway": "residential",
+          "name": "Hislop Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8481481,
+          "longitude": 170.51961870000002
+        },
+        {
+          "latitude": -45.848133600000004,
+          "longitude": 170.5195784
+        },
+        {
+          "latitude": -45.8481226,
+          "longitude": 170.51955600000002
+        },
+        {
+          "latitude": -45.8481159,
+          "longitude": 170.5195423
+        },
+        {
+          "latitude": -45.847885931725024,
+          "longitude": 170.51923441040904
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 78s",
+      "toAnchor": "GPS 81s",
+      "straightLineDistanceMeters": 39.06612805732419,
+      "distanceMeters": 39.065332204231865,
+      "roadDirectRatio": 0.9999796280529476,
+      "maximumCorridorDeviationMeters": 3.1899895769919433,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 78s",
+          "sourceDistanceMeters": 919.987,
+          "latitude": -45.84790549831225,
+          "longitude": 170.51920428992193
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.847885931725024,
+          "longitude": 170.51923441040904
+        },
+        "snapDistanceMeters": 3.19005290762732,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 0.8673879821954182,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 81s",
+          "sourceDistanceMeters": 959.053,
+          "latitude": -45.84764702674373,
+          "longitude": 170.51886267065498
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.84762899980558,
+          "longitude": 170.5188904209453
+        },
+        "snapDistanceMeters": 2.939037503067311,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 0.4057533296817019,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778189
+      ],
+      "ways": [
+        {
+          "wayId": 96778189,
+          "highway": "residential",
+          "name": "Hislop Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847885931725024,
+          "longitude": 170.51923441040904
+        },
+        {
+          "latitude": -45.84762899980558,
+          "longitude": 170.5188904209453
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 81s",
+      "toAnchor": "GPS 84s",
+      "straightLineDistanceMeters": 36.511747284318,
+      "distanceMeters": 36.510651097017195,
+      "roadDirectRatio": 0.9999699771338724,
+      "maximumCorridorDeviationMeters": 2.9389507124952585,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 81s",
+          "sourceDistanceMeters": 959.053,
+          "latitude": -45.84764702674373,
+          "longitude": 170.51886267065498
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.84762899980558,
+          "longitude": 170.5188904209453
+        },
+        "snapDistanceMeters": 2.939037503067311,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 0.4057533296817019,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 84s",
+          "sourceDistanceMeters": 995.565,
+          "latitude": -45.847405154295345,
+          "longitude": 170.51854386047077
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.84738887047245,
+          "longitude": 170.51856892737337
+        },
+        "snapDistanceMeters": 2.6548492302305244,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 1.5318335429270875,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778189
+      ],
+      "ways": [
+        {
+          "wayId": 96778189,
+          "highway": "residential",
+          "name": "Hislop Street"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84762899980558,
+          "longitude": 170.5188904209453
+        },
+        {
+          "latitude": -45.84738887047245,
+          "longitude": 170.51856892737337
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 84s",
+      "toAnchor": "GPS 87s",
+      "straightLineDistanceMeters": 17.765329115818922,
+      "distanceMeters": 20.967846193751598,
+      "roadDirectRatio": 1.1802678158706912,
+      "maximumCorridorDeviationMeters": 4.260266294771632,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 84s",
+          "sourceDistanceMeters": 995.565,
+          "latitude": -45.847405154295345,
+          "longitude": 170.51854386047077
+        },
+        "fromNodeId": 6489536122,
+        "toNodeId": 5515286891,
+        "wayId": 96778189,
+        "snappedCoordinate": {
+          "latitude": -45.84738887047245,
+          "longitude": 170.51856892737337
+        },
+        "snapDistanceMeters": 2.6548492302305244,
+        "bearingDegrees": 316.99771269104235,
+        "directionAlignmentDegrees": 1.5318335429270875,
+        "highway": "residential",
+        "roadName": "Hislop Street"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 87s",
+          "sourceDistanceMeters": 1013.512,
+          "latitude": -45.84729950186007,
+          "longitude": 170.51837180862302
+        },
+        "fromNodeId": 5515286891,
+        "toNodeId": 11523831037,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847306797643675,
+          "longitude": 170.51838164954626
+        },
+        "snapDistanceMeters": 1.1131628771065867,
+        "bearingDegrees": 226.78446053426086,
+        "directionAlignmentDegrees": 18.141450063003205,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778189,
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778189,
+          "highway": "residential",
+          "name": "Hislop Street"
+        },
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84738887047245,
+          "longitude": 170.51856892737337
+        },
+        {
+          "latitude": -45.8472798,
+          "longitude": 170.51842290000002
+        },
+        {
+          "latitude": -45.847306797643675,
+          "longitude": 170.51838164954626
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 87s",
+      "toAnchor": "GPS 90s",
+      "straightLineDistanceMeters": 46.17461116843844,
+      "distanceMeters": 46.13077497028202,
+      "roadDirectRatio": 0.9990506428306128,
+      "maximumCorridorDeviationMeters": 1.1120899593327824,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 87s",
+          "sourceDistanceMeters": 1013.512,
+          "latitude": -45.84729950186007,
+          "longitude": 170.51837180862302
+        },
+        "fromNodeId": 5515286891,
+        "toNodeId": 11523831037,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847306797643675,
+          "longitude": 170.51838164954626
+        },
+        "snapDistanceMeters": 1.1131628771065867,
+        "bearingDegrees": 226.78446053426086,
+        "directionAlignmentDegrees": 18.141450063003205,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 90s",
+          "sourceDistanceMeters": 1059.989,
+          "latitude": -45.84759685219794,
+          "longitude": 170.51795567623924
+        },
+        "fromNodeId": 11523831037,
+        "toNodeId": 1120864065,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847591064177024,
+          "longitude": 170.5179478580299
+        },
+        "snapDistanceMeters": 0.8836973935321679,
+        "bearingDegrees": 226.74423491132367,
+        "directionAlignmentDegrees": 1.4078769456229994,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847306797643675,
+          "longitude": 170.51838164954626
+        },
+        {
+          "latitude": -45.847335300000005,
+          "longitude": 170.51833810000002
+        },
+        {
+          "latitude": -45.847591064177024,
+          "longitude": 170.5179478580299
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 90s",
+      "toAnchor": "GPS 93s",
+      "straightLineDistanceMeters": 44.457396509853105,
+      "distanceMeters": 44.456791201638936,
+      "roadDirectRatio": 0.9999863845330206,
+      "maximumCorridorDeviationMeters": 1.1164528175669688,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 90s",
+          "sourceDistanceMeters": 1059.989,
+          "latitude": -45.84759685219794,
+          "longitude": 170.51795567623924
+        },
+        "fromNodeId": 11523831037,
+        "toNodeId": 1120864065,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847591064177024,
+          "longitude": 170.5179478580299
+        },
+        "snapDistanceMeters": 0.8836973935321679,
+        "bearingDegrees": 226.74423491132367,
+        "directionAlignmentDegrees": 1.4078769456229994,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 93s",
+          "sourceDistanceMeters": 1104.447,
+          "latitude": -45.84787234909213,
+          "longitude": 170.5175397119247
+        },
+        "fromNodeId": 11523831037,
+        "toNodeId": 1120864065,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84786503647476,
+          "longitude": 170.51752983432357
+        },
+        "snapDistanceMeters": 1.1164672749118603,
+        "bearingDegrees": 226.74423491132367,
+        "directionAlignmentDegrees": 5.04109601054725,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847591064177024,
+          "longitude": 170.5179478580299
+        },
+        {
+          "latitude": -45.84786503647476,
+          "longitude": 170.51752983432357
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 93s",
+      "toAnchor": "GPS 96s",
+      "straightLineDistanceMeters": 38.99455298831807,
+      "distanceMeters": 38.72967117781443,
+      "roadDirectRatio": 0.9932072099766603,
+      "maximumCorridorDeviationMeters": 1.4872946431326044,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 93s",
+          "sourceDistanceMeters": 1104.447,
+          "latitude": -45.84787234909213,
+          "longitude": 170.5175397119247
+        },
+        "fromNodeId": 11523831037,
+        "toNodeId": 1120864065,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84786503647476,
+          "longitude": 170.51752983432357
+        },
+        "snapDistanceMeters": 1.1164672749118603,
+        "bearingDegrees": 226.74423491132367,
+        "directionAlignmentDegrees": 5.04109601054725,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 96s",
+          "sourceDistanceMeters": 1143.689,
+          "latitude": -45.84805882191133,
+          "longitude": 170.51711333404526
+        },
+        "fromNodeId": 1120864371,
+        "toNodeId": 6489811645,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.848045840465225,
+          "longitude": 170.5171069044522
+        },
+        "snapDistanceMeters": 1.5269617734881504,
+        "bearingDegrees": 250.96548074875403,
+        "directionAlignmentDegrees": 0.41253719165123387,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84786503647476,
+          "longitude": 170.51752983432357
+        },
+        {
+          "latitude": -45.847884,
+          "longitude": 170.51750090000002
+        },
+        {
+          "latitude": -45.8479406,
+          "longitude": 170.5173943
+        },
+        {
+          "latitude": -45.847983500000005,
+          "longitude": 170.51730160000002
+        },
+        {
+          "latitude": -45.8480264,
+          "longitude": 170.51718780000002
+        },
+        {
+          "latitude": -45.848045840465225,
+          "longitude": 170.5171069044522
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 96s",
+      "toAnchor": "GPS 99s",
+      "straightLineDistanceMeters": 36.75061656527754,
+      "distanceMeters": 36.40898420449804,
+      "roadDirectRatio": 0.9907040373003625,
+      "maximumCorridorDeviationMeters": 1.6139888141756262,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 96s",
+          "sourceDistanceMeters": 1143.689,
+          "latitude": -45.84805882191133,
+          "longitude": 170.51711333404526
+        },
+        "fromNodeId": 1120864371,
+        "toNodeId": 6489811645,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.848045840465225,
+          "longitude": 170.5171069044522
+        },
+        "snapDistanceMeters": 1.5269617734881504,
+        "bearingDegrees": 250.96548074875403,
+        "directionAlignmentDegrees": 0.41253719165123387,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 99s",
+          "sourceDistanceMeters": 1180.854,
+          "latitude": -45.84808348563449,
+          "longitude": 170.5166401758074
+        },
+        "fromNodeId": 6489811644,
+        "toNodeId": 1120864559,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.848068829047506,
+          "longitude": 170.51664211443108
+        },
+        "snapDistanceMeters": 1.6366406971169614,
+        "bearingDegrees": 275.26404381397185,
+        "directionAlignmentDegrees": 0.7534819741676168,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.848045840465225,
+          "longitude": 170.5171069044522
+        },
+        {
+          "latitude": -45.8480599,
+          "longitude": 170.51704840000002
+        },
+        {
+          "latitude": -45.848073,
+          "longitude": 170.51691240000002
+        },
+        {
+          "latitude": -45.848076600000006,
+          "longitude": 170.5167632
+        },
+        {
+          "latitude": -45.848068829047506,
+          "longitude": 170.51664211443108
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 99s",
+      "toAnchor": "GPS 102s",
+      "straightLineDistanceMeters": 40.57410627526512,
+      "distanceMeters": 40.37090353206481,
+      "roadDirectRatio": 0.9949918122207859,
+      "maximumCorridorDeviationMeters": 1.8412121109730928,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 99s",
+          "sourceDistanceMeters": 1180.854,
+          "latitude": -45.84808348563449,
+          "longitude": 170.5166401758074
+        },
+        "fromNodeId": 6489811644,
+        "toNodeId": 1120864559,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.848068829047506,
+          "longitude": 170.51664211443108
+        },
+        "snapDistanceMeters": 1.6366406971169614,
+        "bearingDegrees": 275.26404381397185,
+        "directionAlignmentDegrees": 0.7534819741676168,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 102s",
+          "sourceDistanceMeters": 1221.467,
+          "latitude": -45.848004715351685,
+          "longitude": 170.51612868191387
+        },
+        "fromNodeId": 1120864559,
+        "toNodeId": 8399310102,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84798861680304,
+          "longitude": 170.516134264502
+        },
+        "snapDistanceMeters": 1.84155961809232,
+        "bearingDegrees": 283.5797647822118,
+        "directionAlignmentDegrees": 0.49345883144012215,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.848068829047506,
+          "longitude": 170.51664211443108
+        },
+        {
+          "latitude": -45.848065600000005,
+          "longitude": 170.51659180000001
+        },
+        {
+          "latitude": -45.84798861680304,
+          "longitude": 170.516134264502
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 102s",
+      "toAnchor": "GPS 105s",
+      "straightLineDistanceMeters": 43.70636536927531,
+      "distanceMeters": 43.718996120511974,
+      "roadDirectRatio": 1.0002889911144508,
+      "maximumCorridorDeviationMeters": 1.8415577975029742,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 102s",
+          "sourceDistanceMeters": 1221.467,
+          "latitude": -45.848004715351685,
+          "longitude": 170.51612868191387
+        },
+        "fromNodeId": 1120864559,
+        "toNodeId": 8399310102,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84798861680304,
+          "longitude": 170.516134264502
+        },
+        "snapDistanceMeters": 1.84155961809232,
+        "bearingDegrees": 283.5797647822118,
+        "directionAlignmentDegrees": 0.49345883144012215,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 105s",
+          "sourceDistanceMeters": 1265.184,
+          "latitude": -45.84791188049159,
+          "longitude": 170.51558036191295
+        },
+        "fromNodeId": 1120864268,
+        "toNodeId": 1120864093,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847898188058366,
+          "longitude": 170.51558495556517
+        },
+        "snapDistanceMeters": 1.5635498014584104,
+        "bearingDegrees": 283.15338241682514,
+        "directionAlignmentDegrees": 0.6980581327326323,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84798861680304,
+          "longitude": 170.516134264502
+        },
+        {
+          "latitude": -45.8479474,
+          "longitude": 170.5158893
+        },
+        {
+          "latitude": -45.847933600000005,
+          "longitude": 170.5158025
+        },
+        {
+          "latitude": -45.847898188058366,
+          "longitude": 170.51558495556517
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 105s",
+      "toAnchor": "GPS 108s",
+      "straightLineDistanceMeters": 45.69925702532119,
+      "distanceMeters": 45.67541316491456,
+      "roadDirectRatio": 0.9994782440249868,
+      "maximumCorridorDeviationMeters": 3.038516488981149,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 105s",
+          "sourceDistanceMeters": 1265.184,
+          "latitude": -45.84791188049159,
+          "longitude": 170.51558036191295
+        },
+        "fromNodeId": 1120864268,
+        "toNodeId": 1120864093,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847898188058366,
+          "longitude": 170.51558495556517
+        },
+        "snapDistanceMeters": 1.5635498014584104,
+        "bearingDegrees": 283.15338241682514,
+        "directionAlignmentDegrees": 0.6980581327326323,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 108s",
+          "sourceDistanceMeters": 1310.888,
+          "latitude": -45.84783133708193,
+          "longitude": 170.51500178966668
+        },
+        "fromNodeId": 1120864268,
+        "toNodeId": 1120864093,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84780471406189,
+          "longitude": 170.51501072137188
+        },
+        "snapDistanceMeters": 3.0401038526660864,
+        "bearingDegrees": 283.15338241682514,
+        "directionAlignmentDegrees": 6.449269881378022,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847898188058366,
+          "longitude": 170.51558495556517
+        },
+        {
+          "latitude": -45.84780471406189,
+          "longitude": 170.51501072137188
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 108s",
+      "toAnchor": "GPS 111s",
+      "straightLineDistanceMeters": 40.46306022601692,
+      "distanceMeters": 39.86077170182605,
+      "roadDirectRatio": 0.9851151020010195,
+      "maximumCorridorDeviationMeters": 2.924759902314277,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 108s",
+          "sourceDistanceMeters": 1310.888,
+          "latitude": -45.84783133708193,
+          "longitude": 170.51500178966668
+        },
+        "fromNodeId": 1120864268,
+        "toNodeId": 1120864093,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84780471406189,
+          "longitude": 170.51501072137188
+        },
+        "snapDistanceMeters": 3.0401038526660864,
+        "bearingDegrees": 283.15338241682514,
+        "directionAlignmentDegrees": 6.449269881378022,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 111s",
+          "sourceDistanceMeters": 1351.919,
+          "latitude": -45.84765499167165,
+          "longitude": 170.51454482213174
+        },
+        "fromNodeId": 1120864154,
+        "toNodeId": 11523830953,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847638741227314,
+          "longitude": 170.51456598524433
+        },
+        "snapDistanceMeters": 2.439685047000734,
+        "bearingDegrees": 312.212689795167,
+        "directionAlignmentDegrees": 7.697015031411541,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84780471406189,
+          "longitude": 170.51501072137188
+        },
+        {
+          "latitude": -45.847788400000006,
+          "longitude": 170.5149105
+        },
+        {
+          "latitude": -45.847728100000005,
+          "longitude": 170.51470740000002
+        },
+        {
+          "latitude": -45.847638741227314,
+          "longitude": 170.51456598524433
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 111s",
+      "toAnchor": "GPS 114s",
+      "straightLineDistanceMeters": 25.443864885210544,
+      "distanceMeters": 25.43938148122261,
+      "roadDirectRatio": 0.9998237923362602,
+      "maximumCorridorDeviationMeters": 2.439222693149503,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 111s",
+          "sourceDistanceMeters": 1351.919,
+          "latitude": -45.84765499167165,
+          "longitude": 170.51454482213174
+        },
+        "fromNodeId": 1120864154,
+        "toNodeId": 11523830953,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.847638741227314,
+          "longitude": 170.51456598524433
+        },
+        "snapDistanceMeters": 2.439685047000734,
+        "bearingDegrees": 312.212689795167,
+        "directionAlignmentDegrees": 7.697015031411541,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 114s",
+          "sourceDistanceMeters": 1377.37,
+          "latitude": -45.84749797586999,
+          "longitude": 170.5143058652815
+        },
+        "fromNodeId": 11523830953,
+        "toNodeId": 1120864377,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84748503006658,
+          "longitude": 170.51432271871576
+        },
+        "snapDistanceMeters": 1.9432477216776014,
+        "bearingDegrees": 312.2025995589497,
+        "directionAlignmentDegrees": 1.4891902050717596,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847638741227314,
+          "longitude": 170.51456598524433
+        },
+        {
+          "latitude": -45.8475046,
+          "longitude": 170.51435370000002
+        },
+        {
+          "latitude": -45.84748503006658,
+          "longitude": 170.51432271871576
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 114s",
+      "toAnchor": "GPS 117s",
+      "straightLineDistanceMeters": 9.647005871622003,
+      "distanceMeters": 8.910448026331126,
+      "roadDirectRatio": 0.9236490725627562,
+      "maximumCorridorDeviationMeters": 1.9414785942677242,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 114s",
+          "sourceDistanceMeters": 1377.37,
+          "latitude": -45.84749797586999,
+          "longitude": 170.5143058652815
+        },
+        "fromNodeId": 11523830953,
+        "toNodeId": 1120864377,
+        "wayId": 96778192,
+        "snappedCoordinate": {
+          "latitude": -45.84748503006658,
+          "longitude": 170.51432271871576
+        },
+        "snapDistanceMeters": 1.9432477216776014,
+        "bearingDegrees": 312.2025995589497,
+        "directionAlignmentDegrees": 1.4891902050717596,
+        "highway": "residential",
+        "roadName": "Allenby Avenue"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 117s",
+          "sourceDistanceMeters": 1387.017,
+          "latitude": -45.847437007189754,
+          "longitude": 170.51421725580076
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8474312,
+          "longitude": 170.5142375
+        },
+        "snapDistanceMeters": 1.6957739514036947,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 28.022627655834572,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778192,
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778192,
+          "highway": "residential",
+          "name": "Allenby Avenue"
+        },
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84748503006658,
+          "longitude": 170.51432271871576
+        },
+        {
+          "latitude": -45.8474312,
+          "longitude": 170.5142375
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 117s",
+      "toAnchor": "GPS 120s",
+      "straightLineDistanceMeters": 26.662484787605052,
+      "distanceMeters": 24.737244675342478,
+      "roadDirectRatio": 0.9277921721250232,
+      "maximumCorridorDeviationMeters": 5.228907434135454,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 117s",
+          "sourceDistanceMeters": 1387.017,
+          "latitude": -45.847437007189754,
+          "longitude": 170.51421725580076
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8474312,
+          "longitude": 170.5142375
+        },
+        "snapDistanceMeters": 1.6957739514036947,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 28.022627655834572,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 120s",
+          "sourceDistanceMeters": 1416.948,
+          "latitude": -45.847234025726614,
+          "longitude": 170.51440050551517
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.847265993655746,
+          "longitude": 170.51445139298215
+        },
+        "snapDistanceMeters": 5.307655445236153,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 3.6030788506915927,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8474312,
+          "longitude": 170.5142375
+        },
+        {
+          "latitude": -45.847265993655746,
+          "longitude": 170.51445139298215
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 120s",
+      "toAnchor": "GPS 123s",
+      "straightLineDistanceMeters": 36.024503546401355,
+      "distanceMeters": 35.938593269045235,
+      "roadDirectRatio": 0.9976152266124788,
+      "maximumCorridorDeviationMeters": 5.306785893980868,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 120s",
+          "sourceDistanceMeters": 1416.948,
+          "latitude": -45.847234025726614,
+          "longitude": 170.51440050551517
+        },
+        "fromNodeId": 1120864377,
+        "toNodeId": 1120864362,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.847265993655746,
+          "longitude": 170.51445139298215
+        },
+        "snapDistanceMeters": 5.307655445236153,
+        "bearingDegrees": 42.045872376579666,
+        "directionAlignmentDegrees": 3.6030788506915927,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 123s",
+          "sourceDistanceMeters": 1452.981,
+          "latitude": -45.846997415092346,
+          "longitude": 170.51471820999623
+        },
+        "fromNodeId": 1120864362,
+        "toNodeId": 1120864674,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84702755023414,
+          "longitude": 170.51476459675308
+        },
+        "snapDistanceMeters": 4.9129885395568795,
+        "bearingDegrees": 43.00357928384108,
+        "directionAlignmentDegrees": 0.9720030543015578,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.847265993655746,
+          "longitude": 170.51445139298215
+        },
+        {
+          "latitude": -45.847129200000005,
+          "longitude": 170.51462850000001
+        },
+        {
+          "latitude": -45.84702755023414,
+          "longitude": 170.51476459675308
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 123s",
+      "toAnchor": "GPS 126s",
+      "straightLineDistanceMeters": 43.48212691729651,
+      "distanceMeters": 42.738030474378306,
+      "roadDirectRatio": 0.982887303458419,
+      "maximumCorridorDeviationMeters": 5.810108130941268,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 123s",
+          "sourceDistanceMeters": 1452.981,
+          "latitude": -45.846997415092346,
+          "longitude": 170.51471820999623
+        },
+        "fromNodeId": 1120864362,
+        "toNodeId": 1120864674,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84702755023414,
+          "longitude": 170.51476459675308
+        },
+        "snapDistanceMeters": 4.9129885395568795,
+        "bearingDegrees": 43.00357928384108,
+        "directionAlignmentDegrees": 0.9720030543015578,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 126s",
+          "sourceDistanceMeters": 1496.5,
+          "latitude": -45.84671952314517,
+          "longitude": 170.5151131705738
+        },
+        "fromNodeId": 6490673627,
+        "toNodeId": 1120864276,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84676050127052,
+          "longitude": 170.51516048444455
+        },
+        "snapDistanceMeters": 5.847446962007664,
+        "bearingDegrees": 51.19096087036809,
+        "directionAlignmentDegrees": 0.5694642766995633,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84702755023414,
+          "longitude": 170.51476459675308
+        },
+        {
+          "latitude": -45.8469008,
+          "longitude": 170.51493430000002
+        },
+        {
+          "latitude": -45.8467866,
+          "longitude": 170.51511390000002
+        },
+        {
+          "latitude": -45.84676050127052,
+          "longitude": 170.51516048444455
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 126s",
+      "toAnchor": "GPS 129s",
+      "straightLineDistanceMeters": 50.221674301025146,
+      "distanceMeters": 45.6694312475165,
+      "roadDirectRatio": 0.9093570033881622,
+      "maximumCorridorDeviationMeters": 5.807903429155899,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 126s",
+          "sourceDistanceMeters": 1496.5,
+          "latitude": -45.84671952314517,
+          "longitude": 170.5151131705738
+        },
+        "fromNodeId": 6490673627,
+        "toNodeId": 1120864276,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84676050127052,
+          "longitude": 170.51516048444455
+        },
+        "snapDistanceMeters": 5.847446962007664,
+        "bearingDegrees": 51.19096087036809,
+        "directionAlignmentDegrees": 0.5694642766995633,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 129s",
+          "sourceDistanceMeters": 1546.82,
+          "latitude": -45.846479236608644,
+          "longitude": 170.51566218255851
+        },
+        "fromNodeId": 1120864165,
+        "toNodeId": 6490673628,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8465387,
+          "longitude": 170.51565490000002
+        },
+        "snapDistanceMeters": 6.636045110017389,
+        "bearingDegrees": 61.722381731528685,
+        "directionAlignmentDegrees": 0.22262512617662913,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84676050127052,
+          "longitude": 170.51516048444455
+        },
+        {
+          "latitude": -45.8467136,
+          "longitude": 170.5152442
+        },
+        {
+          "latitude": -45.8466223,
+          "longitude": 170.51543180000002
+        },
+        {
+          "latitude": -45.8465387,
+          "longitude": 170.51565490000002
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 129s",
+      "toAnchor": "GPS 132s",
+      "straightLineDistanceMeters": 52.150706081790375,
+      "distanceMeters": 55.562768577776765,
+      "roadDirectRatio": 1.0654269664275513,
+      "maximumCorridorDeviationMeters": 6.636045173732463,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 129s",
+          "sourceDistanceMeters": 1546.82,
+          "latitude": -45.846479236608644,
+          "longitude": 170.51566218255851
+        },
+        "fromNodeId": 1120864165,
+        "toNodeId": 6490673628,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8465387,
+          "longitude": 170.51565490000002
+        },
+        "snapDistanceMeters": 6.636045110017389,
+        "bearingDegrees": 61.722381731528685,
+        "directionAlignmentDegrees": 0.22262512617662913,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 132s",
+          "sourceDistanceMeters": 1598.973,
+          "latitude": -45.84628758164505,
+          "longitude": 170.51627668921947
+        },
+        "fromNodeId": 6490673632,
+        "toNodeId": 6489536139,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84633671165099,
+          "longitude": 170.51631096308105
+        },
+        "snapDistanceMeters": 6.07388729168556,
+        "bearingDegrees": 64.08261170770749,
+        "directionAlignmentDegrees": 4.7608184573065015,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8465387,
+          "longitude": 170.51565490000002
+        },
+        {
+          "latitude": -45.8464576,
+          "longitude": 170.5159118
+        },
+        {
+          "latitude": -45.8463976,
+          "longitude": 170.5161152
+        },
+        {
+          "latitude": -45.8463433,
+          "longitude": 170.51629150000002
+        },
+        {
+          "latitude": -45.84633671165099,
+          "longitude": 170.51631096308105
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 132s",
+      "toAnchor": "GPS 135s",
+      "straightLineDistanceMeters": 46.8159278470806,
+      "distanceMeters": 46.55200563544069,
+      "roadDirectRatio": 0.9943625551435831,
+      "maximumCorridorDeviationMeters": 9.513006200938992,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 132s",
+          "sourceDistanceMeters": 1598.973,
+          "latitude": -45.84628758164505,
+          "longitude": 170.51627668921947
+        },
+        "fromNodeId": 6490673632,
+        "toNodeId": 6489536139,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.84633671165099,
+          "longitude": 170.51631096308105
+        },
+        "snapDistanceMeters": 6.07388729168556,
+        "bearingDegrees": 64.08261170770749,
+        "directionAlignmentDegrees": 4.7608184573065015,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 135s",
+          "sourceDistanceMeters": 1646.314,
+          "latitude": -45.84602844210008,
+          "longitude": 170.5167530506528
+        },
+        "fromNodeId": 6489536134,
+        "toNodeId": 6489536133,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8460867,
+          "longitude": 170.51678410000002
+        },
+        "snapDistanceMeters": 6.9100111032212705,
+        "bearingDegrees": 38.02130430810149,
+        "directionAlignmentDegrees": 1.7241254501917784,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.84633671165099,
+          "longitude": 170.51631096308105
+        },
+        {
+          "latitude": -45.8462953,
+          "longitude": 170.51643330000002
+        },
+        {
+          "latitude": -45.846248800000005,
+          "longitude": 170.5165407
+        },
+        {
+          "latitude": -45.846219000000005,
+          "longitude": 170.51660230000002
+        },
+        {
+          "latitude": -45.846183,
+          "longitude": 170.51666170000001
+        },
+        {
+          "latitude": -45.8461447,
+          "longitude": 170.516715
+        },
+        {
+          "latitude": -45.8461063,
+          "longitude": 170.51676210000002
+        },
+        {
+          "latitude": -45.8460867,
+          "longitude": 170.51678410000002
+        }
+      ],
+      "sectionType": "road"
+    },
+    {
+      "fromAnchor": "GPS 135s",
+      "toAnchor": "GPS 138s",
+      "straightLineDistanceMeters": 44.0490007488054,
+      "distanceMeters": 47.998454872415536,
+      "roadDirectRatio": 1.0896604703051578,
+      "maximumCorridorDeviationMeters": 6.910013025076112,
+      "startSnap": {
+        "anchor": {
+          "name": "GPS 135s",
+          "sourceDistanceMeters": 1646.314,
+          "latitude": -45.84602844210008,
+          "longitude": 170.5167530506528
+        },
+        "fromNodeId": 6489536134,
+        "toNodeId": 6489536133,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8460867,
+          "longitude": 170.51678410000002
+        },
+        "snapDistanceMeters": 6.9100111032212705,
+        "bearingDegrees": 38.02130430810149,
+        "directionAlignmentDegrees": 1.7241254501917784,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "endSnap": {
+        "anchor": {
+          "name": "GPS 138s",
+          "sourceDistanceMeters": 1690.427,
+          "latitude": -45.84567452493635,
+          "longitude": 170.51700852939453
+        },
+        "fromNodeId": 6489536149,
+        "toNodeId": 1120864692,
+        "wayId": 96778202,
+        "snappedCoordinate": {
+          "latitude": -45.8456975,
+          "longitude": 170.5170487
+        },
+        "snapDistanceMeters": 4.025928820651601,
+        "bearingDegrees": 21.997774846889797,
+        "directionAlignmentDegrees": 4.697400263074452,
+        "highway": "tertiary",
+        "roadName": "Pine Hill Road"
+      },
+      "status": "passed",
+      "wayIds": [
+        96778202
+      ],
+      "ways": [
+        {
+          "wayId": 96778202,
+          "highway": "tertiary",
+          "name": "Pine Hill Road"
+        }
+      ],
+      "alternativeStartCandidates": [],
+      "alternativeEndCandidates": [],
+      "centreline": [
+        {
+          "latitude": -45.8460867,
+          "longitude": 170.51678410000002
+        },
+        {
+          "latitude": -45.8460429,
+          "longitude": 170.51682540000002
+        },
+        {
+          "latitude": -45.8459748,
+          "longitude": 170.51688040000002
+        },
+        {
+          "latitude": -45.845862000000004,
+          "longitude": 170.5169533
+        },
+        {
+          "latitude": -45.8456975,
+          "longitude": 170.5170487
+        }
+      ],
+      "sectionType": "road"
+    }
+  ],
+  "roadSegments": [],
+  "turnaroundWidthSource": "",
+  "generatedTurnarounds": [],
+  "sourceNetworkDistanceMeters": 1679.8416848778108,
+  "excludedClosureEdges": [],
+  "nearbyLandmarkCandidatesConsidered": 4,
+  "selectedLandmarkCount": 4,
+  "buildings": {
+    "nearbyCandidates": 357,
+    "selectedCount": 357,
+    "ordinaryWays": 357,
+    "multipolygonRelationsIncluded": 0,
+    "multipolygonRelationsSkipped": 0,
+    "namedBuildings": 0,
+    "explicitHeightCount": 0,
+    "levelsHeightCount": 0,
+    "fallbackHeightCount": 357,
+    "malformedHeights": 0,
+    "malformedOrExcludedRecords": 0,
+    "originalVertices": 2673,
+    "simplifiedVertices": 2590,
+    "largestFootprintVertices": 29,
+    "minimumHeightMeters": 8,
+    "maximumHeightMeters": 8,
+    "medianHeightMeters": 8,
+    "generatedTriangleCount": 5985,
+    "runtimeMeshChunkCount": 5,
+    "runtimeMeshInstanceCount": 5,
+    "extractionSeconds": 76.2751569,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "elevationSkippedCount": 0,
+    "visualCategoryCounts": {
+      "generic": 357
+    },
+    "roofShapeTagCounts": {
+      "untagged": 357
+    },
+    "buildingsWithRoofMetadata": 0,
+    "explicitBuildingColourCount": 0,
+    "explicitRoofColourCount": 0,
+    "explicitMaterialTagCount": 0,
+    "effectiveFlatRoofCount": 357,
+    "roofedBuildingCount": 357,
+    "effectiveGabledRoofCount": 0,
+    "effectiveHippedRoofCount": 0,
+    "flatRoofFallbackCount": 0,
+    "windowDetailedBuildingCount": 309,
+    "visualFacadeTriangleCount": 4466,
+    "visualRoofTriangleCount": 1519,
+    "visualWindowTriangleCount": 18058,
+    "visualTriangleCount": 24043,
+    "facadePaletteVariantCount": 10,
+    "runtimeSharedMaterialCount": 3,
+    "visualRuntimeMeshChunkCount": 5,
+    "visualRuntimeMeshInstanceCount": 5,
+    "visualRuntimeSurfaceCount": 15,
+    "footprintElevationSamples": 2590,
+    "slopedFootprintCount": 179
+  },
+  "vegetation": {
+    "polygonsConsidered": 3437,
+    "polygonsIncluded": 2,
+    "categoryCounts": {
+      "park": 2
+    },
+    "namedAreas": 2,
+    "explicitTreeCount": 0,
+    "treeRowCount": 0,
+    "treeRowInstances": 0,
+    "generatedTreeCount": 77,
+    "totalTreeInstances": 77,
+    "treesRejectedForRoadProximity": 0,
+    "treesRejectedForBuildingIntersection": 0,
+    "treesRejectedAsDuplicates": 4,
+    "treesRejectedNearLandmarks": 3,
+    "originalPolygonVertices": 73,
+    "simplifiedPolygonVertices": 63,
+    "largestPolygonVertices": 58,
+    "demSamples": 83,
+    "demCacheHits": 1,
+    "malformedOrSkippedGeometries": 4,
+    "areaGroundOverlays": 0,
+    "areaTriangleCount": 0,
+    "multiMeshCount": 6,
+    "areaMeshInstanceCount": 0,
+    "sceneNodeCount": 7,
+    "generationSeconds": 40.5080745,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "demSkippedAreas": 0,
+    "demSkippedTrees": 0
+  },
+  "streetFurniture": {
+    "totalCandidates": 1038,
+    "selectedItems": 19,
+    "categoryCounts": {
+      "crossing": 9,
+      "bus-stop": 9,
+      "bench": 1
+    },
+    "streetLamps": 0,
+    "trafficSignals": 0,
+    "stopGiveWaySigns": 0,
+    "bollards": 0,
+    "crossings": 9,
+    "busStops": 9,
+    "benches": 1,
+    "malformedOrSkippedItems": 1658,
+    "itemsInsideRoadRibbon": 0,
+    "elevationSamples": 19,
+    "runtimeMultiMeshCount": 20,
+    "totalRenderedInstances": 19,
+    "renderedPrimitiveInstances": 40,
+    "sceneNodeCount": 21,
+    "generationSeconds": 37.8924959,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "elevationSkippedCount": 0
+  },
+  "actualOsmDistanceMeters": 1679.8416848778108,
+  "referenceDistanceMeters": 1690.427,
+  "referenceDifferenceMeters": -10.585315122189058,
+  "actualToReferenceRatio": 0.9937380820809245,
+  "finalPointCount": 396,
+  "sourceOsmNodeCount": 130,
+  "maximumAdjacentPointDistanceMeters": 4.999932867031322,
+  "maximumSourceOsmNodeSpacingMeters": 52.43219918795221,
+  "maximumCorridorDeviationMeters": 9.513006200938992,
+  "isValid": true,
+  "errors": [],
+  "warnings": [],
+  "timings": {
+    "nodeScanSeconds": 34.4944348,
+    "wayScanSeconds": 36.1730094,
+    "graphBuildSeconds": 0.0050141,
+    "routeSolveSeconds": 0.521169,
+    "outputGenerationSeconds": 0.0168259,
+    "cacheLoadSeconds": 0,
+    "cacheSaveSeconds": 0.0123751,
+    "cacheHit": false,
+    "cacheBuildSeconds": 70.6724583
+  },
+  "generatedAtUtc": "2026-11-03T06:16:06.2235522\u002B00:00",
+  "elevation": {
+    "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+    "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
+    "license": "CC-BY-4.0",
+    "providers": [
+      {
+        "name": "AAM NZ",
+        "roles": [
+          "producer"
+        ]
+      },
+      {
+        "name": "Otago Regional Council",
+        "roles": [
+          "licensor"
+        ]
+      },
+      {
+        "name": "Toit\u016B Te Whenua Land Information New Zealand",
+        "roles": [
+          "host",
+          "processor"
+        ]
+      }
+    ],
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "acquisition": [
+      [
+        "2021-06-23T12:00:00Z",
+        "2021-06-23T12:00:00Z"
+      ]
+    ],
+    "fallbackCollection": {
+      "title": "New Zealand Contour-Interpolated 8m DEM",
+      "id": "01JE7NNKVY3QP5FPX2Q08DJQX5",
+      "license": "CC-BY-4.0",
+      "providers": [
+        {
+          "name": "Geographx",
+          "roles": [
+            "producer"
+          ]
+        },
+        {
+          "name": "Toit\u016B Te Whenua Land Information New Zealand",
+          "roles": [
+            "host",
+            "licensor",
+            "processor"
+          ]
+        }
+      ]
+    },
+    "resolutionMeters": 1,
+    "verticalDatum": "not declared in STAC collection metadata",
+    "selectedAssets": [
+      {
+        "itemId": "CE17_10000_0303",
+        "url": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/CE17_10000_0303.tiff",
+        "resolution": "1m",
+        "cachedBytes": 8261767,
+        "checksum": "122002d0270a9911edb46bbeab5fc89b08b912a1e26a87ade33a1d56e75ef8dd87b4",
+        "crs": "EPSG:2193",
+        "rasterTags": {
+          "AREA_OR_POINT": "Area"
+        }
+      },
+      {
+        "itemId": "CE17",
+        "url": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/CE17.tiff",
+        "resolution": "8m",
+        "cachedBytes": 17663220,
+        "checksum": "1220848adc98fdebff8dfea3e970f9874cedce8efbc516d0f4d3033fa4dc075e86a4",
+        "crs": "EPSG:2193",
+        "rasterTags": {
+          "AREA_OR_POINT": "Area"
+        }
+      }
+    ],
+    "oneMeterCoveragePercent": 0.0,
+    "fallbackCoveragePercent": 100.0,
+    "minimumElevationMeters": 144.42047408430878,
+    "maximumElevationMeters": 163.48362686979326,
+    "startElevationMeters": 144.42047408430878,
+    "totalAscentMeters": 30.067704226222673,
+    "totalDescentMeters": 28.523958407708704,
+    "minimumGradientPercent": -10.27410290409692,
+    "maximumGradientPercent": 12.120373294368518,
+    "averageGradientPercent": 0.04743461224834325,
+    "gradientReviewThresholdPercent": 20.0,
+    "suspiciousGradientDistancesMeters": [],
+    "sourceTransitions": [],
+    "sourceCalibrations": [],
+    "sharedRoadElevation": {
+      "segments": [
+        {
+          "samplePairs": 45,
+          "firstDistanceMeters": 49.99528824045206,
+          "lastDistanceMeters": 344.9674888591192,
+          "secondTraversalFirstDistanceMeters": 1384.869484260522,
+          "secondTraversalLastDistanceMeters": 1679.8416848791892,
+          "matchedSpanMeters": 294.9722006186671,
+          "maximumElevationDifferenceBeforeMeters": 0.07217478557274148,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        }
+      ],
+      "smoothedSegments": [
+        {
+          "samplePairs": 45,
+          "firstDistanceMeters": 49.99528824045206,
+          "lastDistanceMeters": 344.9674888591192,
+          "secondTraversalFirstDistanceMeters": 1384.869484260522,
+          "secondTraversalLastDistanceMeters": 1679.8416848791892,
+          "matchedSpanMeters": 294.9722006186671,
+          "maximumElevationDifferenceBeforeMeters": 0.1296028706007064,
+          "maximumElevationDifferenceAfterMeters": 0.0,
+          "boundaryBlendMeters": 300.0,
+          "method": "reciprocal spatial match, consistent source elevation, aligned or reversed tangents, and sustained traversal"
+        }
+      ],
+      "description": "Repeated route traversals with sustained reciprocal spatial matches share canonical DEM-derived elevation before gradient calculation."
+    },
+    "isolatedRawDemOutliers": [],
+    "sampleCsv": "pine-hill-test.elevation-samples.csv",
+    "bridgeTunnelSections": [],
+    "profileCsv": "pine-hill-test.elevation.csv",
+    "elapsedSeconds": 6.752749799983576,
+    "method": "centered distance-based moving average and centered gradient on regular samples"
+  },
+  "terrain": {
+    "sourceDataset": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceLicense": "CC-BY-4.0",
+    "sourceAssets": [
+      "CE17_10000_0303.tiff",
+      "CE17.tiff"
+    ],
+    "sourceCrs": "EPSG:2193",
+    "spacingMeters": 10.0,
+    "corridorRadiusMeters": 100.0,
+    "chunkSizeMeters": 200.0,
+    "near": {
+      "radiusMeters": 100.0,
+      "spacingMeters": 10.0,
+      "vertices": 2725,
+      "triangles": 5178,
+      "chunks": 12,
+      "areaSquareMeters": 258900.0
+    },
+    "far": {
+      "radiusMeters": 350.0,
+      "spacingMeters": 20.0,
+      "vertices": 1992,
+      "triangles": 3620,
+      "chunks": 18,
+      "areaSquareMeters": 724000.0,
+      "transitionOverlapMeters": 8.0,
+      "verticalBiasMeters": 0.15,
+      "transitionVerticesClampedBelowNear": 0
+    },
+    "combinedTriangleCount": 8798,
+    "combinedChunkCount": 30,
+    "extentMeters": {
+      "minX": -380.0,
+      "maxX": 880.0,
+      "minZ": -620.0,
+      "maxZ": 400.0
+    },
+    "minimumSourceElevationMeters": 40.838673047836735,
+    "maximumSourceElevationMeters": 164.53760861347658,
+    "vertexCount": 4717,
+    "triangleCount": 8798,
+    "chunkCount": 30,
+    "runtimeMeshInstanceCount": 30,
+    "coveredAreaSquareMeters": 982900.0,
+    "noDataCells": 0,
+    "interpolatedVertices": 0,
+    "roadClearanceRadiusMeters": 5.0,
+    "roadClearanceMeters": 0.15,
+    "roadClearanceAdjustedVertices": 73,
+    "visualDownwardBiasMeters": 0.08,
+    "bundleFile": "pine-hill-test.terrain.json",
+    "bundleBytes": 198781,
+    "generationSeconds": 0.39224930002819747,
+    "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
+  },
+  "totalAscentMeters": 30.067704226222673,
+  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
+}

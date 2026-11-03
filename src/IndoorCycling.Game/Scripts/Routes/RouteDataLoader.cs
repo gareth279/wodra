@@ -8,7 +8,7 @@ using System.Text.Json;
 /// <summary>Loads a bundled, authoring-generated route centreline without runtime authoring dependencies.</summary>
 public static class RouteDataLoader
 {
-	private sealed record RoutePointsFile(string? Id, string? Name, bool IsValid,
+	private sealed record RoutePointsFile(string? Id, string? Name, string? Description, bool IsValid,
 		double? ActualOsmDistanceMeters, IReadOnlyList<RoutePointData>? Points,
 		string? RouteType, string? Difficulty, int? RouteDataVersion, string? GeometryFingerprint,
 		string? SourceAttribution, double? TotalAscentMeters, string? Environment, string? Discipline,
@@ -59,7 +59,7 @@ public static class RouteDataLoader
 		if (source.RouteDataVersion is not > 0 || source.Difficulty is not ("Unrated" or "Easy" or "Moderate" or "Challenging")
 			|| string.IsNullOrWhiteSpace(source.SourceAttribution))
 			throw new InvalidDataException($"Route package '{routePointsPath}' has incomplete difficulty, version, or attribution metadata.");
-		var description = source.SourceAttribution ?? "OpenStreetMap route package";
+		var description = source.Description ?? source.SourceAttribution ?? "OpenStreetMap route package";
 		return Load(source, source.Id, source.Name, description, null, routePointsPath,
 			source.RouteType, source.Difficulty ?? "Unrated", source.RouteDataVersion ?? 1,
 			source.SourceAttribution ?? "", source.TotalAscentMeters);

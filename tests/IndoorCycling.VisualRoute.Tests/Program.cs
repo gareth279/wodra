@@ -6,6 +6,38 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Pine Hill Test loads its point-to-point OSM/LINZ route and scenery package", () =>
+    {
+        const string id = "pine-hill-test";
+        const string description = "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.";
+        var route = RouteCatalog.GetById(id) ?? throw new Exception("Pine Hill Test is missing from the normal route catalogue.");
+        if (route.Name != "Pine Hill Test" || route.Description != description
+            || route.RouteType != "Point-to-Point" || route.Environment != RouteEnvironment.Road
+            || route.Discipline != RouteDiscipline.Road || route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("Pine Hill route metadata or open-route policy is invalid.");
+        if (route.Points is not { Count: > 300 } points || route.DistanceMeters is < 1600 or > 1750
+            || route.TotalAscentMeters is < 15 or > 50 || route.GeometryFingerprint.Length != 64
+            || points.Any(point => point.Latitude is null || point.Longitude is null
+                || !double.IsFinite(point.DistanceMeters + point.ElevationMeters)))
+            throw new Exception("Pine Hill route geometry, chainage, elevation, or fingerprint is invalid.");
+        for (var i = 1; i < points.Count; i++)
+            if (points[i].DistanceMeters <= points[i - 1].DistanceMeters)
+                throw new Exception($"Pine Hill chainage is not increasing at point {i}.");
+        if (Math.Abs(points[^1].Latitude!.Value - points[0].Latitude!.Value) < 0.0001
+            && Math.Abs(points[^1].Longitude!.Value - points[0].Longitude!.Value) < 0.0001)
+            throw new Exception("The recorded point-to-point route was incorrectly closed.");
+        var visual = new VisualRoute(route);
+        if (!visual.IsPointToPoint
+            || visual.LengthMeters != route.DistanceMeters
+            || Vector3.Distance(visual.GetPoseAtDistance(0).Position,
+                visual.GetPoseAtDistance(route.DistanceMeters).Position) < 300)
+            throw new Exception("Pine Hill VisualRoute does not preserve its natural endpoint.");
+        foreach (var suffix in new[] { "buildings.json", "landmarks.json", "vegetation.json",
+                     "street-furniture.json", "streets.json", "terrain.json" })
+            if (!RoutePackageFiles.Exists(typeof(RouteCatalog).Assembly,
+                    $"Wodra.GameData.Routes.{id}.{suffix}", id))
+                throw new Exception($"Pine Hill package is missing its {suffix} sidecar.");
+    }),
     ("fictional XC loop has closed local geometry, truthful climb, and three scored line choices", () =>
     {
         var route = RouteCatalog.GetById("wodra-xc-skills-loop")
@@ -448,7 +480,7 @@ var tests = new (string Name, Action Run)[]
         var routeIds = new[]
         {
             "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop",
-            "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop"
+            "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop", "pine-hill-test"
         };
         foreach (var id in routeIds)
         {

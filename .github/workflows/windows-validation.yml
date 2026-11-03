@@ -92,6 +92,19 @@ jobs:
           }
           & .\tools\RunCompanionTraceInvariance.ps1 -GodotPath $env:GODOT_PATH -KeepTestData
           if ($LASTEXITCODE -ne 0) { throw 'Companion enabled/disabled isolated trace regression failed.' }
+          $pinePackage = Join-Path $env:LOCALAPPDATA 'Wodra\Routes\pine-hill-test'
+          New-Item -ItemType Directory -Path $pinePackage -Force | Out-Null
+          Copy-Item -Path 'routes/user-packages/pine-hill-test/*.json' -Destination $pinePackage -Force
+          $pineHillLog = "$env:RUNNER_TEMP\wodra-pine-hill-ride-screen-review.log"
+          $env:WODRA_REVIEW_OUTPUT = Join-Path $env:RUNNER_TEMP 'wodra-pine-hill-review'
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/PineHillRideScreenReviewTest.tscn --log-file $pineHillLog
+          if ($LASTEXITCODE -ne 0) { throw 'Production Pine Hill RideScreen review failed.' }
+          $pineHillOutput = Get-Content -LiteralPath $pineHillLog -Raw
+          if ($pineHillOutput -notmatch '\[PineHillRideScreenReview\] PASS' -or
+              $pineHillOutput -match 'SCRIPT ERROR:|\[PineHillRideScreenReview\] FAIL:') {
+            throw 'Production Pine Hill RideScreen review did not report a clean pass.'
+          }
+          Remove-Item Env:WODRA_REVIEW_OUTPUT -ErrorAction SilentlyContinue
           $connectionLog = "$env:RUNNER_TEMP\wodra-device-connection-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/DeviceConnectionAutomationReviewTest.tscn --log-file $connectionLog
           if ($LASTEXITCODE -ne 0) { throw 'Production device connection automation scene test failed.' }

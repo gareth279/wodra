@@ -18,6 +18,7 @@ public sealed class RouteAuthoringConfig
 {
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
+    public string Description { get; init; } = "";
     public bool Loop { get; init; }
     /// <summary>Optional explicit catalogue type: loop or outAndBack. Blank preserves legacy Loop behaviour.</summary>
     public string RouteType { get; init; } = "";

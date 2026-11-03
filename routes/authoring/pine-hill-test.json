@@ -1,0 +1,362 @@
+{
+  "id": "pine-hill-test",
+  "name": "Pine Hill Test",
+  "description": "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.",
+  "routeType": "pointToPoint",
+  "loop": false,
+  "difficulty": "Unrated",
+  "routeDataVersion": 1,
+  "environment": "Road",
+  "discipline": "Road",
+  "routingMode": "anchors",
+  "profile": "cycling",
+  "bbox": {
+    "minLatitude": -45.85115791686618,
+    "maxLatitude": -45.84218853369706,
+    "minLongitude": 170.5107430235974,
+    "maxLongitude": 170.52354856172312
+  },
+  "marginMeters": 100,
+  "maxSnapDistanceMeters": 30,
+  "routeCorridorMeters": 40,
+  "maxOutputSpacingMeters": 5,
+  "detourWarningRatio": 1.35,
+  "detourFailureRatio": 1.8,
+  "referenceDistanceMeters": 1690.427,
+  "anchors": [
+    {
+      "name": "GPS 0s",
+      "sourceDistanceMeters": 0.0,
+      "latitude": -45.84768741092232,
+      "longitude": 170.51374302359739
+    },
+    {
+      "name": "GPS 3s",
+      "sourceDistanceMeters": 31.404,
+      "latitude": -45.84750426259624,
+      "longitude": 170.5140506193762
+    },
+    {
+      "name": "GPS 6s",
+      "sourceDistanceMeters": 67.007,
+      "latitude": -45.847272502205726,
+      "longitude": 170.5143674895641
+    },
+    {
+      "name": "GPS 9s",
+      "sourceDistanceMeters": 103.207,
+      "latitude": -45.84702991588824,
+      "longitude": 170.51467914133744
+    },
+    {
+      "name": "GPS 12s",
+      "sourceDistanceMeters": 139.081,
+      "latitude": -45.84679050234254,
+      "longitude": 170.51498907408782
+    },
+    {
+      "name": "GPS 15s",
+      "sourceDistanceMeters": 175.247,
+      "latitude": -45.84659032795623,
+      "longitude": 170.51535679738916
+    },
+    {
+      "name": "GPS 18s",
+      "sourceDistanceMeters": 212.727,
+      "latitude": -45.84645171951174,
+      "longitude": 170.51579551293366
+    },
+    {
+      "name": "GPS 21s",
+      "sourceDistanceMeters": 249.32,
+      "latitude": -45.846320336659055,
+      "longitude": 170.5162286524217
+    },
+    {
+      "name": "GPS 24s",
+      "sourceDistanceMeters": 286.494,
+      "latitude": -45.846138193095044,
+      "longitude": 170.51662892217433
+    },
+    {
+      "name": "GPS 27s",
+      "sourceDistanceMeters": 323.984,
+      "latitude": -45.8458598270686,
+      "longitude": 170.5168980146994
+    },
+    {
+      "name": "GPS 30s",
+      "sourceDistanceMeters": 360.296,
+      "latitude": -45.845558899423885,
+      "longitude": 170.51707923523438
+    },
+    {
+      "name": "GPS 33s",
+      "sourceDistanceMeters": 389.528,
+      "latitude": -45.84531217440786,
+      "longitude": 170.51720947270053
+    },
+    {
+      "name": "GPS 36s",
+      "sourceDistanceMeters": 405.058,
+      "latitude": -45.84518853369706,
+      "longitude": 170.51730059326204
+    },
+    {
+      "name": "GPS 39s",
+      "sourceDistanceMeters": 439.366,
+      "latitude": -45.84534696692907,
+      "longitude": 170.51767989115157
+    },
+    {
+      "name": "GPS 42s",
+      "sourceDistanceMeters": 468.996,
+      "latitude": -45.84554458271565,
+      "longitude": 170.51793631405437
+    },
+    {
+      "name": "GPS 45s",
+      "sourceDistanceMeters": 492.149,
+      "latitude": -45.845696753775535,
+      "longitude": 170.5181403108043
+    },
+    {
+      "name": "GPS 48s",
+      "sourceDistanceMeters": 534.506,
+      "latitude": -45.845973225308036,
+      "longitude": 170.51851648148786
+    },
+    {
+      "name": "GPS 51s",
+      "sourceDistanceMeters": 587.508,
+      "latitude": -45.84632732350212,
+      "longitude": 170.51897453702784
+    },
+    {
+      "name": "GPS 54s",
+      "sourceDistanceMeters": 639.967,
+      "latitude": -45.84667251853051,
+      "longitude": 170.51943567960365
+    },
+    {
+      "name": "GPS 57s",
+      "sourceDistanceMeters": 687.933,
+      "latitude": -45.8469829820267,
+      "longitude": 170.5198654041076
+    },
+    {
+      "name": "GPS 60s",
+      "sourceDistanceMeters": 721.937,
+      "latitude": -45.84720692553474,
+      "longitude": 170.52016426215673
+    },
+    {
+      "name": "GPS 63s",
+      "sourceDistanceMeters": 747.005,
+      "latitude": -45.84737874819284,
+      "longitude": 170.52037374189138
+    },
+    {
+      "name": "GPS 66s",
+      "sourceDistanceMeters": 771.625,
+      "latitude": -45.8475604091966,
+      "longitude": 170.52054856172313
+    },
+    {
+      "name": "GPS 69s",
+      "sourceDistanceMeters": 807.277,
+      "latitude": -45.847813593308,
+      "longitude": 170.5202870301711
+    },
+    {
+      "name": "GPS 72s",
+      "sourceDistanceMeters": 845.687,
+      "latitude": -45.84800055180371,
+      "longitude": 170.5198907410183
+    },
+    {
+      "name": "GPS 75s",
+      "sourceDistanceMeters": 880.081,
+      "latitude": -45.84815791686618,
+      "longitude": 170.51956772742517
+    },
+    {
+      "name": "GPS 78s",
+      "sourceDistanceMeters": 919.987,
+      "latitude": -45.84790549831225,
+      "longitude": 170.51920428992193
+    },
+    {
+      "name": "GPS 81s",
+      "sourceDistanceMeters": 959.053,
+      "latitude": -45.84764702674373,
+      "longitude": 170.51886267065498
+    },
+    {
+      "name": "GPS 84s",
+      "sourceDistanceMeters": 995.565,
+      "latitude": -45.847405154295345,
+      "longitude": 170.51854386047077
+    },
+    {
+      "name": "GPS 87s",
+      "sourceDistanceMeters": 1013.512,
+      "latitude": -45.84729950186007,
+      "longitude": 170.51837180862302
+    },
+    {
+      "name": "GPS 90s",
+      "sourceDistanceMeters": 1059.989,
+      "latitude": -45.84759685219794,
+      "longitude": 170.51795567623924
+    },
+    {
+      "name": "GPS 93s",
+      "sourceDistanceMeters": 1104.447,
+      "latitude": -45.84787234909213,
+      "longitude": 170.5175397119247
+    },
+    {
+      "name": "GPS 96s",
+      "sourceDistanceMeters": 1143.689,
+      "latitude": -45.84805882191133,
+      "longitude": 170.51711333404526
+    },
+    {
+      "name": "GPS 99s",
+      "sourceDistanceMeters": 1180.854,
+      "latitude": -45.84808348563449,
+      "longitude": 170.5166401758074
+    },
+    {
+      "name": "GPS 102s",
+      "sourceDistanceMeters": 1221.467,
+      "latitude": -45.848004715351685,
+      "longitude": 170.51612868191387
+    },
+    {
+      "name": "GPS 105s",
+      "sourceDistanceMeters": 1265.184,
+      "latitude": -45.84791188049159,
+      "longitude": 170.51558036191295
+    },
+    {
+      "name": "GPS 108s",
+      "sourceDistanceMeters": 1310.888,
+      "latitude": -45.84783133708193,
+      "longitude": 170.51500178966668
+    },
+    {
+      "name": "GPS 111s",
+      "sourceDistanceMeters": 1351.919,
+      "latitude": -45.84765499167165,
+      "longitude": 170.51454482213174
+    },
+    {
+      "name": "GPS 114s",
+      "sourceDistanceMeters": 1377.37,
+      "latitude": -45.84749797586999,
+      "longitude": 170.5143058652815
+    },
+    {
+      "name": "GPS 117s",
+      "sourceDistanceMeters": 1387.017,
+      "latitude": -45.847437007189754,
+      "longitude": 170.51421725580076
+    },
+    {
+      "name": "GPS 120s",
+      "sourceDistanceMeters": 1416.948,
+      "latitude": -45.847234025726614,
+      "longitude": 170.51440050551517
+    },
+    {
+      "name": "GPS 123s",
+      "sourceDistanceMeters": 1452.981,
+      "latitude": -45.846997415092346,
+      "longitude": 170.51471820999623
+    },
+    {
+      "name": "GPS 126s",
+      "sourceDistanceMeters": 1496.5,
+      "latitude": -45.84671952314517,
+      "longitude": 170.5151131705738
+    },
+    {
+      "name": "GPS 129s",
+      "sourceDistanceMeters": 1546.82,
+      "latitude": -45.846479236608644,
+      "longitude": 170.51566218255851
+    },
+    {
+      "name": "GPS 132s",
+      "sourceDistanceMeters": 1598.973,
+      "latitude": -45.84628758164505,
+      "longitude": 170.51627668921947
+    },
+    {
+      "name": "GPS 135s",
+      "sourceDistanceMeters": 1646.314,
+      "latitude": -45.84602844210008,
+      "longitude": 170.5167530506528
+    },
+    {
+      "name": "GPS 138s",
+      "sourceDistanceMeters": 1690.427,
+      "latitude": -45.84567452493635,
+      "longitude": 170.51700852939453
+    }
+  ],
+  "elevation": {
+    "enabled": true,
+    "resampleIntervalMeters": 5,
+    "smoothingWindowMeters": 20,
+    "gradientWindowMeters": 20,
+    "maximumBridgeInterpolationMeters": 50,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
+    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json",
+    "gradientReviewThresholdPercent": 20
+  },
+  "terrain": {
+    "enabled": true,
+    "nearRadiusMeters": 100,
+    "farRadiusMeters": 350,
+    "spacingMeters": 10,
+    "farSpacingMeters": 20,
+    "corridorRadiusMeters": 100,
+    "chunkSizeMeters": 200,
+    "farChunkSizeMeters": 300,
+    "transitionOverlapMeters": 8,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "buildings": {
+    "enabled": true,
+    "searchRadiusMeters": 80,
+    "simplificationToleranceMeters": 0.75,
+    "metersPerLevel": 3,
+    "ordinaryHeightMeters": 8,
+    "smallBuildingHeightMeters": 3.5,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "vegetation": {
+    "enabled": true,
+    "searchRadiusMeters": 100,
+    "treeRowSpacingMeters": 10,
+    "simplificationToleranceMeters": 1,
+    "generatedTreeCapPerArea": 70,
+    "totalTreeInstanceCap": 300,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "streetFurniture": {
+    "enabled": true,
+    "searchRadiusMeters": 50,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "backgroundStreets": {
+    "enabled": true,
+    "searchRadiusMeters": 100,
+    "sampleSpacingMeters": 15,
+    "routeOverlapSuppressionMeters": 8,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  }
+}

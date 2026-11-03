@@ -1,0 +1,71 @@
+{
+  "id": "pine-hill-test",
+  "routeName": "Pine Hill Test",
+  "searchRadiusMeters": 150,
+  "nearbyCandidatesConsidered": 4,
+  "deduplicatedCandidateCount": 4,
+  "selectedCount": 4,
+  "source": "OpenStreetMap",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "landmarks": [
+    {
+      "name": "Pine Hill School",
+      "category": "education/civic",
+      "latitude": -45.845827010526314,
+      "longitude": 170.51753387894735,
+      "distanceFromRouteMeters": 8.773101324181498,
+      "nearestRouteDistanceMeters": 339.71809865590313,
+      "osmType": "way",
+      "osmId": 96778188,
+      "tags": {
+        "amenity": "school",
+        "name": "Pine Hill School",
+        "wikidata": "Q106203059"
+      }
+    },
+    {
+      "name": "Liberton Christian School",
+      "category": "education/civic",
+      "latitude": -45.847240794444446,
+      "longitude": 170.51293896111116,
+      "distanceFromRouteMeters": 34.930051394978896,
+      "nearestRouteDistanceMeters": 0,
+      "osmType": "way",
+      "osmId": 113404226,
+      "tags": {
+        "amenity": "school",
+        "name": "Liberton Christian School",
+        "wikidata": "Q6541504"
+      }
+    },
+    {
+      "name": "Dalmore Reserve",
+      "category": "park",
+      "latitude": -45.85051217941175,
+      "longitude": 170.51759617500005,
+      "distanceFromRouteMeters": 7.573060106579195,
+      "nearestRouteDistanceMeters": 1247.3250948592424,
+      "osmType": "way",
+      "osmId": 571263157,
+      "tags": {
+        "leisure": "park",
+        "name": "Dalmore Reserve",
+        "wikidata": "Q96064721"
+      }
+    },
+    {
+      "name": "Wilkinson St Playground",
+      "category": "park",
+      "latitude": -45.846859359999996,
+      "longitude": 170.51861102,
+      "distanceFromRouteMeters": 9.727603175184411,
+      "nearestRouteDistanceMeters": 638.165617263282,
+      "osmType": "way",
+      "osmId": 115938248,
+      "tags": {
+        "leisure": "park",
+        "name": "Wilkinson St Playground"
+      }
+    }
+  ]
+}
