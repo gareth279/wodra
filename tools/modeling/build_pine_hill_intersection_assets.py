@@ -232,6 +232,7 @@ def create_sign():
     def stroke(ax,az,bx,bz,thickness=.013):
         dx,dz=bx-ax,bz-az; length=math.hypot(dx,dz)
         px,pz=-dz/length*thickness/2,dx/length*thickness/2
+        # The approach side is local +Y: riders advance along Blender -Y.
         front_y=y+.15; back_y=front_y+.018
         start=len(verts)
         verts.extend([(ax+px,front_y,az+pz),(bx+px,front_y,bz+pz),(bx-px,front_y,bz-pz),(ax-px,front_y,az-pz),
@@ -259,6 +260,10 @@ def create_sign():
             for segment in glyphs[char]:
                 ax,az,bx,bz=paths[segment]; stroke(ax,az,bx,bz)
             cursor+=width+gap
+    # In the production approach view the imported route frame reverses local X
+    # on screen. Reflect the glyphs within the sign plate so GIVE WAY reads in
+    # normal left-to-right order; plate, post and route orientation are unchanged.
+    verts=[(2*x-vx,vy,vz) for vx,vy,vz in verts]
     mesh_obj("Approach-facing GIVE WAY legend",verts,faces,letter)
 
 def create_pole():
