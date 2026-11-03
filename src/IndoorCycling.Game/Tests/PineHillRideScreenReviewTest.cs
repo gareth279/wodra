@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 /// <summary>Loads Pine Hill Test through the catalogue and inspects its production RideScreen scenery.</summary>
 public partial class PineHillRideScreenReviewTest : Node
@@ -72,6 +73,11 @@ public partial class PineHillRideScreenReviewTest : Node
                 && authoredScene.AuthoredAssetFeatures == 3 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
                 && authoredScene.RoadMarkingFeatures == 6,
                 $"observations load three Blender assets ({authoredScene.AuthoredAssetFeatures}; {authoredScene.AuthoredAssetMeshInstances} mesh instances) and six route markings");
+            var focalAssetTriangles = CountTriangles(authoredScene.GetNode<Node3D>("authored-give-way-intersection-scene"))
+                + CountTriangles(authoredScene.GetNode<Node3D>("mature-broadleaf-left"))
+                + CountTriangles(authoredScene.GetNode<Node3D>("mature-broadleaf-right"));
+            Assert(focalAssetTriangles <= 330_000,
+                $"photo-textured boarded fence, hipped house and two mature trees stay within 330k focal-scene triangles ({focalAssetTriangles:N0})");
 
             var checkpoints = new[] { 395d, 775d, 1010d, 1372d };
             foreach (var checkpoint in checkpoints)
@@ -94,20 +100,16 @@ public partial class PineHillRideScreenReviewTest : Node
                     if (Math.Abs(checkpoint - 1372) < 1)
                     {
                         Capture("pine-route-1372m-gameplay-improved.png");
-                        await CaptureSourceStyleView(world, "pine-route-1372m-static-improved.png", checkpoint, 0);
-                        var vegetation = world.GetNode<VegetationLayer>("RouteGeometry/RouteVegetation");
-                        vegetation.Visible = false;
-                        await CaptureSourceStyleView(world, "pine-route-1372m-static-no-mapped-vegetation.png", checkpoint, 0);
-                        vegetation.Visible = true;
-                        var sceneFeatures = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-                        foreach (var featureId in new[] { "authored-give-way-intersection-scene",
-                                     "mature-broadleaf-left", "mature-broadleaf-right" })
+                        foreach (var viewChainage in new[] { 1362d, 1368.5d, 1371.735d, 1377.37d })
                         {
-                            var featureNode = sceneFeatures.GetNode<Node3D>(featureId);
-                            featureNode.Visible = false;
-                            await CaptureSourceStyleView(world, $"pine-route-1372m-static-without-{featureId}.png", checkpoint, 0);
-                            featureNode.Visible = true;
+                            var filename = Math.Abs(viewChainage - 1377.37) < .01
+                                ? "pine-route-1372m-static-gps-camera.png"
+                                : Math.Abs(viewChainage - 1371.735) < .01
+                                    ? "pine-route-1372m-static-route-camera.png"
+                                : $"pine-route-approach-{viewChainage:F1}m-static.png";
+                            await CaptureSourceStyleView(world, filename, viewChainage, 0);
                         }
+                        await CaptureRenderPerformance("pine-render-performance.csv", TimeSpan.FromSeconds(3));
                     }
                 }
                 if (Math.Abs(checkpoint - 1372) < 1)
@@ -228,5 +230,44 @@ public partial class PineHillRideScreenReviewTest : Node
         if (image.IsEmpty()) throw new IOException($"Screenshot {name} was empty.");
         if (image.SavePng(Path.Combine(_output, name)) != Error.Ok)
             throw new IOException($"Could not save RideScreen screenshot {name}.");
+    }
+
+    private static int CountTriangles(Node root) => root.FindChildren("", "MeshInstance3D", true, false)
+        .OfType<MeshInstance3D>()
+        .Where(instance => instance.Mesh is not null)
+        .Sum(instance => instance.Mesh!.GetFaces().Length / 3);
+
+    private async Task CaptureRenderPerformance(string filename, TimeSpan duration)
+    {
+        var samples = new System.Collections.Generic.List<(double FrameMs, ulong Primitives, ulong DrawCalls,
+            ulong VideoBytes, ulong TextureBytes, ulong BufferBytes)>();
+        var timer = Stopwatch.StartNew();
+        var previous = Stopwatch.GetTimestamp();
+        while (timer.Elapsed < duration)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            var now = Stopwatch.GetTimestamp();
+            var frameMs = (now - previous) * 1000d / Stopwatch.Frequency;
+            previous = now;
+            samples.Add((frameMs,
+                RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalPrimitivesInFrame),
+                RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalDrawCallsInFrame),
+                RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.VideoMemUsed),
+                RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TextureMemUsed),
+                RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.BufferMemUsed)));
+        }
+        if (samples.Count == 0) throw new InvalidOperationException("No RideScreen performance samples were captured.");
+        var output = new System.Text.StringBuilder("frame_ms,fps,primitives,draw_calls,video_mem_bytes,texture_mem_bytes,buffer_mem_bytes\r\n");
+        foreach (var sample in samples)
+            output.AppendLine($"{sample.FrameMs:F3},{1000d / Math.Max(.001,sample.FrameMs):F2},{sample.Primitives},{sample.DrawCalls},{sample.VideoBytes},{sample.TextureBytes},{sample.BufferBytes}");
+        File.WriteAllText(Path.Combine(_output, filename), output.ToString());
+        var orderedFrameTimes = samples.Select(sample => sample.FrameMs).Order().ToArray();
+        double Percentile(double p) => orderedFrameTimes[Math.Clamp((int)Math.Ceiling(p * orderedFrameTimes.Length) - 1, 0, orderedFrameTimes.Length - 1)];
+        GD.Print($"[PineHillPerformance] driver={RenderingServer.GetCurrentRenderingDriverName()} samples={samples.Count} " +
+            $"fpsMedian={1000d/Percentile(.5):F1} fpsP95Frame={Percentile(.95):F2}ms " +
+            $"maxPrimitives={samples.Max(sample=>sample.Primitives)} maxDrawCalls={samples.Max(sample=>sample.DrawCalls)} " +
+            $"videoMemMaxMiB={samples.Max(sample=>sample.VideoBytes)/1048576d:F1} " +
+            $"textureMemMaxMiB={samples.Max(sample=>sample.TextureBytes)/1048576d:F1} " +
+            $"bufferMemMaxMiB={samples.Max(sample=>sample.BufferBytes)/1048576d:F1}");
     }
 }

@@ -299,7 +299,7 @@ public partial class RouteSceneLayer : Node3D
 
     private static void BuildYieldTriangle(Node3D root, RouteSceneFeature feature)
     {
-        var w = Math.Clamp((float)feature.WidthMeters,1.2f,3.0f); var len = Math.Clamp((float)feature.LengthMeters,1.5f,4.0f);
+        var w = Math.Clamp((float)feature.WidthMeters,1.2f,4.0f); var len = Math.Clamp((float)feature.LengthMeters,1.5f,4.0f);
         var white = Material(new Color(.90f,.90f,.86f));
         var marking = RouteSceneTransformMath.YieldTriangle(w, len);
         AddStrip(root, "YieldLeftEdge", ProceduralRoad.ToGodot(marking.LeftBase), ProceduralRoad.ToGodot(marking.Apex), .12f, white);

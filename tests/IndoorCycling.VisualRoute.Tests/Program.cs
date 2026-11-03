@@ -82,7 +82,7 @@ var tests = new (string Name, Action Run)[]
             || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
             || intersectionAssets.Count(feature => feature.Variant ==
                 "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb") != 2
-            || yieldMark.ForwardOffsetMeters != 5 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
+            || yieldMark.ForwardOffsetMeters != 5 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 4
             || Vector3.Dot(
                 RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0, checked((float)giveWayLine.ForwardOffsetMeters))
                     - RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0,

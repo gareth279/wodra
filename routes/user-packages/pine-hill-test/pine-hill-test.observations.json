@@ -594,7 +594,7 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.83,
-          "provenance": "Blender-authored route-local scene assembled from frame 114 s. Asset silhouette and dimensions are manual estimates; route location follows the matched GPS pose."
+          "provenance": "Anchored to the OSM-matched route pose at 1,371.735 m (source capture 54 s). Uses the existing OSM hipped-house footprint/style and two shared CC0 tree meshes; the fence face is a rectified crop from the 4K frame. Building/tree offsets, fence run length and source-camera calibration remain approximate."
         },
         {
           "id": "yield-triangle",
@@ -604,7 +604,7 @@
           "forwardOffsetMeters": 5.0,
           "orientationDegrees": 0,
           "lengthMeters": 2.5,
-          "widthMeters": 3.0,
+          "widthMeters": 4.0,
           "heightMeters": 0.02,
           "variant": "hollow-white-outline",
           "colour": "#F2F1E8",
@@ -671,15 +671,15 @@
           "lateralPositionMeters": 0,
           "forwardOffsetMeters": 14.0,
           "orientationDegrees": 0,
-          "lengthMeters": 28.0,
+          "lengthMeters": 34.0,
           "widthMeters": 0.14,
           "heightMeters": 1.82,
-          "variant": "weathered-grey-paling",
+          "variant": "weathered-paling-photo-textured",
           "colour": "#B7B2A5",
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
-          "confidence": 0.46,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "confidence": 0.53,
+          "provenance": "Visible continuously in the 54 s 4K frame; front-face texture is rectified from the clean right-hand fence run and applied to individual 3D palings. The 34 m run is an image-perspective estimate informed by the mapped cross-street; endpoint and height are not surveyed."
         },
         {
           "id": "give-way-sign",
@@ -736,8 +736,8 @@
           "id": "mature-broadleaf-left",
           "objectType": "authored-scene-asset",
           "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -3.0,
-          "forwardOffsetMeters": 25.0,
+          "lateralPositionMeters": -11.0,
+          "forwardOffsetMeters": 12.0,
           "orientationDegrees": 9,
           "lengthMeters": 5.0,
           "widthMeters": 5.0,
@@ -747,7 +747,7 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.62,
-          "provenance": "Poly Haven Tree Small 02 CC0 model, manually scaled and placed behind the observed cross-street fence; broadleaf species and exact tree positions are visual approximations."
+          "provenance": "Poly Haven Tree Small 02 CC0 model, placed toward the near left corner from the source frame; species, lateral offset, exact ground position and canopy dimensions are visual approximations."
         },
         {
           "id": "mature-broadleaf-right",

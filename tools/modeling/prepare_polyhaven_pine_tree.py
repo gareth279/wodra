@@ -34,7 +34,10 @@ bpy.context.view_layer.objects.active = tree
 tree.select_set(True)
 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 decimate = tree.modifiers.new("Wodra runtime triangle budget", "DECIMATE")
-decimate.ratio = 0.10
+# The source tree is ~2.06M triangles. 0.06 retains its irregular leaf-card canopy
+# at about 124k triangles per tree; 0.02 visibly broke the canopy into sparse dots.
+# Two instances remain a bounded ~250k triangle contribution to the focal scene.
+decimate.ratio = 0.06
 decimate.use_collapse_triangulate = True
 bpy.ops.object.modifier_apply(modifier=decimate.name)
 tree.name = "PolyHaven Tree Small 02 • Wodra broadleaf"
