@@ -10,7 +10,13 @@ using Godot;
 /// </summary>
 public partial class RouteSceneLayer : Node3D
 {
+    public const double AuthoredSceneReplacementRadiusMeters = 36;
+    public const double FeatureVisibleDistanceMeters = 220;
+    private readonly List<(double ChainageMeters, Node3D Node)> _routeFeatures = [];
+    private double _routeLengthMeters;
+    private bool _wrapsAtRouteEnd;
     public int FeaturesRendered { get; private set; }
+    public int VisibleFeatureCount { get; private set; }
     public int TimberFenceFeatures { get; private set; }
     public int RoadMarkingFeatures { get; private set; }
     public int AuthoredAssetFeatures { get; private set; }
@@ -18,13 +24,15 @@ public partial class RouteSceneLayer : Node3D
 
     public void Configure(VisualRoute route, RouteSceneData data)
     {
+        _routeLengthMeters = route.LengthMeters;
+        _wrapsAtRouteEnd = !route.IsPointToPoint;
         var authoredIntersection = data.Features.FirstOrDefault(feature => feature.ObjectType == "authored-scene-asset");
         var terrain = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
             $"Wodra.GameData.Routes.{data.Id}.terrain.json", data.Id);
         foreach (var feature in data.Features)
         {
             if (authoredIntersection is not null && feature != authoredIntersection
-                && Math.Abs(feature.RouteChainageMeters - authoredIntersection.RouteChainageMeters) <= 36
+                && Math.Abs(feature.RouteChainageMeters - authoredIntersection.RouteChainageMeters) <= AuthoredSceneReplacementRadiusMeters
                 && feature.ObjectType is "timber-fence" or "picket-fence" or "broadleaf-tree" or "conifer-tree"
                     or "shrub" or "hedge" or "grass-verge" or "planting-bed" or "give-way-sign" or "utility-pole")
                 continue;
@@ -67,8 +75,27 @@ public partial class RouteSceneLayer : Node3D
                 case "yellow-kerb-stripe": BuildYellowKerb(node, feature); RoadMarkingFeatures++; break;
                 case "white-lane-dash": BuildLaneDash(node, feature); RoadMarkingFeatures++; break;
             }
+            _routeFeatures.Add((feature.RouteChainageMeters, node));
             FeaturesRendered++;
         }
+    }
+
+    /// <summary>Keep observations from distant checkpoints out of the current camera view.</summary>
+    public void UpdateForRideDistance(double rideDistanceMeters)
+    {
+        if (_routeLengthMeters <= 0) return;
+        var wrapped = _wrapsAtRouteEnd
+            ? ((rideDistanceMeters % _routeLengthMeters) + _routeLengthMeters) % _routeLengthMeters
+            : Math.Clamp(rideDistanceMeters, 0, _routeLengthMeters);
+        var visible = 0;
+        foreach (var feature in _routeFeatures)
+        {
+            var difference = Math.Abs(feature.ChainageMeters - wrapped);
+            var along = _wrapsAtRouteEnd ? Math.Min(difference, _routeLengthMeters - difference) : difference;
+            feature.Node.Visible = along <= FeatureVisibleDistanceMeters;
+            if (feature.Node.Visible) visible++;
+        }
+        VisibleFeatureCount = visible;
     }
 
     private void BuildAuthoredSceneAsset(Node3D root, RouteSceneFeature feature)

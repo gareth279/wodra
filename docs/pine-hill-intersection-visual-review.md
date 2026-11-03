@@ -1,40 +1,50 @@
 # Pine Hill 1,372 m scene review
 
-**Status: visual acceptance failed; PR #176 remains draft.** This review covers the give-way intersection only. The other route checkpoints were not rebuilt in this iteration.
+**Status: still not accepted for visual quality. PR #176 remains draft and unmerged.** This iteration addresses only the give-way intersection. The start, 395 m and 775 m scenes were not reconstructed.
 
-## Production captures
+## Production renders and comparison
 
-The four-panel local comparison is `%LOCALAPPDATA%\Wodra\PineHillEvidence\pine-hill-1372m-iteration-comparison.png`. It contains the aligned source frame, the original PR #176 RideScreen baseline, the revised UI-free matched-camera RideScreen render, and the revised RideScreen chase-camera render. Individual production captures are under `%LOCALAPPDATA%\Wodra\PineHillEvidence\RideScreen`:
+The local four-panel comparison is `%LOCALAPPDATA%\Wodra\PineHillEvidence\pine-hill-1372m-pr176-current-review.png`. It contains the source frame, the PR #176 production baseline, the current matched-camera RideScreen view, and the current RideScreen chase-camera view. Individual current captures are in `%LOCALAPPDATA%\Wodra\PineHillEvidence\RideScreen`:
 
 | View | Local file |
 | --- | --- |
-| Source video at elapsed 114 s (route alignment ≈ 1,371.7 m) | `gpx-114.jpg` |
-| A — PR #176 baseline | `pine-route-1372m-pr176.png` |
-| B — revised static view | `pine-route-1372m-static-improved.png` |
-| C — revised gameplay chase view | `pine-route-1372m-gameplay-improved.png` |
+| Original dashcam frame at video 114 s | `gpx-114.jpg` |
+| A — PR #176 RideScreen baseline | `pine-route-1372m-pr176.png` |
+| B — current matched-camera RideScreen | `pine-route-1372m-static-improved.png` |
+| C — current gameplay chase camera with rider | `pine-route-1372m-gameplay-improved.png` |
 
-Source frames are identifying footage and remain local; they are not included in the repository. B is a static camera inside the production RideScreen scene, with estimated 1.45 m height and 70° FOV. Its pose is route-relative and its projection is only approximate; the dashcam intrinsics and exact camera pose were not recoverable from metadata. C uses the regular chase camera and is included to verify the loaded game scene, not as a perspective-matched source comparison.
+B is rendered by the production Godot `RideScreen` world and `RouteSceneLayer`. It uses route chainage 1,372 m, an estimated 1.45 m camera height, route heading, and 70° vertical FOV. Camera intrinsics and exact video-to-GPS camera position are unavailable; this is a comparison pose, not a calibrated camera match. C is the normal gameplay chase camera with the dummy trainer active. Raw video and source frames remain local and are not committed.
 
-## What changed and what the renders show
+## What changed
 
-| Feature | Source correspondence | Remaining difference |
+- The give-way sign is on the left approach and its face points toward the dashcam. Road-local `-Z` follows travel, `+Z` faces approaching traffic. Godot yaw and the local sign/marking axes are checked for eight compass headings.
+- The hollow give-way triangle apex points toward the approaching camera, matching the source frame. Its authored estimate is 3.0 m wide by 2.5 m long, with a 5 m route-forward origin. The give-way line remains at 9.5 m. The rendered orientation is correct; its screen projection and exact placement still need refinement against calibrated camera geometry.
+- The long cross-street timber fence, hipped-roof house, utility pole, kerb ramp, tactile pad and verge are in one metre-scaled Blender scene asset. The former ball-shaped kerb planting was replaced by tapered grass-blade meshes.
+- Two branching, textured broadleaf assets are used as route-local backdrops. The misplaced centre candidate was removed after camera review. Its species and coordinates remain approximations.
+- Three generic OSM building extrusions that conflicted with the fence-screened frame are hidden through the existing per-building visual style while retaining their mapped footprints and route data.
+- Route-authored observations are now visible only within 220 m of current chainage. This prevents observations from distant checkpoints, including start-area trees, appearing in the focal scene. The production review measured 6 of 24 observations visible at 1,372 m.
+
+## Remaining differences
+
+| Feature | Current correspondence | Difference still visible |
 | --- | --- | --- |
-| Give-way marking | Hollow triangle points back toward the approaching camera, matching the source apex direction. Its base is about 3 m and length about 4 m in the authored route frame. | The projected triangle-to-line gap and apparent proportions remain wrong in B. The source camera is not calibrated, so a screen-space match alone cannot establish exact metres. |
-| Sign | Roadside sign has a route-frame normal toward approaching traffic; an eight-heading test checks this orientation. | It is partly occluded by foliage and the small geometric legend is hard to read. The position and sign face have not passed visual review. |
-| Fence | Authored weathered paling fence spans the cross street and appears in the production renders. | Board spacing/height is too regular and the colour is too light compared with the aged source fence. |
-| House | A custom low bungalow mesh includes a hipped roof, cladding courses, framed windows, entry and chimney. | It is too central, too exposed and too large in the composition. The source shows only part of a roof behind the fence, left of the utility pole. |
-| Trees and planting | The asset includes branch meshes, foliage masses, verge and garden shrubs. | Crowns still read as repeated angular clusters; some foliage masks the sign. The source has denser, irregular mature canopies. |
-| Pole and terrain | Utility pole and local route terrain are present; DEM-based terrain and road grades remain authoritative. | Pole placement/proportion is approximate; nearby bank, road-edge detail, distant greenery and hill silhouette are too simple. |
-| Overall streetscape | The revised scene has recognizable authored objects and is visibly different from the box-extrusion baseline. | It still does not convincingly reproduce the source composition or asset quality. The image comparison is a failure, not a qualified pass. |
+| Road and marking | Give-way triangle apex direction, sign approach face and cross-street arrangement are correct. Yellow kerb dashes, tactile ramp and give-way line are present. | The source and rendered road-edge/marking spacing do not yet line up in screen space. Camera calibration is unavailable, and the scene projection still looks too small/central in B. |
+| Sign and pole | Sign is readable from the approach after off-route observations are culled. Utility pole is near the fence and house roof. | Sign lettering and pole proportions are approximate; their lateral placement is not surveyed. |
+| Fence | A long weathered paling fence spans the far side of the junction. | The authored boards are still too regular and light; the source fence has stronger gray weathering and less uniform edges. |
+| House | A bespoke hipped roof, weatherboards, windows, entry and chimney replace the nearest generic extrusion. | The visible house silhouette remains too exposed and simplified; a second roofline in the source is not yet faithfully represented. Some distant OSM masses remain generic. |
+| Vegetation | Two detailed leaf-card/branch tree meshes and tapered verge grass replace the single spherical proxy at this location. | Canopy density, tree spacing and leafy backdrop coverage remain thinner than the source. Exact species and positions are unknown. |
+| Terrain and lighting | LINZ road elevation is unchanged; local terrain and distant hill forms load in the production view. | The background reads as a simple green hill and blue sky rather than the dense, layered vegetation in the frame. The rendered vertical composition still differs. |
 
-Callouts 1–5 in the local montage identify the obscured sign, central house, angular canopy, uniform fence, and triangle spacing/projection respectively. Object presence is not the acceptance measure; visible silhouette, placement, scale, orientation and composition are.
+A and B show a visible qualitative improvement over the original generic extrusion view: the sign, fence, custom roof, real branching tree asset and planting all come from route-scene authored data. The comparison still fails the requested visual standard. Object presence alone is not acceptance, and no other checkpoint should be reconstructed until this scene is reviewed again.
 
-## Orientation regression
+## Asset and authoring workflow
 
-The route renderer uses local `-Z` as travel-forward, `+X` as road-right and `+Z` as the direction toward approaching traffic. The yield triangle apex and sign face must point along the latter. `RouteSceneTransformMath` centralizes these conversions; the VisualRoute test exercises eight compass headings, asserting forward, approach, apex, base, right-side offset and orthogonality. Road paint remains attached to the route frame/tangent. The production image confirms the triangle apex is now at the near end, as in the source, although its placement/projection still needs work.
+The focal Blender source is `tools/modeling/source/PineHillGiveWayIntersection.blend`; `tools/modeling/build_pine_hill_intersection_assets.py` exports its self-contained GLB. Each observation records route chainage, lateral/forward offset, video timestamp, confidence and provenance. `RouteSceneLayer` loads the authored scene and existing Wodra scenery layers remain the runtime renderer. The route loads without video processing.
 
-## Reusable authoring approach
+The two tree instances use Poly Haven *Tree Small 02* by Rico Cilliers, downloaded at 1K under CC0 and reduced from 2,062,487 source mesh faces to 206,248 triangles per tree. The GLB contains its textures. The [asset page](https://polyhaven.com/a/tree_small_02) and [CC0 licence](https://polyhaven.com/license) are documented in `docs/pine-hill-test-route.md`. The tree serves as a broadleaf proxy; species and placement are estimates.
 
-The focused workflow is: inspect an aligned source frame; author a route-local Blender scene using metre-scale coordinates and documented evidence; export a self-contained GLB; refer to it from a route observation with chainage, offset, timestamp, confidence and provenance; load it through the existing route-scene layer; then capture the actual RideScreen view. The included Blender 5.2 script and `.blend` source are reproducible and use only in-house geometry/materials, avoiding third-party license and dependency review. Static meshes are joined by material to reduce runtime mesh instances. No source video is needed by the runtime.
+## Validation
 
-This proves the asset-loading path, but the current models need another quality/composition pass before this authoring technique can be used as a successful route reconstruction. In particular, foliage needs a less repetitive volumetric canopy, the fence needs better weathering/irregularity, and the house and sign must be repositioned and rescaled from the observed frame. The intersection has not been expanded into a broader scenery refactor.
+The production RideScreen review loads the route through the normal catalogue, renders B and C, checks the 1,372 m camera, starts the dummy trainer and rides naturally toward the open endpoint. Current review result: 30 production assertions passed; route length 1,679.8 m; no loop seam exists because the recording is point-to-point. The chainage visibility assertion confirms remote observation features are hidden at the focal scene. This validates runtime integration and camera clearance; it does not grant visual acceptance.
+
+The production teardown logs existing Godot renderer RID/resource leak warnings after the review scene exits; these do not occur during the assertions or prevent captures. No frame-rate benchmark has been run. Source assets, footage and comparisons remain local; the route package itself has no runtime video dependency.

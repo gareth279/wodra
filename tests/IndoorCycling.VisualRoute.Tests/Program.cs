@@ -19,15 +19,23 @@ var tests = new (string Name, Action Run)[]
             var triangleBaseCenter = RouteSceneTransformMath.LocalToWorldDirection(forward,
                 (marking.LeftBase + marking.RightBase) / 2);
             var right = RouteSceneTransformMath.LocalToWorldDirection(forward, Vector3.UnitX);
+            var godotYaw = RouteSceneTransformMath.YawRadians(forward);
+            var godotTravelForward = new Vector3(-MathF.Sin(godotYaw), 0, -MathF.Cos(godotYaw));
+            var godotApproach = new Vector3(MathF.Sin(godotYaw), 0, MathF.Cos(godotYaw));
             NearVector(Vector3.Normalize(forward), localForward);
             NearVector(-Vector3.Normalize(forward), signFace);
             NearVector(signFace, triangleApex);
+            NearVector(Vector3.Normalize(forward), godotTravelForward);
+            NearVector(signFace, godotApproach);
             NearVector(Vector3.Normalize(forward), triangleBaseCenter);
             Near(0, Vector3.Dot(right, forward));
             Near(1, right.Length());
             var position = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, 2, 4);
             NearVector(new Vector3(10, 3, -5) + right * 2 + forward * 4, position);
         }
+        if (!RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(0, 40, 0), Vector3.Zero, 36)
+            || RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(36.1f, 0, 0), Vector3.Zero, 36))
+            throw new Exception("Authored-scene vegetation replacement radius must be horizontal, bounded, and deterministic.");
     }),
     ("Pine Hill Test loads its point-to-point OSM/LINZ route and scenery package", () =>
     {
@@ -64,25 +72,29 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"Pine Hill package is missing its {suffix} sidecar.");
         var authoredScene = RouteSceneDataLoader.Load(typeof(RouteCatalog).Assembly,
             $"Wodra.GameData.Routes.{id}.observations.json", id, route.DistanceMeters);
-        var intersectionAsset = authoredScene.Features.SingleOrDefault(feature => feature.ObjectType == "authored-scene-asset");
+        var intersectionAssets = authoredScene.Features.Where(feature => feature.ObjectType == "authored-scene-asset").ToArray();
+        var intersectionAsset = intersectionAssets.SingleOrDefault(feature => feature.Variant ==
+            "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb");
         var yieldMark = authoredScene.Features.Single(feature => feature.ObjectType == "yield-triangle");
         var giveWayLine = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-line");
-        if (authoredScene.Features.Count < 25
-            || intersectionAsset is null || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
-            || intersectionAsset.Variant != "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb"
-            || yieldMark.ForwardOffsetMeters != 3 || yieldMark.LengthMeters != 4 || yieldMark.WidthMeters != 3
+        if (authoredScene.Features.Count < 24
+            || intersectionAssets.Length != 3 || intersectionAsset is null
+            || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
+            || intersectionAssets.Count(feature => feature.Variant ==
+                "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb") != 2
+            || yieldMark.ForwardOffsetMeters != 5 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
             || Vector3.Dot(
                 RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0, checked((float)giveWayLine.ForwardOffsetMeters))
                     - RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0,
                         checked((float)(yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2))),
-                Vector3.UnitZ * -1) < 4
+                Vector3.UnitZ * -1) < 2
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1370)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters < 10)
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 380 and < 410)
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 750 and < 790)
             || authoredScene.BuildingStyles.Count < 24
-            || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 4
+            || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 7
             || authoredScene.BuildingStyles.Any(style => style.VisualHeightMeters is not (> 2 and <= 30)
                 || string.IsNullOrWhiteSpace(style.SourceVideo) || style.Confidence is not (>= 0 and <= 1)
                 || string.IsNullOrWhiteSpace(style.Provenance)))

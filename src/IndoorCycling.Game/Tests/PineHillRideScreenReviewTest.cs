@@ -68,15 +68,10 @@ public partial class PineHillRideScreenReviewTest : Node
                 && diagnostic.TerrainChunksLoaded > 0 && diagnostic.BackgroundStreetsLoaded > 0,
                 "OSM buildings, mapped trees, LINZ terrain and surrounding streets load in RideScreen");
             var authoredScene = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-            Assert(authoredScene.FeaturesRendered >= 21 && authoredScene.TimberFenceFeatures == 1
-                && authoredScene.AuthoredAssetFeatures == 1 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
+            Assert(authoredScene.FeaturesRendered >= 20
+                && authoredScene.AuthoredAssetFeatures == 3 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
                 && authoredScene.RoadMarkingFeatures == 6,
-                $"observations load the Blender intersection asset ({authoredScene.AuthoredAssetMeshInstances} mesh instances) and route markings at four checkpoints");
-            if (!IsHeadless)
-            {
-                Capture("pine-route-start.png");
-                await CaptureSourceStyleView(world, "pine-route-start-static.png", 0, 0);
-            }
+                $"observations load three Blender assets ({authoredScene.AuthoredAssetFeatures}; {authoredScene.AuthoredAssetMeshInstances} mesh instances) and six route markings");
 
             var checkpoints = new[] { 395d, 775d, 1010d, 1372d };
             foreach (var checkpoint in checkpoints)
@@ -96,14 +91,30 @@ public partial class PineHillRideScreenReviewTest : Node
                     $"{checkpoint:F1},{diagnostic.CameraClearanceResult},{diagnostic.CameraObstructionSource},{diagnostic.CameraRepeatedBlockedMovement}{System.Environment.NewLine}");
                 if (!IsHeadless)
                 {
-                    Capture(Math.Abs(checkpoint - 1372) < 1
-                        ? "pine-route-1372m-gameplay-improved.png" : $"pine-route-{checkpoint:F0}m.png");
                     if (Math.Abs(checkpoint - 1372) < 1)
+                    {
+                        Capture("pine-route-1372m-gameplay-improved.png");
                         await CaptureSourceStyleView(world, "pine-route-1372m-static-improved.png", checkpoint, 0);
-                    else if (Math.Abs(checkpoint - 395) < 1)
-                        await CaptureSourceStyleView(world, "pine-route-395m-static.png", checkpoint, 0);
-                    else if (Math.Abs(checkpoint - 775) < 1)
-                        await CaptureSourceStyleView(world, "pine-route-775m-static.png", checkpoint, 60);
+                        var vegetation = world.GetNode<VegetationLayer>("RouteGeometry/RouteVegetation");
+                        vegetation.Visible = false;
+                        await CaptureSourceStyleView(world, "pine-route-1372m-static-no-mapped-vegetation.png", checkpoint, 0);
+                        vegetation.Visible = true;
+                        var sceneFeatures = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
+                        foreach (var featureId in new[] { "authored-give-way-intersection-scene",
+                                     "mature-broadleaf-left", "mature-broadleaf-right" })
+                        {
+                            var featureNode = sceneFeatures.GetNode<Node3D>(featureId);
+                            featureNode.Visible = false;
+                            await CaptureSourceStyleView(world, $"pine-route-1372m-static-without-{featureId}.png", checkpoint, 0);
+                            featureNode.Visible = true;
+                        }
+                    }
+                }
+                if (Math.Abs(checkpoint - 1372) < 1)
+                {
+                    var sceneLayer = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
+                    Assert(sceneLayer.VisibleFeatureCount is > 0 && sceneLayer.VisibleFeatureCount < sceneLayer.FeaturesRendered,
+                        $"route observations are chainage-culled at the 1,372 m scene ({sceneLayer.VisibleFeatureCount}/{sceneLayer.FeaturesRendered} visible)");
                 }
             }
 

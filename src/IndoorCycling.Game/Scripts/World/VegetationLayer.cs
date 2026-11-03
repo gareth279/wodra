@@ -9,6 +9,7 @@ public partial class VegetationLayer : Node3D
 {
     private const double ChunkLengthMeters = WodraWorldStyle.VegetationChunkLengthMeters;
     private const double VisibleDistanceMeters = WodraWorldStyle.VegetationVisibleDistanceMeters;
+    private const double AuthoredSceneBackdropChainageRadiusMeters = 110;
     private sealed record VisibleChunk(int Index, double CenterDistanceMeters, List<Node3D> Nodes);
     private readonly List<VisibleChunk> _chunks = [];
     private double _routeLengthMeters;
@@ -19,6 +20,7 @@ public partial class VegetationLayer : Node3D
     public int ExplicitTrees { get; private set; }
     public int GeneratedTrees { get; private set; }
     public int TreeRows { get; private set; }
+    public int TreesSuppressedForAuthoredScene { get; private set; }
     public int VisibleVegetationChunks { get; private set; }
     public int AreaTriangleCount { get; private set; }
     public int MultiMeshCount { get; private set; }
@@ -30,7 +32,9 @@ public partial class VegetationLayer : Node3D
     private readonly List<long> _roadOverlapSuppressedAreaIds = [];
 
     public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteVegetationData data,
-        IReadOnlyList<TerrainRoadCorridor>? backgroundRoads = null)
+        IReadOnlyList<TerrainRoadCorridor>? backgroundRoads = null,
+        IReadOnlyList<Vector3>? authoredSceneCenters = null,
+        IReadOnlyList<double>? authoredSceneRouteDistances = null)
     {
         if (_chunks.Count > 0 || VegetationAreaCount > 0 || TreesLoaded > 0)
             throw new InvalidOperationException("Vegetation layer is already configured.");
@@ -38,11 +42,28 @@ public partial class VegetationLayer : Node3D
         _routeLengthMeters = route.DistanceMeters;
         _wrapsAtRouteEnd = !visualRoute.IsPointToPoint;
         var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
+        var authoredCenters = authoredSceneCenters?.Select(center =>
+            new System.Numerics.Vector3(center.X, center.Y, center.Z)).ToArray() ?? [];
+        var authoredDistances = authoredSceneRouteDistances ?? [];
+        var renderedTrees = data.Trees.Where(tree =>
+        {
+            if (authoredDistances.Any(distance =>
+                    Math.Abs(tree.NearestRouteDistanceMeters - distance) <= AuthoredSceneBackdropChainageRadiusMeters))
+                return false;
+            var position = ToGodot(tree.LocalXMeters is { } x && tree.LocalZMeters is { } z
+                ? visualRoute.GetPositionForLocalCoordinate(x, z, tree.ElevationMeters ?? originElevation)
+                : visualRoute.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value,
+                    tree.ElevationMeters ?? originElevation));
+            var point = new System.Numerics.Vector3(position.X, position.Y, position.Z);
+            return !authoredCenters.Any(center => RouteSceneTransformMath.IsWithinHorizontalRadius(point,
+                center, (float)RouteSceneLayer.AuthoredSceneReplacementRadiusMeters));
+        }).ToArray();
+        TreesSuppressedForAuthoredScene = data.Trees.Count - renderedTrees.Length;
         VegetationAreaCount = data.Areas.Count;
-        TreesLoaded = data.Trees.Count;
-        ExplicitTrees = data.Trees.Count(item => item.Source == "osm-tree");
-        TreeRows = data.Trees.Count(item => item.Source == "tree-row");
-        GeneratedTrees = data.Trees.Count(item => item.Source == "generated");
+        TreesLoaded = renderedTrees.Length;
+        ExplicitTrees = renderedTrees.Count(item => item.Source == "osm-tree");
+        TreeRows = renderedTrees.Count(item => item.Source == "tree-row");
+        GeneratedTrees = renderedTrees.Count(item => item.Source == "generated");
         var chunkNodes = new Dictionary<int, List<Node3D>>();
         var chunkCenters = new Dictionary<int, double>();
         var areaGroups = data.Areas.Where(item => item.RenderGround && item.BaseElevationMeters is not null)
@@ -92,7 +113,7 @@ public partial class VegetationLayer : Node3D
             AreaTriangleCount += triangles; AreaMeshInstanceCount++;
         }
 
-        var treeGroups = data.Trees.GroupBy(item => Chunk(item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
+        var treeGroups = renderedTrees.GroupBy(item => Chunk(item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
         foreach (var group in treeGroups)
         {
             var transforms = group.Select(tree => (Tree: tree, Position: ToGodot(

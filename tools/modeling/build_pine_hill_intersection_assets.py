@@ -42,9 +42,9 @@ roof_base = material("Aged charcoal concrete tiles", (0.16, 0.18, 0.19))
 roof_alt = material("Tile variation", (0.21, 0.22, 0.21))
 window = material("Deep blue-grey glazing", (0.11, 0.17, 0.19), 0.27)
 wood = [material(f"Weathered fence board {i}", c) for i, c in enumerate([
-    (0.48, 0.46, 0.40), (0.54, 0.52, 0.46), (0.60, 0.57, 0.50),
-    (0.51, 0.50, 0.46), (0.64, 0.61, 0.54), (0.43, 0.43, 0.39)])]
-wood_dark = material("Fence rails and posts", (0.35, 0.34, 0.30))
+    (0.25, 0.26, 0.25), (0.30, 0.30, 0.28), (0.34, 0.33, 0.30),
+    (0.28, 0.29, 0.27), (0.36, 0.35, 0.32), (0.23, 0.25, 0.24)])]
+wood_dark = material("Fence rails and posts", (0.20, 0.21, 0.20))
 bark = [material("Bark umber", (0.25, 0.17, 0.11)), material("Bark warm grey", (0.34, 0.25, 0.17))]
 leaf_mats = [material(f"Foliage {i}", c) for i, c in enumerate([
     (0.14, 0.27, 0.16), (0.19, 0.34, 0.20), (0.24, 0.39, 0.23),
@@ -146,36 +146,6 @@ def create_fence():
     for x in range(-15,16,2):
         box(f"Fence post {x}",(.17,.19,1.98),(x,y+.10,.92),wood_dark,.025)
 
-def create_tree(cx, cy, height, crown_radius, seed):
-    rng=random.Random(seed)
-    # Tapered trunk with visible forked scaffold branches and asymmetric crown.
-    lean=rng.uniform(-.28,.28)
-    beam("Mature broadleaf trunk",(cx,cy,0),(cx+lean,cy-.05,height*.58),.29,bark[seed%2],10)
-    branch_tips=[]
-    for n in range(9):
-        angle=math.tau*n/9+rng.uniform(-.22,.22)
-        start_z=height*rng.uniform(.40,.64)
-        length=crown_radius*rng.uniform(.62,1.02)
-        tip=(cx+lean+math.cos(angle)*length,cy+math.sin(angle)*length*.72,height*rng.uniform(.70,.91))
-        start=(cx+lean*.6,cy,start_z)
-        beam("Forked canopy branch",start,tip,rng.uniform(.075,.14),bark[(seed+n)%2],7)
-        branch_tips.append(tip)
-    # Layer many deformed low-poly leaf masses over the branches, with varied scales/colors.
-    for j in range(60):
-        tip=branch_tips[j%len(branch_tips)]
-        spread=crown_radius*rng.uniform(.03,.48)
-        px=tip[0]+rng.gauss(0,spread); py=tip[1]+rng.gauss(0,spread*.72)
-        pz=tip[2]+rng.gauss(0,height*.065)
-        r=rng.uniform(.40,.88)
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=1,location=(px,py,pz))
-        obj=bpy.context.object; obj.name="Irregular foliage cluster"
-        for v in obj.data.vertices:
-            noise=1+rng.uniform(-.12,.12)
-            v.co.x*=r*rng.uniform(.88,1.12)*noise
-            v.co.y*=r*.72*noise
-            v.co.z*=r*.66*noise
-        obj.data.materials.append(leaf_mats[rng.randrange(len(leaf_mats))])
-
 def create_sign():
     # Face plane points toward approaching traffic (+Y in this route-local asset).
     x,y=-5.3,-6.6
@@ -238,25 +208,34 @@ def create_garden():
                 location=(-6.36+i*.103,-3.69+j*.135,.136))
             obj=bpy.context.object; obj.name="Tactile raised dot"
             obj.scale.z=.55; obj.data.materials.append(tactile_yellow)
-    for i in range(19):
-        x=-6.4+random.random()*2.4; y=-4.8-random.random()*3.6
-        h=random.uniform(.28,.85); r=random.uniform(.18,.45)
-        # Short woody garden shrubs with angular but dense leaf branches.
-        for k in range(6):
-            a=math.tau*k/6
-            beam("Garden shrub stem",(x,y,.03),(x+math.cos(a)*r,y+math.sin(a)*r*.7,h),.025,wood_dark,5)
-        for k in range(7):
-            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=r*.62,
-                location=(x+random.uniform(-r,r),y+random.uniform(-r*.7,r*.7),h*random.uniform(.65,1.2)))
-            obj=bpy.context.object; obj.name="Garden leaf cluster"
-            obj.data.materials.append(leaf_mats[random.randrange(len(leaf_mats))])
+    blade_mats = [material(f"Ornamental grass blade {i}", c) for i, c in enumerate([
+        (0.24, 0.36, 0.16), (0.32, 0.43, 0.20), (0.39, 0.47, 0.24), (0.20, 0.31, 0.16)])]
+    # The footage has a small tufted planting bed at the kerb. Build bent,
+    # tapered blades with varied lean instead of the former row of ball shrubs.
+    for clump in range(13):
+        x=-6.3+random.random()*2.0; y=-4.9-random.random()*3.0
+        for blade in range(11):
+            angle=math.tau*blade/11+random.uniform(-.2,.2)
+            height=random.uniform(.38,.92)
+            lean=random.uniform(.12,.48)
+            dx=math.cos(angle)*lean; dy=math.sin(angle)*lean*.65
+            half=random.uniform(.018,.042)
+            px=-math.sin(angle)*half; py=math.cos(angle)*half*.65
+            verts=[(x-px,y-py,.06),(x+px,y+py,.06),
+                   (x+dx*.42+px*.45,y+dy*.42+py*.45,height*.62),
+                   (x+dx*.42-px*.45,y+dy*.42-py*.45,height*.62),
+                   (x+dx,y+dy,height)]
+            mesh_obj("Tapered ornamental grass leaf",verts,[(0,1,2,3),(2,4,3)],
+                     blade_mats[random.randrange(len(blade_mats))])
 
+house_start = set(bpy.context.scene.objects)
 create_house()
+# Source framing shows only a partial bungalow roof beyond the fence, left of the pole.
+# Move the full authored house behind the fence and left in the road-local composition.
+for obj in set(bpy.context.scene.objects) - house_start:
+    obj.location.x -= 4.0
+    obj.location.y -= 15.0
 create_fence()
-create_tree(-11,-20,10.2,3.0,10)
-create_tree(-6,-21,9.4,2.7,12)
-create_tree(2,-21.8,10.7,3.3,14)
-create_tree(8.5,-20.5,9.8,2.9,18)
 create_sign()
 create_pole()
 create_garden()
@@ -268,10 +247,18 @@ create_garden()
 for obj in list(bpy.context.scene.objects):
     if obj.type != 'MESH':
         continue
-    bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set(True); bpy.context.view_layer.objects.active=obj
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
-    obj.select_set(False)
+    rotation_is_identity = (obj.rotation_mode == 'QUATERNION'
+        and abs(obj.rotation_quaternion.w - 1.0) < 1e-7
+        and abs(obj.rotation_quaternion.x) < 1e-7
+        and abs(obj.rotation_quaternion.y) < 1e-7
+        and abs(obj.rotation_quaternion.z) < 1e-7) or (
+        obj.rotation_mode != 'QUATERNION' and all(abs(axis) < 1e-7 for axis in obj.rotation_euler))
+    scale_is_identity = all(abs(axis - 1.0) < 1e-7 for axis in obj.scale)
+    if not (rotation_is_identity and scale_is_identity):
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True); bpy.context.view_layer.objects.active=obj
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+        obj.select_set(False)
     for vertex in obj.data.vertices:
         vertex.co.y = -vertex.co.y
     obj.location.y = -obj.location.y

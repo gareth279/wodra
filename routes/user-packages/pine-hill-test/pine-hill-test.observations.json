@@ -601,9 +601,9 @@
           "objectType": "yield-triangle",
           "routeChainageMeters": 1371.735,
           "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 3.0,
+          "forwardOffsetMeters": 5.0,
           "orientationDegrees": 0,
-          "lengthMeters": 4.0,
+          "lengthMeters": 2.5,
           "widthMeters": 3.0,
           "heightMeters": 0.02,
           "variant": "hollow-white-outline",
@@ -611,7 +611,7 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.82,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "Apex points back toward the approaching dash camera; the 5 m forward origin places its near-to-far extent ahead of the camera and the base close to the observed give-way line. Width and length (3.0 m by 2.5 m) are approximate screen-space estimates from frame 114 s, not surveyed measurements."
         },
         {
           "id": "give-way-transverse-line",
@@ -716,40 +716,6 @@
           "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
         },
         {
-          "id": "mature-broadleaf-1",
-          "objectType": "broadleaf-tree",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -12.0,
-          "forwardOffsetMeters": 21.0,
-          "orientationDegrees": 0,
-          "lengthMeters": 0,
-          "widthMeters": 5.5,
-          "heightMeters": 8.8,
-          "variant": "dense-round-crown",
-          "colour": "#426742",
-          "sourceVideo": "Video_20261103_162227.mp4",
-          "videoSeconds": 54.0,
-          "confidence": 0.56,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
-        },
-        {
-          "id": "mature-broadleaf-2",
-          "objectType": "broadleaf-tree",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 12.0,
-          "forwardOffsetMeters": 21.0,
-          "orientationDegrees": 0,
-          "lengthMeters": 0,
-          "widthMeters": 5.0,
-          "heightMeters": 8.2,
-          "variant": "garden-tree",
-          "colour": "#4E7548",
-          "sourceVideo": "Video_20261103_162227.mp4",
-          "videoSeconds": 54.0,
-          "confidence": 0.53,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
-        },
-        {
           "id": "boundary-hedge",
           "objectType": "hedge",
           "routeChainageMeters": 1371.735,
@@ -767,55 +733,38 @@
           "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
         },
         {
-          "id": "mature-broadleaf-left-inner",
-          "objectType": "broadleaf-tree",
+          "id": "mature-broadleaf-left",
+          "objectType": "authored-scene-asset",
           "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -4,
-          "forwardOffsetMeters": 22,
-          "orientationDegrees": 0,
-          "lengthMeters": 0,
+          "lateralPositionMeters": -3.0,
+          "forwardOffsetMeters": 25.0,
+          "orientationDegrees": 9,
+          "lengthMeters": 5.0,
           "widthMeters": 5.0,
-          "heightMeters": 8.6,
-          "variant": "dense-round-crown",
-          "colour": "#4C7046",
+          "heightMeters": 9.2,
+          "variant": "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb",
+          "material": "natural-olive-leaf-canopy",
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
-          "confidence": 0.48,
-          "provenance": "individually placed from the repeated mature tree canopy visible behind the cross-street fence in the timestamped frame; approximate route-relative placement"
+          "confidence": 0.62,
+          "provenance": "Poly Haven Tree Small 02 CC0 model, manually scaled and placed behind the observed cross-street fence; broadleaf species and exact tree positions are visual approximations."
         },
         {
-          "id": "mature-broadleaf-center",
-          "objectType": "broadleaf-tree",
+          "id": "mature-broadleaf-right",
+          "objectType": "authored-scene-asset",
           "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 3,
-          "forwardOffsetMeters": 22,
-          "orientationDegrees": 0,
-          "lengthMeters": 0,
-          "widthMeters": 5.2,
-          "heightMeters": 9,
-          "variant": "dense-round-crown",
-          "colour": "#4C7046",
+          "lateralPositionMeters": 17.0,
+          "forwardOffsetMeters": 24.0,
+          "orientationDegrees": -11,
+          "lengthMeters": 5.0,
+          "widthMeters": 5.0,
+          "heightMeters": 9.2,
+          "variant": "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb",
+          "material": "natural-olive-leaf-canopy",
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
-          "confidence": 0.48,
-          "provenance": "individually placed from the repeated mature tree canopy visible behind the cross-street fence in the timestamped frame; approximate route-relative placement"
-        },
-        {
-          "id": "mature-broadleaf-right-inner",
-          "objectType": "broadleaf-tree",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 8,
-          "forwardOffsetMeters": 22,
-          "orientationDegrees": 0,
-          "lengthMeters": 0,
-          "widthMeters": 4.8,
-          "heightMeters": 8.4,
-          "variant": "dense-round-crown",
-          "colour": "#4C7046",
-          "sourceVideo": "Video_20261103_162227.mp4",
-          "videoSeconds": 54.0,
-          "confidence": 0.48,
-          "provenance": "individually placed from the repeated mature tree canopy visible behind the cross-street fence in the timestamped frame; approximate route-relative placement"
+          "confidence": 0.62,
+          "provenance": "Poly Haven Tree Small 02 CC0 model, manually scaled and placed behind the observed cross-street fence; broadleaf species and exact tree positions are visual approximations."
         }
       ]
     },
@@ -900,7 +849,8 @@
       "videoSeconds": 1,
       "confidence": 0.44,
       "provenance": "Mapped OSM footprint retained; facade and roof style manually chosen from the nearby timestamped video frame. Exact per-house material remains an approximation.",
-      "visualHeightMeters": 5.8
+      "visualHeightMeters": 5.8,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983392478,
@@ -912,7 +862,8 @@
       "videoSeconds": 1,
       "confidence": 0.4,
       "provenance": "Mapped OSM footprint retained; facade and roof style manually chosen from the nearby timestamped video frame. Exact per-house material remains an approximation.",
-      "visualHeightMeters": 6.8
+      "visualHeightMeters": 6.8,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983390740,
@@ -1131,7 +1082,8 @@
       "videoSeconds": 1.0,
       "confidence": 0.36,
       "provenance": "OSM building footprint retained. The aligned footage shows low-rise residential houses with pitched roofs in this streetscape; facade material, individual roof assignment and height are stylised approximations, not surveyed measurements.",
-      "visualHeightMeters": 5.5
+      "visualHeightMeters": 5.5,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983390297,

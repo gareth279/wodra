@@ -35,6 +35,14 @@ public static class RouteSceneTransformMath
     /// <summary>The NZ give-way triangle point and sign face toward approaching traffic (local +Z).</summary>
     public static Vector3 ApproachingDirection(Vector3 routeForward) => -HorizontalForward(routeForward);
 
+    public static bool IsWithinHorizontalRadius(Vector3 point, Vector3 center, float radiusMeters)
+    {
+        if (!Finite(point) || !Finite(center) || !float.IsFinite(radiusMeters) || radiusMeters < 0)
+            throw new ArgumentOutOfRangeException(nameof(radiusMeters));
+        var x = point.X - center.X; var z = point.Z - center.Z;
+        return x * x + z * z <= radiusMeters * radiusMeters;
+    }
+
     public static YieldTriangleVertices YieldTriangle(float widthMeters, float lengthMeters)
     {
         if (!float.IsFinite(widthMeters) || widthMeters <= 0) throw new ArgumentOutOfRangeException(nameof(widthMeters));
