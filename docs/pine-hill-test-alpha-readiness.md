@@ -49,3 +49,8 @@ The latest 1,147,861 peak primitive count and 962 peak draw calls show that broa
 - No release package was published. Public distribution of the video-derived fence texture remains owner-approval gated.
 
 Release readiness remains conditional on a canonical publisher smoke run with the provisioned EOS configuration, a packaged-app ride test on a configured dummy trainer, updated CI, owner approval to distribute the fence texture, and owner acceptance of the fresh sign render. The route remains an experimental point-to-point reconstruction; local 8 m DEM resolution, approximate road width and unmodeled fine retaining walls, power lines, paint wear and residential details remain limitations.
+
+### Recording artifact check
+
+The final RideScreen harness run produced wodra-20261104-122011.fit (386 bytes) in the local evidence folder. Wodra's FitRideLoader accepted its FIT integrity checks and decoded 3 record frames plus 2 timer events (6 seconds, 11.6 m). The FIT recording remains local and is not included in the route package or repository.
+
