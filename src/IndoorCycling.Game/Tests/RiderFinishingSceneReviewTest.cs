@@ -422,9 +422,11 @@ public partial class RiderFinishingSceneReviewTest : Node
                 ?? throw new InvalidOperationException("The imported skinned bib-short surface is missing.");
             if (Find<Node>(rider, "RiderRoadKitDetails") is not null || Find<Node>(rider, "RiderJerseyCollar") is not null)
                 throw new InvalidOperationException("Obsolete projected garment overlays must be removed before reviewing the fitted surfaces.");
-            if (jerseyShell.Mesh is null || jerseyShell.Mesh.GetSurfaceCount() != 3 || jerseyShell.Skin is null ||
-                shortsShell.Mesh is null || shortsShell.Mesh.GetSurfaceCount() != 2 || shortsShell.Skin is null)
-                throw new InvalidOperationException("The jersey and bib shorts need continuous skinned fabric surfaces.");
+            if (FindAll<MeshInstance3D>(rider).Count(mesh => mesh.Name == "RiderJerseyShell") != 1 ||
+                FindAll<MeshInstance3D>(rider).Count(mesh => mesh.Name == "RiderBibShortsShell") != 1 ||
+                jerseyShell.Mesh is null || jerseyShell.Mesh.GetSurfaceCount() < 1 || jerseyShell.Skin is null ||
+                shortsShell.Mesh is null || shortsShell.Mesh.GetSurfaceCount() < 1 || shortsShell.Skin is null)
+                throw new InvalidOperationException("The authored jersey and bib shorts must each load once as skinned production meshes.");
             var maximumJerseyHeadWeight = new float[jerseyShell.Mesh.GetSurfaceCount()];
             for (var surface = 0; surface < jerseyShell.Mesh.GetSurfaceCount(); surface++)
             {
@@ -1116,6 +1118,12 @@ public partial class RiderFinishingSceneReviewTest : Node
         Camera3D camera, Vector3 bikeForward, Vector3 bikeSide)
     {
         var savedFov = camera.Fov;
+        if (System.Environment.GetEnvironmentVariable("WODRA_GARMENT_SHORTS_DIAGNOSTIC") == "1")
+        {
+            await CaptureShortsDiagnostics(output, rider, skeleton, camera, bikeForward, bikeSide);
+            camera.Fov = savedFov;
+            return;
+        }
         var views = new[]
         {
             ("front", bikeForward),
@@ -1174,6 +1182,79 @@ public partial class RiderFinishingSceneReviewTest : Node
         rider.SetReviewCrankPhase(0);
         camera.Fov = savedFov;
     }
+
+    private async Task CaptureShortsDiagnostics(string output, CyclistVisual rider, Skeleton3D skeleton,
+        Camera3D camera, Vector3 bikeForward, Vector3 bikeSide)
+    {
+        var shorts = Find<MeshInstance3D>(rider, "RiderBibShortsShell")
+            ?? throw new InvalidOperationException("Diagnostic bib shorts mesh is missing.");
+        var human = Find<MeshInstance3D>(rider, "Human")
+            ?? throw new InvalidOperationException("Diagnostic Human mesh is missing.");
+        var originalShortsVisible = shorts.Visible;
+        var originalHumanVisible = human.Visible;
+        var humanOverrides = Enumerable.Range(0, human.Mesh?.GetSurfaceCount() ?? 0)
+            .Select(human.GetSurfaceOverrideMaterial).ToArray();
+        var shortsOverrides = Enumerable.Range(0, shorts.Mesh?.GetSurfaceCount() ?? 0)
+            .Select(shorts.GetSurfaceOverrideMaterial).ToArray();
+        var humanFlat = FlatMaterial(new Color(.95f, .02f, .42f));
+        var shortsFlat = FlatMaterial(new Color(.03f, .3f, .9f));
+        var views = new[]
+        {
+            ("rear", -bikeForward), ("rear-three-quarter", (-bikeForward + bikeSide).Normalized())
+        };
+        rider.SetCustomization("Teal", "Charcoal");
+        camera.Fov = 26f;
+        foreach (var phase in new[] { 0, 90, 180, 270 })
+        {
+            rider.SetReviewCrankPhase(phase);
+            var pelvis = (BoneWorldPosition(skeleton, "pelvis.L") + BoneWorldPosition(skeleton, "pelvis.R")) * .5f;
+            var seat = (BoneWorldPosition(skeleton, "upperleg01.L") + BoneWorldPosition(skeleton, "upperleg01.R")) * .5f;
+            var target = pelvis.Lerp(seat, .35f) + Vector3.Up * .045f;
+            foreach (var (angle, direction) in views)
+            {
+                camera.GlobalPosition = target + direction * .62f + Vector3.Up * .015f;
+                camera.LookAt(target, Vector3.Up);
+                await Settle(3);
+
+                shorts.Visible = true;
+                human.Visible = true;
+                await Save(output, $"shorts-original-{angle}-phase-{phase:D3}.png");
+
+                shorts.Visible = false;
+                await Save(output, $"shorts-hidden-human-{angle}-phase-{phase:D3}.png");
+
+                shorts.Visible = true;
+                human.Visible = false;
+                await Save(output, $"shorts-only-{angle}-phase-{phase:D3}.png");
+
+                shorts.Visible = true;
+                human.Visible = true;
+                for (var surface = 0; surface < shortsOverrides.Length; surface++)
+                    shorts.SetSurfaceOverrideMaterial(surface, shortsFlat);
+                for (var surface = 0; surface < humanOverrides.Length; surface++)
+                    human.SetSurfaceOverrideMaterial(surface, humanFlat);
+                await Save(output, $"shorts-flat-{angle}-phase-{phase:D3}.png");
+
+                for (var surface = 0; surface < shortsOverrides.Length; surface++)
+                    shorts.SetSurfaceOverrideMaterial(surface, shortsOverrides[surface]);
+                for (var surface = 0; surface < humanOverrides.Length; surface++)
+                    human.SetSurfaceOverrideMaterial(surface, humanOverrides[surface]);
+            }
+        }
+        shorts.Visible = originalShortsVisible;
+        human.Visible = originalHumanVisible;
+        for (var surface = 0; surface < shortsOverrides.Length; surface++)
+            shorts.SetSurfaceOverrideMaterial(surface, shortsOverrides[surface]);
+        for (var surface = 0; surface < humanOverrides.Length; surface++)
+            human.SetSurfaceOverrideMaterial(surface, humanOverrides[surface]);
+    }
+
+    private static StandardMaterial3D FlatMaterial(Color color) => new()
+    {
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+        AlbedoColor = color,
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled
+    };
 
     private void VerifySideCenter(RideWorldView world, HudController hud, bool debug)
     {
@@ -1403,3 +1484,4 @@ public partial class RiderFinishingSceneReviewTest : Node
         for (var i = 0; i < frames; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
     }
 }
+

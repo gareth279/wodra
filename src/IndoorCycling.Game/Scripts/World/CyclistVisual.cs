@@ -7,6 +7,7 @@ using IndoorCycling.Core.Models;
 public partial class CyclistVisual : Node3D
 {
     private const string ImportedModelPath = "res://Assets/Models/WodraCyclist.glb";
+    private const string CorrectedShortsPath = "res://Assets/Models/RiderGarments.glb";
     private const string RigidHelmetPath = "res://Assets/Models/CyclingHelmetRigid.glb";
     private const double ImportedCrankPhaseOffset = -Math.PI / 2.0;
     private const int ImportedPedalSamplesPerRevolution = 72;
@@ -513,6 +514,7 @@ public partial class CyclistVisual : Node3D
         var rearWheelInModel = TransformToAncestor(_rearWheel, instance).Origin;
         RiderGarmentMeshBuilder.Attach(human, skeleton,
             (frontWheelInModel - rearWheelInModel).Normalized(), instance);
+        ReplaceGeneratedShortsWithAuthoredCorrection(instance, human, skeleton);
 
         // Imported bike assets own their frame finish and material groups.
         // The palette override remains available to the generated fallback,
@@ -522,6 +524,61 @@ public partial class CyclistVisual : Node3D
         AttachRigidHelmet(instance, skeleton);
         _approximateTriangleCount = CountTriangles(instance);
         return true;
+    }
+
+    private static void ReplaceGeneratedShortsWithAuthoredCorrection(Node root, MeshInstance3D human,
+        Skeleton3D targetSkeleton)
+    {
+        var packed = ResourceLoader.Load<PackedScene>(CorrectedShortsPath)
+            ?? throw new InvalidOperationException($"Corrected bib shorts are missing: {CorrectedShortsPath}.");
+        var sourceRoot = packed.Instantiate<Node3D>();
+        root.AddChild(sourceRoot);
+        var sourceSkeleton = FindFirstNode<Skeleton3D>(sourceRoot)
+            ?? throw new InvalidOperationException("Corrected shorts asset has no source Skeleton3D.");
+        var sourceShorts = FindModelNode<MeshInstance3D>(sourceRoot, "RiderBibShortsShell")
+            ?? throw new InvalidOperationException("Corrected shorts asset is missing RiderBibShortsShell.");
+        var generated = FindModelNode<MeshInstance3D>(root, "RiderBibShortsShell")
+            ?? throw new InvalidOperationException("The baseline garment builder did not create bib shorts.");
+        if (sourceShorts.Mesh is not ArrayMesh sourceArray || sourceShorts.Skin is null || human.Skin is null)
+            throw new InvalidOperationException("Corrected shorts and Human production Skin are required.");
+
+        var bindRemap = new int[sourceShorts.Skin.GetBindCount()];
+        for (var sourceBind = 0; sourceBind < bindRemap.Length; sourceBind++)
+        {
+            var sourceBone = sourceShorts.Skin.GetBindBone(sourceBind);
+            var boneName = sourceShorts.Skin.GetBindName(sourceBind).ToString();
+            if (sourceBone >= 0 && sourceBone < sourceSkeleton.GetBoneCount())
+                boneName = sourceSkeleton.GetBoneName(sourceBone).ToString();
+            var targetBone = targetSkeleton.FindBone(boneName);
+            if (targetBone < 0) throw new InvalidOperationException($"Corrected shorts bone '{boneName}' is missing.");
+            var targetBind = Enumerable.Range(0, human.Skin.GetBindCount()).FirstOrDefault(index =>
+                human.Skin.GetBindBone(index) == targetBone || human.Skin.GetBindName(index).ToString() == boneName, -1);
+            if (targetBind < 0) throw new InvalidOperationException($"Production Human Skin has no bind for '{boneName}'.");
+            bindRemap[sourceBind] = targetBind;
+        }
+
+        var corrected = new ArrayMesh { ResourceName = "Bib shorts | Blender centreline correction" };
+        for (var surface = 0; surface < sourceArray.GetSurfaceCount(); surface++)
+        {
+            var arrays = sourceArray.SurfaceGetArrays(surface).Duplicate(true);
+            var bones = arrays[(int)Mesh.ArrayType.Bones].AsInt32Array();
+            for (var index = 0; index < bones.Length; index++)
+            {
+                if (bones[index] < 0 || bones[index] >= bindRemap.Length)
+                    throw new InvalidOperationException("Corrected shorts reference an invalid Skin bind.");
+                bones[index] = bindRemap[bones[index]];
+            }
+            arrays[(int)Mesh.ArrayType.Bones] = bones;
+            var output = corrected.GetSurfaceCount();
+            corrected.AddSurfaceFromArrays(sourceArray.SurfaceGetPrimitiveType(surface), arrays);
+            corrected.SurfaceSetMaterial(output, sourceArray.SurfaceGetMaterial(surface));
+        }
+        generated.Mesh = corrected;
+        generated.Skin = human.Skin;
+        generated.Transform = human.Transform;
+        generated.Skeleton = generated.GetPathTo(targetSkeleton);
+        sourceRoot.Free();
+        GD.Print($"[Cyclist GLB] replaced only bib shorts with Blender centreline correction; surfaces={corrected.GetSurfaceCount()}; baseline Alpha.90 jersey builder retained.");
     }
 
     private static void RemoveLegacyGarmentDetails(Node importedModel)
@@ -755,16 +812,16 @@ public partial class CyclistVisual : Node3D
             ?? throw new InvalidOperationException("Imported rider is missing the skinned jersey shell.");
         var shorts = FindModelNode<MeshInstance3D>(root, "RiderBibShortsShell")
             ?? throw new InvalidOperationException("Imported rider is missing the skinned bib-short shell.");
-        if (jersey.Mesh?.GetSurfaceCount() != 3 || shorts.Mesh?.GetSurfaceCount() != 2)
-            throw new InvalidOperationException($"Expected continuous jersey, sleeve cuffs, zipper, bib fabric and gripper surfaces; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
+        if (jersey.Mesh?.GetSurfaceCount() != 3 || shorts.Mesh is null || shorts.Mesh.GetSurfaceCount() < 1)
+            throw new InvalidOperationException($"Expected the baseline jersey and authored bib shorts; got {jersey.Mesh?.GetSurfaceCount()}/{shorts.Mesh?.GetSurfaceCount()}.");
         jersey.SetSurfaceOverrideMaterial(0, outfit);
         jersey.SetSurfaceOverrideMaterial(1, outfit);
         _zipperMaterial = new ShaderMaterial { Shader = RiderOutfitShader };
         ConfigureOutfitShader(_zipperMaterial, _jerseyMaterial.AlbedoColor, .48f);
         jersey.SetSurfaceOverrideMaterial(2, _zipperMaterial);
-        shorts.SetSurfaceOverrideMaterial(0, outfit);
-        shorts.SetSurfaceOverrideMaterial(1, outfit);
-        GD.Print("[Cyclist GLB] fitted jersey, continuous neckline, short-sleeve cuffs, centre zipper, and bib shorts/grippers use the production Human Skin and skeleton.");
+        for (var surface = 0; surface < shorts.Mesh.GetSurfaceCount(); surface++)
+            shorts.SetSurfaceOverrideMaterial(surface, outfit);
+        GD.Print("[Cyclist GLB] baseline Alpha.90 jersey and Blender-corrected bib shorts use the production Human Skin and skeleton.");
     }
 
     private static void ConfigureOutfitShader(ShaderMaterial material, Color jerseyColor, float tone)
