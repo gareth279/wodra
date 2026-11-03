@@ -16,6 +16,7 @@ public partial class BuildingLayer : Node3D
 
     public int BuildingsLoaded { get; private set; }
     public int BuildingsSuppressedForRideCorridor { get; private set; }
+    public int BuildingsSuppressedForAuthoredScene { get; private set; }
     public int ChunkCount => _chunks.Count;
     public int MeshInstanceCount => _chunks.Count;
     public int VisibleChunkCount => _chunks.Count(item => item.Instance.Visible);
@@ -62,6 +63,12 @@ public partial class BuildingLayer : Node3D
             var buildingCount = 0;
             foreach (var building in group)
             {
+                styles.TryGetValue(building.OsmId, out var authoredStyle);
+                if (authoredStyle?.HideFromRenderer == true)
+                {
+                    BuildingsSuppressedForAuthoredScene++;
+                    continue;
+                }
                 if (building.BaseElevationMeters is not { } elevation || building.Footprint.Count < 4) continue;
                 var ring = building.Footprint.Select((point, index) =>
                 {
@@ -72,7 +79,6 @@ public partial class BuildingLayer : Node3D
                     return new System.Numerics.Vector3(world.X - origin.X, world.Y - origin.Y, world.Z - origin.Z);
                 }).ToArray();
                 var tags = building.SourceTags ?? new Dictionary<string, string>();
-                styles.TryGetValue(building.OsmId, out var authoredStyle);
                 var category = authoredStyle?.BuildingType ?? (building.VisualCategory == "generic"
                     ? BuildingVisualStyle.Classify(tags) : building.VisualCategory);
                 var variant = building.MaterialVariant is >= 0 and < 10
@@ -159,7 +165,8 @@ public partial class BuildingLayer : Node3D
             BuildingsLoaded += buildingCount;
         }
         timer.Stop(); BuildMilliseconds = timer.Elapsed.TotalMilliseconds;
-        GD.Print($"Buildings visual: loaded={BuildingsLoaded} corridorSuppressed={BuildingsSuppressedForRideCorridor} detailed={DetailedBuildingCount} " +
+        GD.Print($"Buildings visual: loaded={BuildingsLoaded} corridorSuppressed={BuildingsSuppressedForRideCorridor} " +
+            $"authoredSceneSuppressed={BuildingsSuppressedForAuthoredScene} detailed={DetailedBuildingCount} " +
             $"pitchedRoofs={RoofedBuildingCount} triangles={TriangleCount} " +
             $"facade={FacadeTriangleCount} roof={RoofTriangleCount} windows={WindowTriangleCount} " +
             $"chunks={ChunkCount} meshInstances={MeshInstanceCount} surfaces={SurfaceCount} " +

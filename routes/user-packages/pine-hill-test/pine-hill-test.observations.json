@@ -580,14 +580,31 @@
       "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
       "features": [
         {
+          "id": "authored-give-way-intersection-scene",
+          "objectType": "authored-scene-asset",
+          "routeChainageMeters": 1371.735,
+          "lateralPositionMeters": 0,
+          "forwardOffsetMeters": 0,
+          "orientationDegrees": 0,
+          "lengthMeters": 0,
+          "widthMeters": 0,
+          "heightMeters": 0,
+          "variant": "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb",
+          "colour": "",
+          "sourceVideo": "Video_20261103_162227.mp4",
+          "videoSeconds": 54.0,
+          "confidence": 0.83,
+          "provenance": "Blender-authored route-local scene assembled from frame 114 s. Asset silhouette and dimensions are manual estimates; route location follows the matched GPS pose."
+        },
+        {
           "id": "yield-triangle",
           "objectType": "yield-triangle",
           "routeChainageMeters": 1371.735,
           "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 4.6,
+          "forwardOffsetMeters": 3.0,
           "orientationDegrees": 0,
           "lengthMeters": 4.0,
-          "widthMeters": 1.8,
+          "widthMeters": 3.0,
           "heightMeters": 0.02,
           "variant": "hollow-white-outline",
           "colour": "#F2F1E8",
@@ -599,9 +616,9 @@
         {
           "id": "give-way-transverse-line",
           "objectType": "give-way-line",
-          "routeChainageMeters": 1378.2,
+          "routeChainageMeters": 1371.735,
           "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 0,
+          "forwardOffsetMeters": 9.5,
           "orientationDegrees": 0,
           "lengthMeters": 7,
           "widthMeters": 0.16,
@@ -611,7 +628,7 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.72,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; transverse line is placed beyond the far edge of the yield triangle from the source perspective; longitudinal placement remains an estimate"
         },
         {
           "id": "left-yellow-kerb-paint",
@@ -870,7 +887,8 @@
       "videoSeconds": 54.0,
       "confidence": 0.44,
       "provenance": "Mapped OSM footprint retained; material and roof selection is an approximate manual match to the visible house in video.",
-      "visualHeightMeters": 6.0
+      "visualHeightMeters": 6.0,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983389056,
@@ -990,7 +1008,8 @@
       "videoSeconds": 6.0,
       "confidence": 0.36,
       "provenance": "OSM building footprint retained. The aligned footage shows low-rise residential houses with pitched roofs in this streetscape; facade material, individual roof assignment and height are stylised approximations, not surveyed measurements.",
-      "visualHeightMeters": 6.04
+      "visualHeightMeters": 6.04,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983387373,
@@ -1014,7 +1033,8 @@
       "videoSeconds": 54.0,
       "confidence": 0.36,
       "provenance": "OSM building footprint retained. The aligned footage shows low-rise residential houses with pitched roofs in this streetscape; facade material, individual roof assignment and height are stylised approximations, not surveyed measurements.",
-      "visualHeightMeters": 6.22
+      "visualHeightMeters": 6.22,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983388606,
@@ -1026,7 +1046,8 @@
       "videoSeconds": 6.0,
       "confidence": 0.36,
       "provenance": "OSM building footprint retained. The aligned footage shows low-rise residential houses with pitched roofs in this streetscape; facade material, individual roof assignment and height are stylised approximations, not surveyed measurements.",
-      "visualHeightMeters": 5.5
+      "visualHeightMeters": 5.5,
+      "hideFromRenderer": true
     },
     {
       "osmId": 983388617,

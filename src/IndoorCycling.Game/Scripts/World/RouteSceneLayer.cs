@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 
@@ -12,27 +13,38 @@ public partial class RouteSceneLayer : Node3D
     public int FeaturesRendered { get; private set; }
     public int TimberFenceFeatures { get; private set; }
     public int RoadMarkingFeatures { get; private set; }
+    public int AuthoredAssetFeatures { get; private set; }
+    public int AuthoredAssetMeshInstances { get; private set; }
 
     public void Configure(VisualRoute route, RouteSceneData data)
     {
+        var authoredIntersection = data.Features.FirstOrDefault(feature => feature.ObjectType == "authored-scene-asset");
         var terrain = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
             $"Wodra.GameData.Routes.{data.Id}.terrain.json", data.Id);
         foreach (var feature in data.Features)
         {
+            if (authoredIntersection is not null && feature != authoredIntersection
+                && Math.Abs(feature.RouteChainageMeters - authoredIntersection.RouteChainageMeters) <= 36
+                && feature.ObjectType is "timber-fence" or "picket-fence" or "broadleaf-tree" or "conifer-tree"
+                    or "shrub" or "hedge" or "grass-verge" or "planting-bed" or "give-way-sign" or "utility-pole")
+                continue;
             var pose = route.GetPoseAtDistance(feature.RouteChainageMeters);
             var routeForward = ProceduralRoad.ToGodot(pose.Forward);
-            var forward = new Vector3(routeForward.X, 0, routeForward.Z).Normalized();
+            System.Numerics.Vector3 routeTangent = new(routeForward.X, routeForward.Y, routeForward.Z);
+            routeTangent = RouteSceneTransformMath.HorizontalForward(routeTangent);
+            var forward = new Vector3(routeTangent.X, 0, routeTangent.Z);
             if (forward.LengthSquared() < 0.9f) continue;
-            var right = forward.Cross(Vector3.Up).Normalized();
-            var origin = ProceduralRoad.ToGodot(pose.Position) + right * (float)feature.LateralPositionMeters
-                + forward * (float)feature.ForwardOffsetMeters;
+            var routePosition = ProceduralRoad.ToGodot(pose.Position);
+            var originNumerics = RouteSceneTransformMath.Position(pose.Position, routeTangent,
+                (float)feature.LateralPositionMeters, (float)feature.ForwardOffsetMeters);
+            var origin = ProceduralRoad.ToGodot(originNumerics);
             var roadPaint = feature.ObjectType is "yield-triangle" or "give-way-line" or "yellow-kerb-stripe" or "white-lane-dash";
             if (roadPaint)
                 origin.Y = ProceduralRoad.ToGodot(pose.Position).Y + .06f;
             else if (terrain is not null && TerrainMeshGeometry.TrySampleGroundY(terrain, origin.X, origin.Z, out var groundY))
                 origin.Y = groundY + .025f;
             var node = new Node3D { Name = SafeName(feature.Id), Position = origin };
-            node.Rotation = new Vector3(0, MathF.Atan2(-forward.X, -forward.Z)
+            node.Rotation = new Vector3(0, RouteSceneTransformMath.YawRadians(routeTangent)
                 + (float)(feature.OrientationDegrees * Math.PI / 180), 0);
             AddChild(node);
             switch (feature.ObjectType)
@@ -49,6 +61,7 @@ public partial class RouteSceneLayer : Node3D
                 case "retaining-wall": BuildBoundaryWall(node, feature, true); break;
                 case "utility-pole": BuildUtilityPole(node, feature); break;
                 case "give-way-sign": BuildGiveWaySign(node, feature); break;
+                case "authored-scene-asset": BuildAuthoredSceneAsset(node, feature); AuthoredAssetFeatures++; break;
                 case "yield-triangle": BuildYieldTriangle(node, feature); RoadMarkingFeatures++; break;
                 case "give-way-line": BuildGiveWayLine(node, feature); RoadMarkingFeatures++; break;
                 case "yellow-kerb-stripe": BuildYellowKerb(node, feature); RoadMarkingFeatures++; break;
@@ -56,6 +69,21 @@ public partial class RouteSceneLayer : Node3D
             }
             FeaturesRendered++;
         }
+    }
+
+    private void BuildAuthoredSceneAsset(Node3D root, RouteSceneFeature feature)
+    {
+        if (string.IsNullOrWhiteSpace(feature.Variant) || !feature.Variant.StartsWith("res://", StringComparison.Ordinal))
+            throw new InvalidDataException($"Authored scene feature '{feature.Id}' must use a project resource path.");
+        var packed = ResourceLoader.Load<PackedScene>(feature.Variant);
+        if (packed is null)
+            throw new InvalidDataException($"Authored scene feature '{feature.Id}' asset '{feature.Variant}' could not be loaded.");
+        var instance = packed.Instantiate<Node3D>();
+        instance.Name = SafeName(feature.Id + "_BlenderAsset");
+        var meshInstances = instance.FindChildren("*", nameof(MeshInstance3D), true, false)
+            .OfType<MeshInstance3D>().ToArray();
+        AuthoredAssetMeshInstances += meshInstances.Length;
+        root.AddChild(instance);
     }
 
     private static void BuildFence(Node3D root, RouteSceneFeature feature)
@@ -246,10 +274,10 @@ public partial class RouteSceneLayer : Node3D
     {
         var w = Math.Clamp((float)feature.WidthMeters,1.2f,3.0f); var len = Math.Clamp((float)feature.LengthMeters,1.5f,4.0f);
         var white = Material(new Color(.90f,.90f,.86f));
-        // Route forward maps to local -Z. The open end is at the rider and the apex points ahead.
-        AddStrip(root, "YieldLeftEdge", new Vector3(-w/2,0,len/2), new Vector3(0,0,-len/2), .14f, white);
-        AddStrip(root, "YieldRightEdge", new Vector3(w/2,0,len/2), new Vector3(0,0,-len/2), .14f, white);
-        AddStrip(root, "YieldBaseEdge", new Vector3(-w/2,0,len/2), new Vector3(w/2,0,len/2), .14f, white);
+        var marking = RouteSceneTransformMath.YieldTriangle(w, len);
+        AddStrip(root, "YieldLeftEdge", ProceduralRoad.ToGodot(marking.LeftBase), ProceduralRoad.ToGodot(marking.Apex), .12f, white);
+        AddStrip(root, "YieldRightEdge", ProceduralRoad.ToGodot(marking.RightBase), ProceduralRoad.ToGodot(marking.Apex), .12f, white);
+        AddStrip(root, "YieldBaseEdge", ProceduralRoad.ToGodot(marking.LeftBase), ProceduralRoad.ToGodot(marking.RightBase), .12f, white);
     }
 
     private static void BuildGiveWayLine(Node3D root, RouteSceneFeature feature)

@@ -8,7 +8,8 @@ using System.Text.Json;
 /// <summary>A video-observed visual override for an existing mapped building footprint.</summary>
 public sealed record RouteSceneBuildingStyle(long OsmId, string? FacadeColour, string? RoofColour,
     string? RoofShape, string? BuildingType, string? SourceVideo = null, double? VideoSeconds = null,
-    double? Confidence = null, string? Provenance = null, double? VisualHeightMeters = null);
+    double? Confidence = null, string? Provenance = null, double? VisualHeightMeters = null,
+    bool HideFromRenderer = false);
 
 /// <summary>One individually authored, route-relative video observation used by the world renderer.</summary>
 public sealed record RouteSceneFeature(string Id, string ObjectType, double RouteChainageMeters,
@@ -32,7 +33,8 @@ public static class RouteSceneDataLoader
     {
         "timber-fence", "picket-fence", "broadleaf-tree", "conifer-tree", "shrub", "hedge",
         "grass-verge", "planting-bed", "low-boundary-wall", "retaining-wall", "utility-pole",
-        "give-way-sign", "yield-triangle", "give-way-line", "yellow-kerb-stripe", "white-lane-dash"
+        "give-way-sign", "yield-triangle", "give-way-line", "yellow-kerb-stripe", "white-lane-dash",
+        "authored-scene-asset"
     };
 
     public static RouteSceneData Load(Assembly assembly, string resourceName, string routeId, double routeLengthMeters)

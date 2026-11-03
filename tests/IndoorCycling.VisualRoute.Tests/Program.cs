@@ -6,6 +6,29 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("route scene markings and sign faces follow the observed approach in every compass direction", () =>
+    {
+        foreach (var headingDegrees in new[] { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f })
+        {
+            var radians = headingDegrees * MathF.PI / 180;
+            var forward = new Vector3(MathF.Sin(radians), 0, -MathF.Cos(radians));
+            var marking = RouteSceneTransformMath.YieldTriangle(3, 4);
+            var localForward = RouteSceneTransformMath.LocalToWorldDirection(forward, -Vector3.UnitZ);
+            var signFace = RouteSceneTransformMath.ApproachingDirection(forward);
+            var triangleApex = RouteSceneTransformMath.LocalToWorldDirection(forward, marking.Apex);
+            var triangleBaseCenter = RouteSceneTransformMath.LocalToWorldDirection(forward,
+                (marking.LeftBase + marking.RightBase) / 2);
+            var right = RouteSceneTransformMath.LocalToWorldDirection(forward, Vector3.UnitX);
+            NearVector(Vector3.Normalize(forward), localForward);
+            NearVector(-Vector3.Normalize(forward), signFace);
+            NearVector(signFace, triangleApex);
+            NearVector(Vector3.Normalize(forward), triangleBaseCenter);
+            Near(0, Vector3.Dot(right, forward));
+            Near(1, right.Length());
+            var position = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, 2, 4);
+            NearVector(new Vector3(10, 3, -5) + right * 2 + forward * 4, position);
+        }
+    }),
     ("Pine Hill Test loads its point-to-point OSM/LINZ route and scenery package", () =>
     {
         const string id = "pine-hill-test";
@@ -41,13 +64,25 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"Pine Hill package is missing its {suffix} sidecar.");
         var authoredScene = RouteSceneDataLoader.Load(typeof(RouteCatalog).Assembly,
             $"Wodra.GameData.Routes.{id}.observations.json", id, route.DistanceMeters);
+        var intersectionAsset = authoredScene.Features.SingleOrDefault(feature => feature.ObjectType == "authored-scene-asset");
+        var yieldMark = authoredScene.Features.Single(feature => feature.ObjectType == "yield-triangle");
+        var giveWayLine = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-line");
         if (authoredScene.Features.Count < 25
+            || intersectionAsset is null || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
+            || intersectionAsset.Variant != "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb"
+            || yieldMark.ForwardOffsetMeters != 3 || yieldMark.LengthMeters != 4 || yieldMark.WidthMeters != 3
+            || Vector3.Dot(
+                RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0, checked((float)giveWayLine.ForwardOffsetMeters))
+                    - RouteSceneTransformMath.Position(Vector3.Zero, Vector3.UnitZ * -1, 0,
+                        checked((float)(yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2))),
+                Vector3.UnitZ * -1) < 4
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1370)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters < 10)
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 380 and < 410)
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 750 and < 790)
             || authoredScene.BuildingStyles.Count < 24
+            || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 4
             || authoredScene.BuildingStyles.Any(style => style.VisualHeightMeters is not (> 2 and <= 30)
                 || string.IsNullOrWhiteSpace(style.SourceVideo) || style.Confidence is not (>= 0 and <= 1)
                 || string.IsNullOrWhiteSpace(style.Provenance)))

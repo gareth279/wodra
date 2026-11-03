@@ -68,9 +68,10 @@ public partial class PineHillRideScreenReviewTest : Node
                 && diagnostic.TerrainChunksLoaded > 0 && diagnostic.BackgroundStreetsLoaded > 0,
                 "OSM buildings, mapped trees, LINZ terrain and surrounding streets load in RideScreen");
             var authoredScene = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-            Assert(authoredScene.FeaturesRendered >= 25 && authoredScene.TimberFenceFeatures == 2
+            Assert(authoredScene.FeaturesRendered >= 21 && authoredScene.TimberFenceFeatures == 1
+                && authoredScene.AuthoredAssetFeatures == 1 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
                 && authoredScene.RoadMarkingFeatures == 6,
-                "timestamped video observations create authored fences, signs, vegetation and markings at four checkpoints");
+                $"observations load the Blender intersection asset ({authoredScene.AuthoredAssetMeshInstances} mesh instances) and route markings at four checkpoints");
             if (!IsHeadless)
             {
                 Capture("pine-route-start.png");
