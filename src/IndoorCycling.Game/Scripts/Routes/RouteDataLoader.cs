@@ -12,7 +12,8 @@ public static class RouteDataLoader
 		double? ActualOsmDistanceMeters, IReadOnlyList<RoutePointData>? Points,
 		string? RouteType, string? Difficulty, int? RouteDataVersion, string? GeometryFingerprint,
 		string? SourceAttribution, double? TotalAscentMeters, string? Environment, string? Discipline,
-		IReadOnlyList<RouteSurfaceSegmentData>? SurfaceSegments, double? ActualRouteDistanceMeters);
+		IReadOnlyList<RouteSurfaceSegmentData>? SurfaceSegments, double? ActualRouteDistanceMeters,
+		bool? RenderRouteReferenceMarkings);
 	private sealed record RoutePointData(double DistanceMeters, double? Latitude, double? Longitude,
 		double? ElevationMeters, double? RawElevationMeters, double? GradientPercent,
 		double? LocalXMeters, double? LocalZMeters);
@@ -184,7 +185,8 @@ public static class RouteDataLoader
 			PublishedTotalAscentMeters = publishedAscentMeters,
 			Environment = environment,
 			Discipline = discipline,
-			SurfaceSegments = surfaces
+			SurfaceSegments = surfaces,
+			RenderRouteReferenceMarkings = source.RenderRouteReferenceMarkings ?? true
 		};
 		if (!string.IsNullOrWhiteSpace(source.GeometryFingerprint)
 			&& !string.Equals(route.GeometryFingerprint, source.GeometryFingerprint, StringComparison.OrdinalIgnoreCase))

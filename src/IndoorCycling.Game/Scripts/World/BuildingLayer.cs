@@ -34,7 +34,8 @@ public partial class BuildingLayer : Node3D
     public int FootprintVertexCount { get; private set; }
     public double BuildMilliseconds { get; private set; }
 
-    public void Configure(VisualRoute visualRoute, RouteDefinition route, IReadOnlyList<RouteBuildingData> buildings)
+    public void Configure(VisualRoute visualRoute, RouteDefinition route, IReadOnlyList<RouteBuildingData> buildings,
+        IReadOnlyList<RouteSceneBuildingStyle>? authoredStyles = null)
     {
         if (_chunks.Count > 0 || BuildingsLoaded > 0) throw new InvalidOperationException("Building layer is already configured.");
         var timer = Stopwatch.StartNew();
@@ -42,7 +43,10 @@ public partial class BuildingLayer : Node3D
         var facadeMaterial = SharedMaterial();
         var roofMaterial = SharedMaterial();
         var windowMaterial = SharedMaterial();
-        SharedMaterialCount = 3;
+        var doorMaterial = SharedMaterial();
+        var garageMaterial = SharedMaterial();
+        var styles = (authoredStyles ?? []).ToDictionary(item => item.OsmId);
+        SharedMaterialCount = 5;
         var groups = buildings.GroupBy(item => Math.Clamp((int)(item.NearestRouteDistanceMeters / ChunkLengthMeters),
             0, Math.Max(0, (int)Math.Ceiling(_routeLengthMeters / ChunkLengthMeters) - 1))).OrderBy(group => group.Key);
         foreach (var group in groups)
@@ -53,6 +57,8 @@ public partial class BuildingLayer : Node3D
             var facadeVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
             var roofVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
             var windowVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
+            var doorVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
+            var garageVertices = new List<(System.Numerics.Vector3 Vertex, Color Colour)>();
             var buildingCount = 0;
             foreach (var building in group)
             {
@@ -66,18 +72,22 @@ public partial class BuildingLayer : Node3D
                     return new System.Numerics.Vector3(world.X - origin.X, world.Y - origin.Y, world.Z - origin.Z);
                 }).ToArray();
                 var tags = building.SourceTags ?? new Dictionary<string, string>();
-                var category = building.VisualCategory == "generic" ? BuildingVisualStyle.Classify(tags) : building.VisualCategory;
+                styles.TryGetValue(building.OsmId, out var authoredStyle);
+                var category = authoredStyle?.BuildingType ?? (building.VisualCategory == "generic"
+                    ? BuildingVisualStyle.Classify(tags) : building.VisualCategory);
                 var variant = building.MaterialVariant is >= 0 and < 10
                     ? building.MaterialVariant : BuildingVisualStyle.MaterialVariant(building.OsmId, category);
                 var facadeColour = ToGodotColour(BuildingVisualStyle.FacadeColor(variant,
-                    tags.GetValueOrDefault("building:colour"), tags.GetValueOrDefault("building:material")));
+                    authoredStyle?.FacadeColour ?? tags.GetValueOrDefault("building:colour"), tags.GetValueOrDefault("building:material")));
                 var roofColour = ToGodotColour(BuildingVisualStyle.RoofColor(variant,
-                    tags.GetValueOrDefault("roof:colour"), tags.GetValueOrDefault("roof:material")));
-                var rawRoofShape = tags.GetValueOrDefault("roof:shape");
+                    authoredStyle?.RoofColour ?? tags.GetValueOrDefault("roof:colour"), tags.GetValueOrDefault("roof:material")));
+                var rawRoofShape = authoredStyle?.RoofShape ?? tags.GetValueOrDefault("roof:shape");
                 var footprintArea = FootprintArea(ring);
-                var mappedOrInferredHeight = string.Equals(building.HeightSource, "Fallback", StringComparison.OrdinalIgnoreCase)
-                    ? BuildingVisualStyle.ResolveFallbackVisualHeight(building.OsmId, category, footprintArea, (float)building.HeightMeters)
-                    : (float)building.HeightMeters;
+                var mappedOrInferredHeight = authoredStyle?.VisualHeightMeters is > 2 and <= 30
+                    ? (float)authoredStyle.VisualHeightMeters.Value
+                    : string.Equals(building.HeightSource, "Fallback", StringComparison.OrdinalIgnoreCase)
+                        ? BuildingVisualStyle.ResolveFallbackVisualHeight(building.OsmId, category, footprintArea, (float)building.HeightMeters)
+                        : (float)building.HeightMeters;
                 var routeElevation = route.GetSampleAt(building.NearestRouteDistanceMeters).ElevationMeters;
                 var footprintBases = building.FootprintElevationMeters.Count == building.Footprint.Count
                     ? building.FootprintElevationMeters.Where(value => value.HasValue).Select(value => value!.Value).ToArray()
@@ -102,17 +112,22 @@ public partial class BuildingLayer : Node3D
                 BuildingMeshGeometry.StyledMesh geometry;
                 try { geometry = BuildingMeshGeometry.BuildStyled(ring, mappedOrInferredHeight,
                     shape, roofHeight, storeys, BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters),
-                    facadePattern: BuildingVisualStyle.FacadePattern(building.OsmId)); }
+                    facadePattern: BuildingVisualStyle.FacadePattern(building.OsmId),
+                    addEntryDoor: category == "residential" && BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters),
+                    addGarageDoor: string.Equals(tags.GetValueOrDefault("building"), "garage", StringComparison.OrdinalIgnoreCase)); }
                 catch (ArgumentException) { continue; }
                 Add(facadeVertices, geometry.Facade, facadeColour);
                 Add(roofVertices, geometry.Roof, roofColour);
                 // Keep glazing visually dark, but lift it above black so shaded
                 // facades retain a little readable blue-grey surface response.
                 Add(windowVertices, geometry.Windows, new Color(.18f,.23f,.27f));
+                Add(doorVertices, geometry.Doors, new Color(.25f,.17f,.12f));
+                Add(garageVertices, geometry.GarageDoors, new Color(.31f,.34f,.34f));
                 FacadeTriangleCount += geometry.FacadeTriangleCount;
                 RoofTriangleCount += geometry.RoofTriangleCount;
                 WindowTriangleCount += geometry.WindowTriangleCount;
-                TriangleCount += geometry.FacadeTriangleCount + geometry.RoofTriangleCount + geometry.WindowTriangleCount;
+                TriangleCount += geometry.FacadeTriangleCount + geometry.RoofTriangleCount + geometry.WindowTriangleCount
+                    + geometry.Doors.Length / 3 + geometry.GarageDoors.Length / 3;
                 if (geometry.WindowCount > 0) DetailedBuildingCount++;
                 if (geometry.RoofTriangleCount > 0) RoofedBuildingCount++;
                 if (geometry.EffectiveRoofShape == "gabled") GabledRoofCount++;
@@ -131,6 +146,8 @@ public partial class BuildingLayer : Node3D
             AddSurface(mesh, facadeVertices, facadeMaterial);
             AddSurface(mesh, roofVertices, roofMaterial);
             AddSurface(mesh, windowVertices, windowMaterial);
+            AddSurface(mesh, doorVertices, doorMaterial);
+            AddSurface(mesh, garageVertices, garageMaterial);
             SurfaceCount += mesh.GetSurfaceCount();
             var instance = new MeshInstance3D
             {

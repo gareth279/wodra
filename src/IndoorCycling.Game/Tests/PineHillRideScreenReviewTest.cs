@@ -67,9 +67,17 @@ public partial class PineHillRideScreenReviewTest : Node
             Assert(diagnostic.BuildingsLoaded > 0 && diagnostic.TreesLoaded > 0
                 && diagnostic.TerrainChunksLoaded > 0 && diagnostic.BackgroundStreetsLoaded > 0,
                 "OSM buildings, mapped trees, LINZ terrain and surrounding streets load in RideScreen");
-            if (!IsHeadless) Capture("pine-route-start.png");
+            var authoredScene = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
+            Assert(authoredScene.FeaturesRendered >= 25 && authoredScene.TimberFenceFeatures == 2
+                && authoredScene.RoadMarkingFeatures == 6,
+                "timestamped video observations create authored fences, signs, vegetation and markings at four checkpoints");
+            if (!IsHeadless)
+            {
+                Capture("pine-route-start.png");
+                await CaptureSourceStyleView(world, "pine-route-start-static.png", 0, 0);
+            }
 
-            var checkpoints = new[] { 395d, 775d, 1010d, 1372d, route.DistanceMeters - 0.1 };
+            var checkpoints = new[] { 395d, 775d, 1010d, 1372d };
             foreach (var checkpoint in checkpoints)
             {
                 session.JumpToRouteDistance(checkpoint.ToString(CultureInfo.InvariantCulture));
@@ -77,13 +85,52 @@ public partial class PineHillRideScreenReviewTest : Node
                 hud.HideDebugJumpConfirmation();
                 await Settle(1.25);
                 diagnostic = world.GetDiagnosticState();
+                var riderCameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
                 Assert(diagnostic.RiderWorldPosition.IsFinite() && diagnostic.CameraWorldPosition.IsFinite()
-                    && (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length() is > 0.5f and < 30,
-                    $"rider and camera remain finite and in clearance range at {checkpoint:F0} m");
+                    && riderCameraDistance is > 0.5f and < 30,
+                    $"rider and camera remain finite and in clearance range at {checkpoint:F0} m " +
+                    $"(distance={riderCameraDistance:F2}, rider={diagnostic.RiderWorldPosition}, camera={diagnostic.CameraWorldPosition}, " +
+                    $"desired={diagnostic.CameraDesiredPosition}, clearance={diagnostic.CameraClearanceResult}, obstruction={diagnostic.CameraObstructionSource})");
                 File.AppendAllText(Path.Combine(_output, "pine-camera-checks.csv"),
                     $"{checkpoint:F1},{diagnostic.CameraClearanceResult},{diagnostic.CameraObstructionSource},{diagnostic.CameraRepeatedBlockedMovement}{System.Environment.NewLine}");
-                if (!IsHeadless) Capture($"pine-route-{checkpoint:F0}m.png");
+                if (!IsHeadless)
+                {
+                    Capture(Math.Abs(checkpoint - 1372) < 1
+                        ? "pine-route-1372m-gameplay-improved.png" : $"pine-route-{checkpoint:F0}m.png");
+                    if (Math.Abs(checkpoint - 1372) < 1)
+                        await CaptureSourceStyleView(world, "pine-route-1372m-static-improved.png", checkpoint, 0);
+                    else if (Math.Abs(checkpoint - 395) < 1)
+                        await CaptureSourceStyleView(world, "pine-route-395m-static.png", checkpoint, 0);
+                    else if (Math.Abs(checkpoint - 775) < 1)
+                        await CaptureSourceStyleView(world, "pine-route-775m-static.png", checkpoint, 60);
+                }
             }
+
+            // Move the dummy-trainer rider naturally from the final visual-review point to
+            // the open endpoint. A debug teleport across that residential block tests the
+            // camera's obstruction sweep against an impossible camera path.
+            var nearFinishCaptured = false;
+            var movingSamples = 0;
+            while (session.CurrentRideState.DistanceMeters < route.DistanceMeters - 20 && movingSamples < 60)
+            {
+                await Settle(1);
+                movingSamples++;
+                diagnostic = world.GetDiagnosticState();
+                var riderCameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
+                Assert(diagnostic.RiderWorldPosition.IsFinite() && diagnostic.CameraWorldPosition.IsFinite()
+                    && riderCameraDistance is > 0.5f and < 30,
+                    $"moving dummy-trainer rider and chase camera remain clear near finish " +
+                    $"(distance={riderCameraDistance:F2}, rider={diagnostic.RiderWorldPosition}, " +
+                    $"camera={diagnostic.CameraWorldPosition}, desired={diagnostic.CameraDesiredPosition}, " +
+                    $"clearance={diagnostic.CameraClearanceResult}, obstruction={diagnostic.CameraObstructionSource})");
+                if (!nearFinishCaptured && session.CurrentRideState.DistanceMeters >= route.DistanceMeters - 25)
+                {
+                    if (!IsHeadless) Capture("pine-route-1680m.png");
+                    nearFinishCaptured = true;
+                }
+            }
+            Assert(session.CurrentRideState.DistanceMeters >= route.DistanceMeters - 20,
+                $"dummy trainer rides naturally into the final 20 m (distance={session.CurrentRideState.DistanceMeters:F1} m)");
 
             Assert((world.RouteGeometry!.GetPoseAtDistance(0).Position
                 - world.RouteGeometry.GetPoseAtDistance(route.DistanceMeters).Position).Length() > 300,
@@ -112,6 +159,40 @@ public partial class PineHillRideScreenReviewTest : Node
         routeSelection.Hide();
         hud.Show();
         hud.SetDebugDisplayEnabled(false);
+    }
+
+    private async Task CaptureSourceStyleView(RideWorldView world, string filename,
+        double routeChainageMeters, float yawOffsetDegrees)
+    {
+        var viewportSize = GetViewport().GetVisibleRect().Size;
+        var viewport = new SubViewport { Name = "SourceStyleCaptureViewport",
+            Size = new Vector2I((int)viewportSize.X,(int)viewportSize.Y),
+            RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
+        AddChild(viewport);
+        viewport.World3D = world.GetWorld3D();
+        var camera = new Camera3D { Name = "CaptureSourceStyleCamera", Fov = 70 };
+        viewport.AddChild(camera);
+        var pose = world.RouteGeometry!.GetPoseAtDistance(routeChainageMeters);
+        var position = world.ToGlobal(ProceduralRoad.ToGodot(pose.Position) + Vector3.Up * 1.45f);
+        var forward = world.GlobalBasis * ProceduralRoad.ToGodot(pose.Forward);
+        forward = forward.Rotated(Vector3.Up, Mathf.DegToRad(yawOffsetDegrees));
+        camera.GlobalPosition = position;
+        // The dash camera is near level with only a slight roadward pitch. Keeping the
+        // horizon visible is essential for comparing Dunedin's hillside streetscape.
+        camera.LookAt(position + forward * 30 + Vector3.Down * 5.5f, Vector3.Up);
+        camera.Current = true;
+        world.PlayerRider.Hide();
+        await Frames(4);
+        GD.Print($"[PineHillStaticView] chainage={routeChainageMeters:F1}m yaw={yawOffsetDegrees:F0}° " +
+            $"camera={camera.GlobalPosition} forward={-camera.GlobalBasis.Z}");
+        RenderingServer.ForceDraw(false);
+        var image = viewport.GetTexture().GetImage();
+        if (image.IsEmpty() || image.SavePng(Path.Combine(_output,filename)) != Error.Ok)
+            throw new IOException($"Static comparison screenshot {filename} could not be saved.");
+        world.PlayerRider.Show();
+        viewport.QueueFree();
+        world.GetNode<ChaseCamera>("ChaseCamera").MakeCurrent();
+        await Frames(2);
     }
 
     private void Assert(bool condition, string message)

@@ -7,6 +7,7 @@ using System.Numerics;
 public static class BuildingMeshGeometry
 {
     public sealed record StyledMesh(Vector3[] Facade, Vector3[] Roof, Vector3[] Windows,
+        Vector3[] Doors, Vector3[] GarageDoors,
         string EffectiveRoofShape, float WallTopHeightMeters, int WindowCount)
     {
         public int FacadeTriangleCount => Facade.Length / 3;
@@ -17,7 +18,7 @@ public static class BuildingMeshGeometry
     public static StyledMesh BuildStyled(IReadOnlyList<Vector3> closedFloorRing, float totalHeight,
         string? roofShape, float requestedRoofHeight, int storeys, bool addWindows,
         int maximumWindowColumnsPerWall = 8, int maximumStoreys = 6, int maximumWindowsPerBuilding = 120,
-        uint facadePattern = 0)
+        uint facadePattern = 0, bool addEntryDoor = false, bool addGarageDoor = false)
     {
         if (!float.IsFinite(totalHeight) || totalHeight <= 0) throw new ArgumentOutOfRangeException(nameof(totalHeight));
         if (closedFloorRing.Count < 4 || Vector3.DistanceSquared(closedFloorRing[0], closedFloorRing[^1]) > .01f)
@@ -26,9 +27,14 @@ public static class BuildingMeshGeometry
         var facade = new List<Vector3>();
         var roof = new List<Vector3>();
         var windows = new List<Vector3>();
+        var doors = new List<Vector3>();
+        var garageDoors = new List<Vector3>();
         var shape = BuildingVisualStyle.NormalizeRoofShape(roofShape);
         var suitable = TryRectangle(floor, out var rectangle);
-        if (shape is "gabled" or "hipped" && !suitable) shape = "flat";
+        // Video-authored roofs may target OSM outlines which include porches or
+        // stepped corners. Keep a coherent hipped silhouette on those footprints
+        // rather than silently turning every non-rectangle back into a box.
+        if (shape == "gabled" && !suitable) shape = "hipped";
         var footprintWidth = suitable ? rectangle.Width : ApproximateWidth(floor);
         var safeRoofHeight = float.IsFinite(requestedRoofHeight) ? requestedRoofHeight : 0;
         var roofHeight = shape == "flat" ? 0 : Math.Clamp(safeRoofHeight, 0, totalHeight * .4f);
@@ -72,24 +78,80 @@ public static class BuildingMeshGeometry
         }
         else // simple hipped roof with a ridge on the long axis
         {
-            var ridgeHalf = Math.Max(0, (rectangle.Length - rectangle.Width) / 2);
-            var leftRidge = rectangle.RidgeAt(-ridgeHalf, totalHeight);
-            var rightRidge = rectangle.RidgeAt(ridgeHalf, totalHeight);
-            AddRoofQuad(roof, rectangle.Corner(-1,-1)+Vector3.UnitY*wallTop,
-                rectangle.Corner(1,-1)+Vector3.UnitY*wallTop, rightRidge, leftRidge);
-            AddRoofQuad(roof, rectangle.Corner(1,1)+Vector3.UnitY*wallTop,
-                rectangle.Corner(-1,1)+Vector3.UnitY*wallTop, leftRidge, rightRidge);
-            AddRoofTriangle(roof, rectangle.Corner(-1,-1)+Vector3.UnitY*wallTop,
-                rectangle.Corner(-1,1)+Vector3.UnitY*wallTop,leftRidge);
-            AddRoofTriangle(roof, rectangle.Corner(1,1)+Vector3.UnitY*wallTop,
-                rectangle.Corner(1,-1)+Vector3.UnitY*wallTop,rightRidge);
+            if (suitable)
+            {
+                var ridgeHalf = Math.Max(0, (rectangle.Length - rectangle.Width) / 2);
+                var leftRidge = rectangle.RidgeAt(-ridgeHalf, totalHeight);
+                var rightRidge = rectangle.RidgeAt(ridgeHalf, totalHeight);
+                AddRoofQuad(roof, rectangle.Corner(-1,-1)+Vector3.UnitY*wallTop,
+                    rectangle.Corner(1,-1)+Vector3.UnitY*wallTop, rightRidge, leftRidge);
+                AddRoofQuad(roof, rectangle.Corner(1,1)+Vector3.UnitY*wallTop,
+                    rectangle.Corner(-1,1)+Vector3.UnitY*wallTop, leftRidge, rightRidge);
+                AddRoofTriangle(roof, rectangle.Corner(-1,-1)+Vector3.UnitY*wallTop,
+                    rectangle.Corner(-1,1)+Vector3.UnitY*wallTop,leftRidge);
+                AddRoofTriangle(roof, rectangle.Corner(1,1)+Vector3.UnitY*wallTop,
+                    rectangle.Corner(1,-1)+Vector3.UnitY*wallTop,rightRidge);
+            }
+            else
+            {
+                var center = floor.Aggregate(Vector3.Zero,(sum,point)=>sum+point)/floor.Length;
+                center.Y = baseY + totalHeight;
+                for (var i=0;i<floor.Length;i++)
+                {
+                    var a = floor[i] + Vector3.UnitY * wallTop;
+                    var b = floor[(i+1)%floor.Length] + Vector3.UnitY * wallTop;
+                    AddRoofTriangle(roof,a,b,center);
+                }
+            }
         }
 
         var windowCount = addWindows
             ? AddWindows(windows, floor, baseY + wallTop, Math.Clamp(storeys, 1, maximumStoreys),
                 Math.Clamp(maximumWindowColumnsPerWall, 0, 8), Math.Clamp(maximumWindowsPerBuilding, 0, 160), facadePattern) : 0;
+        if (addEntryDoor || addGarageDoor)
+            AddResidentialEntry(doors, garageDoors, floor, wallTop, totalHeight, addEntryDoor, addGarageDoor);
         _ = footprintWidth;
-        return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), shape, wallTop, windowCount);
+        return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), doors.ToArray(), garageDoors.ToArray(), shape, wallTop, windowCount);
+    }
+
+    private static void AddResidentialEntry(List<Vector3> doors, List<Vector3> garages,
+        IReadOnlyList<Vector3> floor, float wallTop, float totalHeight, bool addDoor, bool addGarage)
+    {
+        var bestIndex = -1; var bestLength = 0f;
+        for (var i=0;i<floor.Count;i++)
+        {
+            var candidateEdge=floor[(i+1)%floor.Count]-floor[i];
+            var length=MathF.Sqrt(candidateEdge.X*candidateEdge.X+candidateEdge.Z*candidateEdge.Z);
+            if (length>bestLength) { bestLength=length; bestIndex=i; }
+        }
+        if (bestIndex<0 || bestLength<2.5f) return;
+        var a=floor[bestIndex]; var b=floor[(bestIndex+1)%floor.Count];
+        var edge=b-a; var horizontalLength=MathF.Sqrt(edge.X*edge.X+edge.Z*edge.Z);
+        var outward=SignedArea(floor)>0?new Vector3(edge.Z,0,-edge.X):new Vector3(-edge.Z,0,edge.X);
+        outward=Vector3.Normalize(outward)*.035f;
+        var baseY=(a.Y+b.Y)/2; var wallHeight=wallTop-Math.Max(a.Y,b.Y);
+        if (wallHeight<2.1f) return;
+        var center=a+(b-a)*.5f+outward;
+        if (addDoor)
+        {
+            var width=Math.Min(.95f,horizontalLength*.28f); var height=Math.Min(2.05f,wallHeight-.08f);
+            AddFacadePanel(doors,center,edge,horizontalLength,baseY,width,height);
+        }
+        if (addGarage && horizontalLength>3.5f)
+        {
+            var width=Math.Min(3.2f,horizontalLength*.72f); var height=Math.Min(2.15f,wallHeight-.08f);
+            AddFacadePanel(garages,center,edge,horizontalLength,baseY,width,height);
+        }
+    }
+
+    private static void AddFacadePanel(List<Vector3> output,Vector3 center,Vector3 edge,float edgeLength,
+        float baseY,float width,float height)
+    {
+        var axis=new Vector3(edge.X,0,edge.Z)/edgeLength*(width/2);
+        var bottomLeft=new Vector3(center.X,baseY,center.Z)-axis;
+        var bottomRight=new Vector3(center.X,baseY,center.Z)+axis;
+        var topLeft=bottomLeft+Vector3.UnitY*height; var topRight=bottomRight+Vector3.UnitY*height;
+        output.AddRange([bottomLeft,topLeft,bottomRight,bottomRight,topLeft,topRight]);
     }
 
     public static Vector3[] TriangulateSurface(IReadOnlyList<Vector3> closedRing)

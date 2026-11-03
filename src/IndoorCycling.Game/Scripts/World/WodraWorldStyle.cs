@@ -4,17 +4,17 @@ using Godot;
 /// <summary>Shared art direction values for Wodra's route-local world rendering.</summary>
 public static class WodraWorldStyle
 {
-    public static readonly Color Sunlight = new(1.0f, 0.82f, 0.62f);
+    public static readonly Color Sunlight = new(1.0f, 0.94f, 0.84f);
     public static readonly Color SkyTop = new(0.18f, 0.32f, 0.55f);
-    public static readonly Color SkyHorizon = new(0.78f, 0.62f, 0.48f);
-    public static readonly Color GroundHorizon = new(0.54f, 0.47f, 0.34f);
+    public static readonly Color SkyHorizon = new(0.60f, 0.72f, 0.82f);
+    public static readonly Color GroundHorizon = new(0.38f, 0.46f, 0.37f);
     public static readonly Color Grass = new(0.34f, 0.43f, 0.24f);
-    public static readonly Color Meadow = new(0.52f, 0.51f, 0.29f);
+    public static readonly Color Meadow = new(0.36f, 0.47f, 0.30f);
     public static readonly Color Forest = new(0.20f, 0.34f, 0.21f);
-    public static readonly Color Rock = new(0.48f, 0.43f, 0.34f);
-    public static readonly Color Asphalt = new(0.16f, 0.17f, 0.19f);
+    public static readonly Color Rock = new(0.42f, 0.43f, 0.39f);
+    public static readonly Color Asphalt = new(0.20f, 0.21f, 0.22f);
 
-    public const float SunEnergy = 1.18f;
+    public const float SunEnergy = 1.08f;
     public const float AmbientEnergy = 0.62f;
     public const float FogDensity = 0.0018f;
     public const float FogAerialPerspective = 0.18f;

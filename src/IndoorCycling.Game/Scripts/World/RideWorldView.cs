@@ -1336,9 +1336,12 @@ public partial class RideWorldView : Node3D
             _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, ProceduralRoad.WidthMeters, 0, asphalt));
             var junctionFill = ProceduralRoad.BuildSharpJoinFills(_geometry, ProceduralRoad.WidthMeters, asphalt);
             if (junctionFill is not null) _routeRoot.AddChild(junctionFill);
-            _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
-            foreach (float offset in new[] { -3.25f, 3.25f })
-                _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+            if (route.RenderRouteReferenceMarkings)
+            {
+                _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.015f, new Color(0.9f, 0.82f, 0.35f)));
+                foreach (float offset in new[] { -3.25f, 3.25f })
+                    _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 0.12f, 0.02f, Colors.White, offset));
+            }
         }
         var assembly = typeof(RouteCatalog).Assembly;
         var resourcePrefix = $"Wodra.GameData.Routes.{route.Id}.";
@@ -1407,6 +1410,10 @@ public partial class RideWorldView : Node3D
                 _routeRoot.AddChild(ProceduralRoad.BuildRibbon(_geometry, 60, -0.08f,
                     WodraWorldStyle.Grass.Darkened(0.08f)));
             var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
+            RouteSceneData? authoredScene = null;
+            var sceneResource = resourcePrefix + "observations.json";
+            if (RoutePackageFiles.Exists(assembly, sceneResource, route.Id))
+                authoredScene = RouteSceneDataLoader.Load(assembly, sceneResource, route.Id, route.DistanceMeters);
             IReadOnlyList<RouteBuildingData> buildings = [];
             var buildingResource = resourcePrefix + "buildings.json";
             if (environmentPolicy.SupportsUrbanStreetScenery
@@ -1421,7 +1428,7 @@ public partial class RideWorldView : Node3D
                         (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
                 _buildingLayer = new BuildingLayer { Name = "RouteBuildings" };
                 _routeRoot.AddChild(_buildingLayer);
-                _buildingLayer.Configure(_geometry, route, buildings);
+                _buildingLayer.Configure(_geometry, route, buildings, authoredScene?.BuildingStyles);
                 _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var landmarkResource = resourcePrefix + "landmarks.json";
@@ -1492,6 +1499,14 @@ public partial class RideWorldView : Node3D
                     }
                     ReportOptionalLayerFailure(route, "background streets and ambient actors", ex);
                 }
+            }
+            if (authoredScene is { Features.Count: > 0 })
+            {
+                var scene = new RouteSceneLayer { Name = "VideoAuthoredScene" };
+                _routeRoot.AddChild(scene);
+                scene.Configure(_geometry, authoredScene);
+                GD.Print($"Video-authored route scene: route={route.Id} observations={scene.FeaturesRendered} " +
+                    $"fences={scene.TimberFenceFeatures} roadMarkings={scene.RoadMarkingFeatures}");
             }
         }
         var positions = _geometry.Samples.Select(v => v.Position).ToArray();

@@ -27,6 +27,8 @@ public sealed class RouteAuthoringConfig
     /// <summary>Environment policy and riding discipline are independent authoring concepts.</summary>
     public string Environment { get; init; } = "Road";
     public string Discipline { get; init; } = "Road";
+    /// <summary>Whether generic yellow center and white edge guides match the captured road paint.</summary>
+    public bool RenderRouteReferenceMarkings { get; init; } = true;
     public List<RouteSurfaceAuthoringSegment> SurfaceSegments { get; init; } = [];
     /// <summary>OSM paths verified for this authored off-road route, even where bicycle tags are absent.</summary>
     public List<long> ApprovedTrailWayIds { get; init; } = [];

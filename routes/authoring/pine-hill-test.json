@@ -320,7 +320,7 @@
   "terrain": {
     "enabled": true,
     "nearRadiusMeters": 100,
-    "farRadiusMeters": 350,
+    "farRadiusMeters": 1000,
     "spacingMeters": 10,
     "farSpacingMeters": 20,
     "corridorRadiusMeters": 100,
@@ -358,5 +358,6 @@
     "sampleSpacingMeters": 15,
     "routeOverlapSuppressionMeters": 8,
     "elevationCacheDirectory": "routes\\cache\\elevation"
-  }
+  },
+  "renderRouteReferenceMarkings": false
 }

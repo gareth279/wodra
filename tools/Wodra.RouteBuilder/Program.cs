@@ -103,6 +103,7 @@ try
             RouteDataVersion = config.RouteDataVersion,
             Environment = config.Environment,
             Discipline = config.Discipline,
+            RenderRouteReferenceMarkings = config.RenderRouteReferenceMarkings,
             SurfaceSegments = config.SurfaceSegments,
             ApprovedTrailWayIds = config.ApprovedTrailWayIds,
             RestrictToApprovedTrailWayIds = config.RestrictToApprovedTrailWayIds,

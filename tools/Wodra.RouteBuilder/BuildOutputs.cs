@@ -75,6 +75,7 @@ public static class BuildOutputs
             routeDataVersion = config.RouteDataVersion,
             environment = config.Environment,
             discipline = config.Discipline,
+            renderRouteReferenceMarkings = config.RenderRouteReferenceMarkings,
             surfaceSegments = publishedSurfaceSections,
             geometryFingerprint,
             source = "OpenStreetMap",

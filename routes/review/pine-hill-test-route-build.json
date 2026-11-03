@@ -4788,7 +4788,7 @@
     "cacheHit": false,
     "cacheBuildSeconds": 70.6724583
   },
-  "generatedAtUtc": "2026-11-03T06:16:06.2235522\u002B00:00",
+  "generatedAtUtc": "2026-11-03T06:16:06.2235522+00:00",
   "elevation": {
     "collection": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
     "collectionId": "01HQPFHPNGDENDH1YCPNXVYP42",
@@ -4807,14 +4807,14 @@
         ]
       },
       {
-        "name": "Toit\u016B Te Whenua Land Information New Zealand",
+        "name": "Toit\u016b Te Whenua Land Information New Zealand",
         "roles": [
           "host",
           "processor"
         ]
       }
     ],
-    "attribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "attribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "acquisition": [
       [
         "2021-06-23T12:00:00Z",
@@ -4833,7 +4833,7 @@
           ]
         },
         {
-          "name": "Toit\u016B Te Whenua Land Information New Zealand",
+          "name": "Toit\u016b Te Whenua Land Information New Zealand",
           "roles": [
             "host",
             "licensor",
@@ -4922,7 +4922,7 @@
   },
   "terrain": {
     "sourceDataset": "Otago - Dunedin and Mosgiel LiDAR 1m DEM (2021)",
-    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0",
+    "sourceAttribution": "AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0",
     "sourceLicense": "CC-BY-4.0",
     "sourceAssets": [
       "CE17_10000_0303.tiff",
@@ -4941,31 +4941,31 @@
       "areaSquareMeters": 258900.0
     },
     "far": {
-      "radiusMeters": 350.0,
+      "radiusMeters": 1000.0,
       "spacingMeters": 20.0,
-      "vertices": 1992,
-      "triangles": 3620,
-      "chunks": 18,
-      "areaSquareMeters": 724000.0,
+      "vertices": 11285,
+      "triangles": 21948,
+      "chunks": 63,
+      "areaSquareMeters": 4389600.0,
       "transitionOverlapMeters": 8.0,
       "verticalBiasMeters": 0.15,
       "transitionVerticesClampedBelowNear": 0
     },
-    "combinedTriangleCount": 8798,
-    "combinedChunkCount": 30,
+    "combinedTriangleCount": 27126,
+    "combinedChunkCount": 75,
     "extentMeters": {
-      "minX": -380.0,
-      "maxX": 880.0,
-      "minZ": -620.0,
-      "maxZ": 400.0
+      "minX": -1040.0,
+      "maxX": 1520.0,
+      "minZ": -1280.0,
+      "maxZ": 1040.0
     },
-    "minimumSourceElevationMeters": 40.838673047836735,
-    "maximumSourceElevationMeters": 164.53760861347658,
-    "vertexCount": 4717,
-    "triangleCount": 8798,
-    "chunkCount": 30,
-    "runtimeMeshInstanceCount": 30,
-    "coveredAreaSquareMeters": 982900.0,
+    "minimumSourceElevationMeters": 16.735170200143145,
+    "maximumSourceElevationMeters": 243.1090293425675,
+    "vertexCount": 14010,
+    "triangleCount": 27126,
+    "chunkCount": 75,
+    "runtimeMeshInstanceCount": 75,
+    "coveredAreaSquareMeters": 4648500.0,
     "noDataCells": 0,
     "interpolatedVertices": 0,
     "roadClearanceRadiusMeters": 5.0,
@@ -4973,10 +4973,10 @@
     "roadClearanceAdjustedVertices": 73,
     "visualDownwardBiasMeters": 0.08,
     "bundleFile": "pine-hill-test.terrain.json",
-    "bundleBytes": 198781,
-    "generationSeconds": 0.39224930002819747,
+    "bundleBytes": 472905,
+    "generationSeconds": 0.8763016000157222,
     "method": "bilinear LINZ COG samples on 10 m near and 25 m far grids; radial masks with a biased-down overlap; isolated near NoData filled from 8-neighbour mean"
   },
   "totalAscentMeters": 30.067704226222673,
-  "sourceAttribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016B Te Whenua Land Information New Zealand; CC-BY-4.0"
+  "sourceAttribution": "\u00a9 OpenStreetMap contributors, ODbL 1.0.; elevation: AAM NZ, Otago Regional Council, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0; elevation fallback: New Zealand Contour-Interpolated 8m DEM; Geographx, Toit\u016b Te Whenua Land Information New Zealand; CC-BY-4.0"
 }
