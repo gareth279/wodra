@@ -39,8 +39,19 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Godot project import failed (exit $LASTEXITCODE); production scene was not started." }
     $modeArgs = @()
     if ($Headless) { $modeArgs += '--headless' }
-    & $godot @modeArgs --path $project --scene 'res://Tests/MountainBikeRideScreenReviewTest.tscn'
-    if ($LASTEXITCODE -ne 0) { throw "Mountain-bike production-scene review failed (exit $LASTEXITCODE); artifacts: $env:WODRA_REVIEW_OUTPUT" }
+    $sceneArguments = @($modeArgs) + @('--path', $project, '--scene', 'res://Tests/MountainBikeRideScreenReviewTest.tscn')
+    $sceneProcess = Start-Process -FilePath $godot -ArgumentList $sceneArguments -Wait -PassThru
+    if ($sceneProcess.ExitCode -ne 0) { throw "Mountain-bike production-scene review failed (exit $($sceneProcess.ExitCode)); artifacts: $env:WODRA_REVIEW_OUTPUT" }
+    if (-not $Headless) {
+        $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
+        $frames = @(Get-ChildItem -LiteralPath $env:WODRA_REVIEW_OUTPUT -Filter 'xc-jump-frame-*.png' -File | Sort-Object Name)
+        if ($null -ne $ffmpeg -and $frames.Count -ge 36) {
+            & $ffmpeg.Source -y -framerate 15 -i (Join-Path $env:WODRA_REVIEW_OUTPUT 'xc-jump-frame-%05d.png') `
+                -c:v libx264 -pix_fmt yuv420p (Join-Path $env:WODRA_REVIEW_OUTPUT 'xc-jumps-ridescreen.mp4') *> $null
+            if ($LASTEXITCODE -ne 0) { throw "Could not encode the RideScreen jump-motion clip; frames: $($frames.Count)" }
+            Write-Host "RideScreen jump motion video: $(Join-Path $env:WODRA_REVIEW_OUTPUT 'xc-jumps-ridescreen.mp4') ($($frames.Count) frames)"
+        } else { throw "RideScreen jump-motion evidence is incomplete (ffmpeg available=$($null -ne $ffmpeg), frames=$($frames.Count))." }
+    }
     Write-Host "Mountain-bike review artifacts: $env:WODRA_REVIEW_OUTPUT"
     Write-Host "Disposable user data: $reviewRoot"
 }

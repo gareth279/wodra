@@ -13,6 +13,10 @@ public partial class MountainBikeRideScreenReviewTest : Node
     private readonly string _output = System.Environment.GetEnvironmentVariable("WODRA_REVIEW_OUTPUT")
         ?? Path.Combine(Path.GetTempPath(), "WodraMountainBikeRideScreenReview");
     private int _assertions;
+    private int _videoFrame;
+    private ulong _lastVideoFrameAt;
+    private bool _reviewLeftHeld;
+    private bool _reviewRightHeld;
     private Control? _reviewScreen;
 
     public override async void _Ready()
@@ -255,6 +259,8 @@ public partial class MountainBikeRideScreenReviewTest : Node
             var xc = RouteCatalog.GetById("wodra-xc-skills-loop")
                 ?? throw new InvalidOperationException("The fictional XC skills loop is not in the production catalogue.");
             GameFeaturesPreference.Set(false);
+            GameBootstrap.Settings.DummyTrainer.TargetWatts = 250;
+            GameBootstrap.Settings.Save();
             if (!await session.StartTrainerSessionAsync(xc)) throw new InvalidOperationException("Could not start fictional XC route after MTB.");
             ShowRide(screen, hud); await Settle(1.5);
             var xcGeometry = world.RouteGeometry ?? throw new InvalidOperationException("XC visual route failed to load.");
@@ -289,6 +295,8 @@ public partial class MountainBikeRideScreenReviewTest : Node
             await DriveXcReferenceLap(session, world, course, xcGeometry, xc, 1, false, xcMotion);
             Assert(course.TotalScore == 0 && course.CompletedLines == 0,
                 "Gaming-disabled centerline riding completes a whole lap using all three natural bypasses without scoring");
+            Assert(course.CompletedTraversals == 0,
+                "bypass riding creates no false jump traversal events while Gaming is disabled");
             var beforePauseDistance = session.CurrentRideState.DistanceMeters;
             session.ToggleRidePause(); await Settle(.25);
             Assert(session.IsRidePaused && Math.Abs(session.CurrentRideState.DistanceMeters - beforePauseDistance) < .01,
@@ -300,10 +308,17 @@ public partial class MountainBikeRideScreenReviewTest : Node
             await DriveXcReferenceLap(session, world, course, xcGeometry, xc, 2, true, xcMotion);
             Assert(course.TotalScore == 225 && course.CompletedLines == 3,
                 "steering selects and scores each optional jump line once, with score separate from cycling distance and elevation");
+            Assert(course.CompletedTraversals == 3,
+                "Gaming-on keyboard riding records three completed jump traversals independently of the optional score");
+            Assert(world.CollectiblesAvailable == 8,
+                "the Gaming-on RideScreen keeps all eight collectible placements active and inspectable");
+            await DriveXcReferenceLap(session, world, course, xcGeometry, xc, 3, false, xcMotion);
+            Assert(world.CollectiblesCollected >= 8,
+                $"repeated centerline riding collects the eight visible pickup placements (actual {world.CollectiblesCollected}/{world.CollectiblesAvailable} per lap)");
             var xcState = session.CurrentRideState;
-            Assert(Math.Abs(xcState.DistanceMeters - xc.DistanceMeters * 2) < 45
+            Assert(Math.Abs(xcState.DistanceMeters - xc.DistanceMeters * 3) < 45
                 && Math.Abs(xcGeometry.GetPoseAtDistance(xc.DistanceMeters).Position.Y - xcGeometry.GetPoseAtDistance(0).Position.Y) < .01f,
-                "two XC laps return to the same route seam with monotonic reference distance and no jump-added climb");
+                "three XC laps return to the same route seam with monotonic reference distance and no jump-added climb");
             if (!IsHeadless)
             {
                 hud.SetDebugDisplayEnabled(true); await Settle(.35); Capture("xc-feature-score-gaming-on-debug.png");
@@ -315,10 +330,11 @@ public partial class MountainBikeRideScreenReviewTest : Node
             await session.ExitToRouteSelectionAsync();
             var xcActivity = session.LastCompletedActivityDraft
                 ?? throw new InvalidOperationException("The isolated XC ride did not produce its saved activity draft.");
-            Assert(xcActivity.RouteId == xc.Id && Math.Abs(xcActivity.DistanceMeters - xc.DistanceMeters * 2) < 45
-                && xcActivity.ElevationGainMeters is > 40 and < 65
+            Assert(xcActivity.RouteId == xc.Id && Math.Abs(xcActivity.DistanceMeters - xc.DistanceMeters * 3) < 45
+                && xcActivity.ElevationGainMeters > xc.TotalAscentMeters * 2.8
+                && xcActivity.ElevationGainMeters < xc.TotalAscentMeters * 3.2
                 && xcActivity.FitFilePath is { } xcFit && File.Exists(xcFit),
-                "XC ride distance, truthful course climbing, and the finalized FIT file agree after the feature-scored laps");
+                $"three XC laps preserve distance, about three times the authored climb ({xcActivity.ElevationGainMeters:F1}/{xc.TotalAscentMeters:F1} m), and finalized FIT recording");
             if (!await session.StartTrainerSessionAsync(gravel)) throw new InvalidOperationException("Could not start gravel after MTB.");
             ShowRide(screen, hud); await Settle(1.5);
             Assert(world.GetNodeOrNull<Node3D>("RouteGeometry/GravelTrailSurface") is not null
@@ -413,8 +429,16 @@ public partial class MountainBikeRideScreenReviewTest : Node
                 || steeringBack && selected!.RequiredLateralMeters < 0;
             var steerAwayFromBranch = steeringOut && selected!.RequiredLateralMeters < 0
                 || steeringBack && selected!.RequiredLateralMeters > 0;
-            world.SetDeterministicSteeringInputForReview(steerTowardBranch, steerAwayFromBranch);
+            SetKeyboardSteering(steerTowardBranch, steerAwayFromBranch);
             if (selected is not null && ride.DistanceMeters > mergeEnds) featureIndex++;
+            if (!IsHeadless && selected is not null
+                && ride.DistanceMeters >= featureBase + selected.TakeoffMeters - 8
+                && ride.DistanceMeters <= featureBase + selected.LandingMeters + 10
+                && Time.GetTicksMsec() - _lastVideoFrameAt >= 66)
+            {
+                _lastVideoFrameAt = Time.GetTicksMsec();
+                Capture($"xc-jump-frame-{_videoFrame++:D5}.png");
+            }
             var camera = world.InspectionCamera?.GlobalPosition ?? Vector3.Zero;
             maxCameraStep = Math.Max(maxCameraStep, priorCamera.DistanceTo(camera)); priorCamera = camera;
             if (course.LastFrame.CompletedLap is { } lapReport && lapReport.Lap == lap)
@@ -433,13 +457,26 @@ public partial class MountainBikeRideScreenReviewTest : Node
             if (Time.GetTicksMsec() > timeout)
                 throw new TimeoutException($"Dummy XC lap {lap} did not advance to {targetDistance:F0} m.");
         }
-        world.SetDeterministicSteeringInputForReview(false, false);
+        SetKeyboardSteering(false, false);
         Assert(maxCameraStep < 18, $"XC lap {lap} follow-camera movement remains continuous (maximum frame step {maxCameraStep:F1} m)");
         Assert(completedLapSummary is { } summary && summary.Lap == lap
             && summary.CompletedLines == (selectJumpLines ? 3 : 0)
             && summary.Score == (selectJumpLines ? 225 : 0),
             $"XC lap {lap} summary reports its actual feature lines and score at the seam");
     }
+
+    private void SetKeyboardSteering(bool left, bool right)
+    {
+        if (left != _reviewLeftHeld) SendSteeringKey(Key.Left, left);
+        if (right != _reviewRightHeld) SendSteeringKey(Key.Right, right);
+        _reviewLeftHeld = left;
+        _reviewRightHeld = right;
+    }
+
+    private static void SendSteeringKey(Key key, bool pressed) => Input.ParseInputEvent(new InputEventKey
+    {
+        Keycode = key, PhysicalKeycode = key, Pressed = pressed
+    });
 
     private static bool IsHeadless => RenderingServer.GetCurrentRenderingDriverName().Contains("headless", StringComparison.OrdinalIgnoreCase)
         || RenderingServer.GetCurrentRenderingDriverName().Contains("dummy", StringComparison.OrdinalIgnoreCase)
