@@ -72,9 +72,9 @@ jobs:
             PublishRoot = $env:PUBLISH_ROOT
             ReleaseNotesPath = $releaseNotes
           }
-          # The owner has requested Pine Hill Test in this experimental alpha only.
-          # Leave subsequent alpha releases on the normal six-route default.
-          if ($env:RELEASE_TAG -eq 'v0.1.0-alpha.92') {
+          # Pine Hill Test is explicitly included in Alpha.92 and Alpha.93.
+          # Other alpha releases retain the standard six-route default unless separately approved.
+          if ($env:RELEASE_TAG -in @('v0.1.0-alpha.92', 'v0.1.0-alpha.93')) {
             $publishArgs.IncludeExperimentalRoutes = $true
           }
           .\publish.ps1 @publishArgs
