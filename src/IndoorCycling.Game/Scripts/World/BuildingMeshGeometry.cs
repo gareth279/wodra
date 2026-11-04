@@ -7,7 +7,7 @@ using System.Numerics;
 public static class BuildingMeshGeometry
 {
     public sealed record StyledMesh(Vector3[] Facade, Vector3[] Roof, Vector3[] Windows,
-        Vector3[] Doors, Vector3[] GarageDoors,
+        Vector3[] Doors, Vector3[] GarageDoors, Vector3[] WeatherboardCourses, Vector3[] WindowFrames,
         string EffectiveRoofShape, float WallTopHeightMeters, int WindowCount)
     {
         public int FacadeTriangleCount => Facade.Length / 3;
@@ -18,7 +18,8 @@ public static class BuildingMeshGeometry
     public static StyledMesh BuildStyled(IReadOnlyList<Vector3> closedFloorRing, float totalHeight,
         string? roofShape, float requestedRoofHeight, int storeys, bool addWindows,
         int maximumWindowColumnsPerWall = 8, int maximumStoreys = 6, int maximumWindowsPerBuilding = 120,
-        uint facadePattern = 0, bool addEntryDoor = false, bool addGarageDoor = false)
+        uint facadePattern = 0, bool addEntryDoor = false, bool addGarageDoor = false,
+        bool addWeatherboardCourses = false, bool addWindowFrames = false)
     {
         if (!float.IsFinite(totalHeight) || totalHeight <= 0) throw new ArgumentOutOfRangeException(nameof(totalHeight));
         if (closedFloorRing.Count < 4 || Vector3.DistanceSquared(closedFloorRing[0], closedFloorRing[^1]) > .01f)
@@ -29,6 +30,8 @@ public static class BuildingMeshGeometry
         var windows = new List<Vector3>();
         var doors = new List<Vector3>();
         var garageDoors = new List<Vector3>();
+        var weatherboardCourses = new List<Vector3>();
+        var windowFrames = new List<Vector3>();
         var shape = BuildingVisualStyle.NormalizeRoofShape(roofShape);
         var suitable = TryRectangle(floor, out var rectangle);
         // Video-authored roofs may target OSM outlines which include porches or
@@ -106,12 +109,15 @@ public static class BuildingMeshGeometry
         }
 
         var windowCount = addWindows
-            ? AddWindows(windows, floor, baseY + wallTop, Math.Clamp(storeys, 1, maximumStoreys),
+            ? AddWindows(windows, addWindowFrames ? windowFrames : null, floor, baseY + wallTop, Math.Clamp(storeys, 1, maximumStoreys),
                 Math.Clamp(maximumWindowColumnsPerWall, 0, 8), Math.Clamp(maximumWindowsPerBuilding, 0, 160), facadePattern) : 0;
+        if (addWeatherboardCourses)
+            AddWeatherboardCourses(weatherboardCourses, floor, wallTop, baseY, signedArea);
         if (addEntryDoor || addGarageDoor)
             AddResidentialEntry(doors, garageDoors, floor, wallTop, totalHeight, addEntryDoor, addGarageDoor);
         _ = footprintWidth;
-        return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), doors.ToArray(), garageDoors.ToArray(), shape, wallTop, windowCount);
+        return new StyledMesh(facade.ToArray(), roof.ToArray(), windows.ToArray(), doors.ToArray(), garageDoors.ToArray(),
+            weatherboardCourses.ToArray(), windowFrames.ToArray(), shape, wallTop, windowCount);
     }
 
     private static void AddResidentialEntry(List<Vector3> doors, List<Vector3> garages,
@@ -256,7 +262,7 @@ public static class BuildingMeshGeometry
         output.AddRange([a,b,c]);
     }
 
-    private static int AddWindows(List<Vector3> output, IReadOnlyList<Vector3> floor, float wallTopY,
+    private static int AddWindows(List<Vector3> output, List<Vector3>? frames, IReadOnlyList<Vector3> floor, float wallTopY,
         int storeys, int maxColumnsPerWall, int maxWindows, uint facadePattern)
     {
         if (maxColumnsPerWall == 0 || maxWindows == 0) return 0;
@@ -293,10 +299,49 @@ public static class BuildingMeshGeometry
                 var high=low+Vector3.UnitY*actualHeight;
                 if(area>0) AddQuad(output,low-u,high-u,high+u,low+u);
                 else AddQuad(output,low+u,high+u,high-u,low-u);
+                if (frames is not null)
+                {
+                    var frameWidth = .045f;
+                    var outsideV = Vector3.UnitY * frameWidth;
+                    var innerBottomLeft = low - u; var innerBottomRight = low + u;
+                    var innerTopLeft = high - u; var innerTopRight = high + u;
+                    var outerBottomLeft = innerBottomLeft - outsideV - Vector3.Normalize(u) * frameWidth;
+                    var outerBottomRight = innerBottomRight - outsideV + Vector3.Normalize(u) * frameWidth;
+                    var outerTopLeft = innerTopLeft + outsideV - Vector3.Normalize(u) * frameWidth;
+                    var outerTopRight = innerTopRight + outsideV + Vector3.Normalize(u) * frameWidth;
+                    AddQuad(frames, outerBottomLeft, outerTopLeft, innerTopLeft, innerBottomLeft);
+                    AddQuad(frames, innerBottomRight, innerTopRight, outerTopRight, outerBottomRight);
+                    AddQuad(frames, outerTopLeft, outerTopRight, innerTopRight, innerTopLeft);
+                    AddQuad(frames, outerBottomLeft, innerBottomLeft, innerBottomRight, outerBottomRight);
+                }
                 emitted++;
             }
         }
         return emitted;
+    }
+
+    private static void AddWeatherboardCourses(List<Vector3> output, IReadOnlyList<Vector3> floor,
+        float wallHeight, float baseY, float area)
+    {
+        const float courseSpacing = .42f;
+        const float courseThickness = .018f;
+        for (var i = 0; i < floor.Count; i++)
+        {
+            var a = floor[i]; var b = floor[(i + 1) % floor.Count];
+            var dx = b.X - a.X; var dz = b.Z - a.Z;
+            if (MathF.Sqrt(dx * dx + dz * dz) < 1.2f) continue;
+            var outward = area > 0 ? new Vector3(dz, 0, -dx) : new Vector3(-dz, 0, dx);
+            outward = Vector3.Normalize(outward) * .012f;
+            var courseLimit = wallHeight - Math.Max(a.Y, b.Y) + baseY - .25f;
+            for (var y = .48f; y < courseLimit; y += courseSpacing)
+            {
+                var lowerA = new Vector3(a.X, a.Y + y, a.Z) + outward;
+                var lowerB = new Vector3(b.X, b.Y + y, b.Z) + outward;
+                var upperA = lowerA + Vector3.UnitY * courseThickness;
+                var upperB = lowerB + Vector3.UnitY * courseThickness;
+                AddQuad(output, lowerA, upperA, upperB, lowerB);
+            }
+        }
     }
 
     private static uint WindowHash(uint seed, int wall, int level, int column)

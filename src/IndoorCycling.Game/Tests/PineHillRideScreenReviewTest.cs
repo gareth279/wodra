@@ -62,14 +62,14 @@ public partial class PineHillRideScreenReviewTest : Node
             var session = screen.GetNode<RideSessionNode>("RideSessionNode");
             var world = screen.GetNode<RideWorldView>("RideWorldView");
             ShowRide(screen, routeSelection, hud);
-            Assert(session.CurrentRoute?.Id == route.Id && world.RouteGeometry is { IsPointToPoint: true },
-                "production RideScreen starts the open GPS-derived route with its natural endpoint");
+            Assert(session.CurrentRoute?.Id == route.Id && world.RouteGeometry is { IsPointToPoint: false },
+                "production RideScreen starts the closed Pine Hill loop from the normal route catalogue");
             var diagnostic = world.GetDiagnosticState();
             Assert(diagnostic.BuildingsLoaded > 0 && diagnostic.TreesLoaded > 0
                 && diagnostic.TerrainChunksLoaded > 0 && diagnostic.BackgroundStreetsLoaded > 0,
                 "OSM buildings, mapped trees, LINZ terrain and surrounding streets load in RideScreen");
             var authoredScene = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-            Assert(authoredScene.FeaturesRendered >= 20
+            Assert(authoredScene.FeaturesRendered >= 40
                 && authoredScene.AuthoredAssetFeatures == 3 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
                 && authoredScene.RoadMarkingFeatures == 6,
                 $"observations load three Blender assets ({authoredScene.AuthoredAssetFeatures}; {authoredScene.AuthoredAssetMeshInstances} mesh instances) and six route markings");
@@ -79,78 +79,139 @@ public partial class PineHillRideScreenReviewTest : Node
             Assert(focalAssetTriangles <= 330_000,
                 $"photo-textured boarded fence, hipped house and two mature trees stay within 330k focal-scene triangles ({focalAssetTriangles:N0})");
 
-            var checkpoints = new[] { 395d, 775d, 1010d, 1372d };
+            var checkpoints = new[] { 0d, 117.771178, 200d, 253.974022, 298.462154, 306.629136,
+                390.649046, 600d, 645.429035, 668.751667, 739.845927, 772.006605,
+                886.475760, 907.435907, 917d, 1100d, 1268.226435, 1277.146893 };
+            var worldWasProcessing = world.IsProcessing();
+            world.SetProcess(false);
             foreach (var checkpoint in checkpoints)
-            {
-                session.JumpToRouteDistance(checkpoint.ToString(CultureInfo.InvariantCulture));
-                session.ConfirmDebugDistanceJump();
-                hud.HideDebugJumpConfirmation();
-                await Settle(1.25);
-                diagnostic = world.GetDiagnosticState();
-                var riderCameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
-                Assert(diagnostic.RiderWorldPosition.IsFinite() && diagnostic.CameraWorldPosition.IsFinite()
-                    && riderCameraDistance is > 0.5f and < 30,
-                    $"rider and camera remain finite and in clearance range at {checkpoint:F0} m " +
-                    $"(distance={riderCameraDistance:F2}, rider={diagnostic.RiderWorldPosition}, camera={diagnostic.CameraWorldPosition}, " +
-                    $"desired={diagnostic.CameraDesiredPosition}, clearance={diagnostic.CameraClearanceResult}, obstruction={diagnostic.CameraObstructionSource})");
-                File.AppendAllText(Path.Combine(_output, "pine-camera-checks.csv"),
-                    $"{checkpoint:F1},{diagnostic.CameraClearanceResult},{diagnostic.CameraObstructionSource},{diagnostic.CameraRepeatedBlockedMovement}{System.Environment.NewLine}");
                 if (!IsHeadless)
+                    await CaptureSourceStyleView(world, $"pine-route-camera-{checkpoint:F0}m.png", checkpoint, 0);
+            world.SetProcess(worldWasProcessing);
+            UpdateSceneryForReview(world, session.CurrentRideState.DistanceMeters);
+            if (string.Equals(System.Environment.GetEnvironmentVariable("WODRA_VISUAL_ONLY"), "1", StringComparison.Ordinal))
+            {
+                await CaptureRenderPerformance("pine-render-performance-visual-review.csv", TimeSpan.FromSeconds(5));
+                GD.Print($"[PineHillRideScreenReview] VISUAL-ONLY PASS; aligned route screenshots={_output}");
+                GetTree().Quit(0);
+                return;
+            }
+
+            var sceneLayer = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
+            Assert(sceneLayer.FeaturesRendered >= 40 && sceneLayer.VisibleFeatureCount > 0,
+                $"remapped route observations remain visible in the production world ({sceneLayer.VisibleFeatureCount}/{sceneLayer.FeaturesRendered})");
+            var length = route.DistanceMeters;
+            var totalTarget = length * 3 + 6;
+            // Static camera review takes several seconds while the simulated trainer
+            // remains active. Anchor continuity after those captures so its first
+            // measured step compares matching rider and authoritative-route states.
+            world.ResetAfterReposition();
+            await Frames(3);
+            var previousDistance = session.CurrentRideState.DistanceMeters;
+            var continuityAnchor = world.GetDiagnosticState();
+            var previousRider = continuityAnchor.RiderWorldPosition;
+            var previousForward = continuityAnchor.RiderForward;
+            var completedLaps = 0;
+            var capturedBefore = new bool[3];
+            var capturedAfter = new bool[3];
+            var telemetry = new System.Text.StringBuilder(
+                "elapsed_seconds,total_distance_meters,lap_number,lap_distance_meters,gradient_percent,speed_kph,heading_x,heading_y,heading_z,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z\\r\\n");
+            var rideTimer = Stopwatch.StartNew();
+            while (session.CurrentRideState.DistanceMeters < totalTarget && rideTimer.Elapsed < TimeSpan.FromMinutes(8))
+            {
+                await Settle(.25);
+                var state = session.CurrentRideState;
+                if (!session.IsRideActive)
+                    throw new InvalidOperationException($"RideScreen ended automatically at {state.DistanceMeters:F1} m.");
+                if (!session.HasRideRecording)
+                    throw new InvalidOperationException("FIT recording stopped while crossing a Pine Hill lap.");
+                if (state.DistanceMeters < previousDistance || (state.ElapsedSeconds >= 10
+                    && state.DistanceMeters <= previousDistance && state.VirtualSpeedKph < 1))
+                    throw new InvalidOperationException($"The simulated trainer stopped advancing ride distance at {state.DistanceMeters:F1} m.");
+                diagnostic = world.GetDiagnosticState();
+                var lapDistance = world.RouteGeometry!.WrapDistance(state.DistanceMeters);
+                var lapNumber = (int)Math.Floor(state.DistanceMeters / length) + 1;
+                var cameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
+                var riderStep = diagnostic.RiderWorldPosition.DistanceTo(previousRider);
+                var routeStep = state.DistanceMeters - previousDistance;
+                var headingDot = diagnostic.RiderForward.Normalized().Dot(previousForward.Normalized());
+                if (!diagnostic.RiderWorldPosition.IsFinite() || !diagnostic.CameraWorldPosition.IsFinite()
+                    || cameraDistance is < .5f or > 30 || routeStep < 0
+                    || riderStep > Math.Max(20, routeStep * 1.35 + 8) || headingDot < -.85f
+                    || !double.IsFinite(state.CurrentGradientPercent + lapDistance))
+                    throw new InvalidOperationException($"Rider/camera continuity failed at {state.DistanceMeters:F1} m " +
+                        $"(lap={lapNumber}, riderStep={riderStep:F2} m, routeStep={routeStep:F2} m, " +
+                        $"headingDot={headingDot:F3}, camera={cameraDistance:F2} m).");
+
+                for (var boundaryLap = 1; boundaryLap <= 3; boundaryLap++)
                 {
-                    if (Math.Abs(checkpoint - 1372) < 1)
+                    var boundary = boundaryLap * length;
+                    if (!capturedBefore[boundaryLap - 1] && state.DistanceMeters >= boundary - 5)
                     {
-                        Capture("pine-route-1372m-gameplay-improved.png");
-                        foreach (var viewChainage in new[] { 1362d, 1368.5d, 1371.735d, 1377.37d })
-                        {
-                            var filename = Math.Abs(viewChainage - 1377.37) < .01
-                                ? "pine-route-1372m-static-gps-camera.png"
-                                : Math.Abs(viewChainage - 1371.735) < .01
-                                    ? "pine-route-1372m-static-route-camera.png"
-                                : $"pine-route-approach-{viewChainage:F1}m-static.png";
-                            await CaptureSourceStyleView(world, filename, viewChainage, 0);
-                        }
-                        await CaptureRenderPerformance("pine-render-performance.csv", TimeSpan.FromSeconds(3));
+                        capturedBefore[boundaryLap - 1] = true;
+                        if (!IsHeadless) Capture($"pine-loop-lap{boundaryLap}-before-seam.png");
+                    }
+                    if (!capturedAfter[boundaryLap - 1] && state.DistanceMeters >= boundary + 5)
+                    {
+                        capturedAfter[boundaryLap - 1] = true;
+                        Assert(lapNumber == boundaryLap + 1 && lapDistance < 15,
+                            $"lap {boundaryLap} wraps into lap {boundaryLap + 1} at the closed seam " +
+                            $"(total={state.DistanceMeters:F1} m, wrapped={lapDistance:F1} m)");
+                        Assert(session.IsRideActive && session.HasRideRecording,
+                            $"ride and FIT recording remain active after lap {boundaryLap}");
+                        var lapHeader = RouteGradientInset.FormatRouteHeader(route, state.DistanceMeters, lapNumber);
+                        Assert(lapHeader.Contains($"LAP {boundaryLap + 1}", StringComparison.Ordinal),
+                            $"route HUD lap indicator advances to lap {boundaryLap + 1}");
+                        if (!IsHeadless) Capture($"pine-loop-lap{boundaryLap + 1}-after-seam.png");
+                        completedLaps = boundaryLap;
                     }
                 }
-                if (Math.Abs(checkpoint - 1372) < 1)
-                {
-                    var sceneLayer = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-                    Assert(sceneLayer.VisibleFeatureCount is > 0 && sceneLayer.VisibleFeatureCount < sceneLayer.FeaturesRendered,
-                        $"route observations are chainage-culled at the 1,372 m scene ({sceneLayer.VisibleFeatureCount}/{sceneLayer.FeaturesRendered} visible)");
-                }
-            }
 
-            // Move the dummy-trainer rider naturally from the final visual-review point to
-            // the open endpoint. A debug teleport across that residential block tests the
-            // camera's obstruction sweep against an impossible camera path.
-            var nearFinishCaptured = false;
-            var movingSamples = 0;
-            while (session.CurrentRideState.DistanceMeters < route.DistanceMeters - 20 && movingSamples < 60)
-            {
-                await Settle(1);
-                movingSamples++;
-                diagnostic = world.GetDiagnosticState();
-                var riderCameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
-                Assert(diagnostic.RiderWorldPosition.IsFinite() && diagnostic.CameraWorldPosition.IsFinite()
-                    && riderCameraDistance is > 0.5f and < 30,
-                    $"moving dummy-trainer rider and chase camera remain clear near finish " +
-                    $"(distance={riderCameraDistance:F2}, rider={diagnostic.RiderWorldPosition}, " +
-                    $"camera={diagnostic.CameraWorldPosition}, desired={diagnostic.CameraDesiredPosition}, " +
-                    $"clearance={diagnostic.CameraClearanceResult}, obstruction={diagnostic.CameraObstructionSource})");
-                if (!nearFinishCaptured && session.CurrentRideState.DistanceMeters >= route.DistanceMeters - 25)
-                {
-                    if (!IsHeadless) Capture("pine-route-1680m.png");
-                    nearFinishCaptured = true;
-                }
+                telemetry.AppendLine($"{state.ElapsedSeconds:F3},{state.DistanceMeters:F3},{lapNumber},{lapDistance:F3}," +
+                    $"{state.CurrentGradientPercent:F3},{state.VirtualSpeedKph:F3},{diagnostic.RiderForward.X:F5}," +
+                    $"{diagnostic.RiderForward.Y:F5},{diagnostic.RiderForward.Z:F5},{diagnostic.RiderWorldPosition.X:F3}," +
+                    $"{diagnostic.RiderWorldPosition.Y:F3},{diagnostic.RiderWorldPosition.Z:F3},{diagnostic.CameraWorldPosition.X:F3}," +
+                    $"{diagnostic.CameraWorldPosition.Y:F3},{diagnostic.CameraWorldPosition.Z:F3}");
+                previousDistance = state.DistanceMeters;
+                previousRider = diagnostic.RiderWorldPosition;
+                previousForward = diagnostic.RiderForward;
+                if (!IsHeadless && !File.Exists(Path.Combine(_output, "pine-render-performance-final.csv"))
+                    && state.DistanceMeters > 30)
+                    await CaptureRenderPerformance("pine-render-performance-final.csv", TimeSpan.FromSeconds(3));
             }
-            Assert(session.CurrentRideState.DistanceMeters >= route.DistanceMeters - 20,
-                $"dummy trainer rides naturally into the final 20 m (distance={session.CurrentRideState.DistanceMeters:F1} m)");
+            File.WriteAllText(Path.Combine(_output, "pine-three-lap-ride.csv"), telemetry.ToString());
+            Assert(completedLaps == 3 && session.CurrentRideState.DistanceMeters >= totalTarget,
+                $"simulated trainer completes three continuous laps (distance={session.CurrentRideState.DistanceMeters:F1} m)");
+            Assert(session.IsRideActive && session.HasRideRecording
+                && session.CurrentRideState.ElapsedSeconds > 60,
+                "third lap remains an active ride with accumulating elapsed time and FIT recording");
 
-            Assert((world.RouteGeometry!.GetPoseAtDistance(0).Position
-                - world.RouteGeometry.GetPoseAtDistance(route.DistanceMeters).Position).Length() > 300,
-                "finish view remains separate from the start; there is no loop seam or teleport connector");
-            await session.ExitToRouteSelectionAsync();
-            GD.Print($"[PineHillRideScreenReview] PASS {_assertions} production assertions; route={route.DistanceMeters:F1} m; screenshots={_output}");
+            if (!IsHeadless) Capture("pine-loop-three-laps-complete.png");
+            var rideMenu = screen.GetNode<RideMenuPanelController>("RideMenuPanel");
+            rideMenu.ShowInRideMenu();
+            await Frames(2);
+            rideMenu.ShowEndRideConfirmation();
+            await Frames(2);
+            var confirmStop = rideMenu.FindChildren("", "Button", true, false).OfType<Button>()
+                .Single(button => button.Text == "End Ride");
+            confirmStop.EmitSignal(BaseButton.SignalName.Pressed);
+            var stopWait = Stopwatch.StartNew();
+            while (session.IsRideActive && stopWait.Elapsed < TimeSpan.FromSeconds(30)) await Frames(1);
+            Assert(!session.IsRideActive && session.LastRecordingError is null
+                && session.LastStoppedRecordingPath is { } fitPath && File.Exists(fitPath),
+                "normal Ride Menu end action stops the ride and finalizes its FIT file");
+            var fitFrames = new IndoorCycling.Core.Simulation.FitRideLoader().Load(session.LastStoppedRecordingPath!);
+            Assert(fitFrames.Count > 30 && fitFrames[^1].DistanceMeters is { } fitDistance
+                && fitDistance >= totalTarget - 20 && fitFrames[^1].Elapsed.TotalSeconds > 60,
+                $"FIT records all three laps and continuing elapsed time ({fitFrames.Count} samples, " +
+                $"{fitFrames.LastOrDefault()?.DistanceMeters:F1} m)");
+            await Frames(8);
+            Assert(screen.GetNode<RouteSelectionPanelController>("RouteSelectionPanel").Visible
+                || screen.GetNode<RideHistoryPanelController>("RideHistoryPanel").Visible
+                || screen.GetNode<StartPanelController>("StartPanel").Visible,
+                "normal end-ride UI returns to the route, summary, or home screen");
+            GD.Print($"[PineHillRideScreenReview] PASS {_assertions} production assertions; " +
+                $"route={route.DistanceMeters:F1} m; laps=3; FIT={session.LastStoppedRecordingPath}; screenshots={_output}");
             GetTree().Quit(0);
         }
         catch (Exception error)
@@ -178,6 +239,7 @@ public partial class PineHillRideScreenReviewTest : Node
     private async Task CaptureSourceStyleView(RideWorldView world, string filename,
         double routeChainageMeters, float yawOffsetDegrees)
     {
+        UpdateSceneryForReview(world, routeChainageMeters);
         var viewportSize = GetViewport().GetVisibleRect().Size;
         var viewport = new SubViewport { Name = "SourceStyleCaptureViewport",
             Size = new Vector2I((int)viewportSize.X,(int)viewportSize.Y),
@@ -207,6 +269,18 @@ public partial class PineHillRideScreenReviewTest : Node
         viewport.QueueFree();
         world.GetNode<ChaseCamera>("ChaseCamera").MakeCurrent();
         await Frames(2);
+    }
+
+    private static void UpdateSceneryForReview(RideWorldView world, double routeDistanceMeters)
+    {
+        world.GetNode<LandmarkLayer>("RouteGeometry/RouteLandmarks").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<BuildingLayer>("RouteGeometry/RouteBuildings").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<VegetationLayer>("RouteGeometry/RouteVegetation").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<StreetFurnitureLayer>("RouteGeometry/RouteStreetFurniture").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<RoadMarkingLayer>("RouteGeometry/RoadMarkings").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<BackgroundStreetLayer>("RouteGeometry/BackgroundStreets").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<TerrainLayer>("RouteGeometry/LINZTerrain").UpdateForRideDistance(routeDistanceMeters);
     }
 
     private void Assert(bool condition, string message)

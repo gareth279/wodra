@@ -3,7 +3,7 @@
   "routeName": "Pine Hill Test",
   "source": "OpenStreetMap",
   "sourcePbfFilename": "new-zealand-261005.osm.pbf",
-  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "attribution": "© OpenStreetMap contributors, ODbL 1.0",
   "searchRadiusMeters": 80,
   "simplificationToleranceMeters": 0.75,
   "statistics": {
@@ -112,8 +112,8 @@
           "latitude": -45.8473132
         }
       ],
-      "distanceFromRouteMeters": 66.17031483539006,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 116.365125,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -162,8 +162,8 @@
           "latitude": -45.8472943
         }
       ],
-      "distanceFromRouteMeters": 57.330228690048116,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 83.32925,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -206,8 +206,8 @@
           "latitude": -45.8476507
         }
       ],
-      "distanceFromRouteMeters": 59.585780123729926,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 103.588209,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -250,8 +250,8 @@
           "latitude": -45.8474269
         }
       ],
-      "distanceFromRouteMeters": 36.298539198004875,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 70.299758,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -294,8 +294,8 @@
           "latitude": -45.847557900000005
         }
       ],
-      "distanceFromRouteMeters": 50.86528212798792,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 91.228828,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -338,8 +338,8 @@
           "latitude": -45.8477295
         }
       ],
-      "distanceFromRouteMeters": 48.321300590059124,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 94.394413,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -382,8 +382,8 @@
           "latitude": -45.8481013
         }
       ],
-      "distanceFromRouteMeters": 73.8039584900224,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 122.417614,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -426,8 +426,8 @@
           "latitude": -45.848215800000006
         }
       ],
-      "distanceFromRouteMeters": 58.673565382155154,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 105.977173,
+      "nearestRouteDistanceMeters": 1263.190716,
       "sourceTags": {
         "building": "yes"
       },
@@ -478,8 +478,8 @@
           "latitude": -45.848237700000006
         }
       ],
-      "distanceFromRouteMeters": 48.78319747489865,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 94.031056,
+      "nearestRouteDistanceMeters": 1251.300321,
       "sourceTags": {
         "building": "yes"
       },
@@ -524,8 +524,8 @@
           "latitude": -45.8483013
         }
       ],
-      "distanceFromRouteMeters": 64.26044961196395,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 96.656525,
+      "nearestRouteDistanceMeters": 1231.348278,
       "sourceTags": {
         "building": "yes"
       },
@@ -592,8 +592,8 @@
           "latitude": -45.848153700000005
         }
       ],
-      "distanceFromRouteMeters": 61.40951226714081,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 115.266383,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -642,8 +642,8 @@
           "latitude": -45.8480378
         }
       ],
-      "distanceFromRouteMeters": 38.36900353781059,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 53.838781,
+      "nearestRouteDistanceMeters": 1237.093555,
       "sourceTags": {
         "building": "yes"
       },
@@ -686,8 +686,8 @@
           "latitude": -45.8484003
         }
       ],
-      "distanceFromRouteMeters": 76.244651838498,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 98.975433,
+      "nearestRouteDistanceMeters": 1227.995319,
       "sourceTags": {
         "building": "yes"
       },
@@ -730,8 +730,8 @@
           "latitude": -45.847764000000005
         }
       ],
-      "distanceFromRouteMeters": 70.229113677455,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 114.761639,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -790,8 +790,8 @@
           "latitude": -45.8483006
         }
       ],
-      "distanceFromRouteMeters": 78.60277463738424,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 132.255071,
+      "nearestRouteDistanceMeters": 1269.251111,
       "sourceTags": {
         "building": "yes"
       },
@@ -838,8 +838,8 @@
           "latitude": -45.848145300000006
         }
       ],
-      "distanceFromRouteMeters": 71.74467156878222,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 121.558981,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -898,8 +898,8 @@
           "latitude": -45.8480384
         }
       ],
-      "distanceFromRouteMeters": 38.419479363565344,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 93.954424,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -998,8 +998,8 @@
           "latitude": -45.8476555
         }
       ],
-      "distanceFromRouteMeters": 14.093073011065018,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 68.23565,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1055,8 +1055,8 @@
           "latitude": -45.8477011
         }
       ],
-      "distanceFromRouteMeters": 79.17517380396052,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 122.294965,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1107,8 +1107,8 @@
           "latitude": -45.848369600000005
         }
       ],
-      "distanceFromRouteMeters": 57.44455432934745,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 86.559651,
+      "nearestRouteDistanceMeters": 1229.008607,
       "sourceTags": {
         "building": "yes"
       },
@@ -1169,8 +1169,8 @@
           "latitude": -45.848083900000006
         }
       ],
-      "distanceFromRouteMeters": 25.993903805249207,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 81.514582,
+      "nearestRouteDistanceMeters": 1263.940481,
       "sourceTags": {
         "building": "yes"
       },
@@ -1225,8 +1225,8 @@
           "latitude": -45.847818700000005
         }
       ],
-      "distanceFromRouteMeters": 79.90011245286806,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 126.518933,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1271,8 +1271,8 @@
           "latitude": -45.847665400000004
         }
       ],
-      "distanceFromRouteMeters": 56.72799402638241,
-      "nearestRouteDistanceMeters": 0,
+      "distanceFromRouteMeters": 97.504699,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1331,8 +1331,8 @@
           "latitude": -45.848057100000005
         }
       ],
-      "distanceFromRouteMeters": 46.988113722328826,
-      "nearestRouteDistanceMeters": 2.7405325588431473,
+      "distanceFromRouteMeters": 56.271672,
+      "nearestRouteDistanceMeters": 1228.712143,
       "sourceTags": {
         "building": "yes"
       },
@@ -1379,8 +1379,8 @@
           "latitude": -45.847826100000006
         }
       ],
-      "distanceFromRouteMeters": 15.711805488432873,
-      "nearestRouteDistanceMeters": 2.904763465514824,
+      "distanceFromRouteMeters": 51.786385,
+      "nearestRouteDistanceMeters": 1257.080595,
       "sourceTags": {
         "building": "yes"
       },
@@ -1423,8 +1423,8 @@
           "latitude": -45.847753600000004
         }
       ],
-      "distanceFromRouteMeters": 17.559425278301227,
-      "nearestRouteDistanceMeters": 8.027158881903581,
+      "distanceFromRouteMeters": 37.308191,
+      "nearestRouteDistanceMeters": 1255.389561,
       "sourceTags": {
         "building": "yes"
       },
@@ -1467,8 +1467,8 @@
           "latitude": -45.8476519
         }
       ],
-      "distanceFromRouteMeters": 11.093232116067135,
-      "nearestRouteDistanceMeters": 24.24578183837916,
+      "distanceFromRouteMeters": 25.108295,
+      "nearestRouteDistanceMeters": 1263.028555,
       "sourceTags": {
         "building": "yes"
       },
@@ -1511,8 +1511,8 @@
           "latitude": -45.847301
         }
       ],
-      "distanceFromRouteMeters": 36.28308004656915,
-      "nearestRouteDistanceMeters": 28.415462860407416,
+      "distanceFromRouteMeters": 44.370853,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1571,8 +1571,8 @@
           "latitude": -45.8471794
         }
       ],
-      "distanceFromRouteMeters": 35.218364642741165,
-      "nearestRouteDistanceMeters": 33.22585661573999,
+      "distanceFromRouteMeters": 44.749563,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1619,8 +1619,8 @@
           "latitude": -45.847402800000005
         }
       ],
-      "distanceFromRouteMeters": 12.532117635147847,
-      "nearestRouteDistanceMeters": 34.04413451465121,
+      "distanceFromRouteMeters": 22.620315,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1687,8 +1687,8 @@
           "latitude": -45.847334000000004
         }
       ],
-      "distanceFromRouteMeters": 18.22821997961769,
-      "nearestRouteDistanceMeters": 36.93964202248573,
+      "distanceFromRouteMeters": 29.117199,
+      "nearestRouteDistanceMeters": 1277.13397,
       "sourceTags": {
         "building": "yes"
       },
@@ -1753,8 +1753,8 @@
           "latitude": -45.8470043
         }
       ],
-      "distanceFromRouteMeters": 48.78217765774988,
-      "nearestRouteDistanceMeters": 48.46023443540245,
+      "distanceFromRouteMeters": 58.002826,
+      "nearestRouteDistanceMeters": 1284.336989,
       "sourceTags": {
         "building": "yes"
       },
@@ -1801,8 +1801,8 @@
           "latitude": -45.846861800000006
         }
       ],
-      "distanceFromRouteMeters": 57.48137875495149,
-      "nearestRouteDistanceMeters": 62.685772896869736,
+      "distanceFromRouteMeters": 66.515122,
+      "nearestRouteDistanceMeters": 1295.057307,
       "sourceTags": {
         "building": "yes"
       },
@@ -1877,8 +1877,8 @@
           "latitude": -45.846698
         }
       ],
-      "distanceFromRouteMeters": 68.24188768966587,
-      "nearestRouteDistanceMeters": 76.84913732782583,
+      "distanceFromRouteMeters": 73.776493,
+      "nearestRouteDistanceMeters": 1312.722463,
       "sourceTags": {
         "building": "yes"
       },
@@ -1929,8 +1929,8 @@
           "latitude": -45.8472765
         }
       ],
-      "distanceFromRouteMeters": 10.448094192194967,
-      "nearestRouteDistanceMeters": 77.00622611525512,
+      "distanceFromRouteMeters": 12.796425,
+      "nearestRouteDistanceMeters": 1308.41268,
       "sourceTags": {
         "building": "yes"
       },
@@ -2005,8 +2005,8 @@
           "latitude": -45.8469731
         }
       ],
-      "distanceFromRouteMeters": 24.694256312769777,
-      "nearestRouteDistanceMeters": 83.80990854250302,
+      "distanceFromRouteMeters": 30.959161,
+      "nearestRouteDistanceMeters": 1315.324996,
       "sourceTags": {
         "building": "yes"
       },
@@ -2081,8 +2081,8 @@
           "latitude": -45.8466674
         }
       ],
-      "distanceFromRouteMeters": 66.48875637309213,
-      "nearestRouteDistanceMeters": 94.64906050279059,
+      "distanceFromRouteMeters": 71.389416,
+      "nearestRouteDistanceMeters": 6.462851,
       "sourceTags": {
         "building": "yes"
       },
@@ -2131,8 +2131,8 @@
           "latitude": -45.8473507
         }
       ],
-      "distanceFromRouteMeters": 40.4134395390678,
-      "nearestRouteDistanceMeters": 96.87094861584829,
+      "distanceFromRouteMeters": 42.229757,
+      "nearestRouteDistanceMeters": 2.652839,
       "sourceTags": {
         "building": "yes"
       },
@@ -2183,8 +2183,8 @@
           "latitude": -45.846877000000006
         }
       ],
-      "distanceFromRouteMeters": 26.286657789795914,
-      "nearestRouteDistanceMeters": 106.68983512895882,
+      "distanceFromRouteMeters": 29.664275,
+      "nearestRouteDistanceMeters": 8.745501,
       "sourceTags": {
         "building": "yes"
       },
@@ -2253,8 +2253,8 @@
           "latitude": -45.8472542
         }
       ],
-      "distanceFromRouteMeters": 21.378633175510952,
-      "nearestRouteDistanceMeters": 111.35284697736039,
+      "distanceFromRouteMeters": 28.31122,
+      "nearestRouteDistanceMeters": 14.392054,
       "sourceTags": {
         "building": "yes"
       },
@@ -2311,8 +2311,8 @@
           "latitude": -45.846747
         }
       ],
-      "distanceFromRouteMeters": 27.135207355391344,
-      "nearestRouteDistanceMeters": 112.66461193183557,
+      "distanceFromRouteMeters": 31.135168,
+      "nearestRouteDistanceMeters": 25.927974,
       "sourceTags": {
         "building": "yes"
       },
@@ -2357,8 +2357,8 @@
           "latitude": -45.8471326
         }
       ],
-      "distanceFromRouteMeters": 18.551347188428803,
-      "nearestRouteDistanceMeters": 119.1313824619592,
+      "distanceFromRouteMeters": 24.495526,
+      "nearestRouteDistanceMeters": 30.19225,
       "sourceTags": {
         "building": "yes"
       },
@@ -2401,8 +2401,8 @@
           "latitude": -45.847177300000006
         }
       ],
-      "distanceFromRouteMeters": 45.72980347644345,
-      "nearestRouteDistanceMeters": 124.10436385144331,
+      "distanceFromRouteMeters": 46.766893,
+      "nearestRouteDistanceMeters": 37.546288,
       "sourceTags": {
         "building": "yes"
       },
@@ -2469,8 +2469,8 @@
           "latitude": -45.846383100000004
         }
       ],
-      "distanceFromRouteMeters": 70.88648056231607,
-      "nearestRouteDistanceMeters": 127.58685773517972,
+      "distanceFromRouteMeters": 77.521536,
+      "nearestRouteDistanceMeters": 34.727898,
       "sourceTags": {
         "building": "yes"
       },
@@ -2519,8 +2519,8 @@
           "latitude": -45.8471034
         }
       ],
-      "distanceFromRouteMeters": 33.51053637773717,
-      "nearestRouteDistanceMeters": 130.88206698930972,
+      "distanceFromRouteMeters": 35.549686,
+      "nearestRouteDistanceMeters": 37.75983,
       "sourceTags": {
         "building": "yes"
       },
@@ -2587,8 +2587,8 @@
           "latitude": -45.8462529
         }
       ],
-      "distanceFromRouteMeters": 78.43197652964488,
-      "nearestRouteDistanceMeters": 134.73656427576185,
+      "distanceFromRouteMeters": 84.234501,
+      "nearestRouteDistanceMeters": 45.964444,
       "sourceTags": {
         "building": "yes"
       },
@@ -2645,8 +2645,8 @@
           "latitude": -45.8466401
         }
       ],
-      "distanceFromRouteMeters": 27.844164586934717,
-      "nearestRouteDistanceMeters": 136.48615523136058,
+      "distanceFromRouteMeters": 35.799997,
+      "nearestRouteDistanceMeters": 38.198588,
       "sourceTags": {
         "building": "yes"
       },
@@ -2691,8 +2691,8 @@
           "latitude": -45.8471616
         }
       ],
-      "distanceFromRouteMeters": 50.425987661097935,
-      "nearestRouteDistanceMeters": 139.8137812308346,
+      "distanceFromRouteMeters": 52.604998,
+      "nearestRouteDistanceMeters": 44.759936,
       "sourceTags": {
         "building": "yes"
       },
@@ -2767,8 +2767,8 @@
           "latitude": -45.8465617
         }
       ],
-      "distanceFromRouteMeters": 23.324245264428896,
-      "nearestRouteDistanceMeters": 146.4221875244065,
+      "distanceFromRouteMeters": 31.366663,
+      "nearestRouteDistanceMeters": 56.237236,
       "sourceTags": {
         "building": "yes"
       },
@@ -2827,8 +2827,8 @@
           "latitude": -45.8472062
         }
       ],
-      "distanceFromRouteMeters": 57.57414429650212,
-      "nearestRouteDistanceMeters": 149.3091217328381,
+      "distanceFromRouteMeters": 61.48928,
+      "nearestRouteDistanceMeters": 47.844856,
       "sourceTags": {
         "building": "yes"
       },
@@ -2881,8 +2881,8 @@
           "latitude": -45.846496200000004
         }
       ],
-      "distanceFromRouteMeters": 24.424535032913706,
-      "nearestRouteDistanceMeters": 159.8085379018351,
+      "distanceFromRouteMeters": 27.616112,
+      "nearestRouteDistanceMeters": 67.562484,
       "sourceTags": {
         "building": "yes"
       },
@@ -2927,8 +2927,8 @@
           "latitude": -45.8471823
         }
       ],
-      "distanceFromRouteMeters": 68.66512674494575,
-      "nearestRouteDistanceMeters": 166.65662888464476,
+      "distanceFromRouteMeters": 72.625858,
+      "nearestRouteDistanceMeters": 71.07904,
       "sourceTags": {
         "building": "yes"
       },
@@ -2987,8 +2987,8 @@
           "latitude": -45.846408100000005
         }
       ],
-      "distanceFromRouteMeters": 27.232304678950022,
-      "nearestRouteDistanceMeters": 173.84573733977123,
+      "distanceFromRouteMeters": 32.701999,
+      "nearestRouteDistanceMeters": 81.238878,
       "sourceTags": {
         "building": "yes"
       },
@@ -3035,8 +3035,8 @@
           "latitude": -45.8471246
         }
       ],
-      "distanceFromRouteMeters": 66.470870128581,
-      "nearestRouteDistanceMeters": 182.76788156487223,
+      "distanceFromRouteMeters": 68.788249,
+      "nearestRouteDistanceMeters": 89.26852,
       "sourceTags": {
         "building": "yes"
       },
@@ -3087,8 +3087,8 @@
           "latitude": -45.846264000000005
         }
       ],
-      "distanceFromRouteMeters": 27.224339554103587,
-      "nearestRouteDistanceMeters": 183.574185625306,
+      "distanceFromRouteMeters": 35.449465,
+      "nearestRouteDistanceMeters": 98.014699,
       "sourceTags": {
         "building": "yes"
       },
@@ -3157,8 +3157,8 @@
           "latitude": -45.8467532
         }
       ],
-      "distanceFromRouteMeters": 16.25932657723293,
-      "nearestRouteDistanceMeters": 183.80658172152528,
+      "distanceFromRouteMeters": 23.631725,
+      "nearestRouteDistanceMeters": 87.293906,
       "sourceTags": {
         "building": "yes"
       },
@@ -3207,8 +3207,8 @@
           "latitude": -45.8469898
         }
       ],
-      "distanceFromRouteMeters": 45.883018707963245,
-      "nearestRouteDistanceMeters": 187.09710699471557,
+      "distanceFromRouteMeters": 48.109174,
+      "nearestRouteDistanceMeters": 91.794584,
       "sourceTags": {
         "building": "yes"
       },
@@ -3251,8 +3251,8 @@
           "latitude": -45.8469003
         }
       ],
-      "distanceFromRouteMeters": 44.14185963269606,
-      "nearestRouteDistanceMeters": 189.77521649571395,
+      "distanceFromRouteMeters": 45.79296,
+      "nearestRouteDistanceMeters": 99.459301,
       "sourceTags": {
         "building": "yes"
       },
@@ -3303,8 +3303,8 @@
           "latitude": -45.847043500000005
         }
       ],
-      "distanceFromRouteMeters": 52.76880233557899,
-      "nearestRouteDistanceMeters": 189.8750290288161,
+      "distanceFromRouteMeters": 57.050017,
+      "nearestRouteDistanceMeters": 92.326328,
       "sourceTags": {
         "building": "yes"
       },
@@ -3365,8 +3365,8 @@
           "latitude": -45.8459784
         }
       ],
-      "distanceFromRouteMeters": 71.97021296104523,
-      "nearestRouteDistanceMeters": 192.26168382970428,
+      "distanceFromRouteMeters": 74.941202,
+      "nearestRouteDistanceMeters": 99.353969,
       "sourceTags": {
         "building": "yes"
       },
@@ -3413,8 +3413,8 @@
           "latitude": -45.846946300000006
         }
       ],
-      "distanceFromRouteMeters": 51.183482186774704,
-      "nearestRouteDistanceMeters": 199.86266437528724,
+      "distanceFromRouteMeters": 52.909043,
+      "nearestRouteDistanceMeters": 105.940325,
       "sourceTags": {
         "building": "yes"
       },
@@ -3465,8 +3465,8 @@
           "latitude": -45.846252500000006
         }
       ],
-      "distanceFromRouteMeters": 27.759750422774783,
-      "nearestRouteDistanceMeters": 205.39929793808682,
+      "distanceFromRouteMeters": 30.848681,
+      "nearestRouteDistanceMeters": 113.066624,
       "sourceTags": {
         "building": "yes"
       },
@@ -3527,8 +3527,8 @@
           "latitude": -45.8458862
         }
       ],
-      "distanceFromRouteMeters": 63.44826956785538,
-      "nearestRouteDistanceMeters": 205.7131099100077,
+      "distanceFromRouteMeters": 72.570659,
+      "nearestRouteDistanceMeters": 108.791941,
       "sourceTags": {
         "building": "yes"
       },
@@ -3591,8 +3591,8 @@
           "latitude": -45.847007700000006
         }
       ],
-      "distanceFromRouteMeters": 63.493586806269676,
-      "nearestRouteDistanceMeters": 208.6809544341447,
+      "distanceFromRouteMeters": 67.78925,
+      "nearestRouteDistanceMeters": 119.15805,
       "sourceTags": {
         "building": "yes"
       },
@@ -3655,8 +3655,8 @@
           "latitude": -45.846752800000004
         }
       ],
-      "distanceFromRouteMeters": 18.47183439872888,
-      "nearestRouteDistanceMeters": 209.9507963486945,
+      "distanceFromRouteMeters": 30.6932,
+      "nearestRouteDistanceMeters": 118.925346,
       "sourceTags": {
         "building": "yes"
       },
@@ -3703,8 +3703,8 @@
           "latitude": -45.845915700000006
         }
       ],
-      "distanceFromRouteMeters": 63.03147150553412,
-      "nearestRouteDistanceMeters": 214.6064019421827,
+      "distanceFromRouteMeters": 64.817759,
+      "nearestRouteDistanceMeters": 124.319256,
       "sourceTags": {
         "building": "yes"
       },
@@ -3779,8 +3779,8 @@
           "latitude": -45.846758400000006
         }
       ],
-      "distanceFromRouteMeters": 28.19276111697409,
-      "nearestRouteDistanceMeters": 216.8810946837448,
+      "distanceFromRouteMeters": 37.110723,
+      "nearestRouteDistanceMeters": 131.210541,
       "sourceTags": {
         "building": "yes"
       },
@@ -3839,8 +3839,8 @@
           "latitude": -45.8457577
         }
       ],
-      "distanceFromRouteMeters": 67.55236579982855,
-      "nearestRouteDistanceMeters": 217.3185208525092,
+      "distanceFromRouteMeters": 76.504807,
+      "nearestRouteDistanceMeters": 128.190267,
       "sourceTags": {
         "building": "yes"
       },
@@ -3901,8 +3901,8 @@
           "latitude": -45.846962600000005
         }
       ],
-      "distanceFromRouteMeters": 58.583359467707524,
-      "nearestRouteDistanceMeters": 224.51270028627513,
+      "distanceFromRouteMeters": 65.868604,
+      "nearestRouteDistanceMeters": 135.55559,
       "sourceTags": {
         "building": "yes"
       },
@@ -3949,8 +3949,8 @@
           "latitude": -45.8462851
         }
       ],
-      "distanceFromRouteMeters": 10.170787040316167,
-      "nearestRouteDistanceMeters": 226.08901827299027,
+      "distanceFromRouteMeters": 13.764964,
+      "nearestRouteDistanceMeters": 135.326927,
       "sourceTags": {
         "building": "yes"
       },
@@ -4033,8 +4033,8 @@
           "latitude": -45.846125400000005
         }
       ],
-      "distanceFromRouteMeters": 24.216356314142693,
-      "nearestRouteDistanceMeters": 226.569425051668,
+      "distanceFromRouteMeters": 31.161546,
+      "nearestRouteDistanceMeters": 129.839063,
       "sourceTags": {
         "building": "yes"
       },
@@ -4119,8 +4119,8 @@
           "latitude": -45.8457662
         }
       ],
-      "distanceFromRouteMeters": 63.873508753386545,
-      "nearestRouteDistanceMeters": 237.19983042380775,
+      "distanceFromRouteMeters": 73.050432,
+      "nearestRouteDistanceMeters": 149.250743,
       "sourceTags": {
         "building": "yes"
       },
@@ -4179,8 +4179,8 @@
           "latitude": -45.8469508
         }
       ],
-      "distanceFromRouteMeters": 60.71784046016514,
-      "nearestRouteDistanceMeters": 246.67915644121905,
+      "distanceFromRouteMeters": 70.138184,
+      "nearestRouteDistanceMeters": 155.833404,
       "sourceTags": {
         "building": "yes"
       },
@@ -4249,8 +4249,8 @@
           "latitude": -45.846926800000006
         }
       ],
-      "distanceFromRouteMeters": 78.21960056646425,
-      "nearestRouteDistanceMeters": 262.82028589140555,
+      "distanceFromRouteMeters": 82.47859,
+      "nearestRouteDistanceMeters": 169.960268,
       "sourceTags": {
         "building": "yes"
       },
@@ -4299,8 +4299,8 @@
           "latitude": -45.846689500000004
         }
       ],
-      "distanceFromRouteMeters": 52.86781893900659,
-      "nearestRouteDistanceMeters": 264.8440216335573,
+      "distanceFromRouteMeters": 54.791767,
+      "nearestRouteDistanceMeters": 170.904162,
       "sourceTags": {
         "building": "yes"
       },
@@ -4343,8 +4343,8 @@
           "latitude": -45.8459365
         }
       ],
-      "distanceFromRouteMeters": 39.94002424918563,
-      "nearestRouteDistanceMeters": 265.62930159288607,
+      "distanceFromRouteMeters": 42.150519,
+      "nearestRouteDistanceMeters": 174.319036,
       "sourceTags": {
         "building": "yes"
       },
@@ -4411,8 +4411,8 @@
           "latitude": -45.8464812
         }
       ],
-      "distanceFromRouteMeters": 15.582096533403586,
-      "nearestRouteDistanceMeters": 266.40476215842943,
+      "distanceFromRouteMeters": 23.477404,
+      "nearestRouteDistanceMeters": 173.49961,
       "sourceTags": {
         "building": "yes"
       },
@@ -4477,8 +4477,8 @@
           "latitude": -45.845526400000004
         }
       ],
-      "distanceFromRouteMeters": 75.88837532376985,
-      "nearestRouteDistanceMeters": 267.36163200055205,
+      "distanceFromRouteMeters": 86.644201,
+      "nearestRouteDistanceMeters": 227.286817,
       "sourceTags": {
         "building": "yes"
       },
@@ -4525,8 +4525,8 @@
           "latitude": -45.846698200000006
         }
       ],
-      "distanceFromRouteMeters": 56.99323453172268,
-      "nearestRouteDistanceMeters": 269.648785453708,
+      "distanceFromRouteMeters": 58.43566,
+      "nearestRouteDistanceMeters": 175.502859,
       "sourceTags": {
         "building": "yes"
       },
@@ -4593,8 +4593,8 @@
           "latitude": -45.8459355
         }
       ],
-      "distanceFromRouteMeters": 25.17108902718901,
-      "nearestRouteDistanceMeters": 270.6859611263803,
+      "distanceFromRouteMeters": 34.402278,
+      "nearestRouteDistanceMeters": 182.700754,
       "sourceTags": {
         "building": "yes"
       },
@@ -4643,8 +4643,8 @@
           "latitude": -45.8468232
         }
       ],
-      "distanceFromRouteMeters": 77.5081747721723,
-      "nearestRouteDistanceMeters": 272.6150907403834,
+      "distanceFromRouteMeters": 79.672151,
+      "nearestRouteDistanceMeters": 179.754964,
       "sourceTags": {
         "building": "yes"
       },
@@ -4687,8 +4687,8 @@
           "latitude": -45.8465945
         }
       ],
-      "distanceFromRouteMeters": 44.42202875586902,
-      "nearestRouteDistanceMeters": 273.2055473592076,
+      "distanceFromRouteMeters": 46.273708,
+      "nearestRouteDistanceMeters": 179.754964,
       "sourceTags": {
         "building": "yes"
       },
@@ -4731,8 +4731,8 @@
           "latitude": -45.846656100000004
         }
       ],
-      "distanceFromRouteMeters": 55.967673736704725,
-      "nearestRouteDistanceMeters": 273.8066025878899,
+      "distanceFromRouteMeters": 57.602296,
+      "nearestRouteDistanceMeters": 180.040467,
       "sourceTags": {
         "building": "yes"
       },
@@ -4775,8 +4775,8 @@
           "latitude": -45.8466722
         }
       ],
-      "distanceFromRouteMeters": 63.9642779875679,
-      "nearestRouteDistanceMeters": 278.4241973711692,
+      "distanceFromRouteMeters": 66.058672,
+      "nearestRouteDistanceMeters": 185.564008,
       "sourceTags": {
         "building": "yes"
       },
@@ -4843,8 +4843,8 @@
           "latitude": -45.8463719
         }
       ],
-      "distanceFromRouteMeters": 16.58855268762435,
-      "nearestRouteDistanceMeters": 282.37959911309457,
+      "distanceFromRouteMeters": 23.261175,
+      "nearestRouteDistanceMeters": 186.791642,
       "sourceTags": {
         "building": "yes"
       },
@@ -4909,8 +4909,8 @@
           "latitude": -45.8466828
         }
       ],
-      "distanceFromRouteMeters": 66.60233575956666,
-      "nearestRouteDistanceMeters": 284.5227877644312,
+      "distanceFromRouteMeters": 70.754652,
+      "nearestRouteDistanceMeters": 188.886696,
       "sourceTags": {
         "building": "yes"
       },
@@ -4965,8 +4965,8 @@
           "latitude": -45.8464662
         }
       ],
-      "distanceFromRouteMeters": 34.75738617669719,
-      "nearestRouteDistanceMeters": 284.5227877644312,
+      "distanceFromRouteMeters": 40.435575,
+      "nearestRouteDistanceMeters": 191.272811,
       "sourceTags": {
         "building": "yes"
       },
@@ -5011,8 +5011,8 @@
           "latitude": -45.8463195
         }
       ],
-      "distanceFromRouteMeters": 26.78056994803345,
-      "nearestRouteDistanceMeters": 284.5227877644312,
+      "distanceFromRouteMeters": 28.663238,
+      "nearestRouteDistanceMeters": 194.301291,
       "sourceTags": {
         "building": "yes"
       },
@@ -5071,8 +5071,8 @@
           "latitude": -45.8465113
         }
       ],
-      "distanceFromRouteMeters": 49.0903192742907,
-      "nearestRouteDistanceMeters": 284.5227877644312,
+      "distanceFromRouteMeters": 54.075263,
+      "nearestRouteDistanceMeters": 190.624436,
       "sourceTags": {
         "building": "yes"
       },
@@ -5167,8 +5167,8 @@
           "latitude": -45.846219100000006
         }
       ],
-      "distanceFromRouteMeters": 47.046051746790205,
-      "nearestRouteDistanceMeters": 308.6511584093524,
+      "distanceFromRouteMeters": 73.048714,
+      "nearestRouteDistanceMeters": 419.377572,
       "sourceTags": {
         "building": "yes"
       },
@@ -5239,8 +5239,8 @@
           "latitude": -45.8456683
         }
       ],
-      "distanceFromRouteMeters": 28.506787013264614,
-      "nearestRouteDistanceMeters": 321.40776608595127,
+      "distanceFromRouteMeters": 35.742459,
+      "nearestRouteDistanceMeters": 235.700904,
       "sourceTags": {
         "building": "yes"
       },
@@ -5311,8 +5311,8 @@
           "latitude": -45.8454581
         }
       ],
-      "distanceFromRouteMeters": 72.81615382242437,
-      "nearestRouteDistanceMeters": 337.8063210136276,
+      "distanceFromRouteMeters": 83.137619,
+      "nearestRouteDistanceMeters": 250.448298,
       "sourceTags": {
         "building": "yes"
       },
@@ -5369,8 +5369,8 @@
           "latitude": -45.845633
         }
       ],
-      "distanceFromRouteMeters": 27.689322464572243,
-      "nearestRouteDistanceMeters": 344.943595214678,
+      "distanceFromRouteMeters": 34.427247,
+      "nearestRouteDistanceMeters": 250.927249,
       "sourceTags": {
         "building": "yes"
       },
@@ -5415,8 +5415,8 @@
           "latitude": -45.845404300000006
         }
       ],
-      "distanceFromRouteMeters": 28.604406363839733,
-      "nearestRouteDistanceMeters": 361.7419384625744,
+      "distanceFromRouteMeters": 30.903173,
+      "nearestRouteDistanceMeters": 273.512503,
       "sourceTags": {
         "building": "yes"
       },
@@ -5459,8 +5459,8 @@
           "latitude": -45.8452732
         }
       ],
-      "distanceFromRouteMeters": 63.764945243515484,
-      "nearestRouteDistanceMeters": 366.5167089376285,
+      "distanceFromRouteMeters": 65.876596,
+      "nearestRouteDistanceMeters": 276.896634,
       "sourceTags": {
         "building": "yes"
       },
@@ -5503,8 +5503,8 @@
           "latitude": -45.8453266
         }
       ],
-      "distanceFromRouteMeters": 50.31739073314783,
-      "nearestRouteDistanceMeters": 370.67653707812354,
+      "distanceFromRouteMeters": 52.348281,
+      "nearestRouteDistanceMeters": 274.953556,
       "sourceTags": {
         "building": "yes"
       },
@@ -5555,8 +5555,8 @@
           "latitude": -45.8453748
         }
       ],
-      "distanceFromRouteMeters": 16.470520416179504,
-      "nearestRouteDistanceMeters": 378.97578289951326,
+      "distanceFromRouteMeters": 20.415201,
+      "nearestRouteDistanceMeters": 285.728387,
       "sourceTags": {
         "building": "yes"
       },
@@ -5609,8 +5609,8 @@
           "latitude": -45.8447461
         }
       ],
-      "distanceFromRouteMeters": 48.89781824619793,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 56.32569,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -5663,8 +5663,8 @@
           "latitude": -45.8445717
         }
       ],
-      "distanceFromRouteMeters": 67.5197312980708,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 80.590098,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -5709,8 +5709,8 @@
           "latitude": -45.844585
         }
       ],
-      "distanceFromRouteMeters": 67.96929538424003,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 73.354898,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -5761,8 +5761,8 @@
           "latitude": -45.8446062
         }
       ],
-      "distanceFromRouteMeters": 61.5233675529057,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 73.741589,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -5807,8 +5807,8 @@
           "latitude": -45.8452707
         }
       ],
-      "distanceFromRouteMeters": 66.69011601348572,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 74.664867,
+      "nearestRouteDistanceMeters": 280.301049,
       "sourceTags": {
         "building": "yes"
       },
@@ -5875,8 +5875,8 @@
           "latitude": -45.845332400000004
         }
       ],
-      "distanceFromRouteMeters": 33.2347403591607,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 37.332103,
+      "nearestRouteDistanceMeters": 285.659188,
       "sourceTags": {
         "building": "yes"
       },
@@ -5981,8 +5981,8 @@
           "latitude": -45.8448714
         }
       ],
-      "distanceFromRouteMeters": 25.870774845042067,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 41.757127,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -6055,8 +6055,8 @@
           "latitude": -45.845305100000004
         }
       ],
-      "distanceFromRouteMeters": 51.03201456135934,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 58.389876,
+      "nearestRouteDistanceMeters": 281.783359,
       "sourceTags": {
         "building": "yes"
       },
@@ -6119,8 +6119,8 @@
           "latitude": -45.844755400000004
         }
       ],
-      "distanceFromRouteMeters": 69.40826226703662,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 81.044764,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -6167,8 +6167,8 @@
           "latitude": -45.844650200000004
         }
       ],
-      "distanceFromRouteMeters": 61.28564097857803,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 68.150102,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -6211,8 +6211,8 @@
           "latitude": -45.844872800000005
         }
       ],
-      "distanceFromRouteMeters": 65.88581037253036,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 72.274391,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -6263,8 +6263,8 @@
           "latitude": -45.844635800000006
         }
       ],
-      "distanceFromRouteMeters": 61.99038771423303,
-      "nearestRouteDistanceMeters": 404.87959044283144,
+      "distanceFromRouteMeters": 68.011116,
+      "nearestRouteDistanceMeters": 306.692385,
       "sourceTags": {
         "building": "yes"
       },
@@ -6349,8 +6349,8 @@
           "latitude": -45.844916600000005
         }
       ],
-      "distanceFromRouteMeters": 28.93873044776708,
-      "nearestRouteDistanceMeters": 427.8630625004633,
+      "distanceFromRouteMeters": 37.215681,
+      "nearestRouteDistanceMeters": 324.76195,
       "sourceTags": {
         "building": "yes"
       },
@@ -6403,8 +6403,8 @@
           "latitude": -45.845087
         }
       ],
-      "distanceFromRouteMeters": 18.974335585033533,
-      "nearestRouteDistanceMeters": 428.4248462658247,
+      "distanceFromRouteMeters": 23.059029,
+      "nearestRouteDistanceMeters": 324.76195,
       "sourceTags": {
         "building": "yes"
       },
@@ -6479,8 +6479,8 @@
           "latitude": -45.8448221
         }
       ],
-      "distanceFromRouteMeters": 57.36619159290486,
-      "nearestRouteDistanceMeters": 429.2234794726563,
+      "distanceFromRouteMeters": 65.166848,
+      "nearestRouteDistanceMeters": 325.226576,
       "sourceTags": {
         "building": "yes"
       },
@@ -6531,8 +6531,8 @@
           "latitude": -45.8446938
         }
       ],
-      "distanceFromRouteMeters": 74.84629533287519,
-      "nearestRouteDistanceMeters": 431.94407893408385,
+      "distanceFromRouteMeters": 78.124328,
+      "nearestRouteDistanceMeters": 328.429766,
       "sourceTags": {
         "building": "yes"
       },
@@ -6575,8 +6575,8 @@
           "latitude": -45.8451432
         }
       ],
-      "distanceFromRouteMeters": 16.67706542167696,
-      "nearestRouteDistanceMeters": 432.9025004767645,
+      "distanceFromRouteMeters": 20.188703,
+      "nearestRouteDistanceMeters": 328.429766,
       "sourceTags": {
         "building": "yes"
       },
@@ -6619,8 +6619,8 @@
           "latitude": -45.844897800000005
         }
       ],
-      "distanceFromRouteMeters": 52.58808150022979,
-      "nearestRouteDistanceMeters": 436.1898355439196,
+      "distanceFromRouteMeters": 58.229628,
+      "nearestRouteDistanceMeters": 332.675429,
       "sourceTags": {
         "building": "yes"
       },
@@ -6663,8 +6663,8 @@
           "latitude": -45.844754300000005
         }
       ],
-      "distanceFromRouteMeters": 73.3956426221901,
-      "nearestRouteDistanceMeters": 436.1898355439196,
+      "distanceFromRouteMeters": 78.354859,
+      "nearestRouteDistanceMeters": 332.675429,
       "sourceTags": {
         "building": "yes"
       },
@@ -6707,8 +6707,8 @@
           "latitude": -45.8449711
         }
       ],
-      "distanceFromRouteMeters": 44.98230619821748,
-      "nearestRouteDistanceMeters": 436.1898355439196,
+      "distanceFromRouteMeters": 48.234451,
+      "nearestRouteDistanceMeters": 332.675429,
       "sourceTags": {
         "building": "yes"
       },
@@ -6767,8 +6767,8 @@
           "latitude": -45.8448384
         }
       ],
-      "distanceFromRouteMeters": 79.28814617002557,
-      "nearestRouteDistanceMeters": 440.98272318975563,
+      "distanceFromRouteMeters": 84.093466,
+      "nearestRouteDistanceMeters": 338.587444,
       "sourceTags": {
         "building": "yes"
       },
@@ -6839,8 +6839,8 @@
           "latitude": -45.8450799
         }
       ],
-      "distanceFromRouteMeters": 23.47675678298311,
-      "nearestRouteDistanceMeters": 441.70054406915705,
+      "distanceFromRouteMeters": 31.411115,
+      "nearestRouteDistanceMeters": 332.675429,
       "sourceTags": {
         "building": "yes"
       },
@@ -6921,8 +6921,8 @@
           "latitude": -45.845177500000005
         }
       ],
-      "distanceFromRouteMeters": 17.177131129541387,
-      "nearestRouteDistanceMeters": 444.08861379484415,
+      "distanceFromRouteMeters": 28.125388,
+      "nearestRouteDistanceMeters": 346.512692,
       "sourceTags": {
         "building": "yes"
       },
@@ -6989,8 +6989,8 @@
           "latitude": -45.845042500000005
         }
       ],
-      "distanceFromRouteMeters": 66.89973622290508,
-      "nearestRouteDistanceMeters": 450.51322014023816,
+      "distanceFromRouteMeters": 73.276194,
+      "nearestRouteDistanceMeters": 353.525622,
       "sourceTags": {
         "building": "yes"
       },
@@ -7037,8 +7037,8 @@
           "latitude": -45.8451541
         }
       ],
-      "distanceFromRouteMeters": 43.62540023393826,
-      "nearestRouteDistanceMeters": 452.93207831015616,
+      "distanceFromRouteMeters": 45.807363,
+      "nearestRouteDistanceMeters": 350.497362,
       "sourceTags": {
         "building": "yes"
       },
@@ -7097,8 +7097,8 @@
           "latitude": -45.8452812
         }
       ],
-      "distanceFromRouteMeters": 18.06236523676799,
-      "nearestRouteDistanceMeters": 459.2605612890961,
+      "distanceFromRouteMeters": 25.203248,
+      "nearestRouteDistanceMeters": 359.208747,
       "sourceTags": {
         "building": "yes"
       },
@@ -7145,8 +7145,8 @@
           "latitude": -45.8452525
         }
       ],
-      "distanceFromRouteMeters": 38.168474516346,
-      "nearestRouteDistanceMeters": 466.26309120755104,
+      "distanceFromRouteMeters": 42.679177,
+      "nearestRouteDistanceMeters": 364.64193,
       "sourceTags": {
         "building": "yes"
       },
@@ -7197,8 +7197,8 @@
           "latitude": -45.8450853
         }
       ],
-      "distanceFromRouteMeters": 65.22845958036493,
-      "nearestRouteDistanceMeters": 469.8620022768847,
+      "distanceFromRouteMeters": 72.073111,
+      "nearestRouteDistanceMeters": 372.062544,
       "sourceTags": {
         "building": "yes"
       },
@@ -7243,8 +7243,8 @@
           "latitude": -45.8453614
         }
       ],
-      "distanceFromRouteMeters": 30.17951374935487,
-      "nearestRouteDistanceMeters": 475.56454793502996,
+      "distanceFromRouteMeters": 33.051801,
+      "nearestRouteDistanceMeters": 370.387144,
       "sourceTags": {
         "building": "yes"
       },
@@ -7311,8 +7311,8 @@
           "latitude": -45.8454312
         }
       ],
-      "distanceFromRouteMeters": 19.83990110045777,
-      "nearestRouteDistanceMeters": 477.5093960037533,
+      "distanceFromRouteMeters": 27.882016,
+      "nearestRouteDistanceMeters": 375.789728,
       "sourceTags": {
         "building": "yes"
       },
@@ -7361,8 +7361,8 @@
           "latitude": -45.8453442
         }
       ],
-      "distanceFromRouteMeters": 57.0374310418624,
-      "nearestRouteDistanceMeters": 494.4972201175502,
+      "distanceFromRouteMeters": 59.431973,
+      "nearestRouteDistanceMeters": 391.858618,
       "sourceTags": {
         "building": "yes"
       },
@@ -7413,8 +7413,8 @@
           "latitude": -45.8451948
         }
       ],
-      "distanceFromRouteMeters": 65.23629902455691,
-      "nearestRouteDistanceMeters": 497.672430150999,
+      "distanceFromRouteMeters": 72.065162,
+      "nearestRouteDistanceMeters": 388.711925,
       "sourceTags": {
         "building": "yes"
       },
@@ -7475,8 +7475,8 @@
           "latitude": -45.845497300000005
         }
       ],
-      "distanceFromRouteMeters": 20.386468777598623,
-      "nearestRouteDistanceMeters": 500.2803218338442,
+      "distanceFromRouteMeters": 27.021652,
+      "nearestRouteDistanceMeters": 389.493905,
       "sourceTags": {
         "building": "yes"
       },
@@ -7523,8 +7523,8 @@
           "latitude": -45.845536200000005
         }
       ],
-      "distanceFromRouteMeters": 35.84131472545492,
-      "nearestRouteDistanceMeters": 502.6146711505094,
+      "distanceFromRouteMeters": 37.505169,
+      "nearestRouteDistanceMeters": 400.609305,
       "sourceTags": {
         "building": "yes"
       },
@@ -7567,8 +7567,8 @@
           "latitude": -45.8456707
         }
       ],
-      "distanceFromRouteMeters": 11.001425393287995,
-      "nearestRouteDistanceMeters": 503.0753611635452,
+      "distanceFromRouteMeters": 14.579427,
+      "nearestRouteDistanceMeters": 401.084045,
       "sourceTags": {
         "building": "yes"
       },
@@ -7611,8 +7611,8 @@
           "latitude": -45.845677900000005
         }
       ],
-      "distanceFromRouteMeters": 20.348795904975546,
-      "nearestRouteDistanceMeters": 509.56374469606004,
+      "distanceFromRouteMeters": 25.620346,
+      "nearestRouteDistanceMeters": 407.394635,
       "sourceTags": {
         "building": "yes"
       },
@@ -7663,8 +7663,8 @@
           "latitude": -45.845353700000004
         }
       ],
-      "distanceFromRouteMeters": 69.18769622967078,
-      "nearestRouteDistanceMeters": 520.8758993150451,
+      "distanceFromRouteMeters": 77.120202,
+      "nearestRouteDistanceMeters": 413.82123,
       "sourceTags": {
         "building": "yes"
       },
@@ -7733,8 +7733,8 @@
           "latitude": -45.8456777
         }
       ],
-      "distanceFromRouteMeters": 19.86412225758198,
-      "nearestRouteDistanceMeters": 526.3008695696852,
+      "distanceFromRouteMeters": 29.097494,
+      "nearestRouteDistanceMeters": 421.090497,
       "sourceTags": {
         "building": "yes"
       },
@@ -7783,8 +7783,8 @@
           "latitude": -45.8456946
         }
       ],
-      "distanceFromRouteMeters": 41.62417064022958,
-      "nearestRouteDistanceMeters": 534.0119049981688,
+      "distanceFromRouteMeters": 44.63246,
+      "nearestRouteDistanceMeters": 431.718391,
       "sourceTags": {
         "building": "yes"
       },
@@ -7851,8 +7851,8 @@
           "latitude": -45.845833000000006
         }
       ],
-      "distanceFromRouteMeters": 19.53501230534032,
-      "nearestRouteDistanceMeters": 541.532620388712,
+      "distanceFromRouteMeters": 28.195815,
+      "nearestRouteDistanceMeters": 437.339728,
       "sourceTags": {
         "building": "yes"
       },
@@ -7901,8 +7901,8 @@
           "latitude": -45.845916
         }
       ],
-      "distanceFromRouteMeters": 15.23406296249678,
-      "nearestRouteDistanceMeters": 547.8066732728353,
+      "distanceFromRouteMeters": 18.943717,
+      "nearestRouteDistanceMeters": 442.121358,
       "sourceTags": {
         "building": "yes"
       },
@@ -7945,8 +7945,8 @@
           "latitude": -45.8458027
         }
       ],
-      "distanceFromRouteMeters": 24.640411654965643,
-      "nearestRouteDistanceMeters": 548.9642558849024,
+      "distanceFromRouteMeters": 36.885229,
+      "nearestRouteDistanceMeters": 449.326533,
       "sourceTags": {
         "building": "yes"
       },
@@ -7997,8 +7997,8 @@
           "latitude": -45.8465198
         }
       ],
-      "distanceFromRouteMeters": 39.51535529563203,
-      "nearestRouteDistanceMeters": 558.5439811404397,
+      "distanceFromRouteMeters": 46.248602,
+      "nearestRouteDistanceMeters": 459.166881,
       "sourceTags": {
         "building": "yes"
       },
@@ -8139,8 +8139,8 @@
           "latitude": -45.8460149
         }
       ],
-      "distanceFromRouteMeters": 15.745557895851114,
-      "nearestRouteDistanceMeters": 558.8660658036146,
+      "distanceFromRouteMeters": 28.873416,
+      "nearestRouteDistanceMeters": 432.632963,
       "sourceTags": {
         "building": "yes"
       },
@@ -8207,8 +8207,8 @@
           "latitude": -45.8455856
         }
       ],
-      "distanceFromRouteMeters": 76.06336569562613,
-      "nearestRouteDistanceMeters": 571.131358192582,
+      "distanceFromRouteMeters": 84.87887,
+      "nearestRouteDistanceMeters": 460.060569,
       "sourceTags": {
         "building": "yes"
       },
@@ -8275,8 +8275,8 @@
           "latitude": -45.8459841
         }
       ],
-      "distanceFromRouteMeters": 44.57224290372818,
-      "nearestRouteDistanceMeters": 576.0982303986835,
+      "distanceFromRouteMeters": 51.571179,
+      "nearestRouteDistanceMeters": 473.305027,
       "sourceTags": {
         "building": "yes"
       },
@@ -8325,8 +8325,8 @@
           "latitude": -45.846144100000004
         }
       ],
-      "distanceFromRouteMeters": 17.1149142334987,
-      "nearestRouteDistanceMeters": 578.1505609998654,
+      "distanceFromRouteMeters": 19.272426,
+      "nearestRouteDistanceMeters": 478.621774,
       "sourceTags": {
         "building": "yes"
       },
@@ -8369,8 +8369,8 @@
           "latitude": -45.846462900000006
         }
       ],
-      "distanceFromRouteMeters": 29.175178453684367,
-      "nearestRouteDistanceMeters": 580.1941979067092,
+      "distanceFromRouteMeters": 33.729164,
+      "nearestRouteDistanceMeters": 475.133236,
       "sourceTags": {
         "building": "yes"
       },
@@ -8429,8 +8429,8 @@
           "latitude": -45.8462857
         }
       ],
-      "distanceFromRouteMeters": 17.892048398893685,
-      "nearestRouteDistanceMeters": 593.0882940147895,
+      "distanceFromRouteMeters": 25.174953,
+      "nearestRouteDistanceMeters": 498.5405,
       "sourceTags": {
         "building": "yes"
       },
@@ -8517,8 +8517,8 @@
           "latitude": -45.845923000000006
         }
       ],
-      "distanceFromRouteMeters": 72.22294846295149,
-      "nearestRouteDistanceMeters": 599.9369112739496,
+      "distanceFromRouteMeters": 87.746395,
+      "nearestRouteDistanceMeters": 500.585368,
       "sourceTags": {
         "building": "yes"
       },
@@ -8587,8 +8587,8 @@
           "latitude": -45.846359
         }
       ],
-      "distanceFromRouteMeters": 19.866878927229383,
-      "nearestRouteDistanceMeters": 622.2159370673545,
+      "distanceFromRouteMeters": 27.932285,
+      "nearestRouteDistanceMeters": 514.392107,
       "sourceTags": {
         "building": "yes"
       },
@@ -8635,8 +8635,8 @@
           "latitude": -45.8465086
         }
       ],
-      "distanceFromRouteMeters": 9.873433244620596,
-      "nearestRouteDistanceMeters": 623.4744149560189,
+      "distanceFromRouteMeters": 12.239644,
+      "nearestRouteDistanceMeters": 518.960928,
       "sourceTags": {
         "building": "yes"
       },
@@ -8687,8 +8687,8 @@
           "latitude": -45.8462557
         }
       ],
-      "distanceFromRouteMeters": 52.51162855508272,
-      "nearestRouteDistanceMeters": 624.7309057700294,
+      "distanceFromRouteMeters": 60.206602,
+      "nearestRouteDistanceMeters": 524.521564,
       "sourceTags": {
         "building": "yes"
       },
@@ -8749,8 +8749,8 @@
           "latitude": -45.8465233
         }
       ],
-      "distanceFromRouteMeters": 22.745375850389443,
-      "nearestRouteDistanceMeters": 637.6808378672827,
+      "distanceFromRouteMeters": 30.896073,
+      "nearestRouteDistanceMeters": 527.514861,
       "sourceTags": {
         "building": "yes"
       },
@@ -8797,8 +8797,8 @@
           "latitude": -45.8465634
         }
       ],
-      "distanceFromRouteMeters": 15.24817342114765,
-      "nearestRouteDistanceMeters": 640.1224264746029,
+      "distanceFromRouteMeters": 17.349681,
+      "nearestRouteDistanceMeters": 537.810711,
       "sourceTags": {
         "building": "yes"
       },
@@ -8873,8 +8873,8 @@
           "latitude": -45.846233500000004
         }
       ],
-      "distanceFromRouteMeters": 61.64521266629327,
-      "nearestRouteDistanceMeters": 643.9339127113883,
+      "distanceFromRouteMeters": 69.787262,
+      "nearestRouteDistanceMeters": 538.700557,
       "sourceTags": {
         "building": "yes"
       },
@@ -8941,8 +8941,8 @@
           "latitude": -45.846498200000006
         }
       ],
-      "distanceFromRouteMeters": 22.363339081389242,
-      "nearestRouteDistanceMeters": 647.1664403955185,
+      "distanceFromRouteMeters": 31.000435,
+      "nearestRouteDistanceMeters": 544.783008,
       "sourceTags": {
         "building": "yes"
       },
@@ -9005,8 +9005,8 @@
           "latitude": -45.8468882
         }
       ],
-      "distanceFromRouteMeters": 22.26586043955015,
-      "nearestRouteDistanceMeters": 651.9854071085645,
+      "distanceFromRouteMeters": 30.335151,
+      "nearestRouteDistanceMeters": 541.323922,
       "sourceTags": {
         "building": "yes"
       },
@@ -9053,8 +9053,8 @@
           "latitude": -45.8469941
         }
       ],
-      "distanceFromRouteMeters": 35.436985192492145,
-      "nearestRouteDistanceMeters": 655.0565512209738,
+      "distanceFromRouteMeters": 37.887645,
+      "nearestRouteDistanceMeters": 553.631335,
       "sourceTags": {
         "building": "yes"
       },
@@ -9105,8 +9105,8 @@
           "latitude": -45.8470582
         }
       ],
-      "distanceFromRouteMeters": 22.366745267166838,
-      "nearestRouteDistanceMeters": 662.4311540512538,
+      "distanceFromRouteMeters": 26.889006,
+      "nearestRouteDistanceMeters": 560.127551,
       "sourceTags": {
         "building": "yes"
       },
@@ -9167,8 +9167,8 @@
           "latitude": -45.846296900000006
         }
       ],
-      "distanceFromRouteMeters": 63.69125364838313,
-      "nearestRouteDistanceMeters": 664.2282646559067,
+      "distanceFromRouteMeters": 72.213904,
+      "nearestRouteDistanceMeters": 553.419274,
       "sourceTags": {
         "building": "yes"
       },
@@ -9215,8 +9215,8 @@
           "latitude": -45.8470789
         }
       ],
-      "distanceFromRouteMeters": 36.31286714495609,
-      "nearestRouteDistanceMeters": 667.1201402779935,
+      "distanceFromRouteMeters": 38.15982,
+      "nearestRouteDistanceMeters": 564.406712,
       "sourceTags": {
         "building": "yes"
       },
@@ -9259,8 +9259,8 @@
           "latitude": -45.8463829
         }
       ],
-      "distanceFromRouteMeters": 64.90431745752169,
-      "nearestRouteDistanceMeters": 668.4851439027638,
+      "distanceFromRouteMeters": 73.187073,
+      "nearestRouteDistanceMeters": 568.257138,
       "sourceTags": {
         "building": "yes"
       },
@@ -9311,8 +9311,8 @@
           "latitude": -45.846583700000004
         }
       ],
-      "distanceFromRouteMeters": 22.32429193038321,
-      "nearestRouteDistanceMeters": 670.3505817045273,
+      "distanceFromRouteMeters": 30.75085,
+      "nearestRouteDistanceMeters": 559.492595,
       "sourceTags": {
         "building": "yes"
       },
@@ -9365,8 +9365,8 @@
           "latitude": -45.847009500000006
         }
       ],
-      "distanceFromRouteMeters": 18.70493660332214,
-      "nearestRouteDistanceMeters": 672.9600723391011,
+      "distanceFromRouteMeters": 24.230213,
+      "nearestRouteDistanceMeters": 574.891199,
       "sourceTags": {
         "building": "yes"
       },
@@ -9411,8 +9411,8 @@
           "latitude": -45.8471416
         }
       ],
-      "distanceFromRouteMeters": 41.579814294787994,
-      "nearestRouteDistanceMeters": 674.6585678883888,
+      "distanceFromRouteMeters": 44.735495,
+      "nearestRouteDistanceMeters": 569.503659,
       "sourceTags": {
         "building": "yes"
       },
@@ -9455,8 +9455,8 @@
           "latitude": -45.8465426
         }
       ],
-      "distanceFromRouteMeters": 56.40024557796031,
-      "nearestRouteDistanceMeters": 676.2621829566875,
+      "distanceFromRouteMeters": 58.965066,
+      "nearestRouteDistanceMeters": 573.51565,
       "sourceTags": {
         "building": "yes"
       },
@@ -9515,8 +9515,8 @@
           "latitude": -45.8467208
         }
       ],
-      "distanceFromRouteMeters": 18.34193955402218,
-      "nearestRouteDistanceMeters": 680.1470257209425,
+      "distanceFromRouteMeters": 27.780314,
+      "nearestRouteDistanceMeters": 577.565669,
       "sourceTags": {
         "building": "yes"
       },
@@ -9571,8 +9571,8 @@
           "latitude": -45.8465325
         }
       ],
-      "distanceFromRouteMeters": 63.01148031244389,
-      "nearestRouteDistanceMeters": 684.1890132904521,
+      "distanceFromRouteMeters": 69.583303,
+      "nearestRouteDistanceMeters": 581.72209,
       "sourceTags": {
         "building": "yes"
       },
@@ -9617,8 +9617,8 @@
           "latitude": -45.8471568
         }
       ],
-      "distanceFromRouteMeters": 32.116518293947,
-      "nearestRouteDistanceMeters": 685.9674760676244,
+      "distanceFromRouteMeters": 34.182005,
+      "nearestRouteDistanceMeters": 580.59348,
       "sourceTags": {
         "building": "yes"
       },
@@ -9661,8 +9661,8 @@
           "latitude": -45.8466748
         }
       ],
-      "distanceFromRouteMeters": 51.548195500076446,
-      "nearestRouteDistanceMeters": 690.154868363905,
+      "distanceFromRouteMeters": 53.280553,
+      "nearestRouteDistanceMeters": 588.562699,
       "sourceTags": {
         "building": "yes"
       },
@@ -9705,8 +9705,8 @@
           "latitude": -45.847168700000005
         }
       ],
-      "distanceFromRouteMeters": 29.16299398998826,
-      "nearestRouteDistanceMeters": 690.2184305570502,
+      "distanceFromRouteMeters": 32.148454,
+      "nearestRouteDistanceMeters": 585.075998,
       "sourceTags": {
         "building": "yes"
       },
@@ -9749,8 +9749,8 @@
           "latitude": -45.846754100000005
         }
       ],
-      "distanceFromRouteMeters": 35.95051251547829,
-      "nearestRouteDistanceMeters": 697.2104750333745,
+      "distanceFromRouteMeters": 39.718466,
+      "nearestRouteDistanceMeters": 589.882124,
       "sourceTags": {
         "building": "yes"
       },
@@ -9817,8 +9817,8 @@
           "latitude": -45.8472439
         }
       ],
-      "distanceFromRouteMeters": 18.917985720618777,
-      "nearestRouteDistanceMeters": 700.9939798669491,
+      "distanceFromRouteMeters": 28.267416,
+      "nearestRouteDistanceMeters": 592.309246,
       "sourceTags": {
         "building": "yes"
       },
@@ -9867,8 +9867,8 @@
           "latitude": -45.8473369
         }
       ],
-      "distanceFromRouteMeters": 44.43261932370008,
-      "nearestRouteDistanceMeters": 701.2544397115889,
+      "distanceFromRouteMeters": 46.305496,
+      "nearestRouteDistanceMeters": 596.260036,
       "sourceTags": {
         "building": "yes"
       },
@@ -9919,8 +9919,8 @@
           "latitude": -45.8468402
         }
       ],
-      "distanceFromRouteMeters": 18.620271118090113,
-      "nearestRouteDistanceMeters": 703.899718251294,
+      "distanceFromRouteMeters": 24.30779,
+      "nearestRouteDistanceMeters": 594.15379,
       "sourceTags": {
         "building": "yes"
       },
@@ -9965,8 +9965,8 @@
           "latitude": -45.846717700000006
         }
       ],
-      "distanceFromRouteMeters": 64.0426181196821,
-      "nearestRouteDistanceMeters": 705.6197694716914,
+      "distanceFromRouteMeters": 69.884659,
+      "nearestRouteDistanceMeters": 598.765905,
       "sourceTags": {
         "building": "yes"
       },
@@ -10009,8 +10009,8 @@
           "latitude": -45.847369500000006
         }
       ],
-      "distanceFromRouteMeters": 43.946662274682616,
-      "nearestRouteDistanceMeters": 706.3840008441731,
+      "distanceFromRouteMeters": 45.832559,
+      "nearestRouteDistanceMeters": 601.571861,
       "sourceTags": {
         "building": "yes"
       },
@@ -10069,8 +10069,8 @@
           "latitude": -45.8472358
         }
       ],
-      "distanceFromRouteMeters": 19.41429684191652,
-      "nearestRouteDistanceMeters": 706.6677190884119,
+      "distanceFromRouteMeters": 24.931231,
+      "nearestRouteDistanceMeters": 607.789346,
       "sourceTags": {
         "building": "yes"
       },
@@ -10117,8 +10117,8 @@
           "latitude": -45.847329900000005
         }
       ],
-      "distanceFromRouteMeters": 37.77871382503812,
-      "nearestRouteDistanceMeters": 707.8389675314883,
+      "distanceFromRouteMeters": 40.282749,
+      "nearestRouteDistanceMeters": 601.953699,
       "sourceTags": {
         "building": "yes"
       },
@@ -10161,8 +10161,8 @@
           "latitude": -45.846855600000005
         }
       ],
-      "distanceFromRouteMeters": 39.940678625933785,
-      "nearestRouteDistanceMeters": 708.7281872052981,
+      "distanceFromRouteMeters": 42.872783,
+      "nearestRouteDistanceMeters": 606.317319,
       "sourceTags": {
         "building": "yes"
       },
@@ -10205,8 +10205,8 @@
           "latitude": -45.846675600000005
         }
       ],
-      "distanceFromRouteMeters": 60.97402406266442,
-      "nearestRouteDistanceMeters": 710.5560124349527,
+      "distanceFromRouteMeters": 70.034315,
+      "nearestRouteDistanceMeters": 610.550261,
       "sourceTags": {
         "building": "yes"
       },
@@ -10249,8 +10249,8 @@
           "latitude": -45.8469076
         }
       ],
-      "distanceFromRouteMeters": 33.9163251606901,
-      "nearestRouteDistanceMeters": 712.2816983423858,
+      "distanceFromRouteMeters": 37.666423,
+      "nearestRouteDistanceMeters": 612.323564,
       "sourceTags": {
         "building": "yes"
       },
@@ -10293,8 +10293,8 @@
           "latitude": -45.8469521
         }
       ],
-      "distanceFromRouteMeters": 20.160534495563386,
-      "nearestRouteDistanceMeters": 720.2913656523812,
+      "distanceFromRouteMeters": 25.297806,
+      "nearestRouteDistanceMeters": 609.617058,
       "sourceTags": {
         "building": "yes"
       },
@@ -10337,8 +10337,8 @@
           "latitude": -45.847431900000004
         }
       ],
-      "distanceFromRouteMeters": 36.56546015876835,
-      "nearestRouteDistanceMeters": 723.9568565305068,
+      "distanceFromRouteMeters": 38.121206,
+      "nearestRouteDistanceMeters": 618.346212,
       "sourceTags": {
         "building": "yes"
       },
@@ -10397,8 +10397,8 @@
           "latitude": -45.8474269
         }
       ],
-      "distanceFromRouteMeters": 19.229703639520032,
-      "nearestRouteDistanceMeters": 729.4068455181585,
+      "distanceFromRouteMeters": 25.347329,
+      "nearestRouteDistanceMeters": 624.266237,
       "sourceTags": {
         "building": "yes"
       },
@@ -10453,8 +10453,8 @@
           "latitude": -45.8467916
         }
       ],
-      "distanceFromRouteMeters": 61.24766216745117,
-      "nearestRouteDistanceMeters": 732.9830050943466,
+      "distanceFromRouteMeters": 70.454976,
+      "nearestRouteDistanceMeters": 624.270266,
       "sourceTags": {
         "building": "yes"
       },
@@ -10499,8 +10499,8 @@
           "latitude": -45.8469745
         }
       ],
-      "distanceFromRouteMeters": 51.26445271749282,
-      "nearestRouteDistanceMeters": 735.7089823246167,
+      "distanceFromRouteMeters": 53.157726,
+      "nearestRouteDistanceMeters": 633.680431,
       "sourceTags": {
         "building": "yes"
       },
@@ -10551,8 +10551,8 @@
           "latitude": -45.847188900000006
         }
       ],
-      "distanceFromRouteMeters": 20.144125951350244,
-      "nearestRouteDistanceMeters": 736.3435715929695,
+      "distanceFromRouteMeters": 23.939838,
+      "nearestRouteDistanceMeters": 630.465632,
       "sourceTags": {
         "building": "yes"
       },
@@ -10605,8 +10605,8 @@
           "latitude": -45.8468716
         }
       ],
-      "distanceFromRouteMeters": 58.508861048886104,
-      "nearestRouteDistanceMeters": 746.730525619744,
+      "distanceFromRouteMeters": 69.054641,
+      "nearestRouteDistanceMeters": 637.53599,
       "sourceTags": {
         "building": "yes"
       },
@@ -10667,8 +10667,8 @@
           "latitude": -45.847210600000004
         }
       ],
-      "distanceFromRouteMeters": 18.52710796672942,
-      "nearestRouteDistanceMeters": 747.7935715920969,
+      "distanceFromRouteMeters": 26.565526,
+      "nearestRouteDistanceMeters": 644.557994,
       "sourceTags": {
         "building": "yes"
       },
@@ -10723,8 +10723,8 @@
           "latitude": -45.8474973
         }
       ],
-      "distanceFromRouteMeters": 22.154931743465422,
-      "nearestRouteDistanceMeters": 749.4049726085666,
+      "distanceFromRouteMeters": 28.732433,
+      "nearestRouteDistanceMeters": 640.691968,
       "sourceTags": {
         "building": "yes"
       },
@@ -10769,8 +10769,8 @@
           "latitude": -45.847132300000006
         }
       ],
-      "distanceFromRouteMeters": 34.734524266565806,
-      "nearestRouteDistanceMeters": 751.9205652823279,
+      "distanceFromRouteMeters": 37.530941,
+      "nearestRouteDistanceMeters": 644.645382,
       "sourceTags": {
         "building": "yes"
       },
@@ -10813,8 +10813,8 @@
           "latitude": -45.8474875
         }
       ],
-      "distanceFromRouteMeters": 10.114948289098622,
-      "nearestRouteDistanceMeters": 755.7147762026325,
+      "distanceFromRouteMeters": 13.113313,
+      "nearestRouteDistanceMeters": 651.052391,
       "sourceTags": {
         "building": "yes"
       },
@@ -10865,8 +10865,8 @@
           "latitude": -45.8469672
         }
       ],
-      "distanceFromRouteMeters": 56.49899341105637,
-      "nearestRouteDistanceMeters": 757.3290921657821,
+      "distanceFromRouteMeters": 67.514054,
+      "nearestRouteDistanceMeters": 651.131189,
       "sourceTags": {
         "building": "yes"
       },
@@ -10911,8 +10911,8 @@
           "latitude": -45.847078200000006
         }
       ],
-      "distanceFromRouteMeters": 61.74758828606609,
-      "nearestRouteDistanceMeters": 763.4230511996626,
+      "distanceFromRouteMeters": 74.45497,
+      "nearestRouteDistanceMeters": 659.906689,
       "sourceTags": {
         "building": "yes"
       },
@@ -10971,8 +10971,8 @@
           "latitude": -45.8474139
         }
       ],
-      "distanceFromRouteMeters": 20.50308753031125,
-      "nearestRouteDistanceMeters": 763.4230511996626,
+      "distanceFromRouteMeters": 25.886861,
+      "nearestRouteDistanceMeters": 659.906689,
       "sourceTags": {
         "building": "yes"
       },
@@ -11019,8 +11019,8 @@
           "latitude": -45.8474091
         }
       ],
-      "distanceFromRouteMeters": 10.43769456821532,
-      "nearestRouteDistanceMeters": 764.4344584744755,
+      "distanceFromRouteMeters": 14.739961,
+      "nearestRouteDistanceMeters": 661.418702,
       "sourceTags": {
         "building": "yes"
       },
@@ -11079,8 +11079,8 @@
           "latitude": -45.847194300000005
         }
       ],
-      "distanceFromRouteMeters": 63.317849513774135,
-      "nearestRouteDistanceMeters": 767.1914251474019,
+      "distanceFromRouteMeters": 72.86121,
+      "nearestRouteDistanceMeters": 663.67507,
       "sourceTags": {
         "building": "yes"
       },
@@ -11135,8 +11135,8 @@
           "latitude": -45.8474706
         }
       ],
-      "distanceFromRouteMeters": 23.679770896398786,
-      "nearestRouteDistanceMeters": 767.680655255541,
+      "distanceFromRouteMeters": 29.971023,
+      "nearestRouteDistanceMeters": 666.8058,
       "sourceTags": {
         "building": "yes"
       },
@@ -11197,8 +11197,8 @@
           "latitude": -45.8473289
         }
       ],
-      "distanceFromRouteMeters": 74.76300553985041,
-      "nearestRouteDistanceMeters": 770.322152129076,
+      "distanceFromRouteMeters": 83.340423,
+      "nearestRouteDistanceMeters": 666.8058,
       "sourceTags": {
         "building": "yes"
       },
@@ -11245,8 +11245,8 @@
           "latitude": -45.8474708
         }
       ],
-      "distanceFromRouteMeters": 40.965789643768474,
-      "nearestRouteDistanceMeters": 770.322152129076,
+      "distanceFromRouteMeters": 43.873586,
+      "nearestRouteDistanceMeters": 666.8058,
       "sourceTags": {
         "building": "yes"
       },
@@ -11305,8 +11305,8 @@
           "latitude": -45.8476008
         }
       ],
-      "distanceFromRouteMeters": 34.05036459914573,
-      "nearestRouteDistanceMeters": 774.6576734258956,
+      "distanceFromRouteMeters": 40.642143,
+      "nearestRouteDistanceMeters": 671.141322,
       "sourceTags": {
         "building": "yes"
       },
@@ -11393,8 +11393,8 @@
           "latitude": -45.8479128
         }
       ],
-      "distanceFromRouteMeters": 79.17033533589117,
-      "nearestRouteDistanceMeters": 779.0871132819404,
+      "distanceFromRouteMeters": 88.799564,
+      "nearestRouteDistanceMeters": 677.496708,
       "sourceTags": {
         "building": "yes"
       },
@@ -11447,8 +11447,8 @@
           "latitude": -45.847747600000005
         }
       ],
-      "distanceFromRouteMeters": 59.60047792078278,
-      "nearestRouteDistanceMeters": 779.0871132819404,
+      "distanceFromRouteMeters": 63.168241,
+      "nearestRouteDistanceMeters": 675.570762,
       "sourceTags": {
         "building": "yes"
       },
@@ -11499,8 +11499,8 @@
           "latitude": -45.847880800000006
         }
       ],
-      "distanceFromRouteMeters": 31.335910903801583,
-      "nearestRouteDistanceMeters": 782.8647555741112,
+      "distanceFromRouteMeters": 37.754459,
+      "nearestRouteDistanceMeters": 681.425693,
       "sourceTags": {
         "building": "yes"
       },
@@ -11581,8 +11581,8 @@
           "latitude": -45.848300900000005
         }
       ],
-      "distanceFromRouteMeters": 75.41955388519953,
-      "nearestRouteDistanceMeters": 788.164068357599,
+      "distanceFromRouteMeters": 83.925213,
+      "nearestRouteDistanceMeters": 684.647745,
       "sourceTags": {
         "building": "yes"
       },
@@ -11650,8 +11650,8 @@
           "latitude": -45.8475769
         }
       ],
-      "distanceFromRouteMeters": 12.669362062075674,
-      "nearestRouteDistanceMeters": 796.6973658700568,
+      "distanceFromRouteMeters": 17.093574,
+      "nearestRouteDistanceMeters": 695.865764,
       "sourceTags": {
         "building": "yes"
       },
@@ -11714,8 +11714,8 @@
           "latitude": -45.8480697
         }
       ],
-      "distanceFromRouteMeters": 33.27752697633462,
-      "nearestRouteDistanceMeters": 801.9626260906078,
+      "distanceFromRouteMeters": 40.77461,
+      "nearestRouteDistanceMeters": 696.614594,
       "sourceTags": {
         "building": "yes"
       },
@@ -11770,8 +11770,8 @@
           "latitude": -45.8480508
         }
       ],
-      "distanceFromRouteMeters": 32.28267593827615,
-      "nearestRouteDistanceMeters": 811.672526051752,
+      "distanceFromRouteMeters": 37.964143,
+      "nearestRouteDistanceMeters": 713.42055,
       "sourceTags": {
         "building": "yes"
       },
@@ -11816,8 +11816,8 @@
           "latitude": -45.847558
         }
       ],
-      "distanceFromRouteMeters": 38.90996207207276,
-      "nearestRouteDistanceMeters": 814.7801797023259,
+      "distanceFromRouteMeters": 41.091885,
+      "nearestRouteDistanceMeters": 709.407648,
       "sourceTags": {
         "building": "yes"
       },
@@ -11860,8 +11860,8 @@
           "latitude": -45.847718500000006
         }
       ],
-      "distanceFromRouteMeters": 22.742652528338645,
-      "nearestRouteDistanceMeters": 821.0530824581142,
+      "distanceFromRouteMeters": 24.046009,
+      "nearestRouteDistanceMeters": 714.95099,
       "sourceTags": {
         "building": "yes"
       },
@@ -11904,8 +11904,8 @@
           "latitude": -45.8476222
         }
       ],
-      "distanceFromRouteMeters": 38.74868062450103,
-      "nearestRouteDistanceMeters": 825.8754159608698,
+      "distanceFromRouteMeters": 41.218966,
+      "nearestRouteDistanceMeters": 720.342847,
       "sourceTags": {
         "building": "yes"
       },
@@ -11956,8 +11956,8 @@
           "latitude": -45.8484313
         }
       ],
-      "distanceFromRouteMeters": 70.3325934672554,
-      "nearestRouteDistanceMeters": 827.395724680103,
+      "distanceFromRouteMeters": 75.109612,
+      "nearestRouteDistanceMeters": 723.875445,
       "sourceTags": {
         "building": "yes"
       },
@@ -12010,8 +12010,8 @@
           "latitude": -45.8484288
         }
       ],
-      "distanceFromRouteMeters": 59.15937688834555,
-      "nearestRouteDistanceMeters": 844.494093612106,
+      "distanceFromRouteMeters": 61.721484,
+      "nearestRouteDistanceMeters": 738.517804,
       "sourceTags": {
         "building": "yes"
       },
@@ -12064,8 +12064,8 @@
           "latitude": -45.848192100000006
         }
       ],
-      "distanceFromRouteMeters": 29.974403535916117,
-      "nearestRouteDistanceMeters": 845.0385536861027,
+      "distanceFromRouteMeters": 39.693298,
+      "nearestRouteDistanceMeters": 737.210477,
       "sourceTags": {
         "building": "yes"
       },
@@ -12134,8 +12134,8 @@
           "latitude": -45.847825300000004
         }
       ],
-      "distanceFromRouteMeters": 13.229290333053466,
-      "nearestRouteDistanceMeters": 845.262564362013,
+      "distanceFromRouteMeters": 18.444712,
+      "nearestRouteDistanceMeters": 739.503108,
       "sourceTags": {
         "building": "yes"
       },
@@ -12184,8 +12184,8 @@
           "latitude": -45.848352600000005
         }
       ],
-      "distanceFromRouteMeters": 48.15436752419356,
-      "nearestRouteDistanceMeters": 847.3663328464389,
+      "distanceFromRouteMeters": 50.188173,
+      "nearestRouteDistanceMeters": 741.763438,
       "sourceTags": {
         "building": "yes"
       },
@@ -12248,8 +12248,8 @@
           "latitude": -45.848675500000006
         }
       ],
-      "distanceFromRouteMeters": 71.87376298949552,
-      "nearestRouteDistanceMeters": 857.1598150987085,
+      "distanceFromRouteMeters": 79.731281,
+      "nearestRouteDistanceMeters": 751.65154,
       "sourceTags": {
         "building": "yes"
       },
@@ -12305,8 +12305,8 @@
           "latitude": -45.8482975
         }
       ],
-      "distanceFromRouteMeters": 30.339833886602854,
-      "nearestRouteDistanceMeters": 857.9517394167825,
+      "distanceFromRouteMeters": 38.427839,
+      "nearestRouteDistanceMeters": 754.087177,
       "sourceTags": {
         "building": "yes"
       },
@@ -12367,8 +12367,8 @@
           "latitude": -45.848908900000005
         }
       ],
-      "distanceFromRouteMeters": 78.78096152662444,
-      "nearestRouteDistanceMeters": 863.9860565975044,
+      "distanceFromRouteMeters": 86.718393,
+      "nearestRouteDistanceMeters": 760.470335,
       "sourceTags": {
         "building": "yes"
       },
@@ -12415,8 +12415,8 @@
           "latitude": -45.848687500000004
         }
       ],
-      "distanceFromRouteMeters": 53.27947564534586,
-      "nearestRouteDistanceMeters": 863.9860565975044,
+      "distanceFromRouteMeters": 59.403399,
+      "nearestRouteDistanceMeters": 760.470335,
       "sourceTags": {
         "building": "yes"
       },
@@ -12483,8 +12483,8 @@
           "latitude": -45.8487926
         }
       ],
-      "distanceFromRouteMeters": 67.61608938981847,
-      "nearestRouteDistanceMeters": 863.9860565975044,
+      "distanceFromRouteMeters": 72.754794,
+      "nearestRouteDistanceMeters": 763.366817,
       "sourceTags": {
         "building": "yes"
       },
@@ -12565,8 +12565,8 @@
           "latitude": -45.8485072
         }
       ],
-      "distanceFromRouteMeters": 27.5110035311785,
-      "nearestRouteDistanceMeters": 867.9651726823668,
+      "distanceFromRouteMeters": 32.796728,
+      "nearestRouteDistanceMeters": 766.088259,
       "sourceTags": {
         "building": "yes"
       },
@@ -12641,8 +12641,8 @@
           "latitude": -45.8482792
         }
       ],
-      "distanceFromRouteMeters": 19.226943620694694,
-      "nearestRouteDistanceMeters": 876.0143038950368,
+      "distanceFromRouteMeters": 27.41869,
+      "nearestRouteDistanceMeters": 772.31167,
       "sourceTags": {
         "building": "yes"
       },
@@ -12691,8 +12691,8 @@
           "latitude": -45.8484154
         }
       ],
-      "distanceFromRouteMeters": 37.74986423715156,
-      "nearestRouteDistanceMeters": 876.0143038950368,
+      "distanceFromRouteMeters": 39.682464,
+      "nearestRouteDistanceMeters": 772.857293,
       "sourceTags": {
         "building": "yes"
       },
@@ -12735,8 +12735,8 @@
           "latitude": -45.8482884
         }
       ],
-      "distanceFromRouteMeters": 34.150173315455355,
-      "nearestRouteDistanceMeters": 881.2678021195372,
+      "distanceFromRouteMeters": 35.633377,
+      "nearestRouteDistanceMeters": 780.115059,
       "sourceTags": {
         "building": "yes"
       },
@@ -12779,8 +12779,8 @@
           "latitude": -45.8482147
         }
       ],
-      "distanceFromRouteMeters": 21.384233991815957,
-      "nearestRouteDistanceMeters": 881.4196811052196,
+      "distanceFromRouteMeters": 25.608977,
+      "nearestRouteDistanceMeters": 777.267809,
       "sourceTags": {
         "building": "yes"
       },
@@ -12823,8 +12823,8 @@
           "latitude": -45.848162200000004
         }
       ],
-      "distanceFromRouteMeters": 10.4672338024704,
-      "nearestRouteDistanceMeters": 882.1555082279526,
+      "distanceFromRouteMeters": 14.205273,
+      "nearestRouteDistanceMeters": 775.918151,
       "sourceTags": {
         "building": "yes"
       },
@@ -12867,8 +12867,8 @@
           "latitude": -45.8479079
         }
       ],
-      "distanceFromRouteMeters": 15.37959010969608,
-      "nearestRouteDistanceMeters": 891.1665985387186,
+      "distanceFromRouteMeters": 18.929339,
+      "nearestRouteDistanceMeters": 785.195097,
       "sourceTags": {
         "building": "yes"
       },
@@ -12943,8 +12943,8 @@
           "latitude": -45.8480878
         }
       ],
-      "distanceFromRouteMeters": 16.550343150911655,
-      "nearestRouteDistanceMeters": 899.1406829564996,
+      "distanceFromRouteMeters": 23.18011,
+      "nearestRouteDistanceMeters": 792.68212,
       "sourceTags": {
         "building": "yes"
       },
@@ -13003,8 +13003,8 @@
           "latitude": -45.8478446
         }
       ],
-      "distanceFromRouteMeters": 21.146919647758597,
-      "nearestRouteDistanceMeters": 900.9621683931857,
+      "distanceFromRouteMeters": 27.663591,
+      "nearestRouteDistanceMeters": 797.900731,
       "sourceTags": {
         "building": "yes"
       },
@@ -13065,8 +13065,8 @@
           "latitude": -45.848148800000004
         }
       ],
-      "distanceFromRouteMeters": 17.809184256715422,
-      "nearestRouteDistanceMeters": 905.1953214286112,
+      "distanceFromRouteMeters": 28.801392,
+      "nearestRouteDistanceMeters": 804.982979,
       "sourceTags": {
         "building": "yes"
       },
@@ -13113,8 +13113,8 @@
           "latitude": -45.848109900000004
         }
       ],
-      "distanceFromRouteMeters": 39.849171819665486,
-      "nearestRouteDistanceMeters": 911.2139757052747,
+      "distanceFromRouteMeters": 43.470983,
+      "nearestRouteDistanceMeters": 811.465959,
       "sourceTags": {
         "building": "yes"
       },
@@ -13173,8 +13173,8 @@
           "latitude": -45.8477212
         }
       ],
-      "distanceFromRouteMeters": 18.212366053602697,
-      "nearestRouteDistanceMeters": 922.8565766110444,
+      "distanceFromRouteMeters": 24.521849,
+      "nearestRouteDistanceMeters": 814.148038,
       "sourceTags": {
         "building": "yes"
       },
@@ -13237,8 +13237,8 @@
           "latitude": -45.847631400000004
         }
       ],
-      "distanceFromRouteMeters": 18.348493848859366,
-      "nearestRouteDistanceMeters": 926.5003453051779,
+      "distanceFromRouteMeters": 23.591002,
+      "nearestRouteDistanceMeters": 829.355797,
       "sourceTags": {
         "building": "yes"
       },
@@ -13285,8 +13285,8 @@
           "latitude": -45.8475436
         }
       ],
-      "distanceFromRouteMeters": 38.9579710950303,
-      "nearestRouteDistanceMeters": 926.7267918080379,
+      "distanceFromRouteMeters": 41.128117,
+      "nearestRouteDistanceMeters": 821.029415,
       "sourceTags": {
         "building": "yes"
       },
@@ -13361,8 +13361,8 @@
           "latitude": -45.8479164
         }
       ],
-      "distanceFromRouteMeters": 16.155730443422925,
-      "nearestRouteDistanceMeters": 929.1817665346882,
+      "distanceFromRouteMeters": 20.749558,
+      "nearestRouteDistanceMeters": 825.01644,
       "sourceTags": {
         "building": "yes"
       },
@@ -13413,8 +13413,8 @@
           "latitude": -45.8478809
         }
       ],
-      "distanceFromRouteMeters": 11.315999083476072,
-      "nearestRouteDistanceMeters": 930.3851982474386,
+      "distanceFromRouteMeters": 14.132697,
+      "nearestRouteDistanceMeters": 828.095119,
       "sourceTags": {
         "building": "yes"
       },
@@ -13465,8 +13465,8 @@
           "latitude": -45.8478651
         }
       ],
-      "distanceFromRouteMeters": 16.476478109497233,
-      "nearestRouteDistanceMeters": 936.0492597460682,
+      "distanceFromRouteMeters": 22.991376,
+      "nearestRouteDistanceMeters": 838.444963,
       "sourceTags": {
         "building": "yes"
       },
@@ -13511,8 +13511,8 @@
           "latitude": -45.8474425
         }
       ],
-      "distanceFromRouteMeters": 40.180556254669604,
-      "nearestRouteDistanceMeters": 936.1689617224972,
+      "distanceFromRouteMeters": 42.904105,
+      "nearestRouteDistanceMeters": 835.021731,
       "sourceTags": {
         "building": "yes"
       },
@@ -13563,8 +13563,8 @@
           "latitude": -45.848151
         }
       ],
-      "distanceFromRouteMeters": 59.82128315353703,
-      "nearestRouteDistanceMeters": 942.2314920048772,
+      "distanceFromRouteMeters": 64.854133,
+      "nearestRouteDistanceMeters": 833.455715,
       "sourceTags": {
         "building": "yes"
       },
@@ -13609,8 +13609,8 @@
           "latitude": -45.847911
         }
       ],
-      "distanceFromRouteMeters": 40.30683670391767,
-      "nearestRouteDistanceMeters": 948.1773827355776,
+      "distanceFromRouteMeters": 43.303945,
+      "nearestRouteDistanceMeters": 841.217678,
       "sourceTags": {
         "building": "yes"
       },
@@ -13661,8 +13661,8 @@
           "latitude": -45.8475398
         }
       ],
-      "distanceFromRouteMeters": 18.96485038116683,
-      "nearestRouteDistanceMeters": 949.3405162808364,
+      "distanceFromRouteMeters": 22.745174,
+      "nearestRouteDistanceMeters": 845.123586,
       "sourceTags": {
         "building": "yes"
       },
@@ -13739,8 +13739,8 @@
           "latitude": -45.847382200000006
         }
       ],
-      "distanceFromRouteMeters": 18.357847620559888,
-      "nearestRouteDistanceMeters": 957.7521520921243,
+      "distanceFromRouteMeters": 23.664433,
+      "nearestRouteDistanceMeters": 861.774663,
       "sourceTags": {
         "building": "yes"
       },
@@ -13791,8 +13791,8 @@
           "latitude": -45.8472689
         }
       ],
-      "distanceFromRouteMeters": 45.66615237796588,
-      "nearestRouteDistanceMeters": 962.5721356127611,
+      "distanceFromRouteMeters": 47.581026,
+      "nearestRouteDistanceMeters": 857.891523,
       "sourceTags": {
         "building": "yes"
       },
@@ -13835,8 +13835,8 @@
           "latitude": -45.8476343
         }
       ],
-      "distanceFromRouteMeters": 11.324264902585446,
-      "nearestRouteDistanceMeters": 963.2195675420222,
+      "distanceFromRouteMeters": 12.337926,
+      "nearestRouteDistanceMeters": 857.314075,
       "sourceTags": {
         "building": "yes"
       },
@@ -13879,8 +13879,8 @@
           "latitude": -45.8477017
         }
       ],
-      "distanceFromRouteMeters": 23.78257810260632,
-      "nearestRouteDistanceMeters": 964.5902067011668,
+      "distanceFromRouteMeters": 26.307563,
+      "nearestRouteDistanceMeters": 856.423834,
       "sourceTags": {
         "building": "yes"
       },
@@ -13923,8 +13923,8 @@
           "latitude": -45.8472221
         }
       ],
-      "distanceFromRouteMeters": 38.54130695309913,
-      "nearestRouteDistanceMeters": 968.8213723183071,
+      "distanceFromRouteMeters": 42.924008,
+      "nearestRouteDistanceMeters": 867.559315,
       "sourceTags": {
         "building": "yes"
       },
@@ -13983,8 +13983,8 @@
           "latitude": -45.8476379
         }
       ],
-      "distanceFromRouteMeters": 16.053944849863534,
-      "nearestRouteDistanceMeters": 973.2409261724597,
+      "distanceFromRouteMeters": 23.290164,
+      "nearestRouteDistanceMeters": 870.406192,
       "sourceTags": {
         "building": "yes"
       },
@@ -14047,8 +14047,8 @@
           "latitude": -45.8471963
         }
       ],
-      "distanceFromRouteMeters": 21.63500136847307,
-      "nearestRouteDistanceMeters": 988.4196183094585,
+      "distanceFromRouteMeters": 28.806711,
+      "nearestRouteDistanceMeters": 880.049334,
       "sourceTags": {
         "building": "yes"
       },
@@ -14127,8 +14127,8 @@
           "latitude": -45.847221000000005
         }
       ],
-      "distanceFromRouteMeters": 21.57174474386601,
-      "nearestRouteDistanceMeters": 995.3814855896014,
+      "distanceFromRouteMeters": 30.269385,
+      "nearestRouteDistanceMeters": 893.875576,
       "sourceTags": {
         "building": "yes"
       },
@@ -14179,8 +14179,8 @@
           "latitude": -45.847250300000006
         }
       ],
-      "distanceFromRouteMeters": 10.081546100868342,
-      "nearestRouteDistanceMeters": 995.6212295884956,
+      "distanceFromRouteMeters": 13.872425,
+      "nearestRouteDistanceMeters": 890.681351,
       "sourceTags": {
         "building": "yes"
       },
@@ -14223,8 +14223,8 @@
           "latitude": -45.8471398
         }
       ],
-      "distanceFromRouteMeters": 18.944807063557533,
-      "nearestRouteDistanceMeters": 1006.5589033244152,
+      "distanceFromRouteMeters": 20.921257,
+      "nearestRouteDistanceMeters": 902.307553,
       "sourceTags": {
         "building": "yes"
       },
@@ -14283,8 +14283,8 @@
           "latitude": -45.8476032
         }
       ],
-      "distanceFromRouteMeters": 13.261040453452837,
-      "nearestRouteDistanceMeters": 1022.5397578140311,
+      "distanceFromRouteMeters": 19.508359,
+      "nearestRouteDistanceMeters": 925.687472,
       "sourceTags": {
         "building": "yes"
       },
@@ -14355,8 +14355,8 @@
           "latitude": -45.847052600000005
         }
       ],
-      "distanceFromRouteMeters": 31.595037042146295,
-      "nearestRouteDistanceMeters": 1027.618405267331,
+      "distanceFromRouteMeters": 41.554608,
+      "nearestRouteDistanceMeters": 923.629607,
       "sourceTags": {
         "building": "yes"
       },
@@ -14421,8 +14421,8 @@
           "latitude": -45.8468868
         }
       ],
-      "distanceFromRouteMeters": 74.25318018373784,
-      "nearestRouteDistanceMeters": 1029.8093409946991,
+      "distanceFromRouteMeters": 78.647781,
+      "nearestRouteDistanceMeters": 926.127964,
       "sourceTags": {
         "building": "yes"
       },
@@ -14477,8 +14477,8 @@
           "latitude": -45.8469836
         }
       ],
-      "distanceFromRouteMeters": 58.07529458296798,
-      "nearestRouteDistanceMeters": 1029.9291220325943,
+      "distanceFromRouteMeters": 64.551667,
+      "nearestRouteDistanceMeters": 925.003452,
       "sourceTags": {
         "building": "yes"
       },
@@ -14539,8 +14539,8 @@
           "latitude": -45.847263000000005
         }
       ],
-      "distanceFromRouteMeters": 11.70455662245315,
-      "nearestRouteDistanceMeters": 1034.794130554357,
+      "distanceFromRouteMeters": 16.575427,
+      "nearestRouteDistanceMeters": 924.305946,
       "sourceTags": {
         "building": "yes"
       },
@@ -14587,8 +14587,8 @@
           "latitude": -45.8476647
         }
       ],
-      "distanceFromRouteMeters": 27.95511374548057,
-      "nearestRouteDistanceMeters": 1039.3113036713648,
+      "distanceFromRouteMeters": 29.628069,
+      "nearestRouteDistanceMeters": 937.023559,
       "sourceTags": {
         "building": "yes"
       },
@@ -14631,8 +14631,8 @@
           "latitude": -45.8472923
         }
       ],
-      "distanceFromRouteMeters": 26.456104602187672,
-      "nearestRouteDistanceMeters": 1043.36502480439,
+      "distanceFromRouteMeters": 28.50251,
+      "nearestRouteDistanceMeters": 938.033501,
       "sourceTags": {
         "building": "yes"
       },
@@ -14675,8 +14675,8 @@
           "latitude": -45.8473247
         }
       ],
-      "distanceFromRouteMeters": 21.65439695012371,
-      "nearestRouteDistanceMeters": 1043.405566934156,
+      "distanceFromRouteMeters": 23.771872,
+      "nearestRouteDistanceMeters": 938.217716,
       "sourceTags": {
         "building": "yes"
       },
@@ -14719,8 +14719,8 @@
           "latitude": -45.8471125
         }
       ],
-      "distanceFromRouteMeters": 53.20436200777205,
-      "nearestRouteDistanceMeters": 1043.4454103510654,
+      "distanceFromRouteMeters": 55.562296,
+      "nearestRouteDistanceMeters": 937.948521,
       "sourceTags": {
         "building": "yes"
       },
@@ -14763,8 +14763,8 @@
           "latitude": -45.847014
         }
       ],
-      "distanceFromRouteMeters": 68.55614150319552,
-      "nearestRouteDistanceMeters": 1043.794436559532,
+      "distanceFromRouteMeters": 70.918933,
+      "nearestRouteDistanceMeters": 938.293011,
       "sourceTags": {
         "building": "yes"
       },
@@ -14807,8 +14807,8 @@
           "latitude": -45.846952300000005
         }
       ],
-      "distanceFromRouteMeters": 79.50652767268508,
-      "nearestRouteDistanceMeters": 1044.6581474587404,
+      "distanceFromRouteMeters": 83.281379,
+      "nearestRouteDistanceMeters": 943.902888,
       "sourceTags": {
         "building": "yes"
       },
@@ -14851,8 +14851,8 @@
           "latitude": -45.847558
         }
       ],
-      "distanceFromRouteMeters": 11.692852071351563,
-      "nearestRouteDistanceMeters": 1044.6846852014507,
+      "distanceFromRouteMeters": 12.898634,
+      "nearestRouteDistanceMeters": 937.918392,
       "sourceTags": {
         "building": "yes"
       },
@@ -14895,8 +14895,8 @@
           "latitude": -45.847672700000004
         }
       ],
-      "distanceFromRouteMeters": 25.516792393344105,
-      "nearestRouteDistanceMeters": 1049.2048604956121,
+      "distanceFromRouteMeters": 28.116242,
+      "nearestRouteDistanceMeters": 942.067213,
       "sourceTags": {
         "building": "yes"
       },
@@ -14939,8 +14939,8 @@
           "latitude": -45.8478177
         }
       ],
-      "distanceFromRouteMeters": 41.7255428083544,
-      "nearestRouteDistanceMeters": 1049.5028332861027,
+      "distanceFromRouteMeters": 45.282532,
+      "nearestRouteDistanceMeters": 855.326959,
       "sourceTags": {
         "building": "yes"
       },
@@ -14983,8 +14983,8 @@
           "latitude": -45.8470382
         }
       ],
-      "distanceFromRouteMeters": 73.48838347662478,
-      "nearestRouteDistanceMeters": 1054.212826826765,
+      "distanceFromRouteMeters": 77.056538,
+      "nearestRouteDistanceMeters": 949.242899,
       "sourceTags": {
         "building": "yes"
       },
@@ -15043,8 +15043,8 @@
           "latitude": -45.8473607
         }
       ],
-      "distanceFromRouteMeters": 16.37197955736904,
-      "nearestRouteDistanceMeters": 1054.6184727896252,
+      "distanceFromRouteMeters": 25.32671,
+      "nearestRouteDistanceMeters": 951.35199,
       "sourceTags": {
         "building": "yes"
       },
@@ -15091,8 +15091,8 @@
           "latitude": -45.8476076
         }
       ],
-      "distanceFromRouteMeters": 9.328243869408107,
-      "nearestRouteDistanceMeters": 1054.7432889215224,
+      "distanceFromRouteMeters": 12.256081,
+      "nearestRouteDistanceMeters": 948.253038,
       "sourceTags": {
         "building": "yes"
       },
@@ -15135,8 +15135,8 @@
           "latitude": -45.8478742
         }
       ],
-      "distanceFromRouteMeters": 41.69935804096663,
-      "nearestRouteDistanceMeters": 1058.6988102270602,
+      "distanceFromRouteMeters": 42.824954,
+      "nearestRouteDistanceMeters": 956.648784,
       "sourceTags": {
         "building": "yes"
       },
@@ -15179,8 +15179,8 @@
           "latitude": -45.847114700000006
         }
       ],
-      "distanceFromRouteMeters": 68.34741856124916,
-      "nearestRouteDistanceMeters": 1059.8155511144394,
+      "distanceFromRouteMeters": 70.900851,
+      "nearestRouteDistanceMeters": 954.575275,
       "sourceTags": {
         "building": "yes"
       },
@@ -15263,8 +15263,8 @@
           "latitude": -45.8478891
         }
       ],
-      "distanceFromRouteMeters": 19.980139424678665,
-      "nearestRouteDistanceMeters": 1067.5839425746747,
+      "distanceFromRouteMeters": 30.023582,
+      "nearestRouteDistanceMeters": 965.265205,
       "sourceTags": {
         "building": "yes"
       },
@@ -15317,8 +15317,8 @@
           "latitude": -45.8472286
         }
       ],
-      "distanceFromRouteMeters": 47.91696463713186,
-      "nearestRouteDistanceMeters": 1073.1676872276073,
+      "distanceFromRouteMeters": 52.485779,
+      "nearestRouteDistanceMeters": 960.122402,
       "sourceTags": {
         "building": "yes"
       },
@@ -15369,8 +15369,8 @@
           "latitude": -45.8474232
         }
       ],
-      "distanceFromRouteMeters": 18.324113300198594,
-      "nearestRouteDistanceMeters": 1073.1796040349689,
+      "distanceFromRouteMeters": 23.890163,
+      "nearestRouteDistanceMeters": 962.981808,
       "sourceTags": {
         "building": "yes"
       },
@@ -15415,8 +15415,8 @@
           "latitude": -45.8474244
         }
       ],
-      "distanceFromRouteMeters": 38.19420545090332,
-      "nearestRouteDistanceMeters": 1074.3714029789267,
+      "distanceFromRouteMeters": 39.717679,
+      "nearestRouteDistanceMeters": 968.760184,
       "sourceTags": {
         "building": "yes"
       },
@@ -15459,8 +15459,8 @@
           "latitude": -45.847339700000006
         }
       ],
-      "distanceFromRouteMeters": 48.3142048800298,
-      "nearestRouteDistanceMeters": 1075.2612378905606,
+      "distanceFromRouteMeters": 52.609202,
+      "nearestRouteDistanceMeters": 975.824854,
       "sourceTags": {
         "building": "yes"
       },
@@ -15503,8 +15503,8 @@
           "latitude": -45.847196600000004
         }
       ],
-      "distanceFromRouteMeters": 73.64014345739946,
-      "nearestRouteDistanceMeters": 1076.328850414819,
+      "distanceFromRouteMeters": 76.39273,
+      "nearestRouteDistanceMeters": 972.741341,
       "sourceTags": {
         "building": "yes"
       },
@@ -15547,8 +15547,8 @@
           "latitude": -45.847451500000005
         }
       ],
-      "distanceFromRouteMeters": 37.677035660418476,
-      "nearestRouteDistanceMeters": 1078.186731335661,
+      "distanceFromRouteMeters": 39.735373,
+      "nearestRouteDistanceMeters": 975.805211,
       "sourceTags": {
         "building": "yes"
       },
@@ -15591,8 +15591,8 @@
           "latitude": -45.847241700000005
         }
       ],
-      "distanceFromRouteMeters": 68.48580502202906,
-      "nearestRouteDistanceMeters": 1078.785592316585,
+      "distanceFromRouteMeters": 71.375773,
+      "nearestRouteDistanceMeters": 974.977386,
       "sourceTags": {
         "building": "yes"
       },
@@ -15643,8 +15643,8 @@
           "latitude": -45.847106000000004
         }
       ],
-      "distanceFromRouteMeters": 71.53567901412303,
-      "nearestRouteDistanceMeters": 1081.6376093405606,
+      "distanceFromRouteMeters": 81.481547,
+      "nearestRouteDistanceMeters": 975.636099,
       "sourceTags": {
         "building": "yes"
       },
@@ -15689,8 +15689,8 @@
           "latitude": -45.8474561
         }
       ],
-      "distanceFromRouteMeters": 43.875763144159805,
-      "nearestRouteDistanceMeters": 1084.5314222677164,
+      "distanceFromRouteMeters": 45.417751,
+      "nearestRouteDistanceMeters": 982.727331,
       "sourceTags": {
         "building": "yes"
       },
@@ -15733,8 +15733,8 @@
           "latitude": -45.8474949
         }
       ],
-      "distanceFromRouteMeters": 38.14401232454659,
-      "nearestRouteDistanceMeters": 1084.6707007613422,
+      "distanceFromRouteMeters": 39.655253,
+      "nearestRouteDistanceMeters": 982.827413,
       "sourceTags": {
         "building": "yes"
       },
@@ -15777,8 +15777,8 @@
           "latitude": -45.847539600000005
         }
       ],
-      "distanceFromRouteMeters": 17.99280981181719,
-      "nearestRouteDistanceMeters": 1089.1353540399011,
+      "distanceFromRouteMeters": 23.353679,
+      "nearestRouteDistanceMeters": 978.541561,
       "sourceTags": {
         "building": "yes"
       },
@@ -15821,8 +15821,8 @@
           "latitude": -45.8481529
         }
       ],
-      "distanceFromRouteMeters": 55.331251027279144,
-      "nearestRouteDistanceMeters": 1089.4346741283268,
+      "distanceFromRouteMeters": 57.915655,
+      "nearestRouteDistanceMeters": 984.396496,
       "sourceTags": {
         "building": "yes"
       },
@@ -15865,8 +15865,8 @@
           "latitude": -45.8474219
         }
       ],
-      "distanceFromRouteMeters": 48.40590838924825,
-      "nearestRouteDistanceMeters": 1090.5955746888803,
+      "distanceFromRouteMeters": 53.772556,
+      "nearestRouteDistanceMeters": 990.474403,
       "sourceTags": {
         "building": "yes"
       },
@@ -15917,8 +15917,8 @@
           "latitude": -45.8482002
         }
       ],
-      "distanceFromRouteMeters": 61.13975440882799,
-      "nearestRouteDistanceMeters": 1099.228464601797,
+      "distanceFromRouteMeters": 66.38447,
+      "nearestRouteDistanceMeters": 990.709581,
       "sourceTags": {
         "building": "yes"
       },
@@ -15987,8 +15987,8 @@
           "latitude": -45.8476833
         }
       ],
-      "distanceFromRouteMeters": 17.905897453180025,
-      "nearestRouteDistanceMeters": 1101.8620862446094,
+      "distanceFromRouteMeters": 23.328705,
+      "nearestRouteDistanceMeters": 994.792603,
       "sourceTags": {
         "building": "yes"
       },
@@ -16037,8 +16037,8 @@
           "latitude": -45.8475897
         }
       ],
-      "distanceFromRouteMeters": 38.18215114990141,
-      "nearestRouteDistanceMeters": 1106.843742110566,
+      "distanceFromRouteMeters": 40.962553,
+      "nearestRouteDistanceMeters": 1004.541329,
       "sourceTags": {
         "building": "yes"
       },
@@ -16081,8 +16081,8 @@
           "latitude": -45.8475112
         }
       ],
-      "distanceFromRouteMeters": 50.980604846224495,
-      "nearestRouteDistanceMeters": 1110.8494372611988,
+      "distanceFromRouteMeters": 57.447464,
+      "nearestRouteDistanceMeters": 1015.052751,
       "sourceTags": {
         "building": "yes"
       },
@@ -16141,8 +16141,8 @@
           "latitude": -45.847990800000005
         }
       ],
-      "distanceFromRouteMeters": 22.014848442875458,
-      "nearestRouteDistanceMeters": 1114.989563344692,
+      "distanceFromRouteMeters": 28.577769,
+      "nearestRouteDistanceMeters": 1001.093295,
       "sourceTags": {
         "building": "yes"
       },
@@ -16197,8 +16197,8 @@
           "latitude": -45.8483828
         }
       ],
-      "distanceFromRouteMeters": 58.92997151671308,
-      "nearestRouteDistanceMeters": 1120.4697484958938,
+      "distanceFromRouteMeters": 64.58865,
+      "nearestRouteDistanceMeters": 1012.344471,
       "sourceTags": {
         "building": "yes"
       },
@@ -16243,8 +16243,8 @@
           "latitude": -45.8477083
         }
       ],
-      "distanceFromRouteMeters": 15.643718168721671,
-      "nearestRouteDistanceMeters": 1121.195020129739,
+      "distanceFromRouteMeters": 24.502909,
+      "nearestRouteDistanceMeters": 1013.413257,
       "sourceTags": {
         "building": "yes"
       },
@@ -16287,8 +16287,8 @@
           "latitude": -45.8478002
         }
       ],
-      "distanceFromRouteMeters": 15.98107414155091,
-      "nearestRouteDistanceMeters": 1128.0480988133318,
+      "distanceFromRouteMeters": 20.652839,
+      "nearestRouteDistanceMeters": 1022.527196,
       "sourceTags": {
         "building": "yes"
       },
@@ -16331,8 +16331,8 @@
           "latitude": -45.848620800000006
         }
       ],
-      "distanceFromRouteMeters": 71.84339992092396,
-      "nearestRouteDistanceMeters": 1133.6321341241821,
+      "distanceFromRouteMeters": 73.438799,
+      "nearestRouteDistanceMeters": 1030.117988,
       "sourceTags": {
         "building": "yes"
       },
@@ -16375,8 +16375,8 @@
           "latitude": -45.848587300000005
         }
       ],
-      "distanceFromRouteMeters": 70.45816616288876,
-      "nearestRouteDistanceMeters": 1133.6321341241821,
+      "distanceFromRouteMeters": 71.873173,
+      "nearestRouteDistanceMeters": 1029.874306,
       "sourceTags": {
         "building": "yes"
       },
@@ -16443,8 +16443,8 @@
           "latitude": -45.848512
         }
       ],
-      "distanceFromRouteMeters": 52.08612599322945,
-      "nearestRouteDistanceMeters": 1133.6321341241821,
+      "distanceFromRouteMeters": 58.687833,
+      "nearestRouteDistanceMeters": 1030.117988,
       "sourceTags": {
         "building": "yes"
       },
@@ -16501,8 +16501,8 @@
           "latitude": -45.8478143
         }
       ],
-      "distanceFromRouteMeters": 18.313229542344565,
-      "nearestRouteDistanceMeters": 1136.8675974647892,
+      "distanceFromRouteMeters": 23.720441,
+      "nearestRouteDistanceMeters": 1038.004431,
       "sourceTags": {
         "building": "yes"
       },
@@ -16547,8 +16547,8 @@
           "latitude": -45.8477509
         }
       ],
-      "distanceFromRouteMeters": 34.10987748801625,
-      "nearestRouteDistanceMeters": 1138.5706224024946,
+      "distanceFromRouteMeters": 35.858831,
+      "nearestRouteDistanceMeters": 1034.132304,
       "sourceTags": {
         "building": "yes"
       },
@@ -16591,8 +16591,8 @@
           "latitude": -45.8483828
         }
       ],
-      "distanceFromRouteMeters": 39.42597581183174,
-      "nearestRouteDistanceMeters": 1143.4242728499305,
+      "distanceFromRouteMeters": 41.741284,
+      "nearestRouteDistanceMeters": 1038.21772,
       "sourceTags": {
         "building": "yes"
       },
@@ -16667,8 +16667,8 @@
           "latitude": -45.8483153
         }
       ],
-      "distanceFromRouteMeters": 21.348623342808338,
-      "nearestRouteDistanceMeters": 1144.489504608442,
+      "distanceFromRouteMeters": 30.09802,
+      "nearestRouteDistanceMeters": 1035.693328,
       "sourceTags": {
         "building": "yes"
       },
@@ -16719,8 +16719,8 @@
           "latitude": -45.8481697
         }
       ],
-      "distanceFromRouteMeters": 12.801683659627276,
-      "nearestRouteDistanceMeters": 1145.0537806078519,
+      "distanceFromRouteMeters": 15.317069,
+      "nearestRouteDistanceMeters": 1041.539802,
       "sourceTags": {
         "building": "yes"
       },
@@ -16779,8 +16779,8 @@
           "latitude": -45.8483613
         }
       ],
-      "distanceFromRouteMeters": 22.411911981458072,
-      "nearestRouteDistanceMeters": 1150.772406491168,
+      "distanceFromRouteMeters": 30.401555,
+      "nearestRouteDistanceMeters": 1052.639791,
       "sourceTags": {
         "building": "yes"
       },
@@ -16827,8 +16827,8 @@
           "latitude": -45.848167000000004
         }
       ],
-      "distanceFromRouteMeters": 10.440695087229711,
-      "nearestRouteDistanceMeters": 1156.2044705925166,
+      "distanceFromRouteMeters": 12.474449,
+      "nearestRouteDistanceMeters": 1051.664244,
       "sourceTags": {
         "building": "yes"
       },
@@ -16871,8 +16871,8 @@
           "latitude": -45.8474688
         }
       ],
-      "distanceFromRouteMeters": 64.24403083027215,
-      "nearestRouteDistanceMeters": 1161.5147631242112,
+      "distanceFromRouteMeters": 66.783453,
+      "nearestRouteDistanceMeters": 1056.600271,
       "sourceTags": {
         "building": "yes"
       },
@@ -16923,8 +16923,8 @@
           "latitude": -45.8478075
         }
       ],
-      "distanceFromRouteMeters": 17.560442385206102,
-      "nearestRouteDistanceMeters": 1161.566335068592,
+      "distanceFromRouteMeters": 24.694611,
+      "nearestRouteDistanceMeters": 1066.571427,
       "sourceTags": {
         "building": "yes"
       },
@@ -16969,8 +16969,8 @@
           "latitude": -45.847546200000004
         }
       ],
-      "distanceFromRouteMeters": 51.664256065315264,
-      "nearestRouteDistanceMeters": 1172.5009719602415,
+      "distanceFromRouteMeters": 57.252651,
+      "nearestRouteDistanceMeters": 1059.551529,
       "sourceTags": {
         "building": "yes"
       },
@@ -17013,8 +17013,8 @@
           "latitude": -45.8477246
         }
       ],
-      "distanceFromRouteMeters": 33.37991080907552,
-      "nearestRouteDistanceMeters": 1176.9145092088256,
+      "distanceFromRouteMeters": 36.107892,
+      "nearestRouteDistanceMeters": 1080.532128,
       "sourceTags": {
         "building": "yes"
       },
@@ -17065,8 +17065,8 @@
           "latitude": -45.848324100000006
         }
       ],
-      "distanceFromRouteMeters": 17.540918513669972,
-      "nearestRouteDistanceMeters": 1180.582817679051,
+      "distanceFromRouteMeters": 23.624621,
+      "nearestRouteDistanceMeters": 1072.387089,
       "sourceTags": {
         "building": "yes"
       },
@@ -17127,8 +17127,8 @@
           "latitude": -45.847832800000006
         }
       ],
-      "distanceFromRouteMeters": 18.02215692879511,
-      "nearestRouteDistanceMeters": 1182.1711330292324,
+      "distanceFromRouteMeters": 23.739027,
+      "nearestRouteDistanceMeters": 1083.620741,
       "sourceTags": {
         "building": "yes"
       },
@@ -17215,8 +17215,8 @@
           "latitude": -45.8473187
         }
       ],
-      "distanceFromRouteMeters": 66.1879070946527,
-      "nearestRouteDistanceMeters": 1188.490770195317,
+      "distanceFromRouteMeters": 73.948202,
+      "nearestRouteDistanceMeters": 1057.913499,
       "sourceTags": {
         "building": "yes"
       },
@@ -17277,8 +17277,8 @@
           "latitude": -45.847838
         }
       ],
-      "distanceFromRouteMeters": 22.081667895825213,
-      "nearestRouteDistanceMeters": 1196.9526181374372,
+      "distanceFromRouteMeters": 25.104927,
+      "nearestRouteDistanceMeters": 1091.944159,
       "sourceTags": {
         "building": "yes"
       },
@@ -17331,8 +17331,8 @@
           "latitude": -45.848286200000004
         }
       ],
-      "distanceFromRouteMeters": 17.300673354493902,
-      "nearestRouteDistanceMeters": 1197.1290753137275,
+      "distanceFromRouteMeters": 22.530383,
+      "nearestRouteDistanceMeters": 1085.958859,
       "sourceTags": {
         "building": "yes"
       },
@@ -17393,8 +17393,8 @@
           "latitude": -45.8477308
         }
       ],
-      "distanceFromRouteMeters": 16.318417889668307,
-      "nearestRouteDistanceMeters": 1200.779667896453,
+      "distanceFromRouteMeters": 25.187538,
+      "nearestRouteDistanceMeters": 1102.744868,
       "sourceTags": {
         "building": "yes"
       },
@@ -17441,8 +17441,8 @@
           "latitude": -45.847353600000005
         }
       ],
-      "distanceFromRouteMeters": 59.805514496159844,
-      "nearestRouteDistanceMeters": 1201.9372725338294,
+      "distanceFromRouteMeters": 69.208539,
+      "nearestRouteDistanceMeters": 1100.441747,
       "sourceTags": {
         "building": "yes"
       },
@@ -17493,8 +17493,8 @@
           "latitude": -45.8482515
         }
       ],
-      "distanceFromRouteMeters": 17.674809264095398,
-      "nearestRouteDistanceMeters": 1203.4610710661966,
+      "distanceFromRouteMeters": 22.723758,
+      "nearestRouteDistanceMeters": 1101.954651,
       "sourceTags": {
         "building": "yes"
       },
@@ -17539,8 +17539,8 @@
           "latitude": -45.8472889
         }
       ],
-      "distanceFromRouteMeters": 76.5233332763581,
-      "nearestRouteDistanceMeters": 1204.0949339524527,
+      "distanceFromRouteMeters": 80.37927,
+      "nearestRouteDistanceMeters": 1101.136778,
       "sourceTags": {
         "building": "yes"
       },
@@ -17607,8 +17607,8 @@
           "latitude": -45.8474416
         }
       ],
-      "distanceFromRouteMeters": 47.19125576896529,
-      "nearestRouteDistanceMeters": 1207.5118963605146,
+      "distanceFromRouteMeters": 56.85993,
+      "nearestRouteDistanceMeters": 1107.785763,
       "sourceTags": {
         "building": "yes"
       },
@@ -17657,8 +17657,8 @@
           "latitude": -45.8477266
         }
       ],
-      "distanceFromRouteMeters": 27.53018529830786,
-      "nearestRouteDistanceMeters": 1208.6831386820227,
+      "distanceFromRouteMeters": 29.610229,
+      "nearestRouteDistanceMeters": 1107.640609,
       "sourceTags": {
         "building": "yes"
       },
@@ -17701,8 +17701,8 @@
           "latitude": -45.847847900000005
         }
       ],
-      "distanceFromRouteMeters": 12.255473720896381,
-      "nearestRouteDistanceMeters": 1209.3122863952817,
+      "distanceFromRouteMeters": 15.752493,
+      "nearestRouteDistanceMeters": 1107.622466,
       "sourceTags": {
         "building": "yes"
       },
@@ -17753,8 +17753,8 @@
           "latitude": -45.847723300000006
         }
       ],
-      "distanceFromRouteMeters": 19.903202798963648,
-      "nearestRouteDistanceMeters": 1216.7214039769665,
+      "distanceFromRouteMeters": 24.988633,
+      "nearestRouteDistanceMeters": 1119.473928,
       "sourceTags": {
         "building": "yes"
       },
@@ -17799,8 +17799,8 @@
           "latitude": -45.8476183
         }
       ],
-      "distanceFromRouteMeters": 38.133165536005585,
-      "nearestRouteDistanceMeters": 1218.06506244982,
+      "distanceFromRouteMeters": 40.52258,
+      "nearestRouteDistanceMeters": 1113.478134,
       "sourceTags": {
         "building": "yes"
       },
@@ -17851,8 +17851,8 @@
           "latitude": -45.8481114
         }
       ],
-      "distanceFromRouteMeters": 16.798666097072132,
-      "nearestRouteDistanceMeters": 1228.437883292527,
+      "distanceFromRouteMeters": 21.477435,
+      "nearestRouteDistanceMeters": 1121.360309,
       "sourceTags": {
         "building": "yes"
       },
@@ -17897,8 +17897,8 @@
           "latitude": -45.848027800000004
         }
       ],
-      "distanceFromRouteMeters": 8.073631140969402,
-      "nearestRouteDistanceMeters": 1231.90799747555,
+      "distanceFromRouteMeters": 10.336936,
+      "nearestRouteDistanceMeters": 1126.162649,
       "sourceTags": {
         "building": "yes"
       },
@@ -17941,8 +17941,8 @@
           "latitude": -45.847361
         }
       ],
-      "distanceFromRouteMeters": 58.825160196773105,
-      "nearestRouteDistanceMeters": 1251.0058543167827,
+      "distanceFromRouteMeters": 60.947824,
+      "nearestRouteDistanceMeters": 1150.723913,
       "sourceTags": {
         "building": "yes"
       },
@@ -17993,8 +17993,8 @@
           "latitude": -45.8481078
         }
       ],
-      "distanceFromRouteMeters": 16.15147554689289,
-      "nearestRouteDistanceMeters": 1259.1128741570178,
+      "distanceFromRouteMeters": 22.309524,
+      "nearestRouteDistanceMeters": 1152.870827,
       "sourceTags": {
         "building": "yes"
       },
@@ -18047,8 +18047,8 @@
           "latitude": -45.8477395
         }
       ],
-      "distanceFromRouteMeters": 16.057756819622664,
-      "nearestRouteDistanceMeters": 1259.8629195596618,
+      "distanceFromRouteMeters": 20.477761,
+      "nearestRouteDistanceMeters": 1159.614084,
       "sourceTags": {
         "building": "yes"
       },
@@ -18101,8 +18101,8 @@
           "latitude": -45.8474853
         }
       ],
-      "distanceFromRouteMeters": 46.62323084230513,
-      "nearestRouteDistanceMeters": 1263.0047798116864,
+      "distanceFromRouteMeters": 54.97234,
+      "nearestRouteDistanceMeters": 1159.463954,
       "sourceTags": {
         "building": "yes"
       },
@@ -18147,8 +18147,8 @@
           "latitude": -45.8477255
         }
       ],
-      "distanceFromRouteMeters": 8.975849062350118,
-      "nearestRouteDistanceMeters": 1272.771980076659,
+      "distanceFromRouteMeters": 12.901993,
+      "nearestRouteDistanceMeters": 1172.835656,
       "sourceTags": {
         "building": "yes"
       },
@@ -18191,8 +18191,8 @@
           "latitude": -45.847593800000006
         }
       ],
-      "distanceFromRouteMeters": 20.671580592990352,
-      "nearestRouteDistanceMeters": 1274.1290773146627,
+      "distanceFromRouteMeters": 25.620321,
+      "nearestRouteDistanceMeters": 1177.586327,
       "sourceTags": {
         "building": "yes"
       },
@@ -18243,8 +18243,8 @@
           "latitude": -45.8480087
         }
       ],
-      "distanceFromRouteMeters": 15.858655403194865,
-      "nearestRouteDistanceMeters": 1274.620292002173,
+      "distanceFromRouteMeters": 21.181784,
+      "nearestRouteDistanceMeters": 1168.065612,
       "sourceTags": {
         "building": "yes"
       },
@@ -18289,8 +18289,8 @@
           "latitude": -45.8473198
         }
       ],
-      "distanceFromRouteMeters": 55.36065516575142,
-      "nearestRouteDistanceMeters": 1276.8743989623545,
+      "distanceFromRouteMeters": 59.413584,
+      "nearestRouteDistanceMeters": 1173.776306,
       "sourceTags": {
         "building": "yes"
       },
@@ -18333,8 +18333,8 @@
           "latitude": -45.8475811
         }
       ],
-      "distanceFromRouteMeters": 28.99917342089211,
-      "nearestRouteDistanceMeters": 1278.3182060863396,
+      "distanceFromRouteMeters": 30.978129,
+      "nearestRouteDistanceMeters": 1173.491533,
       "sourceTags": {
         "building": "yes"
       },
@@ -18377,8 +18377,8 @@
           "latitude": -45.847675100000004
         }
       ],
-      "distanceFromRouteMeters": 15.35577828924753,
-      "nearestRouteDistanceMeters": 1281.875011951869,
+      "distanceFromRouteMeters": 17.895959,
+      "nearestRouteDistanceMeters": 1180.79401,
       "sourceTags": {
         "building": "yes"
       },
@@ -18429,8 +18429,8 @@
           "latitude": -45.847389
         }
       ],
-      "distanceFromRouteMeters": 51.49130161360197,
-      "nearestRouteDistanceMeters": 1289.2297267357674,
+      "distanceFromRouteMeters": 56.68275,
+      "nearestRouteDistanceMeters": 23.766276,
       "sourceTags": {
         "building": "yes"
       },
@@ -18491,8 +18491,8 @@
           "latitude": -45.8479655
         }
       ],
-      "distanceFromRouteMeters": 14.455872816631524,
-      "nearestRouteDistanceMeters": 1289.726910768322,
+      "distanceFromRouteMeters": 19.797168,
+      "nearestRouteDistanceMeters": 1182.809588,
       "sourceTags": {
         "building": "yes"
       },
@@ -18539,8 +18539,8 @@
           "latitude": -45.8473933
         }
       ],
-      "distanceFromRouteMeters": 43.95395488703221,
-      "nearestRouteDistanceMeters": 1290.3079746006708,
+      "distanceFromRouteMeters": 47.332323,
+      "nearestRouteDistanceMeters": 1189.783949,
       "sourceTags": {
         "building": "yes"
       },
@@ -18583,8 +18583,8 @@
           "latitude": -45.8475504
         }
       ],
-      "distanceFromRouteMeters": 20.849088660297607,
-      "nearestRouteDistanceMeters": 1290.667446286584,
+      "distanceFromRouteMeters": 26.324964,
+      "nearestRouteDistanceMeters": 1194.214682,
       "sourceTags": {
         "building": "yes"
       },
@@ -18627,8 +18627,8 @@
           "latitude": -45.8479364
         }
       ],
-      "distanceFromRouteMeters": 15.26191058687132,
-      "nearestRouteDistanceMeters": 1307.395614087944,
+      "distanceFromRouteMeters": 20.652266,
+      "nearestRouteDistanceMeters": 1200.661295,
       "sourceTags": {
         "building": "yes"
       },
@@ -18671,8 +18671,8 @@
           "latitude": -45.8483047
         }
       ],
-      "distanceFromRouteMeters": 61.27169070702267,
-      "nearestRouteDistanceMeters": 1314.4063143585686,
+      "distanceFromRouteMeters": 63.07449,
+      "nearestRouteDistanceMeters": 1210.894746,
       "sourceTags": {
         "building": "yes"
       },
@@ -18715,8 +18715,8 @@
           "latitude": -45.847523
         }
       ],
-      "distanceFromRouteMeters": 15.875952749847789,
-      "nearestRouteDistanceMeters": 1317.4852916621858,
+      "distanceFromRouteMeters": 24.646512,
+      "nearestRouteDistanceMeters": 1208.326215,
       "sourceTags": {
         "building": "yes"
       },
@@ -18759,8 +18759,8 @@
           "latitude": -45.848328900000006
         }
       ],
-      "distanceFromRouteMeters": 67.03216061725131,
-      "nearestRouteDistanceMeters": 1318.3939501042455,
+      "distanceFromRouteMeters": 72.776372,
+      "nearestRouteDistanceMeters": 1218.842343,
       "sourceTags": {
         "building": "yes"
       },
@@ -18803,8 +18803,8 @@
           "latitude": -45.8479444
         }
       ],
-      "distanceFromRouteMeters": 17.789237453424455,
-      "nearestRouteDistanceMeters": 1320.9775001280816,
+      "distanceFromRouteMeters": 23.291589,
+      "nearestRouteDistanceMeters": 1212.492272,
       "sourceTags": {
         "building": "yes"
       },
@@ -18871,8 +18871,8 @@
           "latitude": -45.847978700000006
         }
       ],
-      "distanceFromRouteMeters": 15.036129410539498,
-      "nearestRouteDistanceMeters": 1331.5067231427715,
+      "distanceFromRouteMeters": 23.285961,
+      "nearestRouteDistanceMeters": 1227.155191,
       "sourceTags": {
         "building": "yes"
       },
@@ -18937,8 +18937,8 @@
           "latitude": -45.847565800000005
         }
       ],
-      "distanceFromRouteMeters": 13.063483163963614,
-      "nearestRouteDistanceMeters": 1345.5219562515429,
+      "distanceFromRouteMeters": 18.606681,
+      "nearestRouteDistanceMeters": 1238.202198,
       "sourceTags": {
         "building": "yes"
       },
@@ -19009,8 +19009,8 @@
           "latitude": -45.8477041
         }
       ],
-      "distanceFromRouteMeters": 12.443840809393318,
-      "nearestRouteDistanceMeters": 1347.09436542893,
+      "distanceFromRouteMeters": 19.918448,
+      "nearestRouteDistanceMeters": 1247.364939,
       "sourceTags": {
         "building": "yes"
       },
@@ -19059,8 +19059,8 @@
           "latitude": -45.847518900000004
         }
       ],
-      "distanceFromRouteMeters": 7.708554796710114,
-      "nearestRouteDistanceMeters": 1347.6185558563159,
+      "distanceFromRouteMeters": 10.859054,
+      "nearestRouteDistanceMeters": 1246.645086,
       "sourceTags": {
         "building": "yes"
       },
@@ -19135,8 +19135,8 @@
           "latitude": -45.847445300000004
         }
       ],
-      "distanceFromRouteMeters": 17.07557794800604,
-      "nearestRouteDistanceMeters": 1352.7170848809048,
+      "distanceFromRouteMeters": 26.175149,
+      "nearestRouteDistanceMeters": 1303.41012,
       "sourceTags": {
         "building": "yes"
       },
@@ -19195,8 +19195,8 @@
           "latitude": -45.8472202
         }
       ],
-      "distanceFromRouteMeters": 20.13159123082522,
-      "nearestRouteDistanceMeters": 1401.255893290339,
+      "distanceFromRouteMeters": 24.540151,
+      "nearestRouteDistanceMeters": 1292.30356,
       "sourceTags": {
         "building": "yes"
       },
@@ -19241,8 +19241,8 @@
           "latitude": -45.8472218
         }
       ],
-      "distanceFromRouteMeters": 18.175826250458208,
-      "nearestRouteDistanceMeters": 1417.5658540091288,
+      "distanceFromRouteMeters": 26.190738,
+      "nearestRouteDistanceMeters": 1320.51939,
       "sourceTags": {
         "building": "yes"
       },
@@ -19301,8 +19301,8 @@
           "latitude": -45.8465329
         }
       ],
-      "distanceFromRouteMeters": 71.58307149570744,
-      "nearestRouteDistanceMeters": 1443.0202673661895,
+      "distanceFromRouteMeters": 74.64373,
+      "nearestRouteDistanceMeters": 21.511119,
       "sourceTags": {
         "building": "yes"
       },
@@ -19381,8 +19381,8 @@
           "latitude": -45.8470467
         }
       ],
-      "distanceFromRouteMeters": 23.18558911976604,
-      "nearestRouteDistanceMeters": 1478.1586074167515,
+      "distanceFromRouteMeters": 30.499294,
+      "nearestRouteDistanceMeters": 50.90412,
       "sourceTags": {
         "building": "yes"
       },
@@ -19433,8 +19433,8 @@
           "latitude": -45.8470935
         }
       ],
-      "distanceFromRouteMeters": 47.72802750971642,
-      "nearestRouteDistanceMeters": 1484.3203226852934,
+      "distanceFromRouteMeters": 50.383018,
+      "nearestRouteDistanceMeters": 56.553867,
       "sourceTags": {
         "building": "yes"
       },
@@ -19493,8 +19493,8 @@
           "latitude": -45.8469471
         }
       ],
-      "distanceFromRouteMeters": 24.18745206323319,
-      "nearestRouteDistanceMeters": 1499.916055193569,
+      "distanceFromRouteMeters": 32.012698,
+      "nearestRouteDistanceMeters": 68.94221,
       "sourceTags": {
         "building": "yes"
       },
@@ -19549,8 +19549,8 @@
           "latitude": -45.847072100000005
         }
       ],
-      "distanceFromRouteMeters": 66.87551501320448,
-      "nearestRouteDistanceMeters": 1533.6065516141673,
+      "distanceFromRouteMeters": 73.20678,
+      "nearestRouteDistanceMeters": 98.724867,
       "sourceTags": {
         "building": "yes"
       },
@@ -19603,8 +19603,8 @@
           "latitude": -45.846662800000004
         }
       ],
-      "distanceFromRouteMeters": 18.234356253538138,
-      "nearestRouteDistanceMeters": 1536.5337388157395,
+      "distanceFromRouteMeters": 21.693209,
+      "nearestRouteDistanceMeters": 105.981813,
       "sourceTags": {
         "building": "yes"
       },
@@ -19673,8 +19673,8 @@
           "latitude": -45.846013500000005
         }
       ],
-      "distanceFromRouteMeters": 27.820830318965633,
-      "nearestRouteDistanceMeters": 1571.6185195351786,
+      "distanceFromRouteMeters": 34.711672,
+      "nearestRouteDistanceMeters": 148.510901,
       "sourceTags": {
         "building": "yes"
       },
@@ -19723,8 +19723,8 @@
           "latitude": -45.8465847
         }
       ],
-      "distanceFromRouteMeters": 26.222387162527315,
-      "nearestRouteDistanceMeters": 1576.5431999385494,
+      "distanceFromRouteMeters": 28.838471,
+      "nearestRouteDistanceMeters": 155.097701,
       "sourceTags": {
         "building": "yes"
       },
@@ -19775,8 +19775,8 @@
           "latitude": -45.8458106
         }
       ],
-      "distanceFromRouteMeters": 25.409979633841036,
-      "nearestRouteDistanceMeters": 1649.101391868157,
+      "distanceFromRouteMeters": 30.284461,
+      "nearestRouteDistanceMeters": 216.546383,
       "sourceTags": {
         "building": "yes"
       },

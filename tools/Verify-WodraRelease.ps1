@@ -1,11 +1,12 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$ZipPath
+    [string]$ZipPath,
+    [switch]$IncludeExperimentalRoutes
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'WodraBuiltInRoutePackages.ps1')
-$routeDefinitions = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot (Split-Path $PSScriptRoot -Parent))
+$routeDefinitions = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot (Split-Path $PSScriptRoot -Parent) -IncludeExperimentalRoutes:$IncludeExperimentalRoutes)
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $ZipPath = [System.IO.Path]::GetFullPath($ZipPath)
@@ -87,7 +88,8 @@ try {
                 try { $sidecar = $sidecarReader.ReadToEnd() | ConvertFrom-Json -ErrorAction Stop }
                 catch { throw "Route sidecar '$entryName' is not valid JSON." }
                 finally { $sidecarReader.Dispose() }
-                if ($sidecar.id -ne $routeId) { throw "Route sidecar '$entryName' has a mismatched route ID." }
+                $sidecarId = if ($sidecar.id) { [string]$sidecar.id } else { [string]$sidecar.routeId }
+                if ($sidecarId -ne $routeId) { throw "Route sidecar '$entryName' has a mismatched route ID." }
                 Remove-Variable sidecar
             }
         }
@@ -132,6 +134,6 @@ try {
     Remove-Variable manifest
 
     Write-Host "Release archive verified: $ZipPath"
-    Write-Host "Validated executable, managed runtime, EOS client config, notices, and six route packages."
+    Write-Host "Validated executable, managed runtime, EOS client config, notices, and $($routeDefinitions.Count) route packages."
 }
 finally { $archive.Dispose() }
