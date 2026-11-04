@@ -496,7 +496,7 @@ try {
     try {
         $packExportResult = Invoke-TrackedProcess -FilePath $Godot `
             -ArgumentList @('--headless', '--path', $GodotProjectDir, '--export-pack', 'Windows Desktop', $PckPath) `
-            -WorkingDirectory $GodotProjectDir -LogPath $exportLog -TimeoutSeconds 45 -Label 'Godot Windows x64 resource export' `
+            -WorkingDirectory $GodotProjectDir -LogPath $exportLog -TimeoutSeconds 300 -Label 'Godot Windows x64 resource export' `
             -StopAfterOutputPattern '\[\s*DONE\s*\]\s+savepack' -StopAfterOutputGraceSeconds 8
         if ($packExportResult.StoppedAfterOutputMarker) {
             Write-Warning "Godot completed the fresh PCK but stalled in its post-export .NET hook; the owned process was stopped and independent managed publish plus smoke testing will validate the package. See $exportLog"
