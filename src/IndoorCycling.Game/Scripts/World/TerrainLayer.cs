@@ -21,7 +21,7 @@ public partial class TerrainLayer : Node3D
     public int VisibleNearTerrainChunks { get; private set; }
     public int VisibleFarTerrainChunks { get; private set; }
     public int TerrainTriangleCount { get; private set; }
-    public int RoadCutoutCellCount { get; private set; }
+    public int RoadRefinedCellCount { get; private set; }
     public int RoadClearanceAdjustedVertices { get; private set; }
     public double BuildMilliseconds { get; private set; }
 
@@ -40,7 +40,7 @@ public partial class TerrainLayer : Node3D
             : TerrainMeshGeometry.Build(data, route.Samples);
         RoadClearanceAdjustedVertices = built.AdjustedForRoadClearanceVertices;
         TerrainTriangleCount = built.TriangleCount;
-        RoadCutoutCellCount = built.RoadCutoutCellCount;
+        RoadRefinedCellCount = built.RoadRefinedCellCount;
         var material = new StandardMaterial3D
         {
             AlbedoColor = Colors.White, VertexColorUseAsAlbedo = true, Roughness = 1,

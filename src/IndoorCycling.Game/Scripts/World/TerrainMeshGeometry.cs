@@ -7,7 +7,7 @@ public sealed record TerrainChunkMeshData(string Id, Vector3[] Vertices, Vector3
 public sealed record TerrainZoneChunk(RouteTerrainChunkData Chunk, double SpacingMeters, double VerticalBiasMeters, bool ApplyRoadClearance);
 public sealed record TerrainRoadCorridor(IReadOnlyList<Vector3> Points, float WidthMeters, long SourceOsmId = 0);
 public sealed record TerrainMeshBuildResult(TerrainChunkMeshData[] Chunks, int AdjustedForRoadClearanceVertices,
-    int TriangleCount, int UniqueVertexCount, int RoadCutoutCellCount = 0);
+    int TriangleCount, int UniqueVertexCount, int RoadRefinedCellCount = 0);
 
 public static class RouteGroundFallbackPolicy
 {
@@ -187,7 +187,7 @@ public static class TerrainMeshGeometry
         var uniqueVertices = new HashSet<GridKey>();
         var adjustedCount = 0;
         var triangleCount = 0;
-        var roadCutoutCellCount = 0;
+        var roadRefinedCellCount = 0;
         foreach (var zone in chunks)
         {
             var chunk = zone.Chunk;
@@ -204,11 +204,8 @@ public static class TerrainMeshGeometry
                 var x = chunk.OriginX + column * zone.SpacingMeters;
                 var z = chunk.OriginZ + row * zone.SpacingMeters;
                 var visualY = (float)(absoluteElevation - data.RouteStartElevationMeters - zone.VerticalBiasMeters);
-                var adjusted = zone.ApplyRoadClearance ? ApplyRoadClearance(new Vector3((float)x, visualY, (float)z),
-                    routeIndex, data.RoadClearanceRadiusMeters, data.RoadClearanceMeters) : new Vector3((float)x, visualY, (float)z);
-                if(zone.ApplyRoadClearance&&backgroundIndex.TryNearest(adjusted,(float)data.RoadClearanceMeters,out var streetY,out var streetDistance,out var halfWidth)
-                    &&streetDistance<=halfWidth+data.RoadClearanceMeters)
-                    adjusted=new Vector3(adjusted.X,Math.Min(adjusted.Y,streetY-(float)data.RoadClearanceMeters),adjusted.Z);
+                var adjusted = AdjustForRoads(new Vector3((float)x, visualY, (float)z), zone.ApplyRoadClearance,
+                    routeIndex, backgroundIndex, data.RoadClearanceRadiusMeters, data.RoadClearanceMeters);
                 if (adjusted.Y < visualY - 1e-5f) adjustedCount++;
                 gridVertices[index] = adjusted;
             }
@@ -221,7 +218,50 @@ public static class TerrainMeshGeometry
                 if (zone.ApplyRoadClearance && CellIntersectsRoadSurface(chunk.OriginX + (column + 0.5) * zone.SpacingMeters,
                     chunk.OriginZ + (row + 0.5) * zone.SpacingMeters, zone.SpacingMeters, routeIndex,backgroundIndex))
                 {
-                    roadCutoutCellCount++;
+                    roadRefinedCellCount++;
+                    var refinedNorthwest = row * (chunk.Columns + 1) + column;
+                    var refinedNortheast = refinedNorthwest + 1;
+                    var refinedSouthwest = refinedNorthwest + chunk.Columns + 1;
+                    var refinedSoutheast = refinedSouthwest + 1;
+                    if (chunk.ElevationsMeters[refinedNorthwest] is not { } northWestElevation
+                        || chunk.ElevationsMeters[refinedNortheast] is not { } northEastElevation
+                        || chunk.ElevationsMeters[refinedSouthwest] is not { } southWestElevation
+                        || chunk.ElevationsMeters[refinedSoutheast] is not { } southEastElevation) continue;
+                    var x0 = chunk.OriginX + column * zone.SpacingMeters;
+                    var x1 = x0 + zone.SpacingMeters;
+                    var z0 = chunk.OriginZ + row * zone.SpacingMeters;
+                    var z1 = z0 + zone.SpacingMeters;
+                    var verticalOffset = data.RouteStartElevationMeters + zone.VerticalBiasMeters;
+                    var rawNorthWest = new Vector3((float)x0, (float)(northWestElevation - verticalOffset), (float)z0);
+                    var rawNorthEast = new Vector3((float)x1, (float)(northEastElevation - verticalOffset), (float)z0);
+                    var rawSouthWest = new Vector3((float)x0, (float)(southWestElevation - verticalOffset), (float)z1);
+                    var rawSouthEast = new Vector3((float)x1, (float)(southEastElevation - verticalOffset), (float)z1);
+                    const int subdivisions = 4;
+                    Vector3 Sample(int sampleColumn, int sampleRow)
+                    {
+                        var u = sampleColumn / (float)subdivisions;
+                        var v = sampleRow / (float)subdivisions;
+                        var top = Vector3.Lerp(rawNorthWest, rawNorthEast, u);
+                        var bottom = Vector3.Lerp(rawSouthWest, rawSouthEast, u);
+                        var raw = Vector3.Lerp(top, bottom, v);
+                        return AdjustForRoads(raw, true, routeIndex, backgroundIndex,
+                            data.RoadClearanceRadiusMeters, data.RoadClearanceMeters + 0.50,
+                            zone.SpacingMeters / subdivisions * Math.Sqrt(2));
+                    }
+                    for (var subRow = 0; subRow < subdivisions; subRow++)
+                    for (var subColumn = 0; subColumn < subdivisions; subColumn++)
+                    {
+                        var subA = Sample(subColumn, subRow);
+                        var subB = Sample(subColumn + 1, subRow);
+                        var subC = Sample(subColumn, subRow + 1);
+                        var subD = Sample(subColumn + 1, subRow + 1);
+                        var keyA = Key(subA.X, subA.Z, zone.SpacingMeters, 0);
+                        var keyB = Key(subB.X, subB.Z, zone.SpacingMeters, 0);
+                        var keyC = Key(subC.X, subC.Z, zone.SpacingMeters, 0);
+                        var keyD = Key(subD.X, subD.Z, zone.SpacingMeters, 0);
+                        Add(subA, subC, subB, keyA, keyC, keyB);
+                        Add(subB, subC, subD, keyB, keyC, keyD);
+                    }
                     continue;
                 }
                 var northwest = row * (chunk.Columns + 1) + column;
@@ -278,23 +318,35 @@ public static class TerrainMeshGeometry
                 indices[index] = index;
             }
         }
-        return new(meshes, adjustedCount, triangleCount, uniqueVertices.Count, roadCutoutCellCount);
+        return new(meshes, adjustedCount, triangleCount, uniqueVertices.Count, roadRefinedCellCount);
     }
 
-    /// <summary>
-    /// Removes whole near-terrain grid cells whose footprint can overlap the asphalt ribbon.
-    /// Clearance applied to individual DEM vertices alone cannot prevent a coarse triangle from
-    /// spanning over the road when all four cell corners happen to lie outside the clearance radius.
-    /// </summary>
+    /// <summary>Identifies coarse DEM cells that need local refinement near a rendered road corridor.</summary>
     private static bool CellIntersectsRoadSurface(double centerX, double centerZ, double spacing,
         RouteSegmentSpatialIndex routeIndex,BackgroundRoadIndex backgroundIndex)
     {
         var roadRadius = RoadRibbonMath.RoadWidthMeters * 0.5f * RoadRibbonMath.MaximumMiterScale;
-        var conservativeRadius = roadRadius + spacing * Math.Sqrt(2) * 0.5;
+        // A coarse cell must be refined when any of its corners can reach the road corridor.
+        // Using the full diagonal avoids center-only misses at bends and along cell boundaries.
+        var cellDiagonal = spacing * Math.Sqrt(2);
+        var conservativeRadius = roadRadius + cellDiagonal;
         var center=new Vector3((float)centerX,0,(float)centerZ);
         return routeIndex.TryGetNearest(center, conservativeRadius, out _)
-            || backgroundIndex.TryNearest(center,(float)(spacing*Math.Sqrt(2)*.5),out _,out var distance,out var halfWidth)
-                &&distance<=halfWidth+spacing*(float)Math.Sqrt(2)*.5f;
+            || backgroundIndex.TryNearest(center,(float)cellDiagonal,out _,out var distance,out var halfWidth)
+                &&distance<=halfWidth+cellDiagonal;
+    }
+
+    private static Vector3 AdjustForRoads(Vector3 terrainVertex, bool applyRoadClearance,
+        RouteSegmentSpatialIndex routeIndex, BackgroundRoadIndex backgroundIndex,
+        double radiusMeters, double clearanceMeters, double refinementMarginMeters = 0)
+    {
+        if (!applyRoadClearance) return terrainVertex;
+        var adjusted = ApplyRoadClearance(terrainVertex, routeIndex, radiusMeters + refinementMarginMeters, clearanceMeters);
+        if (backgroundIndex.TryNearest(adjusted, (float)(clearanceMeters + refinementMarginMeters), out var streetY,
+            out var streetDistance, out var halfWidth)
+            && streetDistance <= halfWidth + clearanceMeters + refinementMarginMeters)
+            adjusted = new Vector3(adjusted.X, Math.Min(adjusted.Y, streetY - (float)clearanceMeters), adjusted.Z);
+        return adjusted;
     }
 
     public static Vector3 ApplyRoadClearance(Vector3 terrainVertex, IReadOnlyList<VisualRouteSample> routeSamples,
