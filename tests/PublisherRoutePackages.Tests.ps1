@@ -5,6 +5,7 @@ $temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WodraBuiltInRoute
 $routeRoot = Join-Path $temporaryRoot 'Routes'
 $releaseRoot = Join-Path $temporaryRoot 'release'
 $zipPath = Join-Path $temporaryRoot 'fixture.zip'
+$experimentalZipPath = Join-Path $temporaryRoot 'experimental-fixture.zip'
 New-Item -ItemType Directory -Path $temporaryRoot, $releaseRoot | Out-Null
 try {
     $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.70'
@@ -118,9 +119,14 @@ try {
     [System.IO.File]::WriteAllText((Join-Path $releaseRoot 'eos-client.json'), $eos)
     Copy-Item -LiteralPath $routeRoot -Destination (Join-Path $releaseRoot 'Routes') -Recurse
     [System.IO.Compression.ZipFile]::CreateFromDirectory($releaseRoot, $zipPath)
-
     & (Join-Path $repositoryRoot 'tools\Verify-WodraRelease.ps1') -ZipPath $zipPath
-    Write-Host 'PASS: release package includes and verifies all six routes, including MTB and fictional XC sidecars.'
+
+    Remove-Item -LiteralPath (Join-Path $releaseRoot 'Routes') -Recurse -Force
+    Copy-Item -LiteralPath $experimentalRoot -Destination (Join-Path $releaseRoot 'Routes') -Recurse
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($releaseRoot, $experimentalZipPath)
+
+    & (Join-Path $repositoryRoot 'tools\Verify-WodraRelease.ps1') -ZipPath $experimentalZipPath -IncludeExperimentalRoutes
+    Write-Host 'PASS: release verifier accepts standard and opt-in route packages, including routeId-based observation sidecars.'
 }
 finally {
     if (Test-Path -LiteralPath $temporaryRoot) { Remove-Item -LiteralPath $temporaryRoot -Recurse -Force }

@@ -1,0 +1,15 @@
+{
+  "activityId": "33752ca8-3100-4263-aa89-83298faf62c9",
+  "routeId": "pine-hill-test",
+  "routeFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+  "startedAtUtc": "2026-11-04T02:18:03.3766263+00:00",
+  "segments": [
+    {
+      "FileName": "wodra-20261104-151803.fit",
+      "RouteStartDistanceMeters": 0,
+      "RouteEndDistanceMeters": 3978.577232742624,
+      "RiddenDistanceMeters": 3978.577232742624,
+      "FinalisedAtUtc": "2026-11-04T02:21:43.9399024+00:00"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "pine-hill-test-loop-transform",
+  "routeId": "pine-hill-test",
+  "method": "deterministic trim of published route geometry; no connector or new map data",
+  "source": {
+    "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+    "pointCount": 396,
+    "startIndex": 22,
+    "repeatIndex": 334,
+    "sharedLengthMeters": 1333.0063572330816,
+    "removedSpurPointIndices": [
+      99,
+      100,
+      101,
+      102
+    ],
+    "removedSpurMeters": 10.65291580440146
+  },
+  "result": {
+    "routeType": "loop",
+    "pointCount": 309,
+    "distanceMeters": 1322.354152985,
+    "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+    "seamCoordinatesExact": true,
+    "seamElevationDeltaMeters": 0.0,
+    "seamIncomingBearingDegrees": 42.04594972724579,
+    "seamOutgoingBearingDegrees": 43.00352060673918,
+    "maximumSuccessiveHeadingChangeDegrees": 90.21286832400551,
+    "elevationSeamCorrectionMeters": 0.0229485137205927
+  },
+  "sidecars": {
+    "authoringConfigLoopAnchors": 49,
+    "routeRelativeObservations": 14,
+    "terrainChunks": 12,
+    "farTerrainChunks": 63
+  }
+}

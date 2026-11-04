@@ -43,18 +43,18 @@ var tests = new (string Name, Action Run)[]
             || RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(36.1f, 0, 0), Vector3.Zero, 36))
             throw new Exception("Authored-scene vegetation replacement radius must be horizontal, bounded, and deterministic.");
     }),
-    ("Pine Hill Test loads its point-to-point OSM/LINZ route and scenery package", () =>
+    ("Pine Hill Test loads its closed loop geometry and remapped OSM/LINZ scenery package", () =>
     {
         const string id = "pine-hill-test";
         const string description = "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.";
         var route = RouteCatalog.GetById(id) ?? throw new Exception("Pine Hill Test is missing from the normal route catalogue.");
         if (route.Name != "Pine Hill Test" || route.Description != description
-            || route.RouteType != "Point-to-Point" || route.Environment != RouteEnvironment.Road
-            || route.Discipline != RouteDiscipline.Road || route.SupportsVerifiedCompletionAchievement)
-            throw new Exception("Pine Hill route metadata or open-route policy is invalid.");
+            || route.RouteType != "Loop" || route.Environment != RouteEnvironment.Road
+            || route.Discipline != RouteDiscipline.Road || !route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("Pine Hill route metadata or loop policy is invalid.");
         if (route.RenderRouteReferenceMarkings)
             throw new Exception("Pine Hill rendered reference paint unsupported by the recorded footage.");
-        if (route.Points is not { Count: > 300 } points || route.DistanceMeters is < 1600 or > 1750
+        if (route.Points is not { Count: > 300 and < 320 } points || route.DistanceMeters is < 1310 or > 1340
             || route.TotalAscentMeters is < 15 or > 50 || route.GeometryFingerprint.Length != 64
             || points.Any(point => point.Latitude is null || point.Longitude is null
                 || !double.IsFinite(point.DistanceMeters + point.ElevationMeters)))
@@ -62,15 +62,35 @@ var tests = new (string Name, Action Run)[]
         for (var i = 1; i < points.Count; i++)
             if (points[i].DistanceMeters <= points[i - 1].DistanceMeters)
                 throw new Exception($"Pine Hill chainage is not increasing at point {i}.");
-        if (Math.Abs(points[^1].Latitude!.Value - points[0].Latitude!.Value) < 0.0001
-            && Math.Abs(points[^1].Longitude!.Value - points[0].Longitude!.Value) < 0.0001)
-            throw new Exception("The recorded point-to-point route was incorrectly closed.");
+        if (points[^1].Latitude != points[0].Latitude || points[^1].Longitude != points[0].Longitude
+            || Math.Abs(points[^1].ElevationMeters - points[0].ElevationMeters) > .001)
+            throw new Exception("Pine Hill loop seam does not close in position and elevation.");
         var visual = new VisualRoute(route);
-        if (!visual.IsPointToPoint
+        if (visual.IsPointToPoint
             || visual.LengthMeters != route.DistanceMeters
             || Vector3.Distance(visual.GetPoseAtDistance(0).Position,
-                visual.GetPoseAtDistance(route.DistanceMeters).Position) < 300)
-            throw new Exception("Pine Hill VisualRoute does not preserve its natural endpoint.");
+                visual.GetPoseAtDistance(route.DistanceMeters).Position) > .001f)
+            throw new Exception("Pine Hill VisualRoute does not preserve the closed lap seam.");
+        var seamBefore = visual.GetPoseAtDistance(route.DistanceMeters - .1).Forward;
+        var seamAfter = visual.GetPoseAtDistance(.1).Forward;
+        if (Vector3.Dot(seamBefore, seamAfter) < .995f)
+            throw new Exception("Pine Hill rider heading is discontinuous across the lap seam.");
+        var loopPoints = points;
+        var cornerHeadings = new List<double>();
+        for (var i = 1; i < loopPoints.Count; i++)
+        {
+            var a = loopPoints[i - 1]; var b = loopPoints[i];
+            var east = (b.Longitude!.Value - a.Longitude!.Value)
+                * Math.Cos((a.Latitude!.Value + b.Latitude!.Value) * Math.PI / 360);
+            var north = b.Latitude!.Value - a.Latitude!.Value;
+            cornerHeadings.Add(Math.Atan2(east, north) * 180 / Math.PI);
+        }
+        for (var i = 1; i < cornerHeadings.Count; i++)
+        {
+            var turn = Math.Abs((cornerHeadings[i] - cornerHeadings[i - 1] + 540) % 360 - 180);
+            if (turn > 150)
+                throw new Exception($"Pine Hill contains an impossible consecutive {turn:F1}° heading reversal near point {i}.");
+        }
         foreach (var suffix in new[] { "buildings.json", "landmarks.json", "vegetation.json", "observations.json",
                      "street-furniture.json", "streets.json", "terrain.json" })
             if (!RoutePackageFiles.Exists(typeof(RouteCatalog).Assembly,
@@ -81,35 +101,32 @@ var tests = new (string Name, Action Run)[]
         var intersectionAssets = authoredScene.Features.Where(feature => feature.ObjectType == "authored-scene-asset").ToArray();
         var intersectionAsset = intersectionAssets.SingleOrDefault(feature => feature.Variant ==
             "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb");
-        var yieldMark = authoredScene.Features.Single(feature => feature.ObjectType == "yield-triangle");
-        var giveWayLine = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-line");
-        var giveWaySign = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-sign"
-            && feature.RouteChainageMeters is > 1370 and < 1374);
-        var kerbMarkings = authoredScene.Features.Single(feature => feature.ObjectType == "yellow-kerb-stripe"
-            && feature.RouteChainageMeters is > 1370 and < 1374);
+        var yieldMark = authoredScene.Features.First(feature => feature.ObjectType == "yield-triangle");
+        var giveWayLine = authoredScene.Features.First(feature => feature.ObjectType == "give-way-line");
+        var giveWaySign = authoredScene.Features.First(feature => feature.ObjectType == "give-way-sign"
+            && feature.RouteChainageMeters is > 1265 and < 1280);
+        var kerbMarkings = authoredScene.Features.First(feature => feature.ObjectType == "yellow-kerb-stripe"
+            && feature.RouteChainageMeters is > 1265 and < 1280
+            && Math.Abs(feature.LateralPositionMeters + 3.9) < .1);
         if (authoredScene.Features.Count < 24
             || intersectionAssets.Length != 3 || intersectionAsset is null
-            || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
+            || intersectionAsset.RouteChainageMeters is < 1265 or > 1280
             || intersectionAssets.Count(feature => feature.Variant ==
                 "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb") != 2
-            || yieldMark.RouteChainageMeters != 1371.735 || yieldMark.LateralPositionMeters != .5
-            || yieldMark.ForwardOffsetMeters != 2 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
-            || giveWayLine.RouteChainageMeters != yieldMark.RouteChainageMeters
-            || giveWayLine.LateralPositionMeters != .25 || giveWayLine.ForwardOffsetMeters != 5.25
+            || yieldMark.RouteChainageMeters is < 1265 or > 1280 || Math.Abs(yieldMark.LateralPositionMeters - .5) > .01
+            || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
+            || giveWayLine.RouteChainageMeters is < 1265 or > 1280
+            || Math.Abs(giveWayLine.LateralPositionMeters - .25) > .01
             || giveWayLine.LengthMeters != 7 || giveWayLine.WidthMeters != .16
-            || Math.Abs(giveWayLine.ForwardOffsetMeters -
-                (yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2) - 2.0) > .001
-            || giveWaySign.RouteChainageMeters != yieldMark.RouteChainageMeters
-            || giveWaySign.LateralPositionMeters != -4.2 || giveWaySign.ForwardOffsetMeters != 5
-            || giveWaySign.OrientationDegrees != 0 || giveWaySign.HeightMeters != 2.6
-            || kerbMarkings.RouteChainageMeters != yieldMark.RouteChainageMeters
-            || kerbMarkings.LateralPositionMeters != -3.9 || kerbMarkings.ForwardOffsetMeters != 4
+            || Math.Abs(giveWaySign.LateralPositionMeters + 4.2) > .01
+            || Math.Abs(giveWaySign.OrientationDegrees) > .1 || giveWaySign.HeightMeters != 2.6
+            || kerbMarkings.RouteChainageMeters is < 1265 or > 1280
+            || Math.Abs(kerbMarkings.LateralPositionMeters + 3.9) > .01
             || kerbMarkings.LengthMeters != 8
-            || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1370)
+            || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1260)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
-            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters < 10)
-            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 380 and < 410)
-            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 750 and < 790)
+            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 280 and < 320)
+            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 650 and < 700)
             || authoredScene.BuildingStyles.Count < 24
             || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 7
             || authoredScene.BuildingStyles.Any(style => style.VisualHeightMeters is not (> 2 and <= 30)

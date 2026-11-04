@@ -2,10 +2,10 @@
   "id": "pine-hill-test",
   "name": "Pine Hill Test",
   "description": "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.",
-  "routeType": "pointToPoint",
-  "loop": false,
+  "routeType": "loop",
+  "loop": true,
   "difficulty": "Unrated",
-  "routeDataVersion": 1,
+  "routeDataVersion": 2,
   "environment": "Road",
   "discipline": "Road",
   "routingMode": "anchors",
@@ -22,8 +22,357 @@
   "maxOutputSpacingMeters": 5,
   "detourWarningRatio": 1.35,
   "detourFailureRatio": 1.8,
-  "referenceDistanceMeters": 1690.427,
+  "referenceDistanceMeters": 1322.354152985,
   "anchors": [
+    {
+      "name": "Loop road anchor 00",
+      "sourceDistanceMeters": 0.0,
+      "latitude": -45.847129200000005,
+      "longitude": 170.51462850000001
+    },
+    {
+      "name": "Loop road anchor 01",
+      "sourceDistanceMeters": 25.13628963907054,
+      "latitude": -45.84696388251993,
+      "longitude": 170.51484984012876
+    },
+    {
+      "name": "Loop road anchor 02",
+      "sourceDistanceMeters": 53.56317486426596,
+      "latitude": -45.8467866,
+      "longitude": 170.51511390000002
+    },
+    {
+      "name": "Loop road anchor 03",
+      "sourceDistanceMeters": 81.51461705638623,
+      "latitude": -45.84663634141779,
+      "longitude": 170.515402948193
+    },
+    {
+      "name": "Loop road anchor 04",
+      "sourceDistanceMeters": 108.5002532458571,
+      "latitude": -45.84652148443637,
+      "longitude": 170.51570943364115
+    },
+    {
+      "name": "Loop road anchor 05",
+      "sourceDistanceMeters": 134.2636823762257,
+      "latitude": -45.8464276,
+      "longitude": 170.51601349999999
+    },
+    {
+      "name": "Loop road anchor 06",
+      "sourceDistanceMeters": 161.81933650982495,
+      "latitude": -45.8463273,
+      "longitude": 170.51633876666668
+    },
+    {
+      "name": "Loop road anchor 07",
+      "sourceDistanceMeters": 188.61327376535712,
+      "latitude": -45.84620100000001,
+      "longitude": 170.51663200000002
+    },
+    {
+      "name": "Loop road anchor 08",
+      "sourceDistanceMeters": 216.14767484601035,
+      "latitude": -45.846008850000004,
+      "longitude": 170.5168529
+    },
+    {
+      "name": "Loop road anchor 09",
+      "sourceDistanceMeters": 244.11091843032608,
+      "latitude": -45.845779750000005,
+      "longitude": 170.517001
+    },
+    {
+      "name": "Loop road anchor 10",
+      "sourceDistanceMeters": 269.23142346920156,
+      "latitude": -45.84556909211814,
+      "longitude": 170.51711810024034
+    },
+    {
+      "name": "Loop road anchor 11",
+      "sourceDistanceMeters": 297.7220746529797,
+      "latitude": -45.8453293,
+      "longitude": 170.5172477
+    },
+    {
+      "name": "Loop road anchor 12",
+      "sourceDistanceMeters": 324.76195040966957,
+      "latitude": -45.8452981,
+      "longitude": 170.51751240000002
+    },
+    {
+      "name": "Loop road anchor 13",
+      "sourceDistanceMeters": 353.04194024235005,
+      "latitude": -45.84546725586469,
+      "longitude": 170.51778142068005
+    },
+    {
+      "name": "Loop road anchor 14",
+      "sourceDistanceMeters": 381.3867913701738,
+      "latitude": -45.84565463816961,
+      "longitude": 170.51802952409815
+    },
+    {
+      "name": "Loop road anchor 15",
+      "sourceDistanceMeters": 409.4701393954705,
+      "latitude": -45.84584029172832,
+      "longitude": 170.51827533857096
+    },
+    {
+      "name": "Loop road anchor 16",
+      "sourceDistanceMeters": 437.90503723158645,
+      "latitude": -45.846028269314544,
+      "longitude": 170.51852423017087
+    },
+    {
+      "name": "Loop road anchor 17",
+      "sourceDistanceMeters": 467.02236725524654,
+      "latitude": -45.8462205106904,
+      "longitude": 170.5187794789319
+    },
+    {
+      "name": "Loop road anchor 18",
+      "sourceDistanceMeters": 495.542035247979,
+      "latitude": -45.84640830472692,
+      "longitude": 170.51903026556508
+    },
+    {
+      "name": "Loop road anchor 19",
+      "sourceDistanceMeters": 524.1412708867284,
+      "latitude": -45.84659662269413,
+      "longitude": 170.5192817518734
+    },
+    {
+      "name": "Loop road anchor 20",
+      "sourceDistanceMeters": 552.8249231118832,
+      "latitude": -45.84678549652095,
+      "longitude": 170.5195339804958
+    },
+    {
+      "name": "Loop road anchor 21",
+      "sourceDistanceMeters": 581.5929919234435,
+      "latitude": -45.84697492620739,
+      "longitude": 170.51978695143228
+    },
+    {
+      "name": "Loop road anchor 22",
+      "sourceDistanceMeters": 610.6725356390374,
+      "latitude": -45.847166406868936,
+      "longitude": 170.5200426613117
+    },
+    {
+      "name": "Loop road anchor 23",
+      "sourceDistanceMeters": 637.0799397324186,
+      "latitude": -45.84734029223849,
+      "longitude": 170.52027487383134
+    },
+    {
+      "name": "Loop road anchor 24",
+      "sourceDistanceMeters": 663.6750696199591,
+      "latitude": -45.84752,
+      "longitude": 170.5204998
+    },
+    {
+      "name": "Loop road anchor 25",
+      "sourceDistanceMeters": 689.2893033424416,
+      "latitude": -45.84772064094291,
+      "longitude": 170.5204081159788
+    },
+    {
+      "name": "Loop road anchor 26",
+      "sourceDistanceMeters": 716.4532454027382,
+      "latitude": -45.84788896454866,
+      "longitude": 170.5201539653842
+    },
+    {
+      "name": "Loop road anchor 27",
+      "sourceDistanceMeters": 744.5849738801461,
+      "latitude": -45.8480612172802,
+      "longitude": 170.51988795256312
+    },
+    {
+      "name": "Loop road anchor 28",
+      "sourceDistanceMeters": 772.498784570198,
+      "latitude": -45.848133600000004,
+      "longitude": 170.5195784
+    },
+    {
+      "name": "Loop road anchor 29",
+      "sourceDistanceMeters": 800.8937343516768,
+      "latitude": -45.84795163694645,
+      "longitude": 170.5193223788636
+    },
+    {
+      "name": "Loop road anchor 30",
+      "sourceDistanceMeters": 830.4167362592916,
+      "latitude": -45.8477574657653,
+      "longitude": 170.51906241567718
+    },
+    {
+      "name": "Loop road anchor 31",
+      "sourceDistanceMeters": 859.0771967428361,
+      "latitude": -45.8475689674723,
+      "longitude": 170.5188100475523
+    },
+    {
+      "name": "Loop road anchor 32",
+      "sourceDistanceMeters": 886.4602720202436,
+      "latitude": -45.84738887047245,
+      "longitude": 170.51856892737337
+    },
+    {
+      "name": "Loop road anchor 33",
+      "sourceDistanceMeters": 912.0566266123196,
+      "latitude": -45.847335300000005,
+      "longitude": 170.51833810000002
+    },
+    {
+      "name": "Loop road anchor 34",
+      "sourceDistanceMeters": 939.7249216399383,
+      "latitude": -45.84750580945135,
+      "longitude": 170.51807793868662
+    },
+    {
+      "name": "Loop road anchor 35",
+      "sourceDistanceMeters": 968.3780841767525,
+      "latitude": -45.84768238827627,
+      "longitude": 170.51780851679447
+    },
+    {
+      "name": "Loop road anchor 36",
+      "sourceDistanceMeters": 998.016114223824,
+      "latitude": -45.84786503647476,
+      "longitude": 170.51752983432357
+    },
+    {
+      "name": "Loop road anchor 37",
+      "sourceDistanceMeters": 1023.4363399411423,
+      "latitude": -45.8479978,
+      "longitude": 170.51726366666668
+    },
+    {
+      "name": "Loop road anchor 38",
+      "sourceDistanceMeters": 1048.6292698546683,
+      "latitude": -45.848068633333334,
+      "longitude": 170.51695773333336
+    },
+    {
+      "name": "Loop road anchor 39",
+      "sourceDistanceMeters": 1077.0694347920175,
+      "latitude": -45.848065600000005,
+      "longitude": 170.51659180000001
+    },
+    {
+      "name": "Loop road anchor 40",
+      "sourceDistanceMeters": 1104.4128477998142,
+      "latitude": -45.84800786260229,
+      "longitude": 170.51624864837652
+    },
+    {
+      "name": "Loop road anchor 41",
+      "sourceDistanceMeters": 1133.0468696142898,
+      "latitude": -45.8479474,
+      "longitude": 170.5158893
+    },
+    {
+      "name": "Loop road anchor 42",
+      "sourceDistanceMeters": 1161.8145182443554,
+      "latitude": -45.84788884065872,
+      "longitude": 170.51552753214585
+    },
+    {
+      "name": "Loop road anchor 43",
+      "sourceDistanceMeters": 1189.220103555179,
+      "latitude": -45.84783275626083,
+      "longitude": 170.51518299162987
+    },
+    {
+      "name": "Loop road anchor 44",
+      "sourceDistanceMeters": 1215.169889449015,
+      "latitude": -45.847773325000006,
+      "longitude": 170.514859725
+    },
+    {
+      "name": "Loop road anchor 45",
+      "sourceDistanceMeters": 1242.7840030829018,
+      "latitude": -45.847638741227314,
+      "longitude": 170.51456598524433
+    },
+    {
+      "name": "Loop road anchor 46",
+      "sourceDistanceMeters": 1268.223493119852,
+      "latitude": -45.84748503006658,
+      "longitude": 170.51432271871576
+    },
+    {
+      "name": "Loop road anchor 47",
+      "sourceDistanceMeters": 1296.9238008088168,
+      "latitude": -45.847299034924596,
+      "longitude": 170.51440861438573
+    },
+    {
+      "name": "Loop road anchor 48",
+      "sourceDistanceMeters": 1322.354152985,
+      "latitude": -45.847129200000005,
+      "longitude": 170.51462850000001
+    }
+  ],
+  "elevation": {
+    "enabled": true,
+    "resampleIntervalMeters": 5,
+    "smoothingWindowMeters": 20,
+    "gradientWindowMeters": 20,
+    "maximumBridgeInterpolationMeters": 50,
+    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
+    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json",
+    "gradientReviewThresholdPercent": 20
+  },
+  "terrain": {
+    "enabled": true,
+    "nearRadiusMeters": 100,
+    "farRadiusMeters": 1000,
+    "spacingMeters": 10,
+    "farSpacingMeters": 20,
+    "corridorRadiusMeters": 100,
+    "chunkSizeMeters": 200,
+    "farChunkSizeMeters": 300,
+    "transitionOverlapMeters": 8,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "buildings": {
+    "enabled": true,
+    "searchRadiusMeters": 80,
+    "simplificationToleranceMeters": 0.75,
+    "metersPerLevel": 3,
+    "ordinaryHeightMeters": 8,
+    "smallBuildingHeightMeters": 3.5,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "vegetation": {
+    "enabled": true,
+    "searchRadiusMeters": 100,
+    "treeRowSpacingMeters": 10,
+    "simplificationToleranceMeters": 1,
+    "generatedTreeCapPerArea": 70,
+    "totalTreeInstanceCap": 300,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "streetFurniture": {
+    "enabled": true,
+    "searchRadiusMeters": 50,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "backgroundStreets": {
+    "enabled": true,
+    "searchRadiusMeters": 100,
+    "sampleSpacingMeters": 15,
+    "routeOverlapSuppressionMeters": 8,
+    "elevationCacheDirectory": "routes\\cache\\elevation"
+  },
+  "renderRouteReferenceMarkings": false,
+  "legacyReferencePoints": [
     {
       "name": "GPS 0s",
       "sourceDistanceMeters": 0.0,
@@ -306,58 +655,5 @@
       "latitude": -45.84567452493635,
       "longitude": 170.51700852939453
     }
-  ],
-  "elevation": {
-    "enabled": true,
-    "resampleIntervalMeters": 5,
-    "smoothingWindowMeters": 20,
-    "gradientWindowMeters": 20,
-    "maximumBridgeInterpolationMeters": 50,
-    "primaryCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/otago/dunedin-and-mosgiel_2021/dem_1m/2193/collection.json",
-    "fallbackCollectionUrl": "https://nz-elevation.s3.ap-southeast-2.amazonaws.com/new-zealand/new-zealand-contour/dem_8m/2193/collection.json",
-    "gradientReviewThresholdPercent": 20
-  },
-  "terrain": {
-    "enabled": true,
-    "nearRadiusMeters": 100,
-    "farRadiusMeters": 1000,
-    "spacingMeters": 10,
-    "farSpacingMeters": 20,
-    "corridorRadiusMeters": 100,
-    "chunkSizeMeters": 200,
-    "farChunkSizeMeters": 300,
-    "transitionOverlapMeters": 8,
-    "elevationCacheDirectory": "routes\\cache\\elevation"
-  },
-  "buildings": {
-    "enabled": true,
-    "searchRadiusMeters": 80,
-    "simplificationToleranceMeters": 0.75,
-    "metersPerLevel": 3,
-    "ordinaryHeightMeters": 8,
-    "smallBuildingHeightMeters": 3.5,
-    "elevationCacheDirectory": "routes\\cache\\elevation"
-  },
-  "vegetation": {
-    "enabled": true,
-    "searchRadiusMeters": 100,
-    "treeRowSpacingMeters": 10,
-    "simplificationToleranceMeters": 1,
-    "generatedTreeCapPerArea": 70,
-    "totalTreeInstanceCap": 300,
-    "elevationCacheDirectory": "routes\\cache\\elevation"
-  },
-  "streetFurniture": {
-    "enabled": true,
-    "searchRadiusMeters": 50,
-    "elevationCacheDirectory": "routes\\cache\\elevation"
-  },
-  "backgroundStreets": {
-    "enabled": true,
-    "searchRadiusMeters": 100,
-    "sampleSpacingMeters": 15,
-    "routeOverlapSuppressionMeters": 8,
-    "elevationCacheDirectory": "routes\\cache\\elevation"
-  },
-  "renderRouteReferenceMarkings": false
+  ]
 }

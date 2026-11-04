@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
   "routeId": "pine-hill-test",
-  "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+  "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
   "observations": [
     {
       "id": "video-000s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162126.mp4",
       "videoSeconds": 1,
       "captureUtc": "2026-11-03T03:21:27+00:00",
       "rawGpsElapsedSeconds": 0,
       "rawGpsChainageMeters": 0.0,
-      "routeChainageMeters": 0.0,
+      "routeChainageMeters": 1277.13397,
       "gpsToOsmRouteOffsetMeters": 5.72,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -28,10 +28,10 @@
         {
           "id": "start-white-timber-fence",
           "objectType": "timber-fence",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": -5.8,
-          "forwardOffsetMeters": 8,
-          "orientationDegrees": 90,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -38.315114,
+          "forwardOffsetMeters": 7.447755,
+          "orientationDegrees": -167.29310980405376,
           "lengthMeters": 24,
           "widthMeters": 0.05,
           "heightMeters": 1.5,
@@ -40,15 +40,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.57,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-curved-verge",
           "objectType": "grass-verge",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": -4.6,
-          "forwardOffsetMeters": 2,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -44.432119,
+          "forwardOffsetMeters": 7.596926,
+          "orientationDegrees": 102.70689019594624,
           "lengthMeters": 15,
           "widthMeters": 3.8,
           "heightMeters": 0.06,
@@ -57,15 +58,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.61,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-broadleaf-left",
           "objectType": "broadleaf-tree",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": -16.0,
-          "forwardOffsetMeters": 22.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -22.414373,
+          "forwardOffsetMeters": 14.318448,
+          "orientationDegrees": 102.70689019594624,
           "lengthMeters": 0,
           "widthMeters": 5.0,
           "heightMeters": 9.0,
@@ -74,15 +76,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.54,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-broadleaf-right",
           "objectType": "broadleaf-tree",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": 16.0,
-          "forwardOffsetMeters": 28.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1258.912253,
+          "lateralPositionMeters": -23.599096,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 102.69687605839641,
           "lengthMeters": 0,
           "widthMeters": 4.6,
           "heightMeters": 8.3,
@@ -91,15 +94,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.52,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-property-hedge",
           "objectType": "hedge",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": 8,
-          "forwardOffsetMeters": 9,
-          "orientationDegrees": 90,
+          "routeChainageMeters": 1270.89975,
+          "lateralPositionMeters": -40.375102,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -167.29310980405364,
           "lengthMeters": 12,
           "widthMeters": 1.2,
           "heightMeters": 1.5,
@@ -108,15 +112,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.53,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-utility-pole",
           "objectType": "utility-pole",
-          "routeChainageMeters": 0,
-          "lateralPositionMeters": 3.8,
-          "forwardOffsetMeters": 10,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1274.77692,
+          "lateralPositionMeters": -38.475747,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 102.70689019594624,
           "lengthMeters": 0,
           "widthMeters": 0.16,
           "heightMeters": 7.8,
@@ -125,15 +130,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1,
           "confidence": 0.56,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 0
         },
         {
           "id": "start-center-lane-dash",
           "objectType": "white-lane-dash",
-          "routeChainageMeters": 12.0,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -35.600875,
+          "forwardOffsetMeters": 1.512042,
+          "orientationDegrees": 93.92281608965231,
           "lengthMeters": 2.0,
           "widthMeters": 0.14,
           "heightMeters": 0.02,
@@ -142,15 +148,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1.0,
           "confidence": 0.72,
-          "provenance": "White broken centre-line dash directly visible in the route-start video frame; dimensions and chainage are approximate manual estimates."
+          "provenance": "White broken centre-line dash directly visible in the route-start video frame; dimensions and chainage are approximate manual estimates.",
+          "sourceRouteChainageMeters": 12.0
         },
         {
           "id": "start-yellow-kerb-dashes",
           "objectType": "yellow-kerb-stripe",
-          "routeChainageMeters": 0.0,
-          "lateralPositionMeters": -3.9,
-          "forwardOffsetMeters": 3.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -43.610585,
+          "forwardOffsetMeters": 6.694107,
+          "orientationDegrees": 102.70689019594624,
           "lengthMeters": 6.0,
           "widthMeters": 0.15,
           "heightMeters": 0.02,
@@ -159,20 +166,22 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 1.0,
           "confidence": 0.66,
-          "provenance": "Yellow edge paint directly visible beside the curved kerb in the route-start frame; route-relative lateral position and dimensions are estimated."
+          "provenance": "Yellow edge paint directly visible beside the curved kerb in the route-start frame; route-relative lateral position and dimensions are estimated.",
+          "sourceRouteChainageMeters": 0.0
         }
-      ]
+      ],
+      "sourceRouteChainageMeters": 0.0
     },
     {
       "id": "video-018s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162126.mp4",
       "videoSeconds": 19,
       "captureUtc": "2026-11-03T03:21:45+00:00",
       "rawGpsElapsedSeconds": 18,
       "rawGpsChainageMeters": 212.73,
-      "routeChainageMeters": 210.63,
+      "routeChainageMeters": 117.771178,
       "gpsToOsmRouteOffsetMeters": 4.32,
       "source": "video frame human reviewed",
       "confidence": 0.85,
@@ -183,18 +192,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 210.63
     },
     {
       "id": "video-033s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162126.mp4",
       "videoSeconds": 34,
       "captureUtc": "2026-11-03T03:22:00+00:00",
       "rawGpsElapsedSeconds": 33,
       "rawGpsChainageMeters": 389.53,
-      "routeChainageMeters": 391.32,
+      "routeChainageMeters": 298.462154,
       "gpsToOsmRouteOffsetMeters": 3.45,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -210,10 +220,10 @@
         {
           "id": "395-garden-berm",
           "objectType": "grass-verge",
-          "routeChainageMeters": 391.32,
-          "lateralPositionMeters": -4.6,
-          "forwardOffsetMeters": 1,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 299.462138,
+          "lateralPositionMeters": -4.602041,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -0.0002025078353256049,
           "lengthMeters": 24,
           "widthMeters": 3.6,
           "heightMeters": 0.05,
@@ -222,15 +232,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34,
           "confidence": 0.65,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 391.32
         },
         {
           "id": "395-right-hedge",
           "objectType": "hedge",
-          "routeChainageMeters": 391.32,
-          "lateralPositionMeters": 8.6,
-          "forwardOffsetMeters": 7,
-          "orientationDegrees": 90,
+          "routeChainageMeters": 315.209283,
+          "lateralPositionMeters": 2.421814,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 4.085051639867174,
           "lengthMeters": 21,
           "widthMeters": 1.4,
           "heightMeters": 1.7,
@@ -239,15 +250,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34,
           "confidence": 0.62,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 391.32
         },
         {
           "id": "395-mature-tree",
           "objectType": "broadleaf-tree",
-          "routeChainageMeters": 391.32,
-          "lateralPositionMeters": 16.0,
-          "forwardOffsetMeters": 28.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 322.675516,
+          "lateralPositionMeters": -18.257211,
+          "forwardOffsetMeters": -0.0,
+          "orientationDegrees": -90.37174030403652,
           "lengthMeters": 0,
           "widthMeters": 4.5,
           "heightMeters": 9.5,
@@ -256,15 +268,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34,
           "confidence": 0.66,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 391.32
         },
         {
           "id": "395-small-conifer",
           "objectType": "conifer-tree",
-          "routeChainageMeters": 391.32,
-          "lateralPositionMeters": -16.0,
-          "forwardOffsetMeters": 30.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 306.692385,
+          "lateralPositionMeters": -16.002144,
+          "forwardOffsetMeters": 21.769713,
+          "orientationDegrees": -0.00020251170980145616,
           "lengthMeters": 0,
           "widthMeters": 3.2,
           "heightMeters": 7.4,
@@ -273,15 +286,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34,
           "confidence": 0.54,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 391.32
         },
         {
           "id": "395-power-pole",
           "objectType": "utility-pole",
-          "routeChainageMeters": 391.32,
-          "lateralPositionMeters": -3.5,
-          "forwardOffsetMeters": 16,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 306.692385,
+          "lateralPositionMeters": -3.502094,
+          "forwardOffsetMeters": 7.769757,
+          "orientationDegrees": -0.00020251170980145616,
           "lengthMeters": 0,
           "widthMeters": 0.16,
           "heightMeters": 7.5,
@@ -290,15 +304,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34,
           "confidence": 0.58,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 391.32
         },
         {
           "id": "395-center-lane-dash",
           "objectType": "white-lane-dash",
-          "routeChainageMeters": 404.0,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 305.878438,
+          "lateralPositionMeters": -4.377696,
+          "forwardOffsetMeters": -0.0,
+          "orientationDegrees": -100.52777471331854,
           "lengthMeters": 2.0,
           "widthMeters": 0.14,
           "heightMeters": 0.02,
@@ -307,20 +322,22 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 34.0,
           "confidence": 0.7,
-          "provenance": "White broken centre-line marking directly visible in the 395 m hillside frame; length and matched route chainage are approximate manual estimates."
+          "provenance": "White broken centre-line marking directly visible in the 395 m hillside frame; length and matched route chainage are approximate manual estimates.",
+          "sourceRouteChainageMeters": 404.0
         }
-      ]
+      ],
+      "sourceRouteChainageMeters": 391.32
     },
     {
       "id": "video-036s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162126.mp4",
       "videoSeconds": 37,
       "captureUtc": "2026-11-03T03:22:03+00:00",
       "rawGpsElapsedSeconds": 36,
       "rawGpsChainageMeters": 405.06,
-      "routeChainageMeters": 409.86,
+      "routeChainageMeters": 306.629136,
       "gpsToOsmRouteOffsetMeters": 7.32,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -331,18 +348,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 409.86
     },
     {
       "id": "video-045s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162126.mp4",
       "videoSeconds": 46,
       "captureUtc": "2026-11-03T03:22:12+00:00",
       "rawGpsElapsedSeconds": 45,
       "rawGpsChainageMeters": 492.15,
-      "routeChainageMeters": 494.16,
+      "routeChainageMeters": 390.649046,
       "gpsToOsmRouteOffsetMeters": 3.14,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -353,18 +371,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 494.16
     },
     {
       "id": "video-063s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 3,
       "captureUtc": "2026-11-03T03:22:30+00:00",
       "rawGpsElapsedSeconds": 63,
       "rawGpsChainageMeters": 747.0,
-      "routeChainageMeters": 748.94,
+      "routeChainageMeters": 645.429035,
       "gpsToOsmRouteOffsetMeters": 2.7,
       "source": "video frame human reviewed",
       "confidence": 0.8,
@@ -375,18 +394,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 748.94
     },
     {
       "id": "video-066s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 6,
       "captureUtc": "2026-11-03T03:22:33+00:00",
       "rawGpsElapsedSeconds": 66,
       "rawGpsChainageMeters": 771.63,
-      "routeChainageMeters": 772.26,
+      "routeChainageMeters": 668.751667,
       "gpsToOsmRouteOffsetMeters": 2.38,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -402,10 +422,10 @@
         {
           "id": "775-open-verge",
           "objectType": "grass-verge",
-          "routeChainageMeters": 772.26,
-          "lateralPositionMeters": -5.2,
-          "forwardOffsetMeters": 1,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 669.751674,
+          "lateralPositionMeters": -5.195157,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 8.581846995525666e-05,
           "lengthMeters": 18,
           "widthMeters": 5.5,
           "heightMeters": 0.05,
@@ -414,15 +434,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 6,
           "confidence": 0.69,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 772.26
         },
         {
           "id": "775-mature-broadleaf",
           "objectType": "broadleaf-tree",
-          "routeChainageMeters": 772.26,
-          "lateralPositionMeters": -12,
-          "forwardOffsetMeters": 9,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 674.294413,
+          "lateralPositionMeters": -13.328107,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -15.548465577793394,
           "lengthMeters": 0,
           "widthMeters": 7.3,
           "heightMeters": 12,
@@ -431,15 +452,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 6,
           "confidence": 0.71,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 772.26
         },
         {
           "id": "775-property-hedge",
           "objectType": "shrub",
-          "routeChainageMeters": 772.26,
-          "lateralPositionMeters": -10.0,
-          "forwardOffsetMeters": 8.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 673.867115,
+          "lateralPositionMeters": -11.133245,
+          "forwardOffsetMeters": -0.0,
+          "orientationDegrees": -15.548465577793394,
           "lengthMeters": 5.0,
           "widthMeters": 1.6,
           "heightMeters": 0.9,
@@ -448,15 +470,16 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 6,
           "confidence": 0.57,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 772.26
         },
         {
           "id": "775-roadside-pole",
           "objectType": "utility-pole",
-          "routeChainageMeters": 772.26,
-          "lateralPositionMeters": -3.8,
-          "forwardOffsetMeters": 13,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 678.385692,
+          "lateralPositionMeters": -7.558769,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -31.42444954188892,
           "lengthMeters": 0,
           "widthMeters": 0.16,
           "heightMeters": 7.6,
@@ -465,20 +488,22 @@
           "sourceVideo": "Video_20261103_162126.mp4",
           "videoSeconds": 6,
           "confidence": 0.64,
-          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates."
+          "provenance": "Manual placement from the timestamped dash-camera frame; object is directly visible but lateral and forward offsets are visual estimates.",
+          "sourceRouteChainageMeters": 772.26
         }
-      ]
+      ],
+      "sourceRouteChainageMeters": 772.26
     },
     {
       "id": "video-072s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 12,
       "captureUtc": "2026-11-03T03:22:39+00:00",
       "rawGpsElapsedSeconds": 72,
       "rawGpsChainageMeters": 845.69,
-      "routeChainageMeters": 843.35,
+      "routeChainageMeters": 739.845927,
       "gpsToOsmRouteOffsetMeters": 4.8,
       "source": "video frame human reviewed",
       "confidence": 0.8,
@@ -489,18 +514,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 843.35
     },
     {
       "id": "video-075s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 15,
       "captureUtc": "2026-11-03T03:22:42+00:00",
       "rawGpsElapsedSeconds": 75,
       "rawGpsChainageMeters": 880.08,
-      "routeChainageMeters": 875.51,
+      "routeChainageMeters": 772.006605,
       "gpsToOsmRouteOffsetMeters": 2.78,
       "source": "video frame human reviewed",
       "confidence": 0.8,
@@ -511,18 +537,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 875.51
     },
     {
       "id": "video-084s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 24,
       "captureUtc": "2026-11-03T03:22:51+00:00",
       "rawGpsElapsedSeconds": 84,
       "rawGpsChainageMeters": 995.57,
-      "routeChainageMeters": 989.98,
+      "routeChainageMeters": 886.47576,
       "gpsToOsmRouteOffsetMeters": 2.66,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -533,18 +560,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 989.98
     },
     {
       "id": "video-087s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 27,
       "captureUtc": "2026-11-03T03:22:54+00:00",
       "rawGpsElapsedSeconds": 87,
       "rawGpsChainageMeters": 1013.51,
-      "routeChainageMeters": 1010.94,
+      "routeChainageMeters": 907.435907,
       "gpsToOsmRouteOffsetMeters": 1.11,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -555,18 +583,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 1010.94
     },
     {
       "id": "video-114s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 54,
       "captureUtc": "2026-11-03T03:23:21+00:00",
       "rawGpsElapsedSeconds": 114,
       "rawGpsChainageMeters": 1377.37,
-      "routeChainageMeters": 1371.73,
+      "routeChainageMeters": 1268.226435,
       "gpsToOsmRouteOffsetMeters": 1.95,
       "source": "video frame human reviewed",
       "confidence": 0.95,
@@ -582,10 +611,10 @@
         {
           "id": "authored-give-way-intersection-scene",
           "objectType": "authored-scene-asset",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1268.231435,
+          "lateralPositionMeters": 0.000171,
+          "forwardOffsetMeters": -0.0,
+          "orientationDegrees": 0.0003056395976273052,
           "lengthMeters": 0,
           "widthMeters": 0,
           "heightMeters": 0,
@@ -594,15 +623,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.83,
-          "provenance": "Anchored to the OSM-matched route pose at 1,371.735 m (source capture 54 s). Uses the existing OSM hipped-house footprint/style and two shared CC0 tree meshes; the fence face is a rectified crop from the 4K frame. Building/tree offsets, fence run length and source-camera calibration remain approximate."
+          "provenance": "Anchored to the OSM-matched route pose at 1,371.735 m (source capture 54 s). Uses the existing OSM hipped-house footprint/style and two shared CC0 tree meshes; the fence face is a rectified crop from the 4K frame. Building/tree offsets, fence run length and source-camera calibration remain approximate.",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "yield-triangle",
           "objectType": "yield-triangle",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0.5,
-          "forwardOffsetMeters": 2.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1270.231433,
+          "lateralPositionMeters": 0.500181,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 0.0003056395976273052,
           "lengthMeters": 2.5,
           "widthMeters": 3.0,
           "heightMeters": 0.02,
@@ -611,15 +641,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.82,
-          "provenance": "Apex points back toward the approach. Width was estimated by comparing the source-frame triangle with the mapped 7 m road (about 3 m); its 2.0 m forward and +0.5 m road-right offsets are informed by the frame registration. Camera-local ray/depth fit is uncertain (about 2 m trajectory RMS), so these are authoring estimates, not surveyed values."
+          "provenance": "Apex points back toward the approach. Width was estimated by comparing the source-frame triangle with the mapped 7 m road (about 3 m); its 2.0 m forward and +0.5 m road-right offsets are informed by the frame registration. Camera-local ray/depth fit is uncertain (about 2 m trajectory RMS), so these are authoring estimates, not surveyed values.",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "give-way-transverse-line",
           "objectType": "give-way-line",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0.25,
-          "forwardOffsetMeters": 5.25,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1273.481434,
+          "lateralPositionMeters": 0.250199,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 0.00030563959751361836,
           "lengthMeters": 7,
           "widthMeters": 0.16,
           "heightMeters": 0.02,
@@ -628,15 +659,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.72,
-          "provenance": "Transverse line position and near-center lateral offset are estimated from frame 114 s and the registered camera pose; the line remains 2.0 m beyond the triangle base. Camera/local-depth alignment has about 2 m RMS uncertainty; dimensions and placement are not surveyed."
+          "provenance": "Transverse line position and near-center lateral offset are estimated from frame 114 s and the registered camera pose; the line remains 2.0 m beyond the triangle base. Camera/local-depth alignment has about 2 m RMS uncertainty; dimensions and placement are not surveyed.",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "left-yellow-kerb-paint",
           "objectType": "yellow-kerb-stripe",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -3.9,
-          "forwardOffsetMeters": 4.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1272.231456,
+          "lateralPositionMeters": -3.899808,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 0.0003056395976273052,
           "lengthMeters": 8,
           "widthMeters": 0.2,
           "heightMeters": 0.02,
@@ -645,15 +677,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.7,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "grassy-verge",
           "objectType": "grass-verge",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -5.3,
-          "forwardOffsetMeters": -1,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1267.231464,
+          "lateralPositionMeters": -5.299835,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": 0.0003056482165675334,
           "lengthMeters": 9,
           "widthMeters": 2.1,
           "heightMeters": 0.08,
@@ -662,15 +695,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.68,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "weathered-paling-fence",
           "objectType": "timber-fence",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 0,
-          "forwardOffsetMeters": 14.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.148137,
+          "lateralPositionMeters": -5.097446,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -89.84321813071364,
           "lengthMeters": 34.0,
           "widthMeters": 0.14,
           "heightMeters": 1.82,
@@ -679,15 +713,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.53,
-          "provenance": "Visible continuously in the 54 s 4K frame; front-face texture is rectified from the clean right-hand fence run and applied to individual 3D palings. The 34 m run is an image-perspective estimate informed by the mapped cross-street; endpoint and height are not surveyed."
+          "provenance": "Visible continuously in the 54 s 4K frame; front-face texture is rectified from the clean right-hand fence run and applied to individual 3D palings. The 34 m run is an image-perspective estimate informed by the mapped cross-street; endpoint and height are not surveyed.",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "give-way-sign",
           "objectType": "give-way-sign",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -4.2,
-          "forwardOffsetMeters": 5.0,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1273.231458,
+          "lateralPositionMeters": -4.199803,
+          "forwardOffsetMeters": -0.0,
+          "orientationDegrees": 0.00030563959751361836,
           "lengthMeters": 1.1,
           "widthMeters": 0.08,
           "heightMeters": 2.6,
@@ -696,15 +731,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.83,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "roadside-power-pole",
           "objectType": "utility-pole",
-          "routeChainageMeters": 1379.1,
-          "lateralPositionMeters": -2.7,
-          "forwardOffsetMeters": 7.4,
-          "orientationDegrees": 0,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -2.699751,
+          "forwardOffsetMeters": 5.86248,
+          "orientationDegrees": 0.0003056395975704618,
           "lengthMeters": 0,
           "widthMeters": 0.22,
           "heightMeters": 7.4,
@@ -713,15 +749,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.62,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective",
+          "sourceRouteChainageMeters": 1379.1
         },
         {
           "id": "boundary-hedge",
           "objectType": "hedge",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -10.0,
-          "forwardOffsetMeters": 16.0,
-          "orientationDegrees": 90,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -9.999744,
+          "forwardOffsetMeters": 7.097519,
+          "orientationDegrees": 90.00030563959751,
           "lengthMeters": 9.0,
           "widthMeters": 1.0,
           "heightMeters": 1.2,
@@ -730,15 +767,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.54,
-          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective"
+          "provenance": "manually aligned to frame 114 s; object identity is directly observed, route-relative offset is an approximate scene placement from the dash-camera perspective",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "mature-broadleaf-left",
           "objectType": "authored-scene-asset",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": -11.0,
-          "forwardOffsetMeters": 12.0,
-          "orientationDegrees": 9,
+          "routeChainageMeters": 1277.13397,
+          "lateralPositionMeters": -10.999765,
+          "forwardOffsetMeters": 3.097524,
+          "orientationDegrees": 9.000305639597514,
           "lengthMeters": 5.0,
           "widthMeters": 5.0,
           "heightMeters": 9.2,
@@ -747,15 +785,16 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.62,
-          "provenance": "Poly Haven Tree Small 02 CC0 model, placed toward the near left corner from the source frame; species, lateral offset, exact ground position and canopy dimensions are visual approximations."
+          "provenance": "Poly Haven Tree Small 02 CC0 model, placed toward the near left corner from the source frame; species, lateral offset, exact ground position and canopy dimensions are visual approximations.",
+          "sourceRouteChainageMeters": 1371.735
         },
         {
           "id": "mature-broadleaf-right",
           "objectType": "authored-scene-asset",
-          "routeChainageMeters": 1371.735,
-          "lateralPositionMeters": 17.0,
-          "forwardOffsetMeters": 24.0,
-          "orientationDegrees": -11,
+          "routeChainageMeters": 1294.175437,
+          "lateralPositionMeters": -15.05089,
+          "forwardOffsetMeters": 0.0,
+          "orientationDegrees": -100.84321813071364,
           "lengthMeters": 5.0,
           "widthMeters": 5.0,
           "heightMeters": 9.2,
@@ -764,20 +803,22 @@
           "sourceVideo": "Video_20261103_162227.mp4",
           "videoSeconds": 54.0,
           "confidence": 0.62,
-          "provenance": "Poly Haven Tree Small 02 CC0 model, manually scaled and placed behind the observed cross-street fence; broadleaf species and exact tree positions are visual approximations."
+          "provenance": "Poly Haven Tree Small 02 CC0 model, manually scaled and placed behind the observed cross-street fence; broadleaf species and exact tree positions are visual approximations.",
+          "sourceRouteChainageMeters": 1371.735
         }
-      ]
+      ],
+      "sourceRouteChainageMeters": 1371.73
     },
     {
       "id": "video-117s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162227.mp4",
       "videoSeconds": 57,
       "captureUtc": "2026-11-03T03:23:24+00:00",
       "rawGpsElapsedSeconds": 117,
       "rawGpsChainageMeters": 1387.02,
-      "routeChainageMeters": 1380.65,
+      "routeChainageMeters": 1277.146893,
       "gpsToOsmRouteOffsetMeters": 1.7,
       "source": "video frame human reviewed",
       "confidence": 0.9,
@@ -788,18 +829,19 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 1380.65
     },
     {
       "id": "video-138s",
       "routeId": "pine-hill-test",
-      "geometryFingerprint": "d26334ef1382286eac82077be8df0549de95feb5d57139cc728c7705cde96a50",
+      "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
       "sourceVideo": "Video_20261103_162327.mp4",
       "videoSeconds": 18,
       "captureUtc": "2026-11-03T03:23:45+00:00",
       "rawGpsElapsedSeconds": 138,
       "rawGpsChainageMeters": 1690.43,
-      "routeChainageMeters": 1679.84,
+      "routeChainageMeters": 253.974022,
       "gpsToOsmRouteOffsetMeters": 4.03,
       "source": "video frame human reviewed",
       "confidence": 0.95,
@@ -810,7 +852,8 @@
         "hill",
         "scenery"
       ],
-      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage"
+      "positionPrecision": "route-relative only; lateral object locations are not inferred from footage",
+      "sourceRouteChainageMeters": 1679.84
     }
   ],
   "buildingStyles": [
