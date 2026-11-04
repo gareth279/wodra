@@ -135,6 +135,11 @@ public partial class RideWorldView : Node3D
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
     public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
+    public int CollectiblesCollected => _collectibleLayer?.Collected ?? 0;
+    public int CollectiblesAvailable => _collectibleLayer?.Available ?? 0;
+    public int CollectibleScore => _collectibleLayer?.Score ?? 0;
+    public int TrailFeaturesCompleted => _trailCourseLayer?.CompletedLines ?? 0;
+    public int TrailFeatureTraversals => _trailCourseLayer?.CompletedTraversals ?? 0;
     public int LocalAiRiderCount => _riderStateSource?.GetRiders().Count(rider => rider.RiderId != "player") ?? 0;
 
     public IReadOnlyList<RiderState> GetCompanionLocalRiders() => (_riderStateSource?.GetRiders()
@@ -710,7 +715,9 @@ public partial class RideWorldView : Node3D
         _collectibleLayer.Configure(_loadedRoute.Id, _geometry);
         GameLogger.Log("collectible_layout_created", new { routeId = _loadedRoute.Id,
             challengeVersion = IndoorCycling.Core.Simulation.CollectibleChallenge.CurrentVersion,
-            placementCount = _collectibleLayer.Available, routeFingerprint = _loadedRoute.GeometryFingerprint });
+            placementCount = _collectibleLayer.Available, routeFingerprint = _loadedRoute.GeometryFingerprint,
+            placements = _collectibleLayer.Placements.Select(pickup => new { pickup.Id,
+                pickup.RouteDistanceMeters, pickup.LateralMeters, pickup.Kind, pickup.Points }).ToArray() });
         _collectibleLayer.CollectedPickup += pickup =>
         {
             var kind = pickup.Kind == IndoorCycling.Core.Simulation.CollectibleKind.GoldenCat ? "Golden" : "Blue";

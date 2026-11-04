@@ -77,7 +77,8 @@ public static class CollectibleChallenge
             var forward = orderedSamples.OrderBy(s => Math.Abs(s.Distance - distance)).Take(2).ToArray();
             if (turnNearPickup || forward.Length < 2 || System.Numerics.Vector3.Dot(forward[0].Forward, forward[1].Forward) < 0.72f)
                 continue;
-            var lateral = (random.NextDouble() * 2 - 1) * 1.25;
+            // Keep pickups on the rollable center line so selecting a feature branch cannot make them unreachable.
+            var lateral = (random.NextDouble() * 2 - 1) * 0.10;
             var gold = random.Next(8) == 0;
             result.Add(new($"v{version}:{routeId}:{distance:0}", distance, lateral,
                 gold ? CollectibleKind.GoldenCat : CollectibleKind.BlueCat, gold ? 5 : 1));

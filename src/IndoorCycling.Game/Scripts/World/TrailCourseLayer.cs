@@ -16,6 +16,7 @@ public partial class TrailCourseLayer : Node3D
     public TrailFeatureFrame LastFrame { get; private set; } = new();
     public int TotalScore => _challenge?.TotalScore ?? 0;
     public int CompletedLines => _challenge?.CompletedLines ?? 0;
+    public int CompletedTraversals => _challenge?.CompletedTraversals ?? 0;
     public double LateralCorridorHalfWidth(double distanceMeters) =>
         Math.Min(_definition?.Capabilities.MaximumLateralOffsetMeters ?? 0,
             _challenge?.LateralCorridorHalfWidth(distanceMeters, TrailWidthMeters * .5) ?? 0);
@@ -41,6 +42,12 @@ public partial class TrailCourseLayer : Node3D
         bool paused, bool scoringEnabled)
     {
         LastFrame = _challenge?.Update(distanceMeters, lateralMeters, speedKph, paused, scoringEnabled) ?? new();
+        if (LastFrame.Traversal is { } traversal)
+            GameLogger.Log("trail_feature_takeoff", new { traversal.FeatureId, traversal.Lap,
+                traversal.TakeoffSpeedKph, traversal.TakeoffLateralMeters, traversal.ScoringEnabled });
+        if (LastFrame.CompletedFeature is { } completed)
+            GameLogger.Log("trail_feature_traversed", new { featureId = completed.FeatureId,
+                completed.Lap, completed.ScoringEnabled });
         return LastFrame;
     }
 
@@ -50,11 +57,35 @@ public partial class TrailCourseLayer : Node3D
         LastFrame = _challenge?.Update(distanceMeters, lateralMeters, 0, paused: true, scoringEnabled: false) ?? new();
     }
 
-    private static MeshInstance3D BuildFeatureRibbon(VisualRoute route, TrailFeatureDefinition feature)
+    private static Node3D BuildFeatureRibbon(VisualRoute route, TrailFeatureDefinition feature)
     {
-        var centers = feature.Path.Select(point => ToNumerics(FeaturePosition(route, point))).ToArray();
-        return BuildRibbon($"JumpLine_{feature.Id}", centers, TrailWidthMeters,
-            new Color(.39f, .27f, .16f));
+        var root = new Node3D { Name = $"JumpLine_{feature.Id}" };
+        AddSurface("TakeoffRamp", feature.Path.Where(point => point.RouteDistanceMeters <= feature.TakeoffMeters));
+        AddSurface("LandingRamp", feature.Path.Where(point => point.RouteDistanceMeters >= feature.LandingMeters));
+        return root;
+
+        void AddSurface(string suffix, IEnumerable<TrailFeaturePathPoint> path)
+        {
+            var points = path.ToArray();
+            if (points.Length < 2) return;
+            var centers = points.Select(point => ToNumerics(FeaturePosition(route, point))).ToArray();
+            root.AddChild(BuildRibbon($"{suffix}_{feature.Id}", centers, TrailWidthMeters,
+                new Color(.43f, .29f, .17f)));
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var edge = centers.Select((center, index) =>
+                {
+                    var direction = index == 0 ? centers[1] - centers[0]
+                        : index == centers.Length - 1 ? centers[^1] - centers[^2]
+                        : centers[index + 1] - centers[index - 1];
+                    direction.Y = 0;
+                    var left = NVector3.Normalize(NVector3.Cross(NVector3.UnitY, NVector3.Normalize(direction)));
+                    return center + left * (side * (TrailWidthMeters * .5f - .10f)) + NVector3.UnitY * .025f;
+                }).ToArray();
+                root.AddChild(BuildRibbon($"{suffix}Edge_{feature.Id}_{side}", edge, .20f,
+                    new Color(.57f, .39f, .22f)));
+            }
+        }
     }
 
     private static MeshInstance3D BuildFeatureConnectors(VisualRoute route, TrailFeatureDefinition feature)

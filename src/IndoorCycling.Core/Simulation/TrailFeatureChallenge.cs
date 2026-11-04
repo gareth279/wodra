@@ -14,10 +14,14 @@ public sealed record TrailRollerDefinition(string Id, double StartMeters, double
     double HeightMeters);
 
 public sealed record TrailFeatureAward(string FeatureId, string Name, int Lap, int Points, int TotalScore);
+public sealed record TrailFeatureTraversal(string FeatureId, string Name, int Lap, double TakeoffSpeedKph,
+    double TakeoffLateralMeters, bool ScoringEnabled);
+public sealed record TrailFeatureCompletion(string FeatureId, int Lap, bool ScoringEnabled);
 public sealed record TrailFeatureLapSummary(int Lap, int CompletedLines, int Score);
 public sealed record TrailFeatureFrame(double SurfaceLiftMeters = 0, double AirHeightMeters = 0,
     float PitchRadians = 0, string? Feedback = null, TrailFeatureAward? Award = null,
-    TrailFeatureLapSummary? CompletedLap = null);
+    TrailFeatureTraversal? Traversal = null,
+    TrailFeatureLapSummary? CompletedLap = null, TrailFeatureCompletion? CompletedFeature = null);
 
 /// <summary>
 /// Route-relative jump-line traversal. Progress remains the route's reference chainage; this observer
@@ -27,6 +31,7 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
     IReadOnlyList<TrailRollerDefinition>? rollers = null)
 {
     private readonly HashSet<string> _awarded = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _traversed = new(StringComparer.Ordinal);
     private readonly Dictionary<int, (int Lines, int Score)> _lapResults = [];
     private double _previousDistance;
     private double _previousLateral;
@@ -36,6 +41,7 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
 
     public int TotalScore => _totalScore;
     public int CompletedLines => _awarded.Count;
+    public int CompletedTraversals => _traversed.Count;
     public IReadOnlyCollection<string> AwardedFeatureKeys => _awarded;
 
     public TrailFeatureFrame Update(double distanceMeters, double lateralMeters, double speedKph,
@@ -63,6 +69,8 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
         }
 
         TrailFeatureAward? award = null;
+        TrailFeatureTraversal? traversal = null;
+        TrailFeatureCompletion? completedFeature = null;
         TrailFeatureLapSummary? lapSummary = null;
         string? feedback = null;
         var firstLap = (long)Math.Floor(_previousDistance / routeLengthMeters);
@@ -82,15 +90,17 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
                     || speedKph < feature.MinimumSpeedKph) continue;
                 _airborne = (feature, lap);
                 feedback = $"{feature.Name} · take-off";
+                traversal = new(feature.Id, feature.Name, (int)lap, speedKph, crossingLateral, scoringEnabled);
             }
 
             if (_airborne is { } active)
             {
                 var finish = active.Lap * routeLengthMeters + active.Feature.LandingMeters;
-                if (_previousDistance < finish && distanceMeters >= finish && scoringEnabled)
+                if (_previousDistance < finish && distanceMeters >= finish)
                 {
                     var key = $"{active.Lap}:{active.Feature.Id}";
-                    if (_awarded.Add(key))
+                    if (_traversed.Add(key)) completedFeature = new(active.Feature.Id, (int)active.Lap, scoringEnabled);
+                    if (scoringEnabled && _awarded.Add(key))
                     {
                         _totalScore += active.Feature.ScorePoints;
                         var tally = _lapResults.GetValueOrDefault((int)active.Lap);
@@ -113,7 +123,8 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
         _previousDistance = distanceMeters;
         _previousLateral = lateralMeters;
         return CurrentPresentation(distanceMeters, lateralMeters) with
-        { Feedback = feedback, Award = award, CompletedLap = lapSummary };
+        { Feedback = feedback, Award = award, Traversal = traversal, CompletedLap = lapSummary,
+            CompletedFeature = completedFeature };
     }
 
     public void SuppressNextSweep(double distanceMeters, double lateralMeters)
@@ -153,7 +164,6 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
         {
             if (wrapped < feature.StartMeters || wrapped > feature.EndMeters) continue;
             var point = Interpolate(feature, wrapped);
-            if (Math.Abs(lateralMeters - point.LateralMeters) > feature.HalfWidthMeters) continue;
             var lift = point.SurfaceLiftMeters;
             if (_airborne is { } active && active.Feature.Id == feature.Id)
             {
@@ -161,9 +171,10 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
                 var absoluteLanding = active.Lap * routeLengthMeters + feature.LandingMeters;
                 var progress = Math.Clamp((distanceMeters - absoluteTakeoff) / (absoluteLanding - absoluteTakeoff), 0, 1);
                 var air = Math.Sin(Math.PI * progress) * feature.MaximumAirHeightMeters;
-                var pitch = (float)(Math.Cos(Math.PI * progress) * 0.13);
+                var pitch = (float)(Math.Cos(Math.PI * progress) * 0.20);
                 return new(lift + rollerLift, air, pitch);
             }
+            if (Math.Abs(lateralMeters - point.LateralMeters) > feature.HalfWidthMeters) continue;
             return new(lift + rollerLift);
         }
         return new(rollerLift);

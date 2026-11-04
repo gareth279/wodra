@@ -207,6 +207,13 @@ var tests = new (string Name, Action Run)[]
 
         foreach (var feature in route.TrailFeatures)
         {
+            if (feature.MaximumAirHeightMeters < .95
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.TakeoffMeters) < .9
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters) < .7
+                || feature.Path.Where(point => point.RouteDistanceMeters > feature.TakeoffMeters
+                    && point.RouteDistanceMeters < feature.LandingMeters)
+                    .Any(point => point.SurfaceLiftMeters > .05))
+                throw new Exception($"{feature.Id} needs distinct take-off/landing ramps and an airborne gap.");
             var corridor = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
             if (corridor.LateralCorridorHalfWidth(feature.StartMeters, 1.55 / 2) != 1.55 / 2
                 || corridor.LateralCorridorHalfWidth(feature.TakeoffMeters, 1.55 / 2) < Math.Abs(feature.RequiredLateralMeters)
@@ -241,7 +248,7 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"{feature.Id} did not produce a pause-stable, non-scoring take-off presentation.");
             var landing = challenge.Update(feature.LandingMeters + 1, feature.RequiredLateralMeters, 22, false, true);
             if (landing.Award?.FeatureId != feature.Id || landing.Award.TotalScore != feature.ScorePoints
-                || landing.AirHeightMeters < 0)
+                || landing.CompletedFeature?.FeatureId != feature.Id || landing.AirHeightMeters < 0)
                 throw new Exception($"{feature.Id} did not score once at its landing boundary.");
             var duplicate = challenge.Update(feature.EndMeters + 1, 0, 22, false, true);
             if (duplicate.Award is not null || challenge.TotalScore != feature.ScorePoints)
@@ -252,6 +259,18 @@ var tests = new (string Name, Action Run)[]
             challenge.Update(feature.TakeoffMeters + 1, feature.RequiredLateralMeters, 22, false, true);
             if (challenge.TotalScore != feature.ScorePoints)
                 throw new Exception("A repositioned or reverse traversal awarded duplicate points.");
+
+            var unscoredTraversal = new TrailFeatureChallenge([feature], route.DistanceMeters);
+            unscoredTraversal.Update(feature.StartMeters - 2, 0, 25, false, false);
+            unscoredTraversal.Update(feature.TakeoffMeters - 2, feature.RequiredLateralMeters, 25, false, false);
+            var unscoredTakeoff = unscoredTraversal.Update(feature.TakeoffMeters + 2,
+                feature.RequiredLateralMeters, 25, false, false);
+            var unscoredLanding = unscoredTraversal.Update(feature.LandingMeters + 1,
+                feature.RequiredLateralMeters, 25, false, false);
+            if (unscoredTakeoff.Traversal?.FeatureId != feature.Id
+                || unscoredLanding.CompletedFeature?.FeatureId != feature.Id
+                || unscoredLanding.Award is not null || unscoredTraversal.TotalScore != 0)
+                throw new Exception($"{feature.Id} did not report its unscored traversal with Gaming disabled.");
         }
         var visual = new VisualRoute(route, spacingMeters: 2);
         if (visual.LengthMeters != route.DistanceMeters

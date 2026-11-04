@@ -23,6 +23,7 @@ public partial class CollectibleCatLayer : Node3D
 	public int Score { get; private set; }
 	public int Collected { get; private set; }
 	public int Available => _placements.Count;
+	public IReadOnlyList<CollectiblePlacement> Placements => _placements;
 	public CollectibleAttemptState Attempt => _attempt;
 	public event Action<CollectiblePlacement>? CollectedPickup;
 
