@@ -28,12 +28,18 @@ public partial class StreetFurnitureLayer : Node3D
     public int PhysicalProxiesSuppressed { get; private set; }
     public int ProxiesRelocatedRoadside { get; private set; }
     public int IntentionallyRetainedInRoad { get; private set; }
+    public int FootprintIntrusionsDetected { get; private set; }
+    public int FootprintIntrusionsUnresolved { get; private set; }
 
-    public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteStreetFurnitureData data)
+    public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteStreetFurnitureData data,
+        RoadCorridorGeometry? sharedCorridor = null)
     {
         if (_chunks.Count > 0 || LoadedCount > 0) throw new InvalidOperationException("Street-furniture layer is already configured.");
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.DistanceMeters;
+        var riderMargin=(float)IndoorCycling.Core.Simulation.SteeringLateralController.RiderMarginMeters;
+        var corridor=sharedCorridor??new RoadCorridorGeometry(visualRoute,ProceduralRoad.WidthMeters,
+            route.Capabilities.MaximumLateralOffsetMeters??ProceduralRoad.WidthMeters/2-riderMargin,riderMargin);
         _items = data.Items;
         LoadedCount = data.Items.Count;
         foreach(var item in data.Items)
@@ -41,7 +47,9 @@ public partial class StreetFurnitureLayer : Node3D
             var source = visualRoute.GetPositionForCoordinate(item.Latitude,item.Longitude,item.ElevationMeters!.Value);
             var nearest = visualRoute.GetPoseAtDistance(item.NearestRouteDistanceMeters);
             var placement=StreetFurniturePlacementMath.Place(item.Category,source,nearest.Position,nearest.Forward,
-                item.DistanceFromRouteMeters,ProceduralRoad.WidthMeters);
+                item.DistanceFromRouteMeters,ProceduralRoad.WidthMeters,visualRoute,item.NearestRouteDistanceMeters,corridor);
+            if(placement.ClearanceViolationDetected)FootprintIntrusionsDetected++;
+            if(placement.ClearanceUnresolved)FootprintIntrusionsUnresolved++;
             _placements.Add(new PlacedItem(item,placement));
             if(item.DistanceFromRouteMeters<ProceduralRoad.WidthMeters/2)SourceItemsInsideRideRoad++;
             if(placement.ProxySuppressed)PhysicalProxiesSuppressed++;

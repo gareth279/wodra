@@ -26,6 +26,9 @@ public partial class VegetationLayer : Node3D
     public int MultiMeshCount { get; private set; }
     public int AreaMeshInstanceCount { get; private set; }
     public int RoadOverlapSuppressedAreaCount { get; private set; }
+    public int TreeTrunksRelocatedForRoadClearance { get; private set; }
+    public int TreeTrunksUnresolvedForRoadClearance { get; private set; }
+    public int GroundTrianglesClippedAgainstRoads { get; private set; }
     public IReadOnlyList<long> RoadOverlapSuppressedAreaIds => _roadOverlapSuppressedAreaIds;
     public int CreatedSceneNodeCount => _chunks.Sum(item => item.Nodes.Count) + 1;
     public double BuildMilliseconds { get; private set; }
@@ -34,14 +37,21 @@ public partial class VegetationLayer : Node3D
     public void Configure(VisualRoute visualRoute, RouteDefinition route, RouteVegetationData data,
         IReadOnlyList<TerrainRoadCorridor>? backgroundRoads = null,
         IReadOnlyList<Vector3>? authoredSceneCenters = null,
-        IReadOnlyList<double>? authoredSceneRouteDistances = null)
+        IReadOnlyList<double>? authoredSceneRouteDistances = null,
+        RoadCorridorGeometry? sharedCorridor = null)
     {
         if (_chunks.Count > 0 || VegetationAreaCount > 0 || TreesLoaded > 0)
             throw new InvalidOperationException("Vegetation layer is already configured.");
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.DistanceMeters;
         _wrapsAtRouteEnd = !visualRoute.IsPointToPoint;
+        var riderMargin = (float)IndoorCycling.Core.Simulation.SteeringLateralController.RiderMarginMeters;
+        var corridor = sharedCorridor ?? (route.Environment == RouteEnvironment.Road
+            ? new RoadCorridorGeometry(visualRoute, ProceduralRoad.WidthMeters,
+                route.Capabilities.MaximumLateralOffsetMeters ?? ProceduralRoad.WidthMeters / 2 - riderMargin, riderMargin)
+            : null);
         var originElevation = route.Points?.FirstOrDefault()?.ElevationMeters ?? 0;
+        var treePositionOverrides = new Dictionary<(string Source, long OsmId), Vector3>();
         var authoredCenters = authoredSceneCenters?.Select(center =>
             new System.Numerics.Vector3(center.X, center.Y, center.Z)).ToArray() ?? [];
         var authoredDistances = authoredSceneRouteDistances ?? [];
@@ -55,8 +65,35 @@ public partial class VegetationLayer : Node3D
                 : visualRoute.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value,
                     tree.ElevationMeters ?? originElevation));
             var point = new System.Numerics.Vector3(position.X, position.Y, position.Z);
-            return !authoredCenters.Any(center => RouteSceneTransformMath.IsWithinHorizontalRadius(point,
-                center, (float)RouteSceneLayer.AuthoredSceneReplacementRadiusMeters));
+            if (authoredCenters.Any(center => RouteSceneTransformMath.IsWithinHorizontalRadius(point,
+                center, (float)RouteSceneLayer.AuthoredSceneReplacementRadiusMeters))) return false;
+            var trunkRadius = .19f;
+            if (corridor is null) return true;
+            var clearance = corridor.MeasurePolygon(TreeFootprint(point, trunkRadius));
+            if (!clearance.Intersects && clearance.ClearanceMeters >= RoadCorridorGeometry.RoadsideClearanceMeters) return true;
+            var pose = visualRoute.GetPoseAtDistance(tree.NearestRouteDistanceMeters);
+            var side = RiderLaneMath.LocalLeft(pose.Forward);
+            var forwardAxis = System.Numerics.Vector3.Normalize(pose.Forward);
+            var lateral = System.Numerics.Vector3.Dot(point - pose.Position, side);
+            var forward = System.Numerics.Vector3.Dot(point - pose.Position, forwardAxis);
+            var placement = corridor.FindSafeRoutePlacement(visualRoute, tree.NearestRouteDistanceMeters,
+                lateral, forward, trunkRadius * 2, trunkRadius * 2, maximumShiftMeters: 16, searchStepMeters: .25f);
+            if (placement.Resolved)
+            {
+                var candidate = pose.Position + side * placement.VisualLateralMeters
+                    + forwardAxis * placement.VisualForwardMeters;
+                treePositionOverrides[(tree.Source, tree.OsmId)] = ToGodot(candidate);
+                TreeTrunksRelocatedForRoadClearance++;
+                GD.Print($"[RoadCorridor] tree trunk relocated source={tree.Source} osm={tree.OsmId} route={route.Id} " +
+                    $"chainage={tree.NearestRouteDistanceMeters:F1} source=({lateral:F2},{forward:F2})m " +
+                    $"visual=({placement.VisualLateralMeters:F2},{placement.VisualForwardMeters:F2})m " +
+                    $"clearance={placement.Clearance.ClearanceMeters:F2}m");
+                return true;
+            }
+            TreeTrunksUnresolvedForRoadClearance++;
+            GD.PrintErr($"[RoadCorridor] unresolved tree trunk intrusion source={tree.Source} osm={tree.OsmId} " +
+                $"route={route.Id} chainage={tree.NearestRouteDistanceMeters:F1}");
+            return true;
         }).ToArray();
         TreesSuppressedForAuthoredScene = data.Trees.Count - renderedTrees.Length;
         VegetationAreaCount = data.Areas.Count;
@@ -95,12 +132,30 @@ public partial class VegetationLayer : Node3D
                 try { polygonTriangles = BuildingMeshGeometry.TriangulateSurface(ring); }
                 catch (ArgumentException) { continue; }
                 var color = AreaColor(area.Category);
-                foreach (var point in polygonTriangles)
+                var retainedTriangles = 0;
+                for (var triangleIndex = 0; triangleIndex < polygonTriangles.Length; triangleIndex += 3)
                 {
+                    var a = polygonTriangles[triangleIndex];
+                    var b = polygonTriangles[triangleIndex + 1];
+                    var c = polygonTriangles[triangleIndex + 2];
+                    var roadOverlap = corridor?.MeasurePolygon([
+                        new System.Numerics.Vector2(a.X, a.Z), new System.Numerics.Vector2(b.X, b.Z),
+                        new System.Numerics.Vector2(c.X, c.Z)]);
+                    if (roadOverlap is { } measured && (measured.Intersects
+                        || measured.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters))
+                    {
+                        GroundTrianglesClippedAgainstRoads++;
+                        continue;
+                    }
                     surface.SetColor(color);
-                    surface.AddVertex(new Vector3(point.X, point.Y, point.Z));
+                    surface.AddVertex(new Vector3(a.X, a.Y, a.Z));
+                    surface.SetColor(color);
+                    surface.AddVertex(new Vector3(b.X, b.Y, b.Z));
+                    surface.SetColor(color);
+                    surface.AddVertex(new Vector3(c.X, c.Y, c.Z));
+                    retainedTriangles++;
                 }
-                triangles += polygonTriangles.Length / 3;
+                triangles += retainedTriangles;
             }
             if (triangles == 0) continue;
             surface.GenerateNormals();
@@ -116,11 +171,16 @@ public partial class VegetationLayer : Node3D
         var treeGroups = renderedTrees.GroupBy(item => Chunk(item.NearestRouteDistanceMeters)).OrderBy(group => group.Key);
         foreach (var group in treeGroups)
         {
-            var transforms = group.Select(tree => (Tree: tree, Position: ToGodot(
-                tree.LocalXMeters is { } x && tree.LocalZMeters is { } z
-                    ? visualRoute.GetPositionForLocalCoordinate(x, z, tree.ElevationMeters ?? originElevation)
-                    : visualRoute.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value,
-                        tree.ElevationMeters ?? originElevation)))).ToArray();
+            var transforms = group.Select(tree =>
+            {
+                var position = treePositionOverrides.TryGetValue((tree.Source, tree.OsmId), out var movedPosition)
+                    ? movedPosition
+                    : ToGodot(tree.LocalXMeters is { } x && tree.LocalZMeters is { } z
+                        ? visualRoute.GetPositionForLocalCoordinate(x, z, tree.ElevationMeters ?? originElevation)
+                        : visualRoute.GetPositionForCoordinate(tree.Latitude!.Value, tree.Longitude!.Value,
+                            tree.ElevationMeters ?? originElevation));
+                return (Tree: tree, Position: position);
+            }).ToArray();
             var nodes = new List<Node3D>();
             var trunkTransforms = transforms.Select(item => ScaledTransform(item.Position + Vector3.Up * (float)(item.Tree.HeightMeters * .15),
                 new Vector3(1, (float)(item.Tree.HeightMeters * .3), 1))).ToArray();
@@ -196,6 +256,11 @@ public partial class VegetationLayer : Node3D
         _ => WodraWorldStyle.Grass
     };
     private static Vector3 ToGodot(System.Numerics.Vector3 value) => new(value.X, value.Y, value.Z);
+    private static System.Numerics.Vector2[] TreeFootprint(System.Numerics.Vector3 center, float radius) =>
+    [
+        new(center.X - radius, center.Z - radius), new(center.X - radius, center.Z + radius),
+        new(center.X + radius, center.Z + radius), new(center.X + radius, center.Z - radius)
+    ];
     private static Transform3D ScaledTransform(Vector3 position, Vector3 scale) =>
         new(new Basis(Vector3.Right * scale.X, Vector3.Up * scale.Y, Vector3.Back * scale.Z), position);
     private static Color CanopyColor(long osmId, string type)

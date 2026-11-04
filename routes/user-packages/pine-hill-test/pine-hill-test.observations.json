@@ -295,7 +295,7 @@
           "id": "395-right-hedge",
           "objectType": "hedge",
           "routeChainageMeters": 315.209283,
-          "lateralPositionMeters": 4.6,
+          "lateralPositionMeters": 6.6,
           "forwardOffsetMeters": 0.0,
           "orientationDegrees": 94.08505163986717,
           "lengthMeters": 21,

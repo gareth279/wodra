@@ -67,7 +67,7 @@ public static class RoadMarkingGeometry
         // zebra bars. Require affirmative marking evidence from the source tags.
         var nearbyCrossings = SelectNearby(route, crossingSources, options.MaximumCrossingDistanceFromRouteMeters);
         var markedCrossings = Deduplicate(route,
-            nearbyCrossings.Where(item => IsExplicitlyZebra(item.Control)).ToArray(), options);
+            nearbyCrossings.Where(item => IsExplicitlyZebraCrossing(item.Control)).ToArray(), options);
         var signalLines = Deduplicate(route, SelectNearby(route,
             controls.Where(item => item.Category == "traffic-signal"), options.MaximumControlDistanceFromRouteMeters), options);
         var stopLines = Deduplicate(route, SelectNearby(route,
@@ -99,7 +99,7 @@ public static class RoadMarkingGeometry
         AddControlLines(giveWayLines, RoadMarkingKind.GiveWayDash, solid: false);
 
         return new RoadMarkingBuildResult(crossingSources.Length, nearbyCrossings.Count, markedCrossings.Count,
-            nearbyCrossings.Count(item => IsExplicitlyZebra(item.Control)) - markedCrossings.Count,
+            nearbyCrossings.Count(item => IsExplicitlyZebraCrossing(item.Control)) - markedCrossings.Count,
             signalLines.Count, stopLines.Count, giveWayLines.Count,
             markedCrossings.Select(item => item.Distance).ToArray(), triangles);
 
@@ -125,7 +125,7 @@ public static class RoadMarkingGeometry
         }
     }
 
-    private static bool IsExplicitlyZebra(RoadMarkingControl item)
+    public static bool IsExplicitlyZebraCrossing(RoadMarkingControl item)
     {
         var tags = item.Tags;
         if (tags is null) return false;

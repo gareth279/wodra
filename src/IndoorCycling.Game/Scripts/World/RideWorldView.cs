@@ -1282,6 +1282,11 @@ public partial class RideWorldView : Node3D
             _routeRoot.QueueFree();
         }
         _geometry = new VisualRoute(route);
+        RoadCorridorGeometry? roadCorridor = route.Environment == RouteEnvironment.Road
+            ? new RoadCorridorGeometry(_geometry, ProceduralRoad.WidthMeters,
+                ProceduralRoad.WidthMeters / 2 - (float)SteeringLateralController.RiderMarginMeters,
+                (float)SteeringLateralController.RiderMarginMeters)
+            : null;
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
@@ -1400,6 +1405,8 @@ public partial class RideWorldView : Node3D
                     ReportOptionalLayerFailure(route, "background street terrain cutouts", ex);
                 }
             }
+            if (roadCorridor is not null && terrainRoads.Length > 0)
+                roadCorridor.AddBackgroundRoads(terrainRoads);
             var terrain = new TerrainLayer { Name = "LINZTerrain" };
             if (terrain.Configure(_geometry, resourcePrefix + "terrain.json", route.Id,terrainRoads))
             {
@@ -1433,7 +1440,7 @@ public partial class RideWorldView : Node3D
                         (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
                 _buildingLayer = new BuildingLayer { Name = "RouteBuildings" };
                 _routeRoot.AddChild(_buildingLayer);
-                _buildingLayer.Configure(_geometry, route, buildings, authoredScene?.BuildingStyles);
+                _buildingLayer.Configure(_geometry, route, buildings, authoredScene?.BuildingStyles, roadCorridor);
                 _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var landmarkResource = resourcePrefix + "landmarks.json";
@@ -1472,7 +1479,7 @@ public partial class RideWorldView : Node3D
                     }).ToArray() ?? [];
                 var authoredSceneDistances = authoredSceneAssets.Select(feature => feature.RouteChainageMeters).ToArray();
                 _vegetationLayer.Configure(_geometry, route, vegetationData, terrainRoads,
-                    authoredSceneCenters, authoredSceneDistances);
+                    authoredSceneCenters, authoredSceneDistances, roadCorridor);
                 _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var furnitureResource = resourcePrefix + "street-furniture.json";
@@ -1482,7 +1489,7 @@ public partial class RideWorldView : Node3D
                 var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(assembly, furnitureResource, route.Id);
                 _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
                 _routeRoot.AddChild(_streetFurnitureLayer);
-                _streetFurnitureLayer.Configure(_geometry, route, furniture);
+                _streetFurnitureLayer.Configure(_geometry, route, furniture, roadCorridor);
                 _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
                 _roadMarkingLayer = new RoadMarkingLayer { Name = "RoadMarkings" };
                 _routeRoot.AddChild(_roadMarkingLayer);
@@ -1522,7 +1529,7 @@ public partial class RideWorldView : Node3D
             {
                 _routeSceneLayer = new RouteSceneLayer { Name = "VideoAuthoredScene" };
                 _routeRoot.AddChild(_routeSceneLayer);
-                _routeSceneLayer.Configure(_geometry, authoredScene);
+                _routeSceneLayer.Configure(_geometry, authoredScene, roadCorridor);
                 _routeSceneLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
                 GD.Print($"Video-authored route scene: route={route.Id} observations={_routeSceneLayer.FeaturesRendered} " +
                     $"visible={_routeSceneLayer.VisibleFeatureCount} " +
