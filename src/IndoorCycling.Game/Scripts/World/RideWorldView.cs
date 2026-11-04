@@ -1019,6 +1019,14 @@ public partial class RideWorldView : Node3D
         _steerRightHeld = right;
     }
 
+    internal void DispatchKeyboardSteeringForReview(bool left, bool right)
+    {
+        if (left != _steerLeftHeld)
+            _Input(new InputEventKey { Keycode = Key.Left, PhysicalKeycode = Key.Left, Pressed = left });
+        if (right != _steerRightHeld)
+            _Input(new InputEventKey { Keycode = Key.Right, PhysicalKeycode = Key.Right, Pressed = right });
+    }
+
     private IReadOnlyList<RiderState> BuildRemoteRiderStates(
         IEnumerable<MultiplayerRemoteRider> remotes, double routeLength)
     {

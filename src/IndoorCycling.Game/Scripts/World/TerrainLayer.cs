@@ -53,14 +53,14 @@ public partial class TerrainLayer : Node3D
             surface.Begin(Mesh.PrimitiveType.Triangles);
             foreach (var index in chunk.Indices)
             {
-                var faceStart = index - index % 3;
-                var a = ToGodot(chunk.Vertices[faceStart]);
-                var b = ToGodot(chunk.Vertices[faceStart + 1]);
-                var c = ToGodot(chunk.Vertices[faceStart + 2]);
-                var normal = (b - a).Cross(c - a).Normalized();
-                if (normal.Y < 0) normal = -normal;
+                // TerrainMeshGeometry accumulates normals across shared grid
+                // vertices. Keep that smooth shading instead of recomputing a
+                // flat normal per triangle, which made coarse terrain cells
+                // read as disconnected square plates in RideScreen.
                 var vertex = ToGodot(chunk.Vertices[index]);
-                var variation = StableVariation((a + b + c) / 3);
+                var normal = ToGodot(chunk.Normals[index]).Normalized();
+                if (normal.Y < 0) normal = -normal;
+                var variation = StableVariation(vertex);
                 surface.SetNormal(normal);
                 surface.SetColor(WodraWorldStyle.TerrainFaceColor(vertex.Y, normal.Y, variation));
                 surface.AddVertex(vertex);

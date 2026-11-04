@@ -214,8 +214,13 @@ var tests = new (string Name, Action Run)[]
                 || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters) is < .98 or > 1.02
                 || tabletopDeck.Length < 2 || tabletopDeck.Any(point => point.SurfaceLiftMeters is < .98 or > 1.02)
                 || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.TakeoffMeters - 12) > .01
-                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters + 14) > .01)
-                throw new Exception($"{feature.Id} needs a continuous raised tabletop deck and blended approach/landing ramps.");
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters + 14) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.StartMeters)) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.TakeoffMeters) - feature.RequiredLateralMeters) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.LandingMeters) - feature.RequiredLateralMeters) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.EndMeters)) > .01
+                || feature.Path.Max(point => Math.Abs(point.LateralMeters)) > Math.Abs(feature.RequiredLateralMeters) + .01)
+                throw new Exception($"{feature.Id} needs a raised tabletop with a short connected branch and rollable rejoin.");
             var corridor = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
             if (corridor.LateralCorridorHalfWidth(feature.StartMeters, 1.55 / 2) != 1.55 / 2
                 || corridor.LateralCorridorHalfWidth(feature.TakeoffMeters, 1.55 / 2) < Math.Abs(feature.RequiredLateralMeters)
