@@ -66,7 +66,7 @@ Godot 4.6.2 Compatibility renderer on NVIDIA Quadro P620. The full Pine Hill rou
 | [pine-ride-1277m.png](../../artifacts/pr178-review-final/pine-ride-1277m.png) | Start-area intersection and lap approach |
 | [pine-loop-lap2-after-seam.png](../../artifacts/pr178-review-final/pine-loop-lap2-after-seam.png) | Normal HUD immediately after lap seam |
 
-Performance sample (114 frames at 1152×648): median 37.3 FPS, median frame time 26.79 ms, P95 frame time 29.22 ms, median 1,355,480 primitives, median 1,335 draw calls, video memory 219.4 MiB, texture memory 108.9 MiB and buffer memory 110.4 MiB. A comparable pre-clearance capture was not present in the repository or local review artifacts, so no before/after performance delta is claimed.
+Performance sample (114 frames at 1152×648): median 37.3 FPS, median frame time 26.79 ms, P95 frame time 29.22 ms, median 1,358,130 primitives, median 1,339 draw calls, video memory 219.4 MiB, texture memory 108.9 MiB and buffer memory 110.4 MiB. A comparable pre-clearance capture was not present in the repository or local review artifacts, so no before/after performance delta is claimed.
 
 ## Remaining review findings
 
