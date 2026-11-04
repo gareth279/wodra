@@ -19,6 +19,30 @@ var tests = new (string Name, Action Run)[]
         if (result.ZebraCrossings != 1 || result.CrossingSourcesConsidered != 3)
             throw new Exception($"Expected only the explicitly zebra crossing to render; generated {result.ZebraCrossings}.");
     }),
+    ("Pine Hill hedge footprint clears the full curved road and rider corridor", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("pine-hill-test")!);
+        var corridor = new RoadCorridorGeometry(route, 7, 3.05f, .45f);
+        var streets = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "Wodra.GameData.Routes.pine-hill-test.streets.json", "pine-hill-test");
+        var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(route.Samples);
+        corridor.AddBackgroundRoads(BackgroundStreetGeometry.BuildTerrainCorridors(route, streets, routeIndex));
+        var dimensions = RoadCorridorGeometry.AuthoredFeatureFootprint("hedge", 21, 1.4)!;
+        var original = corridor.Measure(route, 315.209283, 2.421814f, 0,
+            dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 4.0850516f);
+        var safeOffset = 5.6f;
+        var corrected = corridor.Measure(route, 315.209283, safeOffset, 0,
+            dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 94.08505f);
+        while ((corrected.Intersects || corrected.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters) && safeOffset < 25)
+        {
+            safeOffset += .25f;
+            corrected = corridor.Measure(route, 315.209283, safeOffset, 0,
+                dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 94.08505f);
+        }
+        Console.WriteLine($"PINE_HILL_HEDGE_CLEARANCE initial={original} corrected={corrected} safeLateral={safeOffset:F2}");
+        if (!original.Intersects || corrected.Intersects || corrected.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters)
+            throw new Exception($"Hedge footprint results: original={original}, corrected={corrected}.");
+    }),
     ("route scene markings and sign faces follow the observed approach in every compass direction", () =>
     {
         foreach (var headingDegrees in new[] { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f })
@@ -137,7 +161,7 @@ var tests = new (string Name, Action Run)[]
             || kerbMarkings.RouteChainageMeters is < 1265 or > 1280
             || Math.Abs(kerbMarkings.LateralPositionMeters + 3.9) > .01
             || kerbMarkings.LengthMeters != 8
-            || Math.Abs(clearHedge.LateralPositionMeters - 4.6) > .01
+            || Math.Abs(clearHedge.LateralPositionMeters - 6.6) > .01
             || Math.Abs(clearHedge.OrientationDegrees - 94.08505163986717) > .01
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1260)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
@@ -3492,7 +3516,15 @@ static bool SegmentsProperlyIntersect(RoutePoint a, RoutePoint b, RoutePoint c, 
 }
 
 var failures = 0;
-foreach (var test in tests)
+if (args.Length > 0 && args[0] == "--route-quality-audit")
+{
+    Environment.SetEnvironmentVariable("WODRA_ROUTE_AUDIT_BUILTIN_ONLY", "1");
+    return RouteQualityAudit.WriteReport(args.Length > 1 ? args[1] : "route-quality-audit.json");
+}
+var selectedTests = args.Contains("--corridor-only", StringComparer.Ordinal)
+    ? tests.Where(test => test.Name.Contains("hedge footprint", StringComparison.OrdinalIgnoreCase))
+    : tests;
+foreach (var test in selectedTests)
 {
     try { test.Run(); Console.WriteLine($"PASS: {test.Name}"); }
     catch (Exception ex) { failures++; Console.Error.WriteLine($"FAIL: {test.Name}: {ex.Message}"); }
