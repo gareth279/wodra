@@ -1,4 +1,4 @@
-"""Build the route-specific, Blender-authored Pine Hill give-way scene.
+"""Build route-specific, Blender-authored Pine Hill intersection scenery.
 
 Run from the repository root with Blender 5.2:
   blender --background --python tools/modeling/build_pine_hill_intersection_assets.py
@@ -52,10 +52,6 @@ leaf_mats = [material(f"Foliage {i}", c) for i, c in enumerate([
     (0.29, 0.43, 0.25), (0.17, 0.31, 0.22)])]
 grass = [material("Lawn deep green", (0.25, 0.37, 0.19)), material("Lawn light", (0.34, 0.45, 0.24))]
 tactile_yellow = material("Tactile kerb pad yellow", (0.88, 0.62, 0.10))
-metal = material("Galvanised sign post", (0.53, 0.56, 0.55), 0.55)
-red = material("NZ sign red", (0.74, 0.06, 0.045), 0.55)
-white = material("Sign enamel ivory", (0.91, 0.89, 0.82), 0.6)
-letter = material("Sign legend charcoal", (0.08, 0.09, 0.09), 0.6)
 fence_back = material("Fence back - aged timber", (0.39, 0.40, 0.38), 0.94)
 fence_photo = bpy.data.materials.new("Pine Hill photographed weathered paling face")
 fence_photo.use_nodes = True
@@ -214,58 +210,6 @@ def create_fence():
                (vine_x,vine_y-.045,z)]
         mesh_obj(f"Fence vine leaf {i}",verts,[(0,1,2,3,4),(4,3,2,1,0)],leaf_mats[i%len(leaf_mats)])
 
-def create_sign():
-    # Face plane points toward approaching traffic (+Y in this route-local asset).
-    x,y=-4.2,-5.0
-    box("Give-way steel post",(.085,.085,2.42),(x,y,1.21),metal,.025)
-    w,h=.78,.86; z=2.13
-    # Extruded inverted triangle sign plate with coloured border and cream inset.
-    outer=[(x-w/2,y+.08,z+h/2),(x+w/2,y+.08,z+h/2),(x,y+.08,z-h/2)]
-    inner=[(x-w*.405,y+.095,z+h*.39),(x+w*.405,y+.095,z+h*.39),(x,y+.095,z-h*.36)]
-    mesh_obj("Give-way red triangular sign",outer+[(a,b-.11,c) for a,b,c in outer],[(0,1,2),(3,5,4)],red)
-    # After reflecting the Blender route frame, this face's outward normal is -Y,
-    # toward the approaching dashcam. Keep its rear winding reversed.
-    mesh_obj("Give-way enamel face",inner+[(a,b-.025,c) for a,b,c in inner],[(0,2,1),(3,4,5)],white)
-    # Build crisp approach-facing letter strokes directly in the sign plane. This
-    # avoids font-atlas/runtime variation and keeps the small legend readable in GLB.
-    verts=[]; faces=[]
-    def stroke(ax,az,bx,bz,thickness=.013):
-        dx,dz=bx-ax,bz-az; length=math.hypot(dx,dz)
-        px,pz=-dz/length*thickness/2,dx/length*thickness/2
-        # The approach side is local +Y: riders advance along Blender -Y.
-        front_y=y+.15; back_y=front_y+.018
-        start=len(verts)
-        verts.extend([(ax+px,front_y,az+pz),(bx+px,front_y,bz+pz),(bx-px,front_y,bz-pz),(ax-px,front_y,az-pz),
-                      (ax+px,back_y,az+pz),(bx+px,back_y,bz+pz),(bx-px,back_y,bz-pz),(ax-px,back_y,az-pz)])
-        faces.extend([(start,start+1,start+2,start+3),(start+4,start+7,start+6,start+5),
-                      (start,start+4,start+5,start+1),(start+1,start+5,start+6,start+2),
-                      (start+2,start+6,start+7,start+3),(start+3,start+7,start+4,start)])
-    glyphs={
-        "G":list("abcdefg"), "I":list("ahd"), "V":["v1","v2"], "E":list("afged"),
-        "W":["w1","w2","w3","w4"], "A":list("abgfec"), "Y":["y1","y2","y3"]
-    }
-    for text,center_z in (("GIVE",2.25),("WAY",2.02)):
-        width,height=.105,.145; gap=.025
-        total=len(text)*width+(len(text)-1)*gap; cursor=x-total/2
-        top,bottom=center_z+height/2,center_z-height/2; mid=center_z
-        for char in text:
-            cx=cursor+width/2; left,right=cx-width/2,cx+width/2
-            paths={
-                "a":(left,top,right,top),"g":(left,mid,right,mid),"d":(left,bottom,right,bottom),
-                "f":(left,mid,left,top),"e":(left,bottom,left,mid),"b":(right,mid,right,top),"c":(right,bottom,right,mid),
-                "h":(cx,bottom,cx,top),"v1":(left,top,cx,bottom),"v2":(right,top,cx,bottom),
-                "w1":(left,top,left,bottom),"w2":(left,bottom,cx,mid-.018),"w3":(cx,mid-.018,right,bottom),"w4":(right,bottom,right,top),
-                "y1":(left,top,cx,mid),"y2":(right,top,cx,mid),"y3":(cx,mid,cx,bottom)
-            }
-            for segment in glyphs[char]:
-                ax,az,bx,bz=paths[segment]; stroke(ax,az,bx,bz)
-            cursor+=width+gap
-    # In the production approach view the imported route frame reverses local X
-    # on screen. Reflect the glyphs within the sign plate so GIVE WAY reads in
-    # normal left-to-right order; plate, post and route orientation are unchanged.
-    verts=[(2*x-vx,vy,vz) for vx,vy,vz in verts]
-    mesh_obj("Approach-facing GIVE WAY legend",verts,faces,letter)
-
 def create_pole():
     beam("Concrete roadside power pole",(-3.5,-12.3,0),(-3.42,-12.3,8.4),.14,material("Aged concrete pole",(.57,.55,.49)),10)
     box("Power pole crossarm",(1.5,.12,.11),(-3.42,-12.3,7.78),wood_dark,.025)
@@ -309,7 +253,6 @@ for obj in set(bpy.context.scene.objects) - house_start:
     obj.location.x -= 4.0
     obj.location.y -= 15.0
 create_fence()
-create_sign()
 create_pole()
 create_garden()
 

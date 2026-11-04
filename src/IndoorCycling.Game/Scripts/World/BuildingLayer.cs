@@ -120,9 +120,13 @@ public partial class BuildingLayer : Node3D
                     shape, roofHeight, storeys, BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters),
                     facadePattern: BuildingVisualStyle.FacadePattern(building.OsmId),
                     addEntryDoor: category == "residential" && BuildingVisualStyle.ShouldAddFacadeDetail(building.DistanceFromRouteMeters),
-                    addGarageDoor: string.Equals(tags.GetValueOrDefault("building"), "garage", StringComparison.OrdinalIgnoreCase)); }
+                    addGarageDoor: string.Equals(tags.GetValueOrDefault("building"), "garage", StringComparison.OrdinalIgnoreCase),
+                    addWeatherboardCourses: category == "residential" && building.DistanceFromRouteMeters <= 160,
+                    addWindowFrames: category == "residential" && building.DistanceFromRouteMeters <= 80); }
                 catch (ArgumentException) { continue; }
                 Add(facadeVertices, geometry.Facade, facadeColour);
+                Add(facadeVertices, geometry.WeatherboardCourses, facadeColour.Darkened(.12f));
+                Add(facadeVertices, geometry.WindowFrames, facadeColour.Lightened(.22f));
                 Add(roofVertices, geometry.Roof, roofColour);
                 // Keep glazing visually dark, but lift it above black so shaded
                 // facades retain a little readable blue-grey surface response.

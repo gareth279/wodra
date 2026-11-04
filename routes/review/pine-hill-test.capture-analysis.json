@@ -94,7 +94,10 @@
       "rawGpsChainageMeters": 103.21,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 10.748878,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 4.661
     },
     {
       "sourceVideo": "Video_20261103_162126.mp4",
@@ -103,7 +106,10 @@
       "rawGpsChainageMeters": 224.68,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 129.620083,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 4.248
     },
     {
       "sourceVideo": "Video_20261103_162126.mp4",
@@ -112,7 +118,10 @@
       "rawGpsChainageMeters": 348.49,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 257.430888,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 3.062
     },
     {
       "sourceVideo": "Video_20261103_162126.mp4",
@@ -121,7 +130,10 @@
       "rawGpsChainageMeters": 439.37,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 338.10694,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 3.329
     },
     {
       "sourceVideo": "Video_20261103_162126.mp4",
@@ -130,7 +142,10 @@
       "rawGpsChainageMeters": 551.99,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 450.476867,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 3.39
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -139,7 +154,10 @@
       "rawGpsChainageMeters": 721.94,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 620.386477,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 3.828
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -148,7 +166,10 @@
       "rawGpsChainageMeters": 821.94,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 716.129767,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 6.032
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -157,7 +178,10 @@
       "rawGpsChainageMeters": 945.91,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 836.806199,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 3.031
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -166,7 +190,10 @@
       "rawGpsChainageMeters": 1059.99,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 953.559069,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 0.884
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -175,7 +202,10 @@
       "rawGpsChainageMeters": 1193.65,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 1085.726784,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 1.935
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -184,7 +214,10 @@
       "rawGpsChainageMeters": 1339.39,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 1230.264654,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 2.046
     },
     {
       "sourceVideo": "Video_20261103_162227.mp4",
@@ -193,7 +226,10 @@
       "rawGpsChainageMeters": 1416.95,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 1301.871236,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 5.308
     },
     {
       "sourceVideo": "Video_20261103_162327.mp4",
@@ -202,7 +238,10 @@
       "rawGpsChainageMeters": 1416.95,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 1301.871236,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 5.308
     },
     {
       "sourceVideo": "Video_20261103_162327.mp4",
@@ -211,14 +250,29 @@
       "rawGpsChainageMeters": 1564.31,
       "confidence": "timestamp-aligned",
       "featureTags": [],
-      "note": "Add human-reviewed visual observations here."
+      "note": "Add human-reviewed visual observations here.",
+      "correctedRouteChainageMeters": 124.598653,
+      "correctedRouteFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+      "gpsProjectionErrorMeters": 5.861
     }
   ],
-  "anchorsGenerated": 47,
+  "anchorsGenerated": 49,
   "anchorSpacingSeconds": 3.0,
   "notes": [
-    "Point-to-point: endpoints are separate; no closure connector is invented.",
-    "Anchor timestamps preserve capture order and direction; RouteBuilder snaps them to OSM.",
-    "Buildings, vegetation and terrain are derived from OSM/LINZ, not inferred from GPS."
-  ]
+    "Loop: start and finish use the exact repeated road point at published source indices 22 and 334; no connector is invented.",
+    "The corrected route follows the timestamped GPS/OSM road direction, removes the short corner spur, and wraps observations onto the revised lap.",
+    "Buildings, vegetation, terrain and route-relative video observations are based on the cached package; new OSM/LINZ data was not required."
+  ],
+  "routeGeometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+  "correctedLoop": {
+    "routeType": "loop",
+    "sourceStartIndex": 22,
+    "sourceRepeatIndex": 334,
+    "sharedSourceLengthMeters": 1333.0063572330816,
+    "removedSpurMeters": 10.65291580440146,
+    "routeLengthMeters": 1322.354152985,
+    "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+    "observationCount": 14
+  },
+  "correctedRouteChainageMethod": "Each observation UTC timestamp is interpolated on the supplied GPX track; the resulting coordinate is projected to the nearest segment of the corrected loop route. gpsProjectionErrorMeters records the planar residual."
 }

@@ -1,20 +1,35 @@
-# Pine Hill loop review evidence
+# Pine Hill loop and scenery review evidence
 
-Run date: 2026-11-04. Godot 4.6.2 stable mono; rendering device: NVIDIA Quadro P620, OpenGL 3.3 Compatibility.
+Captured 2026-11-04 with Godot 4.6.2 stable Mono on an NVIDIA Quadro P620 (OpenGL 3.3 Compatibility).
 
-The production `RideScreen` review loaded the built-in Pine Hill package, rode three laps in one uninterrupted active session, crossed into lap 4, kept FIT recording active at each seam, then ended through the normal Ride Menu. It passed 21 production assertions. The final FIT contains 214 samples and records 3,978.9 m; the ride telemetry trace is in `pine-three-lap-ride.csv`.
+## Production RideScreen proof
 
-## Captures
+The normal route catalogue loaded Pine Hill Test and started the production `RideScreen` with the simulated trainer. One uninterrupted active session crossed the seam three times, advanced the HUD from lap 1 through lap 4, kept FIT recording active, and ended through the normal Ride Menu. The graphical review passed 21 production assertions. The latest FIT contains 214 samples and 3,978.7 m; the ride telemetry is in [`pine-three-lap-ride.csv`](pine-three-lap-ride.csv).
 
-- `pine-route-selection.png`: normal route catalogue and elevation preview.
-- `pine-route-camera-*.png`: production chase-camera views at 0, 200, 302, 600, 682, 917, 1100 and 1268 m.
-- `pine-loop-lap*-before-seam.png` and `pine-loop-lap*-after-seam.png`: views on both sides of each lap crossing. Lap 4 is the wrapped state after completing three full laps.
-- `pine-loop-three-laps-complete.png`: active ride after three completed laps.
-- `pine-render-performance.csv`: 101 frames recorded during the ride on the Quadro P620. Median frame time was 29.875 ms (33.47 FPS); maximum was 38.946 ms (25.68 FPS). Median draw calls were 1,287. These measurements are the baseline for scenery optimization.
-- `fit/wodra-20261104-151803.fit`: finalized FIT from the graphical run.
+- `pine-route-selection.png`: route catalogue and elevation preview.
+- `pine-loop-lap*-before-seam.png` and `pine-loop-lap*-after-seam.png`: production camera views around each crossing.
+- `pine-loop-three-laps-complete.png`: active RideScreen after three completed laps and before manual end.
+- [`fit/wodra-20261104-164726.fit`](fit/wodra-20261104-164726.fit): finalized FIT from the latest graphical run.
 
-## Geometry result
+The deterministic loop transformation is `python tools/Wodra.RouteBuilder/rebuild-pine-hill-loop.py --apply`. Source indices, the removed out-and-back, final fingerprint, seam and heading measurements are in [`pine-hill-test-loop-transform.json`](../../../routes/review/pine-hill-test-loop-transform.json). The final route is 1,322.354 m with an exact seam and continuous direction/elevation.
 
-The transformation is reproducible with `python tools/Wodra.RouteBuilder/rebuild-pine-hill-loop.py --apply`. Exact source indices, removed spur, final fingerprint, seam and heading measurements are in [`routes/review/pine-hill-test-loop-transform.json`](../../../routes/review/pine-hill-test-loop-transform.json).
+## Full-route scenery comparison
 
-The headless and graphical production review logs are generated under the local Godot user data and Windows temporary directory; the committed CSV, FIT and screenshots preserve the review artifacts used for this result.
+Fourteen aligned footage checkpoints are paired with production Godot route-camera renders in:
+
+- [`pine-source-game-comparison-1.jpg`](pine-source-game-comparison-1.jpg)
+- [`pine-source-game-comparison-2.jpg`](pine-source-game-comparison-2.jpg)
+- [`pine-source-game-comparison-3.jpg`](pine-source-game-comparison-3.jpg)
+
+There are 18 rendered route-camera views in `pine-route-camera-*.png`, including the corrected corner and lap seam. The route package now has timestamp-linked, estimated building styles for all 357 footprints (28 existing reviewed overrides retained; 329 neighbourhood-level estimates added) and 25 added roadside features across nine video checkpoints. The added feature types cover verges, trees, hedges, a fence and utility poles. Existing authored Blender assets and the six road markings remain. The added individual house identities, materials, roof forms and feature offsets are explicitly estimates rather than surveyed facts; generation reports are in [`pine-hill-video-style-report.json`](../../../routes/review/pine-hill-video-style-report.json).
+
+These comparisons do **not** support calling the result video-faithful. Houses and vegetation still read as simplified game geometry, and the current route scene does not reproduce several visible details in the footage, including parked cars, detailed kerbs and the full streetscape. These captures are included so visual acceptance can be judged directly; additional scenery iteration remains necessary.
+
+## Quadro P620 performance
+
+| RideScreen capture | Frames | Median frame time | P95 frame time | Median draw calls | Median primitives |
+|---|---:|---:|---:|---:|---:|
+| Before scenery styling | 101 | 29.875 ms | 33.801 ms | 1,287 | 1.21M |
+| Current route scene | 118 | 25.264 ms | 29.644 ms | 1,345 | 1.36M |
+
+Raw measurements are in [`pine-render-performance.csv`](pine-render-performance.csv) and [`pine-render-performance-final.csv`](pine-render-performance-final.csv). Median frame time improved in this capture while draw calls and primitives increased; the latter show the cost of additional scenery detail. [`pine-render-performance-visual-review.csv`](pine-render-performance-visual-review.csv) contains the separate 200-frame visual review sample.

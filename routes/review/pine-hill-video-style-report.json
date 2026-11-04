@@ -1,0 +1,117 @@
+{
+  "routeId": "pine-hill-test",
+  "geometryFingerprint": "3ccaab33f8fa997ee5f647d250f37e791eaf35cbd3d569910989c9fad878dac3",
+  "sourceFootprints": 357,
+  "preservedHumanReviewedStyles": 28,
+  "addedTimestampLinkedEstimates": 329,
+  "resultingStyles": 357,
+  "sourceCheckpoints": [
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 1,
+      "routeChainageMeters": 1277.13397
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 19,
+      "routeChainageMeters": 117.771178
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 34,
+      "routeChainageMeters": 298.462154
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 37,
+      "routeChainageMeters": 306.629136
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 46,
+      "routeChainageMeters": 390.649046
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 3,
+      "routeChainageMeters": 645.429035
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 6,
+      "routeChainageMeters": 668.751667
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 12,
+      "routeChainageMeters": 739.845927
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 15,
+      "routeChainageMeters": 772.006605
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 24,
+      "routeChainageMeters": 886.47576
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 27,
+      "routeChainageMeters": 907.435907
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 54,
+      "routeChainageMeters": 1268.226435
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 57,
+      "routeChainageMeters": 1277.146893
+    },
+    {
+      "sourceVideo": "Video_20261103_162327.mp4",
+      "videoSeconds": 18,
+      "routeChainageMeters": 253.974022
+    }
+  ],
+  "roofShapeCounts": {
+    "gabled": 171,
+    "hipped": 164,
+    "flat": 22
+  },
+  "distinctFacadeColours": [
+    "#82948B",
+    "#AEBAB0",
+    "#B67A66",
+    "#B9C5C3",
+    "#C7BBA5",
+    "#C7C9C4",
+    "#D3C3B4",
+    "#D8D2C6"
+  ],
+  "distinctRoofColours": [
+    "#4C5050",
+    "#515E64",
+    "#5C5B56",
+    "#69574D",
+    "#736B60"
+  ],
+  "heightEstimateRangeMeters": [
+    3.5,
+    6.28
+  ],
+  "limitations": "Source footage shows a low-rise suburban streetscape but cannot reliably identify each OSM footprint. New properties use varied, conservative styles as approximation only.",
+  "addedRoadsideFeatureCount": 25,
+  "roadsideFeatureTypes": {
+    "broadleaf-tree": 7,
+    "conifer-tree": 2,
+    "grass-verge": 7,
+    "hedge": 2,
+    "timber-fence": 1,
+    "utility-pole": 6
+  },
+  "roadsideFeatureCheckpoints": 9
+}

@@ -127,12 +127,16 @@ var tests = new (string Name, Action Run)[]
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 280 and < 320)
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 650 and < 700)
-            || authoredScene.BuildingStyles.Count < 24
+            || authoredScene.BuildingStyles.Count != 357
             || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 7
             || authoredScene.BuildingStyles.Any(style => style.VisualHeightMeters is not (> 2 and <= 30)
                 || string.IsNullOrWhiteSpace(style.SourceVideo) || style.Confidence is not (>= 0 and <= 1)
-                || string.IsNullOrWhiteSpace(style.Provenance)))
-            throw new Exception("Video-authored feature provenance, mapped house styles, or four checkpoint scenery is incomplete.");
+                || string.IsNullOrWhiteSpace(style.Provenance))
+            || authoredScene.BuildingStyles.Where(style => style.Confidence == .32)
+                .Select(style => style.RoofShape).Distinct().Count() < 3
+            || authoredScene.BuildingStyles.Where(style => style.Confidence == .32)
+                .Select(style => style.FacadeColour).Distinct().Count() < 6)
+            throw new Exception("Video-authored features or full-route varied house styling is incomplete.");
     }),
     ("fictional XC loop has closed local geometry, truthful climb, and three scored line choices", () =>
     {
@@ -2149,9 +2153,12 @@ var tests = new (string Name, Action Run)[]
     }),
     ("nearby residential buildings receive authored entry doors and mapped garages receive garage doors", () =>
     {
-        var home=BuildingMeshGeometry.BuildStyled(StyledRectangle(12,8),8,"hipped",2,2,true,addEntryDoor:true);
+        var home=BuildingMeshGeometry.BuildStyled(StyledRectangle(12,8),8,"hipped",2,2,true,addEntryDoor:true,
+            addWeatherboardCourses:true,addWindowFrames:true);
         var garage=BuildingMeshGeometry.BuildStyled(StyledRectangle(8,6),4,"flat",0,1,false,addGarageDoor:true);
         Equal(6,home.Doors.Length);Equal(0,home.GarageDoors.Length);
+        if(home.WeatherboardCourses.Length==0||home.WindowFrames.Length==0)
+            throw new Exception("Residential facades need visible weatherboard courses and framed glazing.");
         Equal(0,garage.Doors.Length);Equal(6,garage.GarageDoors.Length);
         AssertFiniteBuildingMesh(home);AssertFiniteBuildingMesh(garage);
     }),
@@ -3530,7 +3537,8 @@ static int ParseStoreysForBuilding(string? value,float height) =>
 
 static void AssertFiniteBuildingMesh(BuildingMeshGeometry.StyledMesh mesh)
 {
-    foreach(var vertices in new[]{mesh.Facade,mesh.Roof,mesh.Windows,mesh.Doors,mesh.GarageDoors})
+    foreach(var vertices in new[]{mesh.Facade,mesh.Roof,mesh.Windows,mesh.Doors,mesh.GarageDoors,
+                  mesh.WeatherboardCourses,mesh.WindowFrames})
     {
         if(vertices.Any(p=>!float.IsFinite(p.X+p.Y+p.Z)))throw new Exception("Building styling emitted a non-finite vertex.");
         for(var i=0;i<vertices.Length;i+=3)

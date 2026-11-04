@@ -34,7 +34,7 @@ public partial class RouteSceneLayer : Node3D
             if (authoredIntersection is not null && feature != authoredIntersection
                 && Math.Abs(feature.RouteChainageMeters - authoredIntersection.RouteChainageMeters) <= AuthoredSceneReplacementRadiusMeters
                 && feature.ObjectType is "timber-fence" or "picket-fence" or "broadleaf-tree" or "conifer-tree"
-                    or "shrub" or "hedge" or "grass-verge" or "planting-bed" or "give-way-sign" or "utility-pole")
+                    or "shrub" or "hedge" or "grass-verge" or "planting-bed" or "utility-pole")
                 continue;
             var pose = route.GetPoseAtDistance(feature.RouteChainageMeters);
             var routeForward = ProceduralRoad.ToGodot(pose.Forward);

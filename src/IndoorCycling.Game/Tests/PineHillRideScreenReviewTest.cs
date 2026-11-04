@@ -69,7 +69,7 @@ public partial class PineHillRideScreenReviewTest : Node
                 && diagnostic.TerrainChunksLoaded > 0 && diagnostic.BackgroundStreetsLoaded > 0,
                 "OSM buildings, mapped trees, LINZ terrain and surrounding streets load in RideScreen");
             var authoredScene = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-            Assert(authoredScene.FeaturesRendered >= 18
+            Assert(authoredScene.FeaturesRendered >= 40
                 && authoredScene.AuthoredAssetFeatures == 3 && authoredScene.AuthoredAssetMeshInstances is > 0 and <= 32
                 && authoredScene.RoadMarkingFeatures == 6,
                 $"observations load three Blender assets ({authoredScene.AuthoredAssetFeatures}; {authoredScene.AuthoredAssetMeshInstances} mesh instances) and six route markings");
@@ -79,19 +79,38 @@ public partial class PineHillRideScreenReviewTest : Node
             Assert(focalAssetTriangles <= 330_000,
                 $"photo-textured boarded fence, hipped house and two mature trees stay within 330k focal-scene triangles ({focalAssetTriangles:N0})");
 
-            var checkpoints = new[] { 0d, 200d, 302d, 600d, 682d, 917d, 1100d, 1268d };
+            var checkpoints = new[] { 0d, 117.771178, 200d, 253.974022, 298.462154, 306.629136,
+                390.649046, 600d, 645.429035, 668.751667, 739.845927, 772.006605,
+                886.475760, 907.435907, 917d, 1100d, 1268.226435, 1277.146893 };
+            var worldWasProcessing = world.IsProcessing();
+            world.SetProcess(false);
             foreach (var checkpoint in checkpoints)
                 if (!IsHeadless)
                     await CaptureSourceStyleView(world, $"pine-route-camera-{checkpoint:F0}m.png", checkpoint, 0);
+            world.SetProcess(worldWasProcessing);
+            UpdateSceneryForReview(world, session.CurrentRideState.DistanceMeters);
+            if (string.Equals(System.Environment.GetEnvironmentVariable("WODRA_VISUAL_ONLY"), "1", StringComparison.Ordinal))
+            {
+                await CaptureRenderPerformance("pine-render-performance-visual-review.csv", TimeSpan.FromSeconds(5));
+                GD.Print($"[PineHillRideScreenReview] VISUAL-ONLY PASS; aligned route screenshots={_output}");
+                GetTree().Quit(0);
+                return;
+            }
 
             var sceneLayer = world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene");
-            Assert(sceneLayer.FeaturesRendered >= 18 && sceneLayer.VisibleFeatureCount > 0,
+            Assert(sceneLayer.FeaturesRendered >= 40 && sceneLayer.VisibleFeatureCount > 0,
                 $"remapped route observations remain visible in the production world ({sceneLayer.VisibleFeatureCount}/{sceneLayer.FeaturesRendered})");
             var length = route.DistanceMeters;
             var totalTarget = length * 3 + 6;
+            // Static camera review takes several seconds while the simulated trainer
+            // remains active. Anchor continuity after those captures so its first
+            // measured step compares matching rider and authoritative-route states.
+            world.ResetAfterReposition();
+            await Frames(3);
             var previousDistance = session.CurrentRideState.DistanceMeters;
-            var previousRider = world.GetDiagnosticState().RiderWorldPosition;
-            var previousForward = world.GetDiagnosticState().RiderForward;
+            var continuityAnchor = world.GetDiagnosticState();
+            var previousRider = continuityAnchor.RiderWorldPosition;
+            var previousForward = continuityAnchor.RiderForward;
             var completedLaps = 0;
             var capturedBefore = new bool[3];
             var capturedAfter = new bool[3];
@@ -156,9 +175,9 @@ public partial class PineHillRideScreenReviewTest : Node
                 previousDistance = state.DistanceMeters;
                 previousRider = diagnostic.RiderWorldPosition;
                 previousForward = diagnostic.RiderForward;
-                if (!IsHeadless && !File.Exists(Path.Combine(_output, "pine-render-performance.csv"))
+                if (!IsHeadless && !File.Exists(Path.Combine(_output, "pine-render-performance-final.csv"))
                     && state.DistanceMeters > 30)
-                    await CaptureRenderPerformance("pine-render-performance.csv", TimeSpan.FromSeconds(3));
+                    await CaptureRenderPerformance("pine-render-performance-final.csv", TimeSpan.FromSeconds(3));
             }
             File.WriteAllText(Path.Combine(_output, "pine-three-lap-ride.csv"), telemetry.ToString());
             Assert(completedLaps == 3 && session.CurrentRideState.DistanceMeters >= totalTarget,
@@ -220,6 +239,7 @@ public partial class PineHillRideScreenReviewTest : Node
     private async Task CaptureSourceStyleView(RideWorldView world, string filename,
         double routeChainageMeters, float yawOffsetDegrees)
     {
+        UpdateSceneryForReview(world, routeChainageMeters);
         var viewportSize = GetViewport().GetVisibleRect().Size;
         var viewport = new SubViewport { Name = "SourceStyleCaptureViewport",
             Size = new Vector2I((int)viewportSize.X,(int)viewportSize.Y),
@@ -249,6 +269,18 @@ public partial class PineHillRideScreenReviewTest : Node
         viewport.QueueFree();
         world.GetNode<ChaseCamera>("ChaseCamera").MakeCurrent();
         await Frames(2);
+    }
+
+    private static void UpdateSceneryForReview(RideWorldView world, double routeDistanceMeters)
+    {
+        world.GetNode<LandmarkLayer>("RouteGeometry/RouteLandmarks").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<BuildingLayer>("RouteGeometry/RouteBuildings").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<VegetationLayer>("RouteGeometry/RouteVegetation").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<StreetFurnitureLayer>("RouteGeometry/RouteStreetFurniture").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<RoadMarkingLayer>("RouteGeometry/RoadMarkings").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<BackgroundStreetLayer>("RouteGeometry/BackgroundStreets").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<RouteSceneLayer>("RouteGeometry/VideoAuthoredScene").UpdateForRideDistance(routeDistanceMeters);
+        world.GetNode<TerrainLayer>("RouteGeometry/LINZTerrain").UpdateForRideDistance(routeDistanceMeters);
     }
 
     private void Assert(bool condition, string message)
