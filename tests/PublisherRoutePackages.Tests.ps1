@@ -9,13 +9,13 @@ $experimentalZipPath = Join-Path $temporaryRoot 'experimental-fixture.zip'
 New-Item -ItemType Directory -Path $temporaryRoot, $releaseRoot | Out-Null
 try {
     $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.70'
-    if ($manifest.Routes.Count -ne 6) { throw "Expected six built-in route entries, got $($manifest.Routes.Count)." }
+    if ($manifest.Routes.Count -ne 7) { throw "Expected seven built-in route entries, got $($manifest.Routes.Count)." }
     if ($manifest.Routes | Where-Object Id -eq 'pine-hill-test') { throw 'Pine Hill leaked into the standard built-in bundle.' }
     $experimentalRoot = Join-Path $temporaryRoot 'ExperimentalRoutes'
     $experimental = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $experimentalRoot -Version '0.1.0-alpha.70' -IncludeExperimentalRoutes
     $pine = @($experimental.Routes | Where-Object Id -eq 'pine-hill-test')[0]
-    if ($experimental.Routes.Count -ne 7 -or $null -eq $pine -or -not $pine.IsExperimental) {
-        throw 'Opt-in bundle must add exactly one explicitly experimental Pine Hill route.'
+    if ($experimental.Routes.Count -ne 8 -or $null -eq $pine -or -not $pine.IsExperimental) {
+        throw 'Opt-in bundle must add exactly one explicitly experimental Pine Hill route to the seven-route built-in bundle.'
     }
     $pineDirectory = Join-Path $experimentalRoot 'pine-hill-test'
     foreach ($required in @('pine-hill-test.observations.json', 'pine-hill-test.route-points.json', 'ATTRIBUTION.md', 'assets-manifest.json',
@@ -52,6 +52,18 @@ try {
     ) | Sort-Object
     if (($mtbFiles -join '|') -ne ($expectedMtbFiles -join '|')) {
         throw "The MTB package contains an unexpected sidecar set: $($mtbFiles -join ', ')"
+    }
+    $gravelId = 'otago-central-rail-trail-clyde-alexandra'
+    $gravel = @($manifest.Routes | Where-Object Id -eq $gravelId | Select-Object -First 1)[0]
+    if ($null -eq $gravel -or [string]::IsNullOrWhiteSpace($gravel.GeometryFingerprint) -or
+        [string]::IsNullOrWhiteSpace($gravel.SourceAttribution)) {
+        throw 'The Gravel release manifest entry is missing its geometry fingerprint or attribution.'
+    }
+    $gravelDirectory = Join-Path $routeRoot $gravelId
+    $gravelFiles = @(Get-ChildItem -LiteralPath $gravelDirectory -File | Select-Object -ExpandProperty Name | Sort-Object)
+    $expectedGravelFiles = @("$gravelId.route-points.json", "$gravelId.terrain.json", "$gravelId.vegetation.json") | Sort-Object
+    if (($gravelFiles -join '|') -ne ($expectedGravelFiles -join '|')) {
+        throw "The Gravel package contains an unexpected sidecar set: $($gravelFiles -join ', ')"
     }
     $xcId = 'wodra-xc-skills-loop'
     $xc = @($manifest.Routes | Where-Object Id -eq $xcId | Select-Object -First 1)[0]

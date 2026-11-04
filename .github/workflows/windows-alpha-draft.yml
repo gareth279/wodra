@@ -72,8 +72,8 @@ jobs:
             PublishRoot = $env:PUBLISH_ROOT
             ReleaseNotesPath = $releaseNotes
           }
-          # Pine Hill Test is explicitly included in Alpha.92 and Alpha.93.
-          # Other alpha releases retain the standard six-route default unless separately approved.
+          # Pine Hill Test is explicitly included in Alpha.92, Alpha.93, and Alpha.94.
+          # The seven standard route packages include the mapped Gravel rail-trail and XC Skills Loop.
           if ($env:RELEASE_TAG -in @('v0.1.0-alpha.92', 'v0.1.0-alpha.93', 'v0.1.0-alpha.94')) {
             $publishArgs.IncludeExperimentalRoutes = $true
           }

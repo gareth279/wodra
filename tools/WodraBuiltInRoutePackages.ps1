@@ -10,6 +10,7 @@ function Get-WodraBuiltInRouteDefinitions {
         [pscustomobject]@{ Id = 'dunedin-south-coastal-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-rolling-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-signal-hill-climbing-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
+        [pscustomobject]@{ Id = 'otago-central-rail-trail-clyde-alexandra'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation') },
         [pscustomobject]@{ Id = 'signal-hill-big-easy-mtb'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation') },
         [pscustomobject]@{ Id = 'wodra-xc-skills-loop'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation', 'trail-features') }
     )

@@ -558,7 +558,7 @@ try {
 
     # The standalone EOS runtime and its supplied third-party legal notices are
     # the only files copied from the installed proprietary SDK package.
-    Write-Phase 5 'Packaging six built-in routes and EOS...'
+    Write-Phase 5 "Packaging $($routePackages.Count) built-in routes and EOS..."
     $noticesTarget = Join-Path $PublishDirStage 'ThirdPartyNotices\EOS'
     New-Item -ItemType Directory -Path $noticesTarget -Force | Out-Null
     Copy-Item -LiteralPath $EosSdkNotices -Destination (Join-Path $noticesTarget 'ThirdPartySoftwareNotice.txt')
