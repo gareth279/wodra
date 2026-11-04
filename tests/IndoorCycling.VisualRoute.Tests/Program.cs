@@ -6,6 +6,19 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("road markings require explicit zebra evidence", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("pine-hill-test")!);
+        var controls = new[]
+        {
+            new RoadMarkingControl("crossing", 1, 315, 0, new Dictionary<string, string> { ["crossing"] = "unmarked" }),
+            new RoadMarkingControl("crossing", 2, 400, 0, new Dictionary<string, string> { ["crossing"] = "unknown" }),
+            new RoadMarkingControl("crossing", 3, 500, 0, new Dictionary<string, string> { ["crossing"] = "zebra" })
+        };
+        var result = RoadMarkingGeometry.Build(route, controls);
+        if (result.ZebraCrossings != 1 || result.CrossingSourcesConsidered != 3)
+            throw new Exception($"Expected only the explicitly zebra crossing to render; generated {result.ZebraCrossings}.");
+    }),
     ("route scene markings and sign faces follow the observed approach in every compass direction", () =>
     {
         foreach (var headingDegrees in new[] { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f })

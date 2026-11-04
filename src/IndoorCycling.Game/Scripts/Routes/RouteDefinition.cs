@@ -36,7 +36,7 @@ public sealed record RouteDefinition(
 	public string Difficulty { get; init; } = "Unrated";
 	public string SourceAttribution { get; init; } = "";
 	/// <summary>Visual lane/edge reference paint emitted by the generic road ribbon. Can be disabled when the captured street has no such paint.</summary>
-	public bool RenderRouteReferenceMarkings { get; init; } = true;
+	public bool RenderRouteReferenceMarkings { get; init; }
 	public int RouteDataVersion { get; init; } = 1;
 	public double? PublishedTotalAscentMeters { get; init; }
 	public double TotalAscentMeters => PublishedTotalAscentMeters ?? (Points is not { Count: >= 2 } points ? 0

@@ -6,7 +6,8 @@ using System.Numerics;
 public enum RoadMarkingKind { ZebraStripe, StopLine, GiveWayDash, TrafficSignalLine }
 
 public sealed record RoadMarkingControl(string Category, long OsmId,
-    double NearestRouteDistanceMeters, double DistanceFromRouteMeters);
+    double NearestRouteDistanceMeters, double DistanceFromRouteMeters,
+    IReadOnlyDictionary<string, string>? Tags = null);
 
 public sealed record RoadMarkingOptions
 {
@@ -62,7 +63,9 @@ public static class RoadMarkingGeometry
 
         var controls = source.Where(item => item is not null).ToArray();
         var crossingSources = controls.Where(item => item.Category == "crossing").ToArray();
-        var nearbyCrossings = SelectNearby(route, crossingSources, options.MaximumCrossingDistanceFromRouteMeters);
+        // A mapped crossing is a pedestrian access point, not proof of painted
+        // zebra bars. Require affirmative marking evidence from the source tags.
+        var nearbyCrossings = SelectNearby(route, crossingSources.Where(IsExplicitlyZebra), options.MaximumCrossingDistanceFromRouteMeters);
         var crossings = Deduplicate(route, nearbyCrossings, options);
         var signalLines = Deduplicate(route, SelectNearby(route,
             controls.Where(item => item.Category == "traffic-signal"), options.MaximumControlDistanceFromRouteMeters), options);
@@ -118,6 +121,15 @@ public static class RoadMarkingGeometry
                         firstLateral + dash * (dashWidth + dashGap));
             }
         }
+    }
+
+    private static bool IsExplicitlyZebra(RoadMarkingControl item)
+    {
+        var tags = item.Tags;
+        if (tags is null) return false;
+        static bool IsZebra(string? value) => string.Equals(value, "zebra", StringComparison.OrdinalIgnoreCase);
+        return tags.TryGetValue("crossing", out var crossing) && IsZebra(crossing)
+            || tags.TryGetValue("crossing:markings", out var markings) && IsZebra(markings);
     }
 
     private static List<Selected> SelectNearby(VisualRoute route, IEnumerable<RoadMarkingControl> controls,

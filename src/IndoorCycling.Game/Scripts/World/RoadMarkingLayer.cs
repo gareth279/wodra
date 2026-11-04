@@ -37,7 +37,7 @@ public partial class RoadMarkingLayer : Node3D
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.LengthMeters;
         var controls = data.Items.Select(item => new RoadMarkingControl(item.Category, item.OsmId,
-            item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters)).ToArray();
+            item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters, item.Tags)).ToArray();
         var generated = RoadMarkingGeometry.Build(route, controls, ProceduralRoad.WidthMeters, options);
         CrossingSourcesConsidered = generated.CrossingSourcesConsidered;
         NearbyCrossingSources = generated.NearbyCrossingSources;
