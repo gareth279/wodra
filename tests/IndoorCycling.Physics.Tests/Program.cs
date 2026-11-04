@@ -199,6 +199,18 @@ static void CollectibleLayoutIsDeterministic()
     Assert(first.Any(p => p.Kind == CollectibleKind.GoldenCat && p.Points == 5), "The layout needs five point rare gold cats.");
     Assert(!first.SequenceEqual(CollectibleChallenge.Generate("other-road", 10000, samples)), "Route identity must be part of the deterministic seed.");
 
+	var xcSamples = Enumerable.Range(0, 801).Select(i => (i * 2d, System.Numerics.Vector3.UnitZ)).ToArray();
+	var xc = CollectibleChallenge.Generate("wodra-xc-skills-loop", 1600, xcSamples);
+	Assert(xc.Count == 8 && xc.All(pickup => Math.Abs(Math.Abs(pickup.LateralMeters) - .66) < .001)
+		&& xc.Select(pickup => Math.Sign(pickup.LateralMeters)).Distinct().Count() == 2,
+		"XC tokens stay on the tread but alternate sides to reward steering corrections.");
+	var firstXc = xc[0];
+	Assert(!CollectibleChallenge.SweptHit(firstXc.RouteDistanceMeters - 1, firstXc.RouteDistanceMeters + 1,
+		0, 0, firstXc, 1600, true, .40)
+		&& CollectibleChallenge.SweptHit(firstXc.RouteDistanceMeters - 1, firstXc.RouteDistanceMeters + 1,
+			firstXc.LateralMeters - .25, firstXc.LateralMeters - .25, firstXc, 1600, true, .40),
+		"Neutral XC bypass misses edge tokens while a modest in-trail steering offset collects them.");
+
     var uTurnSamples = Enumerable.Range(0, 91).Select(i => (i * 10d,
         i < 36 ? System.Numerics.Vector3.UnitZ : -System.Numerics.Vector3.UnitZ)).ToArray();
     Assert(CollectibleChallenge.Generate("u-turn", 900, uTurnSamples).All(p => Math.Abs(p.RouteDistanceMeters - 360) > 120),
@@ -250,6 +262,9 @@ static void CollectibleUiUsesTokenWording()
 		"Both pickup feedback types should refer to tokens.");
 	Assert(CollectibleUiText.ResultSummary(12, 4, 20, "completed").Contains("tokens", StringComparison.Ordinal),
 		"Ride summaries should refer to tokens.");
+	Assert(CollectibleUiText.TrailScore(225, 3, 3, 5, 8, 13) ==
+		"Trail 225 pts · 3/3 jumps\nLap 3 tokens 5/8 · 13 total",
+		"Trail HUD must distinguish this lap's pickups from the cumulative attempt total.");
 }
 
 static void DiagnosticRedactionPreservesJsonl()

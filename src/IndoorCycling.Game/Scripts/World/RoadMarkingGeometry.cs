@@ -6,7 +6,8 @@ using System.Numerics;
 public enum RoadMarkingKind { ZebraStripe, StopLine, GiveWayDash, TrafficSignalLine }
 
 public sealed record RoadMarkingControl(string Category, long OsmId,
-    double NearestRouteDistanceMeters, double DistanceFromRouteMeters);
+    double NearestRouteDistanceMeters, double DistanceFromRouteMeters,
+    IReadOnlyDictionary<string, string>? Tags = null);
 
 public sealed record RoadMarkingOptions
 {
@@ -62,8 +63,11 @@ public static class RoadMarkingGeometry
 
         var controls = source.Where(item => item is not null).ToArray();
         var crossingSources = controls.Where(item => item.Category == "crossing").ToArray();
+        // A mapped crossing is a pedestrian access point, not proof of painted
+        // zebra bars. Require affirmative marking evidence from the source tags.
         var nearbyCrossings = SelectNearby(route, crossingSources, options.MaximumCrossingDistanceFromRouteMeters);
-        var crossings = Deduplicate(route, nearbyCrossings, options);
+        var markedCrossings = Deduplicate(route,
+            nearbyCrossings.Where(item => IsExplicitlyZebraCrossing(item.Control)).ToArray(), options);
         var signalLines = Deduplicate(route, SelectNearby(route,
             controls.Where(item => item.Category == "traffic-signal"), options.MaximumControlDistanceFromRouteMeters), options);
         var stopLines = Deduplicate(route, SelectNearby(route,
@@ -72,7 +76,7 @@ public static class RoadMarkingGeometry
             controls.Where(item => item.Category == "give-way-sign"), options.MaximumControlDistanceFromRouteMeters), options);
 
         var triangles = new List<RoadMarkingTriangle>();
-        foreach (var crossing in crossings)
+        foreach (var crossing in markedCrossings)
         {
             var firstOffset = -((ZebraStripeCount - 1) * (ZebraStripeWidthMeters + ZebraStripeGapMeters) / 2);
             // All bars in one crossing use the same road frame. Sampling a new route
@@ -94,9 +98,10 @@ public static class RoadMarkingGeometry
         AddControlLines(stopLines, RoadMarkingKind.StopLine, solid: true);
         AddControlLines(giveWayLines, RoadMarkingKind.GiveWayDash, solid: false);
 
-        return new RoadMarkingBuildResult(crossingSources.Length, nearbyCrossings.Count, crossings.Count,
-            nearbyCrossings.Count - crossings.Count, signalLines.Count, stopLines.Count, giveWayLines.Count,
-            crossings.Select(item => item.Distance).ToArray(), triangles);
+        return new RoadMarkingBuildResult(crossingSources.Length, nearbyCrossings.Count, markedCrossings.Count,
+            nearbyCrossings.Count(item => IsExplicitlyZebraCrossing(item.Control)) - markedCrossings.Count,
+            signalLines.Count, stopLines.Count, giveWayLines.Count,
+            markedCrossings.Select(item => item.Distance).ToArray(), triangles);
 
         void AddControlLines(IReadOnlyList<Selected> selected, RoadMarkingKind kind, bool solid)
         {
@@ -118,6 +123,15 @@ public static class RoadMarkingGeometry
                         firstLateral + dash * (dashWidth + dashGap));
             }
         }
+    }
+
+    public static bool IsExplicitlyZebraCrossing(RoadMarkingControl item)
+    {
+        var tags = item.Tags;
+        if (tags is null) return false;
+        static bool IsZebra(string? value) => string.Equals(value, "zebra", StringComparison.OrdinalIgnoreCase);
+        return tags.TryGetValue("crossing", out var crossing) && IsZebra(crossing)
+            || tags.TryGetValue("crossing:markings", out var markings) && IsZebra(markings);
     }
 
     private static List<Selected> SelectNearby(VisualRoute route, IEnumerable<RoadMarkingControl> controls,

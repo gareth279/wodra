@@ -311,4 +311,14 @@ jobs:
             dotnet run --project $project -c Release -p:EnableEpicOnlineServices=false -p:NuGetAudit=false
             if ($LASTEXITCODE -ne 0) { throw "Regression suite failed: $project" }
           }
+          $auditPath = "$env:RUNNER_TEMP\route-quality-audit.json"
+          dotnet run --project tests/IndoorCycling.VisualRoute.Tests/IndoorCycling.VisualRoute.Tests.csproj -c Release -p:EnableEpicOnlineServices=false -p:NuGetAudit=false -- --route-quality-audit $auditPath
+          if ($LASTEXITCODE -ne 0) { throw 'Offline route-quality audit found critical unresolved violations.' }
+          if (-not (Test-Path -LiteralPath $auditPath)) { throw 'Offline route-quality audit report was not created.' }
+      - name: Upload offline route-quality audit
+        if: matrix.configuration == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-quality-audit
+          path: ${{ runner.temp }}/route-quality-audit.json
 

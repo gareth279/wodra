@@ -176,7 +176,7 @@ public partial class GravelRideScreenReviewTest : Node
             if (visualCheckpoints && !IsHeadless)
             {
                 hud.SetDebugDisplayEnabled(true);
-                foreach (var checkpoint in new[] { 4_000, 8_000, 12_000 })
+                foreach (var checkpoint in new[] { 4_000, 8_000, 10_560, 10_600, 12_000 })
                 {
                     session.JumpToRouteDistance(checkpoint.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     session.ConfirmDebugDistanceJump();

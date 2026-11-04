@@ -33,7 +33,16 @@ public static class RoutePackageFiles
 		return Path.Combine(string.IsNullOrWhiteSpace(root) ? AppContext.BaseDirectory : root, "Routes");
 	}
 
-	public static string[] PackageDirectories => [PackagedPackagesDirectory, UserPackagesDirectory];
+	public static string[] PackageDirectories
+	{
+		get
+		{
+			// The offline built-in route audit must not vary with routes installed in a developer's profile.
+			if (string.Equals(Environment.GetEnvironmentVariable("WODRA_ROUTE_AUDIT_BUILTIN_ONLY"), "1",
+				StringComparison.Ordinal)) return [PackagedPackagesDirectory];
+			return [PackagedPackagesDirectory, UserPackagesDirectory];
+		}
+	}
 
 	public static Stream? Open(Assembly assembly, string resourceName, string routeId)
 	{

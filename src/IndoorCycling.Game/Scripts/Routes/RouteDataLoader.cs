@@ -186,7 +186,7 @@ public static class RouteDataLoader
 			Environment = environment,
 			Discipline = discipline,
 			SurfaceSegments = surfaces,
-			RenderRouteReferenceMarkings = source.RenderRouteReferenceMarkings ?? true
+			RenderRouteReferenceMarkings = source.RenderRouteReferenceMarkings ?? false
 		};
 		if (!string.IsNullOrWhiteSpace(source.GeometryFingerprint)
 			&& !string.Equals(route.GeometryFingerprint, source.GeometryFingerprint, StringComparison.OrdinalIgnoreCase))

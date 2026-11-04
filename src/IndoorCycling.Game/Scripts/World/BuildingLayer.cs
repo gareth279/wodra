@@ -16,6 +16,7 @@ public partial class BuildingLayer : Node3D
 
     public int BuildingsLoaded { get; private set; }
     public int BuildingsSuppressedForRideCorridor { get; private set; }
+    public int BuildingsIntersectingBackgroundStreetSurface { get; private set; }
     public int BuildingsSuppressedForAuthoredScene { get; private set; }
     public int ChunkCount => _chunks.Count;
     public int MeshInstanceCount => _chunks.Count;
@@ -36,11 +37,15 @@ public partial class BuildingLayer : Node3D
     public double BuildMilliseconds { get; private set; }
 
     public void Configure(VisualRoute visualRoute, RouteDefinition route, IReadOnlyList<RouteBuildingData> buildings,
-        IReadOnlyList<RouteSceneBuildingStyle>? authoredStyles = null)
+        IReadOnlyList<RouteSceneBuildingStyle>? authoredStyles = null, RoadCorridorGeometry? sharedCorridor = null)
     {
         if (_chunks.Count > 0 || BuildingsLoaded > 0) throw new InvalidOperationException("Building layer is already configured.");
         var timer = Stopwatch.StartNew();
         _routeLengthMeters = route.DistanceMeters;
+        var riderMargin = (float)IndoorCycling.Core.Simulation.SteeringLateralController.RiderMarginMeters;
+        var corridor = sharedCorridor ?? new RoadCorridorGeometry(visualRoute, ProceduralRoad.WidthMeters,
+            route.Capabilities.MaximumLateralOffsetMeters ?? ProceduralRoad.WidthMeters / 2 - riderMargin,
+            riderMargin);
         var facadeMaterial = SharedMaterial();
         var roofMaterial = SharedMaterial();
         var windowMaterial = SharedMaterial();
@@ -70,14 +75,16 @@ public partial class BuildingLayer : Node3D
                     continue;
                 }
                 if (building.BaseElevationMeters is not { } elevation || building.Footprint.Count < 4) continue;
-                var ring = building.Footprint.Select((point, index) =>
+                var worldRing = building.Footprint.Select((point, index) =>
                 {
                     var groundElevation = building.FootprintElevationMeters.Count == building.Footprint.Count
                         ? building.FootprintElevationMeters[index] ?? elevation : elevation;
                     var local = visualRoute.GetPositionForCoordinate(point.Latitude, point.Longitude, groundElevation);
                     var world = ProceduralRoad.ToGodot(local);
-                    return new System.Numerics.Vector3(world.X - origin.X, world.Y - origin.Y, world.Z - origin.Z);
+                    return new System.Numerics.Vector3(world.X, world.Y, world.Z);
                 }).ToArray();
+                var ring = worldRing.Select(point => new System.Numerics.Vector3(
+                    point.X - origin.X, point.Y - origin.Y, point.Z - origin.Z)).ToArray();
                 var tags = building.SourceTags ?? new Dictionary<string, string>();
                 var category = authoredStyle?.BuildingType ?? (building.VisualCategory == "generic"
                     ? BuildingVisualStyle.Classify(tags) : building.VisualCategory);
@@ -100,11 +107,28 @@ public partial class BuildingLayer : Node3D
                     : [];
                 var minimumBase = footprintBases.Length > 0 ? footprintBases.Min() : elevation;
                 var maximumBase = footprintBases.Length > 0 ? footprintBases.Max() : elevation;
-                if (routeElevation is { } roadElevation
-                    && BuildingCorridorPolicy.IntersectsRideCorridor(building.DistanceFromRouteMeters,
-                        ProceduralRoad.WidthMeters, roadElevation, minimumBase, maximumBase, mappedOrInferredHeight))
+                var footprintPolygon = worldRing.Select(point =>
+                    new System.Numerics.Vector2(point.X, point.Z)).ToArray();
+                var footprintClearance = corridor.MeasureRoutePolygon(footprintPolygon);
+                var backgroundClearance = corridor.MeasureBackgroundPolygon(footprintPolygon);
+                if (backgroundClearance.Intersects)
+                {
+                    BuildingsIntersectingBackgroundStreetSurface++;
+                    GD.Print($"[RoadCorridor] building overlaps background street osm={building.OsmId} " +
+                        $"streetOsm={backgroundClearance.SourceOsmId} route={route.Id} " +
+                        $"clearance={backgroundClearance.ClearanceMeters:F2}m (retained)");
+                }
+                // Buildings may stand close to a kerb; suppress only an actual footprint overlap.
+                // The shared roadside gap applies to smaller objects that can plausibly be shifted.
+                var horizontalIntersection = footprintClearance.Intersects;
+                if (horizontalIntersection && routeElevation is { } roadElevation
+                    && BuildingCorridorPolicy.IntersectsRideCorridor(0,
+                        corridor.ProtectedHalfWidthMeters * 2,
+                        roadElevation, minimumBase, maximumBase, mappedOrInferredHeight))
                 {
                     BuildingsSuppressedForRideCorridor++;
+                    GD.Print($"[RoadCorridor] building suppressed osm={building.OsmId} route={route.Id} " +
+                        $"chainage={building.NearestRouteDistanceMeters:F1} clearance={footprintClearance.ClearanceMeters:F2}m");
                     continue;
                 }
                 var shape = BuildingVisualStyle.ResolveRoofShape(building.OsmId, rawRoofShape, category,

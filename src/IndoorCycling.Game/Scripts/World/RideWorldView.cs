@@ -135,6 +135,14 @@ public partial class RideWorldView : Node3D
 
     public string CameraInspectionLabel => _camera is null ? "Gameplay (refined)" : FormatCameraView(_camera.View);
     public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
+    public int CollectiblesCollected => _collectibleLayer?.Collected ?? 0;
+    public int CollectiblesAvailable => _collectibleLayer?.Available ?? 0;
+    public int CollectiblesCollectedOnLap(int lapNumber) => _collectibleLayer?.CollectedOnLap(lapNumber) ?? 0;
+    public IReadOnlyList<IndoorCycling.Core.Simulation.CollectiblePlacement> CollectiblePlacements =>
+        _collectibleLayer?.Placements ?? Array.Empty<IndoorCycling.Core.Simulation.CollectiblePlacement>();
+    public int CollectibleScore => _collectibleLayer?.Score ?? 0;
+    public int TrailFeaturesCompleted => _trailCourseLayer?.CompletedLines ?? 0;
+    public int TrailFeatureTraversals => _trailCourseLayer?.CompletedTraversals ?? 0;
     public int LocalAiRiderCount => _riderStateSource?.GetRiders().Count(rider => rider.RiderId != "player") ?? 0;
 
     public IReadOnlyList<RiderState> GetCompanionLocalRiders() => (_riderStateSource?.GetRiders()
@@ -588,7 +596,9 @@ public partial class RideWorldView : Node3D
         _hudController?.SetGameScore(gameEnabled, _collectibleLayer?.Score ?? 0,
             _collectibleLayer?.Collected ?? 0, _collectibleLayer?.Available ?? 0,
             _collectibleLayer?.Attempt.FeatureLinesCompleted ?? 0,
-            _loadedRoute?.Capabilities.SupportsTrailFeatures == true);
+            _loadedRoute?.Capabilities.SupportsTrailFeatures == true,
+            (int)Math.Floor(distance / Math.Max(1, _geometry.LengthMeters)) + 1,
+            _collectibleLayer?.CollectedOnLap((int)Math.Floor(distance / Math.Max(1, _geometry.LengthMeters)) + 1) ?? 0);
         _hudController?.SetGameSteeringHint(gameEnabled && _deviceConnectionPanel?.HasSteeringController != true);
         var routeLength = _geometry.LengthMeters;
         var wrappedDistance = _geometry.WrapDistance(distance);
@@ -710,7 +720,9 @@ public partial class RideWorldView : Node3D
         _collectibleLayer.Configure(_loadedRoute.Id, _geometry);
         GameLogger.Log("collectible_layout_created", new { routeId = _loadedRoute.Id,
             challengeVersion = IndoorCycling.Core.Simulation.CollectibleChallenge.CurrentVersion,
-            placementCount = _collectibleLayer.Available, routeFingerprint = _loadedRoute.GeometryFingerprint });
+            placementCount = _collectibleLayer.Available, routeFingerprint = _loadedRoute.GeometryFingerprint,
+            placements = _collectibleLayer.Placements.Select(pickup => new { pickup.Id,
+                pickup.RouteDistanceMeters, pickup.LateralMeters, pickup.Kind, pickup.Points }).ToArray() });
         _collectibleLayer.CollectedPickup += pickup =>
         {
             var kind = pickup.Kind == IndoorCycling.Core.Simulation.CollectibleKind.GoldenCat ? "Golden" : "Blue";
@@ -1007,6 +1019,14 @@ public partial class RideWorldView : Node3D
         _steerRightHeld = right;
     }
 
+    internal void DispatchKeyboardSteeringForReview(bool left, bool right)
+    {
+        if (left != _steerLeftHeld)
+            _Input(new InputEventKey { Keycode = Key.Left, PhysicalKeycode = Key.Left, Pressed = left });
+        if (right != _steerRightHeld)
+            _Input(new InputEventKey { Keycode = Key.Right, PhysicalKeycode = Key.Right, Pressed = right });
+    }
+
     private IReadOnlyList<RiderState> BuildRemoteRiderStates(
         IEnumerable<MultiplayerRemoteRider> remotes, double routeLength)
     {
@@ -1282,6 +1302,11 @@ public partial class RideWorldView : Node3D
             _routeRoot.QueueFree();
         }
         _geometry = new VisualRoute(route);
+        RoadCorridorGeometry? roadCorridor = route.Environment == RouteEnvironment.Road
+            ? new RoadCorridorGeometry(_geometry, ProceduralRoad.WidthMeters,
+                ProceduralRoad.WidthMeters / 2 - (float)SteeringLateralController.RiderMarginMeters,
+                (float)SteeringLateralController.RiderMarginMeters)
+            : null;
         var groundPlaneY = _geometry.GroundPlaneY;
         _routeRoot = new Node3D { Name = "RouteGeometry" };
         AddChild(_routeRoot);
@@ -1400,6 +1425,8 @@ public partial class RideWorldView : Node3D
                     ReportOptionalLayerFailure(route, "background street terrain cutouts", ex);
                 }
             }
+            if (roadCorridor is not null && terrainRoads.Length > 0)
+                roadCorridor.AddBackgroundRoads(terrainRoads);
             var terrain = new TerrainLayer { Name = "LINZTerrain" };
             if (terrain.Configure(_geometry, resourcePrefix + "terrain.json", route.Id,terrainRoads))
             {
@@ -1433,7 +1460,7 @@ public partial class RideWorldView : Node3D
                         (float)(buildings.Min(item => item.BaseElevationMeters!.Value - originElevation) - VisualRoute.GroundClearanceMeters));
                 _buildingLayer = new BuildingLayer { Name = "RouteBuildings" };
                 _routeRoot.AddChild(_buildingLayer);
-                _buildingLayer.Configure(_geometry, route, buildings, authoredScene?.BuildingStyles);
+                _buildingLayer.Configure(_geometry, route, buildings, authoredScene?.BuildingStyles, roadCorridor);
                 _buildingLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var landmarkResource = resourcePrefix + "landmarks.json";
@@ -1472,7 +1499,7 @@ public partial class RideWorldView : Node3D
                     }).ToArray() ?? [];
                 var authoredSceneDistances = authoredSceneAssets.Select(feature => feature.RouteChainageMeters).ToArray();
                 _vegetationLayer.Configure(_geometry, route, vegetationData, terrainRoads,
-                    authoredSceneCenters, authoredSceneDistances);
+                    authoredSceneCenters, authoredSceneDistances, roadCorridor);
                 _vegetationLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
             }
             var furnitureResource = resourcePrefix + "street-furniture.json";
@@ -1482,7 +1509,7 @@ public partial class RideWorldView : Node3D
                 var furniture = RouteStreetFurnitureDataLoader.LoadEmbedded(assembly, furnitureResource, route.Id);
                 _streetFurnitureLayer = new StreetFurnitureLayer { Name = "RouteStreetFurniture" };
                 _routeRoot.AddChild(_streetFurnitureLayer);
-                _streetFurnitureLayer.Configure(_geometry, route, furniture);
+                _streetFurnitureLayer.Configure(_geometry, route, furniture, roadCorridor);
                 _streetFurnitureLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
                 _roadMarkingLayer = new RoadMarkingLayer { Name = "RoadMarkings" };
                 _routeRoot.AddChild(_roadMarkingLayer);
@@ -1522,7 +1549,7 @@ public partial class RideWorldView : Node3D
             {
                 _routeSceneLayer = new RouteSceneLayer { Name = "VideoAuthoredScene" };
                 _routeRoot.AddChild(_routeSceneLayer);
-                _routeSceneLayer.Configure(_geometry, authoredScene);
+                _routeSceneLayer.Configure(_geometry, authoredScene, roadCorridor);
                 _routeSceneLayer.UpdateForRideDistance(_session.CurrentRideState.DistanceMeters);
                 GD.Print($"Video-authored route scene: route={route.Id} observations={_routeSceneLayer.FeaturesRendered} " +
                     $"visible={_routeSceneLayer.VisibleFeatureCount} " +

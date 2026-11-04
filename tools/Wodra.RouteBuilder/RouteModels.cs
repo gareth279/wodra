@@ -28,7 +28,8 @@ public sealed class RouteAuthoringConfig
     public string Environment { get; init; } = "Road";
     public string Discipline { get; init; } = "Road";
     /// <summary>Whether generic yellow center and white edge guides match the captured road paint.</summary>
-    public bool RenderRouteReferenceMarkings { get; init; } = true;
+    /// <summary>Opt-in for intentional paint in purpose-built environments; mapped road source has no default paint inference.</summary>
+    public bool RenderRouteReferenceMarkings { get; init; }
     public List<RouteSurfaceAuthoringSegment> SurfaceSegments { get; init; } = [];
     /// <summary>OSM paths verified for this authored off-road route, even where bicycle tags are absent.</summary>
     public List<long> ApprovedTrailWayIds { get; init; } = [];

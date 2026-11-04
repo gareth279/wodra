@@ -10,6 +10,8 @@ using Godot;
 /// </summary>
 public partial class RouteSceneLayer : Node3D
 {
+    public sealed record ClearanceCorrection(string FeatureId, string ObjectType, double ChainageMeters,
+        float SourceLateralMeters, float VisualLateralMeters, float ClearanceMeters, bool Resolved);
     public const double AuthoredSceneReplacementRadiusMeters = 36;
     public const double FeatureVisibleDistanceMeters = 220;
     private readonly List<(double ChainageMeters, Node3D Node)> _routeFeatures = [];
@@ -21,11 +23,18 @@ public partial class RouteSceneLayer : Node3D
     public int RoadMarkingFeatures { get; private set; }
     public int AuthoredAssetFeatures { get; private set; }
     public int AuthoredAssetMeshInstances { get; private set; }
+    public int RoadIntrusionsDetected { get; private set; }
+    public int RoadIntrusionsRelocated { get; private set; }
+    public int RoadIntrusionsUnresolved { get; private set; }
+    public int GroundTrianglesClippedAgainstRoads { get; private set; }
+    public IReadOnlyList<ClearanceCorrection> ClearanceCorrections => _clearanceCorrections;
+    private readonly List<ClearanceCorrection> _clearanceCorrections = [];
 
-    public void Configure(VisualRoute route, RouteSceneData data)
+    public void Configure(VisualRoute route, RouteSceneData data, RoadCorridorGeometry? sharedCorridor = null)
     {
         _routeLengthMeters = route.LengthMeters;
         _wrapsAtRouteEnd = !route.IsPointToPoint;
+        var corridor = sharedCorridor;
         var authoredIntersection = data.Features.FirstOrDefault(feature => feature.ObjectType == "authored-scene-asset");
         var terrain = RouteTerrainDataLoader.TryLoadEmbedded(typeof(RouteCatalog).Assembly,
             $"Wodra.GameData.Routes.{data.Id}.terrain.json", data.Id);
@@ -43,8 +52,29 @@ public partial class RouteSceneLayer : Node3D
             var forward = new Vector3(routeTangent.X, 0, routeTangent.Z);
             if (forward.LengthSquared() < 0.9f) continue;
             var routePosition = ProceduralRoad.ToGodot(pose.Position);
+            var visualLateral = (float)feature.LateralPositionMeters;
+            var visualForward = (float)feature.ForwardOffsetMeters;
+            var footprint = RoadCorridorGeometry.AuthoredFeatureFootprint(feature.ObjectType,
+                feature.LengthMeters, feature.WidthMeters);
+            if (corridor is not null && footprint is { } occupied)
+            {
+                var placement = corridor.FindSafeRoutePlacement(route, feature.RouteChainageMeters,
+                    visualLateral, visualForward, occupied.LengthMeters, occupied.WidthMeters,
+                    (float)feature.OrientationDegrees, maximumShiftMeters: 24);
+                if (placement.Adjusted || !placement.Resolved)
+                {
+                    RoadIntrusionsDetected++;
+                    if (placement.Resolved) RoadIntrusionsRelocated++;
+                    else RoadIntrusionsUnresolved++;
+                    visualLateral = placement.VisualLateralMeters;
+                    visualForward = placement.VisualForwardMeters;
+                    _clearanceCorrections.Add(new ClearanceCorrection(feature.Id, feature.ObjectType,
+                        feature.RouteChainageMeters, (float)feature.LateralPositionMeters, visualLateral,
+                        placement.Clearance.ClearanceMeters, placement.Resolved));
+                }
+            }
             var originNumerics = RouteSceneTransformMath.Position(pose.Position, routeTangent,
-                (float)feature.LateralPositionMeters, (float)feature.ForwardOffsetMeters);
+                visualLateral, visualForward);
             var origin = ProceduralRoad.ToGodot(originNumerics);
             var roadPaint = feature.ObjectType is "yield-triangle" or "give-way-line" or "yellow-kerb-stripe" or "white-lane-dash";
             if (roadPaint)
@@ -63,8 +93,8 @@ public partial class RouteSceneLayer : Node3D
                 case "conifer-tree": BuildConifer(node, feature); break;
                 case "shrub": BuildHedge(node, feature); break;
                 case "hedge": BuildHedge(node, feature); break;
-                case "grass-verge": BuildGrassVerge(node, feature); break;
-                case "planting-bed": BuildGrassVerge(node, feature); BuildHedge(node, feature); break;
+                case "grass-verge": BuildGrassVerge(node, feature, corridor); break;
+                case "planting-bed": BuildGrassVerge(node, feature, corridor); BuildHedge(node, feature); break;
                 case "low-boundary-wall": BuildBoundaryWall(node, feature, false); break;
                 case "retaining-wall": BuildBoundaryWall(node, feature, true); break;
                 case "utility-pole": BuildUtilityPole(node, feature); break;
@@ -78,7 +108,14 @@ public partial class RouteSceneLayer : Node3D
             _routeFeatures.Add((feature.RouteChainageMeters, node));
             FeaturesRendered++;
         }
+        GD.Print($"[RoadCorridor] authored scenery detected={RoadIntrusionsDetected} relocated={RoadIntrusionsRelocated} unresolved={RoadIntrusionsUnresolved}");
+        foreach (var correction in _clearanceCorrections)
+            GD.Print($"[RoadCorridor] feature={correction.FeatureId} type={correction.ObjectType} " +
+                $"chainage={correction.ChainageMeters:F2} sourceLateral={correction.SourceLateralMeters:F2}m " +
+                $"visualLateral={correction.VisualLateralMeters:F2}m clearance={correction.ClearanceMeters:F2}m " +
+                $"status={(correction.Resolved ? "corrected" : "unresolved")}");
     }
+
 
     /// <summary>Keep observations from distant checkpoints out of the current camera view.</summary>
     public void UpdateForRideDistance(double rideDistanceMeters)
@@ -251,18 +288,32 @@ public partial class RouteSceneLayer : Node3D
                 MaterialOverride = material });
     }
 
-    private static void BuildGrassVerge(Node3D root, RouteSceneFeature feature)
+    private void BuildGrassVerge(Node3D root, RouteSceneFeature feature, RoadCorridorGeometry? corridor)
     {
         var width = MathF.Max(.2f,(float)feature.WidthMeters); var length = MathF.Max(.2f,(float)feature.LengthMeters);
         var z0=-length/2; var z1=-length*.30f; var z2=length*.12f; var z3=length/2;
         var vertices = new[] { new Vector3(-width*.50f,.02f,z0), new Vector3(width*.50f,.02f,z0),
             new Vector3(width*.42f,.02f,z1), new Vector3(width*.31f,.02f,z2), new Vector3(width*.47f,.02f,z3),
             new Vector3(-width*.48f,.02f,z3), new Vector3(-width*.36f,.02f,z2), new Vector3(-width*.46f,.02f,z1) };
-        var indices = new List<int>();
-        for (var i=1;i<vertices.Length-1;i++) indices.AddRange([0,i,i+1]);
+        var retained = new List<Vector3>();
+        for (var i=1;i<vertices.Length-1;i++)
+        {
+            var a=vertices[0]; var b=vertices[i]; var c=vertices[i+1];
+            if (corridor is not null)
+            {
+                var transform=root.GlobalTransform;
+                var wa=transform*a; var wb=transform*b; var wc=transform*c;
+                var measured=corridor.MeasurePolygon([new System.Numerics.Vector2(wa.X,wa.Z),
+                    new System.Numerics.Vector2(wb.X,wb.Z),new System.Numerics.Vector2(wc.X,wc.Z)]);
+                if (measured.Intersects || measured.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters)
+                { GroundTrianglesClippedAgainstRoads++; continue; }
+            }
+            retained.AddRange([a,b,c]);
+        }
+        if (retained.Count==0) return;
         var mesh = new ArrayMesh(); var arrays = new Godot.Collections.Array(); arrays.Resize((int)Mesh.ArrayType.Max);
-        arrays[(int)Mesh.ArrayType.Vertex]=vertices; arrays[(int)Mesh.ArrayType.Index]=indices.ToArray();
-        arrays[(int)Mesh.ArrayType.Normal]=Enumerable.Repeat(Vector3.Up,vertices.Length).ToArray();
+        arrays[(int)Mesh.ArrayType.Vertex]=retained.ToArray();
+        arrays[(int)Mesh.ArrayType.Normal]=Enumerable.Repeat(Vector3.Up,retained.Count).ToArray();
         mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles,arrays);
         AddMesh(root, mesh, ParseColour(feature.Colour, new Color(.34f,.47f,.25f)), Vector3.Zero);
     }

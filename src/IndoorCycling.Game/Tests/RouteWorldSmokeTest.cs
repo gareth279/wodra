@@ -141,7 +141,7 @@ public partial class RouteWorldSmokeTest : Node
                 $"streets={streetLayer.LoadedStreetCount} streetMeshes={streetLayer.MeshChunkCount} " +
                 $"streetTriangles={streetLayer.TriangleCount} streetMs={streetLayer.BuildMilliseconds} " +
                 $"terrainChunks={terrainLayer.TerrainChunksLoaded} terrainTriangles={terrainLayer.TerrainTriangleCount} " +
-                $"terrainCutoutCells={terrainLayer.RoadCutoutCellCount} vegetationAreas={vegetationLayer.VegetationAreaCount} " +
+                $"terrainRefinedCells={terrainLayer.RoadRefinedCellCount} vegetationAreas={vegetationLayer.VegetationAreaCount} " +
                 $"trees={vegetationLayer.TreesLoaded} suppressedRoadOverlays={vegetationLayer.RoadOverlapSuppressedAreaCount} " +
                 $"vegetationMeshes={vegetationLayer.AreaMeshInstanceCount} vegetationMs={vegetationLayer.BuildMilliseconds:F1} " +
                 $"worldBuildMs={timer.Elapsed.TotalMilliseconds:F1} views=road,rider,buildings,streets,terrain,vegetation,camera");

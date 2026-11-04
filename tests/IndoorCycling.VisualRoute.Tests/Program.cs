@@ -6,6 +6,43 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("road markings require explicit zebra evidence", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("pine-hill-test")!);
+        var controls = new[]
+        {
+            new RoadMarkingControl("crossing", 1, 315, 0, new Dictionary<string, string> { ["crossing"] = "unmarked" }),
+            new RoadMarkingControl("crossing", 2, 400, 0, new Dictionary<string, string> { ["crossing"] = "unknown" }),
+            new RoadMarkingControl("crossing", 3, 500, 0, new Dictionary<string, string> { ["crossing"] = "zebra" })
+        };
+        var result = RoadMarkingGeometry.Build(route, controls);
+        if (result.ZebraCrossings != 1 || result.CrossingSourcesConsidered != 3)
+            throw new Exception($"Expected only the explicitly zebra crossing to render; generated {result.ZebraCrossings}.");
+    }),
+    ("Pine Hill hedge footprint clears the full curved road and rider corridor", () =>
+    {
+        var route = new VisualRoute(RouteCatalog.GetById("pine-hill-test")!);
+        var corridor = new RoadCorridorGeometry(route, 7, 3.05f, .45f);
+        var streets = RouteBackgroundStreetDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
+            "Wodra.GameData.Routes.pine-hill-test.streets.json", "pine-hill-test");
+        var routeIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(route.Samples);
+        corridor.AddBackgroundRoads(BackgroundStreetGeometry.BuildTerrainCorridors(route, streets, routeIndex));
+        var dimensions = RoadCorridorGeometry.AuthoredFeatureFootprint("hedge", 21, 1.4)!;
+        var original = corridor.Measure(route, 315.209283, 2.421814f, 0,
+            dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 4.0850516f);
+        var safeOffset = 5.6f;
+        var corrected = corridor.Measure(route, 315.209283, safeOffset, 0,
+            dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 94.08505f);
+        while ((corrected.Intersects || corrected.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters) && safeOffset < 25)
+        {
+            safeOffset += .25f;
+            corrected = corridor.Measure(route, 315.209283, safeOffset, 0,
+                dimensions.Value.LengthMeters, dimensions.Value.WidthMeters, 94.08505f);
+        }
+        Console.WriteLine($"PINE_HILL_HEDGE_CLEARANCE initial={original} corrected={corrected} safeLateral={safeOffset:F2}");
+        if (!original.Intersects || corrected.Intersects || corrected.ClearanceMeters < RoadCorridorGeometry.RoadsideClearanceMeters)
+            throw new Exception($"Hedge footprint results: original={original}, corrected={corrected}.");
+    }),
     ("route scene markings and sign faces follow the observed approach in every compass direction", () =>
     {
         foreach (var headingDegrees in new[] { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f })
@@ -108,6 +145,7 @@ var tests = new (string Name, Action Run)[]
         var kerbMarkings = authoredScene.Features.First(feature => feature.ObjectType == "yellow-kerb-stripe"
             && feature.RouteChainageMeters is > 1265 and < 1280
             && Math.Abs(feature.LateralPositionMeters + 3.9) < .1);
+        var clearHedge = authoredScene.Features.Single(feature => feature.Id == "395-right-hedge");
         if (authoredScene.Features.Count < 24
             || intersectionAssets.Length != 3 || intersectionAsset is null
             || intersectionAsset.RouteChainageMeters is < 1265 or > 1280
@@ -123,6 +161,8 @@ var tests = new (string Name, Action Run)[]
             || kerbMarkings.RouteChainageMeters is < 1265 or > 1280
             || Math.Abs(kerbMarkings.LateralPositionMeters + 3.9) > .01
             || kerbMarkings.LengthMeters != 8
+            || Math.Abs(clearHedge.LateralPositionMeters - 6.6) > .01
+            || Math.Abs(clearHedge.OrientationDegrees - 94.08505163986717) > .01
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1260)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 280 and < 320)
@@ -167,6 +207,20 @@ var tests = new (string Name, Action Run)[]
 
         foreach (var feature in route.TrailFeatures)
         {
+            var tabletopDeck = feature.Path.Where(point => point.RouteDistanceMeters >= feature.TakeoffMeters
+                && point.RouteDistanceMeters <= feature.LandingMeters).ToArray();
+            if (feature.MaximumAirHeightMeters < 1.05
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.TakeoffMeters) is < .98 or > 1.02
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters) is < .98 or > 1.02
+                || tabletopDeck.Length < 2 || tabletopDeck.Any(point => point.SurfaceLiftMeters is < .98 or > 1.02)
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.TakeoffMeters - 12) > .01
+                || TrailFeatureChallenge.SurfaceLiftAt(feature, feature.LandingMeters + 14) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.StartMeters)) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.TakeoffMeters) - feature.RequiredLateralMeters) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.LandingMeters) - feature.RequiredLateralMeters) > .01
+                || Math.Abs(TrailFeatureChallenge.LateralAt(feature, feature.EndMeters)) > .01
+                || feature.Path.Max(point => Math.Abs(point.LateralMeters)) > Math.Abs(feature.RequiredLateralMeters) + .01)
+                throw new Exception($"{feature.Id} needs a raised tabletop with a short connected branch and rollable rejoin.");
             var corridor = new TrailFeatureChallenge([feature], route.DistanceMeters, route.TrailRollers);
             if (corridor.LateralCorridorHalfWidth(feature.StartMeters, 1.55 / 2) != 1.55 / 2
                 || corridor.LateralCorridorHalfWidth(feature.TakeoffMeters, 1.55 / 2) < Math.Abs(feature.RequiredLateralMeters)
@@ -201,7 +255,7 @@ var tests = new (string Name, Action Run)[]
                 throw new Exception($"{feature.Id} did not produce a pause-stable, non-scoring take-off presentation.");
             var landing = challenge.Update(feature.LandingMeters + 1, feature.RequiredLateralMeters, 22, false, true);
             if (landing.Award?.FeatureId != feature.Id || landing.Award.TotalScore != feature.ScorePoints
-                || landing.AirHeightMeters < 0)
+                || landing.CompletedFeature?.FeatureId != feature.Id || landing.AirHeightMeters < 0)
                 throw new Exception($"{feature.Id} did not score once at its landing boundary.");
             var duplicate = challenge.Update(feature.EndMeters + 1, 0, 22, false, true);
             if (duplicate.Award is not null || challenge.TotalScore != feature.ScorePoints)
@@ -212,6 +266,18 @@ var tests = new (string Name, Action Run)[]
             challenge.Update(feature.TakeoffMeters + 1, feature.RequiredLateralMeters, 22, false, true);
             if (challenge.TotalScore != feature.ScorePoints)
                 throw new Exception("A repositioned or reverse traversal awarded duplicate points.");
+
+            var unscoredTraversal = new TrailFeatureChallenge([feature], route.DistanceMeters);
+            unscoredTraversal.Update(feature.StartMeters - 2, 0, 25, false, false);
+            unscoredTraversal.Update(feature.TakeoffMeters - 2, feature.RequiredLateralMeters, 25, false, false);
+            var unscoredTakeoff = unscoredTraversal.Update(feature.TakeoffMeters + 2,
+                feature.RequiredLateralMeters, 25, false, false);
+            var unscoredLanding = unscoredTraversal.Update(feature.LandingMeters + 1,
+                feature.RequiredLateralMeters, 25, false, false);
+            if (unscoredTakeoff.Traversal?.FeatureId != feature.Id
+                || unscoredLanding.CompletedFeature?.FeatureId != feature.Id
+                || unscoredLanding.Award is not null || unscoredTraversal.TotalScore != 0)
+                throw new Exception($"{feature.Id} did not report its unscored traversal with Gaming disabled.");
         }
         var visual = new VisualRoute(route, spacingMeters: 2);
         if (visual.LengthMeters != route.DistanceMeters
@@ -717,20 +783,26 @@ var tests = new (string Name, Action Run)[]
             Console.WriteLine($"CHECK {id} connected side-street ends={restoredStreetEnds}");
             var roadHalfWidth = RoadRibbonMath.RoadWidthMeters * .5f;
             var terrainIntrusions = 0;
-            (double Distance, double Gap) worstTerrainIntrusion = (0, 0);
+            (double Distance, double Excess, double Lateral, Vector3 Center) worstTerrainIntrusion = (0, 0, 0, default);
+            var worstTerrainChunk = string.Empty;
             foreach (var chunk in terrainMesh.Chunks)
             for (var vertex = 0; vertex + 2 < chunk.Vertices.Length; vertex += 3)
             {
                 var center = (chunk.Vertices[vertex] + chunk.Vertices[vertex + 1] + chunk.Vertices[vertex + 2]) / 3;
                 var nearest = routeIndex.Nearest(center);
                 var lateral = Math.Sqrt(nearest.DistanceSquared);
-                if (lateral >= roadHalfWidth - .2) continue;
+                // The rendered road ribbon is crowned above its centreline by the profile
+                // offset, so permit a small bounded overlap under asphalt only.
+                if (lateral >= roadHalfWidth - .2 || center.Y <= nearest.Position.Y + .08) continue;
                 terrainIntrusions++;
-                worstTerrainIntrusion = (nearest.DistanceMeters, roadHalfWidth - lateral);
+                worstTerrainIntrusion = (nearest.DistanceMeters, center.Y - nearest.Position.Y, lateral, center);
+                worstTerrainChunk = chunk.Id;
             }
             if (terrainIntrusions > 0)
-                throw new Exception($"{id} terrain mesh has {terrainIntrusions} triangle centroids inside route asphalt; " +
-                    $"worst intrusion is {worstTerrainIntrusion.Gap:F2} m near route {worstTerrainIntrusion.Distance:F1} m.");
+                throw new Exception($"{id} terrain mesh rises above route asphalt in {terrainIntrusions} triangles; " +
+                    $"worst excess is {worstTerrainIntrusion.Excess:F2} m, lateral {worstTerrainIntrusion.Lateral:F2} m, " +
+                    $"at ({worstTerrainIntrusion.Center.X:F2},{worstTerrainIntrusion.Center.Y:F2},{worstTerrainIntrusion.Center.Z:F2}) " +
+                    $"near route {worstTerrainIntrusion.Distance:F1} m in {worstTerrainChunk}.");
             var spatialIndex = new BackgroundStreetGeometry.RouteSegmentSpatialIndex(routeVisual.Samples);
             if (id == "dunedin-signal-hill-climbing-loop")
             {
@@ -1585,12 +1657,13 @@ var tests = new (string Name, Action Run)[]
         var data = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", "dunedin-one-way-oval-gardens");
         var result = RoadMarkingGeometry.Build(route, data.Items.Select(item =>
-            new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters)));
+            new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters,
+                item.DistanceFromRouteMeters, item.Tags)));
         var meshChunks = result.Triangles.Select(item => (int)(item.RouteDistanceMeters / RoadMarkingGeometry.SpatialChunkLengthMeters)).Distinct().Count();
         Console.WriteLine($"ROAD MARKING PREVIEW crossings={result.CrossingSourcesConsidered} considered, {result.NearbyCrossingSources} near, {result.ZebraCrossings} rendered, {result.CrossingDuplicatesSuppressed} deduplicated; signal={result.TrafficSignalLines}, stop={result.StopLines}, give-way={result.GiveWayLines}; triangles={result.MarkingTriangleCount}; meshes={meshChunks}, layer+meshes={meshChunks + 1}");
         Equal(194, result.CrossingSourcesConsidered);
-        if (result.ZebraCrossings >= result.CrossingSourcesConsidered || result.ZebraCrossings == 0)
-            throw new Exception("Dunedin crossings were not meaningfully filtered and deduplicated.");
+        if (result.ZebraCrossings != 0)
+            throw new Exception("Dunedin's bundled crossing tags contain no explicit zebra evidence, so zebra paint must not be generated.");
         if (result.Triangles.Any(triangle => !double.IsFinite(triangle.RouteDistanceMeters)
             || triangle.RouteDistanceMeters < 0 || triangle.RouteDistanceMeters >= route.LengthMeters))
             throw new Exception("Bundled road marking references an invalid wrapped route distance.");
@@ -2792,7 +2865,7 @@ var tests = new (string Name, Action Run)[]
         var origin = routeDefinition.Points![0];
         NearVector(Vector3.Zero, visual.GetPositionForCoordinate(origin.Latitude!.Value, origin.Longitude!.Value, origin.ElevationMeters));
     }),
-    ("terrain cell is cut out when a diagonal road crosses between unadjusted grid vertices", () =>
+    ("coarse terrain cells are refined into a smooth lowered road shoulder", () =>
     {
         var data = SyntheticTerrain(1, 1, [110, 110, 110, 110], [true]);
         var route = new[]
@@ -2801,16 +2874,18 @@ var tests = new (string Name, Action Run)[]
             new VisualRouteSample(15, new Vector3(10, 0, 0), Vector3.UnitX)
         };
         var built = TerrainMeshGeometry.Build(data, route);
-        Equal(1, built.RoadCutoutCellCount);
-        Equal(0, built.TriangleCount);
+        Equal(1, built.RoadRefinedCellCount);
+        Equal(32, built.TriangleCount);
+        if (built.Chunks.SelectMany(chunk => chunk.Vertices).Min(vertex => vertex.Y) > 0)
+            throw new Exception("The refined surface did not maintain clearance under the diagonal road.");
     }),
-    ("near terrain cells are excluded around mapped background streets", () =>
+    ("coarse terrain around mapped background streets is refined rather than removed", () =>
     {
         var data=SyntheticTerrain(1,1,[110,110,110,110],[true]);
         var route=new[]{new VisualRouteSample(0,new Vector3(100,0,100),Vector3.UnitX),new VisualRouteSample(20,new Vector3(120,0,100),Vector3.UnitX)};
         var road=new TerrainRoadCorridor(new[]{new Vector3(5,0,0),new Vector3(5,0,10)},6);
         var built=TerrainMeshGeometry.Build(data,route,[road]);
-        Equal(1,built.RoadCutoutCellCount);Equal(0,built.TriangleCount);
+        Equal(1,built.RoadRefinedCellCount);Equal(32,built.TriangleCount);
     }),
     ("terrain NoData cells are safely omitted and adjacent chunks share edge elevations", () =>
     {
@@ -2913,8 +2988,8 @@ var tests = new (string Name, Action Run)[]
         var meshRoute = new[] { new VisualRouteSample(0, new Vector3(0, 0, 0), Vector3.UnitX),
             new VisualRouteSample(20, new Vector3(20, 0, 0), Vector3.UnitX) };
         var generated = TerrainMeshGeometry.Build(a, meshRoute);
-        if (generated.RoadCutoutCellCount <= 0 || generated.TriangleCount >= a.TriangleCount)
-            throw new Exception("The real terrain bundle did not remove cells from its near-road corridor.");
+        if (generated.RoadRefinedCellCount <= 0 || generated.TriangleCount <= a.TriangleCount)
+            throw new Exception("The real terrain bundle did not refine cells along its near-road corridor.");
         if (generated.Chunks.SelectMany(c => c.Vertices).Any(v => !float.IsFinite(v.X+v.Y+v.Z)))
             throw new Exception("Real near/far LINZ geometry contains non-finite vertices.");
         foreach (var mesh in generated.Chunks)
@@ -3475,7 +3550,15 @@ static bool SegmentsProperlyIntersect(RoutePoint a, RoutePoint b, RoutePoint c, 
 }
 
 var failures = 0;
-foreach (var test in tests)
+if (args.Length > 0 && args[0] == "--route-quality-audit")
+{
+    Environment.SetEnvironmentVariable("WODRA_ROUTE_AUDIT_BUILTIN_ONLY", "1");
+    return RouteQualityAudit.WriteReport(args.Length > 1 ? args[1] : "route-quality-audit.json");
+}
+var selectedTests = args.Contains("--corridor-only", StringComparer.Ordinal)
+    ? tests.Where(test => test.Name.Contains("hedge footprint", StringComparison.OrdinalIgnoreCase))
+    : tests;
+foreach (var test in selectedTests)
 {
     try { test.Run(); Console.WriteLine($"PASS: {test.Name}"); }
     catch (Exception ex) { failures++; Console.Error.WriteLine($"FAIL: {test.Name}: {ex.Message}"); }
@@ -3506,7 +3589,8 @@ static VisualRoute MarkingTestRoute()
 }
 
 static RoadMarkingControl MarkingControl(string category, long id, double routeDistance, double distanceFromRoute) =>
-    new(category, id, routeDistance, distanceFromRoute);
+    new(category, id, routeDistance, distanceFromRoute,
+        category == "crossing" ? new Dictionary<string, string> { ["crossing"] = "zebra" } : null);
 
 static Vector3 LongestEdge(RoadMarkingTriangle triangle)
 {

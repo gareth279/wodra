@@ -78,6 +78,16 @@ public partial class PineHillRideScreenReviewTest : Node
                 + CountTriangles(authoredScene.GetNode<Node3D>("mature-broadleaf-right"));
             Assert(focalAssetTriangles <= 330_000,
                 $"photo-textured boarded fence, hipped house and two mature trees stay within 330k focal-scene triangles ({focalAssetTriangles:N0})");
+            var markingLayer = world.GetNode<RoadMarkingLayer>("RouteGeometry/RoadMarkings");
+            Assert(markingLayer.CrossingSourcesConsidered == 9 && markingLayer.ZebraCrossingsGenerated == 0,
+                $"all nine explicitly unmarked Pine Hill crossings produce zero zebra crossings " +
+                $"(considered={markingLayer.CrossingSourcesConsidered}, zebra={markingLayer.ZebraCrossingsGenerated})");
+            Assert(markingLayer.CrossingDuplicatesSuppressed == 0 && !route.RenderRouteReferenceMarkings,
+                "Pine Hill has no duplicate crossing paint and generic continuous reference paint is disabled");
+            Assert(authoredScene.RoadIntrusionsUnresolved == 0 && authoredScene.ClearanceCorrections.All(item =>
+                    item.ClearanceMeters >= RoadCorridorGeometry.RoadsideClearanceMeters),
+                $"all authored physical Pine Hill corrections clear the shared rider envelope " +
+                $"(corrections={authoredScene.ClearanceCorrections.Count}, unresolved={authoredScene.RoadIntrusionsUnresolved})");
 
             var checkpoints = new[] { 0d, 117.771178, 200d, 253.974022, 298.462154, 306.629136,
                 390.649046, 600d, 645.429035, 668.751667, 739.845927, 772.006605,
@@ -114,11 +124,20 @@ public partial class PineHillRideScreenReviewTest : Node
             var completedLaps = 0;
             var capturedBefore = new bool[3];
             var capturedAfter = new bool[3];
+            var visualCheckpoints = new[] { 117.771178, 151.05, 200d, 253.974022, 265.44, 298.462154,
+                306.629136, 315.209283, 390.649046, 485.08, 496.71, 645.429035, 668.751667, 678.39,
+                719.58, 739.845927, 772.006605, 875.47, 880.06, 886.475760, 907.435907, 917d,
+                1132.35, 1268.226435, 1277.146893, 1308.12, 1310.76 };
+            var capturedVisualCheckpoints = new bool[visualCheckpoints.Length];
+            var minimumLateral = double.PositiveInfinity;
+            var maximumLateral = double.NegativeInfinity;
             var telemetry = new System.Text.StringBuilder(
                 "elapsed_seconds,total_distance_meters,lap_number,lap_distance_meters,gradient_percent,speed_kph,heading_x,heading_y,heading_z,rider_x,rider_y,rider_z,camera_x,camera_y,camera_z\\r\\n");
             var rideTimer = Stopwatch.StartNew();
             while (session.CurrentRideState.DistanceMeters < totalTarget && rideTimer.Elapsed < TimeSpan.FromMinutes(8))
             {
+                var steeringPhase = (int)(session.CurrentRideState.DistanceMeters / 18) % 2;
+                world.SetDeterministicSteeringInputForReview(steeringPhase == 0, steeringPhase != 0);
                 await Settle(.25);
                 var state = session.CurrentRideState;
                 if (!session.IsRideActive)
@@ -129,6 +148,8 @@ public partial class PineHillRideScreenReviewTest : Node
                     && state.DistanceMeters <= previousDistance && state.VirtualSpeedKph < 1))
                     throw new InvalidOperationException($"The simulated trainer stopped advancing ride distance at {state.DistanceMeters:F1} m.");
                 diagnostic = world.GetDiagnosticState();
+                minimumLateral = Math.Min(minimumLateral, diagnostic.RiderLateralOffsetMeters);
+                maximumLateral = Math.Max(maximumLateral, diagnostic.RiderLateralOffsetMeters);
                 var lapDistance = world.RouteGeometry!.WrapDistance(state.DistanceMeters);
                 var lapNumber = (int)Math.Floor(state.DistanceMeters / length) + 1;
                 var cameraDistance = (diagnostic.RiderWorldPosition - diagnostic.CameraWorldPosition).Length();
@@ -167,6 +188,18 @@ public partial class PineHillRideScreenReviewTest : Node
                     }
                 }
 
+                if (lapNumber == 1)
+                    for (var checkpointIndex = 0; checkpointIndex < visualCheckpoints.Length; checkpointIndex++)
+                    {
+                        var checkpoint = visualCheckpoints[checkpointIndex];
+                        if (capturedVisualCheckpoints[checkpointIndex] || lapDistance < checkpoint) continue;
+                        if (lapDistance - checkpoint > 6)
+                            throw new InvalidOperationException($"Missed first-lap visual checkpoint {checkpoint:F1}m; " +
+                                $"current chainage={lapDistance:F1}m.");
+                        capturedVisualCheckpoints[checkpointIndex] = true;
+                        if (!IsHeadless) Capture($"pine-ride-{checkpoint:F0}m.png");
+                    }
+
                 telemetry.AppendLine($"{state.ElapsedSeconds:F3},{state.DistanceMeters:F3},{lapNumber},{lapDistance:F3}," +
                     $"{state.CurrentGradientPercent:F3},{state.VirtualSpeedKph:F3},{diagnostic.RiderForward.X:F5}," +
                     $"{diagnostic.RiderForward.Y:F5},{diagnostic.RiderForward.Z:F5},{diagnostic.RiderWorldPosition.X:F3}," +
@@ -182,6 +215,14 @@ public partial class PineHillRideScreenReviewTest : Node
             File.WriteAllText(Path.Combine(_output, "pine-three-lap-ride.csv"), telemetry.ToString());
             Assert(completedLaps == 3 && session.CurrentRideState.DistanceMeters >= totalTarget,
                 $"simulated trainer completes three continuous laps (distance={session.CurrentRideState.DistanceMeters:F1} m)");
+            Assert(capturedVisualCheckpoints.All(value => value),
+                $"actual chase-camera RideScreen captured every first-lap corrected intrusion/intersection checkpoint " +
+                $"({capturedVisualCheckpoints.Count(value => value)}/{capturedVisualCheckpoints.Length})");
+            var lateralLimit = route.Capabilities.MaximumLateralOffsetMeters ?? ProceduralRoad.WidthMeters / 2;
+            Assert(maximumLateral - minimumLateral >= .3 && Math.Max(Math.Abs(minimumLateral), Math.Abs(maximumLateral))
+                    <= lateralLimit + .05,
+                $"normal left/right steering traverses the permitted rider envelope " +
+                $"(min={minimumLateral:F2}m max={maximumLateral:F2}m limit={lateralLimit:F2}m)");
             Assert(session.IsRideActive && session.HasRideRecording
                 && session.CurrentRideState.ElapsedSeconds > 60,
                 "third lap remains an active ride with accumulating elapsed time and FIT recording");

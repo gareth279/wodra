@@ -9,6 +9,8 @@ using NVector3 = System.Numerics.Vector3;
 public partial class TrailCourseLayer : Node3D
 {
     public const float TrailWidthMeters = TrailEnvironmentBuilder.MountainBikeRibbonWidthMeters;
+    private const float FeatureSurfaceOffsetMeters = .035f;
+    private const float JumpRibbonWidthMeters = 2.1f;
     private VisualRoute? _route;
     private TrailFeatureChallenge? _challenge;
     private RouteDefinition? _definition;
@@ -16,6 +18,7 @@ public partial class TrailCourseLayer : Node3D
     public TrailFeatureFrame LastFrame { get; private set; } = new();
     public int TotalScore => _challenge?.TotalScore ?? 0;
     public int CompletedLines => _challenge?.CompletedLines ?? 0;
+    public int CompletedTraversals => _challenge?.CompletedTraversals ?? 0;
     public double LateralCorridorHalfWidth(double distanceMeters) =>
         Math.Min(_definition?.Capabilities.MaximumLateralOffsetMeters ?? 0,
             _challenge?.LateralCorridorHalfWidth(distanceMeters, TrailWidthMeters * .5) ?? 0);
@@ -41,6 +44,12 @@ public partial class TrailCourseLayer : Node3D
         bool paused, bool scoringEnabled)
     {
         LastFrame = _challenge?.Update(distanceMeters, lateralMeters, speedKph, paused, scoringEnabled) ?? new();
+        if (LastFrame.Traversal is { } traversal)
+            GameLogger.Log("trail_feature_takeoff", new { traversal.FeatureId, traversal.Lap,
+                traversal.TakeoffSpeedKph, traversal.TakeoffLateralMeters, traversal.ScoringEnabled });
+        if (LastFrame.CompletedFeature is { } completed)
+            GameLogger.Log("trail_feature_traversed", new { featureId = completed.FeatureId,
+                completed.Lap, completed.ScoringEnabled });
         return LastFrame;
     }
 
@@ -50,37 +59,128 @@ public partial class TrailCourseLayer : Node3D
         LastFrame = _challenge?.Update(distanceMeters, lateralMeters, 0, paused: true, scoringEnabled: false) ?? new();
     }
 
-    private static MeshInstance3D BuildFeatureRibbon(VisualRoute route, TrailFeatureDefinition feature)
+    private static Node3D BuildFeatureRibbon(VisualRoute route, TrailFeatureDefinition feature)
     {
-        var centers = feature.Path.Select(point => ToNumerics(FeaturePosition(route, point))).ToArray();
-        return BuildRibbon($"JumpLine_{feature.Id}", centers, TrailWidthMeters,
-            new Color(.39f, .27f, .16f));
+        var root = new Node3D { Name = $"JumpLine_{feature.Id}" };
+        var raisedPath = RaisedPath(feature);
+        var trailWidth = (float)Math.Max(JumpRibbonWidthMeters, Math.Max(TrailWidthMeters, feature.HalfWidthMeters * 2));
+        var centers = raisedPath.Select(point => ToNumerics(FeaturePosition(route, point) + Vector3.Up * FeatureSurfaceOffsetMeters)).ToArray();
+        root.AddChild(BuildRibbon($"Tabletop_{feature.Id}", centers, trailWidth,
+            new Color(.36f, .29f, .20f)));
+        root.AddChild(BuildJumpShoulders(route, feature, raisedPath, trailWidth));
+        return root;
+    }
+
+    private static TrailFeaturePathPoint[] RaisedPath(TrailFeatureDefinition feature)
+    {
+        var points = feature.Path.ToArray();
+        var firstLifted = Array.FindIndex(points, point => point.SurfaceLiftMeters > 1e-4);
+        if (firstLifted < 0) return [];
+        var lastLifted = Array.FindLastIndex(points, point => point.SurfaceLiftMeters > 1e-4);
+        var start = Math.Max(0, firstLifted - 1);
+        var end = Math.Min(points.Length - 1, lastLifted + 1);
+        return SamplePath(feature, points[start].RouteDistanceMeters, points[end].RouteDistanceMeters, .5);
+    }
+
+    private static MeshInstance3D BuildJumpShoulders(VisualRoute route, TrailFeatureDefinition feature,
+        IReadOnlyList<TrailFeaturePathPoint> raisedPath, float trailWidth)
+    {
+        var surface = new SurfaceTool();
+        surface.Begin(Mesh.PrimitiveType.Triangles);
+        var maximumLift = Math.Max(.01, raisedPath.Max(point => point.SurfaceLiftMeters));
+        var sections = raisedPath.Select((point, index) =>
+        {
+            var center = FeaturePosition(route, point) + Vector3.Up * FeatureSurfaceOffsetMeters;
+            var ground = center - Vector3.Up * (float)point.SurfaceLiftMeters;
+            var before = FeaturePosition(route, raisedPath[Math.Max(0, index - 1)]);
+            var after = FeaturePosition(route, raisedPath[Math.Min(raisedPath.Count - 1, index + 1)]);
+            var tangent = after - before;
+            tangent.Y = 0;
+            if (tangent.LengthSquared() < 1e-6f) tangent = Vector3.Forward;
+            var side = Vector3.Up.Cross(tangent.Normalized()).Normalized();
+            var lift = (float)point.SurfaceLiftMeters;
+            var apronWidth = JumpApronWidthMeters(lift, maximumLift);
+            var halfTop = trailWidth * .5f;
+            var left = new Vector3[5];
+            var right = new Vector3[5];
+            for (var ring = 0; ring < left.Length; ring++)
+            {
+                var t = ring / (float)(left.Length - 1);
+                var smooth = t * t * (3 - 2 * t);
+                var offset = halfTop + apronWidth * t;
+                var height = lift * (1 - smooth) + (ring == left.Length - 1 ? .025f : 0);
+                left[ring] = ground - side * offset + Vector3.Up * height;
+                right[ring] = ground + side * offset + Vector3.Up * height;
+            }
+            return new JumpEarthSection(left, right);
+        }).ToArray();
+
+        for (var index = 0; index < sections.Length - 1; index++)
+        {
+            var a = sections[index];
+            var b = sections[index + 1];
+            for (var ring = 0; ring < a.Left.Length - 1; ring++)
+            {
+                AddQuad(a.Left[ring], b.Left[ring], a.Left[ring + 1], b.Left[ring + 1]);
+                AddQuad(a.Right[ring], b.Right[ring], a.Right[ring + 1], b.Right[ring + 1]);
+            }
+        }
+        surface.Index();
+        surface.GenerateNormals();
+        return new MeshInstance3D
+        {
+            Name = $"SculptedJumpEarthwork_{feature.Id}", Mesh = surface.Commit(),
+            MaterialOverride = Material(new Color(.34f, .28f, .20f))
+        };
+
+        void AddQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+        {
+            AddTriangle(a, b, c); AddTriangle(c, b, d);
+        }
+        void AddTriangle(Vector3 a, Vector3 b, Vector3 c)
+        {
+            var normal = (b - a).Cross(c - a).Normalized();
+            if (normal.LengthSquared() < 1e-5f) return;
+            if (normal.Y < 0) normal = -normal;
+            surface.AddVertex(a); surface.AddVertex(b); surface.AddVertex(c);
+        }
+    }
+
+    private readonly record struct JumpEarthSection(Vector3[] Left, Vector3[] Right);
+
+    public static float JumpApronWidthMeters(double surfaceLiftMeters, double maximumLiftMeters)
+    {
+        if (!double.IsFinite(surfaceLiftMeters) || !double.IsFinite(maximumLiftMeters) || maximumLiftMeters <= 0)
+            return 0;
+        var liftFraction = (float)Math.Clamp(surfaceLiftMeters / maximumLiftMeters, 0, 1);
+        return 1.8f * liftFraction * liftFraction * (3 - 2 * liftFraction);
     }
 
     private static MeshInstance3D BuildFeatureConnectors(VisualRoute route, TrailFeatureDefinition feature)
     {
         var surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);
-        AddWindow(feature.StartMeters, feature.StartMeters + Math.Abs(feature.RequiredLateralMeters) * 14.34);
-        AddWindow(feature.EndMeters - Math.Abs(feature.RequiredLateralMeters) * 14.34, feature.EndMeters);
+        AddWindow(feature.StartMeters, feature.EndMeters);
+        surface.Index();
+        surface.GenerateNormals();
         var mesh = surface.Commit();
         return new MeshInstance3D
         {
             Name = $"FeatureMerges_{feature.Id}", Mesh = mesh,
-            MaterialOverride = Material(new Color(.31f, .25f, .17f))
+            MaterialOverride = Material(new Color(.36f, .29f, .20f))
         };
 
         void AddWindow(double start, double end)
         {
-            var points = feature.Path.Where(point => point.RouteDistanceMeters >= start && point.RouteDistanceMeters <= end).ToArray();
+            var points = SamplePath(feature, start, end, .5);
             if (points.Length < 2) return;
             for (var index = 0; index < points.Length - 1; index++)
             {
                 var a = points[index]; var b = points[index + 1];
-                var centerA = ToGodot(route.GetPoseAtDistance(a.RouteDistanceMeters).Position);
-                var centerB = ToGodot(route.GetPoseAtDistance(b.RouteDistanceMeters).Position);
-                var lineA = FeaturePosition(route, a);
-                var lineB = FeaturePosition(route, b);
+                var centerA = ToGodot(route.GetPoseAtDistance(a.RouteDistanceMeters).Position) + Vector3.Up * FeatureSurfaceOffsetMeters;
+                var centerB = ToGodot(route.GetPoseAtDistance(b.RouteDistanceMeters).Position) + Vector3.Up * FeatureSurfaceOffsetMeters;
+                var lineA = FeaturePosition(route, a) + Vector3.Up * FeatureSurfaceOffsetMeters;
+                var lineB = FeaturePosition(route, b) + Vector3.Up * FeatureSurfaceOffsetMeters;
                 AddTriangle(centerA, lineA, centerB);
                 AddTriangle(lineA, lineB, centerB);
             }
@@ -91,9 +191,7 @@ public partial class TrailCourseLayer : Node3D
             var normal = (b - a).Cross(c - a).Normalized();
             if (normal.LengthSquared() < 1e-5f) normal = Vector3.Up;
             if (normal.Y < 0) normal = -normal;
-            surface.SetNormal(normal); surface.AddVertex(a);
-            surface.SetNormal(normal); surface.AddVertex(b);
-            surface.SetNormal(normal); surface.AddVertex(c);
+            surface.AddVertex(a); surface.AddVertex(b); surface.AddVertex(c);
         }
     }
 
@@ -103,6 +201,33 @@ public partial class TrailCourseLayer : Node3D
         var side = RiderLaneMath.LocalLeft(pose.Forward);
         var position = pose.Position + side * (float)point.LateralMeters + NVector3.UnitY * (float)point.SurfaceLiftMeters;
         return new Vector3(position.X, position.Y, position.Z);
+    }
+
+    private static TrailFeaturePathPoint[] SamplePath(TrailFeatureDefinition feature, double start, double end, double step)
+    {
+        if (feature.Path.Count < 2 || end <= start || step <= 0) return [];
+        var samples = new List<TrailFeaturePathPoint>();
+        for (var distance = start; distance < end; distance += step)
+            samples.Add(InterpolatePathPoint(feature.Path, distance));
+        samples.Add(InterpolatePathPoint(feature.Path, end));
+        return samples.ToArray();
+    }
+
+    private static TrailFeaturePathPoint InterpolatePathPoint(IReadOnlyList<TrailFeaturePathPoint> path, double distance)
+    {
+        if (distance <= path[0].RouteDistanceMeters) return path[0] with { RouteDistanceMeters = distance };
+        for (var index = 1; index < path.Count; index++)
+        {
+            var before = path[index - 1];
+            var after = path[index];
+            if (distance > after.RouteDistanceMeters) continue;
+            var t = Math.Clamp((distance - before.RouteDistanceMeters)
+                / (after.RouteDistanceMeters - before.RouteDistanceMeters), 0, 1);
+            return new TrailFeaturePathPoint(distance,
+                before.LateralMeters + (after.LateralMeters - before.LateralMeters) * t,
+                before.SurfaceLiftMeters + (after.SurfaceLiftMeters - before.SurfaceLiftMeters) * t);
+        }
+        return path[^1] with { RouteDistanceMeters = distance };
     }
 
     private static MeshInstance3D BuildBerm(VisualRoute route, TrailBermDefinition berm)
@@ -178,6 +303,8 @@ public partial class TrailCourseLayer : Node3D
             Add(start.Left, end.Left, start.Right);
             Add(start.Right, end.Left, end.Right);
         }
+        surface.Index();
+        surface.GenerateNormals();
         return new MeshInstance3D { Name = name, Mesh = surface.Commit(), MaterialOverride = Material(color) };
 
         (Vector3 Left, Vector3 Right) Section(int index)
@@ -195,9 +322,7 @@ public partial class TrailCourseLayer : Node3D
             var normal = (b - a).Cross(c - a).Normalized();
             if (normal.LengthSquared() < 1e-5f) return;
             if (normal.Y < 0) normal = -normal;
-            surface.SetNormal(normal); surface.AddVertex(a);
-            surface.SetNormal(normal); surface.AddVertex(b);
-            surface.SetNormal(normal); surface.AddVertex(c);
+            surface.AddVertex(a); surface.AddVertex(b); surface.AddVertex(c);
         }
     }
 
