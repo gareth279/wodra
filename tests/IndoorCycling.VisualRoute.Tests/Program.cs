@@ -121,6 +121,7 @@ var tests = new (string Name, Action Run)[]
         var kerbMarkings = authoredScene.Features.First(feature => feature.ObjectType == "yellow-kerb-stripe"
             && feature.RouteChainageMeters is > 1265 and < 1280
             && Math.Abs(feature.LateralPositionMeters + 3.9) < .1);
+        var clearHedge = authoredScene.Features.Single(feature => feature.Id == "395-right-hedge");
         if (authoredScene.Features.Count < 24
             || intersectionAssets.Length != 3 || intersectionAsset is null
             || intersectionAsset.RouteChainageMeters is < 1265 or > 1280
@@ -136,6 +137,8 @@ var tests = new (string Name, Action Run)[]
             || kerbMarkings.RouteChainageMeters is < 1265 or > 1280
             || Math.Abs(kerbMarkings.LateralPositionMeters + 3.9) > .01
             || kerbMarkings.LengthMeters != 8
+            || Math.Abs(clearHedge.LateralPositionMeters - 4.6) > .01
+            || Math.Abs(clearHedge.OrientationDegrees - 94.08505163986717) > .01
             || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1260)
             || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
             || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 280 and < 320)
@@ -1598,12 +1601,13 @@ var tests = new (string Name, Action Run)[]
         var data = RouteStreetFurnitureDataLoader.LoadEmbedded(typeof(RouteCatalog).Assembly,
             "Wodra.GameData.Routes.dunedin-one-way-oval-gardens.street-furniture.json", "dunedin-one-way-oval-gardens");
         var result = RoadMarkingGeometry.Build(route, data.Items.Select(item =>
-            new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters, item.DistanceFromRouteMeters)));
+            new RoadMarkingControl(item.Category, item.OsmId, item.NearestRouteDistanceMeters,
+                item.DistanceFromRouteMeters, item.Tags)));
         var meshChunks = result.Triangles.Select(item => (int)(item.RouteDistanceMeters / RoadMarkingGeometry.SpatialChunkLengthMeters)).Distinct().Count();
         Console.WriteLine($"ROAD MARKING PREVIEW crossings={result.CrossingSourcesConsidered} considered, {result.NearbyCrossingSources} near, {result.ZebraCrossings} rendered, {result.CrossingDuplicatesSuppressed} deduplicated; signal={result.TrafficSignalLines}, stop={result.StopLines}, give-way={result.GiveWayLines}; triangles={result.MarkingTriangleCount}; meshes={meshChunks}, layer+meshes={meshChunks + 1}");
         Equal(194, result.CrossingSourcesConsidered);
-        if (result.ZebraCrossings >= result.CrossingSourcesConsidered || result.ZebraCrossings == 0)
-            throw new Exception("Dunedin crossings were not meaningfully filtered and deduplicated.");
+        if (result.ZebraCrossings != 0)
+            throw new Exception("Dunedin's bundled crossing tags contain no explicit zebra evidence, so zebra paint must not be generated.");
         if (result.Triangles.Any(triangle => !double.IsFinite(triangle.RouteDistanceMeters)
             || triangle.RouteDistanceMeters < 0 || triangle.RouteDistanceMeters >= route.LengthMeters))
             throw new Exception("Bundled road marking references an invalid wrapped route distance.");
@@ -3519,7 +3523,8 @@ static VisualRoute MarkingTestRoute()
 }
 
 static RoadMarkingControl MarkingControl(string category, long id, double routeDistance, double distanceFromRoute) =>
-    new(category, id, routeDistance, distanceFromRoute);
+    new(category, id, routeDistance, distanceFromRoute,
+        category == "crossing" ? new Dictionary<string, string> { ["crossing"] = "zebra" } : null);
 
 static Vector3 LongestEdge(RoadMarkingTriangle triangle)
 {
