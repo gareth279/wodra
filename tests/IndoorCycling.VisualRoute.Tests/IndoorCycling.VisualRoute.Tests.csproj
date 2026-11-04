@@ -12,6 +12,8 @@
           Link="Routes/dunedin-signal-hill-climbing-loop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../routes/generated/additional/dunedin-rolling-loop.*.json"
           Link="Routes/dunedin-rolling-loop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../routes/user-packages/pine-hill-test/*.json"
+          Link="Routes/pine-hill-test/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../src/IndoorCycling.Core/IndoorCycling.Core.csproj" />
     <ProjectReference Include="../../src/IndoorCycling.Trainer/IndoorCycling.Trainer.csproj" />
     <Compile Include="../../src/IndoorCycling.Game/Scripts/Routes/*.cs" Link="Routes/%(Filename)%(Extension)" />

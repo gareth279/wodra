@@ -17,6 +17,57 @@ public static class RouteGroundFallbackPolicy
 /// <summary>Godot-independent terrain mesh builder used by runtime and focused geometry tests.</summary>
 public static class TerrainMeshGeometry
 {
+    /// <summary>Samples the same offline DEM grids used for rendered terrain and returns its local visual Y.</summary>
+    public static bool TrySampleGroundY(RouteTerrainData data, double xMeters, double zMeters, out float visualY)
+    {
+        foreach (var zone in new[]
+        {
+            (Chunks: data.Chunks, Spacing: data.SpacingMeters, Bias: data.VerticalBiasMeters),
+            (Chunks: data.FarChunks, Spacing: data.FarSpacingMeters, Bias: data.FarVerticalBiasMeters)
+        })
+        {
+            if (!(zone.Spacing > 0)) continue;
+            foreach (var chunk in zone.Chunks)
+            {
+                var gridX = (xMeters - chunk.OriginX) / zone.Spacing;
+                var gridZ = (zMeters - chunk.OriginZ) / zone.Spacing;
+                if (gridX < 0 || gridZ < 0 || gridX > chunk.Columns || gridZ > chunk.Rows) continue;
+                var column = Math.Clamp((int)Math.Floor(gridX), 0, chunk.Columns - 1);
+                var row = Math.Clamp((int)Math.Floor(gridZ), 0, chunk.Rows - 1);
+                var tx = Math.Clamp(gridX - column, 0, 1);
+                var tz = Math.Clamp(gridZ - row, 0, 1);
+                var stride = chunk.Columns + 1;
+                var i00 = row * stride + column;
+                var i10 = i00 + 1;
+                var i01 = i00 + stride;
+                var i11 = i01 + 1;
+                var samples = new[] { chunk.ElevationsMeters[i00], chunk.ElevationsMeters[i10],
+                    chunk.ElevationsMeters[i01], chunk.ElevationsMeters[i11] };
+                double absolute;
+                if (samples.All(value => value.HasValue))
+                {
+                    var north = samples[0]!.Value + (samples[1]!.Value - samples[0]!.Value) * tx;
+                    var south = samples[2]!.Value + (samples[3]!.Value - samples[2]!.Value) * tx;
+                    absolute = north + (south - north) * tz;
+                }
+                else
+                {
+                    var nearest = new[] { (Index: i00, Weight: (1-tx)*(1-tz)),
+                        (Index: i10, Weight: tx*(1-tz)), (Index: i01, Weight: (1-tx)*tz),
+                        (Index: i11, Weight: tx*tz) }
+                        .Where(sample => chunk.ElevationsMeters[sample.Index].HasValue)
+                        .OrderByDescending(sample => sample.Weight).FirstOrDefault();
+                    if (chunk.ElevationsMeters[nearest.Index] is not { } value) continue;
+                    absolute = value;
+                }
+                visualY = (float)(absolute - data.RouteStartElevationMeters - zone.Bias);
+                return float.IsFinite(visualY);
+            }
+        }
+        visualY = 0;
+        return false;
+    }
+
     private readonly record struct GridKey(long X, long Z, long Zone);
     private sealed record Triangle(Vector3 A, Vector3 B, Vector3 C, GridKey KeyA, GridKey KeyB, GridKey KeyC);
     private sealed class RouteSegmentSpatialIndex

@@ -1,0 +1,224 @@
+{
+  "sourceGpx": "track.gpx",
+  "pointCount": 140,
+  "startUtc": "2026-11-03T03:21:27+00:00",
+  "endUtc": "2026-11-03T03:23:45+00:00",
+  "durationSeconds": 138.0,
+  "rawGpsDistanceMeters": 1690.43,
+  "startEndSeparationMeters": 337.75,
+  "gpsElevation": {
+    "available": true,
+    "minMeters": 149.79036690853536,
+    "maxMeters": 163.47981597762555,
+    "authority": "recorded GPX only; not used when LINZ DEM sampling succeeds"
+  },
+  "gpsMaxStepMeters": 17.83,
+  "gpsStationaryIntervalsUnder0_5m": 0,
+  "gapsOverTwoSeconds": [],
+  "videoFiles": [
+    {
+      "file": "Video_20261103_162126.mp4",
+      "creationTime": "2026-11-03T03:21:26.000000Z",
+      "durationSeconds": 59.75,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 3840,
+          "height": 2160,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "7152/239",
+          "duration": "59.750000"
+        }
+      ],
+      "startOffsetFromGpxSeconds": -1.0,
+      "withinGpsRecording": true,
+      "alignmentConfidence": "high"
+    },
+    {
+      "file": "Video_20261103_162227.mp4",
+      "creationTime": "2026-11-03T03:22:27.000000Z",
+      "durationSeconds": 60.008333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 3840,
+          "height": 2160,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "216000/7201",
+          "duration": "60.008333"
+        }
+      ],
+      "startOffsetFromGpxSeconds": 60.0,
+      "withinGpsRecording": true,
+      "alignmentConfidence": "high"
+    },
+    {
+      "file": "Video_20261103_162327.mp4",
+      "creationTime": "2026-11-03T03:23:27.000000Z",
+      "durationSeconds": 18.968333,
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 3840,
+          "height": 2160,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "341400/11381",
+          "duration": "18.968333"
+        }
+      ],
+      "startOffsetFromGpxSeconds": 120.0,
+      "withinGpsRecording": true,
+      "alignmentConfidence": "high"
+    }
+  ],
+  "videoClipBoundaries": [
+    {
+      "before": "Video_20261103_162126.mp4",
+      "after": "Video_20261103_162227.mp4",
+      "gapSeconds": 1.25,
+      "kind": "gap"
+    },
+    {
+      "before": "Video_20261103_162227.mp4",
+      "after": "Video_20261103_162327.mp4",
+      "gapSeconds": -0.008,
+      "kind": "continuous"
+    }
+  ],
+  "embeddedLocationMetadata": "none found in ffprobe format tags",
+  "observations": [
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 10.0,
+      "utc": "2026-11-03T03:21:36+00:00",
+      "rawGpsChainageMeters": 103.21,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 20.0,
+      "utc": "2026-11-03T03:21:46+00:00",
+      "rawGpsChainageMeters": 224.68,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 30.0,
+      "utc": "2026-11-03T03:21:56+00:00",
+      "rawGpsChainageMeters": 348.49,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 40.0,
+      "utc": "2026-11-03T03:22:06+00:00",
+      "rawGpsChainageMeters": 439.37,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162126.mp4",
+      "videoSeconds": 50.0,
+      "utc": "2026-11-03T03:22:16+00:00",
+      "rawGpsChainageMeters": 551.99,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 0.0,
+      "utc": "2026-11-03T03:22:27+00:00",
+      "rawGpsChainageMeters": 721.94,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 10.0,
+      "utc": "2026-11-03T03:22:37+00:00",
+      "rawGpsChainageMeters": 821.94,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 20.0,
+      "utc": "2026-11-03T03:22:47+00:00",
+      "rawGpsChainageMeters": 945.91,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 30.0,
+      "utc": "2026-11-03T03:22:57+00:00",
+      "rawGpsChainageMeters": 1059.99,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 40.0,
+      "utc": "2026-11-03T03:23:07+00:00",
+      "rawGpsChainageMeters": 1193.65,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 50.0,
+      "utc": "2026-11-03T03:23:17+00:00",
+      "rawGpsChainageMeters": 1339.39,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162227.mp4",
+      "videoSeconds": 60.0,
+      "utc": "2026-11-03T03:23:27+00:00",
+      "rawGpsChainageMeters": 1416.95,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162327.mp4",
+      "videoSeconds": 0.0,
+      "utc": "2026-11-03T03:23:27+00:00",
+      "rawGpsChainageMeters": 1416.95,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    },
+    {
+      "sourceVideo": "Video_20261103_162327.mp4",
+      "videoSeconds": 10.0,
+      "utc": "2026-11-03T03:23:37+00:00",
+      "rawGpsChainageMeters": 1564.31,
+      "confidence": "timestamp-aligned",
+      "featureTags": [],
+      "note": "Add human-reviewed visual observations here."
+    }
+  ],
+  "anchorsGenerated": 47,
+  "anchorSpacingSeconds": 3.0,
+  "notes": [
+    "Point-to-point: endpoints are separate; no closure connector is invented.",
+    "Anchor timestamps preserve capture order and direction; RouteBuilder snaps them to OSM.",
+    "Buildings, vegetation and terrain are derived from OSM/LINZ, not inferred from GPS."
+  ]
+}

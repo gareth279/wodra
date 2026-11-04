@@ -1,0 +1,389 @@
+{
+  "id": "pine-hill-test",
+  "routeName": "Pine Hill Test",
+  "source": "OpenStreetMap",
+  "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+  "attribution": "\u00A9 OpenStreetMap contributors, ODbL 1.0",
+  "searchRadiusMeters": 50,
+  "elevationSamplerVersion": 2,
+  "statistics": {
+    "totalCandidates": 1038,
+    "selectedItems": 19,
+    "categoryCounts": {
+      "crossing": 9,
+      "bus-stop": 9,
+      "bench": 1
+    },
+    "streetLamps": 0,
+    "trafficSignals": 0,
+    "stopGiveWaySigns": 0,
+    "bollards": 0,
+    "crossings": 9,
+    "busStops": 9,
+    "benches": 1,
+    "malformedOrSkippedItems": 1658,
+    "itemsInsideRoadRibbon": 0,
+    "elevationSamples": 19,
+    "runtimeMultiMeshCount": 20,
+    "totalRenderedInstances": 19,
+    "renderedPrimitiveInstances": 40,
+    "sceneNodeCount": 21,
+    "generationSeconds": 37.8924959,
+    "sourcePbfFilename": "new-zealand-261005.osm.pbf",
+    "elevationSkippedCount": 0
+  },
+  "items": [
+    {
+      "osmType": "node",
+      "osmId": 11523788942,
+      "category": "crossing",
+      "latitude": -45.8476013,
+      "longitude": 170.5137776,
+      "elevationMeters": 143.66856382396807,
+      "routeTangentDegrees": 54.90934645562754,
+      "distanceFromRouteMeters": 11.963726171640074,
+      "nearestRouteDistanceMeters": 6.994894774933554,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1226127089,
+      "category": "bus-stop",
+      "latitude": -45.847236200000005,
+      "longitude": 170.51457530000002,
+      "elevationMeters": 145.56287746122482,
+      "routeTangentDegrees": 42.04592668104425,
+      "distanceFromRouteMeters": 4.908284752258746,
+      "nearestRouteDistanceMeters": 81.26377901000694,
+      "name": "Pine Hill Rd, 286",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Pine Hill Rd, 286",
+        "public_transport": "platform",
+        "ref": "695",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1226127077,
+      "category": "bus-stop",
+      "latitude": -45.8464098,
+      "longitude": 170.5162391,
+      "elevationMeters": 146.57953214518636,
+      "routeTangentDegrees": 66.14720711060897,
+      "distanceFromRouteMeters": 5.121577723815054,
+      "nearestRouteDistanceMeters": 243.9064442719471,
+      "name": "Pine Hill Rd, 310",
+      "tags": {
+        "bench": "yes",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Pine Hill Rd, 310",
+        "public_transport": "platform",
+        "ref": "696",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831434,
+      "category": "crossing",
+      "latitude": -45.8461561,
+      "longitude": 170.51691490000002,
+      "elevationMeters": 147.87881161188216,
+      "routeTangentDegrees": 38.02131220597818,
+      "distanceFromRouteMeters": 12.735612324504817,
+      "nearestRouteDistanceMeters": 298.83687277368756,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1226127078,
+      "category": "bus-stop",
+      "latitude": -45.845586600000004,
+      "longitude": 170.5170458,
+      "elevationMeters": 145.44895523581502,
+      "routeTangentDegrees": 20.63068144897369,
+      "distanceFromRouteMeters": 4.555142515938912,
+      "nearestRouteDistanceMeters": 358.2968900202726,
+      "name": "Pine Hill Rd, 315",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Pine Hill Rd, 315",
+        "public_transport": "platform",
+        "ref": "697",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831439,
+      "category": "crossing",
+      "latitude": -45.8453293,
+      "longitude": 170.5172477,
+      "elevationMeters": 145.48114114412286,
+      "routeTangentDegrees": 20.630763072021068,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 390.58278554629,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831437,
+      "category": "crossing",
+      "latitude": -45.8452238,
+      "longitude": 170.517141,
+      "elevationMeters": 144.9694026758094,
+      "routeTangentDegrees": 280.09948380075866,
+      "distanceFromRouteMeters": 6.631406167155662,
+      "nearestRouteDistanceMeters": 404.87959044283144,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831440,
+      "category": "crossing",
+      "latitude": -45.8451612,
+      "longitude": 170.5173421,
+      "elevationMeters": 145.6772998707234,
+      "routeTangentDegrees": 100.94748507860328,
+      "distanceFromRouteMeters": 10.897725726115087,
+      "nearestRouteDistanceMeters": 412.32683074979803,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831376,
+      "category": "crossing",
+      "latitude": -45.845276600000005,
+      "longitude": 170.5174251,
+      "elevationMeters": 145.993688407889,
+      "routeTangentDegrees": 106.54195640441714,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 421.0991935980698,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831414,
+      "category": "crossing",
+      "latitude": -45.8461109,
+      "longitude": 170.51879390000002,
+      "elevationMeters": 148.2617770161973,
+      "routeTangentDegrees": 137.06961801496766,
+      "distanceFromRouteMeters": 9.119324214163688,
+      "nearestRouteDistanceMeters": 562.375159162594,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365718,
+      "category": "bus-stop",
+      "latitude": -45.8463258,
+      "longitude": 170.5189592,
+      "elevationMeters": 149.12855605346286,
+      "routeTangentDegrees": 137.0696982942278,
+      "distanceFromRouteMeters": 2.218256991503569,
+      "nearestRouteDistanceMeters": 588.5918671201017,
+      "name": "Wilkinson St, 25",
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Wilkinson St, 25",
+        "public_transport": "platform",
+        "ref": "1021"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365719,
+      "category": "bus-stop",
+      "latitude": -45.8464347,
+      "longitude": 170.51901170000002,
+      "elevationMeters": 149.81295507114785,
+      "routeTangentDegrees": 137.06974666937776,
+      "distanceFromRouteMeters": 3.0519633872048195,
+      "nearestRouteDistanceMeters": 600.2276730638359,
+      "name": "Wilkinson St Playground",
+      "tags": {
+        "bus": "yes",
+        "highway": "bus_stop",
+        "name": "Wilkinson St Playground",
+        "public_transport": "platform",
+        "ref": "1022"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 6489811617,
+      "category": "bus-stop",
+      "latitude": -45.847930500000004,
+      "longitude": 170.5201543,
+      "elevationMeters": 154.19295660821155,
+      "routeTangentDegrees": 227.08908943975814,
+      "distanceFromRouteMeters": 3.400320302459202,
+      "nearestRouteDistanceMeters": 823.094962911413,
+      "name": "Pryde St",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Pryde St",
+        "public_transport": "platform",
+        "ref": "783",
+        "shelter": "yes",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 9342670744,
+      "category": "bench",
+      "latitude": -45.8482369,
+      "longitude": 170.51974460000002,
+      "elevationMeters": 152.49318612634437,
+      "routeTangentDegrees": 258.9332828499995,
+      "distanceFromRouteMeters": 9.964560831560572,
+      "nearestRouteDistanceMeters": 864.5380989437125,
+      "tags": {
+        "amenity": "bench"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365721,
+      "category": "bus-stop",
+      "latitude": -45.8474778,
+      "longitude": 170.51864,
+      "elevationMeters": 161.66427928529873,
+      "routeTangentDegrees": 316.9975780905648,
+      "distanceFromRouteMeters": 2.7183512730579045,
+      "nearestRouteDistanceMeters": 978.9889237237165,
+      "name": "Hislop St, 26",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Hislop St, 26",
+        "public_transport": "platform",
+        "ref": "1038",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 8748365720,
+      "category": "bus-stop",
+      "latitude": -45.8474189,
+      "longitude": 170.5186439,
+      "elevationMeters": 161.02363012307234,
+      "routeTangentDegrees": 316.9975626400977,
+      "distanceFromRouteMeters": 1.9694329040347331,
+      "nearestRouteDistanceMeters": 983.5726258602213,
+      "name": "Hislop St, 25",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Hislop St, 25",
+        "public_transport": "platform",
+        "ref": "1037",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523831037,
+      "category": "crossing",
+      "latitude": -45.847335300000005,
+      "longitude": 170.51833810000002,
+      "elevationMeters": 159.21227356072126,
+      "routeTangentDegrees": 226.7844379569986,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1015.5714851481931,
+      "tags": {
+        "crossing": "unmarked",
+        "crossing:island": "no",
+        "highway": "crossing",
+        "tactile_paving": "yes"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 11523830953,
+      "category": "crossing",
+      "latitude": -45.8475046,
+      "longitude": 170.51435370000002,
+      "elevationMeters": 145.7074908922934,
+      "routeTangentDegrees": 312.2126241626538,
+      "distanceFromRouteMeters": 0,
+      "nearestRouteDistanceMeters": 1368.4953137880511,
+      "tags": {
+        "crossing": "unmarked",
+        "highway": "crossing"
+      }
+    },
+    {
+      "osmType": "node",
+      "osmId": 1227526832,
+      "category": "bus-stop",
+      "latitude": -45.847197200000004,
+      "longitude": 170.51446230000002,
+      "elevationMeters": 144.64231219951404,
+      "routeTangentDegrees": 42.045913373707265,
+      "distanceFromRouteMeters": 4.495709406590759,
+      "nearestRouteDistanceMeters": 1411.6287771743848,
+      "name": "Pine Hill Rd, 285",
+      "tags": {
+        "bench": "no",
+        "bus": "yes",
+        "highway": "bus_stop",
+        "lit": "yes",
+        "name": "Pine Hill Rd, 285",
+        "public_transport": "platform",
+        "ref": "694",
+        "shelter": "no",
+        "tactile_paving": "no"
+      }
+    }
+  ]
+}

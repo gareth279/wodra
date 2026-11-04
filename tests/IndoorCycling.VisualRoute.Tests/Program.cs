@@ -6,6 +6,117 @@ using IndoorCycling.Trainer.Implementations;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("route scene markings and sign faces follow the observed approach in every compass direction", () =>
+    {
+        foreach (var headingDegrees in new[] { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f })
+        {
+            var radians = headingDegrees * MathF.PI / 180;
+            var forward = new Vector3(MathF.Sin(radians), 0, -MathF.Cos(radians));
+            var marking = RouteSceneTransformMath.YieldTriangle(3, 2.5f);
+            var localForward = RouteSceneTransformMath.LocalToWorldDirection(forward, -Vector3.UnitZ);
+            var signFace = RouteSceneTransformMath.ApproachingDirection(forward);
+            var triangleApex = RouteSceneTransformMath.LocalToWorldDirection(forward, marking.Apex);
+            var triangleBaseCenter = RouteSceneTransformMath.LocalToWorldDirection(forward,
+                (marking.LeftBase + marking.RightBase) / 2);
+            var right = RouteSceneTransformMath.LocalToWorldDirection(forward, Vector3.UnitX);
+            var godotYaw = RouteSceneTransformMath.YawRadians(forward);
+            var godotTravelForward = new Vector3(-MathF.Sin(godotYaw), 0, -MathF.Cos(godotYaw));
+            var godotApproach = new Vector3(MathF.Sin(godotYaw), 0, MathF.Cos(godotYaw));
+            NearVector(Vector3.Normalize(forward), localForward);
+            NearVector(-Vector3.Normalize(forward), signFace);
+            NearVector(signFace, triangleApex);
+            NearVector(Vector3.Normalize(forward), godotTravelForward);
+            NearVector(signFace, godotApproach);
+            NearVector(Vector3.Normalize(forward), triangleBaseCenter);
+            Near(0, Vector3.Dot(right, forward));
+            Near(1, right.Length());
+            var position = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, 2, 4);
+            NearVector(new Vector3(10, 3, -5) + right * 2 + forward * 4, position);
+            var triangleOrigin = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, .5f, 2);
+            var triangleBase = triangleOrigin + forward * 1.25f;
+            var lineCenter = RouteSceneTransformMath.Position(new Vector3(10, 3, -5), forward, .25f, 5.25f);
+            Near(.5f, Vector3.Dot(triangleOrigin - new Vector3(10, 3, -5), right));
+            Near(.25f, Vector3.Dot(lineCenter - new Vector3(10, 3, -5), right));
+            Near(2f, Vector3.Dot(lineCenter - triangleBase, forward));
+        }
+        if (!RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(0, 40, 0), Vector3.Zero, 36)
+            || RouteSceneTransformMath.IsWithinHorizontalRadius(new Vector3(36.1f, 0, 0), Vector3.Zero, 36))
+            throw new Exception("Authored-scene vegetation replacement radius must be horizontal, bounded, and deterministic.");
+    }),
+    ("Pine Hill Test loads its point-to-point OSM/LINZ route and scenery package", () =>
+    {
+        const string id = "pine-hill-test";
+        const string description = "A short experimental route reconstructed from GPS and driving footage to test Wodra's real-world route creation workflow.";
+        var route = RouteCatalog.GetById(id) ?? throw new Exception("Pine Hill Test is missing from the normal route catalogue.");
+        if (route.Name != "Pine Hill Test" || route.Description != description
+            || route.RouteType != "Point-to-Point" || route.Environment != RouteEnvironment.Road
+            || route.Discipline != RouteDiscipline.Road || route.SupportsVerifiedCompletionAchievement)
+            throw new Exception("Pine Hill route metadata or open-route policy is invalid.");
+        if (route.RenderRouteReferenceMarkings)
+            throw new Exception("Pine Hill rendered reference paint unsupported by the recorded footage.");
+        if (route.Points is not { Count: > 300 } points || route.DistanceMeters is < 1600 or > 1750
+            || route.TotalAscentMeters is < 15 or > 50 || route.GeometryFingerprint.Length != 64
+            || points.Any(point => point.Latitude is null || point.Longitude is null
+                || !double.IsFinite(point.DistanceMeters + point.ElevationMeters)))
+            throw new Exception("Pine Hill route geometry, chainage, elevation, or fingerprint is invalid.");
+        for (var i = 1; i < points.Count; i++)
+            if (points[i].DistanceMeters <= points[i - 1].DistanceMeters)
+                throw new Exception($"Pine Hill chainage is not increasing at point {i}.");
+        if (Math.Abs(points[^1].Latitude!.Value - points[0].Latitude!.Value) < 0.0001
+            && Math.Abs(points[^1].Longitude!.Value - points[0].Longitude!.Value) < 0.0001)
+            throw new Exception("The recorded point-to-point route was incorrectly closed.");
+        var visual = new VisualRoute(route);
+        if (!visual.IsPointToPoint
+            || visual.LengthMeters != route.DistanceMeters
+            || Vector3.Distance(visual.GetPoseAtDistance(0).Position,
+                visual.GetPoseAtDistance(route.DistanceMeters).Position) < 300)
+            throw new Exception("Pine Hill VisualRoute does not preserve its natural endpoint.");
+        foreach (var suffix in new[] { "buildings.json", "landmarks.json", "vegetation.json", "observations.json",
+                     "street-furniture.json", "streets.json", "terrain.json" })
+            if (!RoutePackageFiles.Exists(typeof(RouteCatalog).Assembly,
+                    $"Wodra.GameData.Routes.{id}.{suffix}", id))
+                throw new Exception($"Pine Hill package is missing its {suffix} sidecar.");
+        var authoredScene = RouteSceneDataLoader.Load(typeof(RouteCatalog).Assembly,
+            $"Wodra.GameData.Routes.{id}.observations.json", id, route.DistanceMeters);
+        var intersectionAssets = authoredScene.Features.Where(feature => feature.ObjectType == "authored-scene-asset").ToArray();
+        var intersectionAsset = intersectionAssets.SingleOrDefault(feature => feature.Variant ==
+            "res://Assets/World/PineHill/PineHillGiveWayIntersection.glb");
+        var yieldMark = authoredScene.Features.Single(feature => feature.ObjectType == "yield-triangle");
+        var giveWayLine = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-line");
+        var giveWaySign = authoredScene.Features.Single(feature => feature.ObjectType == "give-way-sign"
+            && feature.RouteChainageMeters is > 1370 and < 1374);
+        var kerbMarkings = authoredScene.Features.Single(feature => feature.ObjectType == "yellow-kerb-stripe"
+            && feature.RouteChainageMeters is > 1370 and < 1374);
+        if (authoredScene.Features.Count < 24
+            || intersectionAssets.Length != 3 || intersectionAsset is null
+            || intersectionAsset.RouteChainageMeters is < 1370 or > 1374
+            || intersectionAssets.Count(feature => feature.Variant ==
+                "res://Assets/World/PineHill/PineHillMatureBroadleaf.glb") != 2
+            || yieldMark.RouteChainageMeters != 1371.735 || yieldMark.LateralPositionMeters != .5
+            || yieldMark.ForwardOffsetMeters != 2 || yieldMark.LengthMeters != 2.5 || yieldMark.WidthMeters != 3
+            || giveWayLine.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || giveWayLine.LateralPositionMeters != .25 || giveWayLine.ForwardOffsetMeters != 5.25
+            || giveWayLine.LengthMeters != 7 || giveWayLine.WidthMeters != .16
+            || Math.Abs(giveWayLine.ForwardOffsetMeters -
+                (yieldMark.ForwardOffsetMeters + yieldMark.LengthMeters / 2) - 2.0) > .001
+            || giveWaySign.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || giveWaySign.LateralPositionMeters != -4.2 || giveWaySign.ForwardOffsetMeters != 5
+            || giveWaySign.OrientationDegrees != 0 || giveWaySign.HeightMeters != 2.6
+            || kerbMarkings.RouteChainageMeters != yieldMark.RouteChainageMeters
+            || kerbMarkings.LateralPositionMeters != -3.9 || kerbMarkings.ForwardOffsetMeters != 4
+            || kerbMarkings.LengthMeters != 8
+            || !authoredScene.Features.Any(feature => feature.ObjectType == "timber-fence" && feature.RouteChainageMeters > 1370)
+            || !authoredScene.Features.Any(feature => feature.ObjectType == "give-way-sign")
+            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters < 10)
+            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 380 and < 410)
+            || !authoredScene.Features.Any(feature => feature.RouteChainageMeters is > 750 and < 790)
+            || authoredScene.BuildingStyles.Count < 24
+            || authoredScene.BuildingStyles.Count(style => style.HideFromRenderer) != 7
+            || authoredScene.BuildingStyles.Any(style => style.VisualHeightMeters is not (> 2 and <= 30)
+                || string.IsNullOrWhiteSpace(style.SourceVideo) || style.Confidence is not (>= 0 and <= 1)
+                || string.IsNullOrWhiteSpace(style.Provenance)))
+            throw new Exception("Video-authored feature provenance, mapped house styles, or four checkpoint scenery is incomplete.");
+    }),
     ("fictional XC loop has closed local geometry, truthful climb, and three scored line choices", () =>
     {
         var route = RouteCatalog.GetById("wodra-xc-skills-loop")
@@ -448,7 +559,7 @@ var tests = new (string Name, Action Run)[]
         var routeIds = new[]
         {
             "dunedin-one-way-oval-gardens", "dunedin-south-coastal-loop",
-            "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop"
+            "dunedin-rolling-loop", "dunedin-signal-hill-climbing-loop", "pine-hill-test"
         };
         foreach (var id in routeIds)
         {
@@ -2012,12 +2123,20 @@ var tests = new (string Name, Action Run)[]
         Equal("hipped",roof.EffectiveRoofShape);Equal(6,roof.RoofTriangleCount);
         AssertFiniteBuildingMesh(roof);
     }),
-    ("irregular footprint safely falls back to a flat roof", () =>
+    ("irregular residential footprint receives a valid hipped roof instead of a featureless cap", () =>
     {
         var irregular=new[]{new Vector3(0,0,0),new Vector3(8,0,0),new Vector3(7,0,3),
             new Vector3(4,0,5),new Vector3(1,0,4),new Vector3(0,0,0)};
         var roof=BuildingMeshGeometry.BuildStyled(irregular,7,"gabled",2,2,false);
-        Equal("flat",roof.EffectiveRoofShape);Equal(3,roof.RoofTriangleCount);
+        Equal("hipped",roof.EffectiveRoofShape);Equal(5,roof.RoofTriangleCount);AssertFiniteBuildingMesh(roof);
+    }),
+    ("nearby residential buildings receive authored entry doors and mapped garages receive garage doors", () =>
+    {
+        var home=BuildingMeshGeometry.BuildStyled(StyledRectangle(12,8),8,"hipped",2,2,true,addEntryDoor:true);
+        var garage=BuildingMeshGeometry.BuildStyled(StyledRectangle(8,6),4,"flat",0,1,false,addGarageDoor:true);
+        Equal(6,home.Doors.Length);Equal(0,home.GarageDoors.Length);
+        Equal(0,garage.Doors.Length);Equal(6,garage.GarageDoors.Length);
+        AssertFiniteBuildingMesh(home);AssertFiniteBuildingMesh(garage);
     }),
     ("gabled and hipped roofs contain only finite nondegenerate triangles", () =>
     {
@@ -2626,6 +2745,15 @@ var tests = new (string Name, Action Run)[]
         Near(-.08f, built.Chunks[0].Vertices[0].Y);
         Near(0, built.Chunks[0].Vertices[0].X);
         Near(0, built.Chunks[0].Vertices[0].Z);
+    }),
+    ("video-authored scenery samples the same bilinear LINZ terrain elevation as the rendered ground", () =>
+    {
+        var data = SyntheticTerrain(1, 1, [100, 110, 120, 130], [true]);
+        if (!TerrainMeshGeometry.TrySampleGroundY(data, 5, 5, out var center))
+            throw new Exception("A covered route-scene position did not find a DEM sample.");
+        Near(14.92f, center);
+        if (TerrainMeshGeometry.TrySampleGroundY(data, 25, 25, out _))
+            throw new Exception("A route-scene position outside both DEM grids received fabricated elevation.");
     }),
     ("terrain coordinate datum and route clearance match visual route conventions", () =>
     {
@@ -3385,7 +3513,7 @@ static int ParseStoreysForBuilding(string? value,float height) =>
 
 static void AssertFiniteBuildingMesh(BuildingMeshGeometry.StyledMesh mesh)
 {
-    foreach(var vertices in new[]{mesh.Facade,mesh.Roof,mesh.Windows})
+    foreach(var vertices in new[]{mesh.Facade,mesh.Roof,mesh.Windows,mesh.Doors,mesh.GarageDoors})
     {
         if(vertices.Any(p=>!float.IsFinite(p.X+p.Y+p.Z)))throw new Exception("Building styling emitted a non-finite vertex.");
         for(var i=0;i<vertices.Length;i+=3)

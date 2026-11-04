@@ -1,11 +1,11 @@
 function Get-WodraBuiltInRouteDefinitions {
-    param([Parameter(Mandatory = $true)][string]$RepositoryRoot)
+    param([Parameter(Mandatory = $true)][string]$RepositoryRoot, [switch]$IncludeExperimentalRoutes)
 
     $routesRoot = Join-Path $RepositoryRoot 'routes\generated'
     $additionalRoutesRoot = Join-Path $routesRoot 'additional'
     $gameRoutesRoot = Join-Path $RepositoryRoot 'src\IndoorCycling.Game\Data\Routes'
     $roadFiles = @('route-points', 'buildings', 'landmarks', 'street-furniture', 'streets', 'terrain', 'vegetation')
-    @(
+    $definitions = @(
         [pscustomobject]@{ Id = 'dunedin-one-way-oval-gardens'; SourceDirectory = $routesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-south-coastal-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
         [pscustomobject]@{ Id = 'dunedin-rolling-loop'; SourceDirectory = $additionalRoutesRoot; Files = $roadFiles },
@@ -13,6 +13,15 @@ function Get-WodraBuiltInRouteDefinitions {
         [pscustomobject]@{ Id = 'signal-hill-big-easy-mtb'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation') },
         [pscustomobject]@{ Id = 'wodra-xc-skills-loop'; SourceDirectory = $gameRoutesRoot; Files = @('route-points', 'terrain', 'vegetation', 'trail-features') }
     )
+    if ($IncludeExperimentalRoutes) {
+        $pineRoot = Join-Path $RepositoryRoot 'routes\user-packages\pine-hill-test'
+        $definitions += [pscustomobject]@{
+            Id = 'pine-hill-test'; SourceDirectory = $pineRoot
+            Files = @('route-points', 'buildings', 'landmarks', 'street-furniture', 'streets', 'terrain', 'vegetation', 'observations')
+            IsExperimental = $true
+        }
+    }
+    $definitions
 }
 
 function Get-WodraRouteGeometryFingerprint {
@@ -39,10 +48,11 @@ function Write-WodraBuiltInRouteBundle {
     param(
         [Parameter(Mandatory = $true)][string]$RepositoryRoot,
         [Parameter(Mandatory = $true)][string]$DestinationRoot,
-        [Parameter(Mandatory = $true)][string]$Version
+        [Parameter(Mandatory = $true)][string]$Version,
+        [switch]$IncludeExperimentalRoutes
     )
 
-    $definitions = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepositoryRoot)
+    $definitions = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepositoryRoot -IncludeExperimentalRoutes:$IncludeExperimentalRoutes)
     $manifestRoutes = foreach ($definition in $definitions) {
         $destination = Join-Path $DestinationRoot $definition.Id
         New-Item -ItemType Directory -Path $destination -Force | Out-Null
@@ -53,6 +63,28 @@ function Write-WodraBuiltInRouteBundle {
                 throw "Built-in route dependency is missing: $source"
             }
             Copy-Item -LiteralPath $source -Destination (Join-Path $destination $fileName) -Force
+        }
+        if ($definition.Id -eq 'pine-hill-test') {
+            $attributionSource = Join-Path $definition.SourceDirectory 'ATTRIBUTION.md'
+            if (-not (Test-Path -LiteralPath $attributionSource -PathType Leaf)) { throw 'Pine Hill alpha package is missing ATTRIBUTION.md.' }
+            Copy-Item -LiteralPath $attributionSource -Destination (Join-Path $destination 'ATTRIBUTION.md') -Force
+            $runtimeAssets = @(
+                'PineHillGiveWayIntersection.glb',
+                'PineHillMatureBroadleaf.glb',
+                'PineHillGiveWayIntersection_PineHillWeatheredFence_4k.jpg'
+            )
+            $assetRoot = Join-Path $destination 'runtime-assets\Assets\World\PineHill'
+            New-Item -ItemType Directory -Path $assetRoot -Force | Out-Null
+            $assetRecords = foreach ($assetName in $runtimeAssets) {
+                $assetSource = Join-Path $RepositoryRoot "src\IndoorCycling.Game\Assets\World\PineHill\$assetName"
+                if (-not (Test-Path -LiteralPath $assetSource -PathType Leaf)) { throw "Pine Hill runtime asset is missing: $assetSource" }
+                $assetTarget = Join-Path $assetRoot $assetName
+                Copy-Item -LiteralPath $assetSource -Destination $assetTarget -Force
+                [pscustomobject]@{ Path = "Assets/World/PineHill/$assetName"; Sha256 = (Get-FileHash -LiteralPath $assetTarget -Algorithm SHA256).Hash.ToLowerInvariant() }
+            }
+            $assetManifest = [pscustomobject]@{ RouteId = 'pine-hill-test'; IsExperimental = $true; Assets = @($assetRecords) }
+            [System.IO.File]::WriteAllText((Join-Path $destination 'assets-manifest.json'),
+                (($assetManifest | ConvertTo-Json -Depth 5) + [Environment]::NewLine), [System.Text.UTF8Encoding]::new($false))
         }
 
         $routePath = Join-Path $destination "$($definition.Id).route-points.json"
@@ -79,7 +111,8 @@ function Write-WodraBuiltInRouteBundle {
             $sidecarPath = Join-Path $destination "$($definition.Id).$kind.json"
             try { $sidecar = Get-Content -LiteralPath $sidecarPath -Raw | ConvertFrom-Json -ErrorAction Stop }
             catch { throw "Built-in route '$($definition.Id)' sidecar '$kind' is not valid JSON." }
-            if ($sidecar.id -ne $definition.Id) {
+            $sidecarId = if ($sidecar.id) { [string]$sidecar.id } else { [string]$sidecar.routeId }
+            if ($sidecarId -ne $definition.Id) {
                 throw "Built-in route '$($definition.Id)' sidecar '$kind' has a mismatched route ID."
             }
         }
@@ -107,6 +140,7 @@ function Write-WodraBuiltInRouteBundle {
             Name = [string]$route.name
             GeometryFingerprint = $fingerprint
             SourceAttribution = $attribution
+            IsExperimental = [bool]$definition.IsExperimental
         }
     }
     $manifest = [pscustomobject]@{ Version = $Version; Routes = @($manifestRoutes) }

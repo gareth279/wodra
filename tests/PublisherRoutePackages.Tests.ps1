@@ -9,6 +9,33 @@ New-Item -ItemType Directory -Path $temporaryRoot, $releaseRoot | Out-Null
 try {
     $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.70'
     if ($manifest.Routes.Count -ne 6) { throw "Expected six built-in route entries, got $($manifest.Routes.Count)." }
+    if ($manifest.Routes | Where-Object Id -eq 'pine-hill-test') { throw 'Pine Hill leaked into the standard built-in bundle.' }
+    $experimentalRoot = Join-Path $temporaryRoot 'ExperimentalRoutes'
+    $experimental = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $experimentalRoot -Version '0.1.0-alpha.70' -IncludeExperimentalRoutes
+    $pine = @($experimental.Routes | Where-Object Id -eq 'pine-hill-test')[0]
+    if ($experimental.Routes.Count -ne 7 -or $null -eq $pine -or -not $pine.IsExperimental) {
+        throw 'Opt-in bundle must add exactly one explicitly experimental Pine Hill route.'
+    }
+    $pineDirectory = Join-Path $experimentalRoot 'pine-hill-test'
+    foreach ($required in @('pine-hill-test.observations.json', 'pine-hill-test.route-points.json', 'ATTRIBUTION.md', 'assets-manifest.json',
+            'runtime-assets/Assets/World/PineHill/PineHillGiveWayIntersection.glb',
+            'runtime-assets/Assets/World/PineHill/PineHillMatureBroadleaf.glb',
+            'runtime-assets/Assets/World/PineHill/PineHillGiveWayIntersection_PineHillWeatheredFence_4k.jpg')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $pineDirectory ($required -replace '/', '\')) -PathType Leaf)) {
+            throw "Experimental Pine Hill package is missing $required."
+        }
+    }
+    $pineFiles = @(Get-ChildItem -LiteralPath $pineDirectory -File -Recurse | Select-Object -ExpandProperty Name)
+    if ($pineFiles | Where-Object { $_ -match '\.(mp4|mov|gpx|fit)$' -or $_ -match 'frame_\d+' }) {
+        throw 'Experimental package contains private source footage, GPS, or extracted frames.'
+    }
+    $assetManifest = Get-Content -LiteralPath (Join-Path $pineDirectory 'assets-manifest.json') -Raw | ConvertFrom-Json
+    foreach ($asset in $assetManifest.Assets) {
+        $assetPath = Join-Path $pineDirectory ('runtime-assets/' + $asset.Path -replace '/', '\')
+        if ((Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $asset.Sha256) {
+            throw "Pine Hill runtime asset hash mismatch: $($asset.Path)"
+        }
+    }
     $mtbId = 'signal-hill-big-easy-mtb'
     $mtb = @($manifest.Routes | Where-Object Id -eq $mtbId | Select-Object -First 1)[0]
     if ($null -eq $mtb -or [string]::IsNullOrWhiteSpace($mtb.GeometryFingerprint) -or

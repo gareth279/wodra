@@ -69,11 +69,13 @@ public static class BuildOutputs
         {
             id = config.Id,
             name = config.Name,
+            description = string.IsNullOrWhiteSpace(config.Description) ? null : config.Description,
             routeType,
             difficulty = config.Difficulty,
             routeDataVersion = config.RouteDataVersion,
             environment = config.Environment,
             discipline = config.Discipline,
+            renderRouteReferenceMarkings = config.RenderRouteReferenceMarkings,
             surfaceSegments = publishedSurfaceSections,
             geometryFingerprint,
             source = "OpenStreetMap",
