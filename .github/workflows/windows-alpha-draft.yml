@@ -65,7 +65,19 @@ jobs:
           $releaseNotesName = 'release-notes\' + $env:RELEASE_TAG + '.md'
           $releaseNotes = Join-Path $env:GITHUB_WORKSPACE $releaseNotesName
           if (-not (Test-Path -LiteralPath $releaseNotes -PathType Leaf)) { throw "Release notes are missing: $releaseNotes" }
-          .\publish.ps1 -Version $version -GitHubTag $env:RELEASE_TAG -CreateGitHubDraft -PublishRoot $env:PUBLISH_ROOT -ReleaseNotesPath $releaseNotes
+          $publishArgs = @{
+            Version = $version
+            GitHubTag = $env:RELEASE_TAG
+            CreateGitHubDraft = $true
+            PublishRoot = $env:PUBLISH_ROOT
+            ReleaseNotesPath = $releaseNotes
+          }
+          # The owner has requested Pine Hill Test in this experimental alpha only.
+          # Leave subsequent alpha releases on the normal six-route default.
+          if ($env:RELEASE_TAG -eq 'v0.1.0-alpha.92') {
+            $publishArgs.IncludeExperimentalRoutes = $true
+          }
+          .\publish.ps1 @publishArgs
       - uses: actions/upload-artifact@v4
         with:
           name: Wodra-${{ inputs.tag }}-Windows-x64
