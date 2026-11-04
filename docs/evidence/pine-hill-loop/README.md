@@ -11,7 +11,7 @@ The production `RideScreen` review loaded the built-in Pine Hill package, rode t
 - `pine-loop-lap*-before-seam.png` and `pine-loop-lap*-after-seam.png`: views on both sides of each lap crossing. Lap 4 is the wrapped state after completing three full laps.
 - `pine-loop-three-laps-complete.png`: active ride after three completed laps.
 - `pine-render-performance.csv`: 101 frames recorded during the ride on the Quadro P620. Median frame time was 29.875 ms (33.47 FPS); maximum was 38.946 ms (25.68 FPS). Median draw calls were 1,287. These measurements are the baseline for scenery optimization.
-- `fit/wodra-20261104-151736.fit`: finalized FIT from the graphical run.
+- `fit/wodra-20261104-151803.fit`: finalized FIT from the graphical run.
 
 ## Geometry result
 
