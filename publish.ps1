@@ -592,7 +592,9 @@ try {
     # terminating errors rather than $LASTEXITCODE (which belongs to the most
     # recent native process and may still contain an unrelated exit code).
     try {
-        & (Join-Path $RepoDir 'tools\Verify-WodraRelease.ps1') -ZipPath $ArchivePath -ErrorAction Stop
+        $verifyArguments = @{ ZipPath = $ArchivePath }
+        if ($IncludeExperimentalRoutes) { $verifyArguments.IncludeExperimentalRoutes = $true }
+        & (Join-Path $RepoDir 'tools\Verify-WodraRelease.ps1') @verifyArguments -ErrorAction Stop
     }
     catch {
         throw "Release archive verification failed: $($_.Exception.Message)"
