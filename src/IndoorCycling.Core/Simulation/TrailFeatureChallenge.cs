@@ -171,7 +171,7 @@ public sealed class TrailFeatureChallenge(IReadOnlyList<TrailFeatureDefinition> 
                 var absoluteLanding = active.Lap * routeLengthMeters + feature.LandingMeters;
                 var progress = Math.Clamp((distanceMeters - absoluteTakeoff) / (absoluteLanding - absoluteTakeoff), 0, 1);
                 var air = Math.Sin(Math.PI * progress) * feature.MaximumAirHeightMeters;
-                var pitch = (float)(Math.Cos(Math.PI * progress) * 0.20);
+                var pitch = (float)(Math.Cos(Math.PI * progress) * 0.42);
                 return new(lift + rollerLift, air, pitch);
             }
             if (Math.Abs(lateralMeters - point.LateralMeters) > feature.HalfWidthMeters) continue;

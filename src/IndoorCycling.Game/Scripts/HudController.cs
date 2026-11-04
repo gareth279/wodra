@@ -196,7 +196,8 @@ public partial class HudController : Control
 		};
 		topHudLayout?.AddChild(_trackRetryButton);
 		_segmentLabel = GetNodeOrNull<Label>("TopHudPanel/MarginContainer/VBoxContainer/SegmentLabel");
-		_gameScoreLabel = new Label { Name = "GameScore", Visible = false, HorizontalAlignment = HorizontalAlignment.Center };
+		_gameScoreLabel = new Label { Name = "GameScore", Visible = false, HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode = TextServer.AutowrapMode.WordSmart };
 		_gameScoreLabel.AddThemeColorOverride("font_color", new Color(.9f, .78f, .44f));
 		_gameScoreLabel.AddThemeFontSizeOverride("font_size", 13);
 		topHudLayout?.AddChild(_gameScoreLabel);
@@ -1378,12 +1379,12 @@ public partial class HudController : Control
 	}
 
 	public void SetGameScore(bool enabled, int score, int collected, int available,
-		int featureLinesCompleted = 0, bool trailCourse = false)
+		int featureLinesCompleted = 0, bool trailCourse = false, int lap = 1, int lapCollected = 0)
 	{
 		if (_gameScoreLabel is null) return;
 		_gameScoreLabel.Visible = enabled;
 		_gameScoreLabel.Text = enabled ? trailCourse
-			? $"Trail score · {score} pts · {featureLinesCompleted}/3 lines · {collected}/{available} tokens"
+			? CollectibleUiText.TrailScore(score, featureLinesCompleted, lap, lapCollected, available, collected)
 			: CollectibleUiText.Score(score, collected, available) : "";
 		if (!enabled && _catFeedbackLabel is not null) _catFeedbackLabel.Visible = false;
 	}

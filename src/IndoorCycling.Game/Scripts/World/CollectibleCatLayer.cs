@@ -11,11 +11,13 @@ public partial class CollectibleCatLayer : Node3D
 	private readonly Dictionary<string, Vector3> _restPositions = new(StringComparer.Ordinal);
 	private IReadOnlyList<CollectiblePlacement> _placements = Array.Empty<CollectiblePlacement>();
 	private VisualRoute? _route;
+	private string _routeId = string.Empty;
 	private double _previousDistance;
 	private double _previousLateral;
 	private bool _hasPrevious;
 	private readonly HashSet<string> _awarded = new(StringComparer.Ordinal);
 	private readonly HashSet<string> _resolved = new(StringComparer.Ordinal);
+	private readonly Dictionary<int, int> _collectedByLap = [];
 	private readonly CollectibleAttemptState _attempt = new();
 	private Texture2D? _blue;
 	private Texture2D? _gold;
@@ -23,6 +25,7 @@ public partial class CollectibleCatLayer : Node3D
 	public int Score { get; private set; }
 	public int Collected { get; private set; }
 	public int Available => _placements.Count;
+	public int CollectedOnLap(int lapNumber) => _collectedByLap.GetValueOrDefault(lapNumber - 1);
 	public IReadOnlyList<CollectiblePlacement> Placements => _placements;
 	public CollectibleAttemptState Attempt => _attempt;
 	public event Action<CollectiblePlacement>? CollectedPickup;
@@ -36,6 +39,7 @@ public partial class CollectibleCatLayer : Node3D
 	public void Configure(string routeId, VisualRoute route)
 	{
 		_route = route;
+		_routeId = routeId;
 		_placements = CollectibleChallenge.Generate(routeId, route.LengthMeters,
 			route.Samples.Select(s => (s.DistanceMeters, s.Forward)).ToArray());
 		foreach (var pickup in _placements)
@@ -100,10 +104,16 @@ public partial class CollectibleCatLayer : Node3D
 					var target = crossedLap * _route.LengthMeters + pickup.RouteDistanceMeters;
 					if (target < _previousDistance || target > distance || !_resolved.Add(key)) continue;
 					if (CollectibleChallenge.SweptHit(_previousDistance, distance, _previousLateral, lateral,
-						pickup, _route.LengthMeters, looping))
+						pickup, _route.LengthMeters, looping,
+						_routeId == "wodra-xc-skills-loop" ? 0.40 : 0.95))
 					{
 						if (_awarded.Add(key) && _attempt.Award(pickup, (int)crossedLap))
-						{ Score = _attempt.Score; Collected = _attempt.PickupsCollected; CollectedPickup?.Invoke(pickup); }
+						{
+							Score = _attempt.Score;
+							Collected = _attempt.PickupsCollected;
+							_collectedByLap[(int)crossedLap] = _collectedByLap.GetValueOrDefault((int)crossedLap) + 1;
+							CollectedPickup?.Invoke(pickup);
+						}
 					}
 					else GameLogger.Log("collectible_missed", new { pickup.Id, pickup.Kind, pickup.RouteDistanceMeters,
 						pickup.LateralMeters, riderLateralMeters = _previousLateral, endLateralMeters = lateral, lap = crossedLap });

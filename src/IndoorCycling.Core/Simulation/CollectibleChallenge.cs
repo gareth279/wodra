@@ -69,16 +69,24 @@ public static class CollectibleChallenge
         var result = new List<CollectiblePlacement>();
         var orderedSamples = samples.OrderBy(s => s.Distance).ToArray();
         // Leave starts and route closure clear; wide spacing gives riders time to steer.
-        for (var distance = 90d; distance < routeLengthMeters - 90; distance += 180)
+		var candidateDistances = routeId == "wodra-xc-skills-loop"
+			? new[] { 90d, 420d, 510d, 600d, 900d, 990d, 1080d, 1450d }
+			: Enumerable.Range(0, (int)Math.Ceiling(routeLengthMeters / 180d))
+				.Select(index => 90d + index * 180d).Where(distance => distance < routeLengthMeters - 90);
+		foreach (var distance in candidateDistances)
         {
+			if (distance >= routeLengthMeters - 90) continue;
             var turnNearPickup = orderedSamples.Skip(1).Select((sample, index) => (sample, previous: orderedSamples[index]))
                 .Any(pair => Math.Abs(pair.sample.Distance - distance) <= 120 &&
                     System.Numerics.Vector3.Dot(pair.previous.Forward, pair.sample.Forward) < 0.72f);
             var forward = orderedSamples.OrderBy(s => Math.Abs(s.Distance - distance)).Take(2).ToArray();
             if (turnNearPickup || forward.Length < 2 || System.Numerics.Vector3.Dot(forward[0].Forward, forward[1].Forward) < 0.72f)
                 continue;
-            // Keep pickups on the rollable center line so selecting a feature branch cannot make them unreachable.
-            var lateral = (random.NextDouble() * 2 - 1) * 0.10;
+            // XC pickups sit on the inside half of the tread, alternating left/right so a small
+            // deliberate steering correction is useful without sending riders off the trail.
+            var lateral = routeId == "wodra-xc-skills-loop"
+                ? (result.Count % 2 == 0 ? -0.66 : 0.66)
+                : (random.NextDouble() * 2 - 1) * 0.10;
             var gold = random.Next(8) == 0;
             result.Add(new($"v{version}:{routeId}:{distance:0}", distance, lateral,
                 gold ? CollectibleKind.GoldenCat : CollectibleKind.BlueCat, gold ? 5 : 1));

@@ -137,6 +137,9 @@ public partial class RideWorldView : Node3D
     public double CurrentLateralOffsetMeters => _steering.LateralOffsetMeters;
     public int CollectiblesCollected => _collectibleLayer?.Collected ?? 0;
     public int CollectiblesAvailable => _collectibleLayer?.Available ?? 0;
+    public int CollectiblesCollectedOnLap(int lapNumber) => _collectibleLayer?.CollectedOnLap(lapNumber) ?? 0;
+    public IReadOnlyList<IndoorCycling.Core.Simulation.CollectiblePlacement> CollectiblePlacements =>
+        _collectibleLayer?.Placements ?? Array.Empty<IndoorCycling.Core.Simulation.CollectiblePlacement>();
     public int CollectibleScore => _collectibleLayer?.Score ?? 0;
     public int TrailFeaturesCompleted => _trailCourseLayer?.CompletedLines ?? 0;
     public int TrailFeatureTraversals => _trailCourseLayer?.CompletedTraversals ?? 0;
@@ -593,7 +596,9 @@ public partial class RideWorldView : Node3D
         _hudController?.SetGameScore(gameEnabled, _collectibleLayer?.Score ?? 0,
             _collectibleLayer?.Collected ?? 0, _collectibleLayer?.Available ?? 0,
             _collectibleLayer?.Attempt.FeatureLinesCompleted ?? 0,
-            _loadedRoute?.Capabilities.SupportsTrailFeatures == true);
+            _loadedRoute?.Capabilities.SupportsTrailFeatures == true,
+            (int)Math.Floor(distance / Math.Max(1, _geometry.LengthMeters)) + 1,
+            _collectibleLayer?.CollectedOnLap((int)Math.Floor(distance / Math.Max(1, _geometry.LengthMeters)) + 1) ?? 0);
         _hudController?.SetGameSteeringHint(gameEnabled && _deviceConnectionPanel?.HasSteeringController != true);
         var routeLength = _geometry.LengthMeters;
         var wrappedDistance = _geometry.WrapDistance(distance);
