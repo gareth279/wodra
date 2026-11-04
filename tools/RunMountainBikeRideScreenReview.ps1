@@ -39,9 +39,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Godot project import failed (exit $LASTEXITCODE); production scene was not started." }
     $modeArgs = @()
     if ($Headless) { $modeArgs += '--headless' }
-    $sceneArguments = @($modeArgs) + @('--path', $project, '--scene', 'res://Tests/MountainBikeRideScreenReviewTest.tscn')
+    $reviewLog = Join-Path $reviewRoot 'mountain-bike-review.log'
+    $sceneArguments = @($modeArgs) + @('--path', $project, '--scene', 'res://Tests/MountainBikeRideScreenReviewTest.tscn', '--log-file', $reviewLog)
     $sceneProcess = Start-Process -FilePath $godot -ArgumentList $sceneArguments -Wait -PassThru
-    if ($sceneProcess.ExitCode -ne 0) { throw "Mountain-bike production-scene review failed (exit $($sceneProcess.ExitCode)); artifacts: $env:WODRA_REVIEW_OUTPUT" }
+    if (Test-Path -LiteralPath $reviewLog) {
+        Get-Content -LiteralPath $reviewLog | Write-Output
+    }
+    if ($sceneProcess.ExitCode -ne 0) { throw "Mountain-bike production-scene review failed (exit $($sceneProcess.ExitCode)); log: $reviewLog; artifacts: $env:WODRA_REVIEW_OUTPUT" }
     if (-not $Headless) {
         $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
         $frames = @(Get-ChildItem -LiteralPath $env:WODRA_REVIEW_OUTPUT -Filter 'xc-jump-frame-*.png' -File | Sort-Object Name)
