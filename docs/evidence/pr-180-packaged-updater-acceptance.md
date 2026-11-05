@@ -38,7 +38,7 @@ All paths below are inside the disposable local test root and have no public-fee
 | Stable 0.1.0 full package | `F14D0FECBE910A8B4FF5BCB3A34EAA4ED6CEC32BD6BD90584CD778071FC0B7F1` |
 | Stable Setup | `7D96D1CE9759AF806F37A0346E14C90BC8DBE66FAED8B9B13F7B6D72BB7FD34F` |
 | Alpha 0.1.1-alpha.1 full package | `9737C059068E8B102F78FA8BE8B61CAA100A6E9D0D3C766B8507B74F73CAEF79` |
-| Alpha 0.1.1-alpha.3 staged full package | `D25A9950E0AA82009D43A5B8A6D2B526E148809E` |
+| Alpha 0.1.1-alpha.3 staged full package | `D25A9950E0AA82009D43A5B8A6D2B526E148809E1CE6B51D67E63F27CCE7F98B` |
 
 The Alpha and Stable test packages share a test payload and were built at different package versions. These tests make no claim that differently versioned production packages will be byte-identical or that the test artifacts are the promoted production build.
 
@@ -49,6 +49,14 @@ The Alpha and Stable test packages share a test payload and were built at differ
 - No physical BLE FTMS/ANT+ trainer, heart-rate/steering device, Strava upload, or multiplayer service test was performed. These remain separate first-Stable product acceptance checks; they are not claimed as passed by the channel/updater acceptance run.
 - Screenshots from the interactive Settings/update flow were observed during the run but were not saved as standalone image files. The state transitions and result are recorded above; the local logs and feeds remain in the disposable temp root on the test host.
 
+## Fresh Stable Setup follow-up
+
+On 2026-11-06 the Stable Setup artifact was re-verified before any execution. Its SHA-256 is `7D96D1CE9759AF806F37A0346E14C90BC8DBE66FAED8B9B13F7B6D72BB7FD34F`, matching the package evidence above. The Alpha 0.1.1-alpha.3 package hash was also recomputed from the actual local nupkg; the complete 64-character digest above corrects the truncated value previously recorded.
+
+The fresh Stable Setup was **not run** during this follow-up. The available Windows host has only the owner account in an interactive session, and that account lacks elevated administrator rights to provision a disposable local user or enable/query Windows Sandbox. The already open remote desktop environments are not identified as disposable test VMs. The protected release VM is not an acceptable substitute because this test would execute a PR-built package there. Therefore, the exact missing prerequisite is access to a separate disposable Windows user profile or VM where the local Setup can be launched without touching the owner account. This is an isolation prerequisite, not a missing GitHub runner.
+
+No fresh-install screenshots or runtime logs were captured because the installer was not launched. The existing owner Alpha installation, shortcut, uninstall registration, settings and rider data were not touched during this follow-up.
+
 ## Merge assessment
 
-The packaged channel-switching, update, restart, downgrade-prevention, migration, local-feed separation, staged-update safety, and isolated rider-profile scenarios above passed. I would not claim the specifically requested packaged acceptance set is fully complete until the Stable Setup is installed in a separate disposable Windows profile/VM and its initial Stable selection is verified. No release has been published.
+The packaged channel-switching, update, restart, downgrade-prevention, migration, local-feed separation, staged-update safety, and isolated rider-profile scenarios above passed. The specifically requested fresh Stable Setup acceptance remains outstanding and must be run in a separate disposable Windows profile/VM before packaged acceptance is complete. No release has been published.
