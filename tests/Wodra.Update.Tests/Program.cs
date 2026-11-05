@@ -7,6 +7,8 @@ var cases = new (string Name, string Installed, string Candidate, bool Expected)
     ("same version is suppressed", "0.1.0-alpha.2", "0.1.0-alpha.2", false),
     ("older version is suppressed", "0.1.0-alpha.3", "0.1.0-alpha.2", false),
     ("stable release outranks alpha", "0.1.0-alpha.9", "0.1.0", true),
+    ("later Alpha patch series outranks earlier Stable", "0.1.0", "0.1.1-alpha.1", true),
+    ("same series stable outranks prerelease", "0.1.0-alpha.94", "0.1.0", true),
     ("higher prerelease ordinal is newer", "0.1.0-alpha.9", "0.1.0-alpha.10", true),
 };
 
@@ -21,6 +23,25 @@ foreach (var test in cases)
 if (UpdateVersionPolicy.IsNewer(null, SemanticVersion.Parse("0.1.0-alpha.1")))
     throw new InvalidOperationException("An unavailable installed version must not trigger an update prompt.");
 Console.WriteLine("PASS unavailable installed version is suppressed");
+
+if (UpdateChannelPolicy.InitialForNewInstallation("stable") != "stable" ||
+	UpdateChannelPolicy.InitialForNewInstallation("alpha") != "alpha" ||
+	UpdateChannelPolicy.InitialForNewInstallation("dev") != "alpha" ||
+	UpdateChannelPolicy.ResolvePersistedValue(null, hasExistingSettings: true, installerChannel: "alpha", hasExplicitSetting: false) != "alpha" ||
+	UpdateChannelPolicy.ResolvePersistedValue(null, hasExistingSettings: true, installerChannel: "stable", hasExplicitSetting: false) != "stable" ||
+	UpdateChannelPolicy.ResolvePersistedValue("alpha", hasExistingSettings: true, installerChannel: "stable") != "alpha" ||
+	UpdateChannelPolicy.ResolvePersistedValue(null, hasExistingSettings: false, installerChannel: "stable") != "stable")
+	throw new InvalidOperationException("Fresh installer channel initialization must allow exactly Alpha and Stable.");
+if (!UpdateChannelPolicy.IsStagedUpdateForChannel(null, "alpha", "alpha") ||
+	UpdateChannelPolicy.IsStagedUpdateForChannel("alpha", "alpha", "stable") ||
+	!UpdateChannelPolicy.IsStagedUpdateForChannel("stable", "alpha", "stable"))
+	throw new InvalidOperationException("Staged updates must remain isolated to the channel that produced them.");
+if (UpdateVersionPolicy.ExplainNoUpdate("0.1.1-alpha.2", "stable", SemanticVersion.Parse("0.1.0")) is null ||
+	UpdateVersionPolicy.ExplainNoUpdate("0.1.0-alpha.94", "stable", null) is null)
+	throw new InvalidOperationException("An older or unavailable Stable feed must explain that the newer Alpha remains installed.");
+if (UpdateVersionPolicy.ExplainNoUpdate("0.1.0", "alpha", SemanticVersion.Parse("0.1.0-alpha.95")) is not null)
+	throw new InvalidOperationException("A non-newer Alpha candidate must not be offered as an update.");
+Console.WriteLine("PASS two-channel initialization and downgrade explanation");
 
 foreach (var hook in new[] { "--veloapp-install", "--veloapp-obsolete", "--veloapp-updated", "--veloapp-uninstall" })
     if (!VelopackLifecycleArguments.IsLifecycleArgument(hook))
@@ -186,6 +207,46 @@ static class UpdaterStateTests
 		Require((await interrupted.DownloadAndInstallAsync()).Status == UpdaterStatus.Staged,
 			"interrupted download can be resumed by retry");
 
+		var selectedFeeds = new List<string>();
+		var switchedBackend = new FakeUpdaterBackend();
+		var switched = new VelopackUpdateService(switchedBackend, "0.1.1-alpha.2", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel =>
+			{
+				selectedFeeds.Add(channel);
+				return new FakeUpdaterBackend
+				{
+					ChannelName = channel,
+					CurrentVersion = "0.1.1-alpha.2",
+					Check = () => Task.FromResult<UpdateOffer?>(channel == "stable"
+						? new UpdateOffer("0.1.0", "older stable", new object())
+						: new UpdateOffer("0.1.1-alpha.3", "newer alpha", new object()))
+				};
+			});
+		var stableResult = await switched.ChangeChannelAsync("stable");
+		Require(selectedFeeds.SequenceEqual(["stable"]) && stableResult.Channel == "stable" &&
+			stableResult.Status == UpdaterStatus.UpToDate && stableResult.Message.Contains("newer Alpha", StringComparison.Ordinal),
+			"Alpha to Stable rechecks only Stable and keeps a newer Alpha installed");
+		var alphaResult = await switched.ChangeChannelAsync("alpha");
+		Require(selectedFeeds.SequenceEqual(["stable", "alpha"]) && alphaResult.Channel == "alpha" &&
+			alphaResult.Status == UpdaterStatus.Available && alphaResult.Offer?.Version == "0.1.1-alpha.3",
+			"Stable to Alpha rechecks the Alpha feed and offers its newer eligible build");
+
+		var downloadBackend = new FakeUpdaterBackend
+		{
+			Check = () => Task.FromResult<UpdateOffer?>(new UpdateOffer("0.1.0-alpha.2", "download", new object())),
+			Download = async (_, _, cancellationToken) => await Task.Delay(Timeout.Infinite, cancellationToken)
+		};
+		var stagedChannel = (string?)null;
+		var changingDuringDownload = new VelopackUpdateService(downloadBackend, "0.1.0-alpha.1", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel => new FakeUpdaterBackend { ChannelName = channel },
+			setStagedChannel: channel => stagedChannel = channel);
+		await changingDuringDownload.CheckForUpdatesAsync();
+		var pendingDownload = changingDuringDownload.DownloadAndInstallAsync();
+		var changedDuringDownload = await changingDuringDownload.ChangeChannelAsync("stable");
+		await pendingDownload;
+		Require(changedDuringDownload.Channel == "stable" && !changedDuringDownload.HasStagedPackage && stagedChannel is null,
+			"channel switching cancels an in-progress download before replacing its feed");
+
 		var portableBackend = new FakeUpdaterBackend { IsInstalled = false };
 		var portable = new VelopackUpdateService(portableBackend, "0.1.0-alpha.1", "alpha", () => true, (_, _) => { });
 		portable.StartAutomaticCheck();
@@ -201,7 +262,8 @@ sealed class FakeUpdaterBackend : IUpdaterBackend
 	public bool IsInstalled { get; set; } = true;
 	public bool StageCompletedDownload { get; set; } = true;
 	public string CurrentVersion { get; set; } = "0.1.0-alpha.1";
-	public string? Channel => "alpha";
+	public string? Channel => ChannelName;
+	public string ChannelName { get; set; } = "alpha";
 	public UpdateOffer? PendingUpdate => _pendingUpdate;
 	public int CheckCalls { get; private set; }
 	public int ApplyCalls { get; private set; }

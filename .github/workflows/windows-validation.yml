@@ -65,6 +65,9 @@ jobs:
       - name: Test safe local release credential selection
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/GitHubReleaseAuth.Tests.ps1
+      - name: Test release channel version policy
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/ReleaseChannelPolicy.Tests.ps1
       - name: Test publisher smoke user-data isolation
         shell: pwsh
         run: pwsh -NoProfile -File tests/PublisherSmokeIsolation.Tests.ps1
@@ -240,6 +243,14 @@ jobs:
           if ($updaterReviewOutput -notmatch '\[UpdaterServiceVisibilityReview\] PASS startup visibility, active-ride deferral, and visible apply failure' -or
               $updaterReviewOutput -match 'SCRIPT ERROR:|\[UpdaterServiceVisibilityReview\] FAIL:') {
             throw 'Updater startup visibility review did not report a clean pass.'
+          }
+          $channelReviewLog = "$env:RUNNER_TEMP\wodra-update-channel-settings-review.log"
+          & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/UpdateChannelSettingsReviewTest.tscn --log-file $channelReviewLog
+          if ($LASTEXITCODE -ne 0) { Get-Content -LiteralPath $channelReviewLog -Tail 100; throw 'Update channel Settings review failed.' }
+          $channelReviewOutput = Get-Content -LiteralPath $channelReviewLog -Raw
+          if ($channelReviewOutput -notmatch '\[UpdateChannelSettingsReview\] PASS selector' -or
+              $channelReviewOutput -match 'SCRIPT ERROR:|\[UpdateChannelSettingsReview\] FAIL:') {
+            throw 'Update channel selector review did not report a clean pass.'
           }
           $ambientCarOvalLog = "$env:RUNNER_TEMP\wodra-ambient-car-oval-review.log"
           & $env:GODOT_PATH --headless --path src/IndoorCycling.Game --scene res://Tests/AmbientCarOvalRouteReviewTest.tscn --log-file $ambientCarOvalLog

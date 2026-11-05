@@ -141,17 +141,11 @@ public partial class GameBootstrap : Node
 	{
 		const string repositoryUrl = "https://github.com/gareth279/wodra";
 		var identity = BuildIdentity.Current;
-		var channel = BuildIdentity.UpdateChannelForChecks;
+		var channel = UpdateChannelPolicy.Normalize(Settings.UpdateChannel);
 		IUpdaterBackend backend;
 		try
 		{
-			string? localFeedDirectory = null;
-#if WODRA_LOCAL_UPDATE_FEED_TEST
-			localFeedDirectory = System.Environment.GetEnvironmentVariable("WODRA_LOCAL_UPDATE_FEED");
-			if (!string.IsNullOrWhiteSpace(localFeedDirectory))
-				GD.Print("Using the local Velopack feed enabled for installed-update testing.");
-#endif
-			backend = new VelopackUpdateBackend(repositoryUrl, channel, localFeedDirectory);
+			backend = CreateUpdateBackend(repositoryUrl, channel);
 		}
 		catch (Exception ex)
 		{
@@ -171,8 +165,27 @@ public partial class GameBootstrap : Node
 			identity.ApplicationVersion,
 			channel,
 			canApply: () => Mode == SessionMode.None,
-			log: (eventName, payload) => GameLogger.Log(eventName, payload));
+			log: (eventName, payload) => GameLogger.Log(eventName, payload),
+			backendFactory: selected => CreateUpdateBackend(repositoryUrl, selected),
+			setStagedChannel: selected =>
+			{
+				Settings.StagedUpdateChannel = selected;
+				Settings.Save();
+			});
 		UpdateService.StartAutomaticCheck();
+	}
+
+	private static IUpdaterBackend CreateUpdateBackend(string repositoryUrl, string channel)
+	{
+		string? localFeedDirectory = null;
+#if WODRA_LOCAL_UPDATE_FEED_TEST
+		localFeedDirectory = System.Environment.GetEnvironmentVariable("WODRA_LOCAL_UPDATE_FEED");
+		if (!string.IsNullOrWhiteSpace(localFeedDirectory))
+			GD.Print("Using the local Velopack feed enabled for installed-update testing.");
+#endif
+		return new VelopackUpdateBackend(repositoryUrl, channel, localFeedDirectory,
+			stagedChannel: () => Settings.StagedUpdateChannel,
+			installedChannel: BuildIdentity.InstalledChannel);
 	}
 
 	private static void RefreshInstalledShortcutIcons()

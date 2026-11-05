@@ -86,7 +86,7 @@ Automated enforcement: trainer recovery and production device-connection automat
 
 Use the pinned Windows toolchain, approved EOS SDK/configuration and existing release workflow in `docs/windows-alpha-release.md`. Do not publish from an environment missing those capabilities or write-capable authentication. Preflight a clean reviewed commit and matching reachable tag; never move/overwrite a release tag. Keep secrets out of source, arguments and logs. Distinguish built, uploaded, published and anonymously verified artifacts. Verify ZIP, Setup, full package, bundled routes, offline startup, feed metadata and public hashes before claiming delivery. Documentation/test-only issue #107 does not authorize a release.
 
-Implementation/operations: `publish.ps1`, `tools/GitHubReleaseAuth.ps1`, `.github/workflows/windows-alpha-draft.yml`, and `docs/windows-alpha-release.md`.
+Implementation/operations: `publish.ps1`, `tools/GitHubReleaseAuth.ps1`, `.github/workflows/windows-alpha-draft.yml`, `.github/workflows/windows-stable-promotion.yml`, and `docs/windows-alpha-release.md`.
 
 Automated enforcement: Windows validation runs `tests/GitHubReleaseAuth.Tests.ps1`; the release workflow/publisher checks toolchain, tag, package and release preflight. Public downloads and owner hardware/visual acceptance remain release-specific checks, not claims inferred from a successful build.
 

@@ -1,12 +1,15 @@
 param(
     [ValidateSet('Release')]
     [string]$Configuration = 'Release',
+    [ValidateSet('alpha', 'stable')]
+    [string]$Channel = 'alpha',
     [string]$Version,
     [string]$PublishRoot,
     [string]$VisualStudioRoot,
     [string]$GodotPath,
     [string]$EosClientConfigPath,
     [string]$ReleaseNotesPath,
+    [string]$SourceAlphaTag,
     [switch]$SkipOfflineSmokeTest,
     [switch]$IncludeExperimentalRoutes,
     [switch]$CreateGitHubDraft,
@@ -18,6 +21,7 @@ $RepoDir = [System.IO.Path]::GetFullPath($PSScriptRoot)
 . (Join-Path $RepoDir 'tools\GitHubReleaseAuth.ps1')
 . (Join-Path $RepoDir 'tools\PublisherSmokeIsolation.ps1')
 . (Join-Path $RepoDir 'tools\WodraBuiltInRoutePackages.ps1')
+. (Join-Path $RepoDir 'tools\ReleaseChannelPolicy.ps1')
 $githubToken = $null
 $repoPrefix = $RepoDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 $GodotProjectDir = Join-Path $RepoDir 'src\IndoorCycling.Game'
@@ -268,6 +272,10 @@ try {
     Write-Host 'Wodra Windows Release'
     Write-Phase 1 'Validating prerequisites...'
 
+    if ($Channel -eq 'stable' -and [string]::IsNullOrWhiteSpace($Version)) {
+        throw 'Stable package versions must be explicit; use the approved Alpha promotion workflow with -Version.'
+    }
+
     if ([string]::IsNullOrWhiteSpace($Version)) {
         $gitExe = (Get-Command git -ErrorAction Stop).Source
         $versionResult = Invoke-TrackedProcess -FilePath $gitExe `
@@ -281,26 +289,21 @@ try {
         if ($description -match '^v?(\d+\.\d+\.\d+(?:-alpha\.\d+)?)-(\d+)-g[0-9a-f]+(?:-dirty)?$') {
             $baseVersion = $Matches[1]
             $distance = [int]$Matches[2]
-            if ($baseVersion -match '^(\d+\.\d+\.\d+)-alpha\.(\d+)$') {
-                $alphaNumber = [int]$Matches[2] + $distance
-                $Version = "$($Matches[1])-alpha.$alphaNumber"
-            } elseif ($distance -eq 0) {
-                $Version = "$baseVersion-alpha.0"
-            } else {
-                $Version = "$baseVersion-alpha.$distance"
-            }
+            $Version = Get-WodraNextAlphaVersion -BaseVersion $baseVersion -CommitDistance $distance
         } else {
             $Version = $description -replace '^v', ''
         }
     }
     $Version = $Version -replace '^v', ''
-    if ($Version -notmatch '^\d+\.\d+\.\d+-alpha\.\d+$') {
-        throw "Version '$Version' is invalid. Alpha package versions must use MAJOR.MINOR.PATCH-alpha.N (for example 0.2.0-alpha.1)."
-    }
+    Assert-WodraReleaseVersion -Channel $Channel -Version $Version
     $PackageVersion = $Version
+    if ($Channel -eq 'stable' -and $IncludeExperimentalRoutes) { throw 'Stable packages must not include experimental routes.' }
+    if ($Channel -eq 'stable' -and $CreateGitHubDraft -and [string]::IsNullOrWhiteSpace($SourceAlphaTag)) {
+        throw 'Stable draft creation requires -SourceAlphaTag so source provenance can be verified.'
+    }
     if ($CreateGitHubDraft) {
         if ([string]::IsNullOrWhiteSpace($GitHubTag)) { throw 'Pass -GitHubTag with an existing, reviewed Git tag to create a GitHub draft.' }
-        if ($GitHubTag -ne "v$PackageVersion") { throw 'For GitHub publishing, GitHubTag must match the alpha package version.' }
+        if ($GitHubTag -ne "v$PackageVersion") { throw "For GitHub publishing, GitHubTag must match the $Channel package version." }
 
         $savedCredentialProvider = {
             try { $ghExe = (Get-Command gh -ErrorAction Stop).Source }
@@ -366,6 +369,13 @@ try {
         finally {
             [void]$headers.Remove('Authorization')
         }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($SourceAlphaTag) -and $Channel -ne 'stable') {
+        throw 'SourceAlphaTag is only valid for Stable promotion packages.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($SourceAlphaTag)) {
+        Assert-WodraStablePromotionVersion -StableVersion $PackageVersion -SourceAlphaTag $SourceAlphaTag
     }
     if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
         if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) { throw 'LOCALAPPDATA is unavailable; supply -EosClientConfigPath.' }
@@ -441,6 +451,13 @@ try {
     }
 
     $routePackages = @(Get-WodraBuiltInRouteDefinitions -RepositoryRoot $RepoDir -IncludeExperimentalRoutes:$IncludeExperimentalRoutes)
+    if ($Channel -eq 'stable') {
+        $expectedStableRoutes = @(Get-WodraStableRouteIds)
+        $actualStableRoutes = @($routePackages | ForEach-Object { $_.Id })
+        if (($actualStableRoutes -join '|') -ne ($expectedStableRoutes -join '|')) {
+            throw "Stable route manifest must match the approved seven-route allowlist: $($expectedStableRoutes -join ', ')."
+        }
+    }
     foreach ($package in $routePackages) {
         foreach ($kind in $package.Files) {
             $source = Join-Path $package.SourceDirectory "$($package.Id).$kind.json"
@@ -475,7 +492,7 @@ try {
     $buildLog = Join-Path $workRoot "build-$safeVersion.log"
     $exportLog = Join-Path $workRoot "godot-export-$safeVersion.log"
     Write-Host "Output: $PublishDir"
-    Write-Host "Version/channel: $PackageVersion / alpha"
+    Write-Host "Version/channel: $PackageVersion / $Channel"
     Write-Host 'EOS configuration: Loaded (values hidden)'
     Complete-Phase
 
@@ -701,9 +718,9 @@ try {
             -LogPath (Join-Path $workRoot 'release-commit-notes.log') -TimeoutSeconds 30 -Label 'Release note summary'
         $changeLines = @($changes.StdOut -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
             ForEach-Object { "- $_" })
-        if ($changeLines.Count -eq 0) { $changeLines = @('- Initial Wodra alpha package.') }
+        if ($changeLines.Count -eq 0) { $changeLines = @("- Initial Wodra $Channel package.") }
         @("# Wodra $PackageVersion", '', '## Changes', '') + $changeLines + @('', '## Verification', '',
-            'Windows x64 alpha. See the Wodra repository issues for current hardware and multiplayer verification status.') |
+            "Windows x64 $Channel release. See the Wodra repository issues for current hardware and multiplayer verification status.") |
             Set-Content -LiteralPath $releaseNotes -Encoding utf8
     } else {
         $resolvedNotes = [System.IO.Path]::GetFullPath($ReleaseNotesPath)
@@ -714,7 +731,7 @@ try {
     New-Item -ItemType Directory -Path $velopackStage -Force | Out-Null
     $vpkArguments = @('tool', 'run', 'vpk', '--', 'pack', '--packId', 'Wodra', '--packVersion', $PackageVersion,
         '--runtime', 'win-x64',
-        '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', 'alpha', '--packTitle', 'Wodra',
+        '--packDir', $PublishDirStage, '--mainExe', 'Wodra.exe', '--channel', $Channel, '--packTitle', 'Wodra',
         '--packAuthors', 'Wodra', '--icon', (Join-Path $GodotProjectDir 'Assets\Branding\wodra.ico'),
         '--shortcuts', 'Desktop,StartMenuRoot',
         '--releaseNotes', $releaseNotes, '--outputDir', $velopackStage)
@@ -722,11 +739,11 @@ try {
         -LogPath (Join-Path $workRoot 'velopack-pack.log') -TimeoutSeconds 900 -Label 'Velopack full installer and update feed packaging')
     $setup = Get-ChildItem -LiteralPath $velopackStage -Filter '*Setup.exe' -File | Select-Object -First 1
     $fullPackage = Get-ChildItem -LiteralPath $velopackStage -Filter '*-full.nupkg' -File | Select-Object -First 1
-    $channelManifest = Join-Path $velopackStage 'releases.alpha.json'
-    $assetManifest = Join-Path $velopackStage 'assets.alpha.json'
+    $channelManifest = Join-Path $velopackStage "releases.$Channel.json"
+    $assetManifest = Join-Path $velopackStage "assets.$Channel.json"
     if ($null -eq $setup -or $null -eq $fullPackage -or -not (Test-Path -LiteralPath $channelManifest -PathType Leaf) -or
         -not (Test-Path -LiteralPath $assetManifest -PathType Leaf)) {
-        throw 'Velopack did not produce the installer, full package, alpha release feed and build-asset manifest.'
+        throw "Velopack did not produce the installer, full package, $Channel release feed and build-asset manifest."
     }
     Assert-WodraIconResource (Join-Path $PublishDirStage 'Wodra.exe')
     Assert-WodraIconResource $setup.FullName
@@ -757,7 +774,37 @@ try {
     finally { $fullPackageZip.Dispose() }
     $installerChecksum = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
     Set-Content -LiteralPath "$($setup.FullName).sha256" -Value "$installerChecksum  $($setup.Name)"
-    Write-Host "Velopack installer and alpha feed verified: $($setup.Name), $($fullPackage.Name)"
+    if (-not [string]::IsNullOrWhiteSpace($SourceAlphaTag)) {
+        $gitExe = (Get-Command git -ErrorAction Stop).Source
+        $candidate = Invoke-TrackedProcess -FilePath $gitExe -ArgumentList @('-C', $RepoDir, 'rev-parse', '--verify', "refs/tags/$SourceAlphaTag^{commit}") `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'git-alpha-candidate.log') -TimeoutSeconds 30 -Label 'Alpha promotion source verification'
+        $head = Invoke-TrackedProcess -FilePath $gitExe -ArgumentList @('-C', $RepoDir, 'rev-parse', 'HEAD') `
+            -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'git-promotion-head.log') -TimeoutSeconds 30 -Label 'Promotion commit verification'
+        if ($candidate.StdOut.Trim() -ne $head.StdOut.Trim()) { throw 'Stable promotion source must be the exact commit identified by SourceAlphaTag.' }
+        $routeManifest = Join-Path $PublishDirStage 'Routes\builtin-route-manifest.json'
+        if (-not (Test-Path -LiteralPath $routeManifest -PathType Leaf)) { throw 'Stable package is missing its built-in route manifest.' }
+        $manifestContent = Get-Content -LiteralPath $routeManifest -Raw | ConvertFrom-Json
+        if (@($manifestContent.Routes | Where-Object { $_.IsExperimental }).Count -gt 0 -or
+            @($manifestContent.Routes | Where-Object { $_.Id -eq 'pine-hill-test' }).Count -gt 0) {
+            throw 'Stable route manifest contains experimental content.'
+        }
+        $provenance = [ordered]@{
+            Channel = 'stable'
+            Version = $PackageVersion
+            SourceAlphaTag = $SourceAlphaTag
+            SourceAlphaVersion = ($SourceAlphaTag -replace '^v', '')
+            SourceCommit = $head.StdOut.Trim()
+            RouteManifestSha256 = (Get-FileHash -LiteralPath $routeManifest -Algorithm SHA256).Hash.ToLowerInvariant()
+            Artifacts = @(
+                [ordered]@{ Name = $setup.Name; Sha256 = $installerChecksum },
+                [ordered]@{ Name = $fullPackage.Name; Sha256 = (Get-FileHash -LiteralPath $fullPackage.FullName -Algorithm SHA256).Hash.ToLowerInvariant() },
+                [ordered]@{ Name = (Split-Path $ArchivePath -Leaf); Sha256 = (Get-FileHash -LiteralPath $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant() }
+            )
+        }
+        $provenancePath = Join-Path $velopackStage 'release-provenance.json'
+        [System.IO.File]::WriteAllText($provenancePath, (($provenance | ConvertTo-Json -Depth 5) + [Environment]::NewLine), [System.Text.UTF8Encoding]::new($false))
+    }
+    Write-Host "Velopack installer and $Channel feed verified: $($setup.Name), $($fullPackage.Name)"
     Complete-Phase
 
     $hash = (Get-FileHash -LiteralPath $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -788,8 +835,8 @@ try {
     }
     if (-not (Get-ChildItem -LiteralPath $incomingVelopack -Filter '*Setup.exe' -File) -or
         -not (Get-ChildItem -LiteralPath $incomingVelopack -Filter '*-full.nupkg' -File) -or
-        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack 'releases.alpha.json') -PathType Leaf) -or
-        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack 'assets.alpha.json') -PathType Leaf)) {
+        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack "releases.$Channel.json") -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $incomingVelopack "assets.$Channel.json") -PathType Leaf)) {
         throw "Copied Velopack installer/feed output is incomplete: $incomingVelopack"
     }
     if (-not (Test-Path -LiteralPath (Join-Path $incomingExport 'Wodra.exe') -PathType Leaf) -or
@@ -870,10 +917,12 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($statusResult.StdOut)) {
             throw 'The GitHub release source tree must be clean. Commit the reviewed release pipeline and assets before publishing.'
         }
+        $uploadArguments = @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
+            '--channel', $Channel, '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
+            '--releaseName', "Wodra $GitHubTag")
+        if ($Channel -eq 'alpha') { $uploadArguments += '--pre' }
         Invoke-GitHubUploadProcess -FilePath $dotnet `
-            -ArgumentList @('tool', 'run', 'vpk', '--', 'upload', 'github', '--outputDir', $velopackStage,
-                '--channel', 'alpha', '--repoUrl', 'https://github.com/gareth279/wodra', '--tag', $GitHubTag,
-                '--releaseName', "Wodra $GitHubTag", '--pre') `
+            -ArgumentList $uploadArguments `
             -WorkingDirectory $RepoDir -LogPath (Join-Path $workRoot 'github-draft.log') `
             -TimeoutSeconds 600 -Credential $githubToken
     }

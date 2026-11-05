@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 . (Join-Path $repositoryRoot 'tools\WodraBuiltInRoutePackages.ps1')
+. (Join-Path $repositoryRoot 'tools\ReleaseChannelPolicy.ps1')
 $temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WodraBuiltInRoutePackageTest-' + [guid]::NewGuid().ToString('N'))
 $routeRoot = Join-Path $temporaryRoot 'Routes'
 $releaseRoot = Join-Path $temporaryRoot 'release'
@@ -11,6 +12,22 @@ try {
     $manifest = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $routeRoot -Version '0.1.0-alpha.70'
     if ($manifest.Routes.Count -ne 7) { throw "Expected seven built-in route entries, got $($manifest.Routes.Count)." }
     if ($manifest.Routes | Where-Object Id -eq 'pine-hill-test') { throw 'Pine Hill leaked into the standard built-in bundle.' }
+    $stableRouteIds = @(Get-WodraStableRouteIds)
+    if ((@($manifest.Routes | ForEach-Object Id) -join '|') -ne ($stableRouteIds -join '|')) {
+        throw 'The default package route set must exactly match the explicit Stable route allowlist.'
+    }
+    $stableRouteIds = @(Get-WodraStableRouteIds)
+    if ((@($manifest.Routes | ForEach-Object Id) -join '|') -ne ($stableRouteIds -join '|')) {
+        throw 'The default package route set must exactly match the explicit Stable route allowlist.'
+    }
+    $stableRouteIds = @(Get-WodraStableRouteIds)
+    if ((@($manifest.Routes | ForEach-Object Id) -join '|') -ne ($stableRouteIds -join '|')) {
+        throw 'The default package route set must exactly match the explicit Stable route allowlist.'
+    }
+    $stableRouteIds = @(Get-WodraStableRouteIds)
+    if ((@($manifest.Routes | ForEach-Object Id) -join '|') -ne ($stableRouteIds -join '|')) {
+        throw 'The default package route set must exactly match the explicit Stable route allowlist.'
+    }
     $experimentalRoot = Join-Path $temporaryRoot 'ExperimentalRoutes'
     $experimental = Write-WodraBuiltInRouteBundle -RepositoryRoot $repositoryRoot -DestinationRoot $experimentalRoot -Version '0.1.0-alpha.70' -IncludeExperimentalRoutes
     $pine = @($experimental.Routes | Where-Object Id -eq 'pine-hill-test')[0]

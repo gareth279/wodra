@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 public partial class VelopackUpdatePanel : Control
 {
     private readonly bool _showAvailableUpdateAutomatically;
+    private readonly bool _showChannelSelector;
     private readonly VelopackUpdateService? _providedService;
     private VelopackUpdateService? _service;
     private Label? _status;
+    private Label? _identity;
     private Label? _detailsTitle;
     private Label? _detailsStatus;
     private RichTextLabel? _notes;
@@ -27,6 +29,13 @@ public partial class VelopackUpdatePanel : Control
         _providedService = service;
     }
 
+    public VelopackUpdatePanel(bool showAvailableUpdateAutomatically, bool showChannelSelector, VelopackUpdateService? service = null)
+    {
+        _showAvailableUpdateAutomatically = showAvailableUpdateAutomatically;
+        _showChannelSelector = showChannelSelector;
+        _providedService = service;
+    }
+
     public void Attach()
     {
         if (_attached) return;
@@ -37,15 +46,44 @@ public partial class VelopackUpdatePanel : Control
         // Settings embeds this presenter in a VBoxContainer, so reserve space
         // explicitly or its status row can collapse to zero height and appear
         // to be missing even though the updater service is running.
-        CustomMinimumSize = new Vector2(0, 40);
+        CustomMinimumSize = new Vector2(0, _showChannelSelector ? 108 : 56);
+
+        var layout = new VBoxContainer { Name = "UpdatePanelLayout", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        layout.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(layout);
+        _identity = new Label { Name = "InstalledUpdateIdentity", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _identity.AddThemeFontSizeOverride("font_size", 12);
+        layout.AddChild(_identity);
+
+        if (_showChannelSelector)
+        {
+            var channelRow = new HBoxContainer { Name = "UpdateChannelRow", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            channelRow.AddChild(new Label { Text = "Update channel", SizeFlagsHorizontal = SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
+            var picker = new OptionButton { Name = "UpdateChannelSelector", CustomMinimumSize = new Vector2(150, 36) };
+            picker.AddItem("Stable", 0);
+            picker.AddItem("Alpha", 1);
+            picker.SetItemMetadata(0, UpdateChannelPolicy.Stable);
+            picker.SetItemMetadata(1, UpdateChannelPolicy.Alpha);
+            picker.Select(GameBootstrap.Settings.UpdateChannel == UpdateChannelPolicy.Stable ? 0 : 1);
+            picker.ItemSelected += index => _ = ChangeChannelAsync((string)picker.GetItemMetadata((int)index));
+            channelRow.AddChild(picker);
+            layout.AddChild(channelRow);
+            layout.AddChild(new Label
+            {
+                Name = "UpdateChannelDescription",
+                Text = "Stable: Tested releases recommended for normal use.\nAlpha: Development releases with newer features that may have bugs.",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill
+            });
+        }
 
         var row = new HBoxContainer
         {
             Name = "UpdateStatusRow",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, 36)
+            CustomMinimumSize = new Vector2(0, 36),
+            Alignment = BoxContainer.AlignmentMode.Begin
         };
-        row.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _status = new Label
         {
             Name = "UpdateStatus",
@@ -55,10 +93,11 @@ public partial class VelopackUpdatePanel : Control
         };
         _status.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(_status);
-        _checkButton = new Button { Name = "CheckForUpdatesButton", Text = "Check for Updates" };
+        _checkButton = new Button { Name = "CheckForUpdatesButton", Text = "Check for Updates", CustomMinimumSize = new Vector2(0, 36) };
+        _checkButton.SizeFlagsVertical = SizeFlags.ShrinkCenter;
         _checkButton.Pressed += CheckOrReview;
         row.AddChild(_checkButton);
-        AddChild(row);
+        layout.AddChild(row);
 
         BuildDetailsWindow();
         if (_service is not null)
@@ -86,9 +125,28 @@ public partial class VelopackUpdatePanel : Control
         ApplyState(snapshot, openWhenAvailable: _showAvailableUpdateAutomatically && IsVisibleInTree());
     }
 
+    private async Task ChangeChannelAsync(string channel)
+    {
+        if (_service is null || channel == GameBootstrap.Settings.UpdateChannel) return;
+        GameBootstrap.Settings.UpdateChannel = UpdateChannelPolicy.Normalize(channel);
+        try
+        {
+            GameBootstrap.Settings.Save();
+            _service.LogUiEvent("update_channel_changed", new { channel = GameBootstrap.Settings.UpdateChannel });
+            var result = await _service.ChangeChannelAsync(GameBootstrap.Settings.UpdateChannel);
+            if (_status is not null) _status.Text = result.Message;
+        }
+        catch (Exception ex)
+        {
+            if (_status is not null) _status.Text = "Could not reconfigure update checking right now. Wodra remains available for riding.";
+            GD.PushWarning($"Could not reconfigure the update feed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     private void ApplyState(UpdaterSnapshot snapshot, bool openWhenAvailable)
     {
         if (_status is not null) _status.Text = snapshot.Message;
+        if (_identity is not null) _identity.Text = $"Installed Wodra {snapshot.CurrentVersion} · Selected channel: {snapshot.Channel}";
         if (_checkButton is not null)
         {
             _checkButton.Text = snapshot.Status switch

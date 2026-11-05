@@ -49,7 +49,9 @@ public sealed class VelopackUpdateService
 {
     public static readonly TimeSpan FeedCheckTimeout = TimeSpan.FromSeconds(9);
 
-    private readonly IUpdaterBackend _backend;
+    private IUpdaterBackend _backend;
+    private readonly Func<string, IUpdaterBackend>? _backendFactory;
+    private readonly Action<string?>? _setStagedChannel;
     private readonly Func<bool> _canApply;
     private readonly Action<string, object?> _log;
     private readonly SynchronizationContext? _uiContext;
@@ -73,9 +75,13 @@ public sealed class VelopackUpdateService
         Func<bool> canApply,
         Action<string, object?> log,
         SynchronizationContext? uiContext = null,
-        TimeSpan? checkTimeout = null)
+        TimeSpan? checkTimeout = null,
+        Func<string, IUpdaterBackend>? backendFactory = null,
+        Action<string?>? setStagedChannel = null)
     {
         _backend = backend;
+        _backendFactory = backendFactory;
+        _setStagedChannel = setStagedChannel;
         _canApply = canApply;
         _log = log;
         _uiContext = uiContext ?? SynchronizationContext.Current;
@@ -168,7 +174,9 @@ public sealed class VelopackUpdateService
                     Velopack.SemanticVersion.Parse(offer.Version)))
             {
                 _offer = null;
-                SetState(UpdaterStatus.UpToDate, $"Wodra is up to date ({current}).", null, 0);
+                var explanation = UpdateVersionPolicy.ExplainNoUpdate(current, Snapshot.Channel,
+                    offer is null ? null : Velopack.SemanticVersion.Parse(offer.Version));
+                SetState(UpdaterStatus.UpToDate, explanation ?? $"Wodra is up to date ({current}).", null, 0);
                 Log("update_check_complete", new { installedVersion = current, candidateVersion = offer?.Version, isGenuinelyNewer = false });
                 return Snapshot;
             }
@@ -245,6 +253,7 @@ public sealed class VelopackUpdateService
                 throw new InvalidOperationException("Velopack did not confirm the downloaded version as staged.");
 
             _offer = stagedOffer;
+            _setStagedChannel?.Invoke(Snapshot.Channel);
             SetState(UpdaterStatus.Staged, $"Wodra {stagedOffer.Version} is downloaded and ready to apply.", stagedOffer, 100,
                 hasStagedPackage: true);
             Log("update_download_staged", new { version = stagedOffer.Version });
@@ -344,6 +353,45 @@ public sealed class VelopackUpdateService
         }
     }
 
+    public async Task<UpdaterSnapshot> ChangeChannelAsync(string channel)
+    {
+        channel = UpdateChannelPolicy.Normalize(channel);
+        Task<UpdaterSnapshot>? check;
+        Task<UpdaterSnapshot>? download;
+        lock (_sync)
+        {
+            if (string.Equals(Snapshot.Channel, channel, StringComparison.OrdinalIgnoreCase)) return Snapshot;
+            if (_backendFactory is null)
+                return Snapshot with { Message = "The update channel could not be changed in this build." };
+            check = _checkTask is { IsCompleted: false } ? _checkTask : null;
+            download = _downloadTask is { IsCompleted: false } ? _downloadTask : null;
+            _downloadCancellation?.Cancel();
+        }
+
+        // Never replace the manager while it is writing a package. Cancellation
+        // completes first, then the new manager is bound to the selected feed.
+        if (download is not null) await download;
+        if (check is not null) await check;
+
+        lock (_sync)
+        {
+            try { _backend = _backendFactory(channel); }
+            catch (Exception ex)
+            {
+                Log("update_channel_reconfiguration_failed", new { channel, exceptionType = ex.GetType().Name, message = ex.Message });
+                _backend = new UnavailableUpdaterBackend(Snapshot.CurrentVersion, channel, Snapshot.IsInstalled, ex);
+            }
+            _offer = _backend.PendingUpdate;
+            Snapshot = new UpdaterSnapshot(_offer is null ? UpdaterStatus.Unavailable : UpdaterStatus.Staged,
+                _backend.CurrentVersion, channel, _backend.IsInstalled, _offer, _offer is null ? 0 : 100,
+                _offer is null ? $"Checking the {channel} update channel…" : $"Wodra {_offer.Version} is downloaded and ready to apply.",
+                HasStagedPackage: _offer is not null);
+            Publish(Snapshot);
+        }
+        if (Snapshot.Status == UpdaterStatus.Staged) return Snapshot;
+        return await CheckForUpdatesAsync();
+    }
+
     private void ReportProgress(int percentage)
     {
         var progress = Math.Clamp(percentage, 0, 100);
@@ -405,27 +453,35 @@ public sealed class VelopackUpdateBackend : IUpdaterBackend
     private readonly UpdateManager _manager;
     private readonly string _channel;
 
-    public VelopackUpdateBackend(string repositoryUrl, string channel, string? localFeedDirectory = null)
+    private readonly Func<string?>? _stagedChannel;
+    private readonly string _installedChannel;
+    private bool _downloadedInThisSession;
+
+    public VelopackUpdateBackend(string repositoryUrl, string channel, string? localFeedDirectory = null,
+        Func<string?>? stagedChannel = null, string? installedChannel = null)
     {
         _channel = channel;
+        _stagedChannel = stagedChannel;
+        _installedChannel = UpdateChannelPolicy.Normalize(installedChannel ?? channel);
         var downloader = new BoundedFeedDownloader(new HttpClientFileDownloader());
         IUpdateSource source;
 #if WODRA_LOCAL_UPDATE_FEED_TEST
         source = !string.IsNullOrWhiteSpace(localFeedDirectory)
             ? new SimpleFileSource(new DirectoryInfo(localFeedDirectory))
-            : new GithubSource(repositoryUrl, accessToken: null, prerelease: true, downloader);
+            : new GithubSource(repositoryUrl, accessToken: null, prerelease: channel == UpdateChannelPolicy.Alpha, downloader);
 #else
         _ = localFeedDirectory;
-        source = new GithubSource(repositoryUrl, accessToken: null, prerelease: true, downloader);
+        source = new GithubSource(repositoryUrl, accessToken: null, prerelease: channel == UpdateChannelPolicy.Alpha, downloader);
 #endif
-        _manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel });
+        _manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel, AllowVersionDowngrade = true });
     }
 
     public bool IsInstalled => _manager.IsInstalled;
     public string CurrentVersion => _manager.CurrentVersion?.ToString() ?? string.Empty;
     public string? Channel => _channel;
 
-    public UpdateOffer? PendingUpdate => _manager.UpdatePendingRestart is { } pending
+    public UpdateOffer? PendingUpdate => _manager.UpdatePendingRestart is { } pending &&
+        (_downloadedInThisSession || UpdateChannelPolicy.IsStagedUpdateForChannel(_stagedChannel?.Invoke(), _installedChannel, _channel))
         ? new UpdateOffer(pending.Version.ToString(), "A downloaded update is ready to apply.", new NativeOffer(null, pending))
         : null;
 
@@ -442,6 +498,7 @@ public sealed class VelopackUpdateBackend : IUpdaterBackend
         if (offer.Native is not NativeOffer { UpdateInfo: { } info } native)
             throw new InvalidOperationException("The available Velopack update information is missing.");
         await _manager.DownloadUpdatesAsync(info, progress, cancellationToken);
+        _downloadedInThisSession = true;
     }
 
     public void ApplyAndRestart(UpdateOffer offer)
