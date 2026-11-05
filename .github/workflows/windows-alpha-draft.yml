@@ -41,7 +41,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+-alpha\.\d+$') { throw 'Tag must be vMAJOR.MINOR.PATCH-alpha.N.' }
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+-alpha\.\d+$') { throw 'Alpha tag must be vMAJOR.MINOR.PATCH-alpha.N.' }
           git fetch origin main --tags --force
           if ($LASTEXITCODE -ne 0) { throw 'Could not fetch main and tags.' }
           git merge-base --is-ancestor "refs/tags/$env:RELEASE_TAG" 'refs/remotes/origin/main'
@@ -67,6 +67,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $releaseNotes -PathType Leaf)) { throw "Release notes are missing: $releaseNotes" }
           $publishArgs = @{
             Version = $version
+            Channel = 'alpha'
             GitHubTag = $env:RELEASE_TAG
             CreateGitHubDraft = $true
             PublishRoot = $env:PUBLISH_ROOT

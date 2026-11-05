@@ -49,7 +49,10 @@ public sealed class VelopackUpdateService
 {
     public static readonly TimeSpan FeedCheckTimeout = TimeSpan.FromSeconds(9);
 
-    private readonly IUpdaterBackend _backend;
+    private IUpdaterBackend _backend;
+    private readonly Func<string, IUpdaterBackend>? _backendFactory;
+    private readonly Action<string?>? _setStagedChannel;
+    private readonly Action<string>? _persistChannel;
     private readonly Func<bool> _canApply;
     private readonly Action<string, object?> _log;
     private readonly SynchronizationContext? _uiContext;
@@ -61,6 +64,9 @@ public sealed class VelopackUpdateService
     private UpdateOffer? _offer;
     private bool _operationActive;
     private bool _started;
+    private Task<UpdaterSnapshot>? _channelTransitionTask;
+    private string _requestedChannel;
+    private long _channelRequestVersion;
 
     public event Action<UpdaterSnapshot>? StateChanged;
 
@@ -73,9 +79,15 @@ public sealed class VelopackUpdateService
         Func<bool> canApply,
         Action<string, object?> log,
         SynchronizationContext? uiContext = null,
-        TimeSpan? checkTimeout = null)
+        TimeSpan? checkTimeout = null,
+        Func<string, IUpdaterBackend>? backendFactory = null,
+        Action<string?>? setStagedChannel = null,
+        Action<string>? persistChannel = null)
     {
         _backend = backend;
+        _backendFactory = backendFactory;
+        _setStagedChannel = setStagedChannel;
+        _persistChannel = persistChannel;
         _canApply = canApply;
         _log = log;
         _uiContext = uiContext ?? SynchronizationContext.Current;
@@ -95,6 +107,7 @@ public sealed class VelopackUpdateService
                     ? "Updates are checked when online."
                     : $"Wodra {pending.Version} is downloaded and ready to apply.",
             HasStagedPackage: pending is not null);
+        _requestedChannel = Snapshot.Channel;
     }
 
     public void StartAutomaticCheck()
@@ -130,26 +143,36 @@ public sealed class VelopackUpdateService
     {
         lock (_sync)
         {
-            if (_checkTask is { IsCompleted: false })
+            if (_channelTransitionTask is { IsCompleted: false })
             {
-                Log("update_check_coalesced", new { status = Snapshot.Status.ToString(), channel = Snapshot.Channel });
-                return _checkTask;
+                Log("update_check_waiting_for_channel_transition", new { channel = _requestedChannel });
+                return _channelTransitionTask;
             }
-            if (_operationActive)
-            {
-                Log("update_check_skipped_operation_active", new { status = Snapshot.Status.ToString(), channel = Snapshot.Channel });
-                return Task.FromResult(Snapshot);
-            }
-            if (!Snapshot.IsInstalled)
-            {
-                Log("update_check_skipped_not_installed", new { currentVersion = Snapshot.CurrentVersion, channel = Snapshot.Channel });
-                return Task.FromResult(Snapshot);
-            }
+            return StartCheckLocked();
+        }
+    }
 
-            _operationActive = true;
-            _checkTask = CheckCoreAsync();
+    private Task<UpdaterSnapshot> StartCheckLocked()
+    {
+        if (_checkTask is { IsCompleted: false })
+        {
+            Log("update_check_coalesced", new { status = Snapshot.Status.ToString(), channel = Snapshot.Channel });
             return _checkTask;
         }
+        if (_operationActive)
+        {
+            Log("update_check_skipped_operation_active", new { status = Snapshot.Status.ToString(), channel = Snapshot.Channel });
+            return Task.FromResult(Snapshot);
+        }
+        if (!Snapshot.IsInstalled)
+        {
+            Log("update_check_skipped_not_installed", new { currentVersion = Snapshot.CurrentVersion, channel = Snapshot.Channel });
+            return Task.FromResult(Snapshot);
+        }
+
+        _operationActive = true;
+        _checkTask = CheckCoreAsync();
+        return _checkTask;
     }
 
     private async Task<UpdaterSnapshot> CheckCoreAsync()
@@ -168,7 +191,9 @@ public sealed class VelopackUpdateService
                     Velopack.SemanticVersion.Parse(offer.Version)))
             {
                 _offer = null;
-                SetState(UpdaterStatus.UpToDate, $"Wodra is up to date ({current}).", null, 0);
+                var explanation = UpdateVersionPolicy.ExplainNoUpdate(current, Snapshot.Channel,
+                    offer is null ? null : Velopack.SemanticVersion.Parse(offer.Version));
+                SetState(UpdaterStatus.UpToDate, explanation ?? $"Wodra is up to date ({current}).", null, 0);
                 Log("update_check_complete", new { installedVersion = current, candidateVersion = offer?.Version, isGenuinelyNewer = false });
                 return Snapshot;
             }
@@ -200,6 +225,11 @@ public sealed class VelopackUpdateService
     {
         lock (_sync)
         {
+            if (_channelTransitionTask is { IsCompleted: false })
+            {
+                Log("update_download_waiting_for_channel_transition", new { channel = _requestedChannel });
+                return _channelTransitionTask;
+            }
             if (_downloadTask is { IsCompleted: false })
             {
                 Log("update_download_coalesced", new { status = Snapshot.Status.ToString() });
@@ -244,21 +274,41 @@ public sealed class VelopackUpdateService
                     StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Velopack did not confirm the downloaded version as staged.");
 
-            _offer = stagedOffer;
-            SetState(UpdaterStatus.Staged, $"Wodra {stagedOffer.Version} is downloaded and ready to apply.", stagedOffer, 100,
-                hasStagedPackage: true);
-            Log("update_download_staged", new { version = stagedOffer.Version });
-
-            if (!_canApply())
+            lock (_sync)
             {
-                SetState(UpdaterStatus.Staged, "Download complete. Finish your ride or replay, then choose Apply and Restart.", stagedOffer, 100,
+                if (_channelTransitionTask is { IsCompleted: false })
+                {
+                    // Cancellation may arrive after Velopack finishes writing
+                    // its package. Quarantine it before a channel transition can
+                    // expose or apply it, even if the rider switches back.
+                    _setStagedChannel?.Invoke(string.Empty);
+                    _offer = null;
+                    SetState(UpdaterStatus.Failed,
+                        "The channel changed while this download was finishing. The staged package was discarded; check the selected channel again.",
+                        null, 0, "channel-changed", hasStagedPackage: false);
+                    Log("update_download_discarded_for_channel_change", new { version = stagedOffer.Version, channel = Snapshot.Channel });
+                    return Snapshot;
+                }
+
+                _offer = stagedOffer;
+                _setStagedChannel?.Invoke(Snapshot.Channel);
+                SetState(UpdaterStatus.Staged, $"Wodra {stagedOffer.Version} is downloaded and ready to apply.", stagedOffer, 100,
                     hasStagedPackage: true);
-                Log("update_apply_deferred_active_session", new { version = stagedOffer.Version });
+                Log("update_download_staged", new { version = stagedOffer.Version });
+
+                if (!_canApply())
+                {
+                    SetState(UpdaterStatus.Staged, "Download complete. Finish your ride or replay, then choose Apply and Restart.", stagedOffer, 100,
+                        hasStagedPackage: true);
+                    Log("update_apply_deferred_active_session", new { version = stagedOffer.Version });
+                    return Snapshot;
+                }
+
+                // Keep the transition request and staged apply ordered under
+                // the same lock: whichever gets here first owns the outcome.
+                ApplyStagedUpdate(stagedOffer);
                 return Snapshot;
             }
-
-            ApplyStagedUpdate(stagedOffer);
-            return Snapshot;
         }
         catch (OperationCanceledException)
         {
@@ -287,21 +337,29 @@ public sealed class VelopackUpdateService
 
     public UpdaterSnapshot ApplyStagedUpdate()
     {
-        if (!Snapshot.HasStagedPackage || _offer is null)
+        lock (_sync)
         {
-            Log("update_apply_skipped_no_offer", new { status = Snapshot.Status.ToString() });
-            SetState(UpdaterStatus.Failed, "There is no downloaded update ready to apply.", null, 0, "no-staged-update");
-            return Snapshot;
-        }
-        if (!_canApply())
-        {
-            Log("update_apply_deferred_active_session", new { version = _offer.Version });
-            SetState(UpdaterStatus.Staged, "Finish your ride or replay before applying this update.", _offer, Snapshot.ProgressPercent);
-            return Snapshot;
-        }
+            if (_channelTransitionTask is { IsCompleted: false })
+            {
+                Log("update_apply_skipped_channel_transition", new { requestedChannel = _requestedChannel });
+                return Snapshot;
+            }
+            if (!Snapshot.HasStagedPackage || _offer is null)
+            {
+                Log("update_apply_skipped_no_offer", new { status = Snapshot.Status.ToString() });
+                SetState(UpdaterStatus.Failed, "There is no downloaded update ready to apply.", null, 0, "no-staged-update");
+                return Snapshot;
+            }
+            if (!_canApply())
+            {
+                Log("update_apply_deferred_active_session", new { version = _offer.Version });
+                SetState(UpdaterStatus.Staged, "Finish your ride or replay before applying this update.", _offer, Snapshot.ProgressPercent);
+                return Snapshot;
+            }
 
-        ApplyStagedUpdate(_offer);
-        return Snapshot;
+            ApplyStagedUpdate(_offer);
+            return Snapshot;
+        }
     }
 
     private void ApplyStagedUpdate(UpdateOffer offer)
@@ -341,6 +399,111 @@ public sealed class VelopackUpdateService
             }
             Log("update_download_cancel_requested", new { progress = Snapshot.ProgressPercent });
             _downloadCancellation.Cancel();
+        }
+    }
+
+    public Task<UpdaterSnapshot> ChangeChannelAsync(string channel)
+    {
+        channel = UpdateChannelPolicy.Normalize(channel);
+        lock (_sync)
+        {
+            if (_backendFactory is null)
+                return Task.FromResult(Snapshot with { Message = "The update channel could not be changed in this build." });
+
+            _requestedChannel = channel;
+            _channelRequestVersion++;
+            _downloadCancellation?.Cancel();
+            Log("update_channel_requested", new { channel, requestVersion = _channelRequestVersion });
+            if (_channelTransitionTask is { IsCompleted: false })
+                return _channelTransitionTask;
+
+            _channelTransitionTask = RunChannelTransitionsAsync();
+            return _channelTransitionTask;
+        }
+    }
+
+    private async Task<UpdaterSnapshot> RunChannelTransitionsAsync()
+    {
+        // Let ChangeChannelAsync publish the shared task before entering the loop.
+        await Task.Yield();
+
+        while (true)
+        {
+            string channel;
+            long requestVersion;
+            Task<UpdaterSnapshot>? check;
+            Task<UpdaterSnapshot>? download;
+            lock (_sync)
+            {
+                channel = _requestedChannel;
+                requestVersion = _channelRequestVersion;
+                check = _checkTask is { IsCompleted: false } ? _checkTask : null;
+                download = _downloadTask is { IsCompleted: false } ? _downloadTask : null;
+                _downloadCancellation?.Cancel();
+            }
+
+            // Never replace a manager while it is checking metadata or writing a package.
+            if (download is not null) await download;
+            if (check is not null) await check;
+
+            Task<UpdaterSnapshot>? selectedFeedCheck = null;
+            UpdaterSnapshot? publish = null;
+            lock (_sync)
+            {
+                // The selection changed while we waited. Drop this stale request
+                // before creating a backend or persisting its channel.
+                if (requestVersion != _channelRequestVersion) continue;
+
+                var previous = Snapshot;
+                var oldStageExists = previous.HasStagedPackage || _backend.PendingUpdate is not null;
+                try
+                {
+                    // An already-staged package from the old selection must not
+                    // become eligible again if the rider rapidly switches back.
+                    if (oldStageExists) _setStagedChannel?.Invoke(string.Empty);
+
+                    IUpdaterBackend nextBackend;
+                    try { nextBackend = _backendFactory!(channel); }
+                    catch (Exception ex)
+                    {
+                        Log("update_channel_reconfiguration_failed", new { channel, exceptionType = ex.GetType().Name, message = ex.Message });
+                        nextBackend = new UnavailableUpdaterBackend(Snapshot.CurrentVersion, channel, Snapshot.IsInstalled, ex);
+                    }
+
+                    _persistChannel?.Invoke(channel);
+                    _backend = nextBackend;
+                    _offer = _backend.PendingUpdate;
+                    Snapshot = new UpdaterSnapshot(_offer is null ? UpdaterStatus.Unavailable : UpdaterStatus.Staged,
+                        _backend.CurrentVersion, channel, _backend.IsInstalled, _offer, _offer is null ? 0 : 100,
+                        _offer is null ? $"Checking the {channel} update channel…" : $"Wodra {_offer.Version} is downloaded and ready to apply.",
+                        HasStagedPackage: _offer is not null);
+                    publish = Snapshot;
+                    if (_offer is null) selectedFeedCheck = StartCheckLocked();
+                }
+                catch (Exception ex)
+                {
+                    Log("update_channel_persistence_failed", new { channel, exceptionType = ex.GetType().Name, message = ex.Message });
+                    Snapshot = previous with
+                    {
+                        Status = UpdaterStatus.Failed,
+                        Message = "The update channel could not be saved. The previous channel remains active.",
+                        FailureKind = ex.GetType().Name
+                    };
+                    _requestedChannel = previous.Channel;
+                    publish = Snapshot;
+                }
+            }
+
+            if (publish is not null) Publish(publish);
+            if (selectedFeedCheck is not null) await selectedFeedCheck;
+
+            lock (_sync)
+            {
+                if (requestVersion != _channelRequestVersion) continue;
+                if (_channelTransitionTask is { IsCompleted: false }) _channelTransitionTask = null;
+                Log("update_channel_selected", new { channel = Snapshot.Channel, requestVersion, status = Snapshot.Status.ToString() });
+                return Snapshot;
+            }
         }
     }
 
@@ -405,27 +568,35 @@ public sealed class VelopackUpdateBackend : IUpdaterBackend
     private readonly UpdateManager _manager;
     private readonly string _channel;
 
-    public VelopackUpdateBackend(string repositoryUrl, string channel, string? localFeedDirectory = null)
+    private readonly Func<string?>? _stagedChannel;
+    private readonly string _installedChannel;
+    private bool _downloadedInThisSession;
+
+    public VelopackUpdateBackend(string repositoryUrl, string channel, string? localFeedDirectory = null,
+        Func<string?>? stagedChannel = null, string? installedChannel = null)
     {
         _channel = channel;
+        _stagedChannel = stagedChannel;
+        _installedChannel = UpdateChannelPolicy.Normalize(installedChannel ?? channel);
         var downloader = new BoundedFeedDownloader(new HttpClientFileDownloader());
         IUpdateSource source;
 #if WODRA_LOCAL_UPDATE_FEED_TEST
         source = !string.IsNullOrWhiteSpace(localFeedDirectory)
             ? new SimpleFileSource(new DirectoryInfo(localFeedDirectory))
-            : new GithubSource(repositoryUrl, accessToken: null, prerelease: true, downloader);
+            : new GithubSource(repositoryUrl, accessToken: null, prerelease: channel == UpdateChannelPolicy.Alpha, downloader);
 #else
         _ = localFeedDirectory;
-        source = new GithubSource(repositoryUrl, accessToken: null, prerelease: true, downloader);
+        source = new GithubSource(repositoryUrl, accessToken: null, prerelease: channel == UpdateChannelPolicy.Alpha, downloader);
 #endif
-        _manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel });
+        _manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel, AllowVersionDowngrade = true });
     }
 
     public bool IsInstalled => _manager.IsInstalled;
     public string CurrentVersion => _manager.CurrentVersion?.ToString() ?? string.Empty;
     public string? Channel => _channel;
 
-    public UpdateOffer? PendingUpdate => _manager.UpdatePendingRestart is { } pending
+    public UpdateOffer? PendingUpdate => _manager.UpdatePendingRestart is { } pending &&
+        (_downloadedInThisSession || UpdateChannelPolicy.IsStagedUpdateForChannel(_stagedChannel?.Invoke(), _installedChannel, _channel))
         ? new UpdateOffer(pending.Version.ToString(), "A downloaded update is ready to apply.", new NativeOffer(null, pending))
         : null;
 
@@ -442,6 +613,7 @@ public sealed class VelopackUpdateBackend : IUpdaterBackend
         if (offer.Native is not NativeOffer { UpdateInfo: { } info } native)
             throw new InvalidOperationException("The available Velopack update information is missing.");
         await _manager.DownloadUpdatesAsync(info, progress, cancellationToken);
+        _downloadedInThisSession = true;
     }
 
     public void ApplyAndRestart(UpdateOffer offer)

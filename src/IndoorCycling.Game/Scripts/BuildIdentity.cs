@@ -21,8 +21,16 @@ public sealed record BuildIdentityDetails(
 
 public static class BuildIdentity
 {
-	/// <summary>The existing update feed used by startup update checks.</summary>
-	public const string UpdateChannelForChecks = "alpha";
+	/// <summary>Fallback feed name for unpackaged development builds.</summary>
+	public const string UpdateChannelForChecks = UpdateChannelPolicy.Alpha;
+	public static string InstalledChannel
+	{
+		get
+		{
+			try { return VelopackLocator.IsCurrentSet ? UpdateChannelPolicy.Normalize(VelopackLocator.Current.Channel) : UpdateChannelPolicy.Alpha; }
+			catch { return UpdateChannelPolicy.Alpha; }
+		}
+	}
 
 	public static BuildIdentityDetails Current => ResolveCurrent();
 

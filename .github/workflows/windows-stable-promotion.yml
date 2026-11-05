@@ -1,0 +1,97 @@
+name: Prepare Windows Stable draft from approved Alpha
+
+on:
+  workflow_dispatch:
+    inputs:
+      alpha_tag:
+        description: Published, validated Alpha candidate (for example v0.1.0-alpha.94)
+        required: true
+        type: string
+      stable_version:
+        description: Owner-approved Stable SemVer (for example 0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate-candidate:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/windows-validation.yml
+    with:
+      ref: ${{ inputs.alpha_tag }}
+    permissions:
+      contents: read
+
+  package-stable-draft:
+    if: github.ref == 'refs/heads/main'
+    needs: [validate-candidate]
+    environment: stable-release
+    runs-on: [self-hosted, Windows, X64, wodra-release]
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.alpha_tag }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.204
+      - name: Verify approved Alpha candidate, Stable tag, and release workstation
+        shell: pwsh
+        env:
+          ALPHA_TAG: ${{ inputs.alpha_tag }}
+          STABLE_VERSION: ${{ inputs.stable_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . .\tools\ReleaseChannelPolicy.ps1
+          Assert-WodraReleaseVersion -Channel stable -Version $env:STABLE_VERSION
+          if ($env:ALPHA_TAG -notmatch '^v\d+\.\d+\.\d+-alpha\.\d+$') { throw 'Candidate must be an existing vMAJOR.MINOR.PATCH-alpha.N Alpha tag.' }
+          Assert-WodraPromotionCandidateVersion -StableVersion $env:STABLE_VERSION -SourceAlphaTag $env:ALPHA_TAG
+          git fetch origin main --tags --force
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch protected main and release tags.' }
+          $candidateCommit = (git rev-parse --verify "refs/tags/$env:ALPHA_TAG^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'The selected Alpha source tag does not exist.' }
+          $channelPolicy = git show "${candidateCommit}:tools/ReleaseChannelPolicy.ps1"
+          if ($LASTEXITCODE -ne 0 -or $channelPolicy -notmatch 'function Assert-WodraReleaseVersion') { throw 'The Alpha candidate does not contain the merged two-channel release policy.' }
+          $channelUi = git show "${candidateCommit}:src/IndoorCycling.Game/Scripts/VelopackUpdatePanel.cs"
+          if ($LASTEXITCODE -ne 0 -or $channelUi -notmatch 'UpdateChannelSelector') { throw 'The Alpha candidate does not contain the two-channel Settings UI.' }
+          $channelPublisher = git show "${candidateCommit}:publish.ps1"
+          if ($LASTEXITCODE -ne 0 -or $channelPublisher -notmatch "ValidateSet\('alpha', 'stable'\)") { throw 'The Alpha candidate does not contain the channel-aware Windows publisher.' }
+          $stableTag = "v$($env:STABLE_VERSION)"
+          $stableCommit = (git rev-parse --verify "refs/tags/$stableTag^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $stableCommit -ne $candidateCommit) { throw 'The pre-authorized Stable tag must already exist and point to the exact approved Alpha candidate commit. This workflow never creates or moves tags.' }
+          git merge-base --is-ancestor $candidateCommit 'refs/remotes/origin/main'
+          if ($LASTEXITCODE -ne 0) { throw 'The approved Alpha source is not reachable from protected origin/main.' }
+          git checkout --detach $candidateCommit
+          if ($LASTEXITCODE -ne 0) { throw 'Could not check out the approved candidate commit.' }
+          $alphaRelease = gh release view $env:ALPHA_TAG --repo gareth279/wodra --json isDraft,isPrerelease,tagName | ConvertFrom-Json
+          if ($alphaRelease.isDraft -or -not $alphaRelease.isPrerelease) { throw 'The Alpha candidate must already be a published prerelease.' }
+          if ((dotnet --version).Trim() -ne '10.0.204') { throw 'Release runner did not install .NET SDK 10.0.204.' }
+          $godot = 'C:\Tools\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64_console.exe'
+          if (-not (Test-Path $godot)) { throw 'Pinned Godot 4.6.2 .NET editor is missing from this release runner.' }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Wodra\EOS-SDK\SDK\Bin\EOSSDK-Win64-Shipping.dll")) { throw 'Licensed EOS SDK is not provisioned for the release runner.' }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Wodra\eos-client.json")) { throw 'Approved Wodra Player EOS client config is not provisioned for the release runner.' }
+          "PUBLISH_ROOT=$env:RUNNER_TEMP\Wodra-stable-release" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Build Stable packages and create draft only
+        shell: pwsh
+        env:
+          ALPHA_TAG: ${{ inputs.alpha_tag }}
+          STABLE_VERSION: ${{ inputs.stable_version }}
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $notes = Join-Path $env:GITHUB_WORKSPACE "release-notes\v$($env:STABLE_VERSION).md"
+          if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) { throw "Stable release notes are missing: $notes" }
+          .\publish.ps1 -Channel stable -Version $env:STABLE_VERSION -GitHubTag "v$($env:STABLE_VERSION)" `
+            -SourceAlphaTag $env:ALPHA_TAG -CreateGitHubDraft -PublishRoot $env:PUBLISH_ROOT -ReleaseNotesPath $notes
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wodra-v${{ inputs.stable_version }}-Windows-x64-Stable-draft
+          path: ${{ runner.temp }}/Wodra-stable-release
+          if-no-files-found: error
+          retention-days: 90

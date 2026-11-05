@@ -267,7 +267,7 @@ public partial class StartPanelController : Control
 			var updatesHeading = new Label { Text = "Updates" };
 			updatesHeading.AddThemeFontSizeOverride("font_size", 16);
 			content.AddChild(updatesHeading);
-			var settingsUpdatePanel = new VelopackUpdatePanel { Name = "SettingsUpdatePanel" };
+			var settingsUpdatePanel = new VelopackUpdatePanel(showAvailableUpdateAutomatically: false, showChannelSelector: true) { Name = "SettingsUpdatePanel" };
 			content.AddChild(settingsUpdatePanel);
 			settingsUpdatePanel.Attach();
 			content.AddChild(new HSeparator());

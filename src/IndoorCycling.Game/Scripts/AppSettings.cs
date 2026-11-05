@@ -15,6 +15,10 @@ public sealed class AppSettings
 	public RecordingSettings Recording { get; set; } = new();
 	public StravaClientSettings StravaClient { get; set; } = new();
 	public bool DebugModeEnabled { get; set; }
+	/// <summary>Selected public update feed. Missing values migrate existing Alpha installs to Alpha.</summary>
+	public string UpdateChannel { get; set; } = "alpha";
+	/// <summary>Channel that produced a staged Velopack update, used to prevent cross-channel apply.</summary>
+	public string? StagedUpdateChannel { get; set; }
 	/// <summary>Optional in-ride controls for the Windows OS-selected media session. Disabled by default.</summary>
 	public bool InRideMediaControlsEnabled { get; set; }
 	/// <summary>Optional read-only phone companion; disabled by default.</summary>
@@ -75,7 +79,8 @@ public sealed class AppSettings
 			{
 				var defaults = new AppSettings
 				{
-					SteeringSensitivityPreferenceVersion = SteeringSensitivityPreferencePolicy.CurrentVersion
+					SteeringSensitivityPreferenceVersion = SteeringSensitivityPreferencePolicy.CurrentVersion,
+					UpdateChannel = UpdateChannelPolicy.InitialForNewInstallation(BuildIdentity.InstalledChannel)
 				};
 				defaults.Save();
 
@@ -98,22 +103,31 @@ public sealed class AppSettings
 
 			if (settings is null)
 			{
-				var defaults = new AppSettings();
+				var defaults = new AppSettings
+				{
+					UpdateChannel = UpdateChannelPolicy.InitialForNewInstallation(BuildIdentity.InstalledChannel)
+				};
 				defaults.Save();
 				return defaults;
 			}
 			// Older development builds briefly exposed a global Strava settings object.
 			// Remove those unsupported fields from settings.json without logging their values.
 			var removeLegacyStravaSettings = false;
+			var hasUpdateChannelSetting = false;
 			using (var document = JsonDocument.Parse(json))
 			{
 				if (document.RootElement.ValueKind == JsonValueKind.Object)
 				{
 					removeLegacyStravaSettings = document.RootElement.EnumerateObject()
 						.Any(property => string.Equals(property.Name, "Strava", StringComparison.OrdinalIgnoreCase));
+					hasUpdateChannelSetting = document.RootElement.EnumerateObject()
+						.Any(property => string.Equals(property.Name, "UpdateChannel", StringComparison.OrdinalIgnoreCase));
 				}
 			}
 			settings.Display ??= new RideDisplayPreferences();
+			settings.UpdateChannel = UpdateChannelPolicy.ResolvePersistedValue(settings.UpdateChannel,
+				hasExistingSettings: true, installerChannel: BuildIdentity.InstalledChannel,
+				hasExplicitSetting: hasUpdateChannelSetting);
 			settings.GameFeaturesByProfile ??= new System.Collections.Generic.Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 			settings.RouteFavoritesByProfile ??= new System.Collections.Generic.Dictionary<Guid, System.Collections.Generic.List<string>>();
 			settings.WorkoutFtpWattsByProfile ??= new System.Collections.Generic.Dictionary<Guid, int>();
@@ -163,7 +177,10 @@ public sealed class AppSettings
 				exceptionType = ex.GetType().FullName
 			});
 
-			return new AppSettings();
+			return new AppSettings
+			{
+				UpdateChannel = UpdateChannelPolicy.InitialForNewInstallation(BuildIdentity.InstalledChannel)
+			};
 		}
 	}
 
