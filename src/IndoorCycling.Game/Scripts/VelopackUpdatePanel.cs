@@ -43,7 +43,8 @@ public partial class VelopackUpdatePanel : Control
         if (_attached) return;
         _attached = true;
         _service = _providedService ?? GameBootstrap.UpdateService;
-        _requestedChannel = UpdateChannelPolicy.Normalize(GameBootstrap.Settings.UpdateChannel);
+        _requestedChannel = UpdateChannelPolicy.Normalize(
+            _service?.Snapshot.Channel ?? GameBootstrap.Settings?.UpdateChannel);
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         // A plain Control does not derive its minimum size from its children.
         // Settings embeds this presenter in a VBoxContainer, so reserve space
