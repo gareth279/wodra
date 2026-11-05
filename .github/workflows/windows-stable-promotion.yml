@@ -51,11 +51,17 @@ jobs:
           . .\tools\ReleaseChannelPolicy.ps1
           Assert-WodraReleaseVersion -Channel stable -Version $env:STABLE_VERSION
           if ($env:ALPHA_TAG -notmatch '^v\d+\.\d+\.\d+-alpha\.\d+$') { throw 'Candidate must be an existing vMAJOR.MINOR.PATCH-alpha.N Alpha tag.' }
-          Assert-WodraStablePromotionVersion -StableVersion $env:STABLE_VERSION -SourceAlphaTag $env:ALPHA_TAG
+          Assert-WodraPromotionCandidateVersion -StableVersion $env:STABLE_VERSION -SourceAlphaTag $env:ALPHA_TAG
           git fetch origin main --tags --force
           if ($LASTEXITCODE -ne 0) { throw 'Could not fetch protected main and release tags.' }
           $candidateCommit = (git rev-parse --verify "refs/tags/$env:ALPHA_TAG^{commit}").Trim()
           if ($LASTEXITCODE -ne 0) { throw 'The selected Alpha source tag does not exist.' }
+          $channelPolicy = git show "${candidateCommit}:tools/ReleaseChannelPolicy.ps1"
+          if ($LASTEXITCODE -ne 0 -or $channelPolicy -notmatch 'function Assert-WodraReleaseVersion') { throw 'The Alpha candidate does not contain the merged two-channel release policy.' }
+          $channelUi = git show "${candidateCommit}:src/IndoorCycling.Game/Scripts/VelopackUpdatePanel.cs"
+          if ($LASTEXITCODE -ne 0 -or $channelUi -notmatch 'UpdateChannelSelector') { throw 'The Alpha candidate does not contain the two-channel Settings UI.' }
+          $channelPublisher = git show "${candidateCommit}:publish.ps1"
+          if ($LASTEXITCODE -ne 0 -or $channelPublisher -notmatch "ValidateSet\('alpha', 'stable'\)") { throw 'The Alpha candidate does not contain the channel-aware Windows publisher.' }
           $stableTag = "v$($env:STABLE_VERSION)"
           $stableCommit = (git rev-parse --verify "refs/tags/$stableTag^{commit}").Trim()
           if ($LASTEXITCODE -ne 0 -or $stableCommit -ne $candidateCommit) { throw 'The pre-authorized Stable tag must already exist and point to the exact approved Alpha candidate commit. This workflow never creates or moves tags.' }

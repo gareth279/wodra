@@ -171,6 +171,17 @@ public partial class GameBootstrap : Node
 			{
 				Settings.StagedUpdateChannel = selected;
 				Settings.Save();
+			},
+			persistChannel: selected =>
+			{
+				var previous = Settings.UpdateChannel;
+				Settings.UpdateChannel = selected;
+				try { Settings.Save(); }
+				catch
+				{
+					Settings.UpdateChannel = previous;
+					throw;
+				}
 			});
 		UpdateService.StartAutomaticCheck();
 	}

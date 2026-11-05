@@ -19,6 +19,8 @@ public partial class VelopackUpdatePanel : Control
     private Button? _checkButton;
     private Button? _installButton;
     private Button? _cancelButton;
+    private OptionButton? _channelPicker;
+    private string _requestedChannel = UpdateChannelPolicy.Alpha;
     private Window? _detailsWindow;
     private bool _attached;
     private bool _operationDetailsRequested;
@@ -41,6 +43,7 @@ public partial class VelopackUpdatePanel : Control
         if (_attached) return;
         _attached = true;
         _service = _providedService ?? GameBootstrap.UpdateService;
+        _requestedChannel = UpdateChannelPolicy.Normalize(GameBootstrap.Settings.UpdateChannel);
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         // A plain Control does not derive its minimum size from its children.
         // Settings embeds this presenter in a VBoxContainer, so reserve space
@@ -59,14 +62,14 @@ public partial class VelopackUpdatePanel : Control
         {
             var channelRow = new HBoxContainer { Name = "UpdateChannelRow", SizeFlagsHorizontal = SizeFlags.ExpandFill };
             channelRow.AddChild(new Label { Text = "Update channel", SizeFlagsHorizontal = SizeFlags.ExpandFill, VerticalAlignment = VerticalAlignment.Center });
-            var picker = new OptionButton { Name = "UpdateChannelSelector", CustomMinimumSize = new Vector2(150, 36) };
-            picker.AddItem("Stable", 0);
-            picker.AddItem("Alpha", 1);
-            picker.SetItemMetadata(0, UpdateChannelPolicy.Stable);
-            picker.SetItemMetadata(1, UpdateChannelPolicy.Alpha);
-            picker.Select(GameBootstrap.Settings.UpdateChannel == UpdateChannelPolicy.Stable ? 0 : 1);
-            picker.ItemSelected += index => _ = ChangeChannelAsync((string)picker.GetItemMetadata((int)index));
-            channelRow.AddChild(picker);
+            _channelPicker = new OptionButton { Name = "UpdateChannelSelector", CustomMinimumSize = new Vector2(150, 36) };
+            _channelPicker.AddItem("Stable", 0);
+            _channelPicker.AddItem("Alpha", 1);
+            _channelPicker.SetItemMetadata(0, UpdateChannelPolicy.Stable);
+            _channelPicker.SetItemMetadata(1, UpdateChannelPolicy.Alpha);
+            _channelPicker.Select(_requestedChannel == UpdateChannelPolicy.Stable ? 0 : 1);
+            _channelPicker.ItemSelected += index => _ = ChangeChannelAsync((string)_channelPicker.GetItemMetadata((int)index));
+            channelRow.AddChild(_channelPicker);
             layout.AddChild(channelRow);
             layout.AddChild(new Label
             {
@@ -127,17 +130,27 @@ public partial class VelopackUpdatePanel : Control
 
     private async Task ChangeChannelAsync(string channel)
     {
-        if (_service is null || channel == GameBootstrap.Settings.UpdateChannel) return;
-        GameBootstrap.Settings.UpdateChannel = UpdateChannelPolicy.Normalize(channel);
+        if (_service is null) return;
+        channel = UpdateChannelPolicy.Normalize(channel);
+        if (channel == _requestedChannel) return;
+        _requestedChannel = channel;
         try
         {
-            GameBootstrap.Settings.Save();
-            _service.LogUiEvent("update_channel_changed", new { channel = GameBootstrap.Settings.UpdateChannel });
-            var result = await _service.ChangeChannelAsync(GameBootstrap.Settings.UpdateChannel);
+            _service.LogUiEvent("update_channel_change_requested", new { channel });
+            var result = await _service.ChangeChannelAsync(channel);
+            if (_requestedChannel != result.Channel)
+            {
+                _requestedChannel = result.Channel;
+                if (_channelPicker is not null)
+                    _channelPicker.Select(result.Channel == UpdateChannelPolicy.Stable ? 0 : 1);
+            }
             if (_status is not null) _status.Text = result.Message;
         }
         catch (Exception ex)
         {
+            _requestedChannel = _service.Snapshot.Channel;
+            if (_channelPicker is not null)
+                _channelPicker.Select(_requestedChannel == UpdateChannelPolicy.Stable ? 0 : 1);
             if (_status is not null) _status.Text = "Could not reconfigure update checking right now. Wodra remains available for riding.";
             GD.PushWarning($"Could not reconfigure the update feed: {ex.GetType().Name}: {ex.Message}");
         }

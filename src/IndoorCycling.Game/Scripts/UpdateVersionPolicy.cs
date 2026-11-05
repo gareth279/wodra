@@ -21,7 +21,9 @@ public static class UpdateChannelPolicy
 		hasExistingSettings && hasExplicitSetting ? Normalize(savedValue) : InitialForNewInstallation(installerChannel);
 
 	public static bool IsStagedUpdateForChannel(string? stagedChannel, string? installerChannel, string selectedChannel) =>
-		string.Equals(Normalize(stagedChannel ?? installerChannel), Normalize(selectedChannel), StringComparison.OrdinalIgnoreCase);
+		stagedChannel is null
+			? string.Equals(Normalize(installerChannel), Normalize(selectedChannel), StringComparison.OrdinalIgnoreCase)
+			: IsValid(stagedChannel) && string.Equals(Normalize(stagedChannel), Normalize(selectedChannel), StringComparison.OrdinalIgnoreCase);
 
 	public static bool IsNewerThan(string installed, string candidate) =>
 		SemanticVersion.Parse(candidate).CompareTo(SemanticVersion.Parse(installed)) > 0;

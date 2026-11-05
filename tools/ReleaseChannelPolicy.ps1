@@ -27,6 +27,15 @@ function Assert-WodraStablePromotionVersion {
     }
 }
 
+function Assert-WodraPromotionCandidateVersion {
+    param([Parameter(Mandatory)][string]$StableVersion, [Parameter(Mandatory)][string]$SourceAlphaTag)
+    Assert-WodraStablePromotionVersion -StableVersion $StableVersion -SourceAlphaTag $SourceAlphaTag
+    $version = $SourceAlphaTag -replace '^v', ''
+    if ($StableVersion -eq '0.1.0' -and $version -match 'alpha\.(\d+)$' -and [int]$Matches[1] -lt 95) {
+        throw 'The first Stable candidate must be Alpha.95 or newer, built after the channel implementation is merged to main; Alpha.94 predates this release system.'
+    }
+}
+
 function Get-WodraStableRouteIds {
     @(
         'dunedin-one-way-oval-gardens',

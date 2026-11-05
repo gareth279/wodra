@@ -27,7 +27,8 @@ public partial class UpdateChannelSettingsReviewTest : Control
 				{
 					backendFactoryCalls.Add(channel);
 					return new ChannelReviewBackend(channel, "0.1.1-alpha.2", channel == "stable" ? "0.1.0" : "0.1.1-alpha.3");
-				});
+				},
+				persistChannel: channel => settings.UpdateChannel = channel);
 			var panel = new VelopackUpdatePanel(showAvailableUpdateAutomatically: false, showChannelSelector: true, service: service)
 			{ Name = "SettingsUpdatePanel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
 			root.AddChild(panel);
@@ -48,19 +49,22 @@ public partial class UpdateChannelSettingsReviewTest : Control
 				"a newer eligible build is shown through the existing explicit install flow");
 
 			var screenshot = OS.GetEnvironment("WODRA_CHANNEL_SCREENSHOT");
-			settings.UpdateChannel = UpdateChannelPolicy.Stable;
 			picker.Select(0);
+			picker.EmitSignal(OptionButton.SignalName.ItemSelected, 0L);
 			var stableResult = await service.ChangeChannelAsync(UpdateChannelPolicy.Stable);
 			Require(stableResult.Status == UpdaterStatus.UpToDate && stableResult.Message.Contains("newer Alpha", StringComparison.Ordinal),
 				"older Stable release remains unavailable without downgrading the installed Alpha");
-			Require(picker.Selected == 0, "channel selector reflects the selected Stable feed");
+			Require(picker.Selected == 0 && settings.UpdateChannel == UpdateChannelPolicy.Stable,
+				"Settings selection persists only after the Stable feed is selected");
 			if (!string.IsNullOrWhiteSpace(screenshot) && !OS.HasFeature("headless"))
 				await CaptureScreenshot(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(screenshot)!, "update-channel-stable-no-newer-release.png"));
-			settings.UpdateChannel = UpdateChannelPolicy.Alpha;
 			picker.Select(1);
+			picker.EmitSignal(OptionButton.SignalName.ItemSelected, 1L);
 			var alphaAgain = await service.ChangeChannelAsync(UpdateChannelPolicy.Alpha);
 			Require(alphaAgain.Status == UpdaterStatus.Available && alphaAgain.Offer?.Version == "0.1.1-alpha.3",
 				"returning to Alpha exposes its newer eligible release");
+			Require(picker.Selected == 1 && settings.UpdateChannel == UpdateChannelPolicy.Alpha,
+				"Settings persists the selected Alpha feed");
 			if (!string.IsNullOrWhiteSpace(screenshot) && !OS.HasFeature("headless")) await CaptureScreenshot(screenshot);
 			GD.Print("[UpdateChannelSettingsReview] PASS selector, migration default, channel guidance, installed identity, and update action");
 			GetTree().Quit(0);

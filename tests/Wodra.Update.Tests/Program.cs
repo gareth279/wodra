@@ -34,7 +34,8 @@ if (UpdateChannelPolicy.InitialForNewInstallation("stable") != "stable" ||
 	throw new InvalidOperationException("Fresh installer channel initialization must allow exactly Alpha and Stable.");
 if (!UpdateChannelPolicy.IsStagedUpdateForChannel(null, "alpha", "alpha") ||
 	UpdateChannelPolicy.IsStagedUpdateForChannel("alpha", "alpha", "stable") ||
-	!UpdateChannelPolicy.IsStagedUpdateForChannel("stable", "alpha", "stable"))
+	!UpdateChannelPolicy.IsStagedUpdateForChannel("stable", "alpha", "stable") ||
+	UpdateChannelPolicy.IsStagedUpdateForChannel(string.Empty, "alpha", "alpha"))
 	throw new InvalidOperationException("Staged updates must remain isolated to the channel that produced them.");
 if (UpdateVersionPolicy.ExplainNoUpdate("0.1.1-alpha.2", "stable", SemanticVersion.Parse("0.1.0")) is null ||
 	UpdateVersionPolicy.ExplainNoUpdate("0.1.0-alpha.94", "stable", null) is null)
@@ -247,6 +248,130 @@ static class UpdaterStateTests
 		Require(changedDuringDownload.Channel == "stable" && !changedDuringDownload.HasStagedPackage && stagedChannel is null,
 			"channel switching cancels an in-progress download before replacing its feed");
 
+		var metadataGate = new TaskCompletionSource<UpdateOffer?>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var metadataBackend = new FakeUpdaterBackend { ChannelName = "alpha", Check = () => metadataGate.Task };
+		var metadataFeeds = new List<string>();
+		var metadataPersisted = "alpha";
+		var metadataSwitch = new VelopackUpdateService(metadataBackend, "0.1.1-alpha.1", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel =>
+			{
+				metadataFeeds.Add(channel);
+				return new FakeUpdaterBackend { ChannelName = channel, CurrentVersion = "0.1.1-alpha.1" };
+			}, persistChannel: channel => metadataPersisted = channel);
+		var activeMetadataCheck = metadataSwitch.CheckForUpdatesAsync();
+		var staleStableSelection = metadataSwitch.ChangeChannelAsync("stable");
+		var latestAlphaSelection = metadataSwitch.ChangeChannelAsync("alpha");
+		Require(ReferenceEquals(staleStableSelection, latestAlphaSelection),
+			"rapid channel requests share one serialized transition");
+		metadataGate.SetResult(null);
+		await activeMetadataCheck;
+		var metadataSwitchResult = await latestAlphaSelection;
+		Require(metadataFeeds.SequenceEqual(["alpha"]) && metadataSwitchResult.Channel == "alpha" && metadataPersisted == "alpha",
+			"latest Alpha selection wins while an Alpha metadata check is running");
+
+		var persistenceFailureBackend = new FakeUpdaterBackend { ChannelName = "alpha" };
+		var persistenceFailure = new VelopackUpdateService(persistenceFailureBackend, "0.1.1-alpha.1", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel => new FakeUpdaterBackend { ChannelName = channel },
+			persistChannel: channel =>
+			{
+				if (channel == "stable") throw new IOException("settings save failed");
+			});
+		var persistenceFailureResult = await persistenceFailure.ChangeChannelAsync("stable");
+		Require(persistenceFailureResult.Channel == "alpha" && persistenceFailure.Snapshot.Channel == "alpha" &&
+			persistenceFailureResult.Status == UpdaterStatus.Failed,
+			"a failed channel save leaves the previous selected backend active");
+
+		var rapidDownloadBackend = new FakeUpdaterBackend
+		{
+			ChannelName = "alpha",
+			CurrentVersion = "0.1.1-alpha.1",
+			Check = () => Task.FromResult<UpdateOffer?>(new UpdateOffer("0.1.1-alpha.2", "download", new object())),
+			Download = async (_, _, cancellationToken) => await Task.Delay(Timeout.Infinite, cancellationToken)
+		};
+		var downloadFeeds = new List<string>();
+		var downloadPersisted = "alpha";
+		string? rapidlyStagedChannel = null;
+		var rapidDownloadSwitch = new VelopackUpdateService(rapidDownloadBackend, "0.1.1-alpha.1", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel =>
+			{
+				downloadFeeds.Add(channel);
+				return new FakeUpdaterBackend
+				{
+					ChannelName = channel,
+					CurrentVersion = "0.1.1-alpha.1",
+					Check = () => Task.FromResult<UpdateOffer?>(channel == "alpha"
+						? new UpdateOffer("0.1.1-alpha.3", "latest Alpha", new object())
+						: null)
+				};
+			}, setStagedChannel: channel => rapidlyStagedChannel = channel,
+			persistChannel: channel => downloadPersisted = channel);
+		await rapidDownloadSwitch.CheckForUpdatesAsync();
+		var activeDownload = rapidDownloadSwitch.DownloadAndInstallAsync();
+		var downloadStableSelection = rapidDownloadSwitch.ChangeChannelAsync("stable");
+		var downloadLatestAlphaSelection = rapidDownloadSwitch.ChangeChannelAsync("alpha");
+		await activeDownload;
+		var downloadSwitchResult = await downloadLatestAlphaSelection;
+		Require(ReferenceEquals(downloadStableSelection, downloadLatestAlphaSelection) &&
+			downloadFeeds.SequenceEqual(["alpha"]) && downloadSwitchResult.Channel == "alpha" &&
+			downloadPersisted == "alpha" && !downloadSwitchResult.HasStagedPackage && rapidlyStagedChannel is null,
+			"latest Alpha selection wins during download cancellation and checks only its feed");
+
+		var lateDownloadCompletion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var lateDownloadBackend = new FakeUpdaterBackend
+		{
+			ChannelName = "alpha",
+			CurrentVersion = "0.1.1-alpha.1",
+			Check = () => Task.FromResult<UpdateOffer?>(new UpdateOffer("0.1.1-alpha.2", "late download", new object())),
+			Download = async (_, _, _) => await lateDownloadCompletion.Task
+		};
+		var lateStageChannel = (string?)null;
+		var lateDownloadSwitch = new VelopackUpdateService(lateDownloadBackend, "0.1.1-alpha.1", "alpha", () => true,
+			(_, _) => { }, backendFactory: channel => new FakeUpdaterBackend
+			{
+				ChannelName = channel,
+				CurrentVersion = "0.1.1-alpha.1",
+				PendingUpdate = UpdateChannelPolicy.IsStagedUpdateForChannel(lateStageChannel, "alpha", channel)
+					? lateDownloadBackend.PendingUpdate
+					: null
+			}, setStagedChannel: channel => lateStageChannel = channel,
+			persistChannel: _ => { });
+		await lateDownloadSwitch.CheckForUpdatesAsync();
+		var completingDownload = lateDownloadSwitch.DownloadAndInstallAsync();
+		var lateStableSelection = lateDownloadSwitch.ChangeChannelAsync("stable");
+		var lateLatestAlphaSelection = lateDownloadSwitch.ChangeChannelAsync("alpha");
+		lateDownloadCompletion.SetResult();
+		await completingDownload;
+		var lateSwitchResult = await lateLatestAlphaSelection;
+		Require(ReferenceEquals(lateStableSelection, lateLatestAlphaSelection) && lateDownloadBackend.ApplyCalls == 0 &&
+			lateSwitchResult.Channel == "alpha" && !lateSwitchResult.HasStagedPackage && lateStageChannel == string.Empty,
+			"a download completing after cancellation is quarantined instead of auto-applying the old selection");
+
+		var alreadyStaged = new UpdateOffer("0.1.1-alpha.2", "previously staged", new object());
+		string? persistedStageChannel = "alpha";
+		var stagedFeeds = new List<string>();
+		var stagedBackend = new FakeUpdaterBackend { ChannelName = "alpha", PendingUpdate = alreadyStaged };
+		var stagedSwitch = new VelopackUpdateService(stagedBackend, "0.1.1-alpha.1", "alpha", () => false,
+			(_, _) => { }, backendFactory: channel =>
+			{
+				stagedFeeds.Add(channel);
+				var matchingStage = UpdateChannelPolicy.IsStagedUpdateForChannel(persistedStageChannel, "alpha", channel)
+					? alreadyStaged
+					: null;
+				return new FakeUpdaterBackend { ChannelName = channel, PendingUpdate = matchingStage };
+			}, setStagedChannel: channel => persistedStageChannel = channel,
+			persistChannel: _ => { });
+		var stagedStableRequest = stagedSwitch.ChangeChannelAsync("stable");
+		var stagedLatestAlphaRequest = stagedSwitch.ChangeChannelAsync("alpha");
+		var stagedSwitchResult = await stagedLatestAlphaRequest;
+		Require(ReferenceEquals(stagedStableRequest, stagedLatestAlphaRequest) && stagedFeeds.SequenceEqual(["alpha"]) &&
+			stagedSwitchResult.Channel == "alpha" && !stagedSwitchResult.HasStagedPackage && persistedStageChannel == string.Empty,
+			"rapid channel changes permanently exclude a package staged before the transition");
+		await stagedSwitch.ChangeChannelAsync("stable");
+		var returnedToAlphaWithInvalidatedStage = await stagedSwitch.ChangeChannelAsync("alpha");
+		Require(stagedFeeds.SequenceEqual(["alpha", "stable", "alpha"]) &&
+			!returnedToAlphaWithInvalidatedStage.HasStagedPackage && persistedStageChannel == string.Empty,
+			"a discarded staged package stays unavailable when later switching back to its original channel");
+
 		var portableBackend = new FakeUpdaterBackend { IsInstalled = false };
 		var portable = new VelopackUpdateService(portableBackend, "0.1.0-alpha.1", "alpha", () => true, (_, _) => { });
 		portable.StartAutomaticCheck();
@@ -264,7 +389,7 @@ sealed class FakeUpdaterBackend : IUpdaterBackend
 	public string CurrentVersion { get; set; } = "0.1.0-alpha.1";
 	public string? Channel => ChannelName;
 	public string ChannelName { get; set; } = "alpha";
-	public UpdateOffer? PendingUpdate => _pendingUpdate;
+	public UpdateOffer? PendingUpdate { get => _pendingUpdate; set => _pendingUpdate = value; }
 	public int CheckCalls { get; private set; }
 	public int ApplyCalls { get; private set; }
 	public Func<Task<UpdateOffer?>> Check { get; set; } = () => Task.FromResult<UpdateOffer?>(null);
