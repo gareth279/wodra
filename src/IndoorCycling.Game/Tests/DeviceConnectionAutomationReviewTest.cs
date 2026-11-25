@@ -14,6 +14,9 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 {
 	public override async void _Ready()
 	{
+		var previousSettingsPath = AppSettings.SettingsPathForTesting;
+		var isolatedSettingsDirectory = Path.Combine(Path.GetTempPath(), $"Wodra-DeviceConnectionReview-{Guid.NewGuid():N}");
+		AppSettings.SettingsPathForTesting = Path.Combine(isolatedSettingsDirectory, "settings.json");
 		try
 		{
 			var trainer = new FakeTrainer([FakeTrainer.Remembered, FakeTrainer.Alternative]);
@@ -127,6 +130,11 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		{
 			GD.PushError($"[DeviceConnectionAutomationReview] FAIL: {ex}");
 			GetTree().Quit(1);
+		}
+		finally
+		{
+			AppSettings.SettingsPathForTesting = previousSettingsPath;
+			if (Directory.Exists(isolatedSettingsDirectory)) Directory.Delete(isolatedSettingsDirectory, recursive: true);
 		}
 	}
 
