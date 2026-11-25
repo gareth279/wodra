@@ -59,10 +59,13 @@ public sealed class AppSettings
 	{
 		get
 		{
+			if (SettingsPathForTesting is { } testPath) return testPath;
 			var dir = ProjectSettings.GlobalizePath("user://settings");
 			return Path.Combine(dir, "settings.json");
 		}
 	}
+
+	internal static string? SettingsPathForTesting { get; set; }
 
 	public static AppSettings LoadOrCreate()
 	{

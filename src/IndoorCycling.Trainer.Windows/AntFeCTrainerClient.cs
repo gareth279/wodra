@@ -135,6 +135,41 @@ public sealed class AntFeCTrainerClient : ITrainerClient, IWorkoutTrainerControl
             .ConfigureAwait(false);
     }
 
+    /// <summary>Opens the receiver and applies the configured network key, then releases the USB session.</summary>
+    public static async Task InitializeNetworkAsync(CancellationToken cancellationToken = default,
+        Action<AntFeCDiagnosticEvent>? diagnostic = null)
+    {
+        var timer = Stopwatch.StartNew();
+        byte[] key;
+        try
+        {
+            key = AntNetworkKeyMaterial.Load();
+            Emit(diagnostic, new("user_configuration", "network_key_status", timer.Elapsed.TotalMilliseconds,
+                Outcome: "configured_value_redacted"));
+        }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new("user_configuration", "network_key_status", timer.Elapsed.TotalMilliseconds,
+                Outcome: "missing_or_invalid", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            throw;
+        }
+        try
+        {
+            using var session = await AntSdkDeviceSession.OpenFirstAsync(cancellationToken, diagnostic).ConfigureAwait(false);
+            RunCommand(diagnostic, "network_configuration", "NETWORK_KEY_0x46",
+                () => session.Device.setNetworkKey(NetworkNumber, key, 1000));
+            Emit(diagnostic, new("network_configuration", "receiver_network_initialized", timer.Elapsed.TotalMilliseconds,
+                CommandId: "NETWORK_KEY_0x46", Outcome: "success"));
+        }
+        catch (Exception ex)
+        {
+            Emit(diagnostic, new("network_configuration", "receiver_network_initialization_failed", timer.Elapsed.TotalMilliseconds,
+                CommandId: "NETWORK_KEY_0x46", Outcome: "failed", ErrorType: ex.GetType().Name, ErrorMessage: ex.Message));
+            throw;
+        }
+        finally { Array.Clear(key, 0, key.Length); }
+    }
+
     private static async Task<IReadOnlyList<AntFeCDeviceIdentity>> DiscoverPassAsync(bool continuousScan,
         CancellationToken cancellationToken, Action<AntFeCDiagnosticEvent>? diagnostic, Action<TimeSpan>? progress)
     {

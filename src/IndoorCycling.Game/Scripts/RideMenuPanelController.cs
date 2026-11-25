@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
@@ -708,48 +707,12 @@ public partial class RideMenuPanelController : Control
 
 	private void BuildAntSetupView()
 	{
-		_content!.AddChild(new Label
+		_content!.AddChild(new AntNetworkSetupPanel
 		{
-			Text = "Enter the ANT+ network key as 16 hexadecimal digits or eight byte values. It stays in this Windows account's private app-data storage.",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			HorizontalAlignment = HorizontalAlignment.Center
-		});
-		var status = new Label { Text = AntNetworkKeyMaterial.GetStatus(), AutowrapMode = TextServer.AutowrapMode.WordSmart };
-		_content.AddChild(status);
-		var keyInput = new LineEdit
-		{
-			PlaceholderText = "16 hexadecimal digits or eight byte values",
-			ClearButtonEnabled = true,
+			Name = "AntNetworkSetup",
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			Secret = true
-		};
-		_content.AddChild(keyInput);
-		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var save = new Button { Text = "Save key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var clear = new Button { Text = "Clear key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var help = new Button { Text = "Garmin key page", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		bool InUse() => _deviceConnectionPanel?.IsAntConfigurationInUse() == true;
-		save.Pressed += () =>
-		{
-			if (InUse()) { status.Text = "Disconnect ANT+ before changing its setup."; return; }
-			try
-			{
-				AntNetworkKeyMaterial.Save(keyInput.Text);
-				keyInput.Clear();
-				status.Text = "ANT+ key saved for this Windows account.";
-			}
-			catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Security.SecurityException)
-			{ status.Text = ex.Message; }
-		};
-		clear.Pressed += () =>
-		{
-			if (InUse()) { status.Text = "Disconnect ANT+ before clearing its setup."; return; }
-			try { AntNetworkKeyMaterial.Clear(); keyInput.Clear(); status.Text = AntNetworkKeyMaterial.GetStatus(); }
-			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException)
-			{ status.Text = ex.Message; }
-		};
-		help.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
-		actions.AddChild(save); actions.AddChild(clear); actions.AddChild(help); _content.AddChild(actions);
+			IsConfigurationInUse = () => _deviceConnectionPanel?.IsAntConfigurationInUse() == true
+		});
 	}
 
 	private async Task ApplyTrainerDifficultyAsync(int percent)

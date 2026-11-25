@@ -84,4 +84,20 @@ public static class TrainerProtocolPreferencePolicy
             _ => new(null, "The saved trainer protocol preference is invalid.")
         };
     }
+
+    /// <summary>Explicit preferences are retained. Only Auto may move to the other available transport after failure.</summary>
+    public static TrainerProtocol? SelectFailureFallback(
+        TrainerProtocolPreference preference,
+        TrainerProtocol failedProtocol,
+        bool bluetoothAvailable,
+        bool antFeCAvailable)
+    {
+        if (preference != TrainerProtocolPreference.Auto) return null;
+        return failedProtocol switch
+        {
+            TrainerProtocol.BluetoothFtms when antFeCAvailable => TrainerProtocol.AntFeC,
+            TrainerProtocol.AntFeC when bluetoothAvailable => TrainerProtocol.BluetoothFtms,
+            _ => null
+        };
+    }
 }
