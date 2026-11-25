@@ -111,6 +111,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			screen.QueueFree();
 			await Settle(2);
 
+			await VerifyAntConfigurationSurfacesAndKeyEditing();
 			await VerifyMissingTrainerCanBeRetried();
 			await VerifyAutoFallbackAfterFtmsFailure();
 			await VerifyExplicitProtocolFailureOffersAlternateAction();
@@ -119,13 +120,117 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.FitReplay, "replay.fit");
 			await VerifyConnectedDevicesReleasedBeforeTestModes();
 			await VerifyTestModeReleaseWaitIsBounded();
-			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen automatically selected remembered devices using the saved protocol, kept home visible during setup, avoided duplicate/repeated scans and reconnect after manual disconnect or test-mode transitions, safely released connected trainer/HR/steering clients before Dummy Trainer and FIT replay, retained remembered preferences and home navigation, bounded device-release waits without changing modes on timeout, preserved optional-sensor cancellation and readiness, prompted for multiple devices, exposed retry after a miss, and skipped physical discovery for configured test modes.");
+			GD.Print("[DeviceConnectionAutomationReview] PASS: production RideScreen retained recovery behavior and ANT+ configuration remained accessible from Settings and trainer connection with missing/present keys and Bluetooth selected; ANT+ remained selectable with prerequisites explained; key entry, replacement, invalid replacement, clear and independent receiver/network action passed.");
 			GetTree().Quit(0);
 		}
 		catch (Exception ex)
 		{
 			GD.PushError($"[DeviceConnectionAutomationReview] FAIL: {ex}");
 			GetTree().Quit(1);
+		}
+	}
+
+	private async Task VerifyAntConfigurationSurfacesAndKeyEditing()
+	{
+		GameBootstrap.ResetSession();
+		GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
+		var trainer = new FakeTrainer([]);
+		var keyConfigured = false;
+		var screen = CreateProductionRideScreen(trainer, new FakeHeartRate([]), new FakeSteering([]), connection =>
+		{
+			connection.AntNetworkStatusForTesting = () => keyConfigured ? "Configured" : "Not configured";
+		});
+		try
+		{
+			await WaitUntil(() => trainer.ScanCount == 1 && screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").PreRideTrainerStatus.Contains("No trainer found", StringComparison.Ordinal));
+			var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+			connection.ShowTrainerConnectionScreen();
+			if (!connection.AntSetupButtonForTesting.Visible || !connection.AntSetupButtonForTesting.Text.Contains("Configure", StringComparison.Ordinal))
+				throw new InvalidOperationException("ANT+ configuration was hidden when no key or receiver was available and Bluetooth was selected.");
+			connection.AntSetupButtonForTesting.EmitSignal(BaseButton.SignalName.Pressed);
+			var connectionSetupWindow = connection.AntSetupWindowForTesting;
+			if (connectionSetupWindow is null || !connectionSetupWindow.Visible || connectionSetupWindow.FindChild("AntNetworkSetup", true, false) is not AntNetworkSetupPanel)
+				throw new InvalidOperationException("The trainer connection screen did not open the permanent ANT+ configuration panel directly.");
+
+			var protocol = connection.ProtocolPreferenceOptionForTesting;
+			var antIndex = Enumerable.Range(0, protocol.ItemCount).FirstOrDefault(i => protocol.GetItemId(i) == (int)TrainerProtocolPreference.AntFeC, -1);
+			if (antIndex < 0) throw new InvalidOperationException("ANT+ FE-C was hidden from the trainer protocol selector.");
+			protocol.Select(antIndex);
+			protocol.EmitSignal(OptionButton.SignalName.ItemSelected, (long)antIndex);
+			var overallStatus = connection.FindChild("OverallStatusLabel", true, false) as Label;
+			if (GameBootstrap.Settings.Trainer.ProtocolPreference != TrainerProtocolPreference.AntFeC ||
+				overallStatus?.Text.Contains("network key", StringComparison.OrdinalIgnoreCase) != true ||
+				!overallStatus.Text.Contains("ANTUSB-m", StringComparison.Ordinal) ||
+				!overallStatus.Text.Contains("FE-C trainer", StringComparison.Ordinal))
+				throw new InvalidOperationException($"Selecting ANT+ FE-C with missing prerequisites did not stay selected and explain the missing network key, receiver, and trainer requirements. preference={GameBootstrap.Settings.Trainer.ProtocolPreference}, status={overallStatus?.Text}");
+			var reloadedSettings = AppSettings.LoadOrCreate();
+			var appInstallPath = Path.GetFullPath(AppContext.BaseDirectory);
+			if (reloadedSettings.Trainer.ProtocolPreference != TrainerProtocolPreference.AntFeC ||
+				Path.GetFullPath(AntNetworkKeyMaterial.ConfigurationPath).StartsWith(appInstallPath, StringComparison.OrdinalIgnoreCase) ||
+				!Path.GetFullPath(AntNetworkKeyMaterial.ConfigurationPath).StartsWith(Path.GetFullPath(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData)) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+				Path.GetFullPath(AppSettings.SettingsPath).StartsWith(appInstallPath, StringComparison.OrdinalIgnoreCase))
+				throw new InvalidOperationException("The saved ANT+ protocol preference, user settings, or key location is not preserved outside the versioned application payload.");
+			keyConfigured = true;
+			connection.RefreshAntSetupForTesting();
+			if (!connection.AntSetupButtonForTesting.Visible || !connection.AntSetupButtonForTesting.Text.Contains("Edit", StringComparison.Ordinal))
+				throw new InvalidOperationException("ANT+ configuration was hidden once a key had already been configured.");
+
+			var start = screen.GetNode<StartPanelController>("StartPanel");
+			start.ShowOptions(false);
+			var settings = screen.GetNode<Window>("OptionsWindow");
+			if (settings.Title != "Settings" || settings.FindChild("AntNetworkSetup", true, false) is not AntNetworkSetupPanel)
+				throw new InvalidOperationException("The main Settings window did not expose ANT+ network configuration.");
+
+			var testDirectory = Path.Combine(Path.GetTempPath(), $"Wodra-AntSetupUi-{Guid.NewGuid():N}");
+			var configPath = Path.Combine(testDirectory, "ant-config.json");
+			var initializationCalls = 0;
+			var setup = new AntNetworkSetupPanel
+			{
+				Name = "AntNetworkEditingReview",
+				StatusForTesting = () => AntNetworkKeyMaterial.GetStatus(configPath),
+				SaveForTesting = value => AntNetworkKeyMaterial.Save(value, configPath),
+				ClearForTesting = () => AntNetworkKeyMaterial.Clear(configPath),
+				InitializeForTesting = () => { initializationCalls++; return Task.CompletedTask; }
+			};
+			AddChild(setup);
+			try
+			{
+				await Settle(1);
+				setup.KeyInputForTesting!.Text = "0123456789abcdef";
+				setup.SaveForTestingButton!.EmitSignal(BaseButton.SignalName.Pressed);
+				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("0123456789ABCDEF")) || setup.KeyInputForTesting.Text.Length != 0)
+					throw new InvalidOperationException("ANT+ key entry/save did not persist and clear the secret input.");
+				setup.KeyInputForTesting.Text = "ffeeddccbbaa9988";
+				setup.SaveForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
+				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("FFEEDDCCBBAA9988")))
+					throw new InvalidOperationException("ANT+ key replacement did not persist the new key.");
+				setup.KeyInputForTesting.Text = "invalid";
+				setup.SaveForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
+				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("FFEEDDCCBBAA9988")))
+					throw new InvalidOperationException("Rejecting an invalid replacement modified the existing saved key.");
+				setup.ClearForTestingButton!.EmitSignal(BaseButton.SignalName.Pressed);
+				if (File.Exists(configPath) || setup.StatusForTestingLabel?.Text != "Not configured")
+					throw new InvalidOperationException("ANT+ key clearing did not remove the saved configuration.");
+				setup.KeyInputForTesting.Text = "0123456789abcdef";
+				setup.SaveForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
+				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("0123456789ABCDEF")))
+					throw new InvalidOperationException("ANT+ key could not be saved again after clearing.");
+				setup.InitializeForTestingButton!.EmitSignal(BaseButton.SignalName.Pressed);
+				await WaitUntil(() => initializationCalls == 1);
+				if (setup.StatusForTestingLabel?.Text.Contains("Receiver opened", StringComparison.Ordinal) != true)
+					throw new InvalidOperationException("Receiver/network initialization was not independently executable without starting a trainer connection.");
+			}
+			finally
+			{
+				setup.QueueFree();
+				if (Directory.Exists(testDirectory)) Directory.Delete(testDirectory, recursive: true);
+			}
+		}
+		finally
+		{
+			screen.QueueFree();
+			await Settle(2);
+			GameBootstrap.ResetSession();
 		}
 	}
 

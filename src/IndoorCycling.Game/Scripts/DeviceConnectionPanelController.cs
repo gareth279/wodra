@@ -18,12 +18,16 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
 	internal Func<long, CancellationToken, Task>? AntConnectionForTesting { get; set; }
 	internal TrainerProtocolPreference? ProtocolPreferenceForTesting { get; set; }
+	internal Func<string>? AntNetworkStatusForTesting { get; set; }
 	internal bool HasDeviceFactoriesForTesting => TrainerClientFactoryForTesting is not null ||
 		HeartRateClientFactoryForTesting is not null || SteeringClientFactoryForTesting is not null;
 	internal TimeSpan DeviceReleaseWaitTimeoutForTesting { get; set; } = TimeSpan.FromSeconds(10);
 	internal Button HeartRateActionForTesting => _heartRateAction!;
 	internal Button SteeringActionForTesting => _steeringAction!;
 	internal Button AlternativeProtocolButtonForTesting => _alternativeProtocolButton!;
+	internal Button AntSetupButtonForTesting => _antSetupButton!;
+	internal Window? AntSetupWindowForTesting => _antSetupWindow;
+	internal OptionButton ProtocolPreferenceOptionForTesting => _protocolPreferenceOption!;
 
 	private WindowsBleTrainerClient CreateTrainerClient() => TrainerClientFactoryForTesting?.Invoke() ?? new WindowsBleTrainerClient();
 	private WindowsBleHeartRateClient CreateHeartRateClient() => HeartRateClientFactoryForTesting?.Invoke() ?? new WindowsBleHeartRateClient();
@@ -48,6 +52,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _exportDiagnosticsStatus;
 	private VBoxContainer? _connectionDetails;
 	private Button? _antSetupButton;
+	private Window? _antSetupWindow;
 	private Button? _alternativeProtocolButton;
 	private RideMenuPanelController? _rideMenuPanel;
 	private GridContainer? _peripheralCards;
@@ -265,8 +270,8 @@ public partial class DeviceConnectionPanelController : Control
 		_steeringAction.Text = "Connect";
 		_steeringAction.Disabled = false;
 		MakeConnectionDetailsScrollable();
-		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Open Settings → Devices → Advanced ANT+ setup", Visible = false };
-		_antSetupButton.Pressed += () => _rideMenuPanel?.ShowDeviceSettings();
+		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Configure ANT+…", Visible = true };
+		_antSetupButton.Pressed += OpenAntSetupWindow;
 		_connectionDetails?.AddChild(_antSetupButton);
 		_alternativeProtocolButton = new Button { Name = "AlternativeProtocolButton", Text = "Try ANT+ FE-C", Visible = false };
 		_alternativeProtocolButton.Pressed += OnAlternativeProtocolPressed;
@@ -311,10 +316,10 @@ public partial class DeviceConnectionPanelController : Control
 		_protocolStatusLabel!.Text = $"{ProtocolPreferenceLabel(selected)} · Not connected";
 		if (selected == TrainerProtocolPreference.AntFeC)
 		{
-			var configured = AntNetworkKeyMaterial.GetStatus() == "Configured";
-			_overallStatusLabel!.Text = configured
-				? "ANT+ FE-C selected. Connect the ANTUSB-m and wake your trainer before scanning."
-				: "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup.";
+			var keyStatus = GetAntNetworkStatus();
+			_overallStatusLabel!.Text = keyStatus == "Configured"
+				? "ANT+ FE-C selected. Requires an ANTUSB-m receiver with its Windows driver and a nearby awake FE-C trainer. Check receiver/network setup before scanning."
+				: $"ANT+ FE-C is selected, but its network key is not ready ({keyStatus}). Configure the key, use an ANTUSB-m receiver with its Windows driver, and wake a compatible FE-C trainer nearby.";
 			_trainerNameLabel!.Text = "ANT+ trainer not connected";
 			_connectButton!.Text = "Connect trainer";
 			_connectionState.SetPhase(_connectionState.AttemptId, TrainerConnectionPhase.Idle);
@@ -358,12 +363,39 @@ public partial class DeviceConnectionPanelController : Control
 	public bool IsAntConfigurationInUse() =>
 		(_attemptInProgress && _attemptUsingAnt) || _antTrainerClient?.IsConnected == true;
 
+	private string GetAntNetworkStatus() => AntNetworkStatusForTesting?.Invoke() ?? AntNetworkKeyMaterial.GetStatus();
+
+	internal void RefreshAntSetupForTesting() => RefreshAntSetupUi();
+
 	private void RefreshAntSetupUi()
 	{
 		if (_antSetupButton is null) return;
-		var missing = AntNetworkKeyMaterial.GetStatus() != "Configured";
-		_antSetupButton.Text = missing ? "Configure ANT+…" : "Edit ANT+ setup…";
+		var missing = GetAntNetworkStatus() != "Configured";
+		_antSetupButton.Text = missing ? "Configure ANT+ network key…" : "Edit ANT+ network key…";
 		_antSetupButton.Visible = true;
+	}
+
+	private void OpenAntSetupWindow()
+	{
+		if (_antSetupWindow is null || !GodotObject.IsInstanceValid(_antSetupWindow))
+		{
+			_antSetupWindow = new Window { Name = "AntNetworkSetupWindow", Title = "ANT+ FE-C network setup", MinSize = new Vector2I(520, 360), Exclusive = true };
+			var margin = new MarginContainer { Name = "AntNetworkSetupMargin" };
+			foreach (var pair in new[] { ("margin_left", 18), ("margin_right", 18), ("margin_top", 14), ("margin_bottom", 14) })
+				margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
+			_antSetupWindow.AddChild(margin);
+			var scroll = new ScrollContainer { Name = "AntNetworkSetupScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+			margin.AddChild(scroll);
+			scroll.AddChild(new AntNetworkSetupPanel
+			{
+				Name = "AntNetworkSetup",
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				IsConfigurationInUse = IsAntConfigurationInUse
+			});
+			_antSetupWindow.CloseRequested += () => _antSetupWindow?.Hide();
+			GetTree().Root.AddChild(_antSetupWindow);
+		}
+		_antSetupWindow.PopupCentered();
 	}
 
 	private void FitConnectionPanel()
@@ -691,10 +723,10 @@ public partial class DeviceConnectionPanelController : Control
 		{
 			if (_connectionState.IsCurrent(attemptId))
 			{
-				var antNeedsSetup = _attemptUsingAnt && AntNetworkKeyMaterial.GetStatus() != "Configured";
+				var antNeedsSetup = _attemptUsingAnt && GetAntNetworkStatus() != "Configured";
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, ex.Message);
 				_overallStatusLabel!.Text = antNeedsSetup
-					? "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup, then retry."
+					? "ANT+ network key is missing or invalid. Configure it using ANT+ network setup, then retry."
 					: $"Trainer scan failed: {ex.Message} You can retry.";
 				_trainerNameLabel!.Text = "Connection unavailable";
 				_protocolStatusLabel!.Text = _attemptUsingAnt
@@ -726,9 +758,9 @@ public partial class DeviceConnectionPanelController : Control
 	{
 		if (_attemptInProgress) return;
 		if (GameBootstrap.Settings.Trainer.ProtocolPreference == TrainerProtocolPreference.AntFeC &&
-			AntNetworkKeyMaterial.GetStatus() != "Configured")
+			GetAntNetworkStatus() != "Configured")
 		{
-			_overallStatusLabel!.Text = "ANT+ setup is required. Open Settings → Devices → Advanced ANT+ setup.";
+			_overallStatusLabel!.Text = $"ANT+ FE-C is selected, but its network key is not ready ({GetAntNetworkStatus()}). Configure the key, connect an ANTUSB-m receiver with its Windows driver, then wake a compatible FE-C trainer nearby.";
 			_antSetupButton?.Show();
 			return;
 		}
@@ -2041,6 +2073,8 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateConnectionCancellation?.Cancel();
 		_steeringConnectionCancellation?.Cancel();
 		_steeringReconnectCancellation?.Cancel();
+		if (_antSetupWindow is { } antSetupWindow && GodotObject.IsInstanceValid(antSetupWindow))
+			antSetupWindow.QueueFree();
 		_heartRateClient?.Dispose();
 		if (_steeringClient is not null) _ = _steeringClient.DisposeAsync();
 		if (ReferenceEquals(GameBootstrap.HeartRateClient, _heartRateClient)) GameBootstrap.HeartRateClient = null;

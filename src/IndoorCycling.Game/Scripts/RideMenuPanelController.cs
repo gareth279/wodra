@@ -1,11 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
-using IndoorCycling.Trainer.Windows;
 
 public partial class RideMenuPanelController : Control
 {
@@ -709,73 +707,12 @@ public partial class RideMenuPanelController : Control
 
 	private void BuildAntSetupView()
 	{
-		_content!.AddChild(new Label
+		_content!.AddChild(new AntNetworkSetupPanel
 		{
-			Text = "Enter the ANT+ network key as 16 hexadecimal digits or eight byte values. It stays in this Windows account's private app-data storage.",
-			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			HorizontalAlignment = HorizontalAlignment.Center
-		});
-		var status = new Label { Text = AntNetworkKeyMaterial.GetStatus(), AutowrapMode = TextServer.AutowrapMode.WordSmart };
-		_content.AddChild(status);
-		var keyInput = new LineEdit
-		{
-			PlaceholderText = "16 hexadecimal digits or eight byte values",
-			ClearButtonEnabled = true,
+			Name = "AntNetworkSetup",
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			Secret = true
-		};
-		_content.AddChild(keyInput);
-		var actions = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var save = new Button { Text = "Save key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var clear = new Button { Text = "Clear key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var help = new Button { Text = "Garmin key page", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		var initialize = new Button { Text = "Check receiver and initialize ANT+", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		bool InUse() => _deviceConnectionPanel?.IsAntConfigurationInUse() == true;
-		save.Pressed += () =>
-		{
-			if (InUse()) { status.Text = "Disconnect ANT+ before changing its setup."; return; }
-			try
-			{
-				AntNetworkKeyMaterial.Save(keyInput.Text);
-				keyInput.Clear();
-				status.Text = "ANT+ key saved for this Windows account.";
-			}
-			catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or System.Security.SecurityException)
-			{ status.Text = ex.Message; }
-		};
-		clear.Pressed += () =>
-		{
-			if (InUse()) { status.Text = "Disconnect ANT+ before clearing its setup."; return; }
-			try { AntNetworkKeyMaterial.Clear(); keyInput.Clear(); status.Text = AntNetworkKeyMaterial.GetStatus(); }
-			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Security.SecurityException)
-			{ status.Text = ex.Message; }
-		};
-		help.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
-		initialize.Pressed += () => _ = InitializeAntNetworkAsync(initialize, status);
-		actions.AddChild(save); actions.AddChild(clear); actions.AddChild(help); _content.AddChild(actions);
-		_content.AddChild(initialize);
-	}
-
-	private async Task InitializeAntNetworkAsync(Button button, Label status)
-	{
-		if (_deviceConnectionPanel?.IsAntConfigurationInUse() == true)
-		{
-			status.Text = "Disconnect ANT+ before reinitializing its network.";
-			return;
-		}
-		button.Disabled = true;
-		status.Text = "Checking the ANT+ receiver and network key…";
-		try
-		{
-			await AntFeCTrainerClient.InitializeNetworkAsync(diagnostic: diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
-			status.Text = "Receiver opened and ANT+ network initialized. Connect an awake FE-C trainer next.";
-		}
-		catch (Exception ex)
-		{
-			GameLogger.Log("ant_network_initialization_ui_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
-			status.Text = ex.Message;
-		}
-		finally { button.Disabled = false; }
+			IsConfigurationInUse = () => _deviceConnectionPanel?.IsAntConfigurationInUse() == true
+		});
 	}
 
 	private async Task ApplyTrainerDifficultyAsync(int percent)

@@ -129,7 +129,7 @@ text = "Debug mode"
 
 [node name="OptionsButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer"]
 layout_mode = 2
-text = "Options"
+text = "Settings"
 
 [node name="ConnectTrainerButton" type="Button" parent="StartPanel/PanelContainer/MarginContainer/StartupScroll/VBoxContainer" unique_id=1036208023]
 layout_mode = 2

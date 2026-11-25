@@ -161,7 +161,7 @@ public partial class StartPanelController : Control
 		_optionsReturnToRide = returnToRide;
 		if (_optionsWindow is null)
 		{
-			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Options", MinSize = new Vector2I(440, 400), Exclusive = true };
+			_optionsWindow = new Window { Name = "OptionsWindow", Title = "Settings", MinSize = new Vector2I(440, 400), Exclusive = true };
 			var margin = new MarginContainer { Name = "OptionsMargin" };
 			foreach (var pair in new[] { ("margin_left", 20), ("margin_right", 20), ("margin_top", 12), ("margin_bottom", 12) }) margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
 			margin.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -194,6 +194,16 @@ public partial class StartPanelController : Control
 				GameBootstrap.Settings.Save();
 			};
 			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+			content.AddChild(new HSeparator());
+			var antHeading = new Label { Text = "ANT+ FE-C", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			antHeading.AddThemeFontSizeOverride("font_size", 16);
+			content.AddChild(antHeading);
+			content.AddChild(new AntNetworkSetupPanel
+			{
+				Name = "AntNetworkSetup",
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				IsConfigurationInUse = () => _deviceConnectionPanel?.IsAntConfigurationInUse() == true
+			});
 			content.AddChild(new HSeparator());
 			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
 			_optionsCompanionToggle = AddOptionsSetting(content, "CompanionEnabledToggle", "Enable read-only phone companion", "Enabled", GameBootstrap.Settings.CompanionEnabled);
