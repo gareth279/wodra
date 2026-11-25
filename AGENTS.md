@@ -17,11 +17,15 @@ Before changing Wodra code, read [docs/ARCHITECTURE_INVARIANTS.md](docs/ARCHITEC
 
 ## Windows release execution
 
+- For a requested Alpha release, the owner's release authorization also authorizes merging the release's existing PR with the documented administrator pull-request exception after successful required CI. Do not ask again for this routine merge authorization. Preserve all CI checks and repository protections; never bypass a failed check or change a protection rule.
+- Use the existing approved local Windows `publish.ps1` process when available, with its established EOS SDK, approved client configuration, pinned Velopack tooling, and existing GitHub authentication. A dedicated self-hosted `wodra-release` runner is an optional automation path, not a prerequisite for local publishing.
+- Physical hardware acceptance is required before Stable promotion, not for an Alpha release. State hardware limitations accurately; do not claim hardware validation passed when it was not performed.
 - Before release work, determine whether the current command execution is sandboxed. Source-code CI and a Git push do not establish that Windows packaging or GitHub publication is available.
-- If execution is restricted, request the supported outside-sandbox execution permission with user approval before running `publish.ps1` or performing release mutations. Use `sandbox_permissions=require_escalated` or the platform equivalent, and confirm the command actually ran in the approved host context. Changing directories inside a sandbox does not remove its restrictions.
-- Run packaging and publication only on the approved, provisioned Windows release host or protected `wodra-release` runner, with working GitHub connectivity, approved dependencies and existing authentication. Check `gh api user` from that context before publishing.
+- If execution is restricted and an approved host-execution mechanism is available, request it as documented before running `publish.ps1` or performing release mutations; confirm the command actually ran in that host context. Changing directories inside a sandbox does not remove its restrictions.
+- Run packaging and publication on the established local Windows publishing environment when available, or the protected `wodra-release` runner, with working GitHub connectivity, approved dependencies and existing authentication. Check `gh api user` from that context before publishing.
 - Do not repeatedly retry GitHub operations through the restricted sandbox proxy at `127.0.0.1:9`. Distinguish proxy or transport failures from an HTTP 401; do not claim execution was elevated when it was not.
 - Reuse existing approved GitHub authentication. Do not request new tokens when working authentication is available, expose or copy credentials, or bypass protected-environment approval.
 - Use `publish.ps1` and follow [docs/windows-alpha-release.md](docs/windows-alpha-release.md). A successful source CI run, tag push, workflow dispatch, or draft creation is not a published release.
 - Publish a validated draft as a public prerelease, then verify versions, assets, SHA-256 hashes, updater-feed discovery and anonymous downloads.
+- A requested release is complete only after it is publicly published and the Alpha update feed is verified. A build, tag, upload, draft, or workflow run alone is not a completed release.
 - If outside-sandbox execution cannot be requested or approved, report the exact limitation and stop before packaging or uploading.
