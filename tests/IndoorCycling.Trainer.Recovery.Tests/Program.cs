@@ -231,6 +231,9 @@ try
         "ANT+ key persists atomically and runtime initialization loads the configured value");
     Check(File.ReadAllText(antConfigPath).Contains("\"networkKey\":\"0123456789abcdef\"", StringComparison.Ordinal),
         "ANT+ configuration uses the documented JSON shape");
+    AntNetworkKeyMaterial.Save("ffeeddccbbaa9988", antConfigPath);
+    Check(AntNetworkKeyMaterial.Load(antConfigPath).SequenceEqual(Convert.FromHexString("FFEEDDCCBBAA9988")),
+        "ANT+ key replacement is immediately persisted for the next app launch");
     try { AntNetworkKeyMaterial.Save("not-a-network-key", antConfigPath); throw new InvalidOperationException("Invalid ANT config saved."); }
     catch (InvalidDataException error) when (!error.Message.Contains("not-a-network-key", StringComparison.Ordinal))
     { Check(true, "invalid ANT+ input is rejected without echoing the entered value"); }

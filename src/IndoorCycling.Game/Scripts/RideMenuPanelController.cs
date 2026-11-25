@@ -5,6 +5,7 @@ using System.IO;
 using Godot;
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Models;
+using IndoorCycling.Trainer.Windows;
 
 public partial class RideMenuPanelController : Control
 {
@@ -728,6 +729,7 @@ public partial class RideMenuPanelController : Control
 		var save = new Button { Text = "Save key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		var clear = new Button { Text = "Clear key", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		var help = new Button { Text = "Garmin key page", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var initialize = new Button { Text = "Check receiver and initialize ANT+", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		bool InUse() => _deviceConnectionPanel?.IsAntConfigurationInUse() == true;
 		save.Pressed += () =>
 		{
@@ -749,7 +751,31 @@ public partial class RideMenuPanelController : Control
 			{ status.Text = ex.Message; }
 		};
 		help.Pressed += () => OS.ShellOpen(AntNetworkKeyMaterial.GarminNetworkKeysUrl);
+		initialize.Pressed += () => _ = InitializeAntNetworkAsync(initialize, status);
 		actions.AddChild(save); actions.AddChild(clear); actions.AddChild(help); _content.AddChild(actions);
+		_content.AddChild(initialize);
+	}
+
+	private async Task InitializeAntNetworkAsync(Button button, Label status)
+	{
+		if (_deviceConnectionPanel?.IsAntConfigurationInUse() == true)
+		{
+			status.Text = "Disconnect ANT+ before reinitializing its network.";
+			return;
+		}
+		button.Disabled = true;
+		status.Text = "Checking the ANT+ receiver and network key…";
+		try
+		{
+			await AntFeCTrainerClient.InitializeNetworkAsync(diagnostic: diagnostic => GameLogger.Log("ant_diagnostic", diagnostic));
+			status.Text = "Receiver opened and ANT+ network initialized. Connect an awake FE-C trainer next.";
+		}
+		catch (Exception ex)
+		{
+			GameLogger.Log("ant_network_initialization_ui_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+			status.Text = ex.Message;
+		}
+		finally { button.Disabled = false; }
 	}
 
 	private async Task ApplyTrainerDifficultyAsync(int percent)

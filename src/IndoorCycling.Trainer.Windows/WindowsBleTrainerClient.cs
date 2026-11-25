@@ -1,6 +1,7 @@
 using IndoorCycling.Core.Models;
 using IndoorCycling.Trainer.Abstractions;
 using IndoorCycling.Trainer.Models;
+using System.Diagnostics;
 //using System.Text;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
@@ -15,6 +16,7 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
     private BluetoothLEAdvertisementWatcher? _activeScanWatcher;
     private CancellationTokenSource? _activeScanCancellation;
     private BluetoothLEDevice? _device;
+    private GattSession? _gattSession;
     private TrainerTelemetry _latestTelemetry = new(
         Timestamp: DateTimeOffset.MinValue,
         PowerWatts: 0,
@@ -113,6 +115,13 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
         _operationStage = "idle";
         _pendingControlPointResponse?.TrySetCanceled(cancellationToken);
         _pendingControlPointResponse = null;
+
+        if (_gattSession is not null)
+        {
+            try { _gattSession.MaintainConnection = false; _gattSession.Dispose(); }
+            catch (Exception ex) { EmitDebug("gatt_session_disposed", new { outcome = "failed", exceptionType = ex.GetType().Name }); }
+            _gattSession = null;
+        }
 
         if (_device is not null)
         {
@@ -362,6 +371,33 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
     {
         ReleaseDevice();
         _lastSeenAddress = bluetoothAddress;
+        var timer = Stopwatch.StartNew();
+        var attempts = 0;
+        try
+        {
+            await GattConnectionSequence.RunWithRetryAsync(
+                async (attempt, token) =>
+                {
+                    attempts = attempt;
+                    if (attempt > 1)
+                        EmitDebug("trainer_connection_retry", new { address = FormatAddress(bluetoothAddress), attempt, maximumAttempts = GattConnectionSequence.MaximumDiscoveryAttempts, delayMs = GattConnectionSequence.DelayBeforeAttempt(attempt - 1).TotalMilliseconds, strategy = "fresh_device_and_gatt_session" });
+                    await ConnectToDeviceAttemptAsync(bluetoothAddress, token).ConfigureAwait(false);
+                    return true;
+                },
+                ex => ex is GattConnectionUnavailableException or TimeoutException,
+                cancellationToken).ConfigureAwait(false);
+            EmitDebug("trainer_connection_attempt_completed", new { address = FormatAddress(bluetoothAddress), outcome = "ftms_service_available", attempts, durationMs = timer.Elapsed.TotalMilliseconds });
+        }
+        catch (Exception ex)
+        {
+            EmitDebug("trainer_connection_attempt_completed", new { address = FormatAddress(bluetoothAddress), outcome = ex is OperationCanceledException ? "cancelled" : "failed", attempts, durationMs = timer.Elapsed.TotalMilliseconds, exceptionType = ex.GetType().Name });
+            throw;
+        }
+    }
+
+    private async Task ConnectToDeviceAttemptAsync(ulong bluetoothAddress, CancellationToken cancellationToken)
+    {
+        ReleaseDevice();
 
         var stage = "ble_device_creation";
         _operationStage = stage;
@@ -383,9 +419,31 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
             EmitDebug("ble_device_created", new { address = FormatAddress(bluetoothAddress), name = device.Name, connectionStatus = device.ConnectionStatus.ToString() });
             Console.WriteLine($"BLE device created: {device.Name}, status={device.ConnectionStatus}");
 
-            // Windows does not necessarily establish the BLE link when the device
-            // object is created. Uncached GATT discovery is the operation that
-            // initiates the connection, so do that before requiring Connected.
+            stage = "gatt_session_establishment";
+            _operationStage = stage;
+            var session = await GattSession.FromDeviceIdAsync(device.BluetoothDeviceId)
+                .AsTask(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
+            _gattSession = session;
+            EmitDebug("gatt_session_created", new { address = FormatAddress(bluetoothAddress), canMaintainConnection = session.CanMaintainConnection, status = session.SessionStatus.ToString() });
+            if (session.CanMaintainConnection)
+            {
+                session.MaintainConnection = true;
+                EmitDebug("gatt_connection_requested", new { address = FormatAddress(bluetoothAddress), method = "GattSession.MaintainConnection" });
+                var connectedBy = DateTime.UtcNow + TimeSpan.FromSeconds(8);
+                while (device.ConnectionStatus != BluetoothConnectionStatus.Connected && DateTime.UtcNow < connectedBy)
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
+                if (device.ConnectionStatus != BluetoothConnectionStatus.Connected)
+                    throw new TimeoutException("Windows did not establish a GATT link within 8 seconds. Check that the trainer is awake and not connected to another app.");
+                EmitDebug("gatt_connection_established", new { address = FormatAddress(bluetoothAddress), status = device.ConnectionStatus.ToString() });
+            }
+            else
+            {
+                EmitDebug("gatt_connection_request_unavailable", new { address = FormatAddress(bluetoothAddress), fallback = "uncached_service_discovery" });
+            }
+
+            // Keep discovery uncached, but first establish an owned GATT session so
+            // a stale/disconnected OS device object cannot masquerade as a link.
             stage = "ftms_gatt_service_discovery";
             _operationStage = stage;
             EmitDebug("trainer_connection_stage_started", new { stage, address = FormatAddress(bluetoothAddress), connectionStatus = device.ConnectionStatus.ToString() });
@@ -427,6 +485,20 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
         LastAppliedSimulationGradePercent = null;
         _pendingControlPointResponse?.TrySetCanceled();
         _pendingControlPointResponse = null;
+        if (_gattSession is not null)
+        {
+            try
+            {
+                _gattSession.MaintainConnection = false;
+                _gattSession.Dispose();
+                EmitDebug("gatt_session_disposed", new { outcome = "released" });
+            }
+            catch (Exception ex)
+            {
+                EmitDebug("gatt_session_disposed", new { outcome = "failed", exceptionType = ex.GetType().Name });
+            }
+            _gattSession = null;
+        }
         if (_device is not null)
         {
             _device.ConnectionStatusChanged -= OnConnectionStatusChanged;
@@ -469,7 +541,12 @@ public class WindowsBleTrainerClient : ITrainerClient, IWorkoutTrainerControl
                         .WaitAsync(TimeSpan.FromSeconds(15), token);
                     EmitDebug("gatt_discovery_result", new { stage = "ftms_service", status = result.Status.ToString(), serviceCount = result.Services.Count, communicationError = result.ProtocolError, connectionStatus = device.ConnectionStatus.ToString() });
                     if (result.Status != GattCommunicationStatus.Success)
-                        throw new InvalidOperationException($"FTMS GATT service discovery failed ({result.Status}, protocol error {result.ProtocolError?.ToString() ?? "none"}).");
+                    {
+                        var message = $"FTMS GATT service discovery failed ({result.Status}, protocol error {result.ProtocolError?.ToString() ?? "none"}).";
+                        if (result.Status == GattCommunicationStatus.Unreachable)
+                            throw new GattConnectionUnavailableException(message);
+                        throw new InvalidOperationException(message);
+                    }
                     return result;
                 },
                 () => device.ConnectionStatus == BluetoothConnectionStatus.Connected,

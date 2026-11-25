@@ -56,6 +56,8 @@ var tests = new (string Name, Action Run)[]
     ,("Stale trainer readings cannot continue to drive rider power or cadence", StaleTelemetryIsNotRiderInput)
     ,("Trainer recovery is bounded and never follows an intentional disconnect", TrainerRecoveryIsBounded)
     ,("GATT discovery initiates the link before connection status is required", GattDiscoveryStartsConnection)
+    ,("Unreachable FTMS discovery is retried with fresh attempts and bounded backoff", GattDiscoveryRetriesTransientFailures)
+    ,("Trainer protocol fallback only changes transport in Auto mode", TrainerProtocolFallbackPolicy)
     ,("Paused catch-up retains matched resume speed without paused movement", PausedCatchUpResumeSpeed)
     ,("Startup online status stays compact for offline configured and unavailable states", StartupOnlineStatusIsCompact)
     ,("EOS lobby UI status distinguishes membership and P2P phases", EosLobbyStatusPhases)
@@ -933,6 +935,53 @@ static void GattDiscoveryStartsConnection()
         throw new Exception("A link that stayed disconnected was accepted.");
     }
     catch (TimeoutException) { }
+}
+
+static void GattDiscoveryRetriesTransientFailures()
+{
+    var attempts = 0;
+    var delays = new List<TimeSpan>();
+    var result = GattConnectionSequence.RunWithRetryAsync(
+        (attempt, _) =>
+        {
+            attempts++;
+            if (attempt < 3) throw new GattConnectionUnavailableException("FTMS GATT returned Unreachable.");
+            return Task.FromResult("telemetry and control setup completed");
+        },
+        ex => ex is GattConnectionUnavailableException or TimeoutException,
+        delayAsync: (delay, _) => { delays.Add(delay); return Task.CompletedTask; })
+        .GetAwaiter().GetResult();
+    if (result != "telemetry and control setup completed" || attempts != 3 ||
+        !delays.SequenceEqual([TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2)]))
+        throw new Exception("Transient GATT recovery did not use bounded fresh attempts and backoff.");
+
+    attempts = 0;
+    try
+    {
+        GattConnectionSequence.RunWithRetryAsync<string>(
+            (_, _) => { attempts++; throw new GattConnectionUnavailableException("still unreachable"); },
+            ex => ex is GattConnectionUnavailableException,
+            delayAsync: static (_, _) => Task.CompletedTask)
+            .GetAwaiter().GetResult();
+        throw new Exception("Persistent GATT failure was accepted.");
+    }
+    catch (GattConnectionUnavailableException) { }
+    if (attempts != GattConnectionSequence.MaximumDiscoveryAttempts)
+        throw new Exception("Persistent GATT failure exceeded or stopped before the bounded attempt count.");
+}
+
+static void TrainerProtocolFallbackPolicy()
+{
+    if (TrainerProtocolPreferencePolicy.SelectFailureFallback(TrainerProtocolPreference.Auto,
+            TrainerProtocol.BluetoothFtms, bluetoothAvailable: true, antFeCAvailable: true) != TrainerProtocol.AntFeC ||
+        TrainerProtocolPreferencePolicy.SelectFailureFallback(TrainerProtocolPreference.Auto,
+            TrainerProtocol.AntFeC, bluetoothAvailable: true, antFeCAvailable: true) != TrainerProtocol.BluetoothFtms)
+        throw new Exception("Auto did not select the available alternate trainer transport.");
+    if (TrainerProtocolPreferencePolicy.SelectFailureFallback(TrainerProtocolPreference.BluetoothFtms,
+            TrainerProtocol.BluetoothFtms, bluetoothAvailable: true, antFeCAvailable: true) is not null ||
+        TrainerProtocolPreferencePolicy.SelectFailureFallback(TrainerProtocolPreference.AntFeC,
+            TrainerProtocol.AntFeC, bluetoothAvailable: true, antFeCAvailable: true) is not null)
+        throw new Exception("An explicit trainer protocol preference was silently overridden.");
 }
 
 static void TrainerDiscoverySelection()

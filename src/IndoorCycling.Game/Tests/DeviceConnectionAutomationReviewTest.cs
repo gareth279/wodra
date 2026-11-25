@@ -112,6 +112,8 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			await Settle(2);
 
 			await VerifyMissingTrainerCanBeRetried();
+			await VerifyAutoFallbackAfterFtmsFailure();
+			await VerifyExplicitProtocolFailureOffersAlternateAction();
 			await VerifyMultipleTrainersRequireAnExplicitChoice();
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.Trainer, "dummy");
 			await VerifyConfiguredTestModesSkipPhysicalDiscovery(GameBootstrap.SessionMode.FitReplay, "replay.fit");
@@ -127,15 +129,65 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		}
 	}
 
-	private Node CreateProductionRideScreen(FakeTrainer trainer, FakeHeartRate heartRate, FakeSteering steering)
+	private Node CreateProductionRideScreen(FakeTrainer trainer, FakeHeartRate heartRate, FakeSteering steering,
+		Action<DeviceConnectionPanelController>? configure = null)
 	{
 		var screen = GD.Load<PackedScene>("res://Scenes/RideScreen.tscn").Instantiate();
 		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
 		connection.TrainerClientFactoryForTesting = () => trainer;
 		connection.HeartRateClientFactoryForTesting = () => heartRate;
 		connection.SteeringClientFactoryForTesting = () => steering;
+		configure?.Invoke(connection);
 		AddChild(screen);
 		return screen;
+	}
+
+	private async Task VerifyAutoFallbackAfterFtmsFailure()
+	{
+		GameBootstrap.ResetSession();
+		GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.Auto;
+		GameBootstrap.Settings.Trainer.LastSuccessfulProtocol = null;
+		var trainer = new FakeTrainer([FakeTrainer.Remembered]) { FailConnect = true };
+		var heartRate = new FakeHeartRate([]);
+		var steering = new FakeSteering([]);
+		var antAttempts = 0;
+		var screen = CreateProductionRideScreen(trainer, heartRate, steering,
+			connection =>
+			{
+				connection.ProtocolPreferenceForTesting = TrainerProtocolPreference.Auto;
+				connection.AntConnectionForTesting = (_, _) => { antAttempts++; return Task.CompletedTask; };
+			});
+		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+		await WaitUntil(() => trainer.ScanCount == 1);
+		await WaitUntil(() => antAttempts == 1);
+		await WaitUntil(() => connection.AlternativeProtocolButtonForTesting.Visible);
+		if (connection.AlternativeProtocolButtonForTesting.Text != "Retry Bluetooth FTMS")
+			throw new InvalidOperationException("Auto did not offer Bluetooth recovery after discovered FTMS setup failed and the ANT+ attempt failed.");
+		screen.QueueFree();
+		await Settle(2);
+		GameBootstrap.ResetSession();
+	}
+
+	private async Task VerifyExplicitProtocolFailureOffersAlternateAction()
+	{
+		GameBootstrap.ResetSession();
+		GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
+		var trainer = new FakeTrainer([FakeTrainer.Remembered]) { FailConnect = true };
+		var heartRate = new FakeHeartRate([]);
+		var steering = new FakeSteering([]);
+		var antAttempts = 0;
+		var screen = CreateProductionRideScreen(trainer, heartRate, steering,
+			connection => connection.AntConnectionForTesting = (_, _) => { antAttempts++; return Task.CompletedTask; });
+		var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
+		await WaitUntil(() => trainer.ScanCount == 1 && connection.PreRideTrainerStatus.StartsWith("Connection needs attention", StringComparison.Ordinal));
+		connection.ShowTrainerConnectionScreen();
+		await WaitUntil(() => connection.AlternativeProtocolButtonForTesting.Visible);
+		if (antAttempts != 0 || connection.AlternativeProtocolButtonForTesting.Text != "Try ANT+ FE-C" ||
+			GameBootstrap.Settings.Trainer.ProtocolPreference != TrainerProtocolPreference.BluetoothFtms)
+			throw new InvalidOperationException("An explicit Bluetooth preference was overridden or its alternate-protocol recovery action was missing.");
+		screen.QueueFree();
+		await Settle(2);
+		GameBootstrap.ResetSession();
 	}
 
 	private async Task VerifyMissingTrainerCanBeRetried()
@@ -403,6 +455,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		private bool _ready;
 		public FakeTrainer(IReadOnlyList<BleDiscoveredDevice> devices) => _devices = devices;
 		public int ScanCount { get; private set; }
+		public bool FailConnect { get; init; }
 		public int DisconnectCount { get; private set; }
 		public bool ControlRequestStarted { get; private set; }
 		public ulong? LastConnectedBluetoothAddress { get; private set; }
@@ -417,6 +470,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		public override Task ConnectToDeviceAsync(ulong bluetoothAddress, CancellationToken cancellationToken = default)
 		{
 			if (!_devices.Any(device => device.BluetoothAddress == bluetoothAddress)) throw new InvalidOperationException("Unexpected fake trainer identity.");
+			if (FailConnect) throw new GattConnectionUnavailableException("FTMS service discovery returned Unreachable.");
 			_connected = true;
 			LastConnectedBluetoothAddress = bluetoothAddress;
 			return Task.CompletedTask;

@@ -16,11 +16,14 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<WindowsBleTrainerClient>? TrainerClientFactoryForTesting { get; set; }
 	internal Func<WindowsBleHeartRateClient>? HeartRateClientFactoryForTesting { get; set; }
 	internal Func<EliteSterzoSmartClient>? SteeringClientFactoryForTesting { get; set; }
+	internal Func<long, CancellationToken, Task>? AntConnectionForTesting { get; set; }
+	internal TrainerProtocolPreference? ProtocolPreferenceForTesting { get; set; }
 	internal bool HasDeviceFactoriesForTesting => TrainerClientFactoryForTesting is not null ||
 		HeartRateClientFactoryForTesting is not null || SteeringClientFactoryForTesting is not null;
 	internal TimeSpan DeviceReleaseWaitTimeoutForTesting { get; set; } = TimeSpan.FromSeconds(10);
 	internal Button HeartRateActionForTesting => _heartRateAction!;
 	internal Button SteeringActionForTesting => _steeringAction!;
+	internal Button AlternativeProtocolButtonForTesting => _alternativeProtocolButton!;
 
 	private WindowsBleTrainerClient CreateTrainerClient() => TrainerClientFactoryForTesting?.Invoke() ?? new WindowsBleTrainerClient();
 	private WindowsBleHeartRateClient CreateHeartRateClient() => HeartRateClientFactoryForTesting?.Invoke() ?? new WindowsBleHeartRateClient();
@@ -45,6 +48,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Label? _exportDiagnosticsStatus;
 	private VBoxContainer? _connectionDetails;
 	private Button? _antSetupButton;
+	private Button? _alternativeProtocolButton;
 	private RideMenuPanelController? _rideMenuPanel;
 	private GridContainer? _peripheralCards;
 	private Label? _trainerCardName;
@@ -264,6 +268,9 @@ public partial class DeviceConnectionPanelController : Control
 		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Open Settings → Devices → Advanced ANT+ setup", Visible = false };
 		_antSetupButton.Pressed += () => _rideMenuPanel?.ShowDeviceSettings();
 		_connectionDetails?.AddChild(_antSetupButton);
+		_alternativeProtocolButton = new Button { Name = "AlternativeProtocolButton", Text = "Try ANT+ FE-C", Visible = false };
+		_alternativeProtocolButton.Pressed += OnAlternativeProtocolPressed;
+		_connectionDetails?.AddChild(_alternativeProtocolButton);
 		Resized += FitConnectionPanel;
 		FitConnectionPanel();
 		_connectButton.Pressed += OnConnectPressed;
@@ -355,7 +362,8 @@ public partial class DeviceConnectionPanelController : Control
 	{
 		if (_antSetupButton is null) return;
 		var missing = AntNetworkKeyMaterial.GetStatus() != "Configured";
-		_antSetupButton.Visible = missing;
+		_antSetupButton.Text = missing ? "Configure ANT+…" : "Edit ANT+ setup…";
+		_antSetupButton.Visible = true;
 	}
 
 	private void FitConnectionPanel()
@@ -556,7 +564,7 @@ public partial class DeviceConnectionPanelController : Control
 		RefreshAntSetupUi();
 	}
 
-	private async Task StartDiscoveryAsync(AntFeCDeviceIdentity? selectedAntDevice = null)
+	private async Task StartDiscoveryAsync(AntFeCDeviceIdentity? selectedAntDevice = null, TrainerProtocol? protocolOverride = null)
 	{
 		if (_attemptInProgress) return;
 		_attemptInProgress = true;
@@ -584,11 +592,14 @@ public partial class DeviceConnectionPanelController : Control
 		_connectButton.Disabled = true;
 		_changeTrainerButton!.Disabled = true;
 		_continueButton!.Disabled = true;
-		var protocolSelection = TrainerProtocolPreferencePolicy.Select(
-			GameBootstrap.Settings.Trainer.ProtocolPreference,
-			bluetoothAvailable: true,
-			antFeCAvailable: true,
-			lastSuccessfulProtocol: GameBootstrap.Settings.Trainer.LastSuccessfulProtocol);
+		var preference = ProtocolPreferenceForTesting ?? GameBootstrap.Settings.Trainer.ProtocolPreference;
+		var protocolSelection = protocolOverride is { } requestedProtocol
+			? new TrainerProtocolSelection(requestedProtocol, null)
+			: TrainerProtocolPreferencePolicy.Select(
+				preference,
+				bluetoothAvailable: true,
+				antFeCAvailable: true,
+				lastSuccessfulProtocol: GameBootstrap.Settings.Trainer.LastSuccessfulProtocol);
 		SetPhase(attemptId, TrainerConnectionPhase.Scanning);
 		GameLogger.Log("trainer_discovery_started", new { attemptId, protocolPreference = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString() });
 		try
@@ -689,6 +700,8 @@ public partial class DeviceConnectionPanelController : Control
 				_protocolStatusLabel!.Text = _attemptUsingAnt
 					? "ANT+ FE-C · Connection failed" : "Bluetooth FTMS · Scan failed";
 				_connectButton!.Text = "Retry";
+				_alternativeProtocolButton!.Text = _attemptUsingAnt ? "Try Bluetooth FTMS" : "Try ANT+ FE-C";
+				_alternativeProtocolButton.Show();
 				RefreshAntSetupUi();
 			}
 			GameLogger.Log("trainer_scan_failed", new { attemptId, ex.Message });
@@ -1215,6 +1228,11 @@ public partial class DeviceConnectionPanelController : Control
 	private async Task ConnectAntFeCAsync(long attemptId, CancellationToken cancellationToken, AntFeCDeviceIdentity? selectedDevice = null, bool forceFreshDiscovery = false)
 	{
 		_attemptUsingAnt = true;
+		if (AntConnectionForTesting is { } antConnectionForTesting)
+		{
+			await antConnectionForTesting(attemptId, cancellationToken);
+			return;
+		}
 		_selectedTrainer = null;
 		if (_antTrainerClient is not null)
 		{
@@ -1271,6 +1289,8 @@ public partial class DeviceConnectionPanelController : Control
 					? "ANT+ FE-C · Identification failed" : "ANT+ FE-C · No device detected";
 				_connectButton!.Text = "Retry scan";
 				_connectButton.Disabled = false;
+				_alternativeProtocolButton!.Text = "Try Bluetooth FTMS";
+				_alternativeProtocolButton.Show();
 				return;
 			}
 			if (discovery.Outcome == AntFeCDiscoveryOutcome.Choose)
@@ -1427,13 +1447,43 @@ public partial class DeviceConnectionPanelController : Control
 		catch (Exception ex)
 		{
 			await ReleaseClientAsync(client);
+			var fallback = TrainerProtocolPreferencePolicy.SelectFailureFallback(
+				ProtocolPreferenceForTesting ?? GameBootstrap.Settings.Trainer.ProtocolPreference, TrainerProtocol.BluetoothFtms,
+				bluetoothAvailable: true, antFeCAvailable: true);
+			if (_connectionState.IsCurrent(attemptId) && !cancellationToken.IsCancellationRequested && fallback == TrainerProtocol.AntFeC)
+			{
+				if (ReferenceEquals(_realTrainerClient, client)) _realTrainerClient = null;
+				_alternativeProtocolButton!.Hide();
+				GameLogger.Log("trainer_protocol_fallback_started", new { attemptId, selectedPreference = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString(), failedProtocol = "BluetoothFtms", fallbackProtocol = "AntFeC", reason = "ftms_connection_failed" });
+				_overallStatusLabel!.Text = "Bluetooth FTMS could not connect. Trying ANT+ FE-C…";
+				try
+				{
+					await ConnectAntFeCAsync(attemptId, cancellationToken);
+					if (_connectionState.Phase == TrainerConnectionPhase.Ready || _awaitingAntDeviceChoice) return;
+					_alternativeProtocolButton.Text = "Retry Bluetooth FTMS";
+					_alternativeProtocolButton.Show();
+				}
+				catch (Exception fallbackError) when (fallbackError is not OperationCanceledException)
+				{
+					_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, fallbackError.Message);
+					_overallStatusLabel!.Text = $"Bluetooth and ANT+ connection attempts failed. Check trainer power, ANTUSB-m receiver and ANT+ setup, then retry. {fallbackError.Message}";
+					_protocolStatusLabel!.Text = "Auto · both trainer protocols unavailable";
+					_connectButton!.Text = "Retry connection";
+					_alternativeProtocolButton.Text = "Try Bluetooth FTMS";
+					_alternativeProtocolButton.Show();
+					GameLogger.Log("trainer_protocol_fallback_failed", new { attemptId, failedProtocol = "BluetoothFtms", fallbackProtocol = "AntFeC", exceptionType = fallbackError.GetType().Name, message = fallbackError.Message });
+				}
+				return;
+			}
 			if (_connectionState.IsCurrent(attemptId))
 			{
 				_connectionState.SetPhase(attemptId, TrainerConnectionPhase.Failed, ex.Message);
-				_overallStatusLabel!.Text = $"Could not connect to {DisplayName(device)}: {ex.Message} Retry or choose another trainer.";
+				_overallStatusLabel!.Text = $"Could not connect to {DisplayName(device)}: {ex.Message} Retry or choose another protocol above.";
 				_protocolStatusLabel!.Text = "Bluetooth FTMS · Setup failed";
 				_connectButton!.Text = "Retry";
 				_continueButton!.Disabled = true;
+				_alternativeProtocolButton!.Text = "Try ANT+ FE-C";
+				_alternativeProtocolButton.Show();
 			}
 			GameLogger.Log("trainer_connection_failed", new { attemptId, message = ex.Message, exceptionType = ex.GetType().FullName });
 		}
@@ -1469,6 +1519,16 @@ public partial class DeviceConnectionPanelController : Control
 		if (!client.IsConnected) throw new InvalidOperationException("The trainer disconnected during setup.");
 		client.SetOperationStage("trainer_ready");
 		if (markReady) client.MarkReady();
+	}
+
+	private void OnAlternativeProtocolPressed()
+	{
+		if (_attemptInProgress || _connectionState.Phase == TrainerConnectionPhase.Ready) return;
+		var selected = _alternativeProtocolButton?.Text.Contains("ANT+", StringComparison.Ordinal) == true
+			? TrainerProtocol.AntFeC : TrainerProtocol.BluetoothFtms;
+		_alternativeProtocolButton?.Hide();
+		_connectButton!.Disabled = false;
+		_attemptTask = StartDiscoveryAsync(protocolOverride: selected);
 	}
 
 	private void ShowReadyUi()
