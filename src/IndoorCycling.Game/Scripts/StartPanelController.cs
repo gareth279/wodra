@@ -195,16 +195,6 @@ public partial class StartPanelController : Control
 			};
 			content.AddChild(new Label { Text = "Uses the active Windows media session. This is off by default; turn it on to show now-playing details and supported playback controls during rides.", AutowrapMode = TextServer.AutowrapMode.WordSmart, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 			content.AddChild(new HSeparator());
-			var antHeading = new Label { Text = "ANT+ FE-C", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-			antHeading.AddThemeFontSizeOverride("font_size", 16);
-			content.AddChild(antHeading);
-			content.AddChild(new AntNetworkSetupPanel
-			{
-				Name = "AntNetworkSetup",
-				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-				IsConfigurationInUse = () => _deviceConnectionPanel?.IsAntConfigurationInUse() == true
-			});
-			content.AddChild(new HSeparator());
 			var companionHeading = new Label { Text = "Companion" }; companionHeading.AddThemeFontSizeOverride("font_size", 16); content.AddChild(companionHeading);
 			_optionsCompanionToggle = AddOptionsSetting(content, "CompanionEnabledToggle", "Enable read-only phone companion", "Enabled", GameBootstrap.Settings.CompanionEnabled);
 			_optionsCompanionToggle.Toggled += enabled =>
