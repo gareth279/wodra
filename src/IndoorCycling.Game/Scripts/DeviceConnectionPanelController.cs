@@ -19,14 +19,17 @@ public partial class DeviceConnectionPanelController : Control
 	internal Func<long, CancellationToken, Task>? AntConnectionForTesting { get; set; }
 	internal TrainerProtocolPreference? ProtocolPreferenceForTesting { get; set; }
 	internal Func<string>? AntNetworkStatusForTesting { get; set; }
+	internal Func<string>? AntNetworkKeyForTesting { get; set; }
+	internal Action<string>? AntNetworkKeySaveForTesting { get; set; }
+	internal Action? AntNetworkKeyClearForTesting { get; set; }
+	internal Func<Task>? AntNetworkInitializeForTesting { get; set; }
 	internal bool HasDeviceFactoriesForTesting => TrainerClientFactoryForTesting is not null ||
 		HeartRateClientFactoryForTesting is not null || SteeringClientFactoryForTesting is not null;
 	internal TimeSpan DeviceReleaseWaitTimeoutForTesting { get; set; } = TimeSpan.FromSeconds(10);
 	internal Button HeartRateActionForTesting => _heartRateAction!;
 	internal Button SteeringActionForTesting => _steeringAction!;
 	internal Button AlternativeProtocolButtonForTesting => _alternativeProtocolButton!;
-	internal Button AntSetupButtonForTesting => _antSetupButton!;
-	internal Window? AntSetupWindowForTesting => _antSetupWindow;
+	internal AntNetworkSetupPanel AntSetupPanelForTesting => _antSetupPanel!;
 	internal OptionButton ProtocolPreferenceOptionForTesting => _protocolPreferenceOption!;
 
 	private WindowsBleTrainerClient CreateTrainerClient() => TrainerClientFactoryForTesting?.Invoke() ?? new WindowsBleTrainerClient();
@@ -51,8 +54,7 @@ public partial class DeviceConnectionPanelController : Control
 	private Button? _exportDiagnosticsButton;
 	private Label? _exportDiagnosticsStatus;
 	private VBoxContainer? _connectionDetails;
-	private Button? _antSetupButton;
-	private Window? _antSetupWindow;
+	private AntNetworkSetupPanel? _antSetupPanel;
 	private Button? _alternativeProtocolButton;
 	private RideMenuPanelController? _rideMenuPanel;
 	private GridContainer? _peripheralCards;
@@ -114,6 +116,7 @@ public partial class DeviceConnectionPanelController : Control
 	private bool _startupDiscoveryAttempted;
 	private bool _testModeTransitionInProgress;
 	private double _telemetryRefreshSeconds;
+	private bool _deviceScreenVisible;
 
 	// Read-only presentation values for the launch screen. These are derived from
 	// the existing connection state and device clients; they do not own state or
@@ -270,9 +273,20 @@ public partial class DeviceConnectionPanelController : Control
 		_steeringAction.Text = "Connect";
 		_steeringAction.Disabled = false;
 		MakeConnectionDetailsScrollable();
-		_antSetupButton = new Button { Name = "AntSetupButton", Text = "Configure ANT+…", Visible = true };
-		_antSetupButton.Pressed += OpenAntSetupWindow;
-		_connectionDetails?.AddChild(_antSetupButton);
+		_antSetupPanel = new AntNetworkSetupPanel
+		{
+			Name = "AntNetworkSetup",
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			IsConfigurationInUse = IsAntConfigurationInUse,
+			StatusForTesting = GetAntNetworkStatus,
+			LoadForTesting = AntNetworkKeyForTesting,
+			SaveForTesting = AntNetworkKeySaveForTesting,
+			ClearForTesting = AntNetworkKeyClearForTesting,
+			InitializeForTesting = AntNetworkInitializeForTesting
+		};
+		_connectionDetails?.AddChild(new HSeparator());
+		_connectionDetails?.AddChild(new Label { Text = "ANT+ receiver and network", HorizontalAlignment = HorizontalAlignment.Center });
+		_connectionDetails?.AddChild(_antSetupPanel);
 		_alternativeProtocolButton = new Button { Name = "AlternativeProtocolButton", Text = "Try ANT+ FE-C", Visible = false };
 		_alternativeProtocolButton.Pressed += OnAlternativeProtocolPressed;
 		_connectionDetails?.AddChild(_alternativeProtocolButton);
@@ -296,6 +310,7 @@ public partial class DeviceConnectionPanelController : Control
 		_diagnosticsLabel.Hide();
 		_trainerPicker.Hide();
 		Hide();
+		VisibilityChanged += OnDeviceScreenVisibilityChanged;
 		ResetUi();
 	}
 
@@ -311,6 +326,7 @@ public partial class DeviceConnectionPanelController : Control
 		_trainerPicker!.Clear();
 		_trainerPicker.Hide();
 		GameBootstrap.Settings.Trainer.ProtocolPreference = selected;
+		GameLogger.Log("trainer_protocol_preference_changed", new { preferredProtocol = selected.ToString(), activeProtocol = GetActiveTrainerProtocol() });
 		try { GameBootstrap.Settings.Save(); }
 		catch (Exception ex) { GameLogger.Log("trainer_preference_save_failed", new { message = ex.Message }); }
 		_protocolStatusLabel!.Text = $"{ProtocolPreferenceLabel(selected)} · Not connected";
@@ -369,33 +385,7 @@ public partial class DeviceConnectionPanelController : Control
 
 	private void RefreshAntSetupUi()
 	{
-		if (_antSetupButton is null) return;
-		var missing = GetAntNetworkStatus() != "Configured";
-		_antSetupButton.Text = missing ? "Configure ANT+ network key…" : "Edit ANT+ network key…";
-		_antSetupButton.Visible = true;
-	}
-
-	private void OpenAntSetupWindow()
-	{
-		if (_antSetupWindow is null || !GodotObject.IsInstanceValid(_antSetupWindow))
-		{
-			_antSetupWindow = new Window { Name = "AntNetworkSetupWindow", Title = "ANT+ FE-C network setup", MinSize = new Vector2I(520, 360), Exclusive = true };
-			var margin = new MarginContainer { Name = "AntNetworkSetupMargin" };
-			foreach (var pair in new[] { ("margin_left", 18), ("margin_right", 18), ("margin_top", 14), ("margin_bottom", 14) })
-				margin.AddThemeConstantOverride(pair.Item1, pair.Item2);
-			_antSetupWindow.AddChild(margin);
-			var scroll = new ScrollContainer { Name = "AntNetworkSetupScroll", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-			margin.AddChild(scroll);
-			scroll.AddChild(new AntNetworkSetupPanel
-			{
-				Name = "AntNetworkSetup",
-				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-				IsConfigurationInUse = IsAntConfigurationInUse
-			});
-			_antSetupWindow.CloseRequested += () => _antSetupWindow?.Hide();
-			GetTree().Root.AddChild(_antSetupWindow);
-		}
-		_antSetupWindow.PopupCentered();
+		_antSetupPanel?.RefreshStatus();
 	}
 
 	private void FitConnectionPanel()
@@ -569,6 +559,31 @@ public partial class DeviceConnectionPanelController : Control
 		_attemptTask = StartDiscoveryAsync();
 	}
 
+	private void OnDeviceScreenVisibilityChanged()
+	{
+		if (_deviceScreenVisible == Visible) return;
+		_deviceScreenVisible = Visible;
+		if (_deviceScreenVisible)
+		{
+			GameLogger.Log("device_configuration_screen_opened", new
+			{
+				preferredTrainerProtocol = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString(),
+				activeTrainerProtocol = GetActiveTrainerProtocol(),
+				antKeyConfigured = GetAntNetworkStatus() == "Configured"
+			});
+		}
+		else GameLogger.Log("device_configuration_screen_closed", new { preferredTrainerProtocol = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString() });
+	}
+
+	private static string GetActiveTrainerProtocol() => GameBootstrap.TrainerClient switch
+	{
+		AntFeCTrainerClient => "ANT+ FE-C",
+		WindowsBleTrainerClient => "Bluetooth FTMS",
+		IndoorCycling.Trainer.Implementations.FakeTrainerClient => "Dummy",
+		null => "None",
+		_ => "Other"
+	};
+
 	private void ResetUi()
 	{
 		_overallStatusLabel!.Text = "Connect your trainer to begin.";
@@ -615,6 +630,13 @@ public partial class DeviceConnectionPanelController : Control
 		var attemptId = _connectionState.BeginAttempt();
 		if (_heartRateClient?.IsConnected != true) _ = ScanForHeartRateAsync(autoConnect: true);
 		if (_steeringClient?.IsConnected != true) _ = ScanForSteeringAsync();
+		GameLogger.Log("optional_device_discovery_started_with_trainer", new
+		{
+			attemptId,
+			heartRateStarted = _heartRateClient?.IsConnected != true,
+			steeringStarted = _steeringClient?.IsConnected != true,
+			trainerProtocolPreference = GameBootstrap.Settings.Trainer.ProtocolPreference.ToString()
+		});
 		_protocolPreferenceOption!.Disabled = true;
 		_cancelButton!.Show();
 		_disconnectButton!.Hide();
@@ -761,7 +783,7 @@ public partial class DeviceConnectionPanelController : Control
 			GetAntNetworkStatus() != "Configured")
 		{
 			_overallStatusLabel!.Text = $"ANT+ FE-C is selected, but its network key is not ready ({GetAntNetworkStatus()}). Configure the key, connect an ANTUSB-m receiver with its Windows driver, then wake a compatible FE-C trainer nearby.";
-			_antSetupButton?.Show();
+			_antSetupPanel?.Show();
 			return;
 		}
 		if (_awaitingAntDeviceChoice && _antDiscovered.Length > 1)
@@ -815,6 +837,7 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateScanCancellation?.Cancel();
 		var cancellation = new CancellationTokenSource();
 		_heartRateScanCancellation = cancellation;
+		GameLogger.Log("heart_rate_discovery_started", new { protocol = "Bluetooth LE", timeoutMs = 5000, autoConnect });
 		try
 		{
 			var scanner = _heartRateClient ??= CreateHeartRateClient();
@@ -822,6 +845,7 @@ public partial class DeviceConnectionPanelController : Control
 			if (cancellation.IsCancellationRequested) return;
 			var selection = HeartRateDiscoveryPolicy.Select(found, GameBootstrap.Settings.LastHeartRateBluetoothAddress);
 			_heartRateDiscovered = selection.Candidates.ToArray();
+			GameLogger.Log("heart_rate_discovery_completed", new { discoveredCount = found.Count, compatibleCount = selection.Candidates.Count, outcome = selection.Outcome.ToString() });
 			if (selection.Outcome == HeartRateDiscoveryOutcome.None)
 			{
 				_heartRateName!.Text = "No monitor selected";
@@ -844,6 +868,7 @@ public partial class DeviceConnectionPanelController : Control
 		}
 		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
 		{
+			GameLogger.Log("heart_rate_discovery_cancelled", new { protocol = "Bluetooth LE" });
 			if (ReferenceEquals(_heartRateScanCancellation, cancellation))
 			{
 				_heartRateStatus!.Text = "Search cancelled · optional";
@@ -857,7 +882,7 @@ public partial class DeviceConnectionPanelController : Control
 				_heartRateStatus!.Text = "Could not search for a heart-rate monitor. Trainer connection is unaffected.";
 				_heartRateAction!.Text = "Retry search";
 			}
-			GameLogger.Log("heart_rate_scan_failed", new { exceptionType = ex.GetType().Name, message = ex.Message });
+			GameLogger.Log("heart_rate_scan_failed", new { exceptionType = ex.GetType().Name });
 		}
 		finally
 		{
@@ -877,6 +902,7 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateConnectionCancellation = operation;
 		_heartRateAction!.Disabled = true;
 		_heartRateStatus!.Text = $"Connecting to {device.Name}…";
+		GameLogger.Log("heart_rate_connection_started", new { deviceName = device.Name, protocol = "Bluetooth LE" });
 		var client = _heartRateClient ??= CreateHeartRateClient();
 		try
 		{
@@ -908,6 +934,7 @@ public partial class DeviceConnectionPanelController : Control
 				_heartRateStatus!.Text = "Connection cancelled · optional";
 				_heartRateAction!.Text = "Find monitor";
 			}
+			GameLogger.Log("heart_rate_connection_cancelled", new { protocol = "Bluetooth LE" });
 		}
 		catch (Exception ex)
 		{
@@ -943,6 +970,7 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateName!.Text = "No monitor selected";
 		_heartRateStatus!.Text = "Disconnected · optional";
 		_heartRateAction!.Text = "Find monitor";
+		GameLogger.Log("heart_rate_disconnected", new { intentional = true });
 	}
 
 	private void OnHeartRateDisconnected()
@@ -1037,6 +1065,7 @@ public partial class DeviceConnectionPanelController : Control
 		var cancellation = new CancellationTokenSource();
 		_steeringScanCancellation?.Cancel();
 		_steeringScanCancellation = cancellation;
+		GameLogger.Log("steering_discovery_started", new { model = "Elite Sterzo Smart", protocol = "Bluetooth LE", timeoutMs = 7000 });
 		try
 		{
 			var client = _steeringClient ??= CreateSteeringClient();
@@ -1044,6 +1073,7 @@ public partial class DeviceConnectionPanelController : Control
 			if (cancellation.IsCancellationRequested) return;
 			var selection = SteeringDiscoveryPolicy.Select(found, GameBootstrap.Settings.LastSteeringBluetoothAddress);
 			_steeringDiscovered = selection.Candidates.ToArray();
+			GameLogger.Log("steering_discovery_completed", new { discoveredCount = found.Count, compatibleCount = selection.Candidates.Count, outcome = selection.Outcome.ToString() });
 			if (selection.Outcome == SteeringDiscoveryOutcome.None)
 			{
 				_steeringName!.Text = "Elite Sterzo Smart";
@@ -1065,6 +1095,7 @@ public partial class DeviceConnectionPanelController : Control
 		}
 		catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
 		{
+			GameLogger.Log("steering_discovery_cancelled", new { model = "Elite Sterzo Smart" });
 			if (ReferenceEquals(_steeringScanCancellation, cancellation))
 			{
 				_steeringStatus!.Text = "Search cancelled · optional";
@@ -1099,6 +1130,7 @@ public partial class DeviceConnectionPanelController : Control
 		_steeringAction!.Disabled = true;
 		_steeringName!.Text = device.Name;
 		_steeringStatus!.Text = "Connecting to Sterzo Smart…";
+		GameLogger.Log("steering_connection_started", new { model = "Elite Sterzo Smart", deviceName = device.Name, protocol = "Bluetooth LE" });
 			var client = _steeringClient ??= CreateSteeringClient();
 		try
 		{
@@ -1130,6 +1162,7 @@ public partial class DeviceConnectionPanelController : Control
 				_steeringStatus!.Text = "Connection cancelled · optional";
 				_steeringAction!.Text = "Connect";
 			}
+			GameLogger.Log("steering_connection_cancelled", new { model = "Elite Sterzo Smart" });
 		}
 		catch (Exception ex)
 		{
@@ -1161,6 +1194,7 @@ public partial class DeviceConnectionPanelController : Control
 			_steeringClient.Disconnected -= OnSteeringDisconnected;
 			await _steeringClient.DisconnectAsync();
 		}
+		GameLogger.Log("steering_device_disconnected", new { intentional = true });
 		_steeringCenterAction!.Hide();
 		_steeringStatus!.Text = "Disconnected · optional";
 		_steeringAction!.Text = "Connect";
@@ -2073,8 +2107,6 @@ public partial class DeviceConnectionPanelController : Control
 		_heartRateConnectionCancellation?.Cancel();
 		_steeringConnectionCancellation?.Cancel();
 		_steeringReconnectCancellation?.Cancel();
-		if (_antSetupWindow is { } antSetupWindow && GodotObject.IsInstanceValid(antSetupWindow))
-			antSetupWindow.QueueFree();
 		_heartRateClient?.Dispose();
 		if (_steeringClient is not null) _ = _steeringClient.DisposeAsync();
 		if (ReferenceEquals(GameBootstrap.HeartRateClient, _heartRateClient)) GameBootstrap.HeartRateClient = null;

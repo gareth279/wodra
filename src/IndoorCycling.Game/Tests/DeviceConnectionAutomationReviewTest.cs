@@ -14,6 +14,11 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 {
 	public override async void _Ready()
 	{
+		if (System.Environment.GetEnvironmentVariable("WODRA_INTERACTIVE_DEVICE_REVIEW") == "1")
+		{
+			await ShowInteractiveDeviceReviewAsync();
+			return;
+		}
 		var previousSettingsPath = AppSettings.SettingsPathForTesting;
 		var isolatedSettingsDirectory = Path.Combine(Path.GetTempPath(), $"Wodra-DeviceConnectionReview-{Guid.NewGuid():N}");
 		AppSettings.SettingsPathForTesting = Path.Combine(isolatedSettingsDirectory, "settings.json");
@@ -138,6 +143,29 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 		}
 	}
 
+	private async Task ShowInteractiveDeviceReviewAsync()
+	{
+		var reviewDirectory = Path.Combine(Path.GetTempPath(), $"Wodra-InteractiveDeviceReview-{Guid.NewGuid():N}");
+		Directory.CreateDirectory(reviewDirectory);
+		AppSettings.SettingsPathForTesting = Path.Combine(reviewDirectory, "settings.json");
+		GameBootstrap.ResetSession();
+		var keyPath = Path.Combine(reviewDirectory, "ant-config.json");
+		var screen = CreateProductionRideScreen(new FakeTrainer([]), new FakeHeartRate([]), new FakeSteering([]), connection =>
+		{
+			connection.ProtocolPreferenceForTesting = TrainerProtocolPreference.BluetoothFtms;
+			connection.AntNetworkStatusForTesting = () => AntNetworkKeyMaterial.GetStatus(keyPath);
+			connection.AntNetworkKeyForTesting = () => Convert.ToHexString(AntNetworkKeyMaterial.Load(keyPath));
+			connection.AntNetworkKeySaveForTesting = value => AntNetworkKeyMaterial.Save(value, keyPath);
+			connection.AntNetworkKeyClearForTesting = () => AntNetworkKeyMaterial.Clear(keyPath);
+			connection.AntNetworkInitializeForTesting = () => Task.CompletedTask;
+		});
+		GameBootstrap.Settings.Trainer.ProtocolPreference = TrainerProtocolPreference.BluetoothFtms;
+		await Settle(2);
+		screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").ShowTrainerConnectionScreen();
+		await WaitUntil(() => screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").PreRideTrainerStatus.Contains("No trainer found", StringComparison.Ordinal));
+		GD.Print($"[DeviceConnectionInteractiveReview] Ready with isolated settings and key storage at {reviewDirectory}; fake BLE/ANT transports only.");
+	}
+
 	private async Task VerifyAntConfigurationSurfacesAndKeyEditing()
 	{
 		GameBootstrap.ResetSession();
@@ -153,12 +181,9 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			await WaitUntil(() => trainer.ScanCount == 1 && screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel").PreRideTrainerStatus.Contains("No trainer found", StringComparison.Ordinal));
 			var connection = screen.GetNode<DeviceConnectionPanelController>("DeviceConnectionPanel");
 			connection.ShowTrainerConnectionScreen();
-			if (!connection.AntSetupButtonForTesting.Visible || !connection.AntSetupButtonForTesting.Text.Contains("Configure", StringComparison.Ordinal))
-				throw new InvalidOperationException("ANT+ configuration was hidden when no key or receiver was available and Bluetooth was selected.");
-			connection.AntSetupButtonForTesting.EmitSignal(BaseButton.SignalName.Pressed);
-			var connectionSetupWindow = connection.AntSetupWindowForTesting;
-			if (connectionSetupWindow is null || !connectionSetupWindow.Visible || connectionSetupWindow.FindChild("AntNetworkSetup", true, false) is not AntNetworkSetupPanel)
-				throw new InvalidOperationException("The trainer connection screen did not open the permanent ANT+ configuration panel directly.");
+			if (connection.AntSetupPanelForTesting is not { Visible: true } connectionSetup ||
+				connectionSetup.FindChild("AntNetworkKeyInput", true, false) is not LineEdit)
+				throw new InvalidOperationException("The Devices screen did not keep ANT+ configuration directly accessible alongside device status.");
 
 			var protocol = connection.ProtocolPreferenceOptionForTesting;
 			var antIndex = Enumerable.Range(0, protocol.ItemCount).FirstOrDefault(i => protocol.GetItemId(i) == (int)TrainerProtocolPreference.AntFeC, -1);
@@ -180,14 +205,14 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				throw new InvalidOperationException("The saved ANT+ protocol preference, user settings, or key location is not preserved outside the versioned application payload.");
 			keyConfigured = true;
 			connection.RefreshAntSetupForTesting();
-			if (!connection.AntSetupButtonForTesting.Visible || !connection.AntSetupButtonForTesting.Text.Contains("Edit", StringComparison.Ordinal))
-				throw new InvalidOperationException("ANT+ configuration was hidden once a key had already been configured.");
+			if (connection.AntSetupPanelForTesting.StatusForTestingLabel?.Text != "Configured")
+				throw new InvalidOperationException("ANT+ key status did not refresh after configuration changed.");
 
 			var start = screen.GetNode<StartPanelController>("StartPanel");
 			start.ShowOptions(false);
 			var settings = screen.GetNode<Window>("OptionsWindow");
-			if (settings.Title != "Settings" || settings.FindChild("AntNetworkSetup", true, false) is not AntNetworkSetupPanel)
-				throw new InvalidOperationException("The main Settings window did not expose ANT+ network configuration.");
+			if (settings.Title != "Settings" || settings.FindChild("AntNetworkSetup", true, false) is AntNetworkSetupPanel)
+				throw new InvalidOperationException("ANT+ configuration was duplicated outside the unified Devices screen.");
 
 			var testDirectory = Path.Combine(Path.GetTempPath(), $"Wodra-AntSetupUi-{Guid.NewGuid():N}");
 			var configPath = Path.Combine(testDirectory, "ant-config.json");
@@ -196,6 +221,7 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 			{
 				Name = "AntNetworkEditingReview",
 				StatusForTesting = () => AntNetworkKeyMaterial.GetStatus(configPath),
+				LoadForTesting = () => Convert.ToHexString(AntNetworkKeyMaterial.Load(configPath)),
 				SaveForTesting = value => AntNetworkKeyMaterial.Save(value, configPath),
 				ClearForTesting = () => AntNetworkKeyMaterial.Clear(configPath),
 				InitializeForTesting = () => { initializationCalls++; return Task.CompletedTask; }
@@ -212,6 +238,12 @@ public partial class DeviceConnectionAutomationReviewTest : Node
 				setup.SaveForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
 				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("FFEEDDCCBBAA9988")))
 					throw new InvalidOperationException("ANT+ key replacement did not persist the new key.");
+				setup.RevealForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
+				if (setup.KeyInputForTesting!.Secret || setup.KeyInputForTesting.Text != "ffeeddccbbaa9988")
+					throw new InvalidOperationException("Deliberately revealing the saved key did not show the existing configuration.");
+				setup.RevealForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
+				if (!setup.KeyInputForTesting.Secret || setup.KeyInputForTesting.Text.Length != 0)
+					throw new InvalidOperationException("Hiding the saved key did not clear the revealed value.");
 				setup.KeyInputForTesting.Text = "invalid";
 				setup.SaveForTestingButton.EmitSignal(BaseButton.SignalName.Pressed);
 				if (!AntNetworkKeyMaterial.Load(configPath).SequenceEqual(Convert.FromHexString("FFEEDDCCBBAA9988")))

@@ -7,7 +7,7 @@ using IndoorCycling.Trainer.Models;
 
 public partial class RideMenuPanelController : Control
 {
-	private enum MenuView { Closed, Main, Settings, Devices, AntSetup, Display, Multiplayer, CatchUpConfirmation, Confirmation }
+	private enum MenuView { Closed, Main, Settings, Devices, Display, Multiplayer, CatchUpConfirmation, Confirmation }
 
 	private RideSessionNode? _rideSessionNode;
 	private HudController? _hudController;
@@ -76,7 +76,6 @@ public partial class RideMenuPanelController : Control
 		if (!IsMenuVisible || !cancel) return;
 		if (_view == MenuView.CatchUpConfirmation) CancelCatchUpConfirmation();
 		else if (_view == MenuView.Main) CloseMenu();
-		else if (_view == MenuView.AntSetup) ShowView(MenuView.Settings);
 		else if (_view == MenuView.Devices) ReturnToSettings();
 		else if (_view == MenuView.Settings) ReturnFromSettings();
 		else ShowView(MenuView.Main);
@@ -164,7 +163,6 @@ public partial class RideMenuPanelController : Control
 				MenuView.Main => "Ride Menu",
 				MenuView.Settings => "Settings",
 				MenuView.Devices => "Devices",
-				MenuView.AntSetup => "Devices · Advanced ANT+ setup",
 				MenuView.Display => "HUD & Display",
 				MenuView.Multiplayer => "Multiplayer",
 				MenuView.CatchUpConfirmation => CatchUpTitle(),
@@ -218,12 +216,8 @@ public partial class RideMenuPanelController : Control
 				BuildMultiplayerView();
 				AddAction("Back", () => ShowView(MenuView.Main));
 				break;
-			case MenuView.AntSetup:
-				BuildAntSetupView();
-				AddAction("Back to Settings", ReturnToSettings);
-				break;
 			case MenuView.Devices:
-				AddAction("Advanced ANT+ setup", () => ShowView(MenuView.AntSetup));
+				BuildDevicesView();
 				AddAction("Back to Settings", ReturnToSettings);
 				break;
 			case MenuView.CatchUpConfirmation:
@@ -705,9 +699,17 @@ public partial class RideMenuPanelController : Control
 		_content.AddChild(row);
 	}
 
-	private void BuildAntSetupView()
+	private void BuildDevicesView()
 	{
-		_content!.AddChild(new AntNetworkSetupPanel
+		if (_deviceConnectionPanel is { } devices)
+		{
+			_content!.AddChild(new Label { Text = $"Trainer · {devices.PreRideTrainerName}: {devices.PreRideTrainerStatus}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			_content.AddChild(new Label { Text = $"Heart rate · {devices.PreRideHeartRateName}: {devices.PreRideHeartRateStatus}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+			_content.AddChild(new Label { Text = $"Steering · {devices.PreRideSteeringName}: {devices.PreRideSteeringStatus}", AutowrapMode = TextServer.AutowrapMode.WordSmart });
+		}
+		_content!.AddChild(new HSeparator());
+		_content.AddChild(new Label { Text = "ANT+ receiver and network", HorizontalAlignment = HorizontalAlignment.Center });
+		_content.AddChild(new AntNetworkSetupPanel
 		{
 			Name = "AntNetworkSetup",
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
